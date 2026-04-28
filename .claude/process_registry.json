@@ -1,0 +1,74 @@
+{
+  "tasks": {
+    "T009": {
+      "mode": "native",
+      "command": "T009 [P] Vendor Mermaid into `skill/shell/vendor/mermaid/` — pin a specific version, document in vendor README",
+      "status": "running",
+      "started_at": "2026-04-28T18:17:19.987838897Z",
+      "constitution_rules": []
+    },
+    "T007": {
+      "mode": "native",
+      "command": "T007 [P] Author `skill/shell/_science-overlay.css` with the 5 cog-sci pillar colors (spacing/interleaving/retrieval/examples/dual-coding) per PRD §7.4",
+      "status": "running",
+      "started_at": "2026-04-28T18:17:19.978851816Z",
+      "constitution_rules": []
+    },
+    "T004": {
+      "mode": "native",
+      "command": "T004 [P] Fork codebase-to-course shell verbatim into `skill/shell/` — copy `_base.html`, `_footer.html`, `styles.css` (1195 LOC), `main.js`, `build.sh` from `~/dev/audits/codebase-to-course/`",
+      "status": "running",
+      "started_at": "2026-04-28T18:17:19.966421556Z",
+      "constitution_rules": []
+    },
+    "T006": {
+      "mode": "native",
+      "command": "T006 [P] Author new theme files `skill/shell/themes/clinical.css` (medicine default — white/blue/teal) and `skill/shell/themes/linguistic.css` (language default — warm earth tones)",
+      "status": "running",
+      "started_at": "2026-04-28T18:17:19.975501420Z",
+      "constitution_rules": []
+    },
+    "T005": {
+      "mode": "native",
+      "command": "T005 [P] Port ClassBuild theme tokens from `~/dev/audits/classbuild/` into `skill/shell/themes/_tokens.css`, `warm-paper.css`, `midnight.css`, `ocean.css` (FR-024)",
+      "status": "running",
+      "started_at": "2026-04-28T18:17:19.971208993Z",
+      "constitution_rules": []
+    },
+    "T002": {
+      "mode": "native",
+      "command": "T002 [P] Initialize TypeScript scaffolding at `skill/` — `package.json` (no `@anthropic-ai/sdk`, no `@google/generative-ai`; deps are `zod`, `better-sqlite3`, `pdfjs-dist`, plus `pdf-to-img` or equivalent for scanned-PDF rasterization), `tsconfig.json` (strict mode), `.gitignore`",
+      "status": "running",
+      "started_at": "2026-04-28T18:17:19.958565871Z",
+      "constitution_rules": []
+    },
+    "T008": {
+      "mode": "native",
+      "command": "T008 [P] Vendor MathJax + mhchem extension into `skill/shell/vendor/mathjax/` — pin a specific version, document in `skill/shell/vendor/README.md`",
+      "status": "running",
+      "started_at": "2026-04-28T18:17:19.982813302Z",
+      "constitution_rules": []
+    },
+    "T003": {
+      "mode": "native",
+      "command": "T003 [P] Symlink the in-repo skill into Claude Code's skill directory: `ln -s ~/dev/projects/chiron/skill ~/.claude/skills/chiron` (idempotent — script in `skill/scripts/install.sh`)",
+      "status": "running",
+      "started_at": "2026-04-28T18:17:19.962596445Z",
+      "constitution_rules": []
+    },
+    "T010": {
+      "mode": "native",
+      "command": "T010 [P] Author `skill/shell/vendor/forest-plot/` — small custom forest-plot mini-lib (vanilla JS / SVG); supports `studies: Array<{label, effect, ci: [low, high]}>` shape per `contracts/widget-spec.ts`",
+      "status": "running",
+      "started_at": "2026-04-28T18:17:19.991825279Z",
+      "constitution_rules": []
+    },
+    "T001": {
+      "mode": "native",
+      "command": "T001 Create the `skill/` directory tree per `plan.md`: `skill/{prompts/{00-ingest/,medicine-only/},ingest-adapters/,concepts/,curricula/,personas/,shell/{themes/,vendor/},lib/,tests/{golden-inputs/,snapshots/}}`",
+      "status": "running",
+      "started_at": "2026-04-28T18:17:19.953079359Z",
+      "constitution_rules": []
+    }
+  }
+}
