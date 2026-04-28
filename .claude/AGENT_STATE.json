@@ -1,12 +1,19 @@
 {
-  "session_id": "",
+  "session_id": "df7e883e-a738-4f31-9f2f-e65786f04c33",
   "user_id": "gyasisutton",
   "project_path": "/home/gyasisutton/dev/projects/chiron",
-  "status": "initialized",
+  "status": "active",
   "agents": {
-    "main": {"status": "idle"},
-    "memory-keeper": {"status": "idle"},
-    "git-manager": {"status": "idle"}
+    "main": {
+      "status": "idle"
+    },
+    "memory-keeper": {
+      "status": "idle"
+    },
+    "git-manager": {
+      "status": "idle"
+    }
   },
-  "initialized_at": "2026-04-28T16:45:13+00:00"
+  "initialized_at": "2026-04-28T16:45:13+00:00",
+  "last_session_start": "2026-04-28T16:45:44.690312"
 }
