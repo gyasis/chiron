@@ -1,0 +1,1 @@
+../../.specify/memory/constitution.md

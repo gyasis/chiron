@@ -1,0 +1,53 @@
+{
+  "task_orchestration": {
+    "task_watchdog_minutes": 15,
+    "wave_size": 5,
+    "max_parallel_tasks": 3,
+    "checkpoint_auto_save": true
+  },
+  "constitution": {
+    "path": "memory-bank/shared/.constitution.md",
+    "enforce": true,
+    "strict_mode": false
+  },
+  "mcp_servers": {},
+  "cli": {
+    "verbose": false,
+    "auto_git_commit": false,
+    "git_commit_prefix": "[dev-kid]"
+  },
+  "agents": {
+    "preferred_model": "sonnet",
+    "timeout_minutes": 30
+  },
+  "sentinel": {
+    "enabled": true,
+    "mode": "auto",
+    "tiers_file": "",
+    "min_tier": "",
+    "max_total_cost_usd": 5.0,
+    "max_total_duration_min": 30,
+    "tier1": {
+      "model": "",
+      "ollama_url": "http://localhost:11434",
+      "max_iterations": 5
+    },
+    "tier2": {
+      "model": "",
+      "max_iterations": 10,
+      "max_budget_usd": 2.0,
+      "max_duration_min": 10
+    },
+    "change_radius": {
+      "max_files": 3,
+      "max_lines": 150,
+      "allow_interface_changes": false
+    },
+    "test_command": "",
+    "placeholder": {
+      "fail_on_detect": true,
+      "patterns": [],
+      "exclude_paths": []
+    }
+  }
+}

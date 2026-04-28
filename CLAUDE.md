@@ -100,3 +100,10 @@ Mode is auto-detected from user intent + source type. Default is Mode A.
 ---
 
 *Generated 2026-04-28 during Chiron design phase. See `memory-bank/` for evolving project state.*
+
+## Active Technologies
+- TypeScript 5.x (strict mode) + `@anthropic-ai/sdk`, `zod` (runtime schema validation), `better-sqlite3` (synchronous SQLite), `crypto` (sha256 cache key for LLM gateway). Browser runtime: MathJax + mhchem (chemistry), Mermaid (diagrams), Pyodide (optional, code domain), ChalkAI (on-demand for `reactive-math` widgets), an abstract `MoleculeRenderer` (Kekule.js or RDKit-JS — concrete library deferred to Phase 4 prototype per FR-031). TTS via Gemini API (Italian native-speaker persona); ElevenLabs as fallback if Gemini quality insufficient. (001-chiron-v1)
+- SQLite at `<lesson-output-dir>/.chiron-state.db` (per-lesson, single learner). Schema in PRD §8 covers `quiz_attempts`, `mastery`, `chapter_completion`, `weakness_log`, `llm_usage`, `llm_cache`, `sr_cards`, `sr_review_log`, `bookmarks`, plus `_chiron_meta` (schema_version) for migrations. Source PDFs copied into `<lesson-output-dir>/source/` (FR-030). (001-chiron-v1)
+
+## Recent Changes
+- 001-chiron-v1: Added TypeScript 5.x (strict mode) + `@anthropic-ai/sdk`, `zod` (runtime schema validation), `better-sqlite3` (synchronous SQLite), `crypto` (sha256 cache key for LLM gateway). Browser runtime: MathJax + mhchem (chemistry), Mermaid (diagrams), Pyodide (optional, code domain), ChalkAI (on-demand for `reactive-math` widgets), an abstract `MoleculeRenderer` (Kekule.js or RDKit-JS — concrete library deferred to Phase 4 prototype per FR-031). TTS via Gemini API (Italian native-speaker persona); ElevenLabs as fallback if Gemini quality insufficient.

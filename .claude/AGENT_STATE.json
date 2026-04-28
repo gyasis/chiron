@@ -1,0 +1,12 @@
+{
+  "session_id": "",
+  "user_id": "gyasisutton",
+  "project_path": "/home/gyasisutton/dev/projects/chiron",
+  "status": "initialized",
+  "agents": {
+    "main": {"status": "idle"},
+    "memory-keeper": {"status": "idle"},
+    "git-manager": {"status": "idle"}
+  },
+  "initialized_at": "2026-04-28T16:45:13+00:00"
+}
