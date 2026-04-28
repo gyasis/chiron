@@ -3,7 +3,7 @@
 wave_size: 10
 
 sentinel:
-  enabled: true
+  enabled: false
   mode: auto
 
   # Injection granularity — controls how often sentinel tasks are inserted:

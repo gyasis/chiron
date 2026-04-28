@@ -21,7 +21,7 @@
     "timeout_minutes": 30
   },
   "sentinel": {
-    "enabled": true,
+    "enabled": false,
     "mode": "auto",
     "tiers_file": "",
     "min_tier": "",
