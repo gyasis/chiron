@@ -1,11 +1,143 @@
 # Progress
 
-**Last Updated**: [Timestamp]
+**Last Updated**: 2026-04-28 19:08:56
 
 ## Overall Progress
-- Total Tasks: 0
-- Completed: 0
-- Pending: 0
+- Total Tasks: 129
+- Completed: 10 ✅
+- Pending: 119 ⏳
+- Progress: 7%
+
+## Task Breakdown
+- [x] T001 Create the `skill/` directory tree per `plan.md`: `skill/{prompts/{00-ingest/,medicine-only/},ingest-adapters/,concepts/,curricula/,personas/,shell/{themes/,vendor/},lib/,tests/{golden-inputs/,snapshots/}}`
+- [x] T002 [P] Initialize TypeScript scaffolding at `skill/` — `package.json` (no `@anthropic-ai/sdk`, no `@google/generative-ai`; deps are `zod`, `better-sqlite3`, `pdfjs-dist`, plus `pdf-to-img` or equivalent for scanned-PDF rasterization), `tsconfig.json` (strict mode), `.gitignore`
+- [x] T003 [P] Symlink the in-repo skill into Claude Code's skill directory: `ln -s ~/dev/projects/chiron/skill ~/.claude/skills/chiron` (idempotent — script in `skill/scripts/install.sh`)
+- [x] T004 [P] Fork codebase-to-course shell verbatim into `skill/shell/` — copy `_base.html`, `_footer.html`, `styles.css` (1195 LOC), `main.js`, `build.sh` from `~/dev/audits/codebase-to-course/`
+- [x] T005 [P] Port ClassBuild theme tokens from `~/dev/audits/classbuild/` into `skill/shell/themes/_tokens.css`, `warm-paper.css`, `midnight.css`, `ocean.css` (FR-024)
+- [x] T006 [P] Author new theme files `skill/shell/themes/clinical.css` (medicine default — white/blue/teal) and `skill/shell/themes/linguistic.css` (language default — warm earth tones)
+- [x] T007 [P] Author `skill/shell/_science-overlay.css` with the 5 cog-sci pillar colors (spacing/interleaving/retrieval/examples/dual-coding) per PRD §7.4
+- [x] T008 [P] Vendor MathJax + mhchem extension into `skill/shell/vendor/mathjax/` — pin a specific version, document in `skill/shell/vendor/README.md`
+- [x] T009 [P] Vendor Mermaid into `skill/shell/vendor/mermaid/` — pin a specific version, document in vendor README
+- [x] T010 [P] Author `skill/shell/vendor/forest-plot/` — small custom forest-plot mini-lib (vanilla JS / SVG); supports `studies: Array<{label, effect, ci: [low, high]}>` shape per `contracts/widget-spec.ts`
+- [ ] T011 Author `skill/shell/vendor/molecule-renderer/README.md` and stub directory — concrete library (Kekule.js or RDKit-JS) is selected during US3 Phase 4 per FR-031; this task only places the directory + version-pinning template
+- [ ] T012 [P] Update `skill/shell/build.sh` to inline every file under `skill/shell/vendor/*` as `<script>` / `<style>` blocks into the single output `lesson.html` (FR-037, Stage 5 of `contracts/pipeline-stages.md`)
+- [ ] T013 [P] Author `skill/lib/sqlite-init.ts` — opens (or creates) `<lesson-output-dir>/.chiron-state.db`, applies schema from `contracts/sqlite-schema.sql` verbatim (8 tables: `_chiron_meta`, `quiz_attempts`, `mastery`, `chapter_completion`, `weakness_log`, `sr_cards`, `sr_review_log`, `bookmarks` — explicitly NO `llm_usage` / `llm_cache`), seeds `_chiron_meta.schema_version='1'`, applies forward-only idempotent migrations (R-08)
+- [ ] T014 [P] Author `skill/lib/sr-scheduler.ts` — SM-2 algorithm (~50 LOC per R-07): `nextDue(card, rating: 1|2|3|4)` returns updated `{ease_factor, interval_days, repetitions, next_due_at}`; writes to `sr_cards` and appends to `sr_review_log`
+- [ ] T015 [P] Author `skill/lib/schemas/widget-spec.ts` — Zod schema mirroring `contracts/widget-spec.ts` (21 variants); export `WidgetSpec` discriminated union and `WidgetSpecSchema` Zod parser
+- [ ] T016 [P] Author `skill/lib/schemas/chapter-syllabus.ts` — Zod schema for `ChapterSyllabus` per `data-model.md` §1.2, with refinements: `scienceAnnotations.length >= 3` (FR-022), conditional `spacingConnections.length` 2-4 for chapter ≥ 8 (FR-022), every quiz-type widget has `variants: Variant[]` non-empty (FR-021)
+- [ ] T017 [P] Author `skill/lib/schemas/brief.ts` — Zod schema for `Brief` per `data-model.md` §1.1 with all 12 `sourceType` values from FR-032, plus `SourceFileEntry` for `sourceManifest[]`
+- [ ] T018 Author `skill/lib/validator.ts` — runs Zod validation, then concept-DAG validation (no cycles; every prereq exists; every `keyConcepts` entry exists in the domain's DAG), then rubric check; returns structured issue list on failure for retry (FR-006); depends on T015, T016, T017
+- [ ] T019 Author `skill/lib/theme.ts` — exports `Theme` interface, theme registry mapping `id → tokens`, `pickThemeForDomain(domain) → themeId`, and `buildThemePromptBlock(theme) → string` (the system-prompt token injector ported from ClassBuild)
+- [ ] T020 Author `skill/lib/widget-renderer.ts` — dispatch table from `WidgetSpec.type` to renderer function. Phase 2 implements only universal primitives (`mcq`, `true-false`, `mathjax`, `mermaid`); domain-specific widgets (vignette, fill-blank, molecule, forest-plot) come in their respective story phases.
+- [ ] T021 [P] Author `skill/lib/chemistry-renderer.ts` — abstract `MoleculeRenderer` interface per FR-031 + `data-model.md` §1.4; provides `renderChemicalReaction(equation, container)` (uses vendored MathJax+mhchem). Concrete `MoleculeRenderer` impl is deferred to US3 (Phase 5).
+- [ ] T022 [P] Author `skill/lib/progress.ts` — stderr progress emitter per R-05 / FR-028: `progress.stage(N, total, label)`, `progress.chapter(stageN, chapN, chapTotal, label)`. Used by every pipeline stage.
+- [ ] T023 [P] Author `skill/lib/source-copy.ts` — copies any local-file source into `<lesson-output-dir>/source/` preserving structure (FR-030). Used by ingest adapters.
+- [ ] T024 Author `skill/lib/pipeline.ts` — orchestrates the 5 stages per `contracts/pipeline-stages.md`. For text-LLM stages (1-4), it loads the right prompt template and **hands control to the parent Claude Code agent** (Q8 — no SDK call). It enforces validator retry up to 3 attempts (FR-006) and the FR-029 deep-research opt-in cap. Depends on T013, T018, T019, T020, T022, T023.
+- [ ] T025 Author `skill/SKILL.md` — top-level skill descriptor with both entry-point styles per `contracts/skill-triggers.md`: (a) natural-language trigger phrases (`teach me`, `make a course on`, `lesson from this PDF`, `case-study this`, `chiron`); (b) slash-commands (`/chiron`, `/chiron-code`, `/chiron-medicine`, `/chiron-language`, `/chiron-research-paper`, `/chiron-case-study`). Includes the FR-036 Gemini MCP toolset table verbatim. Refuses German with the clear "deferred to post-v1" message per skill-triggers.md validation #2.
+- [ ] T026 [P] Author `skill/lib/trigger-context.ts` — parses raw user input into the `TriggerContext` struct from `contracts/skill-triggers.md` (resolves domain, mode, sourceArg, flags); exposes `parseTrigger(raw, source: 'natural-language' | 'slash-command') → TriggerContext`
+- [ ] T027 [P] Author `skill/lib/mode-heuristic.ts` — `detectMode(extractedText) → {mode: 'A'|'B', reason: string}` per FR-003; `<2000 words → B candidate`, `≥2000 → A candidate`. Honors user override.
+- [ ] T028 [P] Author `skill/prompts/01-brief.md` — Stage 1 prompt template with `{{domain}}` / `{{sourceType}}` / `{{extractedText}}` slots; output schema documented inline
+- [ ] T029 [P] Author `skill/prompts/02-syllabus.md` — Stage 2 prompt template that fills the `ChapterSyllabus[]` schema slots, includes `{{themeBlock}}` injection (FR-024) and the FR-022 mandate (≥3 scienceAnnotations, spacingConnections from chapter 8+)
+- [ ] T030 [P] Author `skill/prompts/03-validate-rubric.md` — Stage 3 rubric prompt for the validator's structured-issue retry loop
+- [ ] T031 [P] Author `skill/prompts/04a-chapter-write.md` — Stage 4 chapter narrative prompt (~150-400 words) referencing `{{chapterSyllabus}}` and `{{priorChapterStruggleSummary}}` (FR-023 pseudo-state)
+- [ ] T032 [P] Author `skill/prompts/05-answer-balancer.md` — post-pass prompt that re-balances correct-answer length + position across MCQ options without changing semantics (FR-006 utility)
+- [ ] T033 Author `skill/lib/assemble.ts` — Stage 5: invokes `shell/build.sh`, calls `sqlite-init.ts` to initialize the DB, seeds `sr_cards` chapter-1 due-now, seeds `bookmarks` chapter-1 entry, opens `lesson.html` via `xdg-open`/`open`. Depends on T012, T013
+- [ ] T034 [P] [US1] Author `skill/concepts/code.json` — small concept DAG (~15 concepts is fine for v1) with prereq edges; passes the validator (no cycles, every prereq exists)
+- [ ] T035 [P] [US1] Author `skill/curricula/code.json` — `templateStyle: scroll-modules`, `chapterCountTarget: 8`, `perChapterQuizTarget: 10`, `perChapterSrCardTarget: 7`, `modeAOnly: true`
+- [ ] T036 [P] [US1] Author `skill/personas/code.json` — Chiron-mentor (subject expert) + Alice (peer, eager) + Bob (peer, confused), all in the JSON shape from `data-model.md` §3.3
+- [ ] T037 [US1] Author `skill/ingest-adapters/code-repo.ts` — handles git repo / local dir / single source file (FR-032 f). Walks the repo respecting `.gitignore`, extracts file list + key file contents into a `Brief` with `sourceType: 'code-repo'` and metadata `{repoSha, fileCount, primaryLanguage}`. Source NOT copied (referenced by path per FR-030 carve-out for repos).
+- [ ] T038 [P] [US1] Extend `skill/lib/widget-renderer.ts` to render `spot-the-bug` widgets — code block with line numbering, click-to-mark-bug interaction, reveal explanation
+- [ ] T039 [P] [US1] Implement `skill/lib/chalkai-loader.ts` lazy-loader stub (PRD §3 #11) — loads ChalkAI runtime ONLY when a chapter's WidgetSpec includes `type: 'reactive-math'`. v1 may stub if no code-domain lessons exercise it.
+- [ ] T040 [P] [US1] Extend `skill/lib/widget-renderer.ts` to render `code-runner` widgets per R-03 — lazy-loads Pyodide from CDN if `runtime: 'pyodide'`; falls back to "Pyodide unavailable" message when offline; native JS runtime always works inline
+- [ ] T041 [P] [US1] Author `skill/prompts/00-ingest/code-repo.md` — guides the agent on what to extract from a repo
+- [ ] T042 [P] [US1] Author `skill/prompts/04b-quiz-mcq.md` — universal MCQ generation prompt (used by US1 + others)
+- [ ] T043 [P] [US1] Author `skill/prompts/04f-quiz-spot-the-bug.md` — code-domain-specific quiz primitive
+- [ ] T044 [P] [US1] Author `skill/prompts/04l-peer-dialogue.md` — Alice/Bob/Mike/Priya/Luca/Sofia dialogue generator referencing `{{personaRoster}}` and `{{priorChapterStruggleSummary}}`
+- [ ] T045 [P] [US1] Author `skill/prompts/04m-domain-expert.md` — Chiron-mentor / Dr. Reyes / Klaus / Dr. Hofmann expert dialogue
+- [ ] T046 [P] [US1] Author `skill/prompts/04n-sr-card-gen.md` — generates SR cards (`card_type`, `front`, `back`) per chapter, scoped to the chapter's `keyConcepts`
+- [ ] T047 [US1] Create `skill/tests/golden-inputs/code-small-repo/` — a tiny, real, MIT-licensed TypeScript repo (e.g. a 200-line utility lib) committed verbatim into the dir
+- [ ] T048 [US1] Author `skill/tests/snapshots/code-small-repo.json` — expected key fields: `{chapterCount, totalQuizCount, srCardCount, peerDialogueLineCount, hasSpotTheBug: true}`
+- [ ] T049 [US1] Author `skill/tests/test.sh` — driver that runs all golden inputs, generates `lesson.html` in a temp dir, opens in headless browser, diffs against snapshots, exits non-zero on any mismatch (FR-026)
+- [ ] T050 [P] [US2] Author `skill/concepts/language-it.json` — vocab + grammar concept DAG for Italian
+- [ ] T051 [P] [US2] Author `skill/curricula/language-vocab.json` — vocab-list-style curriculum (`chapterCountTarget: 5-10`, `perChapterSrCardTarget: 30-50`)
+- [ ] T052 [P] [US2] Author `skill/curricula/language-grammar.json` — grammar-arc curriculum (`templateStyle: scroll-modules`)
+- [ ] T053 [P] [US2] Author `skill/personas/language-it.json` — Maria (native speaker, `ttsVoice: 'it-female-1'`) + Luca (peer, eager) + Sofia (peer, confused)
+- [ ] T054 [P] [US2] Author `skill/ingest-adapters/vocab-list.ts` — parses a CSV vocab list (FR-032 g); produces `Brief` with `sourceType: 'vocab-list'`. Source CSV copied into `<lesson-output-dir>/source/` per FR-030.
+- [ ] T055 [P] [US2] Extend `skill/lib/widget-renderer.ts` to render `fill-blank` widgets with FR-020 fuzzy accent matching: `caffe ≡ caffè`, `e ≡ è`, `niño ≡ nino` (Spanish-style accents tolerated for cross-language consistency)
+- [ ] T056 [P] [US2] Extend `skill/lib/widget-renderer.ts` to render `matching-pair` widgets — `1to1` and `NtoN` drag-drop modes per `contracts/widget-spec.ts`
+- [ ] T057 [P] [US2] Extend `skill/lib/widget-renderer.ts` to render `cloze` widgets with `ankiCompatible: true` (so the optional `.apkg` export later can pick them up unchanged)
+- [ ] T058 [P] [US2] Extend `skill/lib/widget-renderer.ts` to render `audio-tts` widgets — produces `<audio>` tag pointing at the per-clip MP3 in `<lesson-output-dir>/audio/`
+- [ ] T059 [US2] Author `skill/lib/tts-gemini.ts` — invokes the Gemini TTS path (per FR-036 / R-01) for each `audio-tts` widget transcript; saves audio files to `<lesson-output-dir>/audio/<chapter-id>/<line-id>.mp3`. ElevenLabs fallback path documented but not wired in v1 unless Gemini fails Phase 4 ear-test.
+- [ ] T060 [P] [US2] Author `skill/prompts/00-ingest/vocab-list.md`
+- [ ] T061 [P] [US2] Author `skill/prompts/04d-quiz-fill-blank.md` — fill-blank generation with explicit FR-020 fuzzy-accent rule for Italian
+- [ ] T062 [P] [US2] Author `skill/prompts/04e-quiz-cloze.md` — Anki-compatible cloze generation
+- [ ] T063 [US2] Create `skill/tests/golden-inputs/language-it-passato-prossimo/` — a vocab CSV + grammar concept hint for the Italian past tense (passato prossimo)
+- [ ] T064 [US2] Author `skill/tests/snapshots/language-it-passato-prossimo.json` — expected: `{chapterCount, fillBlankCount: ≥10, clozeCount: ≥30, mariaAudioClipCount: ≥1, fuzzyAccentCheck: passed}`
+- [ ] T065 [US2] Extend `skill/tests/test.sh` to include language-it-passato-prossimo run + snapshot diff
+- [ ] T066 [P] [US3] Author `skill/concepts/medicine.json` — medicine concept DAG (~30 concepts spanning conditions / drugs / mechanisms)
+- [ ] T067 [P] [US3] Author `skill/curricula/medicine-amboss.json` — AMBOSS sub-mode: `format_style: bulleted_nested`, `audience_focus: board-exam pattern recognition`, `recommendation_framework: consensus only`, `word_count: 1500-2000`, `vignetteTaxonomy: ['classic','atypical','pediatric','elderly','immunocompromised','pregnancy','comorbidity','mimicker']`
+- [ ] T068 [P] [US3] Author `skill/curricula/medicine-uptodate.json` — UpToDate sub-mode: `format_style: academic_prose`, `audience_focus: point-of-care management`, `recommendation_framework: GRADE enforced`, `word_count: 5000-10000`
+- [ ] T069 [P] [US3] Author `skill/personas/medicine.json` — Dr. Reyes (attending) + Mike (med student, peer) + Priya (resident, peer)
+- [ ] T070 [US3] Author `skill/ingest-adapters/pdf.ts` — text-PDF via `pdfjs-dist`; if no usable text layer (>50 chars on first non-cover page), rasterize via `pdf-to-img` and fall through to Gemini `mcp__gemini-mcp__interpret_image` per page (R-04 revised). Source PDF copied to `<lesson-output-dir>/source/` (FR-030). Emits per-page progress (Stage 0 announces page count up front per R-10 replacement).
+- [ ] T071 [P] [US3] Author `skill/ingest-adapters/image.ts` — handles single image file AND folder of page images (FR-032 c/d). Sends each image to `mcp__gemini-mcp__interpret_image`; preserves alphabetic order; populates `Brief.sourceManifest[]` (FR-034)
+- [ ] T072 [P] [US3] Author `skill/ingest-adapters/multi-pdf.ts` — accepts an ordered list or directory of PDFs (FR-032 e); delegates each file to `pdf.ts`; concatenates extracted text in supplied order; per-file provenance in `Brief.sourceManifest[]`
+- [ ] T073 [P] [US3] Author `skill/ingest-adapters/url.ts` — fetches a URL (FR-032 i) OR reads a local `.html` file (FR-032 j); sanitizes HTML; extracts text
+- [ ] T074 [P] [US3] Author `skill/ingest-adapters/transcript.ts` — handles plain text / markdown chat-meeting-lecture transcripts (FR-032 h)
+- [ ] T075 [P] [US3] Author `skill/ingest-adapters/agent-report.ts` — accepts markdown / JSON output from another agent (FR-032 k); marks the entry `secondary` in `Brief.sourceManifest[]`; sets `Brief.agentSourceProvenance`; refuses if it would be the SOLE source for a medicine lesson (FR-035)
+- [ ] T076 [US3] Author `skill/ingest-adapters/bundle.ts` — walks a directory (FR-032 l); honors optional `chiron.manifest.json` if present (declares per-file `role`); else dispatches each recognized file by extension. Emits warnings for unknown extensions (skipped, not failed). Aggregates ordered concatenation across all files. Depends on T070, T071, T072, T073, T074, T075.
+- [ ] T077 [P] [US3] Extend `skill/lib/widget-renderer.ts` to render `mcq-clinical-vignette` widgets — vignette block + `<keyinfo>` chip rendering + 5-option layout + per-distractor explanation reveal + Hammer rating chip + Attending Tip callout
+- [ ] T078 [P] [US3] Extend `skill/lib/widget-renderer.ts` to render `agreement-matrix` widgets — N statements × {always / sometimes / never} grid
+- [ ] T079 [P] [US3] Extend `skill/lib/widget-renderer.ts` to render `assertion-reason` widgets — 5-relationship picker per `contracts/widget-spec.ts`
+- [ ] T080 [US3] Extend `skill/lib/chemistry-renderer.ts` — concrete `MoleculeRenderer` impl. **Phase 5 prototype rubric** per R-02: prototype both Kekule.js and RDKit-JS against the metformin SMILES, pick the smaller / faster one, drop the loser. Vendor the winning library into `skill/shell/vendor/molecule-renderer/`. Ships a single dep at runtime per FR-031.
+- [ ] T081 [P] [US3] Extend `skill/lib/widget-renderer.ts` to render `pathway-diagram` widgets — supports `renderer: 'mermaid'` (uses vendored Mermaid) and `renderer: 'd3-custom'` (vanilla JS / SVG)
+- [ ] T082 [P] [US3] Author `skill/prompts/medicine-only/verifier-stage1-generate.md`
+- [ ] T083 [P] [US3] Author `skill/prompts/medicine-only/verifier-stage2-verify.md`
+- [ ] T084 [P] [US3] Author `skill/prompts/medicine-only/verifier-stage3-refine.md`
+- [ ] T085 [US3] Wire the verifier loop into `skill/lib/pipeline.ts` Stage 3 — runs ONLY for medicine domain; up to 3 attempts; if all fail, abort the chapter with structured issue report (SC-011). Depends on T024, T082, T083, T084.
+- [ ] T086 [P] [US3] Author `skill/prompts/00-ingest/pdf.md` — guides agent on text-PDF and scanned-PDF extraction handoffs
+- [ ] T087 [P] [US3] Author `skill/prompts/00-ingest/image.md` — guides on image-folder + single-image bundles + figure interpretation
+- [ ] T088 [P] [US3] Author `skill/prompts/00-ingest/agent-report.md` — guides on treating agent reports as `secondary`
+- [ ] T089 [P] [US3] Author `skill/prompts/00-ingest/bundle.md` — guides on multi-source bundles + manifest interpretation
+- [ ] T090 [P] [US3] Author `skill/prompts/04c-quiz-clinical-vignette.md` — vignette MCQ generator with vignette taxonomy enforcement (15-20+, 8 categories), `keyInfo[]` extraction, Hammer rating, Attending Tip, per-distractor explanations (FR-019)
+- [ ] T091 [P] [US3] Author `skill/prompts/04g-quiz-agreement-matrix.md`
+- [ ] T092 [P] [US3] Author `skill/prompts/04j-quiz-assertion-reason.md`
+- [ ] T093 [P] [US3] Author `skill/prompts/04p-chemical-rendering.md` — chemical-equation generation (MathJax+mhchem `\ce{}` syntax) and molecule-2d SMILES generation
+- [ ] T094 [US3] Add medicine-source refusal logic in `skill/lib/pipeline.ts` Stage 0: refuse generation when the only source is `agent-report` (FR-035, SC-016) AND when there is no source-grounding at all (FR-016). Depends on T024.
+- [ ] T095 [US3] Create `skill/tests/golden-inputs/medicine-pneumonia/` — a community-acquired pneumonia textbook chapter (mix of text-PDF + 1 image figure to exercise vision path AND text-extract path)
+- [ ] T096 [US3] Author `skill/tests/snapshots/medicine-pneumonia.json` — expected: `{chapterCount, vignetteCount: ≥15, vignetteTaxonomyCoverage: ['classic','atypical', ...], hammerRangePresent: true, keyInfoTagsPerVignette: ≥3, attendingTipPerVignette: true, chemicalReactionCount: ≥1, moleculeCount: ≥1, verifierCycleCount: ≥1}`
+- [ ] T097 [US3] Extend `skill/tests/test.sh` to include medicine-pneumonia run + snapshot diff
+- [ ] T098 [P] [US4] Author `skill/concepts/research-paper.json` — IMRAD-aware concept DAG (study-design / methods / statistics / interpretation)
+- [ ] T099 [P] [US4] Author `skill/curricula/research-paper.json` — `chapterCountTarget: 6` (fixed: motivation / methods / results / discussion / appraisal / connections); `perChapterQuizTarget: 5-10`
+- [ ] T100 [P] [US4] Author `skill/personas/research-paper.json` — Dr. Hofmann (senior PI, expert) + Bob (skeptical peer)
+- [ ] T101 [P] [US4] Extend `skill/lib/widget-renderer.ts` to render `slider-estimation` widgets — value picker with `acceptableRange` band, reveals correct value + unit
+- [ ] T102 [P] [US4] Extend `skill/lib/widget-renderer.ts` to render `forest-plot` widgets — uses the vendored `skill/shell/vendor/forest-plot/` mini-lib from T010
+- [ ] T103 [P] [US4] Author `skill/prompts/04i-quiz-slider-estimation.md`
+- [ ] T104 [P] [US4] Author `skill/prompts/04o-infographic.md` — for forest-plot data extraction from the source paper
+- [ ] T105 [US4] Create `skill/tests/golden-inputs/research-paper-jones2025/` — a real (or realistic) research paper PDF
+- [ ] T106 [US4] Author `skill/tests/snapshots/research-paper-jones2025.json` — expected: `{sectionCount: 6, mcqCount: ≥5, forestPlotCount: ≥1, drHofmannDialoguePresent: true}`
+- [ ] T107 [US4] Extend `skill/tests/test.sh` to include research-paper-jones2025 run + snapshot diff
+- [ ] T108 [US5] Add Mode-B delegation logic in `skill/lib/pipeline.ts` Stage 0: when `TriggerContext.mode === 'B'` (either inferred via heuristic or forced via `/chiron-case-study`), invoke `~/.claude/skills/case-study.md` with the source and exit early — Chiron's own pipeline does not run for Mode B. Depends on T024, T026, T027.
+- [ ] T109 [P] [US5] Add the `mode b` / `mode a` user-override handler in `skill/lib/trigger-context.ts` per FR-003 — listens for these phrases mid-conversation and updates `TriggerContext.mode`
+- [ ] T110 [P] [US5] (Optional) Create `skill/tests/golden-inputs/case-study-incident/` with a 1500-word incident write-up; snapshot only checks "Mode B inferred + case-study.md invoked" — actual case-study output is the sibling skill's responsibility
+- [ ] T111 [P] [US6] Author `skill/concepts/music-theory.json` — a 10-concept DAG (intervals → scales → triads → chord progressions → cadences)
+- [ ] T112 [P] [US6] Author `skill/curricula/music-theory.json` — minimal scroll-modules curriculum
+- [ ] T113 [P] [US6] Author `skill/personas/music-theory.json` — a music-mentor expert + 2 peer learners
+- [ ] T114 [US6] Add a new-domain regression check in `skill/tests/test.sh`: run Chiron against the music-theory drop with a 1-paragraph music-theory text input, confirm `lesson.html` generates, confirm `git diff` shows zero changes under `skill/lib/`, `skill/ingest-adapters/`, `skill/shell/` (SC-007). Depends on T049 (test.sh exists).
+- [ ] T115 [P] [US6] Document the per-domain drop process in `skill/README.md` — name the 3 files, the optional prompt-template variant slot, and the validation steps
+- [ ] T116 [P] Implement scroll-position restore in `skill/shell/main.js` — on lesson re-open, read `bookmarks.scroll_position` for the most-recent-`last_visited_at` row and `window.scrollTo()` once content is laid out
+- [ ] T117 [P] Implement chapter-completion marking in `skill/shell/main.js` — chapters listed in `chapter_completion` get a visual checkmark in the TOC
+- [ ] T118 Implement in-lesson SR review surface in `skill/shell/main.js` — query `sr_cards WHERE next_due_at <= NOW() AND suspended = 0`; render a "Due cards" panel pinned at the top of the page; on rating click, write to `sr_review_log`, update `sr_cards` SM-2 state via the bundled `lib/sr-scheduler.ts` (compiled to JS for the browser). Depends on T014, T116.
+- [ ] T119 [P] Implement bookmark write in `skill/shell/main.js` — debounced scroll-position writer; updates `bookmarks` row on scroll-pause + on chapter switch
+- [ ] T120 [P] Author `skill/lib/apkg-export.ts` — one-way export of `sr_cards` to a standard `.apkg` file; preserves cloze / term-def / vignette card types. Stretch goal per spec assumptions; v1 may stub if time-pressed.
+- [ ] T121 Add German-deferred refusal in `skill/lib/trigger-context.ts` — when input contains "german", "deutsch", "language-de", or `/chiron-language-de`, return a clear "deferred to post-v1" error and exit. Depends on T026.
+- [ ] T122 Add image-count-up-front announcement in `skill/lib/pipeline.ts` Stage 0 — for any source containing images (scanned-PDF, image, image-folder, multi-pdf with images, bundle), emit `[stage 0/5] ingest: <type> (<N> pages/images — <N> interpret_image calls follow)` BEFORE the first MCP call (R-10 replacement, FR-028). Depends on T024.
+- [ ] T123 [P] Update `skill/README.md` with the canonical "how to use Chiron" content from `quickstart.md`
+- [ ] T124 [P] Update repo-root `README.md` with project overview, link to `prd/chiron_design_v1_2026-04-28.md` and to this spec
+- [ ] T125 [P] Update repo-root `CLAUDE.md` with skill location pointer + symlink instruction
+- [ ] T126 Run `skill/tests/test.sh` against all 5 golden inputs (code, language-it, medicine, research-paper, music-theory extensibility check) — all snapshots match, all `lesson.html` files render in headless browser without console errors
+- [ ] T127 Run `quickstart.md` validation manually — go through every "Generate a lesson" example (both natural-language and slash-command styles) for all 4 domains; confirm re-open behavior, due-card surfacing, scroll-restore
+- [ ] T128 Confirm `git diff` and `git ls-files` show zero `@anthropic-ai/sdk` / `@google/generative-ai` references anywhere under `skill/` (Q8 invariant)
+- [ ] T129 Confirm vendored libraries are checked in under `skill/shell/vendor/` and the assembled `lesson.html` from any golden input contains the libraries inline (no `<script src="https://cdn...">` references — Pyodide CDN reference exempted only when a `code-runner` widget is present per R-03)
 
 ## Recent Milestones
-[None yet]
+0af7c85 [MILESTONE] Dev-kid initialized

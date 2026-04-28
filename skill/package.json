@@ -1,0 +1,29 @@
+{
+  "name": "chiron",
+  "version": "0.1.0",
+  "description": "Universal LLM-powered lesson generator for solo learners across code, medicine, and language.",
+  "private": true,
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "watch": "tsc --watch",
+    "clean": "rm -rf dist *.tsbuildinfo",
+    "test": "node --test dist/tests/**/*.test.js"
+  },
+  "dependencies": {
+    "zod": "^3.23.0",
+    "better-sqlite3": "^11.3.0",
+    "pdfjs-dist": "^4.7.76",
+    "pdf-to-img": "^4.4.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.6.0",
+    "@types/node": "^22.0.0",
+    "@types/better-sqlite3": "^7.6.0"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}

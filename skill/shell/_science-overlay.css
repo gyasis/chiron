@@ -1,0 +1,55 @@
+/*
+ * Chiron — Cognitive Science Pillar Overlay
+ *
+ * Five evidence-based learning pillars get distinct accent colors. Use the
+ * utility classes to mark a section/widget as exercising a particular pillar
+ * — useful for the lesson author to reason about which mechanism a given
+ * activity reinforces, and (eventually) for visual scannability in long
+ * lessons.
+ *
+ * Pillars:
+ *   spacing      — distributed practice, time-spaced retrieval
+ *   interleaving — mixed-topic practice rather than blocked
+ *   retrieval    — active recall (vs re-reading)
+ *   examples     — worked examples, faded scaffolds
+ *   dual-coding  — verbal + visual / multi-modal encoding
+ */
+
+:root {
+  --cog-spacing: #2563eb;       /* blue */
+  --cog-interleaving: #7c3aed;  /* purple */
+  --cog-retrieval: #16a34a;     /* green */
+  --cog-examples: #d97706;      /* amber */
+  --cog-dual-coding: #e11d48;   /* rose */
+}
+
+/* Left-bar utility — pin this on any widget/section to label its pillar */
+.cog-spacing      { border-left: 4px solid var(--cog-spacing); }
+.cog-interleaving { border-left: 4px solid var(--cog-interleaving); }
+.cog-retrieval    { border-left: 4px solid var(--cog-retrieval); }
+.cog-examples     { border-left: 4px solid var(--cog-examples); }
+.cog-dual-coding  { border-left: 4px solid var(--cog-dual-coding); }
+
+/* Pill / badge variants for inline labels */
+.cog-pill {
+  display: inline-block;
+  padding: 0.125rem 0.5rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #fff;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+.cog-pill.cog-spacing      { background: var(--cog-spacing); border-left: 0; }
+.cog-pill.cog-interleaving { background: var(--cog-interleaving); border-left: 0; }
+.cog-pill.cog-retrieval    { background: var(--cog-retrieval); border-left: 0; }
+.cog-pill.cog-examples     { background: var(--cog-examples); border-left: 0; }
+.cog-pill.cog-dual-coding  { background: var(--cog-dual-coding); border-left: 0; }
+
+/* Subtle background tint variant — for section banners */
+.cog-tint-spacing      { background: color-mix(in srgb, var(--cog-spacing) 8%, transparent); }
+.cog-tint-interleaving { background: color-mix(in srgb, var(--cog-interleaving) 8%, transparent); }
+.cog-tint-retrieval    { background: color-mix(in srgb, var(--cog-retrieval) 8%, transparent); }
+.cog-tint-examples     { background: color-mix(in srgb, var(--cog-examples) 8%, transparent); }
+.cog-tint-dual-coding  { background: color-mix(in srgb, var(--cog-dual-coding) 8%, transparent); }

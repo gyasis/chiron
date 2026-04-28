@@ -1,0 +1,65 @@
+/*
+ * Chiron forest-plot — minimal styling.
+ * Honors --chiron-* tokens from the active theme.
+ */
+
+.chiron-forest-plot {
+  font-family: var(--chiron-font-body, system-ui, sans-serif);
+  color: var(--chiron-fg, #1a1a1a);
+  background: var(--chiron-surface, #fff);
+  border: 1px solid var(--chiron-border, #e5e0d8);
+  border-radius: var(--chiron-radius-md, 8px);
+  display: block;
+}
+
+.chiron-forest-plot .fp-title {
+  fill: var(--chiron-fg, #1a1a1a);
+}
+
+.chiron-forest-plot .fp-header,
+.chiron-forest-plot .fp-label,
+.chiron-forest-plot .fp-numeric,
+.chiron-forest-plot .fp-tick {
+  fill: var(--chiron-fg, #1a1a1a);
+  font-size: 12px;
+}
+
+.chiron-forest-plot .fp-label {
+  fill: var(--chiron-fg-secondary, #4a4a4a);
+}
+
+.chiron-forest-plot .fp-numeric {
+  fill: var(--chiron-fg-secondary, #4a4a4a);
+}
+
+.chiron-forest-plot .fp-tick {
+  fill: var(--chiron-muted, #7a7a7a);
+}
+
+.chiron-forest-plot .fp-ci {
+  stroke: var(--chiron-fg-secondary, #4a4a4a);
+}
+
+.chiron-forest-plot .fp-effect-dot {
+  fill: var(--chiron-accent, #1e3a5f);
+  stroke: var(--chiron-accent, #1e3a5f);
+}
+
+.chiron-forest-plot .fp-null-line {
+  stroke: var(--chiron-muted, #7a7a7a);
+  stroke-width: 1;
+}
+
+.chiron-forest-plot .fp-axis {
+  stroke: var(--chiron-fg-secondary, #4a4a4a);
+  stroke-width: 1;
+}
+
+.chiron-forest-plot .fp-summary {
+  fill: var(--chiron-accent, #1e3a5f);
+  stroke: var(--chiron-accent, #1e3a5f);
+}
+
+.chiron-forest-plot .fp-summary-label {
+  fill: var(--chiron-fg, #1a1a1a);
+}

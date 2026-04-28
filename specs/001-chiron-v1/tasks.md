@@ -28,13 +28,13 @@ description: "Task list for Chiron v1 — Universal Lesson Generator"
 
 **Purpose**: Project initialization, directory layout, and tooling.
 
-- [ ] T001 Create the `skill/` directory tree per `plan.md`: `skill/{prompts/{00-ingest/,medicine-only/},ingest-adapters/,concepts/,curricula/,personas/,shell/{themes/,vendor/},lib/,tests/{golden-inputs/,snapshots/}}`
-- [ ] T002 [P] Initialize TypeScript scaffolding at `skill/` — `package.json` (no `@anthropic-ai/sdk`, no `@google/generative-ai`; deps are `zod`, `better-sqlite3`, `pdfjs-dist`, plus `pdf-to-img` or equivalent for scanned-PDF rasterization), `tsconfig.json` (strict mode), `.gitignore`
-- [ ] T003 [P] Symlink the in-repo skill into Claude Code's skill directory: `ln -s ~/dev/projects/chiron/skill ~/.claude/skills/chiron` (idempotent — script in `skill/scripts/install.sh`)
-- [ ] T004 [P] Fork codebase-to-course shell verbatim into `skill/shell/` — copy `_base.html`, `_footer.html`, `styles.css` (1195 LOC), `main.js`, `build.sh` from `~/dev/audits/codebase-to-course/`
-- [ ] T005 [P] Port ClassBuild theme tokens from `~/dev/audits/classbuild/` into `skill/shell/themes/_tokens.css`, `warm-paper.css`, `midnight.css`, `ocean.css` (FR-024)
-- [ ] T006 [P] Author new theme files `skill/shell/themes/clinical.css` (medicine default — white/blue/teal) and `skill/shell/themes/linguistic.css` (language default — warm earth tones)
-- [ ] T007 [P] Author `skill/shell/_science-overlay.css` with the 5 cog-sci pillar colors (spacing/interleaving/retrieval/examples/dual-coding) per PRD §7.4
+- [x] T001 Create the `skill/` directory tree per `plan.md`: `skill/{prompts/{00-ingest/,medicine-only/},ingest-adapters/,concepts/,curricula/,personas/,shell/{themes/,vendor/},lib/,tests/{golden-inputs/,snapshots/}}`
+- [x] T002 [P] Initialize TypeScript scaffolding at `skill/` — `package.json` (no `@anthropic-ai/sdk`, no `@google/generative-ai`; deps are `zod`, `better-sqlite3`, `pdfjs-dist`, plus `pdf-to-img` or equivalent for scanned-PDF rasterization), `tsconfig.json` (strict mode), `.gitignore`
+- [x] T003 [P] Symlink the in-repo skill into Claude Code's skill directory: `ln -s ~/dev/projects/chiron/skill ~/.claude/skills/chiron` (idempotent — script in `skill/scripts/install.sh`)
+- [x] T004 [P] Fork codebase-to-course shell verbatim into `skill/shell/` — copy `_base.html`, `_footer.html`, `styles.css` (1195 LOC), `main.js`, `build.sh` from `~/dev/audits/codebase-to-course/`
+- [x] T005 [P] Port ClassBuild theme tokens from `~/dev/audits/classbuild/` into `skill/shell/themes/_tokens.css`, `warm-paper.css`, `midnight.css`, `ocean.css` (FR-024)
+- [x] T006 [P] Author new theme files `skill/shell/themes/clinical.css` (medicine default — white/blue/teal) and `skill/shell/themes/linguistic.css` (language default — warm earth tones)
+- [x] T007 [P] Author `skill/shell/_science-overlay.css` with the 5 cog-sci pillar colors (spacing/interleaving/retrieval/examples/dual-coding) per PRD §7.4
 
 ---
 
@@ -46,9 +46,9 @@ description: "Task list for Chiron v1 — Universal Lesson Generator"
 
 ### Vendored runtime libraries (FR-037 / Q9)
 
-- [ ] T008 [P] Vendor MathJax + mhchem extension into `skill/shell/vendor/mathjax/` — pin a specific version, document in `skill/shell/vendor/README.md`
-- [ ] T009 [P] Vendor Mermaid into `skill/shell/vendor/mermaid/` — pin a specific version, document in vendor README
-- [ ] T010 [P] Author `skill/shell/vendor/forest-plot/` — small custom forest-plot mini-lib (vanilla JS / SVG); supports `studies: Array<{label, effect, ci: [low, high]}>` shape per `contracts/widget-spec.ts`
+- [x] T008 [P] Vendor MathJax + mhchem extension into `skill/shell/vendor/mathjax/` — pin a specific version, document in `skill/shell/vendor/README.md`
+- [x] T009 [P] Vendor Mermaid into `skill/shell/vendor/mermaid/` — pin a specific version, document in vendor README
+- [x] T010 [P] Author `skill/shell/vendor/forest-plot/` — small custom forest-plot mini-lib (vanilla JS / SVG); supports `studies: Array<{label, effect, ci: [low, high]}>` shape per `contracts/widget-spec.ts`
 - [ ] T011 Author `skill/shell/vendor/molecule-renderer/README.md` and stub directory — concrete library (Kekule.js or RDKit-JS) is selected during US3 Phase 4 per FR-031; this task only places the directory + version-pinning template
 - [ ] T012 [P] Update `skill/shell/build.sh` to inline every file under `skill/shell/vendor/*` as `<script>` / `<style>` blocks into the single output `lesson.html` (FR-037, Stage 5 of `contracts/pipeline-stages.md`)
 
