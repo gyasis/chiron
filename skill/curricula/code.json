@@ -1,0 +1,18 @@
+{
+  "domain": "code",
+  "version": "1",
+  "description": "TypeScript/JavaScript learning path: scroll-module course covering language fundamentals, type system, and idiomatic patterns through exposition + quizzes + spaced-repetition flashcards.",
+  "templateStyle": "scroll-modules",
+  "chapterCountTarget": 8,
+  "perChapterQuizTarget": 10,
+  "perChapterSrCardTarget": 7,
+  "modeAOnly": true,
+  "widgetMix": {
+    "mcq": 0.4,
+    "true-false": 0.2,
+    "spot-the-bug": 0.3,
+    "matching": 0.1
+  },
+  "personasFile": "personas/code.json",
+  "themeId": "warm-paper"
+}

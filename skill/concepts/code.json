@@ -1,0 +1,96 @@
+{
+  "domain": "code",
+  "version": "1",
+  "concepts": [
+    {
+      "id": "values-and-types",
+      "label": "Values and Types",
+      "summary": "Primitive values (string, number, boolean, null, undefined) and how JavaScript/TypeScript classifies them.",
+      "prereqs": []
+    },
+    {
+      "id": "variables",
+      "label": "Variables and Scope",
+      "summary": "Declaring bindings with let/const/var and the lexical scope rules that govern visibility.",
+      "prereqs": ["values-and-types"]
+    },
+    {
+      "id": "control-flow",
+      "label": "Control Flow",
+      "summary": "Branching with if/else/switch and looping with for/while to direct program execution.",
+      "prereqs": ["variables"]
+    },
+    {
+      "id": "functions",
+      "label": "Functions",
+      "summary": "Defining and invoking reusable units of behavior, including parameters, return values, and arrow forms.",
+      "prereqs": ["variables", "control-flow"]
+    },
+    {
+      "id": "objects",
+      "label": "Objects",
+      "summary": "Key/value records, property access, and object literal syntax in JavaScript and TypeScript.",
+      "prereqs": ["values-and-types"]
+    },
+    {
+      "id": "arrays",
+      "label": "Arrays",
+      "summary": "Ordered collections with index access plus core methods like map, filter, and reduce.",
+      "prereqs": ["objects", "functions"]
+    },
+    {
+      "id": "error-handling",
+      "label": "Error Handling",
+      "summary": "Throwing, catching, and recovering from exceptions using try/catch/finally and Error subclasses.",
+      "prereqs": ["functions", "control-flow"]
+    },
+    {
+      "id": "modules",
+      "label": "Modules",
+      "summary": "Splitting code across files using ES module import/export to organize a project.",
+      "prereqs": ["functions"]
+    },
+    {
+      "id": "types-vs-interfaces",
+      "label": "Types vs Interfaces",
+      "summary": "TypeScript's two ways to describe object shapes — type aliases versus interface declarations — and when each fits.",
+      "prereqs": ["objects"]
+    },
+    {
+      "id": "narrowing",
+      "label": "Type Narrowing",
+      "summary": "Refining a broad TypeScript type to a more specific one via typeof, instanceof, in, and discriminated unions.",
+      "prereqs": ["types-vs-interfaces", "control-flow"]
+    },
+    {
+      "id": "generics",
+      "label": "Generics",
+      "summary": "Parameterizing types over other types so functions and structures can stay reusable yet type-safe.",
+      "prereqs": ["types-vs-interfaces", "functions"]
+    },
+    {
+      "id": "closures",
+      "label": "Closures",
+      "summary": "Functions that capture variables from their defining scope and retain access after that scope returns.",
+      "prereqs": ["functions"]
+    },
+    {
+      "id": "classes",
+      "label": "Classes",
+      "summary": "Object templates with constructors, methods, inheritance, and access modifiers in TypeScript.",
+      "prereqs": ["objects", "functions"]
+    },
+    {
+      "id": "promises",
+      "label": "Promises",
+      "summary": "First-class objects representing the eventual result of an asynchronous computation.",
+      "prereqs": ["functions", "error-handling"]
+    },
+    {
+      "id": "async-await",
+      "label": "async/await",
+      "summary": "Syntactic sugar over promises that lets you write asynchronous code with sequential, synchronous-looking flow.",
+      "prereqs": ["promises"]
+    }
+  ]
+}
