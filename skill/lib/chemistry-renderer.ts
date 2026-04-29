@@ -1,4 +1,6 @@
-// FR-031: abstract MoleculeRenderer interface; concrete impl (Kekule.js or RDKit-JS) deferred to US3 Phase 5.
+// FR-031: abstract MoleculeRenderer interface + concrete RDKit-JS impl.
+// v1 default: RDKit-JS (selected per R-02 / Phase 5 rubric: smaller bundle than Kekule.js, simpler API surface).
+// Vendor file expected at skill/shell/vendor/molecule-renderer/RDKit_minimal.js — vendor README documents which version is pinned.
 
 export interface MoleculeRenderer {
   render(
@@ -13,6 +15,20 @@ interface MathJaxGlobal {
   tex2chtmlPromise?: (input: string) => Promise<HTMLElement>;
   typesetPromise?: (elements?: HTMLElement[]) => Promise<void>;
   typeset?: (elements?: HTMLElement[]) => void;
+}
+
+interface RDKitMol {
+  get_svg(width?: number, height?: number): string;
+  delete(): void;
+}
+
+interface RDKitModule {
+  get_mol(smiles: string): RDKitMol;
+}
+
+interface RDKitGlobal {
+  RDKit?: RDKitModule;
+  initRDKitModule?: () => Promise<RDKitModule>;
 }
 
 declare global {
@@ -44,8 +60,89 @@ export function renderChemicalReaction(equation: string, container: HTMLElement)
   }
 }
 
+// v1 default: RDKit-JS chosen over Kekule.js — smaller minified bundle (~3MB vs ~5MB), cleaner SMILES API (get_mol/get_svg).
+class RdkitMoleculeRenderer implements MoleculeRenderer {
+  readonly impl = 'rdkit-js' as const;
+  private _module: RDKitModule | null = null;
+  private _loadPromise: Promise<RDKitModule | null> | null = null;
+
+  private async _ensureLoaded(): Promise<RDKitModule | null> {
+    if (this._module) return this._module;
+    if (this._loadPromise) return this._loadPromise;
+
+    this._loadPromise = (async () => {
+      const w = globalThis as unknown as RDKitGlobal & { document?: Document };
+
+      if (w.RDKit) {
+        this._module = w.RDKit;
+        return this._module;
+      }
+
+      // Lazy-load via script tag injection (works in browser + inlined-vendor build).
+      if (typeof w.document !== 'undefined') {
+        await new Promise<void>((resolve, reject) => {
+          const doc = w.document!;
+          const existing = doc.querySelector('script[data-chiron-rdkit]') as HTMLScriptElement | null;
+          if (existing) {
+            existing.addEventListener('load', () => resolve());
+            existing.addEventListener('error', () => reject(new Error('RDKit script failed to load')));
+            return;
+          }
+          const script = doc.createElement('script');
+          script.src = 'vendor/molecule-renderer/RDKit_minimal.js';
+          script.setAttribute('data-chiron-rdkit', '1');
+          script.addEventListener('load', () => resolve());
+          script.addEventListener('error', () => reject(new Error('RDKit script failed to load')));
+          doc.head.appendChild(script);
+        }).catch(() => {
+          /* swallow; handled by null-check below */
+        });
+
+        if (w.initRDKitModule) {
+          try {
+            this._module = await w.initRDKitModule();
+            w.RDKit = this._module;
+          } catch {
+            this._module = null;
+          }
+        } else if (w.RDKit) {
+          this._module = w.RDKit;
+        }
+      }
+
+      return this._module;
+    })();
+
+    return this._loadPromise;
+  }
+
+  async render(
+    smiles: string,
+    container: HTMLElement,
+    options?: { width?: number; height?: number },
+  ): Promise<void> {
+    const mod = await this._ensureLoaded();
+    if (!mod) {
+      container.innerHTML =
+        '<div class="chiron-molecule-fallback" style="padding:1em;border:1px dashed #999;color:#666;font-family:sans-serif;">' +
+        'Molecule rendering library not vendored — run skill/shell/vendor/molecule-renderer/install.sh' +
+        `<br><small>SMILES: <code>${smiles.replace(/[<>&]/g, (c) => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;' })[c]!)}</code></small>` +
+        '</div>';
+      return;
+    }
+    const mol = mod.get_mol(smiles);
+    try {
+      const svg = mol.get_svg(options?.width ?? 300, options?.height ?? 200);
+      container.innerHTML = svg;
+    } finally {
+      mol.delete();
+    }
+  }
+}
+
+let _singleton: RdkitMoleculeRenderer | null = null;
+
 export function getMoleculeRenderer(): MoleculeRenderer {
-  throw new Error(
-    'getMoleculeRenderer: concrete MoleculeRenderer impl deferred to US3 Phase 5 (FR-031). Pick Kekule.js or RDKit-JS during prototype phase, then wire here.',
-  );
+  if (!_singleton) _singleton = new RdkitMoleculeRenderer();
+  return _singleton;
 }

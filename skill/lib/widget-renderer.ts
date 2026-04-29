@@ -31,6 +31,9 @@ type FillBlankWidget = Extract<WidgetSpec, { type: 'fill-blank' }>;
 /** Narrowed shape for the matching-pair widget (mirrors MatchingPairWidgetSchema). */
 type MatchingPairWidget = Extract<WidgetSpec, { type: 'matching-pair' }>;
 
+/** Narrowed shape for the cloze widget (mirrors ClozeWidgetSchema). */
+type ClozeWidget = Extract<WidgetSpec, { type: 'cloze' }>;
+
 /** Minimal HTML escape for code/text injected into the rendered output. */
 function escapeHtml(s: string): string {
   return s
@@ -565,6 +568,131 @@ export function renderMatchingPair(spec: MatchingPairWidget): string {
   ].join('\n');
 }
 
+/**
+ * Renderer for `cloze` widgets (T057).
+ *
+ * Parses Anki-style cloze markers `{{cN::answer}}` or `{{cN::answer::hint}}`
+ * inside `spec.sentence` and replaces each marker with an `<input>`. Multiple
+ * markers sharing the same N constitute one cloze "set" — Anki treats them as
+ * the same blank (any of the answers is acceptable for any of those inputs);
+ * we mirror that with an answer-pool comparison in the IIFE.
+ *
+ * The wrapper carries `data-anki-compatible="true"` so a future `.apkg`
+ * exporter can identify these widgets. `data-cloze-index` uses 1-based N
+ * matching Anki's `cN` convention.
+ *
+ * On Check, each user input is normalised:
+ *   1. trim + lowercase
+ *   2. NFD-decompose, strip combining marks (U+0300..U+036F)
+ *   3. NFC
+ * The same transform is applied to every accepted answer in the pool for
+ * that input's `cN`. Inputs are tagged `.correct` / `.incorrect`; feedback
+ * shows count and reveals canonical answers for incorrect blanks.
+ */
+export function renderCloze(spec: ClozeWidget): string {
+  const id = nextWidgetId('cloze');
+  const sentence = spec.sentence ?? '';
+
+  // Parse {{cN::answer}} or {{cN::answer::hint}} markers in document order.
+  // We assemble a sentence HTML string with <input> tags interleaved.
+  const markerRe = /\{\{c(\d+)::([^}:]+)(?:::([^}]+))?\}\}/g;
+  // Pool: cN -> array of canonical answers (raw, for reveal).
+  const pool: Record<string, string[]> = {};
+  // Per-input ordered list of (cN, hint).
+  const inputs: { cN: number; hint: string }[] = [];
+
+  let cursor = 0;
+  const htmlParts: string[] = [];
+  let m: RegExpExecArray | null;
+  while ((m = markerRe.exec(sentence)) !== null) {
+    const before = sentence.slice(cursor, m.index);
+    if (before) htmlParts.push(escapeHtml(before));
+    const cN = parseInt(m[1]!, 10);
+    const answer = (m[2] ?? '').trim();
+    const hint = (m[3] ?? '').trim();
+    const key = String(cN);
+    if (!pool[key]) pool[key] = [];
+    if (!pool[key].includes(answer)) pool[key].push(answer);
+    inputs.push({ cN, hint });
+    cursor = m.index + m[0].length;
+  }
+  const tail = sentence.slice(cursor);
+  if (tail) htmlParts.push(escapeHtml(tail));
+
+  // Now interleave inputs back into the parts. We rebuilt htmlParts with text
+  // segments only — but we need inputs at marker positions. Re-walk the
+  // sentence to interleave correctly.
+  markerRe.lastIndex = 0;
+  cursor = 0;
+  const finalParts: string[] = [];
+  let inputIdx = 0;
+  while ((m = markerRe.exec(sentence)) !== null) {
+    const before = sentence.slice(cursor, m.index);
+    if (before) finalParts.push(escapeHtml(before));
+    const cN = inputs[inputIdx]!.cN;
+    const hint = inputs[inputIdx]!.hint;
+    finalParts.push(
+      `<input class="cloze-blank" type="text" autocomplete="off" ` +
+        `spellcheck="false" data-cloze-index="${cN}" ` +
+        `data-answer="${escapeHtml(pool[String(cN)]![0]!)}" ` +
+        `placeholder="${escapeHtml(hint)}" />`,
+    );
+    inputIdx += 1;
+    cursor = m.index + m[0].length;
+  }
+  const finalTail = sentence.slice(cursor);
+  if (finalTail) finalParts.push(escapeHtml(finalTail));
+
+  const poolJson = JSON.stringify(pool);
+
+  return [
+    `<div class="cloze" id="${id}" data-widget="cloze" data-anki-compatible="true">`,
+    `  <div class="cloze-sentence">${finalParts.join('')}</div>`,
+    `  <div class="cloze-controls">`,
+    `    <button type="button" class="check-button" data-action="check">Check</button>`,
+    `  </div>`,
+    `  <div class="feedback" role="status" aria-live="polite"></div>`,
+    `  <script>`,
+    `  (function(){`,
+    `    var root = document.getElementById(${JSON.stringify(id)});`,
+    `    if (!root) return;`,
+    `    var pool = ${poolJson};`,
+    `    function normalize(s){`,
+    `      if (s == null) return '';`,
+    `      var t = String(s).trim().toLowerCase();`,
+    `      try { t = t.normalize('NFD'); } catch(e) {}`,
+    `      t = t.replace(/[\\u0300-\\u036f]/g, '');`,
+    `      try { t = t.normalize('NFC'); } catch(e) {}`,
+    `      return t;`,
+    `    }`,
+    `    var inputs = root.querySelectorAll('.cloze-blank');`,
+    `    var feedback = root.querySelector('.feedback');`,
+    `    var btn = root.querySelector('[data-action="check"]');`,
+    `    btn.addEventListener('click', function(){`,
+    `      var correctCount = 0;`,
+    `      var misses = [];`,
+    `      inputs.forEach(function(inp, idx){`,
+    `        var cN = inp.getAttribute('data-cloze-index');`,
+    `        var answers = pool[cN] || [inp.getAttribute('data-answer') || ''];`,
+    `        var userN = normalize(inp.value);`,
+    `        var ok = userN.length > 0 && answers.some(function(a){ return normalize(a) === userN; });`,
+    `        inp.classList.remove('correct', 'incorrect');`,
+    `        inp.classList.add(ok ? 'correct' : 'incorrect');`,
+    `        if (ok) correctCount += 1;`,
+    `        else misses.push('blank ' + (idx + 1) + ': ' + (inp.getAttribute('data-answer') || ''));`,
+    `      });`,
+    `      var total = inputs.length;`,
+    `      var msg = correctCount + ' / ' + total + ' correct.';`,
+    `      if (misses.length) msg += ' Correct answers — ' + misses.join('; ') + '.';`,
+    `      feedback.textContent = msg;`,
+    `      feedback.className = 'feedback ' + (correctCount === total ? 'correct' : 'incorrect');`,
+    `    });`,
+    `  })();`,
+    `  </script>`,
+    `</div>`,
+  ].join('\n');
+}
+
 /** Function signature every renderer must satisfy. */
 export type WidgetRenderer = (widget: WidgetSpec) => string;
 
@@ -614,6 +742,8 @@ registerRenderer('fill-blank', (widget) =>
 registerRenderer('matching-pair', (widget) =>
   renderMatchingPair(widget as MatchingPairWidget),
 );
+
+registerRenderer('cloze', (widget) => renderCloze(widget as ClozeWidget));
 
 /** List the kinds currently registered. Useful for sanity tests. */
 export function registeredKinds(): WidgetKind[] {

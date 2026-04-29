@@ -19,7 +19,7 @@
 import { existsSync, statSync, readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { resolve, basename, join } from 'node:path';
 
-import type { Brief, SourceType } from '../lib/schemas/brief.js';
+import type { Brief, Domain, SourceType } from '../lib/schemas/brief.js';
 import { copySources } from '../lib/source-copy.js';
 import { stage as progressStage, chapter as progressChapter } from '../lib/progress.js';
 
@@ -33,6 +33,12 @@ export interface IngestPdfOptions {
   sourcePath: string;
   lessonOutputDir: string;
   mode: 'A' | 'B';
+  /**
+   * Resolved Chiron domain — the caller (trigger-context layer / pipeline
+   * orchestrator) MUST supply this. The adapter does NOT classify; it just
+   * threads the value into the Brief.
+   */
+  domain: Domain;
   /** Number of leading pages to skip when judging text-layer availability. Defaults to 1. */
   coverPageCount?: number;
 }
@@ -147,7 +153,7 @@ export async function ingestPdf(opts: IngestPdfOptions): Promise<Brief> {
     const extractedText = chunks.join('\n\n');
 
     const brief: Brief = {
-      domain: 'code', // caller may override post-classify; default kept neutral
+      domain: opts.domain,
       mode: opts.mode,
       sourceType,
       sourcePath: absInput,
@@ -200,7 +206,7 @@ export async function ingestPdf(opts: IngestPdfOptions): Promise<Brief> {
   );
 
   const brief: Brief = {
-    domain: 'code',
+    domain: opts.domain,
     mode: opts.mode,
     sourceType,
     sourcePath: absInput,

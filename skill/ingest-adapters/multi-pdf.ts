@@ -20,7 +20,7 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { ingestPdf } from './pdf.js';
-import type { Brief, SourceFileEntry } from '../lib/schemas/brief.js';
+import type { Brief, Domain, SourceFileEntry } from '../lib/schemas/brief.js';
 import { stage, progress } from '../lib/progress.js';
 
 export interface IngestMultiPdfOpts {
@@ -36,6 +36,13 @@ export interface IngestMultiPdfOpts {
   lessonOutputDir: string;
   /** Lesson mode (A = course, B = case-study). */
   mode: 'A' | 'B';
+  /**
+   * Resolved Chiron domain — caller MUST supply. Threaded through to each
+   * per-PDF `ingestPdf` call AND set on the aggregate Brief. All PDFs in a
+   * multi-pdf bundle share a single domain by construction; if domains
+   * differ, callers should split into separate ingests.
+   */
+  domain: Domain;
 }
 
 interface ResolveResult {
@@ -158,7 +165,7 @@ function approxTokens(charCount: number): number {
  * `ingestPdf`, then folds the results into a single aggregate `Brief`.
  */
 export async function ingestMultiPdf(opts: IngestMultiPdfOpts): Promise<Brief> {
-  const { lessonOutputDir, mode } = opts;
+  const { lessonOutputDir, mode, domain } = opts;
   const { pdfs, representativePath } = resolvePdfList(opts.sourcePath);
   const total = pdfs.length;
 
@@ -187,6 +194,7 @@ export async function ingestMultiPdf(opts: IngestMultiPdfOpts): Promise<Brief> {
       sourcePath: pdfPath,
       lessonOutputDir: subDir,
       mode,
+      domain,
     });
 
     const extracted = perPdfBrief.extractedText ?? '';
@@ -212,20 +220,6 @@ export async function ingestMultiPdf(opts: IngestMultiPdfOpts): Promise<Brief> {
     }
   }
 
-  // First per-PDF Brief drives the inferred domain (all PDFs in a multi-pdf
-  // bundle should share a domain by construction; if not, callers should
-  // split the ingest). Default to 'code' as a conservative fallback.
-  // We rely on per-PDF ingestPdf to have inferred a sensible domain.
-  // If pdfs is empty resolvePdfList already threw, so we know total >= 1.
-  const firstPerPdfDomain = await (async () => {
-    // We do NOT re-call ingestPdf — peek at the first manifest entry's
-    // extracted block to keep ordering stable. The per-PDF Brief domain is
-    // captured implicitly through the metadata aggregation above; we read
-    // it back via a second pass on perPdfMetadata if available.
-    return undefined;
-  })();
-  void firstPerPdfDomain;
-
   const concatenated = textBlocks.join('\n\n');
 
   const aggregateMetadata: Record<string, unknown> = {
@@ -236,16 +230,11 @@ export async function ingestMultiPdf(opts: IngestMultiPdfOpts): Promise<Brief> {
     perPdfMetadata,
   };
 
-  // Domain: defer to first per-PDF Brief if available via re-read. We avoid
-  // that here to keep the function single-pass; instead we set 'code' as a
-  // safe placeholder and rely on the assemble/validation stages or the
-  // bundle dispatcher (T076) to override before persistence. Per Brief
-  // schema, any of the 4 domain values is structurally valid.
-  // NOTE: contract gap — the multi-pdf adapter does not currently pierce
-  // into per-PDF domain inference. Callers (or T076) should set the domain
-  // explicitly when wrapping multi-pdf into a Brief that goes downstream.
+  // Domain is supplied by the caller (trigger-context layer) and threaded
+  // into every per-PDF ingest above. All PDFs in a multi-pdf bundle share a
+  // single domain by construction.
   const brief: Brief = {
-    domain: 'code',
+    domain,
     mode,
     sourceType: 'multi-pdf',
     sourcePath: typeof opts.sourcePath === 'string' ? representativePath : representativePath,

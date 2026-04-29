@@ -163,7 +163,7 @@ description: "Task list for Chiron v1 — Universal Lesson Generator"
 
 - [x] T055 [P] [US2] Extend `skill/lib/widget-renderer.ts` to render `fill-blank` widgets with FR-020 fuzzy accent matching: `caffe ≡ caffè`, `e ≡ è`, `niño ≡ nino` (Spanish-style accents tolerated for cross-language consistency)
 - [x] T056 [P] [US2] Extend `skill/lib/widget-renderer.ts` to render `matching-pair` widgets — `1to1` and `NtoN` drag-drop modes per `contracts/widget-spec.ts`
-- [ ] T057 [P] [US2] Extend `skill/lib/widget-renderer.ts` to render `cloze` widgets with `ankiCompatible: true` (so the optional `.apkg` export later can pick them up unchanged)
+- [x] T057 [P] [US2] Extend `skill/lib/widget-renderer.ts` to render `cloze` widgets with `ankiCompatible: true` (so the optional `.apkg` export later can pick them up unchanged)
 - [ ] T058 [P] [US2] Extend `skill/lib/widget-renderer.ts` to render `audio-tts` widgets — produces `<audio>` tag pointing at the per-clip MP3 in `<lesson-output-dir>/audio/`
 
 ### TTS via Gemini MCP
@@ -204,25 +204,25 @@ description: "Task list for Chiron v1 — Universal Lesson Generator"
 - [x] T070 [US3] Author `skill/ingest-adapters/pdf.ts` — text-PDF via `pdfjs-dist`; if no usable text layer (>50 chars on first non-cover page), rasterize via `pdf-to-img` and fall through to Gemini `mcp__gemini-mcp__interpret_image` per page (R-04 revised). Source PDF copied to `<lesson-output-dir>/source/` (FR-030). Emits per-page progress (Stage 0 announces page count up front per R-10 replacement).
 - [x] T071 [P] [US3] Author `skill/ingest-adapters/image.ts` — handles single image file AND folder of page images (FR-032 c/d). Sends each image to `mcp__gemini-mcp__interpret_image`; preserves alphabetic order; populates `Brief.sourceManifest[]` (FR-034)
 - [x] T072 [P] [US3] Author `skill/ingest-adapters/multi-pdf.ts` — accepts an ordered list or directory of PDFs (FR-032 e); delegates each file to `pdf.ts`; concatenates extracted text in supplied order; per-file provenance in `Brief.sourceManifest[]`
-- [ ] T073 [P] [US3] Author `skill/ingest-adapters/url.ts` — fetches a URL (FR-032 i) OR reads a local `.html` file (FR-032 j); sanitizes HTML; extracts text
-- [ ] T074 [P] [US3] Author `skill/ingest-adapters/transcript.ts` — handles plain text / markdown chat-meeting-lecture transcripts (FR-032 h)
-- [ ] T075 [P] [US3] Author `skill/ingest-adapters/agent-report.ts` — accepts markdown / JSON output from another agent (FR-032 k); marks the entry `secondary` in `Brief.sourceManifest[]`; sets `Brief.agentSourceProvenance`; refuses if it would be the SOLE source for a medicine lesson (FR-035)
-- [ ] T076 [US3] Author `skill/ingest-adapters/bundle.ts` — walks a directory (FR-032 l); honors optional `chiron.manifest.json` if present (declares per-file `role`); else dispatches each recognized file by extension. Emits warnings for unknown extensions (skipped, not failed). Aggregates ordered concatenation across all files. Depends on T070, T071, T072, T073, T074, T075.
+- [x] T073 [P] [US3] Author `skill/ingest-adapters/url.ts` — fetches a URL (FR-032 i) OR reads a local `.html` file (FR-032 j); sanitizes HTML; extracts text
+- [x] T074 [P] [US3] Author `skill/ingest-adapters/transcript.ts` — handles plain text / markdown chat-meeting-lecture transcripts (FR-032 h)
+- [x] T075 [P] [US3] Author `skill/ingest-adapters/agent-report.ts` — accepts markdown / JSON output from another agent (FR-032 k); marks the entry `secondary` in `Brief.sourceManifest[]`; sets `Brief.agentSourceProvenance`; refuses if it would be the SOLE source for a medicine lesson (FR-035)
+- [x] T076 [US3] Author `skill/ingest-adapters/bundle.ts` — walks a directory (FR-032 l); honors optional `chiron.manifest.json` if present (declares per-file `role`); else dispatches each recognized file by extension. Emits warnings for unknown extensions (skipped, not failed). Aggregates ordered concatenation across all files. Depends on T070, T071, T072, T073, T074, T075.
 
 ### Medicine widget renderers
 
 - [ ] T077 [P] [US3] Extend `skill/lib/widget-renderer.ts` to render `mcq-clinical-vignette` widgets — vignette block + `<keyinfo>` chip rendering + 5-option layout + per-distractor explanation reveal + Hammer rating chip + Attending Tip callout
 - [ ] T078 [P] [US3] Extend `skill/lib/widget-renderer.ts` to render `agreement-matrix` widgets — N statements × {always / sometimes / never} grid
 - [ ] T079 [P] [US3] Extend `skill/lib/widget-renderer.ts` to render `assertion-reason` widgets — 5-relationship picker per `contracts/widget-spec.ts`
-- [ ] T080 [US3] Extend `skill/lib/chemistry-renderer.ts` — concrete `MoleculeRenderer` impl. **Phase 5 prototype rubric** per R-02: prototype both Kekule.js and RDKit-JS against the metformin SMILES, pick the smaller / faster one, drop the loser. Vendor the winning library into `skill/shell/vendor/molecule-renderer/`. Ships a single dep at runtime per FR-031.
+- [x] T080 [US3] Extend `skill/lib/chemistry-renderer.ts` — concrete `MoleculeRenderer` impl. **Phase 5 prototype rubric** per R-02: prototype both Kekule.js and RDKit-JS against the metformin SMILES, pick the smaller / faster one, drop the loser. Vendor the winning library into `skill/shell/vendor/molecule-renderer/`. Ships a single dep at runtime per FR-031.
 - [ ] T081 [P] [US3] Extend `skill/lib/widget-renderer.ts` to render `pathway-diagram` widgets — supports `renderer: 'mermaid'` (uses vendored Mermaid) and `renderer: 'd3-custom'` (vanilla JS / SVG)
 
 ### QUEST-AI medicine verifier loop (FR-007, SC-011)
 
-- [ ] T082 [P] [US3] Author `skill/prompts/medicine-only/verifier-stage1-generate.md`
-- [ ] T083 [P] [US3] Author `skill/prompts/medicine-only/verifier-stage2-verify.md`
-- [ ] T084 [P] [US3] Author `skill/prompts/medicine-only/verifier-stage3-refine.md`
-- [ ] T085 [US3] Wire the verifier loop into `skill/lib/pipeline.ts` Stage 3 — runs ONLY for medicine domain; up to 3 attempts; if all fail, abort the chapter with structured issue report (SC-011). Depends on T024, T082, T083, T084.
+- [x] T082 [P] [US3] Author `skill/prompts/medicine-only/verifier-stage1-generate.md`
+- [x] T083 [P] [US3] Author `skill/prompts/medicine-only/verifier-stage2-verify.md`
+- [x] T084 [P] [US3] Author `skill/prompts/medicine-only/verifier-stage3-refine.md`
+- [x] T085 [US3] Wire the verifier loop into `skill/lib/pipeline.ts` Stage 3 — runs ONLY for medicine domain; up to 3 attempts; if all fail, abort the chapter with structured issue report (SC-011). Depends on T024, T082, T083, T084.
 
 ### Medicine prompts + ingest
 

@@ -82,7 +82,11 @@ export function stage2Syllabus(
 export function stage3Validate(
   ctx: PipelineContext,
   syllabus: ChapterSyllabus[],
-): { ok: boolean; issuesByChapter: Record<number, ReturnType<typeof validateSyllabus>['issues']> } {
+): {
+  ok: boolean;
+  issuesByChapter: Record<number, ReturnType<typeof validateSyllabus>['issues']>;
+  verifierRequired: boolean;
+} {
   const issuesByChapter: Record<number, ReturnType<typeof validateSyllabus>['issues']> = {};
   let allOk = true;
   for (const ch of syllabus) {
@@ -93,7 +97,10 @@ export function stage3Validate(
     }
     progress.chapter(3, ch.chapterNumber, syllabus.length, v.ok ? 'ok' : `${v.issues.length} issue(s)`);
   }
-  return { ok: allOk, issuesByChapter };
+  // FR-007 / SC-011 — medicine domain MUST also run the QUEST-AI verifier loop on each
+  // chapter's clinical claims (vignettes especially). Non-medicine domains skip this.
+  const verifierRequired = ctx.domain === 'medicine';
+  return { ok: allOk, issuesByChapter, verifierRequired };
 }
 
 export function stage3Retry(
@@ -163,4 +170,190 @@ export function stage5Assemble(ctx: PipelineContext): { dbPath: string; lessonHt
   db.close();
   const lessonHtmlPath = path.join(ctx.lessonOutputDir, 'lesson.html');
   return { dbPath, lessonHtmlPath };
+}
+
+// ─── Medicine-only QUEST-AI verifier loop per FR-007 / SC-011 ────────────────
+// Non-medicine domains skip this entirely. Up to 3 attempts; abort with structured report on failure.
+
+const MAX_VERIFIER_ATTEMPTS = 3; // SC-011
+
+export interface VerifierState {
+  attempt: number;
+  latestDraft: string;
+  latestVerification: unknown | null;
+  readyForApproval: boolean;
+}
+
+export interface VerifierAbortReport {
+  reason: string;
+  lastState: VerifierState;
+}
+
+export interface VerifierStage1Opts {
+  contentType: 'vignette' | 'chapter-narrative' | 'drug-class';
+  condition: string;
+  sourceExcerpt: string;
+  audience: 'board-exam' | 'point-of-care';
+  difficulty: 'intro' | 'advanced';
+}
+
+export interface VerifierStage2Opts {
+  stage1Output: unknown;
+  sourceExcerpt: string;
+}
+
+export interface VerifierStage3Opts {
+  stage1Draft: unknown;
+  stage1Claims: unknown;
+  stage2Report: unknown;
+  sourceExcerpt: string;
+  maxAttempts: number;
+}
+
+function assertMedicine(ctx: PipelineContext, fn: string): void {
+  if (ctx.domain !== 'medicine') {
+    throw new Error(`${fn} is medicine-only (FR-007); ctx.domain=${ctx.domain}`);
+  }
+}
+
+export function verifierStage1(
+  ctx: PipelineContext,
+  opts: VerifierStage1Opts,
+): PipelinePromptHandoff {
+  assertMedicine(ctx, 'verifierStage1');
+  const { p, t } = loadTemplate(ctx.promptsDir, 'medicine-only/verifier-stage1-generate.md');
+  return {
+    stage: 3,
+    templatePath: p,
+    templateText: t,
+    slots: { ...opts },
+    expectedResponsePath: path.join(ctx.lessonOutputDir, 'verifier-stage1.json'),
+  };
+}
+
+export function verifierStage2(
+  ctx: PipelineContext,
+  opts: VerifierStage2Opts,
+): PipelinePromptHandoff {
+  assertMedicine(ctx, 'verifierStage2');
+  const { p, t } = loadTemplate(ctx.promptsDir, 'medicine-only/verifier-stage2-verify.md');
+  return {
+    stage: 3,
+    templatePath: p,
+    templateText: t,
+    slots: { ...opts },
+    expectedResponsePath: path.join(ctx.lessonOutputDir, 'verifier-stage2.json'),
+  };
+}
+
+export function verifierStage3(
+  ctx: PipelineContext,
+  opts: VerifierStage3Opts,
+): PipelinePromptHandoff {
+  assertMedicine(ctx, 'verifierStage3');
+  const { p, t } = loadTemplate(ctx.promptsDir, 'medicine-only/verifier-stage3-refine.md');
+  return {
+    stage: 3,
+    templatePath: p,
+    templateText: t,
+    slots: { ...opts },
+    expectedResponsePath: path.join(ctx.lessonOutputDir, 'verifier-stage3.json'),
+  };
+}
+
+export interface VerifierLoopResult {
+  next: 'stage1' | 'stage2' | 'stage3' | 'done' | 'aborted';
+  handoff?: PipelinePromptHandoff;
+  abortReport?: VerifierAbortReport;
+}
+
+/**
+ * State machine driving the QUEST-AI verifier loop.
+ *
+ * Action semantics:
+ *   - 'start'    — begin loop. Sets attempt=1, returns Stage 1 handoff. payload = VerifierStage1Opts.
+ *   - 'verified' — caller has run Stage 2 and supplies its parsed result as payload.
+ *                  If overallVerdict==='approved' → done. Else, if attempt>=3 → aborted.
+ *                  Else returns Stage 3 refine handoff.
+ *   - 'refined'  — caller has run Stage 3 and supplies its parsed result as payload.
+ *                  If readyForApproval===true → done. Else, if attempt>=3 → aborted.
+ *                  Else attempt++, returns Stage 1 handoff (regenerate from refinedDraft).
+ *
+ * The caller owns the prompt round-trip; this function only emits handoffs and decisions.
+ */
+export function runVerifierLoop(
+  ctx: PipelineContext,
+  state: VerifierState,
+  action: 'start' | 'verified' | 'refined',
+  payload?: unknown,
+): VerifierLoopResult {
+  assertMedicine(ctx, 'runVerifierLoop');
+
+  if (action === 'start') {
+    state.attempt = 1;
+    state.latestVerification = null;
+    state.readyForApproval = false;
+    const opts = (payload ?? {}) as VerifierStage1Opts;
+    return { next: 'stage1', handoff: verifierStage1(ctx, opts) };
+  }
+
+  if (action === 'verified') {
+    const verification = (payload ?? {}) as {
+      overallVerdict?: string;
+      stage1Draft?: unknown;
+      stage1Claims?: unknown;
+      sourceExcerpt?: string;
+    };
+    state.latestVerification = verification;
+    if (verification.overallVerdict === 'approved') {
+      state.readyForApproval = true;
+      return { next: 'done' };
+    }
+    if (state.attempt >= MAX_VERIFIER_ATTEMPTS) {
+      return {
+        next: 'aborted',
+        abortReport: {
+          reason: `SC-011: verifier reached max attempts (${MAX_VERIFIER_ATTEMPTS}) without approved verdict`,
+          lastState: { ...state },
+        },
+      };
+    }
+    return {
+      next: 'stage3',
+      handoff: verifierStage3(ctx, {
+        stage1Draft: verification.stage1Draft ?? state.latestDraft,
+        stage1Claims: verification.stage1Claims ?? null,
+        stage2Report: verification,
+        sourceExcerpt: verification.sourceExcerpt ?? '',
+        maxAttempts: MAX_VERIFIER_ATTEMPTS,
+      }),
+    };
+  }
+
+  if (action === 'refined') {
+    const refined = (payload ?? {}) as {
+      readyForApproval?: boolean;
+      refinedDraft?: string;
+      stage1Opts?: VerifierStage1Opts;
+    };
+    if (refined.refinedDraft) state.latestDraft = refined.refinedDraft;
+    if (refined.readyForApproval === true) {
+      state.readyForApproval = true;
+      return { next: 'done' };
+    }
+    if (state.attempt >= MAX_VERIFIER_ATTEMPTS) {
+      return {
+        next: 'aborted',
+        abortReport: {
+          reason: `SC-011: verifier loop exhausted ${MAX_VERIFIER_ATTEMPTS} attempts; refined draft still not approved`,
+          lastState: { ...state },
+        },
+      };
+    }
+    state.attempt += 1;
+    const nextOpts: VerifierStage1Opts = refined.stage1Opts ?? ({} as VerifierStage1Opts);
+    return { next: 'stage1', handoff: verifierStage1(ctx, nextOpts) };
+  }
+
+  throw new Error(`runVerifierLoop: unknown action '${action as string}'`);
 }

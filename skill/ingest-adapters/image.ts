@@ -28,7 +28,7 @@ import {
 } from 'node:fs';
 import { basename, extname, join, resolve } from 'node:path';
 
-import type { Brief, SourceFileEntry } from '../lib/schemas/brief.js';
+import type { Brief, Domain, SourceFileEntry } from '../lib/schemas/brief.js';
 import { copySources, type SourceInput } from '../lib/source-copy.js';
 import { stage } from '../lib/progress.js';
 
@@ -107,6 +107,11 @@ export interface IngestImageOptions {
   sourcePath: string;
   lessonOutputDir: string;
   mode: 'A' | 'B';
+  /**
+   * Resolved Chiron domain — caller MUST supply. The image adapter never
+   * classifies on its own (vision happens later as an MCP handoff).
+   */
+  domain: Domain;
 }
 
 export async function ingestImage(opts: IngestImageOptions): Promise<Brief> {
@@ -213,7 +218,7 @@ export async function ingestImage(opts: IngestImageOptions): Promise<Brief> {
         : null;
 
   const brief: Brief = {
-    domain: 'code', // placeholder — domain detection happens in Stage 1
+    domain: opts.domain,
     mode: opts.mode,
     sourceType: isFolder ? 'image-folder' : 'image',
     sourcePath: absInput,
