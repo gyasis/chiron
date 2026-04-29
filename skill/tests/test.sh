@@ -171,6 +171,107 @@ extract_fields() {
   echo "$chapters $total_quiz $srcards $persona $mcq $tf $spotbug"
 }
 
+# ---------- Medicine-domain marker extraction (T097) ----------
+# Per-medicine marker classes (USMLE/AMBOSS-style):
+#   class="mcq-clinical-vignette"            -> vignette stems
+#   data-hammer="1|2|3"                       -> difficulty hammer flags
+#   class="key-info-chips" w/ class="chip"    -> key-info tags per vignette
+#   class="attending-tip"                     -> subject-expert persona tips
+#   class="chemical-reaction"                 -> chem reaction widgets
+#   class="molecule-2d"                       -> 2D molecule renderer
+#   data-vignette-category="<X>"              -> taxonomy coverage
+#   class="verifier-cycle-marker" or
+#     data-verifier-cycle="N"                 -> medicine verifier loop trace
+#
+# Echoes a single space-separated record:
+#   "<vignettes> <hammers_csv> <keyinfo_min_per_vig> <attending_tips>
+#    <chem> <molecules> <taxonomy_csv> <verifier_cycles>"
+extract_medicine_fields() {
+  local html="$1"
+  local lesson_dir
+  lesson_dir="$(dirname "$html")"
+
+  local vignettes attending_tips chem molecules verifier_cycles
+  vignettes="$(count_marker "$html" "mcq-clinical-vignette")"
+  attending_tips="$(count_marker "$html" "attending-tip")"
+  chem="$(count_marker "$html" "chemical-reaction")"
+  molecules="$(count_marker "$html" "molecule-2d")"
+
+  # Hammer levels — collect unique levels seen (1|2|3) into CSV.
+  local hammers_csv
+  hammers_csv="$(grep -oE 'data-hammer=[\"'"'"'][123][\"'"'"']' "$html" 2>/dev/null \
+    | sed -E 's/data-hammer=[\"'"'"']([123])[\"'"'"']/\1/' \
+    | sort -u | paste -sd, - 2>/dev/null || true)"
+  hammers_csv="${hammers_csv:-}"
+
+  # Per-vignette key-info chip count: minimum across vignettes.
+  # Strategy: split HTML into per-vignette chunks via awk, then count chips
+  # (class="chip") inside each chunk's key-info-chips block.
+  local keyinfo_min
+  if [ "$vignettes" -gt 0 ]; then
+    keyinfo_min="$(awk '
+      BEGIN { vig=0; in_chips=0; chip_count=0; min=-1 }
+      /class=["'"'"']?[^"'"'"']*mcq-clinical-vignette/ {
+        if (vig > 0) {
+          if (min < 0 || chip_count < min) min = chip_count
+        }
+        vig++; chip_count=0; in_chips=0
+      }
+      /class=["'"'"']?[^"'"'"']*key-info-chips/ { in_chips=1 }
+      in_chips && /class=["'"'"']?[^"'"'"']*\bchip\b/ { chip_count++ }
+      END {
+        if (vig > 0) {
+          if (min < 0 || chip_count < min) min = chip_count
+          print min
+        } else { print 0 }
+      }
+    ' "$html" 2>/dev/null)"
+    keyinfo_min="${keyinfo_min:-0}"
+  else
+    keyinfo_min=0
+  fi
+
+  # Vignette taxonomy coverage — unique data-vignette-category values, CSV.
+  local taxonomy_csv
+  taxonomy_csv="$(grep -oE 'data-vignette-category=[\"'"'"'][^\"'"'"']+[\"'"'"']' "$html" 2>/dev/null \
+    | sed -E 's/data-vignette-category=[\"'"'"']([^\"'"'"']+)[\"'"'"']/\1/' \
+    | sort -u | paste -sd, - 2>/dev/null || true)"
+  taxonomy_csv="${taxonomy_csv:-}"
+
+  # Verifier cycles — primary: class="verifier-cycle-marker"
+  verifier_cycles="$(count_marker "$html" "verifier-cycle-marker")"
+  # Fallback A: data-verifier-cycle="N" attribute count
+  if [ "$verifier_cycles" -eq 0 ]; then
+    verifier_cycles="$(grep -oE 'data-verifier-cycle=[\"'"'"'][0-9]+[\"'"'"']' "$html" 2>/dev/null | wc -l | awk '{print $1}')"
+  fi
+  # Fallback B: sidecar verifier-state.json or "verifier" mention in lesson dir
+  if [ "$verifier_cycles" -eq 0 ]; then
+    if [ -f "$lesson_dir/verifier-state.json" ]; then
+      verifier_cycles=1
+    elif grep -qiE 'verifier|verification cycle' "$html" 2>/dev/null; then
+      verifier_cycles=1
+    fi
+  fi
+
+  echo "$vignettes ${hammers_csv:-_} $keyinfo_min $attending_tips $chem $molecules ${taxonomy_csv:-_} $verifier_cycles"
+}
+
+# Helper: array containment — every expected element must appear in actual CSV set.
+# Usage: check_array_contains <label> <expected_json_array> <actual_csv>
+check_array_contains() {
+  local label="$1" expected_json="$2" actual_csv="$3"
+  if [ -z "$expected_json" ] || [ "$expected_json" = "null" ]; then return 0; fi
+  local want_list
+  want_list="$(echo "$expected_json" | tr -d '[]"' | tr ',' '\n' | sed 's/^ *//;s/ *$//' | grep -v '^$' || true)"
+  while IFS= read -r want_item; do
+    [ -z "$want_item" ] && continue
+    if ! echo ",${actual_csv}," | grep -q ",${want_item},"; then
+      echo "    [diff] $label: '$want_item' not found (got=[${actual_csv}])"
+      fail=1
+    fi
+  done <<< "$want_list"
+}
+
 # ---------- Italian / language-domain marker extraction (T065) ----------
 # Per-language marker classes:
 #   class="fill-blank", class="cloze", class="audio-tts", class="matching-pair"
@@ -329,9 +430,61 @@ for name in "${INPUTS[@]}"; do
       fi
       ;;
     medicine)
-      # Medicine-specific markers (vignettes / agreement matrix) — wired here
-      # for future contract; no validators yet beyond shared chapterCount/quiz.
-      :
+      # T097: medicine-domain validators (vignettes, hammer range, key-info
+      # chips, attending tips, chem/molecule renderers, verifier cycle).
+      read -r got_vig got_hammers got_kinfo_min got_atip \
+              got_chem got_molec got_taxonomy got_verifier \
+        < <(extract_medicine_fields "$html")
+
+      # Restore empty markers from sentinel "_" for cleaner display.
+      [ "$got_hammers"  = "_" ] && got_hammers=""
+      [ "$got_taxonomy" = "_" ] && got_taxonomy=""
+
+      echo "  medicine: vignettes=$got_vig hammers=[${got_hammers}] keyinfo_min=$got_kinfo_min attending_tips=$got_atip chem=$got_chem molecules=$got_molec taxonomy=[${got_taxonomy}] verifier_cycles=$got_verifier"
+
+      exp_vig_min="$(json_get "$snap" vignetteCountMin)"
+      exp_taxonomy="$(json_get "$snap" vignetteTaxonomyCoverage)"
+      exp_hammer_present="$(json_get "$snap" hammerRangePresent)"
+      exp_kinfo_min="$(json_get "$snap" keyInfoTagsPerVignetteMin)"
+      exp_atip_per_vig="$(json_get "$snap" attendingTipPerVignette)"
+      exp_chem_min="$(json_get "$snap" chemicalReactionCountMin)"
+      exp_molec_min="$(json_get "$snap" moleculeCountMin)"
+      exp_verifier_min="$(json_get "$snap" verifierCycleCountMin)"
+
+      check_min "vignetteCount"          "$exp_vig_min"      "$got_vig"
+      check_min "chemicalReactionCount"  "$exp_chem_min"     "$got_chem"
+      check_min "moleculeCount"          "$exp_molec_min"    "$got_molec"
+      check_min "verifierCycleCount"     "$exp_verifier_min" "$got_verifier"
+
+      # Per-vignette key-info chip floor (every vignette must clear the floor;
+      # extractor returns the minimum observed across vignettes).
+      if [ -n "$exp_kinfo_min" ] && [ "$exp_kinfo_min" != "null" ]; then
+        if [ "$got_vig" -gt 0 ] && [ "$got_kinfo_min" -lt "$exp_kinfo_min" ]; then
+          echo "    [diff] keyInfoTagsPerVignette: min observed=$got_kinfo_min expected>=$exp_kinfo_min (per vignette)"
+          fail=1
+        fi
+      fi
+
+      # Hammer range: 1, 2, 3 must ALL be present when expected true.
+      if [ "$exp_hammer_present" = "true" ]; then
+        for lvl in 1 2 3; do
+          if ! echo ",${got_hammers}," | grep -q ",${lvl},"; then
+            echo "    [diff] hammerRangePresent: level $lvl missing (got=[${got_hammers}])"
+            fail=1
+          fi
+        done
+      fi
+
+      # Attending tip per vignette: count(.attending-tip) === count(vignettes).
+      if [ "$exp_atip_per_vig" = "true" ]; then
+        if [ "$got_atip" -ne "$got_vig" ]; then
+          echo "    [diff] attendingTipPerVignette: tips=$got_atip vignettes=$got_vig (must match)"
+          fail=1
+        fi
+      fi
+
+      # Vignette taxonomy coverage — array containment.
+      check_array_contains "vignetteTaxonomyCoverage" "$exp_taxonomy" "$got_taxonomy"
       ;;
     research-paper|code|*)
       # Default: code-domain markers already validated above.

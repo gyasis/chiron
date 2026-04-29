@@ -22,6 +22,9 @@ import { WIDGET_KINDS } from './schemas/widget-spec.js';
 /** Narrowed shape for the spot-the-bug widget (mirrors SpotTheBugWidgetSchema). */
 type SpotTheBugWidget = Extract<WidgetSpec, { type: 'spot-the-bug' }>;
 
+/** Narrowed shape for the mcq-clinical-vignette widget. */
+type McqClinicalVignetteWidget = Extract<WidgetSpec, { type: 'mcq-clinical-vignette' }>;
+
 /** Narrowed shape for the code-runner widget (mirrors CodeRunnerWidgetSchema). */
 type CodeRunnerWidget = Extract<WidgetSpec, { type: 'code-runner' }>;
 
@@ -843,6 +846,132 @@ export function renderAudioTts(spec: AudioTtsWidget): string {
 
 registerRenderer('audio-tts', (widget) =>
   renderAudioTts(widget as AudioTtsWidget),
+);
+
+/**
+ * Renderer for `mcq-clinical-vignette` widgets (T077, US3 — medicine domain).
+ *
+ * Emits a self-contained HTML fragment matching the USMLE/AMBOSS-style clinical
+ * vignette layout:
+ *   - Vignette block with the case narrative + key-info chips highlighting the
+ *     salient clinical features the learner should extract.
+ *   - Leading question (stem) below the vignette.
+ *   - Five-option layout (1 correct + 1 close-but-wrong + 2 standard distractors
+ *     + 1 obviously-wrong, per USMLE distractor pattern). Options are rendered
+ *     as a radio-style group — only one selectable at a time.
+ *   - Hammer rating chip (1–3) using filled / half / empty stars to convey
+ *     difficulty.
+ *   - Attending Tip callout (Dr. Reyes persona) revealed after Check.
+ *
+ * On Check (inline IIFE): reveal `.explanation` divs for ALL 5 options, mark
+ * selected vs correct, show Attending Tip, and lock the widget so the learner
+ * cannot re-answer to game the assessment.
+ */
+export function renderMcqClinicalVignette(spec: McqClinicalVignetteWidget): string {
+  const id = nextWidgetId('mcv');
+  const vignette = spec.vignette ?? '';
+  const keyInfo = spec.keyInfo ?? [];
+  const stem = spec.stem ?? '';
+  const options = spec.options ?? [];
+  const hammer = spec.hammer ?? 1;
+  const attendingTip = spec.attendingTip ?? '';
+  const vignetteCategory = spec.vignetteCategory ?? '';
+
+  const chipsHtml = keyInfo
+    .map((k) => `<span class="chip">${escapeHtml(String(k))}</span>`)
+    .join('\n        ');
+
+  const letters = ['A', 'B', 'C', 'D', 'E'];
+  const optionsHtml = options
+    .map((opt, idx) => {
+      const letter = letters[idx] ?? String(idx + 1);
+      const correct = opt.correct === true ? 'true' : 'false';
+      return [
+        `      <li class="option" data-correct="${correct}" data-option-letter="${letter}" data-option-index="${idx}">`,
+        `        <label class="option-label">`,
+        `          <input type="radio" name="${id}-opt" value="${idx}" />`,
+        `          <span class="option-letter">${letter}.</span>`,
+        `          <span class="option-text">${escapeHtml(opt.label ?? '')}</span>`,
+        `        </label>`,
+        `        <div class="explanation" hidden>${escapeHtml(opt.explanation ?? '')}</div>`,
+        `      </li>`,
+      ].join('\n');
+    })
+    .join('\n');
+
+  // Hammer chip: ★ filled vs ☆ empty out of 3.
+  const hammerInt = Math.max(1, Math.min(3, Math.round(Number(hammer) || 1)));
+  const stars = '★'.repeat(hammerInt) + '☆'.repeat(3 - hammerInt);
+
+  return [
+    `<div class="mcq-clinical-vignette" id="${id}" data-widget="mcq-clinical-vignette" data-category="${escapeHtml(String(vignetteCategory))}" data-hammer="${hammerInt}">`,
+    `  <div class="vignette-block">`,
+    `    <div class="vignette-text">${escapeHtml(vignette)}</div>`,
+    `    <div class="key-info-chips">`,
+    `        ${chipsHtml}`,
+    `    </div>`,
+    `  </div>`,
+    `  <div class="leading-question">${escapeHtml(stem)}</div>`,
+    `  <ol class="options" type="A">`,
+    optionsHtml,
+    `  </ol>`,
+    `  <div class="mcv-controls">`,
+    `    <button type="button" class="check-button" data-action="check">Check</button>`,
+    `    <span class="mcv-feedback" role="status" aria-live="polite"></span>`,
+    `  </div>`,
+    `  <div class="hammer-chip" title="Difficulty">Hammer: ${stars} (${hammerInt}/3)</div>`,
+    `  <div class="attending-tip" hidden>`,
+    `    <strong>Attending Tip — Dr. Reyes:</strong>`,
+    `    <p>${escapeHtml(attendingTip)}</p>`,
+    `  </div>`,
+    `  <script>`,
+    `  (function(){`,
+    `    var root = document.getElementById(${JSON.stringify(id)});`,
+    `    if (!root) return;`,
+    `    var optionEls = root.querySelectorAll('.option');`,
+    `    var radios = root.querySelectorAll('input[type="radio"][name="${id}-opt"]');`,
+    `    var btn = root.querySelector('[data-action="check"]');`,
+    `    var feedback = root.querySelector('.mcv-feedback');`,
+    `    var tip = root.querySelector('.attending-tip');`,
+    `    var locked = false;`,
+    `    btn.addEventListener('click', function(){`,
+    `      if (locked) return;`,
+    `      var selectedIdx = -1;`,
+    `      radios.forEach(function(r){ if (r.checked) selectedIdx = parseInt(r.value, 10); });`,
+    `      if (selectedIdx < 0) {`,
+    `        feedback.textContent = 'Pick an option first.';`,
+    `        feedback.className = 'mcv-feedback';`,
+    `        return;`,
+    `      }`,
+    `      var correctIdx = -1;`,
+    `      optionEls.forEach(function(el){`,
+    `        var idx = parseInt(el.getAttribute('data-option-index'), 10);`,
+    `        var isCorrect = el.getAttribute('data-correct') === 'true';`,
+    `        if (isCorrect) correctIdx = idx;`,
+    `        var exp = el.querySelector('.explanation');`,
+    `        if (exp) exp.hidden = false;`,
+    `        el.classList.remove('selected', 'correct', 'incorrect');`,
+    `        if (isCorrect) el.classList.add('correct');`,
+    `        if (idx === selectedIdx && !isCorrect) el.classList.add('incorrect');`,
+    `        if (idx === selectedIdx) el.classList.add('selected');`,
+    `      });`,
+    `      var ok = selectedIdx === correctIdx;`,
+    `      feedback.textContent = ok ? 'Correct.' : 'Incorrect — see Attending Tip below.';`,
+    `      feedback.className = 'mcv-feedback ' + (ok ? 'correct' : 'incorrect');`,
+    `      if (tip) tip.hidden = false;`,
+    `      // Lock — no re-answer.`,
+    `      radios.forEach(function(r){ r.disabled = true; });`,
+    `      btn.disabled = true;`,
+    `      locked = true;`,
+    `    });`,
+    `  })();`,
+    `  </script>`,
+    `</div>`,
+  ].join('\n');
+}
+
+registerRenderer('mcq-clinical-vignette', (widget) =>
+  renderMcqClinicalVignette(widget as McqClinicalVignetteWidget),
 );
 
 /** List the kinds currently registered. Useful for sanity tests. */

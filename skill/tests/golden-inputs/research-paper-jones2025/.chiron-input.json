@@ -1,0 +1,10 @@
+{
+  "domain": "research-paper",
+  "topic": "glp1-meta-analysis-cv-mortality",
+  "files": [
+    {"path": "paper.md", "role": "primary"},
+    {"path": "forest-plot-table.md", "role": "supplement"}
+  ],
+  "paperType": "meta-analysis",
+  "primaryOutcome": "cardiovascular-mortality"
+}

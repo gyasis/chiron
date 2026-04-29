@@ -1,12 +1,12 @@
 # Progress
 
-**Last Updated**: 2026-04-29 19:39:19
+**Last Updated**: 2026-04-29 21:36:06
 
 ## Overall Progress
 - Total Tasks: 129
-- Completed: 89 ✅
-- Pending: 40 ⏳
-- Progress: 68%
+- Completed: 99 ✅
+- Pending: 30 ⏳
+- Progress: 76%
 
 ## Task Breakdown
 - [x] T001 Create the `skill/` directory tree per `plan.md`: `skill/{prompts/{00-ingest/,medicine-only/},ingest-adapters/,concepts/,curricula/,personas/,shell/{themes/,vendor/},lib/,tests/{golden-inputs/,snapshots/}}`
@@ -85,7 +85,7 @@
 - [x] T074 [P] [US3] Author `skill/ingest-adapters/transcript.ts` — handles plain text / markdown chat-meeting-lecture transcripts (FR-032 h)
 - [x] T075 [P] [US3] Author `skill/ingest-adapters/agent-report.ts` — accepts markdown / JSON output from another agent (FR-032 k); marks the entry `secondary` in `Brief.sourceManifest[]`; sets `Brief.agentSourceProvenance`; refuses if it would be the SOLE source for a medicine lesson (FR-035)
 - [x] T076 [US3] Author `skill/ingest-adapters/bundle.ts` — walks a directory (FR-032 l); honors optional `chiron.manifest.json` if present (declares per-file `role`); else dispatches each recognized file by extension. Emits warnings for unknown extensions (skipped, not failed). Aggregates ordered concatenation across all files. Depends on T070, T071, T072, T073, T074, T075.
-- [ ] T077 [P] [US3] Extend `skill/lib/widget-renderer.ts` to render `mcq-clinical-vignette` widgets — vignette block + `<keyinfo>` chip rendering + 5-option layout + per-distractor explanation reveal + Hammer rating chip + Attending Tip callout
+- [x] T077 [P] [US3] Extend `skill/lib/widget-renderer.ts` to render `mcq-clinical-vignette` widgets — vignette block + `<keyinfo>` chip rendering + 5-option layout + per-distractor explanation reveal + Hammer rating chip + Attending Tip callout
 - [ ] T078 [P] [US3] Extend `skill/lib/widget-renderer.ts` to render `agreement-matrix` widgets — N statements × {always / sometimes / never} grid
 - [ ] T079 [P] [US3] Extend `skill/lib/widget-renderer.ts` to render `assertion-reason` widgets — 5-relationship picker per `contracts/widget-spec.ts`
 - [x] T080 [US3] Extend `skill/lib/chemistry-renderer.ts` — concrete `MoleculeRenderer` impl. **Phase 5 prototype rubric** per R-02: prototype both Kekule.js and RDKit-JS against the metformin SMILES, pick the smaller / faster one, drop the loser. Vendor the winning library into `skill/shell/vendor/molecule-renderer/`. Ships a single dep at runtime per FR-031.
@@ -103,17 +103,17 @@
 - [x] T092 [P] [US3] Author `skill/prompts/04j-quiz-assertion-reason.md`
 - [x] T093 [P] [US3] Author `skill/prompts/04p-chemical-rendering.md` — chemical-equation generation (MathJax+mhchem `\ce{}` syntax) and molecule-2d SMILES generation
 - [x] T094 [US3] Add medicine-source refusal logic in `skill/lib/pipeline.ts` Stage 0: refuse generation when the only source is `agent-report` (FR-035, SC-016) AND when there is no source-grounding at all (FR-016). Depends on T024.
-- [ ] T095 [US3] Create `skill/tests/golden-inputs/medicine-pneumonia/` — a community-acquired pneumonia textbook chapter (mix of text-PDF + 1 image figure to exercise vision path AND text-extract path)
-- [ ] T096 [US3] Author `skill/tests/snapshots/medicine-pneumonia.json` — expected: `{chapterCount, vignetteCount: ≥15, vignetteTaxonomyCoverage: ['classic','atypical', ...], hammerRangePresent: true, keyInfoTagsPerVignette: ≥3, attendingTipPerVignette: true, chemicalReactionCount: ≥1, moleculeCount: ≥1, verifierCycleCount: ≥1}`
-- [ ] T097 [US3] Extend `skill/tests/test.sh` to include medicine-pneumonia run + snapshot diff
-- [ ] T098 [P] [US4] Author `skill/concepts/research-paper.json` — IMRAD-aware concept DAG (study-design / methods / statistics / interpretation)
-- [ ] T099 [P] [US4] Author `skill/curricula/research-paper.json` — `chapterCountTarget: 6` (fixed: motivation / methods / results / discussion / appraisal / connections); `perChapterQuizTarget: 5-10`
-- [ ] T100 [P] [US4] Author `skill/personas/research-paper.json` — Dr. Hofmann (senior PI, expert) + Bob (skeptical peer)
+- [x] T095 [US3] Create `skill/tests/golden-inputs/medicine-pneumonia/` — a community-acquired pneumonia textbook chapter (mix of text-PDF + 1 image figure to exercise vision path AND text-extract path)
+- [x] T096 [US3] Author `skill/tests/snapshots/medicine-pneumonia.json` — expected: `{chapterCount, vignetteCount: ≥15, vignetteTaxonomyCoverage: ['classic','atypical', ...], hammerRangePresent: true, keyInfoTagsPerVignette: ≥3, attendingTipPerVignette: true, chemicalReactionCount: ≥1, moleculeCount: ≥1, verifierCycleCount: ≥1}`
+- [x] T097 [US3] Extend `skill/tests/test.sh` to include medicine-pneumonia run + snapshot diff
+- [x] T098 [P] [US4] Author `skill/concepts/research-paper.json` — IMRAD-aware concept DAG (study-design / methods / statistics / interpretation)
+- [x] T099 [P] [US4] Author `skill/curricula/research-paper.json` — `chapterCountTarget: 6` (fixed: motivation / methods / results / discussion / appraisal / connections); `perChapterQuizTarget: 5-10`
+- [x] T100 [P] [US4] Author `skill/personas/research-paper.json` — Dr. Hofmann (senior PI, expert) + Bob (skeptical peer)
 - [ ] T101 [P] [US4] Extend `skill/lib/widget-renderer.ts` to render `slider-estimation` widgets — value picker with `acceptableRange` band, reveals correct value + unit
 - [ ] T102 [P] [US4] Extend `skill/lib/widget-renderer.ts` to render `forest-plot` widgets — uses the vendored `skill/shell/vendor/forest-plot/` mini-lib from T010
-- [ ] T103 [P] [US4] Author `skill/prompts/04i-quiz-slider-estimation.md`
-- [ ] T104 [P] [US4] Author `skill/prompts/04o-infographic.md` — for forest-plot data extraction from the source paper
-- [ ] T105 [US4] Create `skill/tests/golden-inputs/research-paper-jones2025/` — a real (or realistic) research paper PDF
+- [x] T103 [P] [US4] Author `skill/prompts/04i-quiz-slider-estimation.md`
+- [x] T104 [P] [US4] Author `skill/prompts/04o-infographic.md` — for forest-plot data extraction from the source paper
+- [x] T105 [US4] Create `skill/tests/golden-inputs/research-paper-jones2025/` — a real (or realistic) research paper PDF
 - [ ] T106 [US4] Author `skill/tests/snapshots/research-paper-jones2025.json` — expected: `{sectionCount: 6, mcqCount: ≥5, forestPlotCount: ≥1, drHofmannDialoguePresent: true}`
 - [ ] T107 [US4] Extend `skill/tests/test.sh` to include research-paper-jones2025 run + snapshot diff
 - [ ] T108 [US5] Add Mode-B delegation logic in `skill/lib/pipeline.ts` Stage 0: when `TriggerContext.mode === 'B'` (either inferred via heuristic or forced via `/chiron-case-study`), invoke `~/.claude/skills/case-study.md` with the source and exit early — Chiron's own pipeline does not run for Mode B. Depends on T024, T026, T027.

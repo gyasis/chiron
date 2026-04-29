@@ -1,0 +1,174 @@
+{
+  "domain": "research-paper",
+  "version": "1.0.0",
+  "concepts": [
+    {
+      "id": "imrad-structure",
+      "label": "IMRAD Structure",
+      "summary": "The Introduction, Methods, Results, and Discussion organization that frames most empirical research papers.",
+      "prereqs": []
+    },
+    {
+      "id": "abstract-anatomy",
+      "label": "Abstract Anatomy",
+      "summary": "Structured (background, methods, results, conclusions) versus unstructured abstracts and how to read them quickly.",
+      "prereqs": []
+    },
+    {
+      "id": "introduction-section",
+      "label": "Introduction Section",
+      "summary": "How papers establish context, identify a knowledge gap, and state the hypothesis or research question.",
+      "prereqs": ["imrad-structure"]
+    },
+    {
+      "id": "methods-section",
+      "label": "Methods Section",
+      "summary": "Where study design, population, interventions, outcomes, and analysis plan are reported in reproducible detail.",
+      "prereqs": ["imrad-structure"]
+    },
+    {
+      "id": "results-section",
+      "label": "Results Section",
+      "summary": "How participant flow, baseline characteristics, primary outcomes, and secondary outcomes are presented without interpretation.",
+      "prereqs": ["imrad-structure"]
+    },
+    {
+      "id": "discussion-section",
+      "label": "Discussion Section",
+      "summary": "Interpretation of findings, comparison to prior work, limitations, and implications for practice or future research.",
+      "prereqs": ["imrad-structure"]
+    },
+    {
+      "id": "randomized-controlled-trial",
+      "label": "Randomized Controlled Trial",
+      "summary": "Prospective experiment that randomizes participants to interventions to minimize confounding and establish causality.",
+      "prereqs": ["methods-section"]
+    },
+    {
+      "id": "cohort-study",
+      "label": "Cohort Study",
+      "summary": "Observational design that follows exposed and unexposed groups forward in time to compare outcome incidence.",
+      "prereqs": ["methods-section"]
+    },
+    {
+      "id": "case-control-study",
+      "label": "Case-Control Study",
+      "summary": "Retrospective design comparing prior exposures between people with an outcome (cases) and matched people without (controls).",
+      "prereqs": ["methods-section"]
+    },
+    {
+      "id": "cross-sectional-study",
+      "label": "Cross-Sectional Study",
+      "summary": "Snapshot design measuring exposure and outcome at a single time point to estimate prevalence and associations.",
+      "prereqs": ["methods-section"]
+    },
+    {
+      "id": "case-series",
+      "label": "Case Series",
+      "summary": "Descriptive report of a sequence of similar cases without a comparison group, useful for hypothesis generation.",
+      "prereqs": ["methods-section"]
+    },
+    {
+      "id": "non-inferiority-trial",
+      "label": "Non-Inferiority Trial",
+      "summary": "RCT variant designed to show a new intervention is not unacceptably worse than a standard comparator within a pre-specified margin.",
+      "prereqs": ["randomized-controlled-trial"]
+    },
+    {
+      "id": "systematic-review",
+      "label": "Systematic Review",
+      "summary": "Structured synthesis of all eligible studies on a question using pre-registered search, screening, and appraisal protocols.",
+      "prereqs": ["cohort-study", "randomized-controlled-trial"]
+    },
+    {
+      "id": "meta-analysis",
+      "label": "Meta-Analysis",
+      "summary": "Quantitative pooling of effect estimates across systematic-review studies, typically with forest plots and heterogeneity statistics.",
+      "prereqs": ["systematic-review"]
+    },
+    {
+      "id": "p-values-and-significance",
+      "label": "P-Values and Significance",
+      "summary": "Probability of observing data at least as extreme as the sample under the null hypothesis, and the conventional 0.05 threshold.",
+      "prereqs": []
+    },
+    {
+      "id": "confidence-intervals",
+      "label": "Confidence Intervals",
+      "summary": "Range of plausible values for an estimate at a given coverage level (typically 95%), more informative than a p-value alone.",
+      "prereqs": ["p-values-and-significance"]
+    },
+    {
+      "id": "effect-sizes",
+      "label": "Effect Sizes",
+      "summary": "Magnitude of association expressed as odds ratio, risk ratio, hazard ratio, or mean difference, independent of sample size.",
+      "prereqs": []
+    },
+    {
+      "id": "power-and-sample-size",
+      "label": "Power and Sample Size",
+      "summary": "Probability of detecting a true effect of given magnitude, driving sample-size calculations during study design.",
+      "prereqs": ["p-values-and-significance", "effect-sizes"]
+    },
+    {
+      "id": "multiple-testing-correction",
+      "label": "Multiple Testing Correction",
+      "summary": "Adjustments such as Bonferroni or false-discovery-rate that control type I error inflation across many simultaneous tests.",
+      "prereqs": ["p-values-and-significance"]
+    },
+    {
+      "id": "regression-models",
+      "label": "Regression Models",
+      "summary": "Linear, logistic, and Poisson models that estimate adjusted associations between predictors and outcomes.",
+      "prereqs": ["effect-sizes"]
+    },
+    {
+      "id": "survival-analysis",
+      "label": "Survival Analysis",
+      "summary": "Time-to-event methods including Kaplan-Meier curves and Cox proportional hazards regression that handle censoring.",
+      "prereqs": ["regression-models"]
+    },
+    {
+      "id": "subgroup-analysis",
+      "label": "Subgroup Analysis",
+      "summary": "Pre-specified or exploratory effect estimates within strata of the population, with attention to interaction tests and multiplicity.",
+      "prereqs": ["regression-models"]
+    },
+    {
+      "id": "bias-types",
+      "label": "Bias Types",
+      "summary": "Systematic errors including selection bias, information (measurement) bias, and confounding that distort study findings.",
+      "prereqs": []
+    },
+    {
+      "id": "confounding-vs-mediation",
+      "label": "Confounding vs Mediation",
+      "summary": "Distinguishing a third variable that distorts an exposure-outcome relationship from one that lies on the causal pathway.",
+      "prereqs": ["bias-types"]
+    },
+    {
+      "id": "internal-validity",
+      "label": "Internal Validity",
+      "summary": "Degree to which a study's design and conduct support causal inference within the studied sample, free of bias.",
+      "prereqs": ["bias-types"]
+    },
+    {
+      "id": "external-validity-generalizability",
+      "label": "External Validity / Generalizability",
+      "summary": "Extent to which study findings apply to populations, settings, and conditions beyond the sample studied.",
+      "prereqs": ["internal-validity"]
+    },
+    {
+      "id": "risk-of-bias-tool-cochrane",
+      "label": "Cochrane Risk of Bias Tool",
+      "summary": "Domain-based assessment (RoB 2) for randomized trials covering randomization, deviations, missing data, measurement, and reporting.",
+      "prereqs": ["randomized-controlled-trial", "bias-types"]
+    },
+    {
+      "id": "grade-evidence-rating",
+      "label": "GRADE Evidence Rating",
+      "summary": "Framework that grades certainty of evidence (high/moderate/low/very low) across a body of studies for a clinical recommendation.",
+      "prereqs": ["systematic-review", "bias-types"]
+    }
+  ]
+}

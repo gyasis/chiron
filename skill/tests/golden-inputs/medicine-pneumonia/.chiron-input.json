@@ -1,0 +1,9 @@
+{
+  "domain": "medicine",
+  "topic": "community-acquired-pneumonia",
+  "subMode": "amboss",
+  "files": [
+    {"path": "chapter.md", "role": "primary"},
+    {"path": "figure-cxr.png", "role": "figure"}
+  ]
+}

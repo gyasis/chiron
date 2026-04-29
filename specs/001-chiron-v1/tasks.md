@@ -211,7 +211,7 @@ description: "Task list for Chiron v1 — Universal Lesson Generator"
 
 ### Medicine widget renderers
 
-- [ ] T077 [P] [US3] Extend `skill/lib/widget-renderer.ts` to render `mcq-clinical-vignette` widgets — vignette block + `<keyinfo>` chip rendering + 5-option layout + per-distractor explanation reveal + Hammer rating chip + Attending Tip callout
+- [x] T077 [P] [US3] Extend `skill/lib/widget-renderer.ts` to render `mcq-clinical-vignette` widgets — vignette block + `<keyinfo>` chip rendering + 5-option layout + per-distractor explanation reveal + Hammer rating chip + Attending Tip callout
 - [ ] T078 [P] [US3] Extend `skill/lib/widget-renderer.ts` to render `agreement-matrix` widgets — N statements × {always / sometimes / never} grid
 - [ ] T079 [P] [US3] Extend `skill/lib/widget-renderer.ts` to render `assertion-reason` widgets — 5-relationship picker per `contracts/widget-spec.ts`
 - [x] T080 [US3] Extend `skill/lib/chemistry-renderer.ts` — concrete `MoleculeRenderer` impl. **Phase 5 prototype rubric** per R-02: prototype both Kekule.js and RDKit-JS against the metformin SMILES, pick the smaller / faster one, drop the loser. Vendor the winning library into `skill/shell/vendor/molecule-renderer/`. Ships a single dep at runtime per FR-031.
@@ -241,9 +241,9 @@ description: "Task list for Chiron v1 — Universal Lesson Generator"
 
 ### Golden input + snapshot
 
-- [ ] T095 [US3] Create `skill/tests/golden-inputs/medicine-pneumonia/` — a community-acquired pneumonia textbook chapter (mix of text-PDF + 1 image figure to exercise vision path AND text-extract path)
-- [ ] T096 [US3] Author `skill/tests/snapshots/medicine-pneumonia.json` — expected: `{chapterCount, vignetteCount: ≥15, vignetteTaxonomyCoverage: ['classic','atypical', ...], hammerRangePresent: true, keyInfoTagsPerVignette: ≥3, attendingTipPerVignette: true, chemicalReactionCount: ≥1, moleculeCount: ≥1, verifierCycleCount: ≥1}`
-- [ ] T097 [US3] Extend `skill/tests/test.sh` to include medicine-pneumonia run + snapshot diff
+- [x] T095 [US3] Create `skill/tests/golden-inputs/medicine-pneumonia/` — a community-acquired pneumonia textbook chapter (mix of text-PDF + 1 image figure to exercise vision path AND text-extract path)
+- [x] T096 [US3] Author `skill/tests/snapshots/medicine-pneumonia.json` — expected: `{chapterCount, vignetteCount: ≥15, vignetteTaxonomyCoverage: ['classic','atypical', ...], hammerRangePresent: true, keyInfoTagsPerVignette: ≥3, attendingTipPerVignette: true, chemicalReactionCount: ≥1, moleculeCount: ≥1, verifierCycleCount: ≥1}`
+- [x] T097 [US3] Extend `skill/tests/test.sh` to include medicine-pneumonia run + snapshot diff
 
 **Checkpoint US3**: Medicine works end-to-end. All 6 new ingest adapters now exist. Three golden inputs pass.
 
@@ -257,9 +257,9 @@ description: "Task list for Chiron v1 — Universal Lesson Generator"
 
 ### Static catalogs
 
-- [ ] T098 [P] [US4] Author `skill/concepts/research-paper.json` — IMRAD-aware concept DAG (study-design / methods / statistics / interpretation)
-- [ ] T099 [P] [US4] Author `skill/curricula/research-paper.json` — `chapterCountTarget: 6` (fixed: motivation / methods / results / discussion / appraisal / connections); `perChapterQuizTarget: 5-10`
-- [ ] T100 [P] [US4] Author `skill/personas/research-paper.json` — Dr. Hofmann (senior PI, expert) + Bob (skeptical peer)
+- [x] T098 [P] [US4] Author `skill/concepts/research-paper.json` — IMRAD-aware concept DAG (study-design / methods / statistics / interpretation)
+- [x] T099 [P] [US4] Author `skill/curricula/research-paper.json` — `chapterCountTarget: 6` (fixed: motivation / methods / results / discussion / appraisal / connections); `perChapterQuizTarget: 5-10`
+- [x] T100 [P] [US4] Author `skill/personas/research-paper.json` — Dr. Hofmann (senior PI, expert) + Bob (skeptical peer)
 
 ### Research widget renderers
 
@@ -268,12 +268,12 @@ description: "Task list for Chiron v1 — Universal Lesson Generator"
 
 ### Research prompts
 
-- [ ] T103 [P] [US4] Author `skill/prompts/04i-quiz-slider-estimation.md`
-- [ ] T104 [P] [US4] Author `skill/prompts/04o-infographic.md` — for forest-plot data extraction from the source paper
+- [x] T103 [P] [US4] Author `skill/prompts/04i-quiz-slider-estimation.md`
+- [x] T104 [P] [US4] Author `skill/prompts/04o-infographic.md` — for forest-plot data extraction from the source paper
 
 ### Golden input + snapshot
 
-- [ ] T105 [US4] Create `skill/tests/golden-inputs/research-paper-jones2025/` — a real (or realistic) research paper PDF
+- [x] T105 [US4] Create `skill/tests/golden-inputs/research-paper-jones2025/` — a real (or realistic) research paper PDF
 - [ ] T106 [US4] Author `skill/tests/snapshots/research-paper-jones2025.json` — expected: `{sectionCount: 6, mcqCount: ≥5, forestPlotCount: ≥1, drHofmannDialoguePresent: true}`
 - [ ] T107 [US4] Extend `skill/tests/test.sh` to include research-paper-jones2025 run + snapshot diff
 

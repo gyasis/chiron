@@ -1,10 +1,17 @@
 {
   "tasks": {
-    "T086": {
+    "T054": {
       "mode": "native",
-      "command": "T086 [P] [US3] Author `skill/prompts/00-ingest/pdf.md` — guides agent on text-PDF and scanned-PDF extraction handoffs",
+      "command": "T054 [P] [US2] Author `skill/ingest-adapters/vocab-list.ts` — parses a CSV vocab list (FR-032 g); produces `Brief` with `sourceType: 'vocab-list'`. Source CSV copied into `<lesson-output-dir>/source/` per FR-030.",
       "status": "running",
-      "started_at": "2026-04-29T18:23:58.787692013Z",
+      "started_at": "2026-04-29T15:31:13.464072629Z",
+      "constitution_rules": []
+    },
+    "T094": {
+      "mode": "native",
+      "command": "T094 [US3] Add medicine-source refusal logic in `skill/lib/pipeline.ts` Stage 0: refuse generation when the only source is `agent-report` (FR-035, SC-016) AND when there is no source-grounding at all (FR-016). Depends on T024.",
+      "status": "running",
+      "started_at": "2026-04-29T20:03:25.512202072Z",
       "constitution_rules": []
     },
     "T001": {
@@ -14,123 +21,25 @@
       "started_at": "2026-04-28T18:17:19.953079359Z",
       "constitution_rules": []
     },
-    "T064": {
+    "T090": {
       "mode": "native",
-      "command": "T064 [US2] Author `skill/tests/snapshots/language-it-passato-prossimo.json` — expected: `{chapterCount, fillBlankCount: ≥10, clozeCount: ≥30, mariaAudioClipCount: ≥1, fuzzyAccentCheck: passed}`",
+      "command": "T090 [P] [US3] Author `skill/prompts/04c-quiz-clinical-vignette.md` — vignette MCQ generator with vignette taxonomy enforcement (15-20+, 8 categories), `keyInfo[]` extraction, Hammer rating, Attending Tip, per-distractor explanations (FR-019)",
       "status": "running",
-      "started_at": "2026-04-29T16:04:05.564435695Z",
+      "started_at": "2026-04-29T20:03:25.480923864Z",
       "constitution_rules": []
     },
-    "T053": {
+    "T072": {
       "mode": "native",
-      "command": "T053 [P] [US2] Author `skill/personas/language-it.json` — Maria (native speaker, `ttsVoice: 'it-female-1'`) + Luca (peer, eager) + Sofia (peer, confused)",
+      "command": "T072 [P] [US3] Author `skill/ingest-adapters/multi-pdf.ts` — accepts an ordered list or directory of PDFs (FR-032 e); delegates each file to `pdf.ts`; concatenates extracted text in supplied order; per-file provenance in `Brief.sourceManifest[]`",
       "status": "running",
-      "started_at": "2026-04-29T15:31:13.460046058Z",
+      "started_at": "2026-04-29T16:04:05.665208863Z",
       "constitution_rules": []
     },
-    "T038": {
+    "T035": {
       "mode": "native",
-      "command": "T038 [P] [US1] Extend `skill/lib/widget-renderer.ts` to render `spot-the-bug` widgets — code block with line numbering, click-to-mark-bug interaction, reveal explanation",
+      "command": "T035 [P] [US1] Author `skill/curricula/code.json` — `templateStyle: scroll-modules`, `chapterCountTarget: 8`, `perChapterQuizTarget: 10`, `perChapterSrCardTarget: 7`, `modeAOnly: true`",
       "status": "running",
-      "started_at": "2026-04-29T12:05:31.345074367Z",
-      "constitution_rules": []
-    },
-    "T005": {
-      "mode": "native",
-      "command": "T005 [P] Port ClassBuild theme tokens from `~/dev/audits/classbuild/` into `skill/shell/themes/_tokens.css`, `warm-paper.css`, `midnight.css`, `ocean.css` (FR-024)",
-      "status": "running",
-      "started_at": "2026-04-28T18:17:19.971208993Z",
-      "constitution_rules": []
-    },
-    "T061": {
-      "mode": "native",
-      "command": "T061 [P] [US2] Author `skill/prompts/04d-quiz-fill-blank.md` — fill-blank generation with explicit FR-020 fuzzy-accent rule for Italian",
-      "status": "running",
-      "started_at": "2026-04-29T15:31:13.481724494Z",
-      "constitution_rules": []
-    },
-    "T031": {
-      "mode": "native",
-      "command": "T031 [P] Author `skill/prompts/04a-chapter-write.md` — Stage 4 chapter narrative prompt (~150-400 words) referencing `{{chapterSyllabus}}` and `{{priorChapterStruggleSummary}}` (FR-023 pseudo-state)",
-      "status": "running",
-      "started_at": "2026-04-29T11:13:51.191779424Z",
-      "constitution_rules": []
-    },
-    "T003": {
-      "mode": "native",
-      "command": "T003 [P] Symlink the in-repo skill into Claude Code's skill directory: `ln -s ~/dev/projects/chiron/skill ~/.claude/skills/chiron` (idempotent — script in `skill/scripts/install.sh`)",
-      "status": "running",
-      "started_at": "2026-04-28T18:17:19.962596445Z",
-      "constitution_rules": []
-    },
-    "T048": {
-      "mode": "native",
-      "command": "T048 [US1] Author `skill/tests/snapshots/code-small-repo.json` — expected key fields: `{chapterCount, totalQuizCount, srCardCount, peerDialogueLineCount, hasSpotTheBug: true}`",
-      "status": "running",
-      "started_at": "2026-04-29T14:55:03.456871077Z",
-      "constitution_rules": []
-    },
-    "T012": {
-      "mode": "native",
-      "command": "T012 [P] Update `skill/shell/build.sh` to inline every file under `skill/shell/vendor/*` as `<script>` / `<style>` blocks into the single output `lesson.html` (FR-037, Stage 5 of `contracts/pipeline-stages.md`)",
-      "status": "running",
-      "started_at": "2026-04-28T19:11:05.879981115Z",
-      "constitution_rules": []
-    },
-    "T083": {
-      "mode": "native",
-      "command": "T083 [P] [US3] Author `skill/prompts/medicine-only/verifier-stage2-verify.md`",
-      "status": "running",
-      "started_at": "2026-04-29T16:30:53.391929261Z",
-      "constitution_rules": []
-    },
-    "T059": {
-      "mode": "native",
-      "command": "T059 [US2] Author `skill/lib/tts-gemini.ts` — invokes the Gemini TTS path (per FR-036 / R-01) for each `audio-tts` widget transcript; saves audio files to `<lesson-output-dir>/audio/<chapter-id>/<line-id>.mp3`. ElevenLabs fallback path documented but not wired in v1 unless Gemini fails Phase 4 ear-test.",
-      "status": "running",
-      "started_at": "2026-04-29T15:31:13.472697438Z",
-      "constitution_rules": []
-    },
-    "T066": {
-      "mode": "native",
-      "command": "T066 [P] [US3] Author `skill/concepts/medicine.json` — medicine concept DAG (~30 concepts spanning conditions / drugs / mechanisms)",
-      "status": "running",
-      "started_at": "2026-04-29T16:04:05.589905448Z",
-      "constitution_rules": []
-    },
-    "T019": {
-      "mode": "native",
-      "command": "T019 Author `skill/lib/theme.ts` — exports `Theme` interface, theme registry mapping `id → tokens`, `pickThemeForDomain(domain) → themeId`, and `buildThemePromptBlock(theme) → string` (the system-prompt token injector ported from ClassBuild)",
-      "status": "running",
-      "started_at": "2026-04-28T19:11:05.983125253Z",
-      "constitution_rules": []
-    },
-    "T063": {
-      "mode": "native",
-      "command": "T063 [US2] Create `skill/tests/golden-inputs/language-it-passato-prossimo/` — a vocab CSV + grammar concept hint for the Italian past tense (passato prossimo)",
-      "status": "running",
-      "started_at": "2026-04-29T15:31:13.490196185Z",
-      "constitution_rules": []
-    },
-    "T070": {
-      "mode": "native",
-      "command": "T070 [US3] Author `skill/ingest-adapters/pdf.ts` — text-PDF via `pdfjs-dist`; if no usable text layer (>50 chars on first non-cover page), rasterize via `pdf-to-img` and fall through to Gemini `mcp__gemini-mcp__interpret_image` per page (R-04 revised). Source PDF copied to `<lesson-output-dir>/source/` (FR-030). Emits per-page progress (Stage 0 announces page count up front per R-10 replacement).",
-      "status": "running",
-      "started_at": "2026-04-29T16:04:05.643174051Z",
-      "constitution_rules": []
-    },
-    "T085": {
-      "mode": "native",
-      "command": "T085 [US3] Wire the verifier loop into `skill/lib/pipeline.ts` Stage 3 — runs ONLY for medicine domain; up to 3 attempts; if all fail, abort the chapter with structured issue report (SC-011). Depends on T024, T082, T083, T084.",
-      "status": "running",
-      "started_at": "2026-04-29T16:30:53.404154508Z",
-      "constitution_rules": []
-    },
-    "T009": {
-      "mode": "native",
-      "command": "T009 [P] Vendor Mermaid into `skill/shell/vendor/mermaid/` — pin a specific version, document in vendor README",
-      "status": "running",
-      "started_at": "2026-04-28T18:17:19.987838897Z",
+      "started_at": "2026-04-29T12:05:31.333978742Z",
       "constitution_rules": []
     },
     "T013": {
@@ -140,74 +49,39 @@
       "started_at": "2026-04-28T19:11:05.918766365Z",
       "constitution_rules": []
     },
+    "T003": {
+      "mode": "native",
+      "command": "T003 [P] Symlink the in-repo skill into Claude Code's skill directory: `ln -s ~/dev/projects/chiron/skill ~/.claude/skills/chiron` (idempotent — script in `skill/scripts/install.sh`)",
+      "status": "running",
+      "started_at": "2026-04-28T18:17:19.962596445Z",
+      "constitution_rules": []
+    },
+    "T074": {
+      "mode": "native",
+      "command": "T074 [P] [US3] Author `skill/ingest-adapters/transcript.ts` — handles plain text / markdown chat-meeting-lecture transcripts (FR-032 h)",
+      "status": "running",
+      "started_at": "2026-04-29T16:30:53.360512044Z",
+      "constitution_rules": []
+    },
+    "T002": {
+      "mode": "native",
+      "command": "T002 [P] Initialize TypeScript scaffolding at `skill/` — `package.json` (no `@anthropic-ai/sdk`, no `@google/generative-ai`; deps are `zod`, `better-sqlite3`, `pdfjs-dist`, plus `pdf-to-img` or equivalent for scanned-PDF rasterization), `tsconfig.json` (strict mode), `.gitignore`",
+      "status": "running",
+      "started_at": "2026-04-28T18:17:19.958565871Z",
+      "constitution_rules": []
+    },
+    "T041": {
+      "mode": "native",
+      "command": "T041 [P] [US1] Author `skill/prompts/00-ingest/code-repo.md` — guides the agent on what to extract from a repo",
+      "status": "running",
+      "started_at": "2026-04-29T12:05:31.372347806Z",
+      "constitution_rules": []
+    },
     "T021": {
       "mode": "native",
       "command": "T021 [P] Author `skill/lib/chemistry-renderer.ts` — abstract `MoleculeRenderer` interface per FR-031 + `data-model.md` §1.4; provides `renderChemicalReaction(equation, container)` (uses vendored MathJax+mhchem). Concrete `MoleculeRenderer` impl is deferred to US3 (Phase 5).",
       "status": "running",
       "started_at": "2026-04-29T12:05:31.285845247Z",
-      "constitution_rules": []
-    },
-    "T073": {
-      "mode": "native",
-      "command": "T073 [P] [US3] Author `skill/ingest-adapters/url.ts` — fetches a URL (FR-032 i) OR reads a local `.html` file (FR-032 j); sanitizes HTML; extracts text",
-      "status": "running",
-      "started_at": "2026-04-29T16:30:53.353212262Z",
-      "constitution_rules": []
-    },
-    "T036": {
-      "mode": "native",
-      "command": "T036 [P] [US1] Author `skill/personas/code.json` — Chiron-mentor (subject expert) + Alice (peer, eager) + Bob (peer, confused), all in the JSON shape from `data-model.md` §3.3",
-      "status": "running",
-      "started_at": "2026-04-29T14:55:03.417871549Z",
-      "constitution_rules": []
-    },
-    "T052": {
-      "mode": "native",
-      "command": "T052 [P] [US2] Author `skill/curricula/language-grammar.json` — grammar-arc curriculum (`templateStyle: scroll-modules`)",
-      "status": "running",
-      "started_at": "2026-04-29T15:31:13.456114098Z",
-      "constitution_rules": []
-    },
-    "T014": {
-      "mode": "native",
-      "command": "T014 [P] Author `skill/lib/sr-scheduler.ts` — SM-2 algorithm (~50 LOC per R-07): `nextDue(card, rating: 1|2|3|4)` returns updated `{ease_factor, interval_days, repetitions, next_due_at}`; writes to `sr_cards` and appends to `sr_review_log`",
-      "status": "running",
-      "started_at": "2026-04-28T19:11:05.941685040Z",
-      "constitution_rules": []
-    },
-    "T091": {
-      "mode": "native",
-      "command": "T091 [P] [US3] Author `skill/prompts/04g-quiz-agreement-matrix.md`",
-      "status": "running",
-      "started_at": "2026-04-29T18:23:58.815094253Z",
-      "constitution_rules": []
-    },
-    "T008": {
-      "mode": "native",
-      "command": "T008 [P] Vendor MathJax + mhchem extension into `skill/shell/vendor/mathjax/` — pin a specific version, document in `skill/shell/vendor/README.md`",
-      "status": "running",
-      "started_at": "2026-04-28T18:17:19.982813302Z",
-      "constitution_rules": []
-    },
-    "T075": {
-      "mode": "native",
-      "command": "T075 [P] [US3] Author `skill/ingest-adapters/agent-report.ts` — accepts markdown / JSON output from another agent (FR-032 k); marks the entry `secondary` in `Brief.sourceManifest[]`; sets `Brief.agentSourceProvenance`; refuses if it would be the SOLE source for a medicine lesson (FR-035)",
-      "status": "running",
-      "started_at": "2026-04-29T16:30:53.366394377Z",
-      "constitution_rules": []
-    },
-    "T071": {
-      "mode": "native",
-      "command": "T071 [P] [US3] Author `skill/ingest-adapters/image.ts` — handles single image file AND folder of page images (FR-032 c/d). Sends each image to `mcp__gemini-mcp__interpret_image`; preserves alphabetic order; populates `Brief.sourceManifest[]` (FR-034)",
-      "status": "running",
-      "started_at": "2026-04-29T16:04:05.660180355Z",
-      "constitution_rules": []
-    },
-    "T010": {
-      "mode": "native",
-      "command": "T010 [P] Author `skill/shell/vendor/forest-plot/` — small custom forest-plot mini-lib (vanilla JS / SVG); supports `studies: Array<{label, effect, ci: [low, high]}>` shape per `contracts/widget-spec.ts`",
-      "status": "running",
-      "started_at": "2026-04-28T18:17:19.991825279Z",
       "constitution_rules": []
     },
     "T007": {
@@ -217,11 +91,165 @@
       "started_at": "2026-04-28T18:17:19.978851816Z",
       "constitution_rules": []
     },
-    "T044": {
+    "T006": {
       "mode": "native",
-      "command": "T044 [P] [US1] Author `skill/prompts/04l-peer-dialogue.md` — Alice/Bob/Mike/Priya/Luca/Sofia dialogue generator referencing `{{personaRoster}}` and `{{priorChapterStruggleSummary}}`",
+      "command": "T006 [P] Author new theme files `skill/shell/themes/clinical.css` (medicine default — white/blue/teal) and `skill/shell/themes/linguistic.css` (language default — warm earth tones)",
       "status": "running",
-      "started_at": "2026-04-29T14:55:03.435653089Z",
+      "started_at": "2026-04-28T18:17:19.975501420Z",
+      "constitution_rules": []
+    },
+    "T075": {
+      "mode": "native",
+      "command": "T075 [P] [US3] Author `skill/ingest-adapters/agent-report.ts` — accepts markdown / JSON output from another agent (FR-032 k); marks the entry `secondary` in `Brief.sourceManifest[]`; sets `Brief.agentSourceProvenance`; refuses if it would be the SOLE source for a medicine lesson (FR-035)",
+      "status": "running",
+      "started_at": "2026-04-29T16:30:53.366394377Z",
+      "constitution_rules": []
+    },
+    "T082": {
+      "mode": "native",
+      "command": "T082 [P] [US3] Author `skill/prompts/medicine-only/verifier-stage1-generate.md`",
+      "status": "running",
+      "started_at": "2026-04-29T16:30:53.385594249Z",
+      "constitution_rules": []
+    },
+    "T053": {
+      "mode": "native",
+      "command": "T053 [P] [US2] Author `skill/personas/language-it.json` — Maria (native speaker, `ttsVoice: 'it-female-1'`) + Luca (peer, eager) + Sofia (peer, confused)",
+      "status": "running",
+      "started_at": "2026-04-29T15:31:13.460046058Z",
+      "constitution_rules": []
+    },
+    "T024": {
+      "mode": "native",
+      "command": "T024 Author `skill/lib/pipeline.ts` — orchestrates the 5 stages per `contracts/pipeline-stages.md`. For text-LLM stages (1-4), it loads the right prompt template and **hands control to the parent Claude Code agent** (Q8 — no SDK call). It enforces validator retry up to 3 attempts (FR-006) and the FR-029 deep-research opt-in cap. Depends on T013, T018, T019, T020, T022, T023.",
+      "status": "running",
+      "started_at": "2026-04-29T11:13:51.155435604Z",
+      "constitution_rules": []
+    },
+    "T085": {
+      "mode": "native",
+      "command": "T085 [US3] Wire the verifier loop into `skill/lib/pipeline.ts` Stage 3 — runs ONLY for medicine domain; up to 3 attempts; if all fail, abort the chapter with structured issue report (SC-011). Depends on T024, T082, T083, T084.",
+      "status": "running",
+      "started_at": "2026-04-29T16:30:53.404154508Z",
+      "constitution_rules": []
+    },
+    "T051": {
+      "mode": "native",
+      "command": "T051 [P] [US2] Author `skill/curricula/language-vocab.json` — vocab-list-style curriculum (`chapterCountTarget: 5-10`, `perChapterSrCardTarget: 30-50`)",
+      "status": "running",
+      "started_at": "2026-04-29T15:31:13.450891787Z",
+      "constitution_rules": []
+    },
+    "T032": {
+      "mode": "native",
+      "command": "T032 [P] Author `skill/prompts/05-answer-balancer.md` — post-pass prompt that re-balances correct-answer length + position across MCQ options without changing semantics (FR-006 utility)",
+      "status": "running",
+      "started_at": "2026-04-29T11:13:51.196599533Z",
+      "constitution_rules": []
+    },
+    "T084": {
+      "mode": "native",
+      "command": "T084 [P] [US3] Author `skill/prompts/medicine-only/verifier-stage3-refine.md`",
+      "status": "running",
+      "started_at": "2026-04-29T16:30:53.397297604Z",
+      "constitution_rules": []
+    },
+    "T052": {
+      "mode": "native",
+      "command": "T052 [P] [US2] Author `skill/curricula/language-grammar.json` — grammar-arc curriculum (`templateStyle: scroll-modules`)",
+      "status": "running",
+      "started_at": "2026-04-29T15:31:13.456114098Z",
+      "constitution_rules": []
+    },
+    "T088": {
+      "mode": "native",
+      "command": "T088 [P] [US3] Author `skill/prompts/00-ingest/agent-report.md` — guides on treating agent reports as `secondary`",
+      "status": "running",
+      "started_at": "2026-04-29T20:03:25.460457466Z",
+      "constitution_rules": []
+    },
+    "T011": {
+      "mode": "native",
+      "command": "T011 Author `skill/shell/vendor/molecule-renderer/README.md` and stub directory — concrete library (Kekule.js or RDKit-JS) is selected during US3 Phase 4 per FR-031; this task only places the directory + version-pinning template",
+      "status": "running",
+      "started_at": "2026-04-28T19:11:05.859233910Z",
+      "constitution_rules": []
+    },
+    "T026": {
+      "mode": "native",
+      "command": "T026 [P] Author `skill/lib/trigger-context.ts` — parses raw user input into the `TriggerContext` struct from `contracts/skill-triggers.md` (resolves domain, mode, sourceArg, flags); exposes `parseTrigger(raw, source: 'natural-language' | 'slash-command') → TriggerContext`",
+      "status": "running",
+      "started_at": "2026-04-29T12:05:31.293024616Z",
+      "constitution_rules": []
+    },
+    "T031": {
+      "mode": "native",
+      "command": "T031 [P] Author `skill/prompts/04a-chapter-write.md` — Stage 4 chapter narrative prompt (~150-400 words) referencing `{{chapterSyllabus}}` and `{{priorChapterStruggleSummary}}` (FR-023 pseudo-state)",
+      "status": "running",
+      "started_at": "2026-04-29T11:13:51.191779424Z",
+      "constitution_rules": []
+    },
+    "T014": {
+      "mode": "native",
+      "command": "T014 [P] Author `skill/lib/sr-scheduler.ts` — SM-2 algorithm (~50 LOC per R-07): `nextDue(card, rating: 1|2|3|4)` returns updated `{ease_factor, interval_days, repetitions, next_due_at}`; writes to `sr_cards` and appends to `sr_review_log`",
+      "status": "running",
+      "started_at": "2026-04-28T19:11:05.941685040Z",
+      "constitution_rules": []
+    },
+    "T046": {
+      "mode": "native",
+      "command": "T046 [P] [US1] Author `skill/prompts/04n-sr-card-gen.md` — generates SR cards (`card_type`, `front`, `back`) per chapter, scoped to the chapter's `keyConcepts`",
+      "status": "running",
+      "started_at": "2026-04-29T14:55:03.447207634Z",
+      "constitution_rules": []
+    },
+    "T009": {
+      "mode": "native",
+      "command": "T009 [P] Vendor Mermaid into `skill/shell/vendor/mermaid/` — pin a specific version, document in vendor README",
+      "status": "running",
+      "started_at": "2026-04-28T18:17:19.987838897Z",
+      "constitution_rules": []
+    },
+    "T048": {
+      "mode": "native",
+      "command": "T048 [US1] Author `skill/tests/snapshots/code-small-repo.json` — expected key fields: `{chapterCount, totalQuizCount, srCardCount, peerDialogueLineCount, hasSpotTheBug: true}`",
+      "status": "running",
+      "started_at": "2026-04-29T14:55:03.456871077Z",
+      "constitution_rules": []
+    },
+    "T039": {
+      "mode": "native",
+      "command": "T039 [P] [US1] Implement `skill/lib/chalkai-loader.ts` lazy-loader stub (PRD §3 #11) — loads ChalkAI runtime ONLY when a chapter's WidgetSpec includes `type: 'reactive-math'`. v1 may stub if no code-domain lessons exercise it.",
+      "status": "running",
+      "started_at": "2026-04-29T12:05:31.352519634Z",
+      "constitution_rules": []
+    },
+    "T063": {
+      "mode": "native",
+      "command": "T063 [US2] Create `skill/tests/golden-inputs/language-it-passato-prossimo/` — a vocab CSV + grammar concept hint for the Italian past tense (passato prossimo)",
+      "status": "running",
+      "started_at": "2026-04-29T15:31:13.490196185Z",
+      "constitution_rules": []
+    },
+    "T061": {
+      "mode": "native",
+      "command": "T061 [P] [US2] Author `skill/prompts/04d-quiz-fill-blank.md` — fill-blank generation with explicit FR-020 fuzzy-accent rule for Italian",
+      "status": "running",
+      "started_at": "2026-04-29T15:31:13.481724494Z",
+      "constitution_rules": []
+    },
+    "T070": {
+      "mode": "native",
+      "command": "T070 [US3] Author `skill/ingest-adapters/pdf.ts` — text-PDF via `pdfjs-dist`; if no usable text layer (>50 chars on first non-cover page), rasterize via `pdf-to-img` and fall through to Gemini `mcp__gemini-mcp__interpret_image` per page (R-04 revised). Source PDF copied to `<lesson-output-dir>/source/` (FR-030). Emits per-page progress (Stage 0 announces page count up front per R-10 replacement).",
+      "status": "running",
+      "started_at": "2026-04-29T16:04:05.643174051Z",
+      "constitution_rules": []
+    },
+    "T059": {
+      "mode": "native",
+      "command": "T059 [US2] Author `skill/lib/tts-gemini.ts` — invokes the Gemini TTS path (per FR-036 / R-01) for each `audio-tts` widget transcript; saves audio files to `<lesson-output-dir>/audio/<chapter-id>/<line-id>.mp3`. ElevenLabs fallback path documented but not wired in v1 unless Gemini fails Phase 4 ear-test.",
+      "status": "running",
+      "started_at": "2026-04-29T15:31:13.472697438Z",
       "constitution_rules": []
     },
     "T043": {
@@ -229,6 +257,132 @@
       "command": "T043 [P] [US1] Author `skill/prompts/04f-quiz-spot-the-bug.md` — code-domain-specific quiz primitive",
       "status": "running",
       "started_at": "2026-04-29T14:55:03.430083199Z",
+      "constitution_rules": []
+    },
+    "T020": {
+      "mode": "native",
+      "command": "T020 Author `skill/lib/widget-renderer.ts` — dispatch table from `WidgetSpec.type` to renderer function. Phase 2 implements only universal primitives (`mcq`, `true-false`, `mathjax`, `mermaid`); domain-specific widgets (vignette, fill-blank, molecule, forest-plot) come in their respective story phases.",
+      "status": "running",
+      "started_at": "2026-04-28T19:11:05.988708573Z",
+      "constitution_rules": []
+    },
+    "T060": {
+      "mode": "native",
+      "command": "T060 [P] [US2] Author `skill/prompts/00-ingest/vocab-list.md`",
+      "status": "running",
+      "started_at": "2026-04-29T15:31:13.477046147Z",
+      "constitution_rules": []
+    },
+    "T073": {
+      "mode": "native",
+      "command": "T073 [P] [US3] Author `skill/ingest-adapters/url.ts` — fetches a URL (FR-032 i) OR reads a local `.html` file (FR-032 j); sanitizes HTML; extracts text",
+      "status": "running",
+      "started_at": "2026-04-29T16:30:53.353212262Z",
+      "constitution_rules": []
+    },
+    "T092": {
+      "mode": "native",
+      "command": "T092 [P] [US3] Author `skill/prompts/04j-quiz-assertion-reason.md`",
+      "status": "running",
+      "started_at": "2026-04-29T20:03:25.499429924Z",
+      "constitution_rules": []
+    },
+    "T044": {
+      "mode": "native",
+      "command": "T044 [P] [US1] Author `skill/prompts/04l-peer-dialogue.md` — Alice/Bob/Mike/Priya/Luca/Sofia dialogue generator referencing `{{personaRoster}}` and `{{priorChapterStruggleSummary}}`",
+      "status": "running",
+      "started_at": "2026-04-29T14:55:03.435653089Z",
+      "constitution_rules": []
+    },
+    "T047": {
+      "mode": "native",
+      "command": "T047 [US1] Create `skill/tests/golden-inputs/code-small-repo/` — a tiny, real, MIT-licensed TypeScript repo (e.g. a 200-line utility lib) committed verbatim into the dir",
+      "status": "running",
+      "started_at": "2026-04-29T14:55:03.451968594Z",
+      "constitution_rules": []
+    },
+    "T022": {
+      "mode": "native",
+      "command": "T022 [P] Author `skill/lib/progress.ts` — stderr progress emitter per R-05 / FR-028: `progress.stage(N, total, label)`, `progress.chapter(stageN, chapN, chapTotal, label)`. Used by every pipeline stage.",
+      "status": "running",
+      "started_at": "2026-04-28T19:11:06.003730960Z",
+      "constitution_rules": []
+    },
+    "T038": {
+      "mode": "native",
+      "command": "T038 [P] [US1] Extend `skill/lib/widget-renderer.ts` to render `spot-the-bug` widgets — code block with line numbering, click-to-mark-bug interaction, reveal explanation",
+      "status": "running",
+      "started_at": "2026-04-29T12:05:31.345074367Z",
+      "constitution_rules": []
+    },
+    "T069": {
+      "mode": "native",
+      "command": "T069 [P] [US3] Author `skill/personas/medicine.json` — Dr. Reyes (attending) + Mike (med student, peer) + Priya (resident, peer)",
+      "status": "running",
+      "started_at": "2026-04-29T16:04:05.632691618Z",
+      "constitution_rules": []
+    },
+    "T023": {
+      "mode": "native",
+      "command": "T023 [P] Author `skill/lib/source-copy.ts` — copies any local-file source into `<lesson-output-dir>/source/` preserving structure (FR-030). Used by ingest adapters.",
+      "status": "running",
+      "started_at": "2026-04-28T19:11:06.009562078Z",
+      "constitution_rules": []
+    },
+    "T005": {
+      "mode": "native",
+      "command": "T005 [P] Port ClassBuild theme tokens from `~/dev/audits/classbuild/` into `skill/shell/themes/_tokens.css`, `warm-paper.css`, `midnight.css`, `ocean.css` (FR-024)",
+      "status": "running",
+      "started_at": "2026-04-28T18:17:19.971208993Z",
+      "constitution_rules": []
+    },
+    "T030": {
+      "mode": "native",
+      "command": "T030 [P] Author `skill/prompts/03-validate-rubric.md` — Stage 3 rubric prompt for the validator's structured-issue retry loop",
+      "status": "running",
+      "started_at": "2026-04-29T11:13:51.186159297Z",
+      "constitution_rules": []
+    },
+    "T065": {
+      "mode": "native",
+      "command": "T065 [US2] Extend `skill/tests/test.sh` to include language-it-passato-prossimo run + snapshot diff",
+      "status": "running",
+      "started_at": "2026-04-29T16:04:05.582469941Z",
+      "constitution_rules": []
+    },
+    "T093": {
+      "mode": "native",
+      "command": "T093 [P] [US3] Author `skill/prompts/04p-chemical-rendering.md` — chemical-equation generation (MathJax+mhchem `\\ce{}` syntax) and molecule-2d SMILES generation",
+      "status": "running",
+      "started_at": "2026-04-29T20:03:25.505695946Z",
+      "constitution_rules": []
+    },
+    "T004": {
+      "mode": "native",
+      "command": "T004 [P] Fork codebase-to-course shell verbatim into `skill/shell/` — copy `_base.html`, `_footer.html`, `styles.css` (1195 LOC), `main.js`, `build.sh` from `~/dev/audits/codebase-to-course/`",
+      "status": "running",
+      "started_at": "2026-04-28T18:17:19.966421556Z",
+      "constitution_rules": []
+    },
+    "T037": {
+      "mode": "native",
+      "command": "T037 [US1] Author `skill/ingest-adapters/code-repo.ts` — handles git repo / local dir / single source file (FR-032 f). Walks the repo respecting `.gitignore`, extracts file list + key file contents into a `Brief` with `sourceType: 'code-repo'` and metadata `{repoSha, fileCount, primaryLanguage}`. Source NOT copied (referenced by path per FR-030 carve-out for repos).",
+      "status": "running",
+      "started_at": "2026-04-29T12:05:31.338753217Z",
+      "constitution_rules": []
+    },
+    "T064": {
+      "mode": "native",
+      "command": "T064 [US2] Author `skill/tests/snapshots/language-it-passato-prossimo.json` — expected: `{chapterCount, fillBlankCount: ≥10, clozeCount: ≥30, mariaAudioClipCount: ≥1, fuzzyAccentCheck: passed}`",
+      "status": "running",
+      "started_at": "2026-04-29T16:04:05.564435695Z",
+      "constitution_rules": []
+    },
+    "T049": {
+      "mode": "native",
+      "command": "T049 [US1] Author `skill/tests/test.sh` — driver that runs all golden inputs, generates `lesson.html` in a temp dir, opens in headless browser, diffs against snapshots, exits non-zero on any mismatch (FR-026)",
+      "status": "running",
+      "started_at": "2026-04-29T14:55:03.462718911Z",
       "constitution_rules": []
     },
     "T028": {
@@ -245,102 +399,53 @@
       "started_at": "2026-04-29T15:31:13.485860178Z",
       "constitution_rules": []
     },
-    "T039": {
+    "T086": {
       "mode": "native",
-      "command": "T039 [P] [US1] Implement `skill/lib/chalkai-loader.ts` lazy-loader stub (PRD §3 #11) — loads ChalkAI runtime ONLY when a chapter's WidgetSpec includes `type: 'reactive-math'`. v1 may stub if no code-domain lessons exercise it.",
+      "command": "T086 [P] [US3] Author `skill/prompts/00-ingest/pdf.md` — guides agent on text-PDF and scanned-PDF extraction handoffs",
       "status": "running",
-      "started_at": "2026-04-29T12:05:31.352519634Z",
+      "started_at": "2026-04-29T20:03:25.440026968Z",
       "constitution_rules": []
     },
-    "T050": {
+    "T010": {
       "mode": "native",
-      "command": "T050 [P] [US2] Author `skill/concepts/language-it.json` — vocab + grammar concept DAG for Italian",
+      "command": "T010 [P] Author `skill/shell/vendor/forest-plot/` — small custom forest-plot mini-lib (vanilla JS / SVG); supports `studies: Array<{label, effect, ci: [low, high]}>` shape per `contracts/widget-spec.ts`",
       "status": "running",
-      "started_at": "2026-04-29T14:55:03.473722468Z",
+      "started_at": "2026-04-28T18:17:19.991825279Z",
       "constitution_rules": []
     },
-    "T047": {
+    "T089": {
       "mode": "native",
-      "command": "T047 [US1] Create `skill/tests/golden-inputs/code-small-repo/` — a tiny, real, MIT-licensed TypeScript repo (e.g. a 200-line utility lib) committed verbatim into the dir",
+      "command": "T089 [P] [US3] Author `skill/prompts/00-ingest/bundle.md` — guides on multi-source bundles + manifest interpretation",
       "status": "running",
-      "started_at": "2026-04-29T14:55:03.451968594Z",
+      "started_at": "2026-04-29T20:03:25.472531900Z",
       "constitution_rules": []
     },
-    "T088": {
+    "T058": {
       "mode": "native",
-      "command": "T088 [P] [US3] Author `skill/prompts/00-ingest/agent-report.md` — guides on treating agent reports as `secondary`",
+      "command": "T058 [P] [US2] Extend `skill/lib/widget-renderer.ts` to render `audio-tts` widgets — produces `<audio>` tag pointing at the per-clip MP3 in `<lesson-output-dir>/audio/`",
       "status": "running",
-      "started_at": "2026-04-29T18:23:58.802099255Z",
+      "started_at": "2026-04-29T20:03:25.420181882Z",
       "constitution_rules": []
     },
-    "T042": {
+    "T091": {
       "mode": "native",
-      "command": "T042 [P] [US1] Author `skill/prompts/04b-quiz-mcq.md` — universal MCQ generation prompt (used by US1 + others)",
+      "command": "T091 [P] [US3] Author `skill/prompts/04g-quiz-agreement-matrix.md`",
       "status": "running",
-      "started_at": "2026-04-29T12:05:31.382093329Z",
+      "started_at": "2026-04-29T20:03:25.490215444Z",
       "constitution_rules": []
     },
-    "T054": {
+    "T083": {
       "mode": "native",
-      "command": "T054 [P] [US2] Author `skill/ingest-adapters/vocab-list.ts` — parses a CSV vocab list (FR-032 g); produces `Brief` with `sourceType: 'vocab-list'`. Source CSV copied into `<lesson-output-dir>/source/` per FR-030.",
+      "command": "T083 [P] [US3] Author `skill/prompts/medicine-only/verifier-stage2-verify.md`",
       "status": "running",
-      "started_at": "2026-04-29T15:31:13.464072629Z",
+      "started_at": "2026-04-29T16:30:53.391929261Z",
       "constitution_rules": []
     },
-    "T024": {
+    "T036": {
       "mode": "native",
-      "command": "T024 Author `skill/lib/pipeline.ts` — orchestrates the 5 stages per `contracts/pipeline-stages.md`. For text-LLM stages (1-4), it loads the right prompt template and **hands control to the parent Claude Code agent** (Q8 — no SDK call). It enforces validator retry up to 3 attempts (FR-006) and the FR-029 deep-research opt-in cap. Depends on T013, T018, T019, T020, T022, T023.",
+      "command": "T036 [P] [US1] Author `skill/personas/code.json` — Chiron-mentor (subject expert) + Alice (peer, eager) + Bob (peer, confused), all in the JSON shape from `data-model.md` §3.3",
       "status": "running",
-      "started_at": "2026-04-29T11:13:51.155435604Z",
-      "constitution_rules": []
-    },
-    "T069": {
-      "mode": "native",
-      "command": "T069 [P] [US3] Author `skill/personas/medicine.json` — Dr. Reyes (attending) + Mike (med student, peer) + Priya (resident, peer)",
-      "status": "running",
-      "started_at": "2026-04-29T16:04:05.632691618Z",
-      "constitution_rules": []
-    },
-    "T035": {
-      "mode": "native",
-      "command": "T035 [P] [US1] Author `skill/curricula/code.json` — `templateStyle: scroll-modules`, `chapterCountTarget: 8`, `perChapterQuizTarget: 10`, `perChapterSrCardTarget: 7`, `modeAOnly: true`",
-      "status": "running",
-      "started_at": "2026-04-29T12:05:31.333978742Z",
-      "constitution_rules": []
-    },
-    "T068": {
-      "mode": "native",
-      "command": "T068 [P] [US3] Author `skill/curricula/medicine-uptodate.json` — UpToDate sub-mode: `format_style: academic_prose`, `audience_focus: point-of-care management`, `recommendation_framework: GRADE enforced`, `word_count: 5000-10000`",
-      "status": "running",
-      "started_at": "2026-04-29T16:04:05.618607035Z",
-      "constitution_rules": []
-    },
-    "T022": {
-      "mode": "native",
-      "command": "T022 [P] Author `skill/lib/progress.ts` — stderr progress emitter per R-05 / FR-028: `progress.stage(N, total, label)`, `progress.chapter(stageN, chapN, chapTotal, label)`. Used by every pipeline stage.",
-      "status": "running",
-      "started_at": "2026-04-28T19:11:06.003730960Z",
-      "constitution_rules": []
-    },
-    "T030": {
-      "mode": "native",
-      "command": "T030 [P] Author `skill/prompts/03-validate-rubric.md` — Stage 3 rubric prompt for the validator's structured-issue retry loop",
-      "status": "running",
-      "started_at": "2026-04-29T11:13:51.186159297Z",
-      "constitution_rules": []
-    },
-    "T055": {
-      "mode": "native",
-      "command": "T055 [P] [US2] Extend `skill/lib/widget-renderer.ts` to render `fill-blank` widgets with FR-020 fuzzy accent matching: `caffe ≡ caffè`, `e ≡ è`, `niño ≡ nino` (Spanish-style accents tolerated for cross-language consistency)",
-      "status": "running",
-      "started_at": "2026-04-29T15:31:13.468280921Z",
-      "constitution_rules": []
-    },
-    "T082": {
-      "mode": "native",
-      "command": "T082 [P] [US3] Author `skill/prompts/medicine-only/verifier-stage1-generate.md`",
-      "status": "running",
-      "started_at": "2026-04-29T16:30:53.385594249Z",
+      "started_at": "2026-04-29T14:55:03.417871549Z",
       "constitution_rules": []
     },
     "T025": {
@@ -350,60 +455,11 @@
       "started_at": "2026-04-29T11:13:51.161066931Z",
       "constitution_rules": []
     },
-    "T045": {
+    "T080": {
       "mode": "native",
-      "command": "T045 [P] [US1] Author `skill/prompts/04m-domain-expert.md` — Chiron-mentor / Dr. Reyes / Klaus / Dr. Hofmann expert dialogue",
+      "command": "T080 [US3] Extend `skill/lib/chemistry-renderer.ts` — concrete `MoleculeRenderer` impl. **Phase 5 prototype rubric** per R-02: prototype both Kekule.js and RDKit-JS against the metformin SMILES, pick the smaller / faster one, drop the loser. Vendor the winning library into `skill/shell/vendor/molecule-renderer/`. Ships a single dep at runtime per FR-031.",
       "status": "running",
-      "started_at": "2026-04-29T14:55:03.441015345Z",
-      "constitution_rules": []
-    },
-    "T046": {
-      "mode": "native",
-      "command": "T046 [P] [US1] Author `skill/prompts/04n-sr-card-gen.md` — generates SR cards (`card_type`, `front`, `back`) per chapter, scoped to the chapter's `keyConcepts`",
-      "status": "running",
-      "started_at": "2026-04-29T14:55:03.447207634Z",
-      "constitution_rules": []
-    },
-    "T041": {
-      "mode": "native",
-      "command": "T041 [P] [US1] Author `skill/prompts/00-ingest/code-repo.md` — guides the agent on what to extract from a repo",
-      "status": "running",
-      "started_at": "2026-04-29T12:05:31.372347806Z",
-      "constitution_rules": []
-    },
-    "T020": {
-      "mode": "native",
-      "command": "T020 Author `skill/lib/widget-renderer.ts` — dispatch table from `WidgetSpec.type` to renderer function. Phase 2 implements only universal primitives (`mcq`, `true-false`, `mathjax`, `mermaid`); domain-specific widgets (vignette, fill-blank, molecule, forest-plot) come in their respective story phases.",
-      "status": "running",
-      "started_at": "2026-04-28T19:11:05.988708573Z",
-      "constitution_rules": []
-    },
-    "T004": {
-      "mode": "native",
-      "command": "T004 [P] Fork codebase-to-course shell verbatim into `skill/shell/` — copy `_base.html`, `_footer.html`, `styles.css` (1195 LOC), `main.js`, `build.sh` from `~/dev/audits/codebase-to-course/`",
-      "status": "running",
-      "started_at": "2026-04-28T18:17:19.966421556Z",
-      "constitution_rules": []
-    },
-    "T011": {
-      "mode": "native",
-      "command": "T011 Author `skill/shell/vendor/molecule-renderer/README.md` and stub directory — concrete library (Kekule.js or RDKit-JS) is selected during US3 Phase 4 per FR-031; this task only places the directory + version-pinning template",
-      "status": "running",
-      "started_at": "2026-04-28T19:11:05.859233910Z",
-      "constitution_rules": []
-    },
-    "T027": {
-      "mode": "native",
-      "command": "T027 [P] Author `skill/lib/mode-heuristic.ts` — `detectMode(extractedText) → {mode: 'A'|'B', reason: string}` per FR-003; `<2000 words → B candidate`, `≥2000 → A candidate`. Honors user override.",
-      "status": "running",
-      "started_at": "2026-04-29T11:13:51.168946309Z",
-      "constitution_rules": []
-    },
-    "T049": {
-      "mode": "native",
-      "command": "T049 [US1] Author `skill/tests/test.sh` — driver that runs all golden inputs, generates `lesson.html` in a temp dir, opens in headless browser, diffs against snapshots, exits non-zero on any mismatch (FR-026)",
-      "status": "running",
-      "started_at": "2026-04-29T14:55:03.462718911Z",
+      "started_at": "2026-04-29T16:30:53.378133539Z",
       "constitution_rules": []
     },
     "T057": {
@@ -413,46 +469,11 @@
       "started_at": "2026-04-29T16:30:53.343611076Z",
       "constitution_rules": []
     },
-    "T017": {
+    "T087": {
       "mode": "native",
-      "command": "T017 [P] Author `skill/lib/schemas/brief.ts` — Zod schema for `Brief` per `data-model.md` §1.1 with all 12 `sourceType` values from FR-032, plus `SourceFileEntry` for `sourceManifest[]`",
+      "command": "T087 [P] [US3] Author `skill/prompts/00-ingest/image.md` — guides on image-folder + single-image bundles + figure interpretation",
       "status": "running",
-      "started_at": "2026-04-29T11:13:51.130623644Z",
-      "constitution_rules": []
-    },
-    "T002": {
-      "mode": "native",
-      "command": "T002 [P] Initialize TypeScript scaffolding at `skill/` — `package.json` (no `@anthropic-ai/sdk`, no `@google/generative-ai`; deps are `zod`, `better-sqlite3`, `pdfjs-dist`, plus `pdf-to-img` or equivalent for scanned-PDF rasterization), `tsconfig.json` (strict mode), `.gitignore`",
-      "status": "running",
-      "started_at": "2026-04-28T18:17:19.958565871Z",
-      "constitution_rules": []
-    },
-    "T072": {
-      "mode": "native",
-      "command": "T072 [P] [US3] Author `skill/ingest-adapters/multi-pdf.ts` — accepts an ordered list or directory of PDFs (FR-032 e); delegates each file to `pdf.ts`; concatenates extracted text in supplied order; per-file provenance in `Brief.sourceManifest[]`",
-      "status": "running",
-      "started_at": "2026-04-29T16:04:05.665208863Z",
-      "constitution_rules": []
-    },
-    "T026": {
-      "mode": "native",
-      "command": "T026 [P] Author `skill/lib/trigger-context.ts` — parses raw user input into the `TriggerContext` struct from `contracts/skill-triggers.md` (resolves domain, mode, sourceArg, flags); exposes `parseTrigger(raw, source: 'natural-language' | 'slash-command') → TriggerContext`",
-      "status": "running",
-      "started_at": "2026-04-29T12:05:31.293024616Z",
-      "constitution_rules": []
-    },
-    "T084": {
-      "mode": "native",
-      "command": "T084 [P] [US3] Author `skill/prompts/medicine-only/verifier-stage3-refine.md`",
-      "status": "running",
-      "started_at": "2026-04-29T16:30:53.397297604Z",
-      "constitution_rules": []
-    },
-    "T016": {
-      "mode": "native",
-      "command": "T016 [P] Author `skill/lib/schemas/chapter-syllabus.ts` — Zod schema for `ChapterSyllabus` per `data-model.md` §1.2, with refinements: `scienceAnnotations.length >= 3` (FR-022), conditional `spacingConnections.length` 2-4 for chapter ≥ 8 (FR-022), every quiz-type widget has `variants: Variant[]` non-empty (FR-021)",
-      "status": "running",
-      "started_at": "2026-04-28T19:11:05.971880612Z",
+      "started_at": "2026-04-29T20:03:25.454963659Z",
       "constitution_rules": []
     },
     "T076": {
@@ -462,109 +483,60 @@
       "started_at": "2026-04-29T16:30:53.372196796Z",
       "constitution_rules": []
     },
-    "T033": {
-      "mode": "native",
-      "command": "T033 Author `skill/lib/assemble.ts` — Stage 5: invokes `shell/build.sh`, calls `sqlite-init.ts` to initialize the DB, seeds `sr_cards` chapter-1 due-now, seeds `bookmarks` chapter-1 entry, opens `lesson.html` via `xdg-open`/`open`. Depends on T012, T013",
-      "status": "running",
-      "started_at": "2026-04-29T12:05:31.310909865Z",
-      "constitution_rules": []
-    },
-    "T067": {
-      "mode": "native",
-      "command": "T067 [P] [US3] Author `skill/curricula/medicine-amboss.json` — AMBOSS sub-mode: `format_style: bulleted_nested`, `audience_focus: board-exam pattern recognition`, `recommendation_framework: consensus only`, `word_count: 1500-2000`, `vignetteTaxonomy: ['classic','atypical','pediatric','elderly','immunocompromised','pregnancy','comorbidity','mimicker']`",
-      "status": "running",
-      "started_at": "2026-04-29T16:04:05.609751869Z",
-      "constitution_rules": []
-    },
-    "T029": {
-      "mode": "native",
-      "command": "T029 [P] Author `skill/prompts/02-syllabus.md` — Stage 2 prompt template that fills the `ChapterSyllabus[]` schema slots, includes `{{themeBlock}}` injection (FR-024) and the FR-022 mandate (≥3 scienceAnnotations, spacingConnections from chapter 8+)",
-      "status": "running",
-      "started_at": "2026-04-29T11:13:51.180719775Z",
-      "constitution_rules": []
-    },
-    "T040": {
-      "mode": "native",
-      "command": "T040 [P] [US1] Extend `skill/lib/widget-renderer.ts` to render `code-runner` widgets per R-03 — lazy-loads Pyodide from CDN if `runtime: 'pyodide'`; falls back to \"Pyodide unavailable\" message when offline; native JS runtime always works inline",
-      "status": "running",
-      "started_at": "2026-04-29T14:55:03.424703840Z",
-      "constitution_rules": []
-    },
-    "T094": {
-      "mode": "native",
-      "command": "T094 [US3] Add medicine-source refusal logic in `skill/lib/pipeline.ts` Stage 0: refuse generation when the only source is `agent-report` (FR-035, SC-016) AND when there is no source-grounding at all (FR-016). Depends on T024.",
-      "status": "running",
-      "started_at": "2026-04-29T18:23:58.830653451Z",
-      "constitution_rules": []
-    },
-    "T089": {
-      "mode": "native",
-      "command": "T089 [P] [US3] Author `skill/prompts/00-ingest/bundle.md` — guides on multi-source bundles + manifest interpretation",
-      "status": "running",
-      "started_at": "2026-04-29T18:23:58.806209796Z",
-      "constitution_rules": []
-    },
-    "T018": {
-      "mode": "native",
-      "command": "T018 Author `skill/lib/validator.ts` — runs Zod validation, then concept-DAG validation (no cycles; every prereq exists; every `keyConcepts` entry exists in the domain's DAG), then rubric check; returns structured issue list on failure for retry (FR-006); depends on T015, T016, T017",
-      "status": "running",
-      "started_at": "2026-04-29T11:13:51.145237774Z",
-      "constitution_rules": []
-    },
-    "T087": {
-      "mode": "native",
-      "command": "T087 [P] [US3] Author `skill/prompts/00-ingest/image.md` — guides on image-folder + single-image bundles + figure interpretation",
-      "status": "running",
-      "started_at": "2026-04-29T18:23:58.797628228Z",
-      "constitution_rules": []
-    },
-    "T032": {
-      "mode": "native",
-      "command": "T032 [P] Author `skill/prompts/05-answer-balancer.md` — post-pass prompt that re-balances correct-answer length + position across MCQ options without changing semantics (FR-006 utility)",
-      "status": "running",
-      "started_at": "2026-04-29T11:13:51.196599533Z",
-      "constitution_rules": []
-    },
-    "T006": {
-      "mode": "native",
-      "command": "T006 [P] Author new theme files `skill/shell/themes/clinical.css` (medicine default — white/blue/teal) and `skill/shell/themes/linguistic.css` (language default — warm earth tones)",
-      "status": "running",
-      "started_at": "2026-04-28T18:17:19.975501420Z",
-      "constitution_rules": []
-    },
-    "T058": {
-      "mode": "native",
-      "command": "T058 [P] [US2] Extend `skill/lib/widget-renderer.ts` to render `audio-tts` widgets — produces `<audio>` tag pointing at the per-clip MP3 in `<lesson-output-dir>/audio/`",
-      "status": "running",
-      "started_at": "2026-04-29T18:23:58.777131221Z",
-      "constitution_rules": []
-    },
-    "T051": {
-      "mode": "native",
-      "command": "T051 [P] [US2] Author `skill/curricula/language-vocab.json` — vocab-list-style curriculum (`chapterCountTarget: 5-10`, `perChapterSrCardTarget: 30-50`)",
-      "status": "running",
-      "started_at": "2026-04-29T15:31:13.450891787Z",
-      "constitution_rules": []
-    },
-    "T090": {
-      "mode": "native",
-      "command": "T090 [P] [US3] Author `skill/prompts/04c-quiz-clinical-vignette.md` — vignette MCQ generator with vignette taxonomy enforcement (15-20+, 8 categories), `keyInfo[]` extraction, Hammer rating, Attending Tip, per-distractor explanations (FR-019)",
-      "status": "running",
-      "started_at": "2026-04-29T18:23:58.810333037Z",
-      "constitution_rules": []
-    },
-    "T037": {
-      "mode": "native",
-      "command": "T037 [US1] Author `skill/ingest-adapters/code-repo.ts` — handles git repo / local dir / single source file (FR-032 f). Walks the repo respecting `.gitignore`, extracts file list + key file contents into a `Brief` with `sourceType: 'code-repo'` and metadata `{repoSha, fileCount, primaryLanguage}`. Source NOT copied (referenced by path per FR-030 carve-out for repos).",
-      "status": "running",
-      "started_at": "2026-04-29T12:05:31.338753217Z",
-      "constitution_rules": []
-    },
     "T056": {
       "mode": "native",
       "command": "T056 [P] [US2] Extend `skill/lib/widget-renderer.ts` to render `matching-pair` widgets — `1to1` and `NtoN` drag-drop modes per `contracts/widget-spec.ts`",
       "status": "running",
       "started_at": "2026-04-29T16:04:05.559514291Z",
+      "constitution_rules": []
+    },
+    "T066": {
+      "mode": "native",
+      "command": "T066 [P] [US3] Author `skill/concepts/medicine.json` — medicine concept DAG (~30 concepts spanning conditions / drugs / mechanisms)",
+      "status": "running",
+      "started_at": "2026-04-29T16:04:05.589905448Z",
+      "constitution_rules": []
+    },
+    "T071": {
+      "mode": "native",
+      "command": "T071 [P] [US3] Author `skill/ingest-adapters/image.ts` — handles single image file AND folder of page images (FR-032 c/d). Sends each image to `mcp__gemini-mcp__interpret_image`; preserves alphabetic order; populates `Brief.sourceManifest[]` (FR-034)",
+      "status": "running",
+      "started_at": "2026-04-29T16:04:05.660180355Z",
+      "constitution_rules": []
+    },
+    "T050": {
+      "mode": "native",
+      "command": "T050 [P] [US2] Author `skill/concepts/language-it.json` — vocab + grammar concept DAG for Italian",
+      "status": "running",
+      "started_at": "2026-04-29T14:55:03.473722468Z",
+      "constitution_rules": []
+    },
+    "T008": {
+      "mode": "native",
+      "command": "T008 [P] Vendor MathJax + mhchem extension into `skill/shell/vendor/mathjax/` — pin a specific version, document in `skill/shell/vendor/README.md`",
+      "status": "running",
+      "started_at": "2026-04-28T18:17:19.982813302Z",
+      "constitution_rules": []
+    },
+    "T068": {
+      "mode": "native",
+      "command": "T068 [P] [US3] Author `skill/curricula/medicine-uptodate.json` — UpToDate sub-mode: `format_style: academic_prose`, `audience_focus: point-of-care management`, `recommendation_framework: GRADE enforced`, `word_count: 5000-10000`",
+      "status": "running",
+      "started_at": "2026-04-29T16:04:05.618607035Z",
+      "constitution_rules": []
+    },
+    "T019": {
+      "mode": "native",
+      "command": "T019 Author `skill/lib/theme.ts` — exports `Theme` interface, theme registry mapping `id → tokens`, `pickThemeForDomain(domain) → themeId`, and `buildThemePromptBlock(theme) → string` (the system-prompt token injector ported from ClassBuild)",
+      "status": "running",
+      "started_at": "2026-04-28T19:11:05.983125253Z",
+      "constitution_rules": []
+    },
+    "T045": {
+      "mode": "native",
+      "command": "T045 [P] [US1] Author `skill/prompts/04m-domain-expert.md` — Chiron-mentor / Dr. Reyes / Klaus / Dr. Hofmann expert dialogue",
+      "status": "running",
+      "started_at": "2026-04-29T14:55:03.441015345Z",
       "constitution_rules": []
     },
     "T034": {
@@ -574,46 +546,11 @@
       "started_at": "2026-04-29T12:05:31.319162533Z",
       "constitution_rules": []
     },
-    "T092": {
+    "T029": {
       "mode": "native",
-      "command": "T092 [P] [US3] Author `skill/prompts/04j-quiz-assertion-reason.md`",
+      "command": "T029 [P] Author `skill/prompts/02-syllabus.md` — Stage 2 prompt template that fills the `ChapterSyllabus[]` schema slots, includes `{{themeBlock}}` injection (FR-024) and the FR-022 mandate (≥3 scienceAnnotations, spacingConnections from chapter 8+)",
       "status": "running",
-      "started_at": "2026-04-29T18:23:58.819823770Z",
-      "constitution_rules": []
-    },
-    "T093": {
-      "mode": "native",
-      "command": "T093 [P] [US3] Author `skill/prompts/04p-chemical-rendering.md` — chemical-equation generation (MathJax+mhchem `\\ce{}` syntax) and molecule-2d SMILES generation",
-      "status": "running",
-      "started_at": "2026-04-29T18:23:58.825336657Z",
-      "constitution_rules": []
-    },
-    "T074": {
-      "mode": "native",
-      "command": "T074 [P] [US3] Author `skill/ingest-adapters/transcript.ts` — handles plain text / markdown chat-meeting-lecture transcripts (FR-032 h)",
-      "status": "running",
-      "started_at": "2026-04-29T16:30:53.360512044Z",
-      "constitution_rules": []
-    },
-    "T065": {
-      "mode": "native",
-      "command": "T065 [US2] Extend `skill/tests/test.sh` to include language-it-passato-prossimo run + snapshot diff",
-      "status": "running",
-      "started_at": "2026-04-29T16:04:05.582469941Z",
-      "constitution_rules": []
-    },
-    "T080": {
-      "mode": "native",
-      "command": "T080 [US3] Extend `skill/lib/chemistry-renderer.ts` — concrete `MoleculeRenderer` impl. **Phase 5 prototype rubric** per R-02: prototype both Kekule.js and RDKit-JS against the metformin SMILES, pick the smaller / faster one, drop the loser. Vendor the winning library into `skill/shell/vendor/molecule-renderer/`. Ships a single dep at runtime per FR-031.",
-      "status": "running",
-      "started_at": "2026-04-29T16:30:53.378133539Z",
-      "constitution_rules": []
-    },
-    "T060": {
-      "mode": "native",
-      "command": "T060 [P] [US2] Author `skill/prompts/00-ingest/vocab-list.md`",
-      "status": "running",
-      "started_at": "2026-04-29T15:31:13.477046147Z",
+      "started_at": "2026-04-29T11:13:51.180719775Z",
       "constitution_rules": []
     },
     "T015": {
@@ -623,11 +560,74 @@
       "started_at": "2026-04-28T19:11:05.956523730Z",
       "constitution_rules": []
     },
-    "T023": {
+    "T012": {
       "mode": "native",
-      "command": "T023 [P] Author `skill/lib/source-copy.ts` — copies any local-file source into `<lesson-output-dir>/source/` preserving structure (FR-030). Used by ingest adapters.",
+      "command": "T012 [P] Update `skill/shell/build.sh` to inline every file under `skill/shell/vendor/*` as `<script>` / `<style>` blocks into the single output `lesson.html` (FR-037, Stage 5 of `contracts/pipeline-stages.md`)",
       "status": "running",
-      "started_at": "2026-04-28T19:11:06.009562078Z",
+      "started_at": "2026-04-28T19:11:05.879981115Z",
+      "constitution_rules": []
+    },
+    "T033": {
+      "mode": "native",
+      "command": "T033 Author `skill/lib/assemble.ts` — Stage 5: invokes `shell/build.sh`, calls `sqlite-init.ts` to initialize the DB, seeds `sr_cards` chapter-1 due-now, seeds `bookmarks` chapter-1 entry, opens `lesson.html` via `xdg-open`/`open`. Depends on T012, T013",
+      "status": "running",
+      "started_at": "2026-04-29T12:05:31.310909865Z",
+      "constitution_rules": []
+    },
+    "T017": {
+      "mode": "native",
+      "command": "T017 [P] Author `skill/lib/schemas/brief.ts` — Zod schema for `Brief` per `data-model.md` §1.1 with all 12 `sourceType` values from FR-032, plus `SourceFileEntry` for `sourceManifest[]`",
+      "status": "running",
+      "started_at": "2026-04-29T11:13:51.130623644Z",
+      "constitution_rules": []
+    },
+    "T018": {
+      "mode": "native",
+      "command": "T018 Author `skill/lib/validator.ts` — runs Zod validation, then concept-DAG validation (no cycles; every prereq exists; every `keyConcepts` entry exists in the domain's DAG), then rubric check; returns structured issue list on failure for retry (FR-006); depends on T015, T016, T017",
+      "status": "running",
+      "started_at": "2026-04-29T11:13:51.145237774Z",
+      "constitution_rules": []
+    },
+    "T016": {
+      "mode": "native",
+      "command": "T016 [P] Author `skill/lib/schemas/chapter-syllabus.ts` — Zod schema for `ChapterSyllabus` per `data-model.md` §1.2, with refinements: `scienceAnnotations.length >= 3` (FR-022), conditional `spacingConnections.length` 2-4 for chapter ≥ 8 (FR-022), every quiz-type widget has `variants: Variant[]` non-empty (FR-021)",
+      "status": "running",
+      "started_at": "2026-04-28T19:11:05.971880612Z",
+      "constitution_rules": []
+    },
+    "T067": {
+      "mode": "native",
+      "command": "T067 [P] [US3] Author `skill/curricula/medicine-amboss.json` — AMBOSS sub-mode: `format_style: bulleted_nested`, `audience_focus: board-exam pattern recognition`, `recommendation_framework: consensus only`, `word_count: 1500-2000`, `vignetteTaxonomy: ['classic','atypical','pediatric','elderly','immunocompromised','pregnancy','comorbidity','mimicker']`",
+      "status": "running",
+      "started_at": "2026-04-29T16:04:05.609751869Z",
+      "constitution_rules": []
+    },
+    "T042": {
+      "mode": "native",
+      "command": "T042 [P] [US1] Author `skill/prompts/04b-quiz-mcq.md` — universal MCQ generation prompt (used by US1 + others)",
+      "status": "running",
+      "started_at": "2026-04-29T12:05:31.382093329Z",
+      "constitution_rules": []
+    },
+    "T027": {
+      "mode": "native",
+      "command": "T027 [P] Author `skill/lib/mode-heuristic.ts` — `detectMode(extractedText) → {mode: 'A'|'B', reason: string}` per FR-003; `<2000 words → B candidate`, `≥2000 → A candidate`. Honors user override.",
+      "status": "running",
+      "started_at": "2026-04-29T11:13:51.168946309Z",
+      "constitution_rules": []
+    },
+    "T040": {
+      "mode": "native",
+      "command": "T040 [P] [US1] Extend `skill/lib/widget-renderer.ts` to render `code-runner` widgets per R-03 — lazy-loads Pyodide from CDN if `runtime: 'pyodide'`; falls back to \"Pyodide unavailable\" message when offline; native JS runtime always works inline",
+      "status": "running",
+      "started_at": "2026-04-29T14:55:03.424703840Z",
+      "constitution_rules": []
+    },
+    "T055": {
+      "mode": "native",
+      "command": "T055 [P] [US2] Extend `skill/lib/widget-renderer.ts` to render `fill-blank` widgets with FR-020 fuzzy accent matching: `caffe ≡ caffè`, `e ≡ è`, `niño ≡ nino` (Spanish-style accents tolerated for cross-language consistency)",
+      "status": "running",
+      "started_at": "2026-04-29T15:31:13.468280921Z",
       "constitution_rules": []
     }
   }

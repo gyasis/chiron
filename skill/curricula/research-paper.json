@@ -1,0 +1,23 @@
+{
+  "domain": "research-paper",
+  "version": "1",
+  "description": "Critical-appraisal-style lesson tracking IMRAD structure plus the paper's methodology and findings",
+  "templateStyle": "scroll-modules",
+  "chapterCountTarget": 6,
+  "perChapterQuizTarget": 7,
+  "perChapterSrCardTarget": 6,
+  "modeAOnly": true,
+  "chapterStructure": ["motivation", "methods", "results", "discussion", "appraisal", "connections"],
+  "widgetMix": {
+    "mcq": 0.25,
+    "agreement-matrix": 0.2,
+    "assertion-reason": 0.15,
+    "forest-plot": 0.15,
+    "true-false": 0.15,
+    "slider-estimation": 0.1
+  },
+  "personasFile": "personas/research-paper.json",
+  "themeId": "warm-paper",
+  "requireSourcePaperGrounding": true,
+  "forestPlotIfMetaAnalysis": true
+}
