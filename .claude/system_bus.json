@@ -90,6 +90,15 @@
     {
       "timestamp": "2026-04-29T09:54:54.177541",
       "event_type": "context_compression_detected"
+    },
+    {
+      "timestamp": "2026-04-29T09:54:54.458853",
+      "agent": "git-manager",
+      "event_type": "checkpoint_created"
+    },
+    {
+      "timestamp": "2026-04-29T09:57:51.976996",
+      "event_type": "context_compression_detected"
     }
   ]
 }

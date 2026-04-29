@@ -1,0 +1,19 @@
+{
+  "session_id": "e4234542-0742-427f-afab-b5c40d037550",
+  "compact_timestamp": "2026-04-29T09:54:54+00:00",
+  "compact_epoch": 1777456494,
+  "discoveries_file": "/home/gyasisutton/dev/projects/chiron/.memory/.pre-compact-discoveries-e4234542.json",
+  "backup_path": "/home/gyasisutton/.claude/backups/20260429/session-e4234542-20260429_095455.jsonl",
+  "trigger": "auto",
+  "specstory_latest_file": "/home/gyasisutton/dev/projects/chiron/.specstory/history/2026-04-28_16-45-45Z.md",
+  "specstory_latest_date": "2026-04-28",
+  "specstory_session_start": "2026-04-28_16-45-45",
+  "specstory_last_modified": "2026-04-29T09:54:54+00:00",
+  "specstory_last_modified_epoch": 1777456494,
+  "jsonl_transcript_path": "/home/gyasisutton/.claude/projects/-home-gyasisutton-dev-projects-chiron/e4234542-0742-427f-afab-b5c40d037550.jsonl",
+  "jsonl_message_count": 41,
+  "jsonl_first_timestamp": "2026-04-29T08:38:42.877Z",
+  "jsonl_last_timestamp": "2026-04-29T09:54:47.379Z",
+  "injection_tokens": 100,
+  "injection_percentage": "0.05%"
+}

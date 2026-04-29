@@ -1,0 +1,20 @@
+{
+  "session_id": "e4234542-0742-427f-afab-b5c40d037550",
+  "extraction_timestamp": "2026-04-29T09:54:55.237681",
+  "trigger": "auto",
+  "messages_analyzed": 11,
+  "discoveries_count": 1,
+  "discoveries": [
+    {
+      "type": "successful_tool_pattern",
+      "tools": [
+        "Bash",
+        "Bash",
+        "Bash"
+      ],
+      "pattern": "Bash \u2192 Bash \u2192 Bash",
+      "priority": "medium"
+    }
+  ],
+  "last_user_directives": []
+}
