@@ -1,0 +1,12 @@
+{
+  "active_prds": [
+    {
+      "id": "chiron_tts_provider_selection_2026-04-29",
+      "path": "/home/gyasisutton/dev/prd/scratch/chiron_tts_provider_selection_2026-04-29.md",
+      "status": "open",
+      "created": "2026-04-29",
+      "summary": "TTS provider selection deferred from chiron v1 build (Wave 6 surfaced Gemini MCP TTS gap). Defines decision criteria, candidate matrix (Gemini, ElevenLabs, Azure, OpenAI, Coqui, Piper, Hume), and proposes TtsProvider interface.",
+      "blocks": ["T059 production wire-up", "US2 audio path"]
+    }
+  ]
+}
