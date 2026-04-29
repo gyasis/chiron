@@ -1,12 +1,12 @@
 # Progress
 
-**Last Updated**: 2026-04-29 19:08:24
+**Last Updated**: 2026-04-29 19:39:19
 
 ## Overall Progress
 - Total Tasks: 129
-- Completed: 90 ✅
-- Pending: 39 ⏳
-- Progress: 69%
+- Completed: 89 ✅
+- Pending: 40 ⏳
+- Progress: 68%
 
 ## Task Breakdown
 - [x] T001 Create the `skill/` directory tree per `plan.md`: `skill/{prompts/{00-ingest/,medicine-only/},ingest-adapters/,concepts/,curricula/,personas/,shell/{themes/,vendor/},lib/,tests/{golden-inputs/,snapshots/}}`
@@ -66,7 +66,7 @@
 - [x] T055 [P] [US2] Extend `skill/lib/widget-renderer.ts` to render `fill-blank` widgets with FR-020 fuzzy accent matching: `caffe ≡ caffè`, `e ≡ è`, `niño ≡ nino` (Spanish-style accents tolerated for cross-language consistency)
 - [x] T056 [P] [US2] Extend `skill/lib/widget-renderer.ts` to render `matching-pair` widgets — `1to1` and `NtoN` drag-drop modes per `contracts/widget-spec.ts`
 - [x] T057 [P] [US2] Extend `skill/lib/widget-renderer.ts` to render `cloze` widgets with `ankiCompatible: true` (so the optional `.apkg` export later can pick them up unchanged)
-- [x] T058 [P] [US2] Extend `skill/lib/widget-renderer.ts` to render `audio-tts` widgets — produces `<audio>` tag pointing at the per-clip MP3 in `<lesson-output-dir>/audio/`
+- [ ] T058 [P] [US2] Extend `skill/lib/widget-renderer.ts` to render `audio-tts` widgets — **TABLED to TTS PRD** (`~/dev/prd/scratch/chiron_tts_provider_selection_2026-04-29.md`); provisional renderer authored 2026-04-29 but task remains incomplete until provider selection lands
 - [x] T059 [US2] Author `skill/lib/tts-gemini.ts` — invokes the Gemini TTS path (per FR-036 / R-01) for each `audio-tts` widget transcript; saves audio files to `<lesson-output-dir>/audio/<chapter-id>/<line-id>.mp3`. ElevenLabs fallback path documented but not wired in v1 unless Gemini fails Phase 4 ear-test.
 - [x] T060 [P] [US2] Author `skill/prompts/00-ingest/vocab-list.md`
 - [x] T061 [P] [US2] Author `skill/prompts/04d-quiz-fill-blank.md` — fill-blank generation with explicit FR-020 fuzzy-accent rule for Italian

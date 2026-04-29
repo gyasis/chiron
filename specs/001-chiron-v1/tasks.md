@@ -164,7 +164,7 @@ description: "Task list for Chiron v1 — Universal Lesson Generator"
 - [x] T055 [P] [US2] Extend `skill/lib/widget-renderer.ts` to render `fill-blank` widgets with FR-020 fuzzy accent matching: `caffe ≡ caffè`, `e ≡ è`, `niño ≡ nino` (Spanish-style accents tolerated for cross-language consistency)
 - [x] T056 [P] [US2] Extend `skill/lib/widget-renderer.ts` to render `matching-pair` widgets — `1to1` and `NtoN` drag-drop modes per `contracts/widget-spec.ts`
 - [x] T057 [P] [US2] Extend `skill/lib/widget-renderer.ts` to render `cloze` widgets with `ankiCompatible: true` (so the optional `.apkg` export later can pick them up unchanged)
-- [x] T058 [P] [US2] Extend `skill/lib/widget-renderer.ts` to render `audio-tts` widgets — produces `<audio>` tag pointing at the per-clip MP3 in `<lesson-output-dir>/audio/`
+- [ ] T058 [P] [US2] Extend `skill/lib/widget-renderer.ts` to render `audio-tts` widgets — **TABLED to TTS PRD** (`~/dev/prd/scratch/chiron_tts_provider_selection_2026-04-29.md`); provisional renderer authored 2026-04-29 but task remains incomplete until provider selection lands
 
 ### TTS via Gemini MCP
 

@@ -41,7 +41,8 @@ matching the `AssertionReasonWidget` variant of `widget-spec.ts`:
       {"label": "A", "text": "Both A and R are true and R is the correct explanation of A", "correct": true},
       {"label": "B", "text": "Both A and R are true but R is NOT the correct explanation of A", "correct": false},
       {"label": "C", "text": "A is true but R is false", "correct": false},
-      {"label": "D", "text": "Both A and R are false", "correct": false}
+      {"label": "D", "text": "A is false but R is true", "correct": false},
+      {"label": "E", "text": "Both A and R are false", "correct": false}
     ],
     "explanation": "Brief paragraph: why A is true (or false), why R is true (or false), whether R explains A, and one sentence per other option saying why it is wrong.",
     "variants": [
@@ -58,14 +59,18 @@ Schema notes:
   - `"both-true-reason-explains"` (Type A)
   - `"both-true-reason-doesnt-explain"` (Type B)
   - `"assertion-true-reason-false"` (Type C)
-  - `"assertion-false-reason-true"` (rare — use sparingly)
-  - `"both-false"` (Type D)
-- The runtime renders the same fixed 4-option board-exam answer set for
-  every item; `options` is supplied so the harness/balancer sees a uniform
-  shape. Exactly **one** option has `correct: true`, and it MUST agree with
+  - `"assertion-false-reason-true"` (Type D — A false, R true)
+  - `"both-false"` (Type E)
+- The runtime renders a fixed **5-option** board-exam answer set for every
+  item (USMLE / advanced-board convention; 4 options are an older variant).
+  `options` is supplied so the harness/balancer sees a uniform shape. The
+  5 options follow the USMLE distractor pattern: **one correct answer, one
+  close-but-wrong (the highest-yield distractor), two standard distractors,
+  and one obviously-wrong option**. For assertion-reason specifically those
+  five slots map onto the five relationship types (A/B/C/D/E above).
+- Exactly **one** option has `correct: true`, and it MUST agree with
   `correctRelationship` (A↔both-true-reason-explains, B↔both-true-reason-doesnt-explain,
-  C↔assertion-true-reason-false, D↔both-false). The `assertion-false-reason-true`
-  enum value maps to option C-equivalent — flag it with a `note` field if used.
+  C↔assertion-true-reason-false, D↔assertion-false-reason-true, E↔both-false).
 - `variants[]` MUST contain **at least 2** entries (FR-021). Each variant is a
   partial widget that the runtime merges over the base — typically a rephrased
   `assertion`, a rephrased `reason`, or both. Do NOT change the truth values
@@ -73,10 +78,10 @@ Schema notes:
 
 ## Pedagogical rules
 
-1. **Distribute correct answers across A, B, C, D.** Across `{{numItems}}`
-   items, do NOT make every answer "A". Aim roughly for: 30% Type A,
-   35% Type B, 25% Type C, 10% Type D. The Stage-4 answer-balancer will
-   tighten the distribution — produce something reasonable upfront.
+1. **Distribute correct answers across A, B, C, D, E.** Across `{{numItems}}`
+   items, do NOT make every answer "A". Aim roughly for: 25% Type A,
+   30% Type B, 20% Type C, 15% Type D, 10% Type E. The Stage-4 answer-balancer
+   will tighten the distribution — produce something reasonable upfront.
 2. **Type-B items are highest-yield** — both statements true but
    unrelated. Tests *reasoning structure*, not just recall. A learner who
    memorized two true facts but doesn't understand the causal link will get
@@ -87,11 +92,14 @@ Schema notes:
    sympathetic drive and remodeling, not by inotropy)."
 4. **Type-A items are foundational** — clean cause-effect chains drawn
    directly from the chapter. Use these to anchor the concept.
-5. **Type-D items** are harder to write convincingly without becoming
-   absurd. Use sparingly. The two false statements should be *plausible*
+5. **Type-D items** (A false, R true) test the partial-prep learner who
+   memorized a true fact but applied it to the wrong claim. Use them when
+   the chapter contains a commonly-misapplied true statement.
+6. **Type-E items** (both false) are harder to write convincingly without
+   becoming absurd. Use sparingly. Both false statements should be *plausible*
    misconceptions a partially-prepared learner would actually hold.
-6. **Per-option explanation.** The `explanation` field MUST briefly address
-   all four options — say which is correct and why each of the other three
+7. **Per-option explanation.** The `explanation` field MUST briefly address
+   all FIVE options — say which is correct and why each of the other four
    is wrong. This is a USMLE/AMBOSS-style requirement (matches `04b`).
 7. **Test understanding, not vocabulary.** A and R should each be
    substantive claims — not "X is defined as Y". Prefer mechanism, cause,
@@ -153,7 +161,7 @@ surface the gap.
 3. **Stable IDs.** `id` follows `assertion-<chapterSlug>-<1-indexed-n>`.
 4. **`correctRelationship` and `correct: true` option must agree.**
    Validation rejects mismatches.
-5. **`explanation` MUST address all four options briefly** — one
+5. **`explanation` MUST address all FIVE options briefly** — one
    sentence each is fine.
 6. **`variants[]` MUST have ≥2 entries** (FR-021), and variants must NOT
    flip truth values.
