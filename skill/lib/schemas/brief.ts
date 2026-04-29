@@ -1,0 +1,90 @@
+import { z } from 'zod';
+
+// SourceFileEntry — per-file provenance for multi-source ingest (FR-034)
+export const SourceFileEntrySchema = z.object({
+  path: z.string(),
+  role: z.enum(['primary', 'supplement', 'figure', 'appendix', 'agent-report']),
+  extractor: z.enum([
+    'text-pdf',
+    'vision-pdf',
+    'vision-image',
+    'html',
+    'transcript',
+    'agent-report',
+    'code',
+  ]),
+  tokenCount: z.number().int().nonnegative(),
+  extractedAt: z.number().int().nonnegative(),
+});
+
+export type SourceFileEntry = z.infer<typeof SourceFileEntrySchema>;
+
+// All 12 sourceType values from FR-032 (a-l)
+export const SourceTypeSchema = z.enum([
+  'code-repo',
+  'pdf-text',
+  'pdf-scanned',
+  'image',
+  'image-folder',
+  'multi-pdf',
+  'vocab-list',
+  'transcript',
+  'url',
+  'html-file',
+  'agent-report',
+  'bundle',
+]);
+
+export type SourceType = z.infer<typeof SourceTypeSchema>;
+
+export const DomainSchema = z.enum(['code', 'medicine', 'language-it', 'research-paper']);
+export type Domain = z.infer<typeof DomainSchema>;
+
+export const ModeSchema = z.enum(['A', 'B']);
+export type Mode = z.infer<typeof ModeSchema>;
+
+// Brief — Stage 1 output, persisted as <lesson-output-dir>/brief.json
+export const BriefSchema = z
+  .object({
+    domain: DomainSchema,
+    mode: ModeSchema,
+    sourceType: SourceTypeSchema,
+    sourcePath: z.string().min(1),
+    sourceCopiedTo: z.string().nullable(),
+    extractedText: z.string(),
+    sourceManifest: z.array(SourceFileEntrySchema).optional(),
+    agentSourceProvenance: z.string().nullable().optional(),
+    metadata: z.record(z.unknown()),
+    briefSchemaVersion: z.string(),
+  })
+  .superRefine((b, ctx) => {
+    // FR-034: sourceManifest required for multi-source types
+    const multiSource: SourceType[] = ['multi-pdf', 'image-folder', 'bundle'];
+    if (multiSource.includes(b.sourceType)) {
+      if (!b.sourceManifest || b.sourceManifest.length === 0) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['sourceManifest'],
+          message: `sourceManifest required for sourceType '${b.sourceType}' (FR-034)`,
+        });
+      }
+    }
+    // FR-035: agentSourceProvenance required for agent-report
+    if (b.sourceType === 'agent-report' && !b.agentSourceProvenance) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['agentSourceProvenance'],
+        message: 'agentSourceProvenance required for agent-report sources (FR-035)',
+      });
+    }
+    // FR-035 / SC-016: medicine refuses agent-report-only sources
+    if (b.domain === 'medicine' && b.sourceType === 'agent-report') {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['sourceType'],
+        message: 'medicine domain forbids agent-report as sole source (SC-016)',
+      });
+    }
+  });
+
+export type Brief = z.infer<typeof BriefSchema>;

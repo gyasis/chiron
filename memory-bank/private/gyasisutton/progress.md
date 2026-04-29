@@ -1,12 +1,12 @@
 # Progress
 
-**Last Updated**: 2026-04-29 10:57:31
+**Last Updated**: 2026-04-29 12:05:52
 
 ## Overall Progress
 - Total Tasks: 129
-- Completed: 20 ✅
-- Pending: 109 ⏳
-- Progress: 15%
+- Completed: 30 ✅
+- Pending: 99 ⏳
+- Progress: 23%
 
 ## Task Breakdown
 - [x] T001 Create the `skill/` directory tree per `plan.md`: `skill/{prompts/{00-ingest/,medicine-only/},ingest-adapters/,concepts/,curricula/,personas/,shell/{themes/,vendor/},lib/,tests/{golden-inputs/,snapshots/}}`
@@ -25,22 +25,22 @@
 - [x] T014 [P] Author `skill/lib/sr-scheduler.ts` — SM-2 algorithm (~50 LOC per R-07): `nextDue(card, rating: 1|2|3|4)` returns updated `{ease_factor, interval_days, repetitions, next_due_at}`; writes to `sr_cards` and appends to `sr_review_log`
 - [x] T015 [P] Author `skill/lib/schemas/widget-spec.ts` — Zod schema mirroring `contracts/widget-spec.ts` (21 variants); export `WidgetSpec` discriminated union and `WidgetSpecSchema` Zod parser
 - [x] T016 [P] Author `skill/lib/schemas/chapter-syllabus.ts` — Zod schema for `ChapterSyllabus` per `data-model.md` §1.2, with refinements: `scienceAnnotations.length >= 3` (FR-022), conditional `spacingConnections.length` 2-4 for chapter ≥ 8 (FR-022), every quiz-type widget has `variants: Variant[]` non-empty (FR-021)
-- [ ] T017 [P] Author `skill/lib/schemas/brief.ts` — Zod schema for `Brief` per `data-model.md` §1.1 with all 12 `sourceType` values from FR-032, plus `SourceFileEntry` for `sourceManifest[]`
-- [ ] T018 Author `skill/lib/validator.ts` — runs Zod validation, then concept-DAG validation (no cycles; every prereq exists; every `keyConcepts` entry exists in the domain's DAG), then rubric check; returns structured issue list on failure for retry (FR-006); depends on T015, T016, T017
+- [x] T017 [P] Author `skill/lib/schemas/brief.ts` — Zod schema for `Brief` per `data-model.md` §1.1 with all 12 `sourceType` values from FR-032, plus `SourceFileEntry` for `sourceManifest[]`
+- [x] T018 Author `skill/lib/validator.ts` — runs Zod validation, then concept-DAG validation (no cycles; every prereq exists; every `keyConcepts` entry exists in the domain's DAG), then rubric check; returns structured issue list on failure for retry (FR-006); depends on T015, T016, T017
 - [x] T019 Author `skill/lib/theme.ts` — exports `Theme` interface, theme registry mapping `id → tokens`, `pickThemeForDomain(domain) → themeId`, and `buildThemePromptBlock(theme) → string` (the system-prompt token injector ported from ClassBuild)
 - [x] T020 Author `skill/lib/widget-renderer.ts` — dispatch table from `WidgetSpec.type` to renderer function. Phase 2 implements only universal primitives (`mcq`, `true-false`, `mathjax`, `mermaid`); domain-specific widgets (vignette, fill-blank, molecule, forest-plot) come in their respective story phases.
 - [ ] T021 [P] Author `skill/lib/chemistry-renderer.ts` — abstract `MoleculeRenderer` interface per FR-031 + `data-model.md` §1.4; provides `renderChemicalReaction(equation, container)` (uses vendored MathJax+mhchem). Concrete `MoleculeRenderer` impl is deferred to US3 (Phase 5).
 - [x] T022 [P] Author `skill/lib/progress.ts` — stderr progress emitter per R-05 / FR-028: `progress.stage(N, total, label)`, `progress.chapter(stageN, chapN, chapTotal, label)`. Used by every pipeline stage.
 - [x] T023 [P] Author `skill/lib/source-copy.ts` — copies any local-file source into `<lesson-output-dir>/source/` preserving structure (FR-030). Used by ingest adapters.
-- [ ] T024 Author `skill/lib/pipeline.ts` — orchestrates the 5 stages per `contracts/pipeline-stages.md`. For text-LLM stages (1-4), it loads the right prompt template and **hands control to the parent Claude Code agent** (Q8 — no SDK call). It enforces validator retry up to 3 attempts (FR-006) and the FR-029 deep-research opt-in cap. Depends on T013, T018, T019, T020, T022, T023.
-- [ ] T025 Author `skill/SKILL.md` — top-level skill descriptor with both entry-point styles per `contracts/skill-triggers.md`: (a) natural-language trigger phrases (`teach me`, `make a course on`, `lesson from this PDF`, `case-study this`, `chiron`); (b) slash-commands (`/chiron`, `/chiron-code`, `/chiron-medicine`, `/chiron-language`, `/chiron-research-paper`, `/chiron-case-study`). Includes the FR-036 Gemini MCP toolset table verbatim. Refuses German with the clear "deferred to post-v1" message per skill-triggers.md validation #2.
+- [x] T024 Author `skill/lib/pipeline.ts` — orchestrates the 5 stages per `contracts/pipeline-stages.md`. For text-LLM stages (1-4), it loads the right prompt template and **hands control to the parent Claude Code agent** (Q8 — no SDK call). It enforces validator retry up to 3 attempts (FR-006) and the FR-029 deep-research opt-in cap. Depends on T013, T018, T019, T020, T022, T023.
+- [x] T025 Author `skill/SKILL.md` — top-level skill descriptor with both entry-point styles per `contracts/skill-triggers.md`: (a) natural-language trigger phrases (`teach me`, `make a course on`, `lesson from this PDF`, `case-study this`, `chiron`); (b) slash-commands (`/chiron`, `/chiron-code`, `/chiron-medicine`, `/chiron-language`, `/chiron-research-paper`, `/chiron-case-study`). Includes the FR-036 Gemini MCP toolset table verbatim. Refuses German with the clear "deferred to post-v1" message per skill-triggers.md validation #2.
 - [ ] T026 [P] Author `skill/lib/trigger-context.ts` — parses raw user input into the `TriggerContext` struct from `contracts/skill-triggers.md` (resolves domain, mode, sourceArg, flags); exposes `parseTrigger(raw, source: 'natural-language' | 'slash-command') → TriggerContext`
-- [ ] T027 [P] Author `skill/lib/mode-heuristic.ts` — `detectMode(extractedText) → {mode: 'A'|'B', reason: string}` per FR-003; `<2000 words → B candidate`, `≥2000 → A candidate`. Honors user override.
-- [ ] T028 [P] Author `skill/prompts/01-brief.md` — Stage 1 prompt template with `{{domain}}` / `{{sourceType}}` / `{{extractedText}}` slots; output schema documented inline
-- [ ] T029 [P] Author `skill/prompts/02-syllabus.md` — Stage 2 prompt template that fills the `ChapterSyllabus[]` schema slots, includes `{{themeBlock}}` injection (FR-024) and the FR-022 mandate (≥3 scienceAnnotations, spacingConnections from chapter 8+)
-- [ ] T030 [P] Author `skill/prompts/03-validate-rubric.md` — Stage 3 rubric prompt for the validator's structured-issue retry loop
-- [ ] T031 [P] Author `skill/prompts/04a-chapter-write.md` — Stage 4 chapter narrative prompt (~150-400 words) referencing `{{chapterSyllabus}}` and `{{priorChapterStruggleSummary}}` (FR-023 pseudo-state)
-- [ ] T032 [P] Author `skill/prompts/05-answer-balancer.md` — post-pass prompt that re-balances correct-answer length + position across MCQ options without changing semantics (FR-006 utility)
+- [x] T027 [P] Author `skill/lib/mode-heuristic.ts` — `detectMode(extractedText) → {mode: 'A'|'B', reason: string}` per FR-003; `<2000 words → B candidate`, `≥2000 → A candidate`. Honors user override.
+- [x] T028 [P] Author `skill/prompts/01-brief.md` — Stage 1 prompt template with `{{domain}}` / `{{sourceType}}` / `{{extractedText}}` slots; output schema documented inline
+- [x] T029 [P] Author `skill/prompts/02-syllabus.md` — Stage 2 prompt template that fills the `ChapterSyllabus[]` schema slots, includes `{{themeBlock}}` injection (FR-024) and the FR-022 mandate (≥3 scienceAnnotations, spacingConnections from chapter 8+)
+- [x] T030 [P] Author `skill/prompts/03-validate-rubric.md` — Stage 3 rubric prompt for the validator's structured-issue retry loop
+- [x] T031 [P] Author `skill/prompts/04a-chapter-write.md` — Stage 4 chapter narrative prompt (~150-400 words) referencing `{{chapterSyllabus}}` and `{{priorChapterStruggleSummary}}` (FR-023 pseudo-state)
+- [x] T032 [P] Author `skill/prompts/05-answer-balancer.md` — post-pass prompt that re-balances correct-answer length + position across MCQ options without changing semantics (FR-006 utility)
 - [ ] T033 Author `skill/lib/assemble.ts` — Stage 5: invokes `shell/build.sh`, calls `sqlite-init.ts` to initialize the DB, seeds `sr_cards` chapter-1 due-now, seeds `bookmarks` chapter-1 entry, opens `lesson.html` via `xdg-open`/`open`. Depends on T012, T013
 - [ ] T034 [P] [US1] Author `skill/concepts/code.json` — small concept DAG (~15 concepts is fine for v1) with prereq edges; passes the validator (no cycles, every prereq exists)
 - [ ] T035 [P] [US1] Author `skill/curricula/code.json` — `templateStyle: scroll-modules`, `chapterCountTarget: 8`, `perChapterQuizTarget: 10`, `perChapterSrCardTarget: 7`, `modeAOnly: true`
