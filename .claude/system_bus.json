@@ -108,6 +108,11 @@
     {
       "timestamp": "2026-04-29T10:00:22.660948",
       "event_type": "context_compression_detected"
+    },
+    {
+      "timestamp": "2026-04-29T10:00:22.971075",
+      "agent": "git-manager",
+      "event_type": "checkpoint_created"
     }
   ]
 }

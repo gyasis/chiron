@@ -49,34 +49,34 @@ description: "Task list for Chiron v1 — Universal Lesson Generator"
 - [x] T008 [P] Vendor MathJax + mhchem extension into `skill/shell/vendor/mathjax/` — pin a specific version, document in `skill/shell/vendor/README.md`
 - [x] T009 [P] Vendor Mermaid into `skill/shell/vendor/mermaid/` — pin a specific version, document in vendor README
 - [x] T010 [P] Author `skill/shell/vendor/forest-plot/` — small custom forest-plot mini-lib (vanilla JS / SVG); supports `studies: Array<{label, effect, ci: [low, high]}>` shape per `contracts/widget-spec.ts`
-- [ ] T011 Author `skill/shell/vendor/molecule-renderer/README.md` and stub directory — concrete library (Kekule.js or RDKit-JS) is selected during US3 Phase 4 per FR-031; this task only places the directory + version-pinning template
-- [ ] T012 [P] Update `skill/shell/build.sh` to inline every file under `skill/shell/vendor/*` as `<script>` / `<style>` blocks into the single output `lesson.html` (FR-037, Stage 5 of `contracts/pipeline-stages.md`)
+- [x] T011 Author `skill/shell/vendor/molecule-renderer/README.md` and stub directory — concrete library (Kekule.js or RDKit-JS) is selected during US3 Phase 4 per FR-031; this task only places the directory + version-pinning template
+- [x] T012 [P] Update `skill/shell/build.sh` to inline every file under `skill/shell/vendor/*` as `<script>` / `<style>` blocks into the single output `lesson.html` (FR-037, Stage 5 of `contracts/pipeline-stages.md`)
 
 ### SQLite + persistence
 
-- [ ] T013 [P] Author `skill/lib/sqlite-init.ts` — opens (or creates) `<lesson-output-dir>/.chiron-state.db`, applies schema from `contracts/sqlite-schema.sql` verbatim (8 tables: `_chiron_meta`, `quiz_attempts`, `mastery`, `chapter_completion`, `weakness_log`, `sr_cards`, `sr_review_log`, `bookmarks` — explicitly NO `llm_usage` / `llm_cache`), seeds `_chiron_meta.schema_version='1'`, applies forward-only idempotent migrations (R-08)
-- [ ] T014 [P] Author `skill/lib/sr-scheduler.ts` — SM-2 algorithm (~50 LOC per R-07): `nextDue(card, rating: 1|2|3|4)` returns updated `{ease_factor, interval_days, repetitions, next_due_at}`; writes to `sr_cards` and appends to `sr_review_log`
+- [x] T013 [P] Author `skill/lib/sqlite-init.ts` — opens (or creates) `<lesson-output-dir>/.chiron-state.db`, applies schema from `contracts/sqlite-schema.sql` verbatim (8 tables: `_chiron_meta`, `quiz_attempts`, `mastery`, `chapter_completion`, `weakness_log`, `sr_cards`, `sr_review_log`, `bookmarks` — explicitly NO `llm_usage` / `llm_cache`), seeds `_chiron_meta.schema_version='1'`, applies forward-only idempotent migrations (R-08)
+- [x] T014 [P] Author `skill/lib/sr-scheduler.ts` — SM-2 algorithm (~50 LOC per R-07): `nextDue(card, rating: 1|2|3|4)` returns updated `{ease_factor, interval_days, repetitions, next_due_at}`; writes to `sr_cards` and appends to `sr_review_log`
 
 ### Schemas and validators (FR-006, FR-008)
 
-- [ ] T015 [P] Author `skill/lib/schemas/widget-spec.ts` — Zod schema mirroring `contracts/widget-spec.ts` (21 variants); export `WidgetSpec` discriminated union and `WidgetSpecSchema` Zod parser
-- [ ] T016 [P] Author `skill/lib/schemas/chapter-syllabus.ts` — Zod schema for `ChapterSyllabus` per `data-model.md` §1.2, with refinements: `scienceAnnotations.length >= 3` (FR-022), conditional `spacingConnections.length` 2-4 for chapter ≥ 8 (FR-022), every quiz-type widget has `variants: Variant[]` non-empty (FR-021)
+- [x] T015 [P] Author `skill/lib/schemas/widget-spec.ts` — Zod schema mirroring `contracts/widget-spec.ts` (21 variants); export `WidgetSpec` discriminated union and `WidgetSpecSchema` Zod parser
+- [x] T016 [P] Author `skill/lib/schemas/chapter-syllabus.ts` — Zod schema for `ChapterSyllabus` per `data-model.md` §1.2, with refinements: `scienceAnnotations.length >= 3` (FR-022), conditional `spacingConnections.length` 2-4 for chapter ≥ 8 (FR-022), every quiz-type widget has `variants: Variant[]` non-empty (FR-021)
 - [ ] T017 [P] Author `skill/lib/schemas/brief.ts` — Zod schema for `Brief` per `data-model.md` §1.1 with all 12 `sourceType` values from FR-032, plus `SourceFileEntry` for `sourceManifest[]`
 - [ ] T018 Author `skill/lib/validator.ts` — runs Zod validation, then concept-DAG validation (no cycles; every prereq exists; every `keyConcepts` entry exists in the domain's DAG), then rubric check; returns structured issue list on failure for retry (FR-006); depends on T015, T016, T017
 
 ### Theme registry (FR-024)
 
-- [ ] T019 Author `skill/lib/theme.ts` — exports `Theme` interface, theme registry mapping `id → tokens`, `pickThemeForDomain(domain) → themeId`, and `buildThemePromptBlock(theme) → string` (the system-prompt token injector ported from ClassBuild)
+- [x] T019 Author `skill/lib/theme.ts` — exports `Theme` interface, theme registry mapping `id → tokens`, `pickThemeForDomain(domain) → themeId`, and `buildThemePromptBlock(theme) → string` (the system-prompt token injector ported from ClassBuild)
 
 ### Widget rendering — universal primitives only
 
-- [ ] T020 Author `skill/lib/widget-renderer.ts` — dispatch table from `WidgetSpec.type` to renderer function. Phase 2 implements only universal primitives (`mcq`, `true-false`, `mathjax`, `mermaid`); domain-specific widgets (vignette, fill-blank, molecule, forest-plot) come in their respective story phases.
+- [x] T020 Author `skill/lib/widget-renderer.ts` — dispatch table from `WidgetSpec.type` to renderer function. Phase 2 implements only universal primitives (`mcq`, `true-false`, `mathjax`, `mermaid`); domain-specific widgets (vignette, fill-blank, molecule, forest-plot) come in their respective story phases.
 - [ ] T021 [P] Author `skill/lib/chemistry-renderer.ts` — abstract `MoleculeRenderer` interface per FR-031 + `data-model.md` §1.4; provides `renderChemicalReaction(equation, container)` (uses vendored MathJax+mhchem). Concrete `MoleculeRenderer` impl is deferred to US3 (Phase 5).
 
 ### Pipeline stage skeleton (FR-005, contracts/pipeline-stages.md)
 
-- [ ] T022 [P] Author `skill/lib/progress.ts` — stderr progress emitter per R-05 / FR-028: `progress.stage(N, total, label)`, `progress.chapter(stageN, chapN, chapTotal, label)`. Used by every pipeline stage.
-- [ ] T023 [P] Author `skill/lib/source-copy.ts` — copies any local-file source into `<lesson-output-dir>/source/` preserving structure (FR-030). Used by ingest adapters.
+- [x] T022 [P] Author `skill/lib/progress.ts` — stderr progress emitter per R-05 / FR-028: `progress.stage(N, total, label)`, `progress.chapter(stageN, chapN, chapTotal, label)`. Used by every pipeline stage.
+- [x] T023 [P] Author `skill/lib/source-copy.ts` — copies any local-file source into `<lesson-output-dir>/source/` preserving structure (FR-030). Used by ingest adapters.
 - [ ] T024 Author `skill/lib/pipeline.ts` — orchestrates the 5 stages per `contracts/pipeline-stages.md`. For text-LLM stages (1-4), it loads the right prompt template and **hands control to the parent Claude Code agent** (Q8 — no SDK call). It enforces validator retry up to 3 attempts (FR-006) and the FR-029 deep-research opt-in cap. Depends on T013, T018, T019, T020, T022, T023.
 
 ### SKILL.md entry-point + trigger contract (FR-001, contracts/skill-triggers.md)

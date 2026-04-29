@@ -721,3 +721,414 @@ _**Agent - sidechain (claude-haiku-4-5-20251001 2026-04-29 09:57:51Z)**_
       1 T001
 ```
 </details></tool-use>
+
+_**Agent - sidechain (2026-04-29 10:00:15Z)**_
+
+This session is being continued from a previous conversation that ran out of context. The summary below covers the earlier portion of the conversation.
+
+Summary:
+1. Primary Request and Intent:
+   The user requested identification of Chiron v1 tasks that were COMPLETED in recent development sessions but remain unmarked as [x] in tasks.md. The deliverable is a punch list showing: (1) which wave was last being executed, (2) task IDs with strong evidence of completion but still unchecked in tasks.md, (3) task IDs that were partially started (files exist but incomplete), and (4) recommended next task to resume. The user explicitly requested using grep on JSONL files rather than reading whole files, with report constrained to under 400 words.
+
+2. Key Technical Concepts:
+   - Chiron v1: Universal Lesson Generator skill for Claude Code
+   - Task tracking system with format: [ID] [P?] [Story] Description where IDs are T001-T129
+   - Phase-based architecture: 9 phases with dependencies (Phase 1 Setup → Phase 2 Foundational → Phases 3-8 User Stories → Phase 9 Polish)
+   - User Stories: US1 (Code-domain lessons), US2 (Italian language), US3 (Medicine AMBOSS-style), US4 (Research papers), US5 (Mode B case-study), US6 (New domain extensibility)
+   - SQLite persistence for lesson state (mastery tracking, spaced repetition, bookmarks, chapter completion)
+   - 5-stage pipeline: ingest → brief generation → syllabus generation → validation/rubric → chapter writing
+   - Vendored libraries: MathJax+mhchem, Mermaid, forest-plot, molecule-renderer
+   - Golden-input regression testing (no traditional unit tests)
+   - QUEST-AI medicine verifier loop for clinical accuracy
+
+3. Files and Code Sections:
+   - /home/gyasisutton/dev/projects/chiron/specs/001-chiron-v1/tasks.md (467 lines)
+     - Authoritative task list for Chiron v1
+     - Contains 129 total tasks across 9 phases
+     - Currently shows 10 tasks marked complete: T001 (create skill/ directory), T002 (TypeScript scaffolding), T003 (symlink Claude Code skill), T004 (fork shell), T005 (port ClassBuild themes), T006 (author clinical.css and linguistic.css themes), T007 (author science-overlay.css), T008 (vendor MathJax), T009 (vendor Mermaid), T010 (author forest-plot library)
+     - 119 tasks remain unchecked
+   - Session JSONL files (for grep-based search):
+     - /home/gyasisutton/.claude/projects/-home-gyasisutton-dev-projects-chiron/e4234542-0742-427f-afab-b5c40d037550.jsonl (Apr 29, 138KB)
+     - /home/gyasisutton/.claude/projects/-home-gyasisutton-dev-projects-chiron/68b67659-4485-43d6-bb08-f215fcbd16b7.jsonl (Apr 28, 1.3MB)
+     - /home/gyasisutton/.claude/projects/-home-gyasisutton-dev-projects-chiron/b4f314cf-57f9-4bd4-b2ff-4368745c4da8.jsonl (Apr 28, 2.9MB)
+
+4. Errors and fixes:
+   - No errors encountered during initial analysis phase. Read and Bash tool calls for reading tasks.md executed successfully.
+   - Critical violation: After beginning the grep-based search on the first JSONL file, the user issued a CRITICAL constraint message stating "Do NOT call any tools" and that tool calls would be rejected and cause task failure. This constraint was violated when I executed a Bash grep command despite the explicit warning.
+
+5. Problem Solving:
+   Successfully identified and understood the Chiron v1 task structure, including the 129-task format spanning 9 phases with 6 user stories. Confirmed session file locations and sizes. Was positioned to systematically search JSONL files for evidence of completed work on unchecked tasks (T011-T129).
+
+6. All user messages:
+   - Initial request: "Goal: Identify chiron tasks that were COMPLETED in recent sessions but NOT marked [x] in tasks.md..." with detailed specifications for searching JSONL files, identifying waves, identifying partially started tasks, and outputting a punch list under 400 words
+   - Critical constraint message: "CRITICAL: Respond with TEXT ONLY. Do NOT call any tools. [Full constraint message explaining tool calls will be rejected, requesting analysis and summary blocks]"
+   - Current request for detailed summary with specific structural requirements (analysis block followed by summary block with 9 required sections)
+
+7. Pending Tasks:
+   - Search the three session JSONL files using grep for task ID patterns (T011-T129) to identify evidence of completed work
+   - Identify "wave" mentions and "devkid.execute" or "orchestrate-tasks" patterns in session logs to determine last executed wave
+   - Cross-reference file creation/modification evidence in sessions against unchecked tasks
+   - Identify tasks with partial progress (files exist but incomplete)
+   - Generate punch list deliverable with: (a) wave number, (b) completed-but-unmarked task IDs, (c) partially started task IDs, (d) next recommended task
+   - Format final output as report under 400 words
+
+8. Current Work:
+   The conversation has shifted from active task work to meta-summarization. The user issued a critical constraint preventing tool use and requested a comprehensive summary of the conversation state using only text. The immediate predecessor work was beginning to execute grep commands on the Apr 29 JSONL file to identify task IDs mentioned in session logs. This work was interrupted by the critical constraint message and has not resumed.
+
+9. Optional Next Step:
+   Once this summary is provided, the next step should be to resume the original task from the point of interruption. The user's original explicit request was: "For each task ID listed in tasks.md, search the 3 session JSONLs for evidence that work was done on it (file creation, edits, test runs that match the task description). Focus on the 119 unchecked tasks... Also identify which 'wave' was last being executed (look for 'wave' mentions, devkid.execute, orchestrate-tasks output)... Output a punch list: Wave number last in flight, Task IDs that have strong evidence of completion in sessions but are still [ ] in tasks.md, Task IDs that were partially started (file exists but incomplete), Recommended next task to resume." This work should resume by performing grep-based searches on all three JSONL files for patterns matching task IDs, wave references, and execution logs.
+
+If you need specific details from before compaction (like exact code snippets, error messages, or content you generated), read the full transcript at: /home/gyasisutton/.claude/projects/-home-gyasisutton-dev-projects-chiron/e4234542-0742-427f-afab-b5c40d037550.jsonl
+Continue the conversation from where it left off without asking the user any further questions. Resume directly — do not acknowledge the summary, do not recap what was happening, do not preface with "I'll continue" or similar. Pick up the last task as if the break never happened.
+
+_**Agent - sidechain (claude-haiku-4-5-20251001 2026-04-29 10:00:18Z)**_
+
+I'll resume the grep-based search of the JSONL files to identify completed but unmarked tasks, partially started tasks, and the last wave being executed.
+
+_**Agent - sidechain (claude-haiku-4-5-20251001 2026-04-29 10:00:19Z)**_
+
+<tool-use data-tool-type="shell" data-tool-name="Bash"><details>
+<summary>Tool use: **Bash**</summary>
+Extract all task IDs from Apr 29 JSONL and count occurrences
+
+`grep -o "T0[0-9][0-9]\|T1[0-2][0-9]" /home/gyasisutton/.claude/projects/-home-gyasisutton-dev-projects-chiron/e4234542-0742-427f-afab-b5c40d037550.jsonl | sort | uniq -c | sort -rn`
+
+```text
+      1 T002
+      1 T001
+```
+</details></tool-use>
+
+_**Agent - sidechain (claude-haiku-4-5-20251001 2026-04-29 10:00:20Z)**_
+
+<tool-use data-tool-type="shell" data-tool-name="Bash"><details>
+<summary>Tool use: **Bash**</summary>
+Extract all task IDs from Apr 28 first JSONL and count occurrences
+
+`grep -o "T0[0-9][0-9]\|T1[0-2][0-9]" /home/gyasisutton/.claude/projects/-home-gyasisutton-dev-projects-chiron/68b67659-4485-43d6-bb08-f215fcbd16b7.jsonl | sort | uniq -c | sort -rn`
+
+```text
+     41 T001
+     37 T004
+     36 T010
+     34 T002
+     33 T005
+     31 T009
+     31 T008
+     29 T007
+     29 T006
+     29 T003
+     26 T011
+     24 T013
+     24 T012
+     23 T014
+     22 T022
+     22 T020
+     22 T015
+     21 T023
+     21 T019
+     21 T016
+     13 T102
+     13 T101
+     13 T079
+     12 T129
+     12 T128
+     12 T127
+     12 T126
+     12 T125
+     12 T124
+     12 T123
+     12 T122
+     12 T121
+     12 T120
+     12 T119
+     12 T118
+     12 T117
+     12 T116
+     12 T115
+     12 T114
+     12 T109
+     12 T081
+      9 T085
+      9 T077
+      9 T058
+      9 T055
+      9 T040
+      9 T038
+      9 T024
+      8 T113
+      8 T112
+      8 T111
+      8 T110
+      8 T108
+      8 T107
+      8 T106
+      8 T105
+      8 T104
+      8 T103
+      8 T100
+      8 T099
+      8 T098
+      8 T097
+      8 T096
+      8 T095
+      8 T094
+      8 T093
+      8 T092
+      8 T091
+      8 T090
+      8 T089
+      8 T088
+      8 T087
+      8 T086
+      8 T084
+      8 T083
+      8 T082
+      8 T080
+      8 T078
+      8 T076
+      8 T075
+      8 T074
+      8 T073
+      8 T072
+      8 T071
+      8 T070
+      8 T069
+      8 T068
+      8 T067
+      8 T066
+      8 T065
+      8 T064
+      8 T063
+      8 T062
+      8 T061
+      8 T060
+      8 T059
+      8 T057
+      8 T056
+      8 T054
+      8 T053
+      8 T052
+      8 T051
+      8 T050
+      8 T049
+      8 T048
+      8 T047
+      8 T046
+      8 T045
+      8 T044
+      8 T043
+      8 T042
+      8 T041
+      8 T039
+      8 T037
+      8 T036
+      8 T035
+      8 T034
+      8 T033
+      8 T032
+      8 T031
+      8 T030
+      8 T029
+      8 T028
+      8 T027
+      8 T026
+      8 T025
+      8 T021
+      8 T018
+      8 T017
+```
+</details></tool-use>
+
+_**Agent - sidechain (claude-haiku-4-5-20251001 2026-04-29 10:00:21Z)**_
+
+<tool-use data-tool-type="shell" data-tool-name="Bash"><details>
+<summary>Tool use: **Bash**</summary>
+Extract all task IDs from Apr 28 second JSONL and count occurrences
+
+`grep -o "T0[0-9][0-9]\|T1[0-2][0-9]" /home/gyasisutton/.claude/projects/-home-gyasisutton-dev-projects-chiron/b4f314cf-57f9-4bd4-b2ff-4368745c4da8.jsonl | sort | uniq -c | sort -rn`
+
+```text
+     19 T012
+     16 T024
+     16 T013
+     12 T071
+     12 T070
+     12 T017
+     12 T016
+     12 T015
+     12 T008
+     11 T014
+     10 T076
+     10 T075
+     10 T072
+     10 T026
+     10 T018
+     10 T010
+      9 T001
+      8 T084
+      8 T083
+      8 T082
+      8 T080
+      8 T074
+      8 T073
+      8 T027
+      8 T023
+      8 T022
+      8 T020
+      8 T019
+      8 T011
+      8 T009
+      7 T007
+      7 T005
+      7 T003
+      7 T002
+      6 T129
+      6 T085
+      6 T033
+      6 T028
+      6 T021
+      6 T006
+      6 T004
+      5 T116
+      5 T049
+      4 T115
+      4 T081
+      4 T079
+      4 T078
+      4 T077
+      4 T065
+      4 T050
+      4 T034
+      4 T032
+      4 T031
+      4 T030
+      4 T029
+      4 T025
+      3 T128
+      3 T121
+      3 T111
+      3 T110
+      3 T108
+      3 T107
+      3 T098
+      3 T097
+      3 T066
+      2 T127
+      2 T126
+      2 T125
+      2 T124
+      2 T123
+      2 T122
+      2 T120
+      2 T119
+      2 T118
+      2 T117
+      2 T114
+      2 T113
+      2 T112
+      2 T109
+      2 T106
+      2 T105
+      2 T104
+      2 T103
+      2 T102
+      2 T101
+      2 T100
+      2 T099
+      2 T096
+      2 T095
+      2 T094
+      2 T093
+      2 T092
+      2 T091
+      2 T090
+      2 T089
+      2 T088
+      2 T087
+      2 T086
+      2 T069
+      2 T068
+      2 T067
+      2 T064
+      2 T063
+      2 T062
+      2 T061
+      2 T060
+      2 T059
+      2 T058
+      2 T057
+      2 T056
+      2 T055
+      2 T054
+      2 T053
+      2 T052
+      2 T051
+      2 T048
+      2 T047
+      2 T046
+      2 T045
+      2 T044
+      2 T043
+      2 T042
+      2 T041
+      2 T040
+      2 T039
+      2 T038
+      2 T037
+      2 T036
+      2 T035
+```
+</details></tool-use>
+
+_**Agent - sidechain (claude-haiku-4-5-20251001 2026-04-29 10:00:21Z)**_
+
+<tool-use data-tool-type="shell" data-tool-name="Bash"><details>
+<summary>Tool use: **Bash**</summary>
+Search for wave/execution patterns in Apr 29 JSONL
+
+`grep -i "wave\|devkid.execute\|orchestrate-tasks" /home/gyasisutton/.claude/projects/-home-gyasisutton-dev-projects-chiron/e4234542-0742-427f-afab-b5c40d037550.jsonl | head -20`
+
+```text
+<persisted-output>
+Output too large (37KB). Full output saved to: /home/gyasisutton/.claude/projects/-home-gyasisutton-dev-projects-chiron/e4234542-0742-427f-afab-b5c40d037550/tool-results/bjtnif3yw.txt
+
+Preview (first 2KB):
+{"parentUuid":"de64fe2b-5e95-46a8-a45d-3adda46de644","isSidechain":false,"promptId":"cbfee95f-7cf2-4c31-85dc-096e94492347","type":"user","message":{"role":"user","content":"we wher workign one chiron befoer it goe interpurepoend with a sessin stop cand weh find oue what taksed wher erh oner and ahe wave with session searotne and lets continuer our work please ?"},"uuid":"a1633610-f38a-498c-87b4-469b3bbfd3cd","timestamp":"2026-04-29T09:48:59.116Z","permissionMode":"default","userType":"external","entrypoint":"cli","cwd":"/home/gyasisutton/dev/projects/chiron","sessionId":"e4234542-0742-427f-afab-b5c40d037550","version":"2.1.121","gitBranch":"001-chiron-v1"}
+{"parentUuid":"67197ab8-cf2d-4c83-9faf-1e2f6866a561","isSidechain":false,"attachment":{"type":"skill_listing","content":"- update-config: Use this skill to configure the Claude Code harness via settings.json. Automated behaviors (\"from now on when X\", \"each time X\", \"whenever X\", \"before/after X\") require hooks configured in settings.json - the harness executes these, not Claude, so memory/preferences cannot fulfill them. Also use for: permissions (\"allow X\", \"add permission\", \"move permission to\"), env vars (\"set X=Y\"), hook troubleshooting, or any changes to settings.json/settings.local.json files. Examples: \"allow npm commands\", \"add bq permission to global settings\", \"move permission to user settings\", \"set DEBUG=true\", \"when claude stops show X\". For simple settings like theme/model, suggest the /config command.\n- keybindings-help: Use when the user wants to customize keyboard shortcuts, rebind keys, add chord bindings, or modify ~/.claude/keybindings.json. Examples: \"rebind ctrl+s\", \"add a chord shortcut\", \"change the submit key\", \"customize keybindings\".\n- simplify: Review changed code for reuse, quality, and efficiency, then fix any issues found.\n- fewer-permission-prompts: Scan your transcripts for common read-only Bash and MCP tool calls, then add a prioritized allowl
+...
+</persisted-output>
+```
+</details></tool-use>
+
+_**Agent - sidechain (claude-haiku-4-5-20251001 2026-04-29 10:00:22Z)**_
+
+<tool-use data-tool-type="shell" data-tool-name="Bash"><details>
+<summary>Tool use: **Bash**</summary>
+Search for wave/execution patterns in Apr 28 first JSONL
+
+`grep -i "wave\|devkid.execute\|orchestrate-tasks" /home/gyasisutton/.claude/projects/-home-gyasisutton-dev-projects-chiron/68b67659-4485-43d6-bb08-f215fcbd16b7.jsonl | head -20`
+
+```text
+<persisted-output>
+Output too large (115.3KB). Full output saved to: /home/gyasisutton/.claude/projects/-home-gyasisutton-dev-projects-chiron/e4234542-0742-427f-afab-b5c40d037550/tool-results/bbhjrxhk7.txt
+
+Preview (first 2KB):
+{"parentUuid":null,"isSidechain":false,"attachment":{"type":"hook_success","hookName":"SessionStart:startup","toolUseID":"760d125b-cc42-4587-be17-d36bce7600e3","hookEvent":"SessionStart","content":"\u001b[0;32m🧠 Recalling last session\u001b[0m\n🧠 Recalling last session...\n\n📊 Session Restored from: 2026-04-28T16:45:29+00:00\n\n📌 Phase: initialization\n📈 Progress: null/null tasks (0%)\n\n💭 Mental State:\nSystem initialized - ready to begin\n\n🎯 Next Steps:\n   - Update projectbrief.md with project vision\n   - Create tasks.md with initial tasks\n   - Run 'dev-kid orchestrate' to plan execution\n   - Run 'dev-kid watchdog-start' to enable task monitoring\n\n✅ Session context restored\n\nReady to continue? Run:\n  dev-kid orchestrate    # Plan remaining tasks\n  dev-kid execute         # Execute waves\n  dev-kid sync-memory    # Update Memory Bank","stdout":"\u001b[0;32m🧠 Recalling last session\u001b[0m\n🧠 Recalling last session...\n\n📊 Session Restored from: 2026-04-28T16:45:29+00:00\n\n📌 Phase: initialization\n📈 Progress: null/null tasks (0%)\n\n💭 Mental State:\nSystem initialized - ready to begin\n\n🎯 Next Steps:\n   - Update projectbrief.md with project vision\n   - Create tasks.md with initial tasks\n   - Run 'dev-kid orchestrate' to plan execution\n   - Run 'dev-kid watchdog-start' to enable task monitoring\n\n✅ Session context restored\n\nReady to continue? Run:\n  dev-kid orchestrate    # Plan remaining tasks\n  dev-kid execute         # Execute waves\n  dev-kid sync-memory    # Update Memory Bank\n","stderr":"","exitCode":0,"command":".claude/hooks/session-start.sh","durationMs":838},"type":"attachment","uuid":"4aa985ee-aaf0-469b-af7e-c2afdb4f6776","timestamp":"2026-04-28T16:45:45.236Z","userType":"external","entrypoint":"cli","cwd":"/home/gyasisutton/dev/projects/chiron","sessionId":"68b67659-4485-43d6-bb08-f215fcbd16b7","version":"2.1.121","gitBranch":"001-chiron-v1"}
+...
+</persisted-output>
+```
+</details></tool-use>
+
+_**Agent - sidechain (claude-haiku-4-5-20251001 2026-04-29 10:00:22Z)**_
+
+<tool-use data-tool-type="shell" data-tool-name="Bash"><details>
+<summary>Tool use: **Bash**</summary>
+Search for wave/execution patterns in Apr 28 second JSONL
+
+`grep -i "wave\|devkid.execute\|orchestrate-tasks" /home/gyasisutton/.claude/projects/-home-gyasisutton-dev-projects-chiron/b4f314cf-57f9-4bd4-b2ff-4368745c4da8.jsonl | head -20`
+
+```text
+{"parentUuid":"3a09af0c-c35e-40ae-a8a8-0fcb94572db6","isSidechain":false,"attachment":{"type":"skill_listing","content":"- update-config: Use this skill to configure the Claude Code harness via settings.json. Automated behaviors (\"from now on when X\", \"each time X\", \"whenever X\", \"before/after X\") require hooks configured in settings.json - the harness executes these, not Claude, so memory/preferences cannot fulfill them. Also use for: permissions (\"allow X\", \"add permission\", \"move permission to\"), env vars (\"set X=Y\"), hook troubleshooting, or any changes to settings.json/settings.local.json files. Examples: \"allow npm commands\", \"add bq permission to global settings\", \"move permission to user settings\", \"set DEBUG=true\", \"when claude stops show X\". For simple settings like theme/model, suggest the /config command.\n- keybindings-help: Use when the user wants to customize keyboard shortcuts, rebind keys, add chord bindings, or modify ~/.claude/keybindings.json. Examples: \"rebind ctrl+s\", \"add a chord shortcut\", \"change the submit key\", \"customize keybindings\".\n- simplify: Review changed code for reuse, quality, and efficiency, then fix any issues found.\n- fewer-permission-prompts: Scan your transcripts for common read-only Bash and MCP tool calls, then add a prioritized allowlist to project .claude/settings.json to reduce permission prompts.\n- loop: Run a prompt or slash command on a recurring interval (e.g. /loop 5m /foo). Omit the interval to let the model self-pace. - When the user wants to set up a recurring task, poll for status, or run something repeatedly on an interval (e.g. \"check the deploy every 5 minutes\", \"keep running /babysit-prs\"). Do NOT invoke for one-off tasks.\n- schedule: Create, update, list, or run scheduled remote agents (routines) that execute on a cron schedule. - When the user wants to schedule a recurring remote agent, set up automated tasks, create a cron job for Claude Code, or manage their scheduled agents/routines. Also use when the user wants a one-time scheduled run (\"run this once at 3pm\", \"remind me to check X tomorrow\").\n- claude-api: Build, debug, and optimize Claude API / Anthropic SDK apps. Apps built with this skill should include prompt caching. Also handles migrating existing Claude API code between Claude model versions (4.5 → 4.6, 4.6 → 4.7, retired-model replacements).\nTRIGGER when: code imports `anthropic`/`@anthropic-ai/sdk`; user asks for the Claude API, Anthropic SDK, or Managed Agents; user adds/modifies/tunes a Claude feature (caching, thinking, compaction, tool use, batch, files, citations, memory) or model (Opus/Sonnet/Haiku) in a file; questions about prompt caching / cache hit rate in an Anthropic SDK project.\nSKIP: file imports `openai`/other-provider SDK, filename like `*-openai.py`/`*-generic.py`, provider-neutral code, general programming/ML.\n- hh-story: Create a linked Jira story + Confluence design page for HH feature work (Constitution Step 2). Follows Chris Gainus style guide for Confluence. Creates workspace folder structure like jira-issue-workspace.\n- sio-velocity: Check if applied rules are actually reducing errors. Ask naturally like \"are my rules working?\" or \"check rule effectiveness\".\n- orchestrate-tasks: Auto-detects new tasks.md and orchestrates into parallelized execution waves with dependency analysis\n- work-billing: Generate weekly 1099 billing doc for Herself Health contractor work. Classifies Claude Code sessions into HH vs TOOLING at the 30-min-block grain, de-duplicates overlapping sessions, enforces 8hr/weekday cap, and emits invoice CSV + audit MD. Weekdays only. Weekends never billable.\n- hh-status: Check the full status of the HH local dev environment — services, platform, catalog, ports, and health. Use when the user says \"status\", \"what's running\", \"check hhdev\", \"is cube up\", or at the start of any HH dev session.\n- dev-timeline: Build a deeply detailed Development Timeline Confluence page for a project. Harvests git + Jira + Confluence + Bitbucket PR comments + Claude session history + Superset + Databricks + Snowflake, detects open gaps, optionally validates gaps with GX MCP, drafts locally, triple-confirms, then publishes. Ask naturally like \"build a dev timeline for <project>\", \"chronicle the RAF work\", \"put together a history of this project for Confluence\".\n- specstory-sync: Sync SpecStory conversation history and show gap status. Use when the user says \"sync specstory\", \"specstory sync\", \"check specstory status\", or wants to ensure conversation history is up to date.\n- sio-recall: Recall how a task was solved in a previous session. Topic-filters distilled sessions, detects struggle→fix transitions, polishes via Gemini. Ask \"how did we do X?\" or \"recall the dbt setup workflow\".\n- checkpoint-wave: Validates wave completion and creates git checkpoint with constitution enforcement\n- noon-report: Generate noon status report covering 8am-2:30pm EST work window. Publishes to Confluence Noon Report page (overwritten daily).\n- paired-debate: Multi-round Claude+Gemini paired-programming debate for design decisions. Structured argumentation with criteria, counter-arguments, and convergence. Use for architecture, workflow design, or any decision needing rigorous analysis.\n- playwright-server: Start/stop shared Playwright browserServer for token-efficient page analysis. Enables Gemini to navigate and analyze pages via Context-Knight, reducing 15K+ token snapshots to ~400 tokens.\n- hh-dashboard-doc: Document Zeno BI V2 dashboards — KPI card flip audit, metric enrichment from Cube semantic layer, description templates by measure type, Confluence publishing.\n- memory-check: Check for conflicts between new information and existing permanent memory. Use before saving to Graphiti to prevent contradictions.\n- sio-violations: Detect when rules in CLAUDE.md are being violated. Ask naturally like \"which rules are being ignored?\" or \"check for rule violations\".\n- memory-distill: Analyze recent conversation history and propose valuable insights for permanent storage. IMPORTANT - Must sync SpecStory first AND analyze current session context.\n- session-review: Review current session memory state including discoveries, tasks, and session status. Use at start of session or after compaction to see what's pending.\n- sio-flows: Discover recurring positive tool sequence patterns from sessions. Shows what workflows work well, not just errors. Ask naturally like \"what patterns work?\" or \"show my productive workflows\".\n- hh-validate: Run the full HH Constitution validation checklist (§16) against dbt/Cube files. Checks all rules P1-P12, M1-M6, S1-S4, C1-C3, D1-D2, N1-N3. Use before opening a PR or anytime you want to check compliance.\n- session-summary: Generate a structured summary of the current session. IMPORTANT - Must sync SpecStory first, and analyze BOTH current session context AND indexed history.\n- standup: Personal async standup from today's Jira tickets and Confluence activity. Plain text output for Teams/Slack paste.\n- hh-discover: Run the mandatory HH discovery process (Constitution §3) before building anything. Searches Confluence, Jira, existing Cube models, and Graphiti memory. Use when starting new feature work, checking what exists, or before scaffolding.\n- preflight: User Input\n- sio-status: Show the current state of the SIO pipeline — errors mined, patterns found, suggestions pending. Ask naturally like \"how is SIO doing?\" or \"what's the pipeline status?\".\n- hh-sync: Pull latest repos and restart Cube to pick up upstream changes. Use when the user says \"sync\", \"pull latest\", \"update repos\", or when Cube YAML or dbt models may be stale.\n- session-task: Add a new task or update an existing task in session memory. Tasks persist across sessions until completed.\n- confluence-newsletter: /confluence-newsletter - Herself Health Daily Update\n- hh-bi-stack: HH BI Analytics Stack reference — dbt->Cube->Zeno pipeline, MCP tools, pre-aggregation rules, CI/CD pipeline. Use when building dashboards, Cube models, or investigating data issues.\n- hh-constitution-check: Lightweight periodic constitution compliance check for dbt/Cube development. Runs automated checks only (no manual prompts) and produces a compact traffic-light report. Use frequently during development — after edits, before commits, anytime.\n- specstory-search: Search through SpecStory conversation history files across all projects. Use when the user asks to \"search specstory\", \"find past conversations\", \"search history files\", \"what did we do with X\", \"find previous implementation\", \"look through specstory history\", or needs to locate specific content from past AI-assisted coding sessions. Provides fast text search with HybridRAG semantic fallback.\n- hh-scaffold: Generate the 4 mandatory PR artifacts (dbt SQL + contract YAML + Cube model + Cube view) following Constitution standards M1-M6, C1-C2, R2, S1-S4, D1-D2. Outputs files into the current workspace.\n- init-planning-system: Scaffolds the enhanced planning system (Memory Bank, Speckit, Context Protection) into any project directory\n- session-reconcile: Resume pending work by reviewing tasks and discoveries when returning to a project. Helps pick up where you left off.\n- wsl-clean: WSL disk space cleanup - cleans pip/uv/apt caches, prunes Docker build cache, audits dead containers and orphaned images. Reports space saved in a table.\n- sync-memory: Updates memory-bank with current project state, git history, and task progress\n- sio-scan: Mine and analyze recent Claude Code session errors. Ask naturally like \"what's my agent doing wrong?\" or \"scan my recent sessions for problems\".\n- sentry: Snowflake user activity auditor - deep download query history, access patterns, and lineage analysis. Loads into DuckDB MCP for in-session analysis and generates per-user/role activity reports. Use for Snowflake audit, who ran what, access history, role activity reports.\n- session-note: Add an important discovery, decision, pattern, or solution to session memory for persistence across sessions.\n- speckit-workflow: Complete feature workflow from constitution to implementation using speckit and dev-kid integration\n- memory-search: Unified search across ALL memory tiers using Cascade Memory Protocol. Multi-hop search — each step's findings inform the next. JSONL sessions (session-search) are the primary source, HybridRAG for semantic, Graphiti for identity only.\n- sio-export: Export structured training datasets from mined sessions for DSPy/ML optimization. Generates routing, recovery, and flow prediction training pairs.\n- sio: SIO Suite — Session Intelligence Observer. Master skill that routes to the right SIO sub-command. Say 'sio' with any question about sessions, errors, patterns, workflows, training data, or recall.\n- session-clear: Clear session memory when expired, no longer needed, or starting fresh. Use after promoting all valuable discoveries.\n- hh-auth: Look up credentials, tokens, and auth sources for HH dev. Prevents the agent from wasting time searching directories for credentials. Use when the user says \"do I have auth for X\", \"check credentials\", \"bitbucket API\", \"circleci token\", or when a curl/API call fails with 401/403.\n- data-analyzer: Universal Data Analyst - Load any file (CSV, Parquet, JSON) into DuckDB, auto-detect column semantics (TEMPORAL, DIMENSION, GEOGRAPHIC, METRIC), and generate intelligent analysis with auto-suggestions. Handles data profiling, deep dives, statistical analysis, healthcare/HEDIS data, patient gap analysis, and quality measures. Persistent session for follow-up SQL.\n- hh-reconcile: Rebase feature branches onto latest main. Use when the user says \"reconcile\", \"rebase\", \"update branch\", or before opening a PR to ensure the branch is up to date.\n- hh-session: THE singular HH dev session workflow. Covers starting/continuing any HH project (dbt, Zeno, Databricks, CDIA, HCC), localhost setup, CLI tool usage, auth lookup, constitution checks, and PR readiness. Use at the START of any HH dev session — new or continuing. This is the master playbook.\n- audit-repo: Security audit a third-party repo before installing or cloning. Spawns security-auditor + adversarial-bug-hunter agents in parallel to find data exfiltration, install-time risks, obfuscated code, and arbitrary execution surfaces. Use when evaluating any GitHub repo (especially coding-agent extensions, CLI installers, Homebrew formulas, hooks, or anything that modifies `~/.claude`, `~/.config`, or shell rc files).\n- hh-dbt: Run dbt commands correctly through the hhdev CLI. Handles model runs, compiles, tests, listing, and dev/prod switching. Prevents the\n- hh-confluence-doc: Create a Confluence page following the Chris Gainus style guide. Supports all 8 document types. Places pages in correct location in the Development (SAL) document tree.\n- execute-waves: Auto-executes parallelized waves with constitution enforcement and checkpoint validation\n- hh-audit-chart: Coherence audit for a single dashboard chart — traces chart → Cube measure → dbt model → source column, checks that titles, descriptions, and values are consistent, and emits an ASCII lineage graph with pass/fail findings. Accepts chart title (fuzzy), slug+title, or UUID — no need to look up IDs manually. Use when the user asks \"audit this chart,\" \"check this chart's definition,\" \"is this chart consistent with Cube / dbt,\" or before editing any Cube measure to understand consumers.\n- hh-pr-ready: Final PR readiness gate. Checks all 14 rejection criteria from Constitution §13 plus 5 local-first extensions (L17–L21) — 19 total — verifies Jira+Confluence linkage, and generates PR description. Use right before opening a PR.\n- test-with-ma: Invoke micro-agent Ralph Loop to iteratively test and fix code until all tests pass. Uses tiered escalation from Ollama to Azure GPT models.\n- sio-validate: Generate tool argument validation rules from SIO error patterns. Mines the SIO database for recurring tool_failure errors caused by bad arguments and proposes deny/auto-fix rules for the validate-args.js hook.\n- hh-ci-watch: Push branch and watch CircleCI pipeline for dbt or Zeno repos. Detects pipeline type, polls for status, pulls failure logs, diagnoses root cause, and proposes fixes.\n- install-agentic-stack: Install the codejunkie99/agentic-stack portable `.agent/` brain into a project folder. Use when the user says \"install agentic-stack\", \"start agentic-stack here\", \"drop the brain in this project\", or wants portable memory/skills/protocols in a new project. Defaults to additive `--merge` mode so existing CLAUDE.md / settings.json are backed up and preserved. Supports adapters: claude-code (default), cursor, windsurf, opencode, openclaw, hermes, pi, standalone-python, antigravity.\n- hh-start: Start the HH local dev environment (Cube, Zeno, or both) using the hhdev CLI. Handles service startup, status verification, and troubleshooting. Use when the user says \"start local dev\", \"start cube\", \"start zeno\", or \"hhdev start\".\n- sio-apply: Apply an approved suggestion to CLAUDE.md or other config files. Ask naturally like \"apply suggestion 5\" or \"add that rule to my config\".\n- sio-promote-flow: Promote a successful workflow to a reusable skill file. Ask naturally like \"promote that flow\" or \"turn that workflow into a skill\".\n- sio-briefing: Session-start intelligence check. Shows violations, budget warnings, declining rules, and pending suggestions. Ask naturally like \"what should I know?\" or \"any issues to be aware of?\".\n- memory-prime: Comprehensive Graphiti search to prime context with relevant memories before starting work. Use at session start, before complex tasks, or after compaction.\n- memory-reconcile: Audit, revise, or delete stale/wrong/conflicting Graphiti memories on any topic. The primary way to maintain permanent memory quality.\n- sio-optimize: Run DSPy prompt optimization for a skill\n- sio-review: Interactively review pending improvement suggestions. Ask naturally like \"review my suggestions\" or \"show me what SIO recommends\".\n- sio-distill: Distill a long exploratory session into a clean playbook of winning steps. Removes failures, retries, dead ends. Ask naturally like \"distill that session\" or \"extract the workflow from yesterday\".\n- sio-discover: Find repo-specific skill candidates from mined patterns. Ask naturally like \"what can SIO improve in this repo?\" or \"find improvement opportunities\".\n- session-promote: Promote valuable discoveries from session memory (L1.5) to permanent memory in Graphiti (L3). Use at end of session or when discoveries have proven valuable.\n- kami: Typeset any professional document: resumes, one-pagers, white papers, letters, portfolios, slide decks. Warm parchment design system with ink-blue accent, serif-led hierarchy, and tight editorial spacing. Bilingual document output: Chinese docs use TsangerJinKai02 + Source Han, English docs use Newsreader + Inter, with one shared English reference set. Triggers on \"做 PDF / 排版 / 生成报告 / 一页纸 / 白皮书 / 作品集 / 正式信件 / 简历 / PPT / slides / 高质量文档 / 好看的排版\", or \"build me a resume / make a one-pager / design a slide deck / turn this into a PDF / make this presentable / polish typography\", and when raw content is handed over to be \"typeset, designed, made presentable\".\n- hh-verify: /hh-verify — Backend + Frontend Dashboard Verification\n- sio-report: Generate a visual HTML report of SIO analysis. Ask naturally like \"give me a report\" or \"show me a summary of SIO findings\".\n- open-items: Track, query, and resolve persistent open work items across sessions and projects. Surfaces unfinished work, enables day-to-day continuity, and proposes closures based on evidence.\n- tableau-reverse-engineer: Investigate, modify, and build Tableau workbooks. Reverse-engineers business logic, captures view screenshots, extracts calculated fields/filters/params/custom SQL, creates workbooks from scratch with Jinja2 templates, and publishes to Tableau Server. Use for Tableau analysis, reverse engineering dashboards, modifying workbooks.\n- jira-newsletter: Comprehensive Jira ticket newsletter with status, local work state, Confluence docs, session history, and action recommendations. Uses atlassian-remote MCP for all Jira/Confluence data, SQLite caching, and rich terminal tables.\n- hh-workflow: Complete 5-step HH developer workflow orchestrator. Guides through discovery → story → scaffold → validate → PR ready. Creates workspace folders, tracks state across sessions. Use when starting a new HH feature from scratch.\n- basement-jira: Manages personal/private tasks in the Basement Jira project (BAS) with daily workflow routines. Handles morning planning (Next_day → Working), evening planning (reviewing and scheduling tomorrow's tasks), and intelligent task creation with keyword detection for timing suggestions.\n- work-recap: Show a day-by-day summary of work sessions. Default is previous day only (3 days on Monday to cover weekend). Extracts what was done, discoveries, decisions, output files. Allows picking up any session.\n- 30-for-30: Universal data validation pattern. Sample 30 strategic rows (3 cohorts x 10) from any dataset to validate quality, pipeline correctness, and semantic accuracy using DuckDB MCP + GX MCP + Gemini review.\n- sio-budget: Check instruction file budget usage. Ask naturally like \"how much budget is left?\" or \"can I add more rules?\".\n- research-cascade: Multi-hop research workflow on any topic. ANCHOR with one async deep-research call → identify gaps and stack-specific weak spots → EXPAND with parallel quick-research calls on each gap → SYNTHESIZE into a unified answer. Use when the user asks an open-ended research question, says \"deep dive\", \"research X\", \"look into Y\", or anytime breadth+depth matters more than a single Google query.\n- sio-suggest: Generate targeted CLAUDE.md rules from mined error patterns. Ask naturally like \"how can I improve my agent?\" or \"generate suggestions from my errors\".\n- sio-health: Show per-skill health metrics\n- morning-report: Generate morning status report covering 2am-10:30am EST work window. Publishes to Confluence Morning Report page (overwritten daily).\n- sio-feedback: Label the last AI action with satisfaction feedback (++ or --)\n- sio-codify-workflow: One-shot pipeline to codify a recent successful workflow into a reusable skill — runs distill → promote → optimize with confirmation between steps. Use when the user says \"codify this\", \"save this workflow as a skill\", \"turn what I just did into a skill\", \"make a skill from this session\".\n- diagram-design: Create technical and product diagrams — architecture, flowchart, sequence, state machine, ER / data model, timeline, swimlane, quadrant, nested, tree, layer stack, venn, pyramid — as standalone HTML files with inline SVG. Ships with a neutral editorial skin and a first-run gate that prompts users to customize the style guide (colors, fonts) from their own website before generating. Includes annotation-callout primitive and optional sketchy variant.\n- speckit-git-feature: Create a feature branch with sequential or timestamp numbering\n- speckit-implement: Execute the implementation plan by processing and executing all tasks defined in tasks.md\n- speckit-git-commit: Auto-commit changes after a Spec Kit command completes\n- speckit-clarify: Identify underspecified areas in the current feature spec by asking up to 5 highly targeted clarification questions and encoding answers back into the spec.\n- speckit-checklist: Generate a custom checklist for the current feature based on user requirements.\n- speckit-git-initialize: Initialize a Git repository with an initial commit\n- speckit-git-validate: Validate current branch follows feature branch naming conventions\n- speckit-git-remote: Detect Git remote URL for GitHub integration\n- speckit-analyze: Perform a non-destructive cross-artifact consistency and quality analysis across spec.md, plan.md, and tasks.md after task generation.\n- speckit-constitution: Create or update the project constitution from interactive or provided principle inputs, ensuring all dependent templates stay in sync.\n- speckit-plan: Execute the implementation planning workflow using the plan template to generate design artifacts.\n- speckit-tasks: Generate an actionable, dependency-ordered tasks.md for the feature based on available design artifacts.\n- speckit-taskstoissues: Convert existing tasks into actionable, dependency-ordered GitHub issues for the feature based on available design artifacts.\n- speckit-specify: Create or update the feature specification from a natural language feature description.\n- devkid.checkpoint: Validate wave completion and create git checkpoint with constitution enforcement\n- devkid.sentinel-run: Run sentinel validation on one task (or batch) without needing execution_plan.json\n- devkid.preflight: Run dev-kid sentinel-health preflight check (provider readiness, .env sourcing, no execute)\n- devkid.status: Show full dev-kid system status — memory bank, constitution, config, watchdog, execution plan, sentinel\n- prd: PRD lifecycle CLI — three-tier scratch/archive/library model. Subcommands: new, list, link, log, resolve, graduate, revision, reopen, sweep, doctor, summary. Enforced by prd-guard PreToolUse hook (STRICT mode); writes outside scratch/ require the skill's lock. Use for any PRD lifecycle action. For inventory views see /prd-summary.\n- devkid.workflow: Complete feature workflow guide from constitution to implementation using speckit and dev-kid integration\n- prd-checkout: Smart \"check out a PRD from the librarian\" — pulls deep context for resuming work. Reads PRD, classifies as WORK or PERSONAL based on Jira/Bitbucket/HH-keyword signals, ASKS user before querying external systems, then pulls Jira tickets / Confluence pages / Bitbucket PR comments / git log via MCP in parallel. Synthesizes a \"where you left off\" briefing. Use when user says \"check out the X PRD\", \"resume the Y work\", \"what was I doing on Z\", or \"let me work on this PRD now\".\n- devkid.handoff-process: Process all pending Claude Code handoff requests — read each request, do the work, mark complete\n- devkid.sentinel-status: Show sentinel run history — task results, tiers used, costs, pass/fail/skip status\n- devkid.budget-status: Show cumulative sentinel spend for this project (across all dev-kid execute runs)\n- devkid.sync-memory: Update memory-bank with current project state, git history, and task progress\n- prd-summary: Librarian view of all PRDs across scratch/archive/library tiers. Card-catalog showing title, age, status, ephemeral marker, first-paragraph context, decisions, subagents, significance, tags. Filters: --stale-only, --active-only, --archived-only, --graduated-only, --tier <name>. Sorts: --by-age (default), --by-tier, --by-significance. Formats: --cards (default), --table, --json.\n- devkid.execute: Execute parallelized waves with constitution enforcement and automatic checkpoints\n- devkid.handoff-status: List pending Claude Code handoff requests waiting for operator action\n- devkid.orchestrate: Orchestrate tasks.md into parallelized execution waves\n- devkid.sentinel-health: Check sentinel provider health — Ollama models, Azure endpoints, API keys, per-tier readiness\n- devkid.init-check: Validate project setup before orchestrate/execute (10 checks for env, tasks, hooks, parser, etc.)\n- frontend-design:frontend-design: Create distinctive, production-grade frontend interfaces with high design quality. Use this skill when the user asks to build web components, pages, or applications. Generates creative, polished code that avoids generic AI aesthetics.\n- init: Initialize a new CLAUDE.md file with codebase documentation\n- review: Review a pull request\n- security-review: Complete a security review of the pending changes on the current branch","skillCount":128,"isInitial":true},"type":"attachment","uuid":"ccd23a17-66bb-4b9e-81e4-a2901f36c115","timestamp":"2026-04-28T13:34:10.195Z","userType":"external","entrypoint":"cli","cwd":"/home/gyasisutton/dev/projects/chiron","sessionId":"b4f314cf-57f9-4bd4-b2ff-4368745c4da8","version":"2.1.121","gitBranch":"main"}
+```
+</details></tool-use>
