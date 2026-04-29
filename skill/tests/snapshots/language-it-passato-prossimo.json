@@ -1,0 +1,23 @@
+{
+  "input": "language-it-passato-prossimo",
+  "domain": "language-it",
+  "mode": "A",
+  "curriculumStyle": "vocab+grammar",
+  "chapterCount": 7,
+  "chapterCountTolerance": 1,
+  "fillBlankCount": 12,
+  "fillBlankCountMin": 10,
+  "clozeCount": 35,
+  "clozeCountMin": 30,
+  "mariaAudioClipCountMin": 1,
+  "totalQuizCount": 35,
+  "totalQuizCountTolerance": 10,
+  "srCardCount": 280,
+  "srCardCountTolerance": 70,
+  "personaDialogueLineCount": 50,
+  "personaDialogueLineCountTolerance": 25,
+  "fuzzyAccentCheck": "passed",
+  "expectedKeyConcepts": ["passato-prossimo", "essere-vs-avere", "present-tense-regular", "imperfetto"],
+  "expectedPersonaSpeakers": ["maria", "luca", "sofia"],
+  "schemaVersion": "1"
+}

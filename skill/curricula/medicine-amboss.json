@@ -1,0 +1,35 @@
+{
+  "domain": "medicine",
+  "subMode": "amboss",
+  "version": "1",
+  "description": "AMBOSS-style board-exam curriculum: bulleted-nested exposition with consensus-only recommendations, pattern recognition over deep mechanism, and clinical vignettes spanning classic/atypical/pediatric/elderly/immunocompromised/pregnancy/comorbidity/mimicker presentations.",
+  "templateStyle": "scroll-modules",
+  "chapterCountTarget": 10,
+  "perChapterQuizTarget": 8,
+  "perChapterSrCardTarget": 8,
+  "modeAOnly": true,
+  "format_style": "bulleted_nested",
+  "audience_focus": "board-exam pattern recognition",
+  "recommendation_framework": "consensus only",
+  "word_count": "1500-2000",
+  "vignetteTaxonomy": [
+    "classic",
+    "atypical",
+    "pediatric",
+    "elderly",
+    "immunocompromised",
+    "pregnancy",
+    "comorbidity",
+    "mimicker"
+  ],
+  "widgetMix": {
+    "vignette": 0.4,
+    "mcq": 0.2,
+    "true-false": 0.15,
+    "agreement-matrix": 0.15,
+    "matching-pair": 0.1
+  },
+  "personasFile": "personas/medicine.json",
+  "themeId": "clinical",
+  "requireQuestAiVerification": true
+}

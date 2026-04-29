@@ -1,0 +1,186 @@
+{
+  "domain": "medicine",
+  "version": "1.0.0",
+  "concepts": [
+    {
+      "id": "cell-membrane-physiology",
+      "label": "Cell Membrane Physiology",
+      "summary": "How molecules cross the lipid bilayer via passive diffusion, facilitated transport, and ATP-driven active pumps.",
+      "prereqs": []
+    },
+    {
+      "id": "action-potential",
+      "label": "Action Potential",
+      "summary": "Rapid voltage swing across an excitable cell driven by sequential opening of sodium and potassium channels.",
+      "prereqs": ["cell-membrane-physiology"]
+    },
+    {
+      "id": "cardiac-output",
+      "label": "Cardiac Output",
+      "summary": "Volume of blood pumped per minute, governed by preload, afterload, contractility, and heart rate.",
+      "prereqs": []
+    },
+    {
+      "id": "nephron-physiology",
+      "label": "Nephron Physiology",
+      "summary": "Functional unit of the kidney that filters plasma and selectively reabsorbs water and solutes to form urine.",
+      "prereqs": []
+    },
+    {
+      "id": "acid-base-balance",
+      "label": "Acid-Base Balance",
+      "summary": "How lungs and kidneys cooperate to keep arterial pH near 7.4 via CO2 and bicarbonate handling.",
+      "prereqs": ["nephron-physiology"]
+    },
+    {
+      "id": "inflammation-cascade",
+      "label": "Inflammation Cascade",
+      "summary": "Innate immune response involving vasodilation, leukocyte recruitment, and cytokine release at sites of injury or infection.",
+      "prereqs": []
+    },
+    {
+      "id": "hemostasis",
+      "label": "Hemostasis",
+      "summary": "Sequential platelet plug formation and coagulation cascade that stops bleeding and lays down fibrin clot.",
+      "prereqs": []
+    },
+    {
+      "id": "glucose-homeostasis",
+      "label": "Glucose Homeostasis",
+      "summary": "Tight regulation of blood glucose by insulin (lowers) and glucagon (raises) acting on liver and peripheral tissues.",
+      "prereqs": []
+    },
+    {
+      "id": "hypertension",
+      "label": "Hypertension",
+      "summary": "Chronically elevated arterial blood pressure that increases risk of stroke, MI, and renal failure.",
+      "prereqs": ["cardiac-output"]
+    },
+    {
+      "id": "coronary-artery-disease",
+      "label": "Coronary Artery Disease",
+      "summary": "Atherosclerotic narrowing of coronary arteries causing angina and predisposing to myocardial infarction.",
+      "prereqs": ["hypertension"]
+    },
+    {
+      "id": "heart-failure",
+      "label": "Heart Failure",
+      "summary": "Inability of the heart to maintain adequate cardiac output, presenting with dyspnea, edema, and fatigue.",
+      "prereqs": ["cardiac-output", "coronary-artery-disease"]
+    },
+    {
+      "id": "atrial-fibrillation",
+      "label": "Atrial Fibrillation",
+      "summary": "Disorganized atrial electrical activity producing an irregularly irregular pulse and elevated stroke risk.",
+      "prereqs": ["action-potential", "cardiac-output"]
+    },
+    {
+      "id": "diabetes-mellitus-type-2",
+      "label": "Type 2 Diabetes Mellitus",
+      "summary": "Chronic hyperglycemia from insulin resistance and progressive beta-cell dysfunction.",
+      "prereqs": ["glucose-homeostasis"]
+    },
+    {
+      "id": "chronic-kidney-disease",
+      "label": "Chronic Kidney Disease",
+      "summary": "Progressive irreversible loss of nephron function, commonly secondary to diabetes and hypertension.",
+      "prereqs": ["nephron-physiology", "diabetes-mellitus-type-2", "hypertension"]
+    },
+    {
+      "id": "pneumonia-community-acquired",
+      "label": "Community-Acquired Pneumonia",
+      "summary": "Lower respiratory infection acquired outside the hospital, most often from Strep pneumoniae or atypicals.",
+      "prereqs": ["inflammation-cascade"]
+    },
+    {
+      "id": "sepsis",
+      "label": "Sepsis",
+      "summary": "Life-threatening organ dysfunction caused by a dysregulated host response to infection.",
+      "prereqs": ["inflammation-cascade", "pneumonia-community-acquired"]
+    },
+    {
+      "id": "dvt-pe",
+      "label": "DVT and Pulmonary Embolism",
+      "summary": "Venous thromboembolism in deep leg veins that can dislodge and obstruct pulmonary arteries.",
+      "prereqs": ["hemostasis"]
+    },
+    {
+      "id": "stroke-ischemic",
+      "label": "Ischemic Stroke",
+      "summary": "Sudden focal neurologic deficit caused by occlusion of a cerebral artery by thrombus or embolus.",
+      "prereqs": ["atrial-fibrillation", "coronary-artery-disease"]
+    },
+    {
+      "id": "copd",
+      "label": "Chronic Obstructive Pulmonary Disease",
+      "summary": "Progressive airflow limitation from chronic bronchitis and emphysema, strongly linked to tobacco smoking.",
+      "prereqs": []
+    },
+    {
+      "id": "gerd",
+      "label": "Gastroesophageal Reflux Disease",
+      "summary": "Reflux of gastric contents into the esophagus causing heartburn, regurgitation, and mucosal injury.",
+      "prereqs": []
+    },
+    {
+      "id": "beta-blockers",
+      "label": "Beta Blockers",
+      "summary": "Drugs that antagonize beta-adrenergic receptors to lower heart rate, contractility, and blood pressure.",
+      "prereqs": ["cardiac-output"]
+    },
+    {
+      "id": "ace-inhibitors-arb",
+      "label": "ACE Inhibitors and ARBs",
+      "summary": "Renin-angiotensin blockers that lower blood pressure and protect kidneys in diabetes and heart failure.",
+      "prereqs": ["hypertension", "nephron-physiology"]
+    },
+    {
+      "id": "statins",
+      "label": "Statins",
+      "summary": "HMG-CoA reductase inhibitors that lower LDL cholesterol and reduce cardiovascular events.",
+      "prereqs": ["coronary-artery-disease"]
+    },
+    {
+      "id": "diuretics-loop-thiazide-k-sparing",
+      "label": "Diuretics (Loop, Thiazide, K-sparing)",
+      "summary": "Drugs acting at distinct nephron segments to increase urine output and manage volume and blood pressure.",
+      "prereqs": ["nephron-physiology"]
+    },
+    {
+      "id": "anticoagulants-doac-warfarin-heparin",
+      "label": "Anticoagulants (DOAC, Warfarin, Heparin)",
+      "summary": "Agents that interrupt the coagulation cascade to prevent or treat venous and arterial thromboembolism.",
+      "prereqs": ["hemostasis", "dvt-pe"]
+    },
+    {
+      "id": "antibiotics-penicillins-cephalosporins",
+      "label": "Beta-Lactam Antibiotics",
+      "summary": "Penicillins and cephalosporins that inhibit bacterial cell wall synthesis via transpeptidase binding.",
+      "prereqs": ["pneumonia-community-acquired"]
+    },
+    {
+      "id": "antibiotics-fluoroquinolones-macrolides",
+      "label": "Fluoroquinolones and Macrolides",
+      "summary": "Antibiotics targeting bacterial DNA gyrase (FQ) or the 50S ribosome (macrolides), used for atypical pneumonia.",
+      "prereqs": ["pneumonia-community-acquired"]
+    },
+    {
+      "id": "metformin",
+      "label": "Metformin",
+      "summary": "First-line oral biguanide for type 2 diabetes that reduces hepatic gluconeogenesis and improves insulin sensitivity.",
+      "prereqs": ["diabetes-mellitus-type-2"]
+    },
+    {
+      "id": "glp1-agonists",
+      "label": "GLP-1 Receptor Agonists",
+      "summary": "Incretin mimetics that augment insulin release, suppress glucagon, slow gastric emptying, and promote weight loss.",
+      "prereqs": ["diabetes-mellitus-type-2"]
+    },
+    {
+      "id": "ssri-snri",
+      "label": "SSRIs and SNRIs",
+      "summary": "First-line antidepressants that block reuptake of serotonin (SSRI) or serotonin and norepinephrine (SNRI).",
+      "prereqs": []
+    }
+  ]
+}

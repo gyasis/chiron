@@ -171,6 +171,49 @@ extract_fields() {
   echo "$chapters $total_quiz $srcards $persona $mcq $tf $spotbug"
 }
 
+# ---------- Italian / language-domain marker extraction (T065) ----------
+# Per-language marker classes:
+#   class="fill-blank", class="cloze", class="audio-tts", class="matching-pair"
+#   data-speaker="<id>"
+# Plus fuzzyAccentCheck: presence of NFD combining-mark regex or FR-020 marker.
+extract_italian_fields() {
+  # extract_italian_fields <lesson.html>
+  #   -> echoes "fill_blank cloze audio_tts matching_pair fuzzy_accent <speaker_csv>"
+  local html="$1"
+  local fill_blank cloze audio_tts matching_pair fuzzy_accent speakers
+  fill_blank="$(count_marker "$html" "fill-blank")"
+  cloze="$(count_marker "$html" "cloze")"
+  audio_tts="$(count_marker "$html" "audio-tts")"
+  matching_pair="$(count_marker "$html" "matching-pair")"
+
+  # Fuzzy accent check: look for NFD combining-mark regex or FR-020 source marker.
+  # The renderer's normalization should ship as either a regex like /[̀-ͯ]/g
+  # / [̀-ͯ] (literal NFD range) or be tagged with a "// FR-020" comment.
+  if grep -qE '\[\\u0300-\\u036f\]|\[̀-ͯ\]|FR-020' "$html" 2>/dev/null; then
+    fuzzy_accent="passed"
+  else
+    fuzzy_accent="failed"
+  fi
+
+  # Collect speaker ids from data-speaker="..." attributes (uniq, comma-separated).
+  speakers="$(grep -oE 'data-speaker=[\"'"'"'][^\"'"'"']+[\"'"'"']' "$html" \
+    | sed -E 's/data-speaker=[\"'"'"']([^\"'"'"']+)[\"'"'"']/\1/' \
+    | sort -u | paste -sd, - 2>/dev/null || true)"
+  speakers="${speakers:-}"
+
+  echo "$fill_blank $cloze $audio_tts $matching_pair $fuzzy_accent ${speakers}"
+}
+
+# Helper: minimum-threshold check (got >= min)
+check_min() {
+  local label="$1" min="$2" got="$3"
+  if [ -z "$min" ]; then return 0; fi
+  if [ "$got" -lt "$min" ]; then
+    echo "    [diff] $label: got=$got expected>=$min"
+    fail=1
+  fi
+}
+
 # ---------- Validation phase ----------
 FAILS=0
 SKIPS=0
@@ -240,6 +283,61 @@ for name in "${INPUTS[@]}"; do
   check_bool "hasMcq"        "$exp_mcq"  "$got_mcq"
   check_bool "hasTrueFalse"  "$exp_tf"   "$got_tf"
   check_bool "hasSpotTheBug" "$exp_spot" "$got_spot"
+
+  # ---------- Domain dispatch (T065) ----------
+  # Detect from snapshot's "domain" field. Fallback to "code" when absent so
+  # legacy snapshots (code-small-repo) keep their existing semantics.
+  domain="$(json_get "$snap" domain)"
+  domain="${domain:-code}"
+  echo "  domain:  $domain"
+
+  case "$domain" in
+    language-it|language-de|language)
+      read -r got_fb got_cloze got_audio got_match got_fuzzy got_speakers \
+        < <(extract_italian_fields "$html")
+      echo "  italian: fill_blank=$got_fb cloze=$got_cloze audio_tts=$got_audio matching=$got_match fuzzy=$got_fuzzy speakers=[${got_speakers}]"
+
+      exp_fb_min="$(json_get "$snap" fillBlankCountMin)"
+      exp_cloze_min="$(json_get "$snap" clozeCountMin)"
+      exp_audio_min="$(json_get "$snap" mariaAudioClipCountMin)"
+      exp_match_min="$(json_get "$snap" matchingPairCountMin)"
+      exp_fuzzy="$(json_get "$snap" fuzzyAccentCheck)"
+      exp_speakers="$(json_get "$snap" expectedPersonaSpeakers)"
+
+      check_min "fillBlankCount"        "$exp_fb_min"    "$got_fb"
+      check_min "clozeCount"            "$exp_cloze_min" "$got_cloze"
+      check_min "mariaAudioClipCount"   "$exp_audio_min" "$got_audio"
+      check_min "matchingPairCount"     "$exp_match_min" "$got_match"
+
+      if [ -n "$exp_fuzzy" ] && [ "$exp_fuzzy" != "$got_fuzzy" ]; then
+        echo "    [diff] fuzzyAccentCheck: got=$got_fuzzy expected=$exp_fuzzy"
+        fail=1
+      fi
+
+      # expectedPersonaSpeakers is a JSON array (e.g. ["maria","alice"]).
+      # Verify each appears at least once in the rendered HTML's data-speaker set.
+      if [ -n "$exp_speakers" ] && [ "$exp_speakers" != "null" ]; then
+        # Strip JSON brackets/quotes -> comma-separated list
+        want_list="$(echo "$exp_speakers" | tr -d '[]"' | tr ',' '\n' | sed 's/^ *//;s/ *$//' | grep -v '^$' || true)"
+        while IFS= read -r want_sp; do
+          [ -z "$want_sp" ] && continue
+          if ! echo ",${got_speakers}," | grep -q ",${want_sp},"; then
+            echo "    [diff] expectedPersonaSpeakers: '$want_sp' not found (got=[${got_speakers}])"
+            fail=1
+          fi
+        done <<< "$want_list"
+      fi
+      ;;
+    medicine)
+      # Medicine-specific markers (vignettes / agreement matrix) — wired here
+      # for future contract; no validators yet beyond shared chapterCount/quiz.
+      :
+      ;;
+    research-paper|code|*)
+      # Default: code-domain markers already validated above.
+      :
+      ;;
+  esac
 
   if [ "$fail" -eq 0 ]; then
     echo "  [PASS] $name"

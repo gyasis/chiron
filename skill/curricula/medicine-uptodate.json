@@ -1,0 +1,30 @@
+{
+  "domain": "medicine",
+  "subMode": "uptodate",
+  "version": "1",
+  "description": "UpToDate sub-mode: long-form academic prose with GRADE-graded recommendations, oriented to point-of-care clinical decision-making rather than board-style pattern matching.",
+  "format_style": "academic_prose",
+  "audience_focus": "point-of-care management",
+  "recommendation_framework": "GRADE enforced",
+  "word_count": "5000-10000",
+  "templateStyle": "scroll-modules",
+  "chapterCountTarget": 6,
+  "perChapterQuizTarget": 5,
+  "perChapterSrCardTarget": 6,
+  "modeAOnly": true,
+  "widgetMix": {
+    "vignette": 0.3,
+    "mcq": 0.2,
+    "agreement-matrix": 0.25,
+    "true-false": 0.1,
+    "forest-plot": 0.15
+  },
+  "personasFile": "personas/medicine.json",
+  "themeId": "clinical",
+  "requireQuestAiVerification": true,
+  "gradeFramework": {
+    "recommendation": ["strong", "weak"],
+    "evidenceQuality": ["high", "moderate", "low", "very-low"],
+    "requireGradeOnAllRecs": true
+  }
+}

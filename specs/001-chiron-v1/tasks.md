@@ -162,7 +162,7 @@ description: "Task list for Chiron v1 — Universal Lesson Generator"
 ### Language widget renderers
 
 - [x] T055 [P] [US2] Extend `skill/lib/widget-renderer.ts` to render `fill-blank` widgets with FR-020 fuzzy accent matching: `caffe ≡ caffè`, `e ≡ è`, `niño ≡ nino` (Spanish-style accents tolerated for cross-language consistency)
-- [ ] T056 [P] [US2] Extend `skill/lib/widget-renderer.ts` to render `matching-pair` widgets — `1to1` and `NtoN` drag-drop modes per `contracts/widget-spec.ts`
+- [x] T056 [P] [US2] Extend `skill/lib/widget-renderer.ts` to render `matching-pair` widgets — `1to1` and `NtoN` drag-drop modes per `contracts/widget-spec.ts`
 - [ ] T057 [P] [US2] Extend `skill/lib/widget-renderer.ts` to render `cloze` widgets with `ankiCompatible: true` (so the optional `.apkg` export later can pick them up unchanged)
 - [ ] T058 [P] [US2] Extend `skill/lib/widget-renderer.ts` to render `audio-tts` widgets — produces `<audio>` tag pointing at the per-clip MP3 in `<lesson-output-dir>/audio/`
 
@@ -179,8 +179,8 @@ description: "Task list for Chiron v1 — Universal Lesson Generator"
 ### Golden input + snapshot
 
 - [x] T063 [US2] Create `skill/tests/golden-inputs/language-it-passato-prossimo/` — a vocab CSV + grammar concept hint for the Italian past tense (passato prossimo)
-- [ ] T064 [US2] Author `skill/tests/snapshots/language-it-passato-prossimo.json` — expected: `{chapterCount, fillBlankCount: ≥10, clozeCount: ≥30, mariaAudioClipCount: ≥1, fuzzyAccentCheck: passed}`
-- [ ] T065 [US2] Extend `skill/tests/test.sh` to include language-it-passato-prossimo run + snapshot diff
+- [x] T064 [US2] Author `skill/tests/snapshots/language-it-passato-prossimo.json` — expected: `{chapterCount, fillBlankCount: ≥10, clozeCount: ≥30, mariaAudioClipCount: ≥1, fuzzyAccentCheck: passed}`
+- [x] T065 [US2] Extend `skill/tests/test.sh` to include language-it-passato-prossimo run + snapshot diff
 
 **Checkpoint US2**: US1 + US2 work independently. Two golden inputs pass.
 
@@ -194,16 +194,16 @@ description: "Task list for Chiron v1 — Universal Lesson Generator"
 
 ### Static catalogs
 
-- [ ] T066 [P] [US3] Author `skill/concepts/medicine.json` — medicine concept DAG (~30 concepts spanning conditions / drugs / mechanisms)
-- [ ] T067 [P] [US3] Author `skill/curricula/medicine-amboss.json` — AMBOSS sub-mode: `format_style: bulleted_nested`, `audience_focus: board-exam pattern recognition`, `recommendation_framework: consensus only`, `word_count: 1500-2000`, `vignetteTaxonomy: ['classic','atypical','pediatric','elderly','immunocompromised','pregnancy','comorbidity','mimicker']`
-- [ ] T068 [P] [US3] Author `skill/curricula/medicine-uptodate.json` — UpToDate sub-mode: `format_style: academic_prose`, `audience_focus: point-of-care management`, `recommendation_framework: GRADE enforced`, `word_count: 5000-10000`
-- [ ] T069 [P] [US3] Author `skill/personas/medicine.json` — Dr. Reyes (attending) + Mike (med student, peer) + Priya (resident, peer)
+- [x] T066 [P] [US3] Author `skill/concepts/medicine.json` — medicine concept DAG (~30 concepts spanning conditions / drugs / mechanisms)
+- [x] T067 [P] [US3] Author `skill/curricula/medicine-amboss.json` — AMBOSS sub-mode: `format_style: bulleted_nested`, `audience_focus: board-exam pattern recognition`, `recommendation_framework: consensus only`, `word_count: 1500-2000`, `vignetteTaxonomy: ['classic','atypical','pediatric','elderly','immunocompromised','pregnancy','comorbidity','mimicker']`
+- [x] T068 [P] [US3] Author `skill/curricula/medicine-uptodate.json` — UpToDate sub-mode: `format_style: academic_prose`, `audience_focus: point-of-care management`, `recommendation_framework: GRADE enforced`, `word_count: 5000-10000`
+- [x] T069 [P] [US3] Author `skill/personas/medicine.json` — Dr. Reyes (attending) + Mike (med student, peer) + Priya (resident, peer)
 
 ### Ingest adapters — all 6 new adapters land here (FR-032 b/c/d/e/i/j/k/l)
 
-- [ ] T070 [US3] Author `skill/ingest-adapters/pdf.ts` — text-PDF via `pdfjs-dist`; if no usable text layer (>50 chars on first non-cover page), rasterize via `pdf-to-img` and fall through to Gemini `mcp__gemini-mcp__interpret_image` per page (R-04 revised). Source PDF copied to `<lesson-output-dir>/source/` (FR-030). Emits per-page progress (Stage 0 announces page count up front per R-10 replacement).
-- [ ] T071 [P] [US3] Author `skill/ingest-adapters/image.ts` — handles single image file AND folder of page images (FR-032 c/d). Sends each image to `mcp__gemini-mcp__interpret_image`; preserves alphabetic order; populates `Brief.sourceManifest[]` (FR-034)
-- [ ] T072 [P] [US3] Author `skill/ingest-adapters/multi-pdf.ts` — accepts an ordered list or directory of PDFs (FR-032 e); delegates each file to `pdf.ts`; concatenates extracted text in supplied order; per-file provenance in `Brief.sourceManifest[]`
+- [x] T070 [US3] Author `skill/ingest-adapters/pdf.ts` — text-PDF via `pdfjs-dist`; if no usable text layer (>50 chars on first non-cover page), rasterize via `pdf-to-img` and fall through to Gemini `mcp__gemini-mcp__interpret_image` per page (R-04 revised). Source PDF copied to `<lesson-output-dir>/source/` (FR-030). Emits per-page progress (Stage 0 announces page count up front per R-10 replacement).
+- [x] T071 [P] [US3] Author `skill/ingest-adapters/image.ts` — handles single image file AND folder of page images (FR-032 c/d). Sends each image to `mcp__gemini-mcp__interpret_image`; preserves alphabetic order; populates `Brief.sourceManifest[]` (FR-034)
+- [x] T072 [P] [US3] Author `skill/ingest-adapters/multi-pdf.ts` — accepts an ordered list or directory of PDFs (FR-032 e); delegates each file to `pdf.ts`; concatenates extracted text in supplied order; per-file provenance in `Brief.sourceManifest[]`
 - [ ] T073 [P] [US3] Author `skill/ingest-adapters/url.ts` — fetches a URL (FR-032 i) OR reads a local `.html` file (FR-032 j); sanitizes HTML; extracts text
 - [ ] T074 [P] [US3] Author `skill/ingest-adapters/transcript.ts` — handles plain text / markdown chat-meeting-lecture transcripts (FR-032 h)
 - [ ] T075 [P] [US3] Author `skill/ingest-adapters/agent-report.ts` — accepts markdown / JSON output from another agent (FR-032 k); marks the entry `secondary` in `Brief.sourceManifest[]`; sets `Brief.agentSourceProvenance`; refuses if it would be the SOLE source for a medicine lesson (FR-035)

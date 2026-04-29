@@ -28,6 +28,9 @@ type CodeRunnerWidget = Extract<WidgetSpec, { type: 'code-runner' }>;
 /** Narrowed shape for the fill-blank widget (mirrors FillBlankWidgetSchema). */
 type FillBlankWidget = Extract<WidgetSpec, { type: 'fill-blank' }>;
 
+/** Narrowed shape for the matching-pair widget (mirrors MatchingPairWidgetSchema). */
+type MatchingPairWidget = Extract<WidgetSpec, { type: 'matching-pair' }>;
+
 /** Minimal HTML escape for code/text injected into the rendered output. */
 function escapeHtml(s: string): string {
   return s
@@ -354,6 +357,214 @@ export function renderFillBlank(spec: FillBlankWidget): string {
   ].join('\n');
 }
 
+/**
+ * Renderer for `matching-pair` widgets (T056, FR-020).
+ *
+ * Two visual modes (per `spec.mode`):
+ *   - `1to1`: each left prompt pairs with exactly one right match. Clicking a
+ *     left then a right cell creates a pair (each side de-pairs from any
+ *     existing partner). Re-clicking an already-paired cell un-pairs it.
+ *   - `NtoN`: a left item may pair with multiple right items and vice versa.
+ *     Clicks toggle individual (left, right) cells in an N×M relation.
+ *
+ * Right-column order is shuffled at render time using a deterministic seeded
+ * Fisher–Yates so output is stable across re-renders of the same spec.
+ *
+ * On Check, user pairs are compared to `spec.pairs[]` (canonical answer set).
+ * Per-pair correctness is highlighted; canonical answers are revealed.
+ */
+export function renderMatchingPair(spec: MatchingPairWidget): string {
+  const id = nextWidgetId('mp');
+  const pairs = spec.pairs ?? [];
+  const mode = spec.mode ?? '1to1';
+
+  // Deterministic seed derived from the spec content so re-renders are stable.
+  let seed = 0;
+  const seedSrc = `${id}|${mode}|${pairs.map((p) => `${p.left}=${p.right}`).join('|')}`;
+  for (let i = 0; i < seedSrc.length; i += 1) {
+    seed = (seed * 31 + seedSrc.charCodeAt(i)) | 0;
+  }
+  // Mulberry32 — small, deterministic PRNG.
+  function rand(): number {
+    seed = (seed + 0x6d2b79f5) | 0;
+    let t = seed;
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  }
+
+  // Indices [0..N-1] then Fisher–Yates with the seeded RNG.
+  const rightIndices = pairs.map((_, i) => i);
+  for (let i = rightIndices.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(rand() * (i + 1));
+    const tmp = rightIndices[i]!;
+    rightIndices[i] = rightIndices[j]!;
+    rightIndices[j] = tmp;
+  }
+
+  const promptItems = pairs
+    .map(
+      (p, i) =>
+        `<li class="prompt-item" data-left-index="${i}" role="button" tabindex="0">` +
+        escapeHtml(p.left) +
+        `</li>`,
+    )
+    .join('\n');
+
+  const matchItems = rightIndices
+    .map(
+      (origIdx) =>
+        `<li class="match-item" data-right-index="${origIdx}" role="button" tabindex="0">` +
+        escapeHtml(pairs[origIdx]!.right) +
+        `</li>`,
+    )
+    .join('\n');
+
+  const pairsJson = JSON.stringify(pairs.map((p, i) => ({ left: i, right: i, leftText: p.left, rightText: p.right })));
+  const modeJson = JSON.stringify(mode);
+
+  return [
+    `<div class="matching-pair" id="${id}" data-widget="matching-pair" data-mode="${escapeHtml(mode)}">`,
+    `  <div class="mp-columns">`,
+    `    <ul class="prompts">`,
+    promptItems,
+    `    </ul>`,
+    `    <ul class="matches">`,
+    matchItems,
+    `    </ul>`,
+    `  </div>`,
+    `  <div class="mp-controls">`,
+    `    <button type="button" class="check-button" data-action="check">Check</button>`,
+    `    <button type="button" class="reset-button" data-action="reset">Reset</button>`,
+    `    <span class="mp-feedback" role="status" aria-live="polite"></span>`,
+    `  </div>`,
+    `  <div class="mp-reveal" hidden></div>`,
+    `  <script>`,
+    `  (function(){`,
+    `    var root = document.getElementById(${JSON.stringify(id)});`,
+    `    if (!root) return;`,
+    `    var mode = ${modeJson};`,
+    `    var canonical = ${pairsJson};`,
+    `    var prompts = root.querySelectorAll('.prompt-item');`,
+    `    var matches = root.querySelectorAll('.match-item');`,
+    `    var feedback = root.querySelector('.mp-feedback');`,
+    `    var reveal = root.querySelector('.mp-reveal');`,
+    `    var selectedLeft = null;`,
+    `    var selectedRight = null;`,
+    `    // userPairs: array of {left:int, right:int}`,
+    `    var userPairs = [];`,
+    ``,
+    `    function pairKey(l, r){ return l + ':' + r; }`,
+    `    function hasPair(l, r){`,
+    `      for (var i = 0; i < userPairs.length; i++){`,
+    `        if (userPairs[i].left === l && userPairs[i].right === r) return true;`,
+    `      } return false;`,
+    `    }`,
+    `    function removePair(l, r){`,
+    `      userPairs = userPairs.filter(function(p){ return !(p.left === l && p.right === r); });`,
+    `    }`,
+    `    function leftHasAny(l){ return userPairs.some(function(p){ return p.left === l; }); }`,
+    `    function rightHasAny(r){ return userPairs.some(function(p){ return p.right === r; }); }`,
+    ``,
+    `    function repaint(){`,
+    `      prompts.forEach(function(el){`,
+    `        var l = parseInt(el.getAttribute('data-left-index'), 10);`,
+    `        el.classList.toggle('paired', leftHasAny(l));`,
+    `        el.classList.toggle('selected', selectedLeft === l);`,
+    `        el.classList.remove('correct', 'incorrect');`,
+    `      });`,
+    `      matches.forEach(function(el){`,
+    `        var r = parseInt(el.getAttribute('data-right-index'), 10);`,
+    `        el.classList.toggle('paired', rightHasAny(r));`,
+    `        el.classList.toggle('selected', selectedRight === r);`,
+    `        el.classList.remove('correct', 'incorrect');`,
+    `      });`,
+    `    }`,
+    ``,
+    `    function tryCommit(){`,
+    `      if (selectedLeft == null || selectedRight == null) return;`,
+    `      var l = selectedLeft, r = selectedRight;`,
+    `      if (hasPair(l, r)) {`,
+    `        // re-click toggles off`,
+    `        removePair(l, r);`,
+    `      } else {`,
+    `        if (mode === '1to1') {`,
+    `          // remove any existing pairing for this left or right`,
+    `          userPairs = userPairs.filter(function(p){ return p.left !== l && p.right !== r; });`,
+    `        }`,
+    `        userPairs.push({ left: l, right: r });`,
+    `      }`,
+    `      selectedLeft = null;`,
+    `      selectedRight = null;`,
+    `      repaint();`,
+    `    }`,
+    ``,
+    `    prompts.forEach(function(el){`,
+    `      el.addEventListener('click', function(){`,
+    `        var l = parseInt(el.getAttribute('data-left-index'), 10);`,
+    `        selectedLeft = (selectedLeft === l) ? null : l;`,
+    `        repaint();`,
+    `        tryCommit();`,
+    `      });`,
+    `    });`,
+    `    matches.forEach(function(el){`,
+    `      el.addEventListener('click', function(){`,
+    `        var r = parseInt(el.getAttribute('data-right-index'), 10);`,
+    `        selectedRight = (selectedRight === r) ? null : r;`,
+    `        repaint();`,
+    `        tryCommit();`,
+    `      });`,
+    `    });`,
+    ``,
+    `    var checkBtn = root.querySelector('[data-action="check"]');`,
+    `    var resetBtn = root.querySelector('[data-action="reset"]');`,
+    `    checkBtn.addEventListener('click', function(){`,
+    `      // Canonical pair set = {left==right index}`,
+    `      var correctCount = 0;`,
+    `      var canonSet = {};`,
+    `      for (var i = 0; i < canonical.length; i++) canonSet[pairKey(canonical[i].left, canonical[i].right)] = true;`,
+    `      // Mark prompt and match items based on whether they participate in any correct user pair.`,
+    `      var leftCorrect = {}, rightCorrect = {};`,
+    `      var leftFlagged = {}, rightFlagged = {};`,
+    `      userPairs.forEach(function(p){`,
+    `        leftFlagged[p.left] = true; rightFlagged[p.right] = true;`,
+    `        if (canonSet[pairKey(p.left, p.right)]) {`,
+    `          correctCount++;`,
+    `          leftCorrect[p.left] = true; rightCorrect[p.right] = true;`,
+    `        }`,
+    `      });`,
+    `      prompts.forEach(function(el){`,
+    `        var l = parseInt(el.getAttribute('data-left-index'), 10);`,
+    `        if (leftCorrect[l]) el.classList.add('correct');`,
+    `        else if (leftFlagged[l]) el.classList.add('incorrect');`,
+    `      });`,
+    `      matches.forEach(function(el){`,
+    `        var r = parseInt(el.getAttribute('data-right-index'), 10);`,
+    `        if (rightCorrect[r]) el.classList.add('correct');`,
+    `        else if (rightFlagged[r]) el.classList.add('incorrect');`,
+    `      });`,
+    `      var total = canonical.length;`,
+    `      feedback.textContent = correctCount + ' / ' + total + ' correct pair(s).';`,
+    `      feedback.className = 'mp-feedback ' + (correctCount === total && userPairs.length === total ? 'correct' : 'incorrect');`,
+    `      // Reveal canonical answers`,
+    `      var lines = canonical.map(function(p){ return p.leftText + ' ↔ ' + p.rightText; });`,
+    `      reveal.innerHTML = '<strong>Answers:</strong><ul>' + lines.map(function(s){`,
+    `        return '<li>' + s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;') + '</li>';`,
+    `      }).join('') + '</ul>';`,
+    `      reveal.hidden = false;`,
+    `    });`,
+    `    resetBtn.addEventListener('click', function(){`,
+    `      userPairs = []; selectedLeft = null; selectedRight = null;`,
+    `      reveal.hidden = true; reveal.innerHTML = '';`,
+    `      feedback.textContent = ''; feedback.className = 'mp-feedback';`,
+    `      repaint();`,
+    `    });`,
+    `  })();`,
+    `  </script>`,
+    `</div>`,
+  ].join('\n');
+}
+
 /** Function signature every renderer must satisfy. */
 export type WidgetRenderer = (widget: WidgetSpec) => string;
 
@@ -398,6 +609,10 @@ registerRenderer('code-runner', (widget) =>
 
 registerRenderer('fill-blank', (widget) =>
   renderFillBlank(widget as FillBlankWidget),
+);
+
+registerRenderer('matching-pair', (widget) =>
+  renderMatchingPair(widget as MatchingPairWidget),
 );
 
 /** List the kinds currently registered. Useful for sanity tests. */
