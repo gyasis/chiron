@@ -1,12 +1,12 @@
 # Progress
 
-**Last Updated**: 2026-04-29 17:10:28
+**Last Updated**: 2026-04-29 19:08:24
 
 ## Overall Progress
 - Total Tasks: 129
-- Completed: 80 ✅
-- Pending: 49 ⏳
-- Progress: 62%
+- Completed: 90 ✅
+- Pending: 39 ⏳
+- Progress: 69%
 
 ## Task Breakdown
 - [x] T001 Create the `skill/` directory tree per `plan.md`: `skill/{prompts/{00-ingest/,medicine-only/},ingest-adapters/,concepts/,curricula/,personas/,shell/{themes/,vendor/},lib/,tests/{golden-inputs/,snapshots/}}`
@@ -66,7 +66,7 @@
 - [x] T055 [P] [US2] Extend `skill/lib/widget-renderer.ts` to render `fill-blank` widgets with FR-020 fuzzy accent matching: `caffe ≡ caffè`, `e ≡ è`, `niño ≡ nino` (Spanish-style accents tolerated for cross-language consistency)
 - [x] T056 [P] [US2] Extend `skill/lib/widget-renderer.ts` to render `matching-pair` widgets — `1to1` and `NtoN` drag-drop modes per `contracts/widget-spec.ts`
 - [x] T057 [P] [US2] Extend `skill/lib/widget-renderer.ts` to render `cloze` widgets with `ankiCompatible: true` (so the optional `.apkg` export later can pick them up unchanged)
-- [ ] T058 [P] [US2] Extend `skill/lib/widget-renderer.ts` to render `audio-tts` widgets — produces `<audio>` tag pointing at the per-clip MP3 in `<lesson-output-dir>/audio/`
+- [x] T058 [P] [US2] Extend `skill/lib/widget-renderer.ts` to render `audio-tts` widgets — produces `<audio>` tag pointing at the per-clip MP3 in `<lesson-output-dir>/audio/`
 - [x] T059 [US2] Author `skill/lib/tts-gemini.ts` — invokes the Gemini TTS path (per FR-036 / R-01) for each `audio-tts` widget transcript; saves audio files to `<lesson-output-dir>/audio/<chapter-id>/<line-id>.mp3`. ElevenLabs fallback path documented but not wired in v1 unless Gemini fails Phase 4 ear-test.
 - [x] T060 [P] [US2] Author `skill/prompts/00-ingest/vocab-list.md`
 - [x] T061 [P] [US2] Author `skill/prompts/04d-quiz-fill-blank.md` — fill-blank generation with explicit FR-020 fuzzy-accent rule for Italian
@@ -94,15 +94,15 @@
 - [x] T083 [P] [US3] Author `skill/prompts/medicine-only/verifier-stage2-verify.md`
 - [x] T084 [P] [US3] Author `skill/prompts/medicine-only/verifier-stage3-refine.md`
 - [x] T085 [US3] Wire the verifier loop into `skill/lib/pipeline.ts` Stage 3 — runs ONLY for medicine domain; up to 3 attempts; if all fail, abort the chapter with structured issue report (SC-011). Depends on T024, T082, T083, T084.
-- [ ] T086 [P] [US3] Author `skill/prompts/00-ingest/pdf.md` — guides agent on text-PDF and scanned-PDF extraction handoffs
-- [ ] T087 [P] [US3] Author `skill/prompts/00-ingest/image.md` — guides on image-folder + single-image bundles + figure interpretation
-- [ ] T088 [P] [US3] Author `skill/prompts/00-ingest/agent-report.md` — guides on treating agent reports as `secondary`
-- [ ] T089 [P] [US3] Author `skill/prompts/00-ingest/bundle.md` — guides on multi-source bundles + manifest interpretation
-- [ ] T090 [P] [US3] Author `skill/prompts/04c-quiz-clinical-vignette.md` — vignette MCQ generator with vignette taxonomy enforcement (15-20+, 8 categories), `keyInfo[]` extraction, Hammer rating, Attending Tip, per-distractor explanations (FR-019)
-- [ ] T091 [P] [US3] Author `skill/prompts/04g-quiz-agreement-matrix.md`
-- [ ] T092 [P] [US3] Author `skill/prompts/04j-quiz-assertion-reason.md`
-- [ ] T093 [P] [US3] Author `skill/prompts/04p-chemical-rendering.md` — chemical-equation generation (MathJax+mhchem `\ce{}` syntax) and molecule-2d SMILES generation
-- [ ] T094 [US3] Add medicine-source refusal logic in `skill/lib/pipeline.ts` Stage 0: refuse generation when the only source is `agent-report` (FR-035, SC-016) AND when there is no source-grounding at all (FR-016). Depends on T024.
+- [x] T086 [P] [US3] Author `skill/prompts/00-ingest/pdf.md` — guides agent on text-PDF and scanned-PDF extraction handoffs
+- [x] T087 [P] [US3] Author `skill/prompts/00-ingest/image.md` — guides on image-folder + single-image bundles + figure interpretation
+- [x] T088 [P] [US3] Author `skill/prompts/00-ingest/agent-report.md` — guides on treating agent reports as `secondary`
+- [x] T089 [P] [US3] Author `skill/prompts/00-ingest/bundle.md` — guides on multi-source bundles + manifest interpretation
+- [x] T090 [P] [US3] Author `skill/prompts/04c-quiz-clinical-vignette.md` — vignette MCQ generator with vignette taxonomy enforcement (15-20+, 8 categories), `keyInfo[]` extraction, Hammer rating, Attending Tip, per-distractor explanations (FR-019)
+- [x] T091 [P] [US3] Author `skill/prompts/04g-quiz-agreement-matrix.md`
+- [x] T092 [P] [US3] Author `skill/prompts/04j-quiz-assertion-reason.md`
+- [x] T093 [P] [US3] Author `skill/prompts/04p-chemical-rendering.md` — chemical-equation generation (MathJax+mhchem `\ce{}` syntax) and molecule-2d SMILES generation
+- [x] T094 [US3] Add medicine-source refusal logic in `skill/lib/pipeline.ts` Stage 0: refuse generation when the only source is `agent-report` (FR-035, SC-016) AND when there is no source-grounding at all (FR-016). Depends on T024.
 - [ ] T095 [US3] Create `skill/tests/golden-inputs/medicine-pneumonia/` — a community-acquired pneumonia textbook chapter (mix of text-PDF + 1 image figure to exercise vision path AND text-extract path)
 - [ ] T096 [US3] Author `skill/tests/snapshots/medicine-pneumonia.json` — expected: `{chapterCount, vignetteCount: ≥15, vignetteTaxonomyCoverage: ['classic','atypical', ...], hammerRangePresent: true, keyInfoTagsPerVignette: ≥3, attendingTipPerVignette: true, chemicalReactionCount: ≥1, moleculeCount: ≥1, verifierCycleCount: ≥1}`
 - [ ] T097 [US3] Extend `skill/tests/test.sh` to include medicine-pneumonia run + snapshot diff

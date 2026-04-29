@@ -37,10 +37,62 @@ function loadTemplate(promptsDir: string, name: string): { p: string; t: string 
   return { p, t: fs.readFileSync(p, 'utf8') };
 }
 
+// FR-016 / FR-035 / SC-016 — Stage 0 refusal checkpoint. Runs BEFORE the LLM hand-off so we
+// never burn a Claude call on a brief that lacks source-grounding or (in medicine) is grounded
+// only on agent-generated reports. Caller must check the return-type discriminator.
+
+export interface Stage0RefusalReport {
+  reason: 'no-source-grounding' | 'medicine-agent-report-sole-source';
+  details: string;
+  remediation: string;
+}
+
+export function stage0Preflight(
+  ctx: PipelineContext,
+  brief: Brief,
+): Stage0RefusalReport | null {
+  const manifest = (brief as unknown as { sourceManifest?: Array<{ role?: string; extractor?: string }> })
+    .sourceManifest;
+  const hasManifestEntry =
+    Array.isArray(manifest) &&
+    manifest.some((m) => typeof m?.extractor === 'string' && m.extractor.trim().length > 0);
+  const extractedText = typeof brief.extractedText === 'string' ? brief.extractedText : '';
+
+  if (extractedText.trim().length === 0 && !hasManifestEntry) {
+    return {
+      reason: 'no-source-grounding',
+      details:
+        'Brief has no extracted text and no manifest entries; cannot ground a lesson without source material.',
+      remediation: 'Provide a source file (PDF, code repo, vocab CSV, etc.) before invoking Chiron.',
+    };
+  }
+
+  if (ctx.domain === 'medicine') {
+    const sourceTypeIsAgentReport = brief.sourceType === 'agent-report';
+    const allManifestAgentReport =
+      Array.isArray(manifest) && manifest.length > 0 && manifest.every((m) => m?.role === 'agent-report');
+    if (sourceTypeIsAgentReport || allManifestAgentReport) {
+      return {
+        reason: 'medicine-agent-report-sole-source',
+        details:
+          'Medicine domain requires a primary source (textbook PDF, clinical guideline, journal article); agent-generated reports cannot be the sole grounding for medical content.',
+        remediation: 'Add a primary medical source to the bundle, or use a non-medicine domain.',
+      };
+    }
+  }
+
+  return null;
+}
+
 export function stage1Brief(
   ctx: PipelineContext,
   partialBrief: Pick<Brief, 'domain' | 'mode' | 'sourceType' | 'sourcePath' | 'extractedText' | 'metadata'>,
-): PipelinePromptHandoff {
+): PipelinePromptHandoff | Stage0RefusalReport {
+  const refusal = stage0Preflight(ctx, partialBrief as unknown as Brief);
+  if (refusal) {
+    progress.stage(1, 5, `brief refused: ${refusal.reason}`);
+    return refusal;
+  }
   progress.stage(1, 5, `brief: ${partialBrief.sourceType}`);
   const { p, t } = loadTemplate(ctx.promptsDir, '01-brief.md');
   return {

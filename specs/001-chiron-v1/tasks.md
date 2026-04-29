@@ -164,7 +164,7 @@ description: "Task list for Chiron v1 — Universal Lesson Generator"
 - [x] T055 [P] [US2] Extend `skill/lib/widget-renderer.ts` to render `fill-blank` widgets with FR-020 fuzzy accent matching: `caffe ≡ caffè`, `e ≡ è`, `niño ≡ nino` (Spanish-style accents tolerated for cross-language consistency)
 - [x] T056 [P] [US2] Extend `skill/lib/widget-renderer.ts` to render `matching-pair` widgets — `1to1` and `NtoN` drag-drop modes per `contracts/widget-spec.ts`
 - [x] T057 [P] [US2] Extend `skill/lib/widget-renderer.ts` to render `cloze` widgets with `ankiCompatible: true` (so the optional `.apkg` export later can pick them up unchanged)
-- [ ] T058 [P] [US2] Extend `skill/lib/widget-renderer.ts` to render `audio-tts` widgets — produces `<audio>` tag pointing at the per-clip MP3 in `<lesson-output-dir>/audio/`
+- [x] T058 [P] [US2] Extend `skill/lib/widget-renderer.ts` to render `audio-tts` widgets — produces `<audio>` tag pointing at the per-clip MP3 in `<lesson-output-dir>/audio/`
 
 ### TTS via Gemini MCP
 
@@ -226,18 +226,18 @@ description: "Task list for Chiron v1 — Universal Lesson Generator"
 
 ### Medicine prompts + ingest
 
-- [ ] T086 [P] [US3] Author `skill/prompts/00-ingest/pdf.md` — guides agent on text-PDF and scanned-PDF extraction handoffs
-- [ ] T087 [P] [US3] Author `skill/prompts/00-ingest/image.md` — guides on image-folder + single-image bundles + figure interpretation
-- [ ] T088 [P] [US3] Author `skill/prompts/00-ingest/agent-report.md` — guides on treating agent reports as `secondary`
-- [ ] T089 [P] [US3] Author `skill/prompts/00-ingest/bundle.md` — guides on multi-source bundles + manifest interpretation
-- [ ] T090 [P] [US3] Author `skill/prompts/04c-quiz-clinical-vignette.md` — vignette MCQ generator with vignette taxonomy enforcement (15-20+, 8 categories), `keyInfo[]` extraction, Hammer rating, Attending Tip, per-distractor explanations (FR-019)
-- [ ] T091 [P] [US3] Author `skill/prompts/04g-quiz-agreement-matrix.md`
-- [ ] T092 [P] [US3] Author `skill/prompts/04j-quiz-assertion-reason.md`
-- [ ] T093 [P] [US3] Author `skill/prompts/04p-chemical-rendering.md` — chemical-equation generation (MathJax+mhchem `\ce{}` syntax) and molecule-2d SMILES generation
+- [x] T086 [P] [US3] Author `skill/prompts/00-ingest/pdf.md` — guides agent on text-PDF and scanned-PDF extraction handoffs
+- [x] T087 [P] [US3] Author `skill/prompts/00-ingest/image.md` — guides on image-folder + single-image bundles + figure interpretation
+- [x] T088 [P] [US3] Author `skill/prompts/00-ingest/agent-report.md` — guides on treating agent reports as `secondary`
+- [x] T089 [P] [US3] Author `skill/prompts/00-ingest/bundle.md` — guides on multi-source bundles + manifest interpretation
+- [x] T090 [P] [US3] Author `skill/prompts/04c-quiz-clinical-vignette.md` — vignette MCQ generator with vignette taxonomy enforcement (15-20+, 8 categories), `keyInfo[]` extraction, Hammer rating, Attending Tip, per-distractor explanations (FR-019)
+- [x] T091 [P] [US3] Author `skill/prompts/04g-quiz-agreement-matrix.md`
+- [x] T092 [P] [US3] Author `skill/prompts/04j-quiz-assertion-reason.md`
+- [x] T093 [P] [US3] Author `skill/prompts/04p-chemical-rendering.md` — chemical-equation generation (MathJax+mhchem `\ce{}` syntax) and molecule-2d SMILES generation
 
 ### Refusal logic (medicine-specific guardrails)
 
-- [ ] T094 [US3] Add medicine-source refusal logic in `skill/lib/pipeline.ts` Stage 0: refuse generation when the only source is `agent-report` (FR-035, SC-016) AND when there is no source-grounding at all (FR-016). Depends on T024.
+- [x] T094 [US3] Add medicine-source refusal logic in `skill/lib/pipeline.ts` Stage 0: refuse generation when the only source is `agent-report` (FR-035, SC-016) AND when there is no source-grounding at all (FR-016). Depends on T024.
 
 ### Golden input + snapshot
 

@@ -34,6 +34,22 @@ type MatchingPairWidget = Extract<WidgetSpec, { type: 'matching-pair' }>;
 /** Narrowed shape for the cloze widget (mirrors ClozeWidgetSchema). */
 type ClozeWidget = Extract<WidgetSpec, { type: 'cloze' }>;
 
+/** Narrowed shape for the audio-tts widget (mirrors AudioTtsWidgetSchema).
+ *
+ * NOTE — contract gap: as of T058, `AudioTtsWidgetSchema` only defines
+ * `{ type, transcript, voice }`. The renderer also reads optional
+ * `audioPath`, `speaker`, and `language` fields per the task brief — these
+ * are NOT YET in the Zod schema. Tightening will land when the upstream TTS
+ * pipeline is implemented (provider selection PRD pending). Until then we
+ * treat them as optional via a structural intersection so this renderer
+ * compiles against the current schema.
+ */
+type AudioTtsWidget = Extract<WidgetSpec, { type: 'audio-tts' }> & {
+  audioPath?: string;
+  speaker?: string;
+  language?: string;
+};
+
 /** Minimal HTML escape for code/text injected into the rendered output. */
 function escapeHtml(s: string): string {
   return s
@@ -744,6 +760,90 @@ registerRenderer('matching-pair', (widget) =>
 );
 
 registerRenderer('cloze', (widget) => renderCloze(widget as ClozeWidget));
+
+/**
+ * Renderer for `audio-tts` widgets (T058, US2 — Italian native-speaker persona).
+ *
+ * SCOPE: HTML emission only. The TTS-provider question (Gemini vs ElevenLabs
+ * etc.) is tabled in `~/dev/prd/scratch/chiron_tts_provider_selection_2026-04-29.md`
+ * and is OUT OF SCOPE for this renderer. We assume an upstream pipeline has
+ * already produced an MP3 at `spec.audioPath` (typically
+ * `<lesson-output-dir>/audio/<clip>.mp3`); this renderer just points at it.
+ *
+ * Emits:
+ *   - <audio controls preload="none" src="..."> — `preload="none"` keeps
+ *     bandwidth zero until user interacts.
+ *   - <details><summary>Transcript</summary><p class="transcript-text">...</p></details>
+ *     — collapsed by default, opens for screen-reader / silent-mode users.
+ *   - `lang="<code>"` on the transcript paragraph when `spec.language` is
+ *     supplied (e.g. `'it'` for Italian) so AT pronounces it correctly.
+ *   - `data-speaker` and `data-tts-voice` for cross-referencing with the
+ *     voice catalog the TTS-provider PRD will define.
+ *   - `<div class="audio-fallback" hidden>` shown when the `<audio>` element
+ *     fires `error` (file missing / decode failure / CORS).
+ *   - On `ended`, dispatches a bubbling `chiron:audio-ended` CustomEvent so a
+ *     later wave can prompt SR-card review when the clip finishes.
+ *
+ * Contract gaps surfaced by this implementation (flagged for a future schema PR):
+ *   1. `AudioTtsWidgetSchema` lacks `audioPath` — required for HTML rendering.
+ *   2. `AudioTtsWidgetSchema` lacks `speaker?` — required for multi-persona
+ *      lessons (Alice/Bob/Native-Speaker).
+ *   3. `AudioTtsWidgetSchema` lacks `language?` — required for `lang=` a11y.
+ *   4. `voice` is currently a free-form string — should become an enum once
+ *      the TTS-provider PRD lands a voice catalog.
+ */
+export function renderAudioTts(spec: AudioTtsWidget): string {
+  const id = nextWidgetId('att');
+  const audioPath = spec.audioPath ?? '';
+  const transcript = spec.transcript ?? '';
+  const voice = spec.voice ?? '';
+  const speaker = spec.speaker ?? '';
+  const language = spec.language ?? '';
+
+  const langAttr = language ? ` lang="${escapeHtml(language)}"` : '';
+  const speakerAttr = speaker ? ` data-speaker="${escapeHtml(speaker)}"` : '';
+  const voiceAttr = voice ? ` data-tts-voice="${escapeHtml(voice)}"` : '';
+
+  return [
+    `<div class="audio-tts" id="${id}" data-widget="audio-tts"${speakerAttr}${voiceAttr}>`,
+    `  <audio controls preload="none" src="${escapeHtml(audioPath)}"></audio>`,
+    `  <details class="transcript">`,
+    `    <summary>Transcript</summary>`,
+    `    <p class="transcript-text"${langAttr}>${escapeHtml(transcript)}</p>`,
+    `  </details>`,
+    `  <div class="audio-fallback" hidden>`,
+    `    Audio unavailable — see transcript below.`,
+    `  </div>`,
+    `  <script>`,
+    `  (function(){`,
+    `    var root = document.getElementById(${JSON.stringify(id)});`,
+    `    if (!root) return;`,
+    `    var audio = root.querySelector('audio');`,
+    `    var fallback = root.querySelector('.audio-fallback');`,
+    `    var details = root.querySelector('details.transcript');`,
+    `    if (!audio) return;`,
+    `    audio.addEventListener('error', function(){`,
+    `      audio.hidden = true;`,
+    `      if (fallback) fallback.hidden = false;`,
+    `      if (details) details.open = true;`,
+    `    });`,
+    `    audio.addEventListener('ended', function(){`,
+    `      try {`,
+    `        root.dispatchEvent(new CustomEvent('chiron:audio-ended', {`,
+    `          bubbles: true,`,
+    `          detail: { widgetId: ${JSON.stringify(id)} }`,
+    `        }));`,
+    `      } catch(e) { /* CustomEvent unsupported — silent */ }`,
+    `    });`,
+    `  })();`,
+    `  </script>`,
+    `</div>`,
+  ].join('\n');
+}
+
+registerRenderer('audio-tts', (widget) =>
+  renderAudioTts(widget as AudioTtsWidget),
+);
 
 /** List the kinds currently registered. Useful for sanity tests. */
 export function registeredKinds(): WidgetKind[] {
