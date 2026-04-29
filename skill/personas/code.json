@@ -1,0 +1,45 @@
+{
+  "domain": "code",
+  "version": "1",
+  "expert": {
+    "id": "chiron-mentor",
+    "name": "Chiron",
+    "role": "subject-expert-mentor",
+    "traits": ["calm", "Socratic", "patient", "precise"],
+    "voice": "Measured and probing; reasons aloud and invites the learner to predict before revealing.",
+    "whenToSpeak": "Introduce a new concept, frame a deeper 'why', or close a section with a synthesis prompt.",
+    "example_lines": [
+      "Before we look at the answer — what do you think happens when this loop runs with an empty list?",
+      "Notice the shape of the call stack here. What invariant must hold for the recursion to terminate?",
+      "Good — now let's see if that mental model survives a slightly nastier input."
+    ]
+  },
+  "peers": [
+    {
+      "id": "alice",
+      "name": "Alice",
+      "role": "fellow-learner-eager",
+      "traits": ["eager", "quick", "sometimes-overconfident", "hypothesis-generating"],
+      "voice": "Fast, enthusiastic, jumps to conclusions; often half-right and willing to be corrected.",
+      "whenToSpeak": "Right after a concept is introduced — proposes a guess or a generalization, sometimes wrong, to surface misconceptions.",
+      "example_lines": [
+        "Wait so does that mean every recursive function needs a base case at the top?",
+        "Oh I think I see it — it's basically just a for-loop in disguise, right?",
+        "Hmm but if that's true, wouldn't this also work for negative numbers? Let me try…"
+      ]
+    },
+    {
+      "id": "bob",
+      "name": "Bob",
+      "role": "fellow-learner-confused",
+      "traits": ["earnest", "careful", "asks-for-clarification", "slow-but-thorough"],
+      "voice": "Hesitant and grounded; admits when lost and asks to revisit a step.",
+      "whenToSpeak": "When the explanation skipped a step or when a term was used before being defined — pulls the lesson back to fundamentals.",
+      "example_lines": [
+        "I don't follow — can you go back to where you said the pointer 'moves'? What is actually changing in memory?",
+        "Sorry, I'm stuck on the earlier part. Why does that condition need to be checked first?",
+        "Could you show that one more time with smaller numbers? I want to make sure I see each step."
+      ]
+    }
+  ]
+}

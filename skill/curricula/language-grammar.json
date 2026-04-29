@@ -1,0 +1,20 @@
+{
+  "domain": "language-it",
+  "version": "1",
+  "description": "Italian grammar-arc learning path: chapters trace verb tenses and construction patterns through narrative exposition + mixed-format quizzes + spaced-repetition flashcards.",
+  "templateStyle": "scroll-modules",
+  "chapterCountTarget": 8,
+  "perChapterQuizTarget": 10,
+  "perChapterSrCardTarget": 7,
+  "modeAOnly": true,
+  "widgetMix": {
+    "mcq": 0.25,
+    "fill-blank": 0.3,
+    "matching": 0.15,
+    "sentence-reorder": 0.15,
+    "cloze": 0.15
+  },
+  "personasFile": "personas/language-it.json",
+  "themeId": "linguistic",
+  "srCardEmphasis": "grammar"
+}

@@ -1,0 +1,114 @@
+{
+  "domain": "language-it",
+  "version": "1",
+  "concepts": [
+    {
+      "id": "articles-definite-indefinite",
+      "label": "Articles (Definite & Indefinite)",
+      "summary": "Italian definite articles (il, lo, la, i, gli, le) and indefinite articles (un, uno, una, un'), and how their form depends on the following noun's gender and starting sound.",
+      "prereqs": []
+    },
+    {
+      "id": "nouns-gender-number",
+      "label": "Nouns: Gender and Number",
+      "summary": "Italian nouns are masculine or feminine and pluralize by changing endings (-o/-i, -a/-e, -e/-i), with article agreement.",
+      "prereqs": ["articles-definite-indefinite"]
+    },
+    {
+      "id": "numbers-0-100",
+      "label": "Numbers 0-100",
+      "summary": "Cardinal numbers from zero to one hundred, including the elision rules for venti, trenta, etc. when combined with uno and otto.",
+      "prereqs": []
+    },
+    {
+      "id": "time-expressions",
+      "label": "Time Expressions",
+      "summary": "Common time markers like oggi, domani, ieri, adesso, subito, dopo, prima, plus telling the hour using numbers.",
+      "prereqs": ["numbers-0-100"]
+    },
+    {
+      "id": "family-vocab",
+      "label": "Family Vocabulary",
+      "summary": "Core family terms: madre, padre, fratello, sorella, figlio, figlia, nonno, nonna, zio, zia, cugino, cugina.",
+      "prereqs": []
+    },
+    {
+      "id": "food-vocab",
+      "label": "Food Vocabulary",
+      "summary": "High-frequency food and drink words: pane, pasta, pizza, vino, acqua, formaggio, prosciutto, frutta, verdura, caffe.",
+      "prereqs": []
+    },
+    {
+      "id": "directions-vocab",
+      "label": "Directions Vocabulary",
+      "summary": "Spatial and movement words: a destra, a sinistra, dritto, vicino, lontano, qui, la, sopra, sotto.",
+      "prereqs": []
+    },
+    {
+      "id": "essere-vs-avere",
+      "label": "Essere vs Avere",
+      "summary": "The two foundational verbs essere (to be) and avere (to have): present-tense conjugations and the meanings each one carries (identity/state vs possession/age).",
+      "prereqs": ["nouns-gender-number"]
+    },
+    {
+      "id": "weather-and-seasons",
+      "label": "Weather and Seasons",
+      "summary": "Weather phrases (fa caldo, fa freddo, piove, nevica) and the four seasons, all leaning on essere/avere idioms.",
+      "prereqs": ["essere-vs-avere"]
+    },
+    {
+      "id": "present-tense-regular",
+      "label": "Present Tense — Regular Verbs",
+      "summary": "Conjugating regular -are, -ere, and -ire verbs in the indicative present across all six persons.",
+      "prereqs": ["essere-vs-avere"]
+    },
+    {
+      "id": "everyday-actions",
+      "label": "Everyday Action Verbs",
+      "summary": "High-frequency verbs of daily life — mangiare, bere, andare, lavorare, studiare, parlare, dormire — used in the present.",
+      "prereqs": ["present-tense-regular"]
+    },
+    {
+      "id": "present-tense-irregular",
+      "label": "Present Tense — Irregular Verbs",
+      "summary": "The most common irregular present-tense verbs: andare, fare, dire, dare, venire, uscire, sapere, potere, volere, dovere.",
+      "prereqs": ["present-tense-regular"]
+    },
+    {
+      "id": "ordering-at-restaurant",
+      "label": "Ordering at a Restaurant",
+      "summary": "Functional set for restaurants: vorrei, posso avere, mi porta, il conto per favore, plus combining food vocab with polite irregular verb forms.",
+      "prereqs": ["food-vocab", "present-tense-irregular"]
+    },
+    {
+      "id": "direct-object-pronouns",
+      "label": "Direct Object Pronouns",
+      "summary": "Replacing direct objects with mi, ti, lo, la, ci, vi, li, le and where they sit relative to a conjugated verb.",
+      "prereqs": ["nouns-gender-number", "present-tense-regular"]
+    },
+    {
+      "id": "passato-prossimo",
+      "label": "Passato Prossimo",
+      "summary": "The compound past tense formed with avere or essere as the auxiliary plus the past participle, including agreement when essere is used.",
+      "prereqs": ["essere-vs-avere", "present-tense-regular"]
+    },
+    {
+      "id": "imperfetto",
+      "label": "Imperfetto",
+      "summary": "The imperfect tense for ongoing, habitual, or descriptive past actions, with regular -avo/-evo/-ivo endings.",
+      "prereqs": ["present-tense-regular"]
+    },
+    {
+      "id": "passato-vs-imperfetto",
+      "label": "Passato Prossimo vs Imperfetto",
+      "summary": "Choosing between the two past tenses: completed events and changes (passato prossimo) versus background, habit, and duration (imperfetto).",
+      "prereqs": ["passato-prossimo", "imperfetto"]
+    },
+    {
+      "id": "congiuntivo-presente",
+      "label": "Congiuntivo Presente",
+      "summary": "The present subjunctive for opinions, doubts, wishes, and emotions after triggers like penso che, voglio che, e necessario che.",
+      "prereqs": ["present-tense-irregular", "passato-prossimo"]
+    }
+  ]
+}

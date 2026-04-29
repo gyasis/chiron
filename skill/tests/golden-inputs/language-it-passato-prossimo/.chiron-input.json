@@ -1,0 +1,16 @@
+{
+  "domain": "language-it",
+  "primary": "vocab.csv",
+  "primaryType": "vocab-list",
+  "supplements": [
+    {
+      "path": "grammar-hint.md",
+      "type": "grammar-hint"
+    }
+  ],
+  "metadata": {
+    "targetLanguage": "it",
+    "topic": "passato-prossimo",
+    "cefr": "A2"
+  }
+}

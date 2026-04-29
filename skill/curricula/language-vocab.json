@@ -1,0 +1,19 @@
+{
+  "domain": "language-it",
+  "version": "1",
+  "description": "Italian vocab-list-style learning path: SR-card-heavy curriculum focused on vocabulary acquisition through fill-blank, cloze deletion, matching, and audio-TTS exposure with a native-speaker persona.",
+  "templateStyle": "vocab-cards",
+  "chapterCountTarget": 7,
+  "perChapterQuizTarget": 5,
+  "perChapterSrCardTarget": 40,
+  "modeAOnly": true,
+  "widgetMix": {
+    "fill-blank": 0.4,
+    "cloze": 0.3,
+    "matching": 0.2,
+    "audio-tts": 0.1
+  },
+  "personasFile": "personas/language-it.json",
+  "themeId": "linguistic",
+  "srCardEmphasis": "vocab"
+}

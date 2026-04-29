@@ -1,0 +1,21 @@
+{
+  "name": "result-util",
+  "version": "0.1.0",
+  "description": "A tiny Result<T, E> type and helpers for TypeScript.",
+  "license": "MIT",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist",
+    "src",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "test": "echo no tests yet"
+  },
+  "devDependencies": {
+    "typescript": "^5.4.0"
+  }
+}

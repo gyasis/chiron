@@ -1,12 +1,12 @@
 # Progress
 
-**Last Updated**: 2026-04-29 14:04:29
+**Last Updated**: 2026-04-29 15:43:25
 
 ## Overall Progress
 - Total Tasks: 129
-- Completed: 40 ✅
-- Pending: 89 ⏳
-- Progress: 31%
+- Completed: 60 ✅
+- Pending: 69 ⏳
+- Progress: 46%
 
 ## Task Breakdown
 - [x] T001 Create the `skill/` directory tree per `plan.md`: `skill/{prompts/{00-ingest/,medicine-only/},ingest-adapters/,concepts/,curricula/,personas/,shell/{themes/,vendor/},lib/,tests/{golden-inputs/,snapshots/}}`
@@ -44,34 +44,34 @@
 - [x] T033 Author `skill/lib/assemble.ts` — Stage 5: invokes `shell/build.sh`, calls `sqlite-init.ts` to initialize the DB, seeds `sr_cards` chapter-1 due-now, seeds `bookmarks` chapter-1 entry, opens `lesson.html` via `xdg-open`/`open`. Depends on T012, T013
 - [x] T034 [P] [US1] Author `skill/concepts/code.json` — small concept DAG (~15 concepts is fine for v1) with prereq edges; passes the validator (no cycles, every prereq exists)
 - [x] T035 [P] [US1] Author `skill/curricula/code.json` — `templateStyle: scroll-modules`, `chapterCountTarget: 8`, `perChapterQuizTarget: 10`, `perChapterSrCardTarget: 7`, `modeAOnly: true`
-- [ ] T036 [P] [US1] Author `skill/personas/code.json` — Chiron-mentor (subject expert) + Alice (peer, eager) + Bob (peer, confused), all in the JSON shape from `data-model.md` §3.3
+- [x] T036 [P] [US1] Author `skill/personas/code.json` — Chiron-mentor (subject expert) + Alice (peer, eager) + Bob (peer, confused), all in the JSON shape from `data-model.md` §3.3
 - [x] T037 [US1] Author `skill/ingest-adapters/code-repo.ts` — handles git repo / local dir / single source file (FR-032 f). Walks the repo respecting `.gitignore`, extracts file list + key file contents into a `Brief` with `sourceType: 'code-repo'` and metadata `{repoSha, fileCount, primaryLanguage}`. Source NOT copied (referenced by path per FR-030 carve-out for repos).
 - [x] T038 [P] [US1] Extend `skill/lib/widget-renderer.ts` to render `spot-the-bug` widgets — code block with line numbering, click-to-mark-bug interaction, reveal explanation
 - [x] T039 [P] [US1] Implement `skill/lib/chalkai-loader.ts` lazy-loader stub (PRD §3 #11) — loads ChalkAI runtime ONLY when a chapter's WidgetSpec includes `type: 'reactive-math'`. v1 may stub if no code-domain lessons exercise it.
-- [ ] T040 [P] [US1] Extend `skill/lib/widget-renderer.ts` to render `code-runner` widgets per R-03 — lazy-loads Pyodide from CDN if `runtime: 'pyodide'`; falls back to "Pyodide unavailable" message when offline; native JS runtime always works inline
+- [x] T040 [P] [US1] Extend `skill/lib/widget-renderer.ts` to render `code-runner` widgets per R-03 — lazy-loads Pyodide from CDN if `runtime: 'pyodide'`; falls back to "Pyodide unavailable" message when offline; native JS runtime always works inline
 - [x] T041 [P] [US1] Author `skill/prompts/00-ingest/code-repo.md` — guides the agent on what to extract from a repo
 - [x] T042 [P] [US1] Author `skill/prompts/04b-quiz-mcq.md` — universal MCQ generation prompt (used by US1 + others)
-- [ ] T043 [P] [US1] Author `skill/prompts/04f-quiz-spot-the-bug.md` — code-domain-specific quiz primitive
-- [ ] T044 [P] [US1] Author `skill/prompts/04l-peer-dialogue.md` — Alice/Bob/Mike/Priya/Luca/Sofia dialogue generator referencing `{{personaRoster}}` and `{{priorChapterStruggleSummary}}`
-- [ ] T045 [P] [US1] Author `skill/prompts/04m-domain-expert.md` — Chiron-mentor / Dr. Reyes / Klaus / Dr. Hofmann expert dialogue
-- [ ] T046 [P] [US1] Author `skill/prompts/04n-sr-card-gen.md` — generates SR cards (`card_type`, `front`, `back`) per chapter, scoped to the chapter's `keyConcepts`
-- [ ] T047 [US1] Create `skill/tests/golden-inputs/code-small-repo/` — a tiny, real, MIT-licensed TypeScript repo (e.g. a 200-line utility lib) committed verbatim into the dir
-- [ ] T048 [US1] Author `skill/tests/snapshots/code-small-repo.json` — expected key fields: `{chapterCount, totalQuizCount, srCardCount, peerDialogueLineCount, hasSpotTheBug: true}`
-- [ ] T049 [US1] Author `skill/tests/test.sh` — driver that runs all golden inputs, generates `lesson.html` in a temp dir, opens in headless browser, diffs against snapshots, exits non-zero on any mismatch (FR-026)
-- [ ] T050 [P] [US2] Author `skill/concepts/language-it.json` — vocab + grammar concept DAG for Italian
-- [ ] T051 [P] [US2] Author `skill/curricula/language-vocab.json` — vocab-list-style curriculum (`chapterCountTarget: 5-10`, `perChapterSrCardTarget: 30-50`)
-- [ ] T052 [P] [US2] Author `skill/curricula/language-grammar.json` — grammar-arc curriculum (`templateStyle: scroll-modules`)
-- [ ] T053 [P] [US2] Author `skill/personas/language-it.json` — Maria (native speaker, `ttsVoice: 'it-female-1'`) + Luca (peer, eager) + Sofia (peer, confused)
-- [ ] T054 [P] [US2] Author `skill/ingest-adapters/vocab-list.ts` — parses a CSV vocab list (FR-032 g); produces `Brief` with `sourceType: 'vocab-list'`. Source CSV copied into `<lesson-output-dir>/source/` per FR-030.
-- [ ] T055 [P] [US2] Extend `skill/lib/widget-renderer.ts` to render `fill-blank` widgets with FR-020 fuzzy accent matching: `caffe ≡ caffè`, `e ≡ è`, `niño ≡ nino` (Spanish-style accents tolerated for cross-language consistency)
+- [x] T043 [P] [US1] Author `skill/prompts/04f-quiz-spot-the-bug.md` — code-domain-specific quiz primitive
+- [x] T044 [P] [US1] Author `skill/prompts/04l-peer-dialogue.md` — Alice/Bob/Mike/Priya/Luca/Sofia dialogue generator referencing `{{personaRoster}}` and `{{priorChapterStruggleSummary}}`
+- [x] T045 [P] [US1] Author `skill/prompts/04m-domain-expert.md` — Chiron-mentor / Dr. Reyes / Klaus / Dr. Hofmann expert dialogue
+- [x] T046 [P] [US1] Author `skill/prompts/04n-sr-card-gen.md` — generates SR cards (`card_type`, `front`, `back`) per chapter, scoped to the chapter's `keyConcepts`
+- [x] T047 [US1] Create `skill/tests/golden-inputs/code-small-repo/` — a tiny, real, MIT-licensed TypeScript repo (e.g. a 200-line utility lib) committed verbatim into the dir
+- [x] T048 [US1] Author `skill/tests/snapshots/code-small-repo.json` — expected key fields: `{chapterCount, totalQuizCount, srCardCount, peerDialogueLineCount, hasSpotTheBug: true}`
+- [x] T049 [US1] Author `skill/tests/test.sh` — driver that runs all golden inputs, generates `lesson.html` in a temp dir, opens in headless browser, diffs against snapshots, exits non-zero on any mismatch (FR-026)
+- [x] T050 [P] [US2] Author `skill/concepts/language-it.json` — vocab + grammar concept DAG for Italian
+- [x] T051 [P] [US2] Author `skill/curricula/language-vocab.json` — vocab-list-style curriculum (`chapterCountTarget: 5-10`, `perChapterSrCardTarget: 30-50`)
+- [x] T052 [P] [US2] Author `skill/curricula/language-grammar.json` — grammar-arc curriculum (`templateStyle: scroll-modules`)
+- [x] T053 [P] [US2] Author `skill/personas/language-it.json` — Maria (native speaker, `ttsVoice: 'it-female-1'`) + Luca (peer, eager) + Sofia (peer, confused)
+- [x] T054 [P] [US2] Author `skill/ingest-adapters/vocab-list.ts` — parses a CSV vocab list (FR-032 g); produces `Brief` with `sourceType: 'vocab-list'`. Source CSV copied into `<lesson-output-dir>/source/` per FR-030.
+- [x] T055 [P] [US2] Extend `skill/lib/widget-renderer.ts` to render `fill-blank` widgets with FR-020 fuzzy accent matching: `caffe ≡ caffè`, `e ≡ è`, `niño ≡ nino` (Spanish-style accents tolerated for cross-language consistency)
 - [ ] T056 [P] [US2] Extend `skill/lib/widget-renderer.ts` to render `matching-pair` widgets — `1to1` and `NtoN` drag-drop modes per `contracts/widget-spec.ts`
 - [ ] T057 [P] [US2] Extend `skill/lib/widget-renderer.ts` to render `cloze` widgets with `ankiCompatible: true` (so the optional `.apkg` export later can pick them up unchanged)
 - [ ] T058 [P] [US2] Extend `skill/lib/widget-renderer.ts` to render `audio-tts` widgets — produces `<audio>` tag pointing at the per-clip MP3 in `<lesson-output-dir>/audio/`
-- [ ] T059 [US2] Author `skill/lib/tts-gemini.ts` — invokes the Gemini TTS path (per FR-036 / R-01) for each `audio-tts` widget transcript; saves audio files to `<lesson-output-dir>/audio/<chapter-id>/<line-id>.mp3`. ElevenLabs fallback path documented but not wired in v1 unless Gemini fails Phase 4 ear-test.
-- [ ] T060 [P] [US2] Author `skill/prompts/00-ingest/vocab-list.md`
-- [ ] T061 [P] [US2] Author `skill/prompts/04d-quiz-fill-blank.md` — fill-blank generation with explicit FR-020 fuzzy-accent rule for Italian
-- [ ] T062 [P] [US2] Author `skill/prompts/04e-quiz-cloze.md` — Anki-compatible cloze generation
-- [ ] T063 [US2] Create `skill/tests/golden-inputs/language-it-passato-prossimo/` — a vocab CSV + grammar concept hint for the Italian past tense (passato prossimo)
+- [x] T059 [US2] Author `skill/lib/tts-gemini.ts` — invokes the Gemini TTS path (per FR-036 / R-01) for each `audio-tts` widget transcript; saves audio files to `<lesson-output-dir>/audio/<chapter-id>/<line-id>.mp3`. ElevenLabs fallback path documented but not wired in v1 unless Gemini fails Phase 4 ear-test.
+- [x] T060 [P] [US2] Author `skill/prompts/00-ingest/vocab-list.md`
+- [x] T061 [P] [US2] Author `skill/prompts/04d-quiz-fill-blank.md` — fill-blank generation with explicit FR-020 fuzzy-accent rule for Italian
+- [x] T062 [P] [US2] Author `skill/prompts/04e-quiz-cloze.md` — Anki-compatible cloze generation
+- [x] T063 [US2] Create `skill/tests/golden-inputs/language-it-passato-prossimo/` — a vocab CSV + grammar concept hint for the Italian past tense (passato prossimo)
 - [ ] T064 [US2] Author `skill/tests/snapshots/language-it-passato-prossimo.json` — expected: `{chapterCount, fillBlankCount: ≥10, clozeCount: ≥30, mariaAudioClipCount: ≥1, fuzzyAccentCheck: passed}`
 - [ ] T065 [US2] Extend `skill/tests/test.sh` to include language-it-passato-prossimo run + snapshot diff
 - [ ] T066 [P] [US3] Author `skill/concepts/medicine.json` — medicine concept DAG (~30 concepts spanning conditions / drugs / mechanisms)

@@ -33,10 +33,6 @@ Return a JSON object:
     },
     ...
   ],
-  "personaDialogue": [
-    {"speaker": "alice", "text": "..."},
-    {"speaker": "chiron-mentor", "text": "..."}
-  ],
   "srCards": [
     {"front": "...", "back": "...", "tags": [...]}
   ],
@@ -52,9 +48,10 @@ Return a JSON object:
    `extractedText` from the Brief or to a `keyConcepts` entry. No fabrication.
 3. **Per-distractor explanations.** Every wrong MCQ option must say *why*
    it's wrong (USMLE/AMBOSS pedagogy).
-4. **`personaDialogue`** uses the personas defined for the lesson's domain
-   (`personas/<domain>.json`). Peer learners ask realistic questions; the
-   tutor (chiron-mentor or domain-expert) answers in-character.
+4. **`personaDialogue` is NOT generated here.** Peer-learner / mentor dialogue
+   is generated separately by Stage 4l (`04l-peer-dialogue.md`). Do NOT emit
+   a `personaDialogue` field — Stage 4l owns that output and the rendering
+   shell interleaves it into the chapter.
 5. **`srCards`** — concept flashcards (term ↔ definition) for code/medicine;
    sentence-cloze cards for language. Aim for `perChapterSrCardTarget` from
    the curriculum.

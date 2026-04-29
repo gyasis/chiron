@@ -1,0 +1,50 @@
+italian,english,partOfSpeech,exampleSentence,grammarTag
+essere,to be,verb,"Sono stato a Roma la settimana scorsa.",aux-essere
+avere,to have,verb,"Ho avuto una giornata lunga ieri.",aux-avere
+mangiato,eaten,verb,"Ho mangiato la pasta a pranzo.",participle-regular
+parlato,spoken,verb,"Abbiamo parlato per due ore.",participle-regular
+guardato,watched,verb,"Ieri sera ho guardato un film italiano.",participle-regular
+lavorato,worked,verb,"Ho lavorato fino a tardi venerdì.",participle-regular
+studiato,studied,verb,"Ho studiato l'italiano per tre anni.",participle-regular
+dormito,slept,verb,"Ho dormito otto ore questa notte.",participle-regular
+finito,finished,verb,"Ho finito il libro stamattina.",participle-regular
+capito,understood,verb,"Non ho capito la domanda.",participle-regular
+sentito,heard/felt,verb,"Ho sentito un rumore strano.",participle-regular
+partito,left/departed,verb,"Marco è partito per Milano.",participle-regular
+arrivato,arrived,verb,"Sono arrivata a casa alle otto.",participle-regular
+andato,gone,verb,"Siamo andati al cinema sabato.",participle-irregular
+fatto,done/made,verb,"Cosa hai fatto ieri?",participle-irregular
+detto,said,verb,"Mi ha detto la verità.",participle-irregular
+scritto,written,verb,"Ho scritto una lettera a mia madre.",participle-irregular
+letto,read,verb,"Ho letto tre libri quest'estate.",participle-irregular
+preso,taken,verb,"Ho preso il treno delle sette.",participle-irregular
+messo,put/placed,verb,"Ho messo le chiavi sul tavolo.",participle-irregular
+aperto,opened,verb,"Ha aperto la finestra perché faceva caldo.",participle-irregular
+chiuso,closed,verb,"Ho chiuso la porta a chiave.",participle-irregular
+venuto,come,verb,"Anna è venuta alla festa con noi.",participle-irregular
+stato,been,verb,"Sono stato molto stanco la settimana scorsa.",participle-irregular
+visto,seen,verb,"Hai visto il mio telefono?",participle-irregular
+nato,born,verb,"Sono nato a Bologna nel 1990.",participle-irregular
+morto,died,verb,"Il suo cane è morto l'anno scorso.",participle-irregular
+rimasto,remained/stayed,verb,"Siamo rimasti a casa tutto il giorno.",participle-irregular
+ieri,yesterday,adverb,"Ieri ho incontrato un vecchio amico.",time-marker
+"la settimana scorsa","last week",adverb,"La settimana scorsa siamo andati al mare.",time-marker
+"due giorni fa","two days ago",adverb,"Due giorni fa ho ricevuto la tua lettera.",time-marker
+già,already,adverb,"Ho già mangiato, grazie.",time-marker
+mai,never/ever,adverb,"Non sono mai stato in Giappone.",time-marker
+"l'anno scorso","last year",adverb,"L'anno scorso ho visitato la Sicilia.",time-marker
+stamattina,this morning,adverb,"Stamattina ho bevuto un caffè al bar.",time-marker
+giorno,day,noun,"È stato un giorno difficile.",noun-time
+settimana,week,noun,"La settimana è passata velocemente.",noun-time
+mese,month,noun,"Il mese scorso ho cambiato lavoro.",noun-time
+anno,year,noun,"Quest'anno ho imparato molto.",noun-time
+festa,party,noun,"La festa è finita a mezzanotte.",noun-time
+viaggio,trip,noun,"Il viaggio è stato lungo ma bello.",noun-time
+lungo,long,adjective,"È stata una giornata lunga.",adjective
+breve,short/brief,adjective,"È stato un incontro breve.",adjective
+stanco,tired,adjective,"Ero stanco dopo il lavoro.",adjective
+contento,happy/content,adjective,"Sono stata molto contenta di vederti.",adjective
+bello,beautiful/nice,adjective,"È stato un weekend bello.",adjective
+uscito,gone out,verb,"Sono uscita con le mie amiche venerdì.",participle-irregular
+tornato,returned,verb,"Sono tornato a casa tardi.",participle-regular
+caduto,fallen,verb,"Il bambino è caduto dalla bicicletta.",participle-regular

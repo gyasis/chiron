@@ -34,7 +34,7 @@ export interface Chapter1SrCard {
   front: string;
   /** Back-of-card answer / explanation. */
   back: string;
-  /** Optional tags — currently unused by the schema; reserved for future. */
+  /** Optional tags — JSON-encoded into the schema's `sr_cards.tags` TEXT column. */
   tags?: string[];
   /**
    * Card type — `'cloze' | 'term-def' | 'vignette' | 'fill-blank' | ...`.
@@ -108,9 +108,9 @@ export function assembleLesson(opts: AssembleOptions): AssembleResult {
     // ---- Step 3: seed sr_cards (chapter 1, all due now) ----------------------
     const insertCard = db.prepare(
       `INSERT INTO sr_cards (
-         course_id, chapter_id, concept_id, card_type, front, back,
+         course_id, chapter_id, concept_id, card_type, front, back, tags,
          ease_factor, interval_days, repetitions, next_due_at, suspended
-       ) VALUES (?, ?, ?, ?, ?, ?, 2.5, 0, 0, ?, 0)`,
+       ) VALUES (?, ?, ?, ?, ?, ?, ?, 2.5, 0, 0, ?, 0)`,
     );
 
     const seedCards = db.transaction((cards: Chapter1SrCard[]) => {
@@ -122,6 +122,7 @@ export function assembleLesson(opts: AssembleOptions): AssembleResult {
           c.card_type ?? 'term-def',
           c.front,
           c.back,
+          c.tags && c.tags.length > 0 ? JSON.stringify(c.tags) : null,
           now,
         );
       }

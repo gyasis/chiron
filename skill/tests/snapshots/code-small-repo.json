@@ -1,0 +1,18 @@
+{
+  "input": "code-small-repo",
+  "domain": "code",
+  "mode": "A",
+  "chapterCount": 8,
+  "chapterCountTolerance": 1,
+  "totalQuizCount": 80,
+  "totalQuizCountTolerance": 16,
+  "srCardCount": 56,
+  "srCardCountTolerance": 14,
+  "peerDialogueLineCount": 64,
+  "peerDialogueLineCountTolerance": 24,
+  "hasSpotTheBug": true,
+  "hasMcq": true,
+  "hasTrueFalse": true,
+  "expectedKeyConcepts": ["values-and-types", "functions", "generics", "narrowing"],
+  "schemaVersion": "1"
+}

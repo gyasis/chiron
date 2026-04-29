@@ -84,6 +84,7 @@ CREATE TABLE IF NOT EXISTS sr_cards (
     card_type        TEXT NOT NULL,             -- 'cloze' | 'term-def' | 'vignette' | 'fill-blank' | ...
     front            TEXT NOT NULL,
     back             TEXT NOT NULL,
+    tags             TEXT,                      -- nullable; JSON-encoded string[] from Stage 4n
     -- SM-2 state
     ease_factor      REAL    DEFAULT 2.5,
     interval_days    INTEGER DEFAULT 0,

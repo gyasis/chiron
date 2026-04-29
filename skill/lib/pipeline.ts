@@ -10,7 +10,7 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { progress } from './progress.js';
 import { validateBrief, validateSyllabus, type ConceptDag } from './validator.js';
-import { initSqlite } from './sqlite-init.js';
+import { initDb } from './sqlite-init.js';
 import type { Brief } from './schemas/brief.js';
 import type { ChapterSyllabus } from './schemas/chapter-syllabus.js';
 
@@ -158,7 +158,9 @@ export function stage5Assemble(ctx: PipelineContext): { dbPath: string; lessonHt
   progress.stage(5, 5, 'assemble: build.sh + sqlite-init + open');
   // build.sh runs out-of-process (FR-009 — generation-time only).
   // sqlite-init applies the schema (no llm_* tables per Q8).
-  const dbPath = initSqlite(ctx.lessonOutputDir);
+  const db = initDb(ctx.lessonOutputDir);
+  const dbPath = (db as unknown as { name: string }).name;
+  db.close();
   const lessonHtmlPath = path.join(ctx.lessonOutputDir, 'lesson.html');
   return { dbPath, lessonHtmlPath };
 }
