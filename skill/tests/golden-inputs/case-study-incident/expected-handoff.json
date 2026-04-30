@@ -1,0 +1,10 @@
+{
+  "kind": "case-study-delegation",
+  "siblingSkillPath": "~/.claude/skills/case-study.md",
+  "modeReason": "1500 words is below the 2000-word Mode-B threshold (FR-003)",
+  "metadata": {
+    "domain": "auto",
+    "sourceType": "transcript",
+    "briefSchemaVersion": "1"
+  }
+}

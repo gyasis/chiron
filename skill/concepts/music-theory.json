@@ -1,0 +1,66 @@
+{
+  "domain": "music-theory",
+  "version": "1",
+  "concepts": [
+    {
+      "id": "pitch-and-octaves",
+      "label": "Pitch and Octaves",
+      "summary": "A pitch is the perceived frequency of a sound, and two pitches an octave apart share the same letter name because one vibrates at exactly twice the frequency of the other.",
+      "prereqs": []
+    },
+    {
+      "id": "intervals",
+      "label": "Intervals",
+      "summary": "An interval is the distance in pitch between two notes, measured in steps and qualities like major third or perfect fifth.",
+      "prereqs": ["pitch-and-octaves"]
+    },
+    {
+      "id": "scales-major-minor",
+      "label": "Major and Minor Scales",
+      "summary": "Scales are ordered sequences of intervals that define a tonal palette, with major and minor being the two most common patterns in Western music.",
+      "prereqs": ["intervals"]
+    },
+    {
+      "id": "key-signatures",
+      "label": "Key Signatures",
+      "summary": "A key signature is the set of sharps or flats at the start of a staff that tells you which scale a piece is built from.",
+      "prereqs": ["scales-major-minor"]
+    },
+    {
+      "id": "triads",
+      "label": "Triads",
+      "summary": "A triad is a three-note chord built by stacking thirds on a chosen scale degree, forming the basic harmonic unit.",
+      "prereqs": ["intervals", "scales-major-minor"]
+    },
+    {
+      "id": "chord-qualities",
+      "label": "Chord Qualities",
+      "summary": "The four basic triad qualities are major, minor, diminished, and augmented, distinguished by the specific intervals between their three notes.",
+      "prereqs": ["triads"]
+    },
+    {
+      "id": "chord-functions",
+      "label": "Chord Functions",
+      "summary": "Within a key, each chord has a function such as tonic, dominant, or subdominant that describes its role in establishing or resolving harmonic tension.",
+      "prereqs": ["chord-qualities", "key-signatures"]
+    },
+    {
+      "id": "chord-progressions",
+      "label": "Chord Progressions",
+      "summary": "A chord progression is an ordered sequence of chords that shapes the harmonic motion of a piece, like the common I-IV-V-I.",
+      "prereqs": ["chord-functions"]
+    },
+    {
+      "id": "cadences",
+      "label": "Cadences",
+      "summary": "Cadences are the closing chord patterns that punctuate phrases, including authentic, plagal, deceptive, and half cadences.",
+      "prereqs": ["chord-progressions"]
+    },
+    {
+      "id": "voice-leading",
+      "label": "Voice Leading",
+      "summary": "Voice leading is the craft of moving each individual note from one chord to the next as smoothly as possible, usually by step or common tone.",
+      "prereqs": ["chord-progressions"]
+    }
+  ]
+}

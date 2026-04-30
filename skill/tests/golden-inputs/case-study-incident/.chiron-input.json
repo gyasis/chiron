@@ -1,0 +1,6 @@
+{
+  "domain": "auto",
+  "expectedMode": "B",
+  "modeReason": "1500 words is below the 2000-word Mode-B threshold (FR-003); case-study form is appropriate",
+  "files": [{"path": "incident.md", "role": "primary"}]
+}

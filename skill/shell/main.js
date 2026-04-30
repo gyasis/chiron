@@ -16,12 +16,106 @@
  *  - "Spot the bug" challenge
  *  - Layer toggle
  */
+// FR-005 / FR-026 — scroll-position restore (v1 uses localStorage; .chiron-state.db is for CLI analytics only)
 (function () {
   'use strict';
 
   /* ── HELPERS ──────────────────────────────────────────────── */
   function $(sel, ctx) { return (ctx || document).querySelector(sel); }
   function $$(sel, ctx) { return Array.from((ctx || document).querySelectorAll(sel)); }
+
+  /* ── BOOKMARKS / SCROLL-POSITION RESTORE (FR-005 / FR-026) ── */
+  (function setupBookmarks() {
+    const META = document.querySelector('meta[name="chiron-lesson-id"]');
+    const lessonId = (META && META.getAttribute('content')) || document.title || 'unknown';
+    const STORAGE_KEY = 'chiron:lesson:' + lessonId + ':bookmarks';
+    const MAX_ENTRIES = 20;
+    const DEBOUNCE_MS = 500;
+
+    function readBookmarks() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) return [];
+        const parsed = JSON.parse(raw);
+        return Array.isArray(parsed) ? parsed : [];
+      } catch (e) {
+        return [];
+      }
+    }
+
+    function writeBookmarks(arr) {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(arr.slice(0, MAX_ENTRIES)));
+      } catch (e) {
+        /* quota or disabled — silently ignore */
+      }
+    }
+
+    function currentChapterId() {
+      const probe = document.elementFromPoint(window.innerWidth / 2, 100);
+      let el = probe;
+      while (el && el !== document.body) {
+        if (el.dataset && el.dataset.chapterId) return el.dataset.chapterId;
+        el = el.parentElement;
+      }
+      return null;
+    }
+
+    // Restore: pick the most recent bookmark and scroll to it after layout settles.
+    function restore() {
+      const bookmarks = readBookmarks();
+      if (!bookmarks.length) return;
+      const sorted = bookmarks.slice().sort((a, b) => (b.last_visited_at || 0) - (a.last_visited_at || 0));
+      const top = sorted[0];
+      if (!top || typeof top.scroll_position !== 'number') return;
+      // Wait for layout (fonts, images, MathJax, Mermaid) before scrolling.
+      window.addEventListener('load', () => {
+        requestAnimationFrame(() => {
+          window.scrollTo({ top: top.scroll_position, behavior: 'auto' });
+        });
+      });
+    }
+
+    let pendingTimer = null;
+    let pendingEntry = null;
+
+    function flush() {
+      if (!pendingEntry) return;
+      const bookmarks = readBookmarks();
+      const idx = bookmarks.findIndex(b => b.chapter_id === pendingEntry.chapter_id);
+      if (idx >= 0) bookmarks[idx] = pendingEntry;
+      else bookmarks.push(pendingEntry);
+      // Sort newest first; cap at MAX_ENTRIES.
+      bookmarks.sort((a, b) => (b.last_visited_at || 0) - (a.last_visited_at || 0));
+      writeBookmarks(bookmarks);
+      pendingEntry = null;
+      pendingTimer = null;
+    }
+
+    function onScroll() {
+      const chapterId = currentChapterId();
+      if (!chapterId) return;
+      pendingEntry = {
+        chapter_id: chapterId,
+        scroll_position: window.scrollY,
+        last_visited_at: Date.now()
+      };
+      if (pendingTimer) clearTimeout(pendingTimer);
+      pendingTimer = setTimeout(flush, DEBOUNCE_MS);
+    }
+
+    window.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('beforeunload', () => {
+      if (pendingTimer) { clearTimeout(pendingTimer); pendingTimer = null; }
+      flush();
+    });
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', restore);
+    } else {
+      restore();
+    }
+  })();
 
   /* ── NAVIGATION & PROGRESS BAR ────────────────────────────── */
   const progressBar = $('#progress-bar');

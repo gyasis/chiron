@@ -13,6 +13,12 @@ import { validateBrief, validateSyllabus, type ConceptDag } from './validator.js
 import { initDb } from './sqlite-init.js';
 import type { Brief } from './schemas/brief.js';
 import type { ChapterSyllabus } from './schemas/chapter-syllabus.js';
+import type { TriggerContext } from './trigger-context.js';
+import { detectMode } from './mode-heuristic.js';
+
+// Mode B (case-study) delegation per FR-003 / contracts/skill-triggers.md.
+// Chiron does NOT run its own pipeline for Mode B; the case-study sibling skill
+// (~/.claude/skills/case-study.md) owns the entire output.
 
 export interface PipelineContext {
   lessonOutputDir: string;
@@ -84,15 +90,98 @@ export function stage0Preflight(
   return null;
 }
 
+export interface CaseStudyHandoff {
+  kind: 'case-study-delegation';
+  siblingSkillPath: string;
+  sourcePath: string;
+  sourceExcerpt: string;
+  modeReason: string;
+  metadata: Record<string, unknown>;
+}
+
+export interface ModeDecision {
+  mode: 'A' | 'B';
+  reason: string;
+  modeForcedBy: 'user-flag' | 'slash-command' | 'heuristic' | null;
+}
+
+export function decideMode(
+  _ctx: PipelineContext,
+  triggerCtx: TriggerContext,
+  extractedText: string,
+): ModeDecision {
+  if ((triggerCtx.mode === 'A' || triggerCtx.mode === 'B') && triggerCtx.modeForcedBy) {
+    return {
+      mode: triggerCtx.mode,
+      reason: `Mode ${triggerCtx.mode} forced via ${triggerCtx.modeForcedBy}.`,
+      modeForcedBy: triggerCtx.modeForcedBy,
+    };
+  }
+  // 'auto' (or unforced) → run heuristic
+  const h = detectMode(extractedText);
+  return {
+    mode: h.mode,
+    reason: h.reason,
+    modeForcedBy: 'heuristic',
+  };
+}
+
+export function delegateToCaseStudy(
+  ctx: PipelineContext,
+  _triggerCtx: TriggerContext,
+  brief: Brief,
+): CaseStudyHandoff {
+  const decision = _triggerCtx
+    ? decideMode(ctx, _triggerCtx, brief.extractedText ?? '')
+    : { mode: 'B' as const, reason: 'caller-resolved', modeForcedBy: null };
+  return {
+    kind: 'case-study-delegation',
+    siblingSkillPath: '~/.claude/skills/case-study.md',
+    sourcePath: (brief as unknown as { sourcePath?: string }).sourcePath ?? '',
+    sourceExcerpt: brief.extractedText ?? '',
+    modeReason: decision.reason,
+    metadata: {
+      domain: ctx.domain,
+      sourceType: brief.sourceType,
+      briefSchemaVersion: (brief as unknown as { briefSchemaVersion?: string }).briefSchemaVersion,
+    },
+  };
+}
+
 export function stage1Brief(
   ctx: PipelineContext,
   partialBrief: Pick<Brief, 'domain' | 'mode' | 'sourceType' | 'sourcePath' | 'extractedText' | 'metadata'>,
-): PipelinePromptHandoff | Stage0RefusalReport {
+  triggerCtx?: TriggerContext,
+  extractedText?: string,
+): PipelinePromptHandoff | Stage0RefusalReport | CaseStudyHandoff {
+  // FR-016 / FR-035 / SC-016 preflight runs FIRST — refusal beats Mode-B delegation.
   const refusal = stage0Preflight(ctx, partialBrief as unknown as Brief);
   if (refusal) {
     progress.stage(1, 5, `brief refused: ${refusal.reason}`);
     return refusal;
   }
+
+  // Mode-B delegation per FR-003 — only runs if trigger context is provided.
+  if (triggerCtx) {
+    const text = extractedText ?? partialBrief.extractedText ?? '';
+    const decision = decideMode(ctx, triggerCtx, text);
+    if (decision.mode === 'B') {
+      progress.stage(0, 5, 'Mode B detected — delegating to case-study skill');
+      return {
+        kind: 'case-study-delegation',
+        siblingSkillPath: '~/.claude/skills/case-study.md',
+        sourcePath: partialBrief.sourcePath ?? '',
+        sourceExcerpt: text,
+        modeReason: decision.reason,
+        metadata: {
+          domain: ctx.domain,
+          sourceType: partialBrief.sourceType,
+          briefSchemaVersion: (partialBrief as unknown as { briefSchemaVersion?: string }).briefSchemaVersion,
+        },
+      };
+    }
+  }
+
   progress.stage(1, 5, `brief: ${partialBrief.sourceType}`);
   const { p, t } = loadTemplate(ctx.promptsDir, '01-brief.md');
   return {

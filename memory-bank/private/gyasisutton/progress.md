@@ -1,12 +1,12 @@
 # Progress
 
-**Last Updated**: 2026-04-29 21:51:28
+**Last Updated**: 2026-04-30 08:39:23
 
 ## Overall Progress
 - Total Tasks: 129
-- Completed: 99 ✅
-- Pending: 30 ⏳
-- Progress: 76%
+- Completed: 109 ✅
+- Pending: 20 ⏳
+- Progress: 84%
 
 ## Task Breakdown
 - [x] T001 Create the `skill/` directory tree per `plan.md`: `skill/{prompts/{00-ingest/,medicine-only/},ingest-adapters/,concepts/,curricula/,personas/,shell/{themes/,vendor/},lib/,tests/{golden-inputs/,snapshots/}}`
@@ -86,7 +86,7 @@
 - [x] T075 [P] [US3] Author `skill/ingest-adapters/agent-report.ts` — accepts markdown / JSON output from another agent (FR-032 k); marks the entry `secondary` in `Brief.sourceManifest[]`; sets `Brief.agentSourceProvenance`; refuses if it would be the SOLE source for a medicine lesson (FR-035)
 - [x] T076 [US3] Author `skill/ingest-adapters/bundle.ts` — walks a directory (FR-032 l); honors optional `chiron.manifest.json` if present (declares per-file `role`); else dispatches each recognized file by extension. Emits warnings for unknown extensions (skipped, not failed). Aggregates ordered concatenation across all files. Depends on T070, T071, T072, T073, T074, T075.
 - [x] T077 [P] [US3] Extend `skill/lib/widget-renderer.ts` to render `mcq-clinical-vignette` widgets — vignette block + `<keyinfo>` chip rendering + 5-option layout + per-distractor explanation reveal + Hammer rating chip + Attending Tip callout
-- [ ] T078 [P] [US3] Extend `skill/lib/widget-renderer.ts` to render `agreement-matrix` widgets — N statements × {always / sometimes / never} grid
+- [x] T078 [P] [US3] Extend `skill/lib/widget-renderer.ts` to render `agreement-matrix` widgets — N statements × {always / sometimes / never} grid
 - [ ] T079 [P] [US3] Extend `skill/lib/widget-renderer.ts` to render `assertion-reason` widgets — 5-relationship picker per `contracts/widget-spec.ts`
 - [x] T080 [US3] Extend `skill/lib/chemistry-renderer.ts` — concrete `MoleculeRenderer` impl. **Phase 5 prototype rubric** per R-02: prototype both Kekule.js and RDKit-JS against the metformin SMILES, pick the smaller / faster one, drop the loser. Vendor the winning library into `skill/shell/vendor/molecule-renderer/`. Ships a single dep at runtime per FR-031.
 - [ ] T081 [P] [US3] Extend `skill/lib/widget-renderer.ts` to render `pathway-diagram` widgets — supports `renderer: 'mermaid'` (uses vendored Mermaid) and `renderer: 'd3-custom'` (vanilla JS / SVG)
@@ -114,17 +114,17 @@
 - [x] T103 [P] [US4] Author `skill/prompts/04i-quiz-slider-estimation.md`
 - [x] T104 [P] [US4] Author `skill/prompts/04o-infographic.md` — for forest-plot data extraction from the source paper
 - [x] T105 [US4] Create `skill/tests/golden-inputs/research-paper-jones2025/` — a real (or realistic) research paper PDF
-- [ ] T106 [US4] Author `skill/tests/snapshots/research-paper-jones2025.json` — expected: `{sectionCount: 6, mcqCount: ≥5, forestPlotCount: ≥1, drHofmannDialoguePresent: true}`
-- [ ] T107 [US4] Extend `skill/tests/test.sh` to include research-paper-jones2025 run + snapshot diff
-- [ ] T108 [US5] Add Mode-B delegation logic in `skill/lib/pipeline.ts` Stage 0: when `TriggerContext.mode === 'B'` (either inferred via heuristic or forced via `/chiron-case-study`), invoke `~/.claude/skills/case-study.md` with the source and exit early — Chiron's own pipeline does not run for Mode B. Depends on T024, T026, T027.
+- [x] T106 [US4] Author `skill/tests/snapshots/research-paper-jones2025.json` — expected: `{sectionCount: 6, mcqCount: ≥5, forestPlotCount: ≥1, drHofmannDialoguePresent: true}`
+- [x] T107 [US4] Extend `skill/tests/test.sh` to include research-paper-jones2025 run + snapshot diff
+- [x] T108 [US5] Add Mode-B delegation logic in `skill/lib/pipeline.ts` Stage 0: when `TriggerContext.mode === 'B'` (either inferred via heuristic or forced via `/chiron-case-study`), invoke `~/.claude/skills/case-study.md` with the source and exit early — Chiron's own pipeline does not run for Mode B. Depends on T024, T026, T027.
 - [ ] T109 [P] [US5] Add the `mode b` / `mode a` user-override handler in `skill/lib/trigger-context.ts` per FR-003 — listens for these phrases mid-conversation and updates `TriggerContext.mode`
-- [ ] T110 [P] [US5] (Optional) Create `skill/tests/golden-inputs/case-study-incident/` with a 1500-word incident write-up; snapshot only checks "Mode B inferred + case-study.md invoked" — actual case-study output is the sibling skill's responsibility
-- [ ] T111 [P] [US6] Author `skill/concepts/music-theory.json` — a 10-concept DAG (intervals → scales → triads → chord progressions → cadences)
-- [ ] T112 [P] [US6] Author `skill/curricula/music-theory.json` — minimal scroll-modules curriculum
-- [ ] T113 [P] [US6] Author `skill/personas/music-theory.json` — a music-mentor expert + 2 peer learners
+- [x] T110 [P] [US5] (Optional) Create `skill/tests/golden-inputs/case-study-incident/` with a 1500-word incident write-up; snapshot only checks "Mode B inferred + case-study.md invoked" — actual case-study output is the sibling skill's responsibility
+- [x] T111 [P] [US6] Author `skill/concepts/music-theory.json` — a 10-concept DAG (intervals → scales → triads → chord progressions → cadences)
+- [x] T112 [P] [US6] Author `skill/curricula/music-theory.json` — minimal scroll-modules curriculum
+- [x] T113 [P] [US6] Author `skill/personas/music-theory.json` — a music-mentor expert + 2 peer learners
 - [ ] T114 [US6] Add a new-domain regression check in `skill/tests/test.sh`: run Chiron against the music-theory drop with a 1-paragraph music-theory text input, confirm `lesson.html` generates, confirm `git diff` shows zero changes under `skill/lib/`, `skill/ingest-adapters/`, `skill/shell/` (SC-007). Depends on T049 (test.sh exists).
-- [ ] T115 [P] [US6] Document the per-domain drop process in `skill/README.md` — name the 3 files, the optional prompt-template variant slot, and the validation steps
-- [ ] T116 [P] Implement scroll-position restore in `skill/shell/main.js` — on lesson re-open, read `bookmarks.scroll_position` for the most-recent-`last_visited_at` row and `window.scrollTo()` once content is laid out
+- [x] T115 [P] [US6] Document the per-domain drop process in `skill/README.md` — name the 3 files, the optional prompt-template variant slot, and the validation steps
+- [x] T116 [P] Implement scroll-position restore in `skill/shell/main.js` — on lesson re-open, read `bookmarks.scroll_position` for the most-recent-`last_visited_at` row and `window.scrollTo()` once content is laid out
 - [ ] T117 [P] Implement chapter-completion marking in `skill/shell/main.js` — chapters listed in `chapter_completion` get a visual checkmark in the TOC
 - [ ] T118 Implement in-lesson SR review surface in `skill/shell/main.js` — query `sr_cards WHERE next_due_at <= NOW() AND suspended = 0`; render a "Due cards" panel pinned at the top of the page; on rating click, write to `sr_review_log`, update `sr_cards` SM-2 state via the bundled `lib/sr-scheduler.ts` (compiled to JS for the browser). Depends on T014, T116.
 - [ ] T119 [P] Implement bookmark write in `skill/shell/main.js` — debounced scroll-position writer; updates `bookmarks` row on scroll-pause + on chapter switch

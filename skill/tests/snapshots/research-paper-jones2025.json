@@ -1,0 +1,23 @@
+{
+  "input": "research-paper-jones2025",
+  "domain": "research-paper",
+  "mode": "A",
+  "sectionCount": 6,
+  "sectionCountTolerance": 0,
+  "expectedSectionStructure": ["motivation", "methods", "results", "discussion", "appraisal", "connections"],
+  "mcqCountMin": 5,
+  "totalQuizCount": 42,
+  "totalQuizCountTolerance": 14,
+  "forestPlotCountMin": 1,
+  "expectedForestPlotStudies": 12,
+  "expectedPooledHr": 0.86,
+  "expectedI2": 18,
+  "drHofmannDialoguePresent": true,
+  "srCardCount": 36,
+  "srCardCountTolerance": 12,
+  "personaDialogueLineCount": 48,
+  "personaDialogueLineCountTolerance": 20,
+  "expectedKeyConcepts": ["meta-analysis", "systematic-review", "confidence-intervals", "grade-evidence-rating"],
+  "expectedPersonaSpeakers": ["dr-hofmann", "bob", "mike"],
+  "schemaVersion": "1"
+}

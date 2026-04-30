@@ -315,6 +315,131 @@ check_min() {
   fi
 }
 
+# Helper: exact equality (integers or strings)
+check_eq() {
+  local label="$1" want="$2" got="$3"
+  if [ -z "$want" ] || [ "$want" = "null" ]; then return 0; fi
+  if [ "$want" != "$got" ]; then
+    echo "    [diff] $label: got=$got expected=$want"
+    fail=1
+  fi
+}
+
+# Helper: floating-point closeness using awk; tolerance is absolute.
+check_float_close() {
+  local label="$1" want="$2" got="$3" tol="$4"
+  if [ -z "$want" ] || [ "$want" = "null" ]; then return 0; fi
+  if [ -z "$got" ]; then
+    echo "    [diff] $label: got=<empty> expected=$want+/-$tol"
+    fail=1
+    return 0
+  fi
+  local ok
+  ok="$(awk -v w="$want" -v g="$got" -v t="$tol" 'BEGIN{ d=g-w; if (d<0) d=-d; print (d<=t)?"1":"0" }')"
+  if [ "$ok" != "1" ]; then
+    echo "    [diff] $label: got=$got expected=$want+/-$tol"
+    fail=1
+  fi
+}
+
+# Helper: integer absolute-tolerance closeness
+check_int_close() {
+  local label="$1" want="$2" got="$3" tol="$4"
+  if [ -z "$want" ] || [ "$want" = "null" ]; then return 0; fi
+  if [ -z "$got" ]; then
+    echo "    [diff] $label: got=<empty> expected=$want+/-$tol"
+    fail=1
+    return 0
+  fi
+  local ok
+  ok="$(awk -v w="$want" -v g="$got" -v t="$tol" 'BEGIN{ d=g-w; if (d<0) d=-d; print (d<=t)?"1":"0" }')"
+  if [ "$ok" != "1" ]; then
+    echo "    [diff] $label: got=$got expected=$want+/-$tol"
+    fail=1
+  fi
+}
+
+# ---------- Research-paper-domain marker extraction (T107) ----------
+# Per-research-paper marker classes:
+#   class="forest-plot"                       -> forestPlotCount
+#   class="forest-plot-row" (within plots)    -> expectedForestPlotStudies
+#   data-pooled-hr="<val>" or
+#     class="forest-pooled" containing <val>  -> pooledHr
+#   data-i2="<val>" or text 'I²=NN' near plot -> i2
+#   class="mcq-widget"                        -> mcqCount (reuses code marker)
+#   data-section="<X>"                        -> sectionStructure (CSV)
+#   data-speaker="dr-hofmann"                 -> drHofmannDialoguePresent
+#   data-key-concept="<X>" or
+#     class="key-concept" data-concept="<X>"  -> keyConcepts (CSV)
+#   data-speaker="<X>"                        -> personaSpeakers (CSV)
+#
+# Echoes a single space-separated record:
+#   "<forest> <studies> <pooled_hr> <i2> <mcq> <sections_csv>
+#    <hofmann> <concepts_csv> <speakers_csv>"
+extract_research_paper_fields() {
+  local html="$1"
+  local forest studies pooled_hr i2 mcq hofmann sections_csv concepts_csv speakers_csv
+
+  forest="$(count_marker "$html" "forest-plot")"
+  mcq="$(count_marker "$html" "mcq-widget")"
+
+  # Forest plot rows — count occurrences of class="forest-plot-row" anywhere.
+  studies="$(grep -oE "class=[\"'][^\"']*\\bforest-plot-row\\b[^\"']*[\"']" "$html" 2>/dev/null | wc -l | awk '{print $1}')"
+
+  # Pooled HR — primary: data-pooled-hr="<val>"
+  pooled_hr="$(grep -oE 'data-pooled-hr=[\"'"'"'][0-9.]+[\"'"'"']' "$html" 2>/dev/null \
+    | sed -E 's/data-pooled-hr=[\"'"'"']([0-9.]+)[\"'"'"']/\1/' | head -1 || true)"
+  # Fallback: class="forest-pooled" ... <val>
+  if [ -z "$pooled_hr" ]; then
+    pooled_hr="$(grep -oE "class=[\"'][^\"']*\\bforest-pooled\\b[^\"']*[\"'][^<]*[0-9]+\\.[0-9]+" "$html" 2>/dev/null \
+      | grep -oE '[0-9]+\.[0-9]+' | head -1 || true)"
+  fi
+  pooled_hr="${pooled_hr:-}"
+
+  # I^2 — primary: data-i2="NN"
+  i2="$(grep -oE 'data-i2=[\"'"'"'][0-9]+[\"'"'"']' "$html" 2>/dev/null \
+    | sed -E 's/data-i2=[\"'"'"']([0-9]+)[\"'"'"']/\1/' | head -1 || true)"
+  # Fallback: I²=NN textual near forest-plot
+  if [ -z "$i2" ]; then
+    i2="$(grep -oE 'I[²2]\s*=\s*[0-9]+' "$html" 2>/dev/null | grep -oE '[0-9]+' | head -1 || true)"
+  fi
+  i2="${i2:-}"
+
+  # Section structure — unique data-section="..." values, CSV.
+  sections_csv="$(grep -oE 'data-section=[\"'"'"'][^\"'"'"']+[\"'"'"']' "$html" 2>/dev/null \
+    | sed -E 's/data-section=[\"'"'"']([^\"'"'"']+)[\"'"'"']/\1/' \
+    | sort -u | paste -sd, - 2>/dev/null || true)"
+  sections_csv="${sections_csv:-}"
+
+  # Dr. Hofmann dialogue — at least one data-speaker="dr-hofmann"
+  local hofmann_count
+  hofmann_count="$(grep -oE 'data-speaker=[\"'"'"']dr-hofmann[\"'"'"']' "$html" 2>/dev/null | wc -l | awk '{print $1}')"
+  if [ "$hofmann_count" -ge 1 ]; then
+    hofmann="true"
+  else
+    hofmann="false"
+  fi
+
+  # Key concepts — primary: data-key-concept; fallback: data-concept on key-concept class
+  concepts_csv="$(grep -oE 'data-key-concept=[\"'"'"'][^\"'"'"']+[\"'"'"']' "$html" 2>/dev/null \
+    | sed -E 's/data-key-concept=[\"'"'"']([^\"'"'"']+)[\"'"'"']/\1/' \
+    | sort -u | paste -sd, - 2>/dev/null || true)"
+  if [ -z "$concepts_csv" ]; then
+    concepts_csv="$(grep -oE 'data-concept=[\"'"'"'][^\"'"'"']+[\"'"'"']' "$html" 2>/dev/null \
+      | sed -E 's/data-concept=[\"'"'"']([^\"'"'"']+)[\"'"'"']/\1/' \
+      | sort -u | paste -sd, - 2>/dev/null || true)"
+  fi
+  concepts_csv="${concepts_csv:-}"
+
+  # Persona speakers — unique data-speaker values, CSV.
+  speakers_csv="$(grep -oE 'data-speaker=[\"'"'"'][^\"'"'"']+[\"'"'"']' "$html" 2>/dev/null \
+    | sed -E 's/data-speaker=[\"'"'"']([^\"'"'"']+)[\"'"'"']/\1/' \
+    | sort -u | paste -sd, - 2>/dev/null || true)"
+  speakers_csv="${speakers_csv:-}"
+
+  echo "$forest $studies ${pooled_hr:-_} ${i2:-_} $mcq ${sections_csv:-_} $hofmann ${concepts_csv:-_} ${speakers_csv:-_}"
+}
+
 # ---------- Validation phase ----------
 FAILS=0
 SKIPS=0
@@ -486,7 +611,76 @@ for name in "${INPUTS[@]}"; do
       # Vignette taxonomy coverage — array containment.
       check_array_contains "vignetteTaxonomyCoverage" "$exp_taxonomy" "$got_taxonomy"
       ;;
-    research-paper|code|*)
+    research-paper)
+      # T107: research-paper-domain validators (forest plots, sections,
+      # MCQs, Dr. Hofmann persona, key concepts, persona speakers).
+      read -r got_forest got_studies got_pooled got_i2 got_rp_mcq \
+              got_sections got_hofmann got_concepts got_rp_speakers \
+        < <(extract_research_paper_fields "$html")
+
+      # Restore empty markers from sentinel "_" for cleaner display + checks.
+      [ "$got_pooled"      = "_" ] && got_pooled=""
+      [ "$got_i2"          = "_" ] && got_i2=""
+      [ "$got_sections"    = "_" ] && got_sections=""
+      [ "$got_concepts"    = "_" ] && got_concepts=""
+      [ "$got_rp_speakers" = "_" ] && got_rp_speakers=""
+
+      echo "  research-paper: forest=$got_forest studies=$got_studies pooledHr=${got_pooled:-<none>} i2=${got_i2:-<none>} mcq=$got_rp_mcq sections=[${got_sections}] hofmann=$got_hofmann concepts=[${got_concepts}] speakers=[${got_rp_speakers}]"
+
+      exp_section_count="$(json_get "$snap" sectionCount)"
+      tol_section_count="$(json_get "$snap" sectionCountTolerance)"
+      exp_section_struct="$(json_get "$snap" expectedSectionStructure)"
+      exp_mcq_min="$(json_get "$snap" mcqCountMin)"
+      exp_forest_min="$(json_get "$snap" forestPlotCountMin)"
+      exp_forest_studies="$(json_get "$snap" expectedForestPlotStudies)"
+      exp_pooled_hr="$(json_get "$snap" expectedPooledHr)"
+      exp_i2="$(json_get "$snap" expectedI2)"
+      exp_hofmann="$(json_get "$snap" drHofmannDialoguePresent)"
+      exp_concepts="$(json_get "$snap" expectedKeyConcepts)"
+      exp_rp_speakers="$(json_get "$snap" expectedPersonaSpeakers)"
+
+      # Section count — exact when tolerance is 0/empty, else range.
+      got_section_count=0
+      if [ -n "$got_sections" ]; then
+        got_section_count="$(echo "$got_sections" | tr ',' '\n' | grep -v '^$' | wc -l | awk '{print $1}')"
+      fi
+      if [ -n "$exp_section_count" ] && [ "$exp_section_count" != "null" ]; then
+        if [ -z "$tol_section_count" ] || [ "$tol_section_count" = "null" ] || [ "$tol_section_count" = "0" ]; then
+          check_eq "sectionCount" "$exp_section_count" "$got_section_count"
+        else
+          check_tol "sectionCount" "$exp_section_count" "$tol_section_count" "$got_section_count"
+        fi
+      fi
+
+      # Section structure — array containment.
+      check_array_contains "expectedSectionStructure" "$exp_section_struct" "$got_sections"
+
+      # Min checks.
+      check_min "mcqCount"        "$exp_mcq_min"    "$got_rp_mcq"
+      check_min "forestPlotCount" "$exp_forest_min" "$got_forest"
+
+      # Forest-plot-row exact count.
+      check_eq "expectedForestPlotStudies" "$exp_forest_studies" "$got_studies"
+
+      # Pooled HR within +/- 0.02.
+      check_float_close "expectedPooledHr" "$exp_pooled_hr" "$got_pooled" "0.02"
+
+      # I^2 within +/- 2 (integer).
+      check_int_close "expectedI2" "$exp_i2" "$got_i2" "2"
+
+      # Dr. Hofmann dialogue presence.
+      if [ -n "$exp_hofmann" ] && [ "$exp_hofmann" != "null" ]; then
+        if [ "$exp_hofmann" != "$got_hofmann" ]; then
+          echo "    [diff] drHofmannDialoguePresent: got=$got_hofmann expected=$exp_hofmann"
+          fail=1
+        fi
+      fi
+
+      # Key concepts + persona speakers — array containment.
+      check_array_contains "expectedKeyConcepts"     "$exp_concepts"     "$got_concepts"
+      check_array_contains "expectedPersonaSpeakers" "$exp_rp_speakers"  "$got_rp_speakers"
+      ;;
+    code|*)
       # Default: code-domain markers already validated above.
       :
       ;;

@@ -1,0 +1,19 @@
+{
+  "domain": "music-theory",
+  "version": "1",
+  "description": "Minimal music theory curriculum: foundations to cadences in 5 chapters.",
+  "templateStyle": "scroll-modules",
+  "chapterCountTarget": 5,
+  "perChapterQuizTarget": 6,
+  "perChapterSrCardTarget": 5,
+  "modeAOnly": true,
+  "widgetMix": {
+    "mcq": 0.4,
+    "true-false": 0.2,
+    "matching-pair": 0.2,
+    "audio-tts": 0.1,
+    "fill-blank": 0.1
+  },
+  "personasFile": "personas/music-theory.json",
+  "themeId": "warm-paper"
+}

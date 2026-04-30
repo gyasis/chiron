@@ -25,6 +25,21 @@ type SpotTheBugWidget = Extract<WidgetSpec, { type: 'spot-the-bug' }>;
 /** Narrowed shape for the mcq-clinical-vignette widget. */
 type McqClinicalVignetteWidget = Extract<WidgetSpec, { type: 'mcq-clinical-vignette' }>;
 
+/** Narrowed shape for the agreement-matrix widget (T078).
+ *
+ * Contract gap: `AgreementMatrixWidgetSchema` currently defines only
+ * `{ type, statements, classifications, variants }`. The renderer also reads
+ * optional `promptText`, `rationale[]`, and `options[]` (column headers) per
+ * the task brief — these are NOT YET in the Zod schema. We treat them as
+ * optional via a structural intersection so this renderer compiles against
+ * the current schema.
+ */
+type AgreementMatrixWidget = Extract<WidgetSpec, { type: 'agreement-matrix' }> & {
+  promptText?: string;
+  rationale?: string[];
+  options?: string[];
+};
+
 /** Narrowed shape for the code-runner widget (mirrors CodeRunnerWidgetSchema). */
 type CodeRunnerWidget = Extract<WidgetSpec, { type: 'code-runner' }>;
 
@@ -972,6 +987,131 @@ export function renderMcqClinicalVignette(spec: McqClinicalVignetteWidget): stri
 
 registerRenderer('mcq-clinical-vignette', (widget) =>
   renderMcqClinicalVignette(widget as McqClinicalVignetteWidget),
+);
+
+/**
+ * Renderer for `agreement-matrix` widgets (T078, US3 — medicine domain).
+ *
+ * Emits an N-row × 3-column grid (Always / Sometimes / Never per FR-018) where
+ * each row is one statement and the learner picks one classification via radio.
+ * On Check (inline IIFE):
+ *   - Per row: read selected radio value → compare to `spec.classifications[i]`
+ *     (canonical, lowercase). Mark `<tr>` `.correct`, `.incorrect`, or
+ *     `.unanswered` (no selection).
+ *   - Show "X / N rows correct" beneath the matrix.
+ *   - Reveal the `.rationale` block (one `<li>` per row) so the learner sees
+ *     2-3 sentences of explanation per statement.
+ *   - Lock the matrix (disable all radios + the Check button) so the learner
+ *     cannot re-answer to game the assessment.
+ *
+ * Schema-vs-brief: `AgreementMatrixWidgetSchema` only defines
+ * `statements[]` + `classifications[]`. The brief also references optional
+ * `promptText`, `rationale[]`, and `options[]` (custom column headers) —
+ * carried as optional structural fields until a schema PR lands.
+ */
+export function renderAgreementMatrix(spec: AgreementMatrixWidget): string {
+  const id = nextWidgetId('am');
+  const statements = spec.statements ?? [];
+  const classifications = spec.classifications ?? [];
+  const rationale = spec.rationale ?? [];
+  const promptText = spec.promptText ?? '';
+  const headers =
+    spec.options && spec.options.length === 3
+      ? spec.options
+      : ['Always', 'Sometimes', 'Never'];
+
+  const headerHtml = headers.map((h) => `<th>${escapeHtml(h)}</th>`).join('');
+
+  const rowsHtml = statements
+    .map((stmt, i) => {
+      return [
+        `        <tr data-row-index="${i}">`,
+        `          <td class="statement">${escapeHtml(stmt)}</td>`,
+        `          <td><input type="radio" name="${id}-row-${i}" value="always" /></td>`,
+        `          <td><input type="radio" name="${id}-row-${i}" value="sometimes" /></td>`,
+        `          <td><input type="radio" name="${id}-row-${i}" value="never" /></td>`,
+        `        </tr>`,
+      ].join('\n');
+    })
+    .join('\n');
+
+  const rationaleHtml = statements
+    .map((_, i) => {
+      const text = rationale[i] ?? '';
+      return `        <li class="rationale-row" data-row-index="${i}">${escapeHtml(text)}</li>`;
+    })
+    .join('\n');
+
+  const classificationsJson = JSON.stringify(
+    classifications.map((c) => String(c).toLowerCase()),
+  );
+
+  return [
+    `<div class="agreement-matrix" id="${id}" data-widget="agreement-matrix">`,
+    `  <p class="prompt-text">${escapeHtml(promptText)}</p>`,
+    `  <table class="matrix">`,
+    `    <thead>`,
+    `      <tr><th>Statement</th>${headerHtml}</tr>`,
+    `    </thead>`,
+    `    <tbody>`,
+    rowsHtml,
+    `    </tbody>`,
+    `  </table>`,
+    `  <div class="am-controls">`,
+    `    <button type="button" class="check-button" data-action="check">Check</button>`,
+    `    <span class="am-feedback" role="status" aria-live="polite"></span>`,
+    `  </div>`,
+    `  <div class="rationale" hidden>`,
+    `    <ol>`,
+    rationaleHtml,
+    `    </ol>`,
+    `  </div>`,
+    `  <script>`,
+    `  (function(){`,
+    `    var root = document.getElementById(${JSON.stringify(id)});`,
+    `    if (!root) return;`,
+    `    var canonical = ${classificationsJson};`,
+    `    var rows = root.querySelectorAll('tbody tr');`,
+    `    var btn = root.querySelector('[data-action="check"]');`,
+    `    var feedback = root.querySelector('.am-feedback');`,
+    `    var rationale = root.querySelector('.rationale');`,
+    `    var locked = false;`,
+    `    btn.addEventListener('click', function(){`,
+    `      if (locked) return;`,
+    `      var correctCount = 0;`,
+    `      var total = rows.length;`,
+    `      rows.forEach(function(tr, i){`,
+    `        tr.classList.remove('correct', 'incorrect', 'unanswered');`,
+    `        var radios = tr.querySelectorAll('input[type="radio"]');`,
+    `        var picked = null;`,
+    `        radios.forEach(function(r){ if (r.checked) picked = r.value; });`,
+    `        if (picked == null) {`,
+    `          tr.classList.add('unanswered');`,
+    `          return;`,
+    `        }`,
+    `        if (picked === canonical[i]) {`,
+    `          tr.classList.add('correct');`,
+    `          correctCount += 1;`,
+    `        } else {`,
+    `          tr.classList.add('incorrect');`,
+    `        }`,
+    `      });`,
+    `      feedback.textContent = correctCount + ' / ' + total + ' rows correct';`,
+    `      feedback.className = 'am-feedback ' + (correctCount === total ? 'correct' : 'incorrect');`,
+    `      if (rationale) rationale.hidden = false;`,
+    `      // Lock — disable all radios so the user can't game the assessment.`,
+    `      root.querySelectorAll('input[type="radio"]').forEach(function(r){ r.disabled = true; });`,
+    `      btn.disabled = true;`,
+    `      locked = true;`,
+    `    });`,
+    `  })();`,
+    `  </script>`,
+    `</div>`,
+  ].join('\n');
+}
+
+registerRenderer('agreement-matrix', (widget) =>
+  renderAgreementMatrix(widget as AgreementMatrixWidget),
 );
 
 /** List the kinds currently registered. Useful for sanity tests. */
