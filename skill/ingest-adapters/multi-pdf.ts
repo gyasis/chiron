@@ -22,6 +22,7 @@ import * as path from 'node:path';
 import { ingestPdf } from './pdf.js';
 import type { Brief, Domain, SourceFileEntry } from '../lib/schemas/brief.js';
 import { stage, progress } from '../lib/progress.js';
+import { safeJoin, PathTraversalError } from '../lib/path-safety.js';
 
 export interface IngestMultiPdfOpts {
   /**
@@ -135,9 +136,24 @@ function resolvePdfList(sourcePath: string | string[]): ResolveResult {
 }
 
 /** Resolve a manifest entry relative to the manifest file's own directory. */
+// T148: absolute paths rejected; safeJoin enforces sandbox under manifest dir.
 function resolveManifestEntry(manifestPath: string, entry: string): string {
-  if (path.isAbsolute(entry)) return entry;
-  return path.resolve(path.dirname(manifestPath), entry);
+  const manifestDir = path.dirname(manifestPath);
+  if (path.isAbsolute(entry)) {
+    throw new Error(
+      `multi-pdf: manifest entry must be relative to the manifest file's directory; got absolute path: ${entry}`,
+    );
+  }
+  try {
+    return safeJoin(manifestDir, entry);
+  } catch (e) {
+    if (e instanceof PathTraversalError) {
+      throw new Error(
+        `multi-pdf: manifest entry escapes sandbox under manifest dir (${manifestDir}): ${entry}`,
+      );
+    }
+    throw e;
+  }
 }
 
 /**

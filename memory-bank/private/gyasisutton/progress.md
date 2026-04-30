@@ -1,12 +1,12 @@
 # Progress
 
-**Last Updated**: 2026-04-30 17:06:30
+**Last Updated**: 2026-04-30 17:20:08
 
 ## Overall Progress
 - Total Tasks: 182
-- Completed: 143 ✅
-- Pending: 39 ⏳
-- Progress: 78%
+- Completed: 149 ✅
+- Pending: 33 ⏳
+- Progress: 81%
 
 ## Task Breakdown
 - [x] T001 Create the `skill/` directory tree per `plan.md`: `skill/{prompts/{00-ingest/,medicine-only/},ingest-adapters/,concepts/,curricula/,personas/,shell/{themes/,vendor/},lib/,tests/{golden-inputs/,snapshots/}}`
@@ -153,12 +153,12 @@
 - [x] T142 Fix every curriculum's `widgetMix` keys — `code.json`, `language-vocab.json`, `language-grammar.json`, `medicine-amboss.json`, `medicine-uptodate.json`, `music-theory.json` all reference `matching`/`vignette`/`sentence-reorder` (drift). Replace with canonical kind names.
 - [x] T143 Fix Stage-2 syllabus prompt (`02-syllabus.md`) hard-coded widget-kind list — currently lists 4 wrong + many missing.
 - [x] T144 Fix Stage-4a chapter-writer (`04a-chapter-write.md`) MCQ option example — uses `text` field; canonical schema is `label`.
-- [ ] T145 Add `safeJoin(base, child)` helper in `skill/lib/path-safety.ts` — assert resolved path is inside base. Replace ad-hoc `path.join`/`path.resolve` with this everywhere user/LLM-supplied components land.
-- [ ] T146 Fix `code-repo.ts` walker: use `lstatSync` (not `statSync`); skip symlinks (or resolve and verify still inside repoRoot). Prevents infinite loops AND `.ssh/id_rsa` exfiltration.
-- [ ] T147 Fix `bundle.ts` manifest path-traversal: reject absolute paths in `chiron.manifest.json` entries. Sandbox under manifest dir.
-- [ ] T148 Fix `multi-pdf.ts` manifest path-traversal: same as bundle.ts — require relative paths.
-- [ ] T149 Fix `source-copy.ts` `relPath` traversal: assert `path.relative(absDest, target)` doesn't start with `..`.
-- [ ] T150 Fix `tts-gemini.ts` outputPath traversal: sanitize `chapterId` and `lineId` before joining.
+- [x] T145 Add `safeJoin(base, child)` helper in `skill/lib/path-safety.ts` — assert resolved path is inside base. Replace ad-hoc `path.join`/`path.resolve` with this everywhere user/LLM-supplied components land.
+- [x] T146 Fix `code-repo.ts` walker: use `lstatSync` (not `statSync`); skip symlinks (or resolve and verify still inside repoRoot). Prevents infinite loops AND `.ssh/id_rsa` exfiltration.
+- [x] T147 Fix `bundle.ts` manifest path-traversal: reject absolute paths in `chiron.manifest.json` entries. Sandbox under manifest dir.
+- [x] T148 Fix `multi-pdf.ts` manifest path-traversal: same as bundle.ts — require relative paths.
+- [x] T149 Fix `source-copy.ts` `relPath` traversal: assert `path.relative(absDest, target)` doesn't start with `..`.
+- [x] T150 Fix `tts-gemini.ts` outputPath traversal: sanitize `chapterId` and `lineId` before joining.
 - [ ] T151 Fix `theme.ts` `Domain` type — uses `'language'` while everywhere else uses `'language-it'`. Italian gets warm-paper (default) instead of linguistic theme. Rename throughout.
 - [ ] T152 Fix `bundle.ts` ingest prompt: `{{domain}}` enum is `code | medicine | language` only. Add `language-it` and `research-paper`.
 - [ ] T153 Fix `pdf.ts` vision-handoffs sidecar atomicity: temp-file + rename. Prevent crash-mid-write corruption. Add advisory lockfile OR batch `recordVisionResult` to prevent concurrent-fold race.

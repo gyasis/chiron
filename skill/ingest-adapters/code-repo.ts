@@ -8,11 +8,16 @@
 // `sourcePath` is the absolute path to the repo root (referenced by path).
 // This adapter MUST NOT call any LLM (Stage 0 is deterministic).
 
-import { readFileSync, statSync, readdirSync, existsSync } from 'node:fs';
+import { readFileSync, statSync, lstatSync, readdirSync, existsSync } from 'node:fs';
 import { resolve, join, relative, basename, extname, dirname } from 'node:path';
 import { execFileSync } from 'node:child_process';
 
 import type { Brief } from '../lib/schemas/brief.js';
+// T146: resolveSymlinkInsideRoot + PathTraversalError imported for future use
+// if we switch from skip-all (option a) to follow-if-inside-root (option b).
+import { isSymlink, resolveSymlinkInsideRoot, PathTraversalError } from '../lib/path-safety.js';
+void resolveSymlinkInsideRoot;
+void PathTraversalError;
 
 // Directories always skipped, regardless of .gitignore
 const ALWAYS_SKIP_DIRS = new Set<string>([
@@ -210,8 +215,14 @@ function walk(
     const abs = join(current, name);
     let st;
     try {
-      st = statSync(abs);
+      // T146: skip symlinks to prevent infinite loops + out-of-tree reads.
+      st = lstatSync(abs);
     } catch {
+      continue;
+    }
+    // T146: skip symlinks to prevent infinite loops + out-of-tree reads.
+    if (st.isSymbolicLink() || isSymlink(abs)) {
+      console.warn(`[code-repo] skipping symlink: ${abs}`);
       continue;
     }
     const rel = relative(rootDir, abs).split(/[\\/]/).join('/');

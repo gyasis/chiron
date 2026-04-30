@@ -2,6 +2,7 @@
 import { mkdirSync, existsSync, statSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { progress } from './progress.js';
+import { safeJoin, sanitizeComponent, PathTraversalError } from './path-safety.js';
 
 /**
  * Handoff describing a TTS synthesis call for the parent Claude Code agent to invoke.
@@ -47,11 +48,14 @@ export function prepareTtsHandoffs(opts: PrepareTtsHandoffsOpts): TtsGeminiHando
   let skipped = 0;
 
   for (const widget of audioWidgets) {
-    const outputPath = join(
+    // T150: sanitize+safeJoin prevents path traversal via LLM-generated chapter/line ids.
+    const safeChapterId = sanitizeComponent(widget.chapterId);
+    const safeLineId = sanitizeComponent(widget.lineId);
+    const outputPath = safeJoin(
       lessonOutputDir,
       'audio',
-      widget.chapterId,
-      `${widget.lineId}.mp3`,
+      safeChapterId,
+      `${safeLineId}.mp3`,
     );
 
     // Ensure directory exists before the parent agent attempts to write the audio.

@@ -373,12 +373,12 @@ description: "Task list for Chiron v1 — Universal Lesson Generator"
 
 ### Path safety (Wave R3)
 
-- [ ] T145 Add `safeJoin(base, child)` helper in `skill/lib/path-safety.ts` — assert resolved path is inside base. Replace ad-hoc `path.join`/`path.resolve` with this everywhere user/LLM-supplied components land.
-- [ ] T146 Fix `code-repo.ts` walker: use `lstatSync` (not `statSync`); skip symlinks (or resolve and verify still inside repoRoot). Prevents infinite loops AND `.ssh/id_rsa` exfiltration.
-- [ ] T147 Fix `bundle.ts` manifest path-traversal: reject absolute paths in `chiron.manifest.json` entries. Sandbox under manifest dir.
-- [ ] T148 Fix `multi-pdf.ts` manifest path-traversal: same as bundle.ts — require relative paths.
-- [ ] T149 Fix `source-copy.ts` `relPath` traversal: assert `path.relative(absDest, target)` doesn't start with `..`.
-- [ ] T150 Fix `tts-gemini.ts` outputPath traversal: sanitize `chapterId` and `lineId` before joining.
+- [x] T145 Add `safeJoin(base, child)` helper in `skill/lib/path-safety.ts` — assert resolved path is inside base. Replace ad-hoc `path.join`/`path.resolve` with this everywhere user/LLM-supplied components land.
+- [x] T146 Fix `code-repo.ts` walker: use `lstatSync` (not `statSync`); skip symlinks (or resolve and verify still inside repoRoot). Prevents infinite loops AND `.ssh/id_rsa` exfiltration.
+- [x] T147 Fix `bundle.ts` manifest path-traversal: reject absolute paths in `chiron.manifest.json` entries. Sandbox under manifest dir.
+- [x] T148 Fix `multi-pdf.ts` manifest path-traversal: same as bundle.ts — require relative paths.
+- [x] T149 Fix `source-copy.ts` `relPath` traversal: assert `path.relative(absDest, target)` doesn't start with `..`.
+- [x] T150 Fix `tts-gemini.ts` outputPath traversal: sanitize `chapterId` and `lineId` before joining.
 
 ### Theme + ingest fixes (Wave R4)
 

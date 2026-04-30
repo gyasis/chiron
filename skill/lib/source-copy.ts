@@ -14,6 +14,7 @@
 import { copyFile, mkdir, readFile } from 'node:fs/promises';
 import { basename, join, resolve } from 'node:path';
 import { createHash } from 'node:crypto';
+import { safeJoin, PathTraversalError } from './path-safety.js';
 
 export interface SourceInput {
   /** Absolute or cwd-relative path to the original file on disk. */
@@ -54,7 +55,16 @@ export async function copySources(
   for (const s of sources) {
     const absSrc = resolve(s.path);
     const rel = s.relPath ?? basename(absSrc);
-    const target = join(absDest, rel);
+    // T149: safeJoin prevents ../-traversal in relPath.
+    let target: string;
+    try {
+      target = safeJoin(absDest, rel);
+    } catch (e) {
+      if (e instanceof PathTraversalError) {
+        throw new Error('source-copy: refused to copy outside lesson dir: ' + rel + ' (' + e.message + ')');
+      }
+      throw e;
+    }
 
     // Ensure any nested sub-dirs exist before copying.
     const targetDir = target.slice(0, target.length - basename(target).length);

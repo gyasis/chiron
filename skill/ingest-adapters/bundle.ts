@@ -29,6 +29,7 @@
 import { existsSync, statSync, readFileSync, readdirSync, mkdirSync } from 'node:fs';
 import { resolve, join, extname, basename, relative } from 'node:path';
 
+import { safeJoin, PathTraversalError } from '../lib/path-safety.js';
 import type {
   Brief,
   Domain,
@@ -263,11 +264,21 @@ export async function ingestBundle(opts: IngestBundleOptions): Promise<Brief> {
   const manifestPresent = manifest !== null;
 
   // Build the ordered list of (absPath, relPath, role) entries.
+  // T147: safeJoin prevents path-traversal in manifest entries.
   const files: ResolvedFile[] = [];
   if (manifest) {
     for (let i = 0; i < manifest.files.length; i++) {
       const entry = manifest.files[i]!;
-      const absPath = resolve(absRoot, entry.path);
+      let absPath: string;
+      try {
+        absPath = safeJoin(absRoot, entry.path);
+      } catch (err) {
+        if (err instanceof PathTraversalError) {
+          console.warn('Skipping out-of-bundle manifest entry: ' + entry.path);
+          continue;
+        }
+        throw err;
+      }
       if (!existsSync(absPath) || !statSync(absPath).isFile()) {
         throw new Error(
           `ingestBundle: ${MANIFEST_FILENAME} references missing file: ${entry.path}`,
@@ -282,7 +293,16 @@ export async function ingestBundle(opts: IngestBundleOptions): Promise<Brief> {
   } else {
     const names = listTopLevelFiles(absRoot);
     for (const name of names) {
-      const absPath = join(absRoot, name);
+      let absPath: string;
+      try {
+        absPath = safeJoin(absRoot, name);
+      } catch (err) {
+        if (err instanceof PathTraversalError) {
+          console.warn('Skipping out-of-bundle manifest entry: ' + name);
+          continue;
+        }
+        throw err;
+      }
       files.push({ absPath, relPath: name, role: inferRole(name) });
     }
   }
