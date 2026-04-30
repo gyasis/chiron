@@ -19,8 +19,15 @@
 
 set -euo pipefail
 
-HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-OUT="${HERE}/lesson.html"
+# Where this script lives (source of vendor/, _base.html, _footer.html, modules/).
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# Where the lesson should be assembled. Defaults to SCRIPT_DIR for the
+# legacy in-place-build behavior; assemble.ts passes "$1" = lessonOutputDir
+# (T131: previously $1 was silently ignored).
+LESSON_DIR="${1:-${SCRIPT_DIR}}"
+
+HERE="${SCRIPT_DIR}"          # source files live here
+OUT="${LESSON_DIR}/lesson.html"
 VENDOR_DIR="${HERE}/vendor"
 
 cd "${HERE}"

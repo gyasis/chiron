@@ -8,9 +8,9 @@
 
 import * as fs from 'node:fs';
 import * as path from 'node:path';
-import { progress } from './progress.js';
+import * as progress from './progress.js';
 import { validateBrief, validateSyllabus, type ConceptDag } from './validator.js';
-import { initDb } from './sqlite-init.js';
+import { assembleLesson } from './assemble.js';
 import type { Brief } from './schemas/brief.js';
 import type { ChapterSyllabus } from './schemas/chapter-syllabus.js';
 import type { TriggerContext } from './trigger-context.js';
@@ -408,15 +408,23 @@ export function stage4AnswerBalancer(
   };
 }
 
-export function stage5Assemble(ctx: PipelineContext): { dbPath: string; lessonHtmlPath: string } {
+export function stage5Assemble(
+  ctx: PipelineContext,
+  opts?: { skillRoot?: string; chapter1SrCards?: Array<{ front: string; back: string; tags?: string[] }> },
+): { dbPath: string; lessonHtmlPath: string } {
   progress.stage(5, 5, 'assemble: build.sh + sqlite-init + open');
-  // build.sh runs out-of-process (FR-009 — generation-time only).
-  // sqlite-init applies the schema (no llm_* tables per Q8).
-  const db = initDb(ctx.lessonOutputDir);
-  const dbPath = (db as unknown as { name: string }).name;
-  db.close();
-  const lessonHtmlPath = path.join(ctx.lessonOutputDir, 'lesson.html');
-  return { dbPath, lessonHtmlPath };
+  // T132: actually invoke assembleLesson (which runs build.sh out-of-process,
+  // initializes SQLite, seeds chapter-1 SR cards + bookmark, opens browser).
+  // assembleLesson handles FR-009 / FR-037 / Stage-5 contract end-to-end.
+  // skillRoot defaults to two levels up from this file (skill/lib → skill/),
+  // so callers don't have to pass it for the standard install layout.
+  const skillRoot = opts?.skillRoot
+    ?? path.resolve(path.dirname(new URL(import.meta.url).pathname), '..');
+  return assembleLesson({
+    lessonOutputDir: ctx.lessonOutputDir,
+    skillRoot,
+    chapter1SrCards: opts?.chapter1SrCards ?? [],
+  });
 }
 
 // ─── Medicine-only QUEST-AI verifier loop per FR-007 / SC-011 ────────────────
