@@ -210,6 +210,78 @@ function extractSourceArg(raw: string): string | null {
   return null;
 }
 
+// --- Mid-conversation mode override (FR-003) ------------------------------
+
+/** FR-003 mid-conversation override per `contracts/skill-triggers.md`. */
+export const MODE_OVERRIDE_PATTERNS: {
+  mode: TriggerMode;
+  patterns: RegExp[];
+}[] = [
+  {
+    mode: 'A',
+    patterns: [
+      /\bswitch\s+to\s+mode\s+a\b/i,
+      /\buse\s+mode\s+a\b/i,
+      /\bmode\s+a\b/i,
+    ],
+  },
+  {
+    mode: 'B',
+    patterns: [
+      /\bswitch\s+to\s+mode\s+b\b/i,
+      /\buse\s+mode\s+b\b/i,
+      /\bmode\s+b\b/i,
+      /\bcase[-\s]study\s+(this|it)\b/i,
+    ],
+  },
+];
+
+/**
+ * applyModeOverride — FR-003 mid-conversation override.
+ *
+ * Pure function: scans `userMessage` for "mode a" / "mode b" override phrases
+ * (case-insensitive, word-boundary anchored). If found, returns a new
+ * TriggerContext with the updated mode + `modeForcedBy: 'user-flag'`.
+ * If multiple override phrases appear, the LATER occurrence wins.
+ * If no override phrase is present, returns `currentCtx` unchanged
+ * (referentially equal — orchestrator can use `===` to detect no-op).
+ */
+export function applyModeOverride(
+  currentCtx: TriggerContext,
+  userMessage: string,
+): TriggerContext {
+  if (typeof userMessage !== 'string' || userMessage.length === 0) {
+    return currentCtx;
+  }
+
+  let bestIndex = -1;
+  let bestMode: TriggerMode | null = null;
+
+  // Find the LATEST match position across all patterns.
+  for (const { mode, patterns } of MODE_OVERRIDE_PATTERNS) {
+    for (const re of patterns) {
+      // Use a fresh regex with the global flag stripped to ensure stateless matching.
+      const match = userMessage.match(re);
+      if (match && typeof match.index === 'number') {
+        if (match.index > bestIndex) {
+          bestIndex = match.index;
+          bestMode = mode;
+        }
+      }
+    }
+  }
+
+  if (bestMode === null) {
+    return currentCtx;
+  }
+
+  return {
+    ...currentCtx,
+    mode: bestMode,
+    modeForcedBy: 'user-flag',
+  };
+}
+
 function parseFlags(raw: string): TriggerContext['flags'] {
   const flags: TriggerContext['flags'] = {};
 

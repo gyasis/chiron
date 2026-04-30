@@ -1,0 +1,11 @@
+{
+  "input": "music-theory-cadences",
+  "domain": "music-theory",
+  "mode": "A",
+  "chapterCount": 1,
+  "chapterCountTolerance": 1,
+  "expectedKeyConcepts": ["cadences", "chord-progressions"],
+  "expectedPersonaSpeakers": ["sofia", "theo", "maya"],
+  "regressionCheckType": "us6-extensibility",
+  "schemaVersion": "1"
+}

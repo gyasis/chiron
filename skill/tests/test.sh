@@ -440,10 +440,79 @@ extract_research_paper_fields() {
   echo "$forest $studies ${pooled_hr:-_} ${i2:-_} $mcq ${sections_csv:-_} $hofmann ${concepts_csv:-_} ${speakers_csv:-_}"
 }
 
+# ---------- US6 extensibility regression helpers (T114) ----------
+# SC-007: extending Chiron to a new domain MUST require zero changes under
+# skill/lib/, skill/ingest-adapters/, or skill/shell/. The 3 catalog dirs
+# (concepts/, curricula/, personas/) are the ONLY allowed surface.
+#
+# Strategy: capture `git status --porcelain` of the 3 pipeline dirs once at
+# the start of the run, then re-check after the test branch executes. Any
+# delta (new/modified file) for the snapshotted directory FAILS the test.
+US6_PIPELINE_DIRS=("skill/lib" "skill/ingest-adapters" "skill/shell")
+US6_REPO_ROOT=""
+US6_BASELINE=""
+
+us6_capture_baseline() {
+  # us6_capture_baseline — populate US6_BASELINE with `git status --porcelain`
+  # restricted to the pipeline dirs. Idempotent: only runs once per script
+  # invocation. Silently no-ops if not in a git repo.
+  if [ -n "$US6_BASELINE" ]; then return 0; fi
+  local root
+  root="$(cd "$SCRIPT_DIR" && git rev-parse --show-toplevel 2>/dev/null || true)"
+  if [ -z "$root" ] || ! command -v git >/dev/null 2>&1; then
+    US6_REPO_ROOT="__nogit__"
+    US6_BASELINE="__nogit__"
+    return 0
+  fi
+  US6_REPO_ROOT="$root"
+  US6_BASELINE="$(cd "$root" && git status --porcelain -- "${US6_PIPELINE_DIRS[@]}" 2>/dev/null || true)"
+  US6_BASELINE="${US6_BASELINE:-__clean__}"
+}
+
+us6_check_regression() {
+  # us6_check_regression — compare current `git status --porcelain` of the
+  # pipeline dirs against the baseline. Sets fail=1 (caller scope) on any
+  # delta. No-op when git is unavailable.
+  if [ "$US6_BASELINE" = "__nogit__" ] || [ -z "$US6_REPO_ROOT" ]; then
+    echo "    [info] us6-extensibility: git unavailable — skipping pipeline-dir check"
+    return 0
+  fi
+  local now baseline
+  now="$(cd "$US6_REPO_ROOT" && git status --porcelain -- "${US6_PIPELINE_DIRS[@]}" 2>/dev/null || true)"
+  now="${now:-__clean__}"
+  baseline="$US6_BASELINE"
+  if [ "$now" = "$baseline" ]; then
+    echo "    [ok] us6-extensibility: no changes under ${US6_PIPELINE_DIRS[*]}"
+    return 0
+  fi
+  # Compute the delta (lines in $now not in $baseline) for a focused error.
+  local delta
+  delta="$(comm -23 <(printf '%s\n' "$now" | sort -u) <(printf '%s\n' "$baseline" | sort -u) 2>/dev/null || true)"
+  if [ -z "$delta" ]; then
+    delta="$now"
+  fi
+  while IFS= read -r line; do
+    [ -z "$line" ] && continue
+    [ "$line" = "__clean__" ] && continue
+    # Identify which pipeline dir was touched for the error message.
+    local touched="<unknown>"
+    for d in "${US6_PIPELINE_DIRS[@]}"; do
+      case "$line" in
+        *"$d"*) touched="$d/$(echo "$line" | awk '{print $NF}')" ; break ;;
+      esac
+    done
+    echo "    [diff] SC-007 violated — extending to new domain caused changes to $touched ($line)"
+    fail=1
+  done <<< "$delta"
+}
+
 # ---------- Validation phase ----------
 FAILS=0
 SKIPS=0
 PASSES=0
+
+# Capture baseline once before any per-input validation runs.
+us6_capture_baseline
 
 for name in "${INPUTS[@]}"; do
   snap="$SNAPSHOT_DIR/$name.json"
@@ -680,11 +749,27 @@ for name in "${INPUTS[@]}"; do
       check_array_contains "expectedKeyConcepts"     "$exp_concepts"     "$got_concepts"
       check_array_contains "expectedPersonaSpeakers" "$exp_rp_speakers"  "$got_rp_speakers"
       ;;
+    music-theory)
+      # T114: minimal validators for the US6 extensibility regression input.
+      # The fixture is a single paragraph — chapter count is the only marker
+      # check. Domain-specific markers are intentionally NOT validated here
+      # because the whole point of SC-007 is that extending to a new domain
+      # required no new marker-extraction code in skill/lib/.
+      :
+      ;;
     code|*)
       # Default: code-domain markers already validated above.
       :
       ;;
   esac
+
+  # ---------- US6 extensibility regression check (T114, SC-007) ----------
+  # Honor `regressionCheckType` as a no-op for everything else.
+  reg_check="$(json_get "$snap" regressionCheckType)"
+  if [ "$reg_check" = "us6-extensibility" ]; then
+    echo "  us6-extensibility: verifying zero changes under ${US6_PIPELINE_DIRS[*]}"
+    us6_check_regression
+  fi
 
   if [ "$fail" -eq 0 ]; then
     echo "  [PASS] $name"

@@ -43,6 +43,11 @@ type AgreementMatrixWidget = Extract<WidgetSpec, { type: 'agreement-matrix' }> &
 /** Narrowed shape for the code-runner widget (mirrors CodeRunnerWidgetSchema). */
 type CodeRunnerWidget = Extract<WidgetSpec, { type: 'code-runner' }>;
 
+/** Narrowed shape for the assertion-reason widget (mirrors AssertionReasonWidgetSchema). */
+type AssertionReasonWidget = Extract<WidgetSpec, { type: 'assertion-reason' }> & {
+  explanation?: string;
+};
+
 /** Narrowed shape for the fill-blank widget (mirrors FillBlankWidgetSchema). */
 type FillBlankWidget = Extract<WidgetSpec, { type: 'fill-blank' }>;
 
@@ -1112,6 +1117,140 @@ export function renderAgreementMatrix(spec: AgreementMatrixWidget): string {
 
 registerRenderer('agreement-matrix', (widget) =>
   renderAgreementMatrix(widget as AgreementMatrixWidget),
+);
+
+/**
+ * Renderer for `assertion-reason` widgets (T079, US3 — medicine domain).
+ *
+ * Canonical 5-relationship picker (USMLE/advanced-board format, confirmed
+ * 2026-04-29 — see `skill/prompts/04j-quiz-assertion-reason.md`):
+ *   A. Both A and R are true, and R is the correct explanation of A
+ *   B. Both A and R are true, but R is NOT the correct explanation of A
+ *   C. A is true, but R is false
+ *   D. A is false, but R is true
+ *   E. Both A and R are false
+ *
+ * On Check (inline IIFE):
+ *   - If no radio is selected, mark all options `.unanswered` and bail.
+ *   - Otherwise mark the chosen option `.selected`, mark the canonical-correct
+ *     option `.correct`, and (when wrong) also mark the chosen one `.incorrect`.
+ *   - Reveal the `.explanation` block.
+ *   - Lock all radios + the Check button so the learner cannot re-answer.
+ *
+ * Contract gap: `AssertionReasonWidgetSchema` doesn't yet declare an
+ * `explanation` field — carried as optional structural until a schema PR lands.
+ */
+export function renderAssertionReason(spec: AssertionReasonWidget): string {
+  const id = nextWidgetId('ar');
+  const assertion = spec.assertion ?? '';
+  const reason = spec.reason ?? '';
+  const correctRel = spec.correctRelationship;
+  const explanation = spec.explanation ?? '';
+
+  const relationships: { key: string; letter: string; label: string }[] = [
+    {
+      key: 'both-true-reason-explains',
+      letter: 'A',
+      label: 'Both A and R are true, and R is the correct explanation of A',
+    },
+    {
+      key: 'both-true-reason-doesnt-explain',
+      letter: 'B',
+      label: 'Both A and R are true, but R is NOT the correct explanation of A',
+    },
+    {
+      key: 'assertion-true-reason-false',
+      letter: 'C',
+      label: 'A is true, but R is false',
+    },
+    {
+      key: 'assertion-false-reason-true',
+      letter: 'D',
+      label: 'A is false, but R is true',
+    },
+    {
+      key: 'both-false',
+      letter: 'E',
+      label: 'Both A and R are false',
+    },
+  ];
+
+  const optionsHtml = relationships
+    .map((rel) => {
+      const isCorrect = rel.key === correctRel ? 'true' : 'false';
+      return [
+        `      <li class="option" data-relationship="${rel.key}" data-correct="${isCorrect}">`,
+        `        <label class="option-label">`,
+        `          <input type="radio" name="${id}-rel" value="${rel.key}" />`,
+        `          <span class="label">${rel.letter}.</span>`,
+        `          <span class="option-text">${escapeHtml(rel.label)}</span>`,
+        `        </label>`,
+        `      </li>`,
+      ].join('\n');
+    })
+    .join('\n');
+
+  return [
+    `<div class="assertion-reason" id="${id}" data-widget="assertion-reason">`,
+    `  <div class="assertion"><strong>Assertion (A):</strong> ${escapeHtml(assertion)}</div>`,
+    `  <div class="connector">BECAUSE</div>`,
+    `  <div class="reason"><strong>Reason (R):</strong> ${escapeHtml(reason)}</div>`,
+    `  <ol class="relationship-options" type="A">`,
+    optionsHtml,
+    `  </ol>`,
+    `  <div class="ar-controls">`,
+    `    <button type="button" class="check-button" data-action="check">Check</button>`,
+    `    <span class="ar-feedback" role="status" aria-live="polite"></span>`,
+    `  </div>`,
+    `  <div class="explanation" hidden>${escapeHtml(explanation)}</div>`,
+    `  <script>`,
+    `  (function(){`,
+    `    var root = document.getElementById(${JSON.stringify(id)});`,
+    `    if (!root) return;`,
+    `    var optionEls = root.querySelectorAll('.option');`,
+    `    var radios = root.querySelectorAll('input[type="radio"][name="${id}-rel"]');`,
+    `    var btn = root.querySelector('[data-action="check"]');`,
+    `    var feedback = root.querySelector('.ar-feedback');`,
+    `    var explanation = root.querySelector('.explanation');`,
+    `    var locked = false;`,
+    `    btn.addEventListener('click', function(){`,
+    `      if (locked) return;`,
+    `      var picked = null;`,
+    `      radios.forEach(function(r){ if (r.checked) picked = r.value; });`,
+    `      if (picked == null) {`,
+    `        optionEls.forEach(function(el){ el.classList.add('unanswered'); });`,
+    `        feedback.textContent = 'Pick a relationship first.';`,
+    `        feedback.className = 'ar-feedback';`,
+    `        return;`,
+    `      }`,
+    `      var ok = false;`,
+    `      optionEls.forEach(function(el){`,
+    `        el.classList.remove('selected', 'correct', 'incorrect', 'unanswered');`,
+    `        var rel = el.getAttribute('data-relationship');`,
+    `        var isCorrect = el.getAttribute('data-correct') === 'true';`,
+    `        if (isCorrect) el.classList.add('correct');`,
+    `        if (rel === picked) {`,
+    `          el.classList.add('selected');`,
+    `          if (!isCorrect) el.classList.add('incorrect');`,
+    `          else ok = true;`,
+    `        }`,
+    `      });`,
+    `      feedback.textContent = ok ? 'Correct.' : 'Incorrect — see explanation below.';`,
+    `      feedback.className = 'ar-feedback ' + (ok ? 'correct' : 'incorrect');`,
+    `      if (explanation) explanation.hidden = false;`,
+    `      // Lock — no re-answer.`,
+    `      radios.forEach(function(r){ r.disabled = true; });`,
+    `      btn.disabled = true;`,
+    `      locked = true;`,
+    `    });`,
+    `  })();`,
+    `  </script>`,
+    `</div>`,
+  ].join('\n');
+}
+
+registerRenderer('assertion-reason', (widget) =>
+  renderAssertionReason(widget as AssertionReasonWidget),
 );
 
 /** List the kinds currently registered. Useful for sanity tests. */

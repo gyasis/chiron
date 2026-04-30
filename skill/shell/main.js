@@ -117,6 +117,151 @@
     }
   })();
 
+  /* ── CHAPTER COMPLETION TRACKING ──────────────────────────── */
+  // FR-005 / spec.md — chapter-completion tracking via localStorage; TOC checkmarks update on scroll-debounced check
+  (function setupChapterCompletion() {
+    const META = document.querySelector('meta[name="chiron-lesson-id"]');
+    const lessonId = (META && META.getAttribute('content')) || document.title || 'unknown';
+    const STORAGE_KEY = 'chiron:lesson:' + lessonId + ':completion';
+    const DEBOUNCE_MS = 500;
+    const SCROLL_THRESHOLD = 90;
+    const QUIZ_THRESHOLD = 0.5;
+
+    function readCompletion() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) return {};
+        const parsed = JSON.parse(raw);
+        return (parsed && typeof parsed === 'object') ? parsed : {};
+      } catch (e) {
+        return {};
+      }
+    }
+
+    function writeCompletion(obj) {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(obj));
+      } catch (e) {
+        /* quota or disabled — silently ignore */
+      }
+    }
+
+    function currentChapterId() {
+      const probe = document.elementFromPoint(window.innerWidth / 2, 100);
+      let el = probe;
+      while (el && el !== document.body) {
+        if (el.dataset && el.dataset.chapterId) return el.dataset.chapterId;
+        el = el.parentElement;
+      }
+      return null;
+    }
+
+    function chapterEl(chapterId) {
+      return document.querySelector('[data-chapter-id="' + chapterId + '"]:not(nav.toc *)') ||
+             document.querySelector('[data-chapter-id="' + chapterId + '"]');
+    }
+
+    function computeScrollPercent(el) {
+      if (!el) return 0;
+      const rect = el.getBoundingClientRect();
+      const vh = window.innerHeight;
+      if (rect.bottom <= vh + 50) return 100;
+      const total = rect.height;
+      if (total <= 0) return 0;
+      const scrolled = Math.max(0, vh - rect.top);
+      return Math.min(100, Math.max(0, (scrolled / total) * 100));
+    }
+
+    function countQuizzes(el) {
+      if (!el) return { attempted: 0, total: 0 };
+      const quizzes = el.querySelectorAll('[data-quiz-id]');
+      let attempted = 0;
+      quizzes.forEach(q => { if (q.classList.contains('check-completed')) attempted++; });
+      return { attempted: attempted, total: quizzes.length };
+    }
+
+    function markTocCompleted(chapterId) {
+      const entries = document.querySelectorAll('nav.toc [data-chapter-id="' + chapterId + '"]');
+      entries.forEach(entry => {
+        entry.classList.add('completed');
+        if (!entry.querySelector('.completion-check')) {
+          const span = document.createElement('span');
+          span.className = 'completion-check';
+          span.setAttribute('aria-label', 'Completed');
+          span.textContent = '✓';
+          entry.appendChild(span);
+        }
+      });
+    }
+
+    function evaluateChapter(chapterId) {
+      if (!chapterId) return;
+      const el = chapterEl(chapterId);
+      if (!el) return;
+      const data = readCompletion();
+      const scrollPercent = computeScrollPercent(el);
+      const { attempted, total } = countQuizzes(el);
+      const quizRatio = total > 0 ? (attempted / total) : 1; // chapters with no quizzes pass on scroll alone
+      const existing = data[chapterId] || {};
+      const updated = {
+        completedAt: existing.completedAt || null,
+        scrollPercent: Math.max(existing.scrollPercent || 0, Math.round(scrollPercent)),
+        quizzesAttempted: attempted,
+        totalQuizzes: total
+      };
+      const meetsCriteria = updated.scrollPercent >= SCROLL_THRESHOLD && quizRatio >= QUIZ_THRESHOLD;
+      const wasCompleted = !!existing.completedAt;
+      if (meetsCriteria && !wasCompleted) {
+        updated.completedAt = Date.now();
+        data[chapterId] = updated;
+        writeCompletion(data);
+        markTocCompleted(chapterId);
+      } else if (existing.scrollPercent !== updated.scrollPercent ||
+                 existing.quizzesAttempted !== updated.quizzesAttempted ||
+                 existing.totalQuizzes !== updated.totalQuizzes) {
+        data[chapterId] = updated;
+        writeCompletion(data);
+      }
+    }
+
+    let pendingTimer = null;
+    function onScroll() {
+      if (pendingTimer) clearTimeout(pendingTimer);
+      pendingTimer = setTimeout(() => {
+        pendingTimer = null;
+        evaluateChapter(currentChapterId());
+      }, DEBOUNCE_MS);
+    }
+
+    // Forward-compat: widget renderers may emit this when their Check button is pressed.
+    document.addEventListener('chiron:widget-checked', e => {
+      const detail = (e && e.detail) || {};
+      const quizId = detail.quizId;
+      if (quizId) {
+        const quizEl = document.querySelector('[data-quiz-id="' + quizId + '"]');
+        if (quizEl) quizEl.classList.add('check-completed');
+      }
+      evaluateChapter(currentChapterId());
+    });
+
+    window.addEventListener('scroll', onScroll, { passive: true });
+
+    function applyInitial() {
+      const data = readCompletion();
+      Object.keys(data).forEach(chapterId => {
+        if (data[chapterId] && data[chapterId].completedAt) {
+          markTocCompleted(chapterId);
+        }
+      });
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', applyInitial);
+    } else {
+      applyInitial();
+    }
+  })();
+
   /* ── NAVIGATION & PROGRESS BAR ────────────────────────────── */
   const progressBar = $('#progress-bar');
   const navDots     = $$('.nav-dot');

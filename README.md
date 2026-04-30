@@ -1,54 +1,74 @@
-# Chiron
+# Chiron — Universal Lesson Generator
+
+![Branch](https://img.shields.io/badge/branch-001--chiron--v1-blue) ![Tasks](https://img.shields.io/badge/tasks-WIP-yellow)
 
 > *"A centaur. A teacher. The tutor of Achilles, Asclepius, Jason, and Heracles."*
 
-**Chiron** turns any subject — code repos, medical chapters, German/Italian language, books, papers — into a structured, interactive lesson with embedded quizzes, AI-simulated peer learners, and Anki-backed spaced-repetition retention. Built as a Claude Code skill for solo learners.
+## TL;DR
 
-## Status
+Chiron is a universal LLM-powered lesson generator for solo learners across code, medicine, and language. Drop in any source — repo, PDF, vocab CSV, research paper — and get a self-contained interactive lesson HTML.
 
-🚧 **Pre-build** — design phase. See:
-- Design PRDs: [`prd/`](prd/) (project-local, NOT in global `~/dev/prd/scratch/`)
-- Memory bank: [`memory-bank/`](memory-bank/)
+## Foundational facts
 
-## What it is
+- **Three co-equal domains: code, medicine, and language.** Not a code-tutorial tool with the others bolted on. Specialized paths per domain are encouraged where pedagogy demands it.
+- **Single learner = Gyasi.** No multi-user features, no auth. SQLite per-lesson at `<lesson-output-dir>/.chiron-state.db`.
+- **AI multi-persona content** (peer learners + tutor + native speaker) inside one solo-learner's lesson — content-layer feature, NOT a multi-user system.
 
-A unified Claude Code skill (with sub-skills per domain where pedagogy demands specialization) that produces a self-contained interactive HTML lesson site for one of three (initial) domains:
+## Documentation hierarchy
 
-- **Engineering / Code** — repos → multi-chapter HTML course with side-by-side code-to-English, embedded MCQs / true-false / spot-the-bug, AI peer-learner study-group dialogue
-- **Medicine** — clinical guidelines / textbook chapters → AMBOSS-style sections (Definition / Pathophysiology / Clinical features / Diagnostics / Treatment / Complications) with USMLE-style clinical-vignette MCQs (vignette stem + lab values + leading question + 5 options + per-distractor explanations)
-- **Language (German / Italian)** — vocab / grammar / immersion → fill-in-the-blank, matching pairs, cloze deletion, AI native-speaker conversation partner with TTS audio, AI peer-learner role-play
-
-## Pillars
-
-| Pillar | Implementation |
+| Doc | Purpose |
 |---|---|
-| **Two pedagogical modes** | Mode A (exposition + quizzes — `codebase-to-course`-style) + Mode B (case-study — `case-study` skill: 2 hunters + paired debate + 3-act lecture) |
-| **Cognitive science scaffolding** | ClassBuild's typed-schema approach: `SciencePrinciple` union, `ScienceAnnotation`, `spacingConnections[]` enforced via type system, not vibes |
-| **AI multi-persona engagement** | Peer-learner agents (Alice asks why X; Bob suggests Y; you respond) + native-speaker for language. Fights solo-learner isolation |
-| **Spaced-repetition retention** | Anki via MCP server (no custom SR engine — Anki is gold-standard with SM-2/FSRS) |
-| **Deterministic progression** | Concept DAG as build-time validator + linear milestone FSM at runtime — LLM is advisor, not arbiter (per `JulienAvezou/ai-course-generator` pattern) |
+| [skill/README.md](./skill/README.md) | Skill how-to — quick-start, supported domains, drop-in extension |
+| [skill/SKILL.md](./skill/SKILL.md) | Skill descriptor — top-level skill manifest |
+| [prd/chiron_design_v1_2026-04-28.md](./prd/chiron_design_v1_2026-04-28.md) | Comprehensive design PRD (post-debate) |
+| [prd/universal_lesson_generator_2026-04-28.md](./prd/universal_lesson_generator_2026-04-28.md) | Original design PRD |
+| [specs/001-chiron-v1/](./specs/001-chiron-v1/) | Spec + design artifacts: `spec.md`, `plan.md`, `data-model.md`, `tasks.md`, [contracts/](./specs/001-chiron-v1/contracts/) |
+| [memory-bank/](./memory-bank/) | `projectbrief.md`, `systemPatterns.md`, `techContext.md`, `activeContext.md` |
+| [CLAUDE.md](./CLAUDE.md) | Project directives — Claude Code agent guardrails |
 
-## Domains are co-equal
+## Architecture summary
 
-Code, medicine, and language are equally weighted. Specialized paths exist where pedagogy demands it (medical MCQ pairs with clinical vignette; language MCQ pairs with fill-blank; code MCQ pairs with spot-the-bug). The HTML rendering shell + the SR layer + the AI-peer-learner personas are **shared across all three**.
+**Pipeline.** Five-stage `Ingest → Generate → Validate → Build → Assemble` flow. Each stage has typed inputs/outputs, validators, and retry semantics. See [specs/001-chiron-v1/contracts/pipeline-stages.md](./specs/001-chiron-v1/contracts/pipeline-stages.md).
 
-## Heritage
+**LLM architecture.** Per Q8 of the design PRD, the **parent Claude Code agent runs all text-LLM steps in its own context** — Chiron's skill structures prompts, validates outputs against Zod schemas, and orchestrates retries. There is no separate text-LLM gateway process. Vision (diagram OCR, figure description) routes through `mcp__gemini-mcp__interpret_image`.
 
-Chiron stands on the shoulders of:
+**Output.** A single self-contained `lesson.html` per lesson — vendored libs (MathJax + mhchem, Mermaid, optional Pyodide, ChalkAI for `reactive-math`, an abstract `MoleculeRenderer`) are inlined per FR-037, so opening the HTML in a browser works with no build step. Runtime state — quiz attempts, mastery, SR scheduling, weakness log, bookmarks — lives in `.chiron-state.db` (SQLite, per-lesson, single learner).
 
-| Source | What we borrowed |
-|---|---|
-| [`zarazhangrui/codebase-to-course`](https://github.com/zarazhangrui/codebase-to-course) (4.1k★) | HTML rendering shell — `main.js` + `styles.css` + `_base.html`. ~85% domain-agnostic per audit. |
-| [`jtangen/classbuild`](https://github.com/jtangen/classbuild) (MIT) | 5-stage pipeline · typed-schema-as-pedagogy · 7-question-type weekly challenge · `answerBalancer.ts` post-pass · multimedia (TTS + infographics) · repurposed discussion/activities for AI peer dialogue |
-| [`JulienAvezou/ai-course-generator`](https://github.com/JulienAvezou/ai-course-generator) (MIT) | Concept DAG as build-time validator · LLM-as-advisor-not-arbiter · LLM gateway w/ secret scan + token gate + sha256 cache · LLM-with-validator retry pattern |
-| [`~/.claude/skills/case-study.md`](~/.claude/skills/case-study.md) | Mode B 3-act-lecture pattern with 2 adversarial hunters + Gemini paired debate |
-| Anki MCP servers ([`amidvidy`](https://github.com/amidvidy/anki-mcp), [`nailuoGG`](https://github.com/nailuoGG/anki-mcp-server), [`samefarrar/mcp-ankiconnect`](https://github.com/samefarrar/mcp-ankiconnect)) | SR backend — generate cards, push to Anki, let Anki schedule reviews |
-| AMBOSS / UpToDate (formatting research in flight) | Medical content section structure, vignette templates, evidence grading |
+## Heritage repos
 
-## Why "Chiron"?
+Audited locally in `~/dev/audits/`:
 
-Chiron was unique among centaurs: civilized, learned, and the prototype tutor. He taught **medicine** to Asclepius (the god of healing), **strategy and music** to Achilles, **navigation** to Jason, and **astronomy** to Heracles. One teacher, many subjects, deep mastery — exactly what this project is for.
+- `~/dev/audits/codebase-to-course/` — HTML rendering shell (reused ~85% as-is)
+- `~/dev/audits/classbuild/` — 5-stage pipeline + typed-schema pedagogy
+- `~/dev/audits/ai-course-generator/` — concept DAG validator + LLM-as-advisor
+
+## Per-domain assessment formats
+
+| Domain | Primary | Secondary | SR card type |
+|---|---|---|---|
+| **Code** | MCQ + true/false + spot-the-bug | drag-and-drop matching | Concept flashcards |
+| **Medicine** | MCQ paired with USMLE/AMBOSS-style clinical vignette | agreement-matrix (always/sometimes/never) | Disease/drug/mechanism cards |
+| **Language (DE/IT)** | Fill-blank + matching | sentence reordering, dictation | Vocabulary + sentence cloze cards |
+
+## Mode A vs Mode B
+
+| Mode | Trigger | Output |
+|---|---|---|
+| **A — Course-style** | "turn this textbook chapter into a lesson" | Multi-chapter scroll-snap HTML site, Coursera-style |
+| **B — Case-study-style** | "make this incident a teaching moment" | 3-act lecture (Evidence → 2 Lectures → Synthesis) — see `~/.claude/skills/case-study.md` |
+
+## Open PRDs affecting Chiron
+
+- `~/dev/prd/scratch/chiron_tts_provider_selection_2026-04-29.md` — TTS provider selection (Gemini API primary, ElevenLabs fallback) for the Italian native-speaker persona. Lives in the global PRD librarian, not the project tree.
 
 ## License
 
-TBD — likely MIT.
+TBD — likely MIT. No `LICENSE` file committed yet.
+
+## Status / next steps
+
+WIP — see [specs/001-chiron-v1/tasks.md](./specs/001-chiron-v1/tasks.md) for current progress. **Wave 12 in flight.**
+
+## Why "Chiron"?
+
+Chiron was unique among centaurs: civilized, learned, and the prototype tutor. He taught medicine to Asclepius, strategy and music to Achilles, navigation to Jason, and astronomy to Heracles. One teacher, many subjects, deep mastery.

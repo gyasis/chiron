@@ -10,6 +10,24 @@ Chiron is **NOT** a code-tutorial tool with medicine/language bolted on. It is a
 
 The user IS the audience. No multi-user features, no auth, no multi-tenant infra. SQLite or JSON for persistence (NOT Postgres). One learner state. But the lesson **content** itself uses **AI multi-persona personas** (peer learners + native-speaker tutor) to fight solo-learner isolation — that's a content design choice, not a multi-user system.
 
+## Skill Location & Symlink
+
+The Chiron skill lives at `~/dev/projects/chiron/skill/`. To make it discoverable
+by Claude Code, symlink it into the user's skills directory:
+
+```bash
+ln -s ~/dev/projects/chiron/skill ~/.claude/skills/chiron
+```
+
+This is idempotent — re-running it reuses the existing symlink. The install
+script at `skill/scripts/install.sh` handles this for you.
+
+**Skill entry point**: [skill/SKILL.md](./skill/SKILL.md) — declares the skill
+descriptor with both natural-language trigger phrases and slash-commands.
+
+**Skill how-to**: [skill/README.md](./skill/README.md) — user-facing quick-start
+plus per-domain extensibility doc.
+
 ## Authoritative documents
 
 ```

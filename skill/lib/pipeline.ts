@@ -148,6 +148,109 @@ export function delegateToCaseStudy(
   };
 }
 
+// FR-028 / R-10 — image-extraction count announced up front BEFORE first
+// interpret_image MCP call. See contracts/pipeline-stages.md.
+export function announceImageExtraction(
+  brief: Pick<Brief, 'sourceType' | 'metadata'> & { sourceManifest?: unknown },
+  lessonOutputDir: string,
+): void {
+  const sourceType = brief.sourceType;
+  const metadata = (brief.metadata ?? {}) as Record<string, unknown>;
+
+  // Read the .scratch/vision-handoffs.json sidecar if present (single-source ingests).
+  type Sidecar = { handoffs?: unknown[]; pageCount?: number; sourceType?: string };
+  let sidecar: Sidecar | null = null;
+  const sidecarPath = path.join(lessonOutputDir, '.scratch', 'vision-handoffs.json');
+  try {
+    if (fs.existsSync(sidecarPath)) {
+      sidecar = JSON.parse(fs.readFileSync(sidecarPath, 'utf8')) as Sidecar;
+    }
+  } catch {
+    sidecar = null;
+  }
+  const sidecarCount = Array.isArray(sidecar?.handoffs) ? (sidecar!.handoffs as unknown[]).length : 0;
+
+  switch (sourceType) {
+    case 'pdf-scanned': {
+      const n = sidecarCount > 0 ? sidecarCount : (typeof metadata.pageCount === 'number' ? metadata.pageCount : 0);
+      progress.stage(0, 5, `ingest: scanned-PDF (${n} pages — ${n} interpret_image calls follow)`);
+      return;
+    }
+    case 'image': {
+      progress.stage(0, 5, 'ingest: image (1 image — 1 interpret_image call follows)');
+      return;
+    }
+    case 'image-folder': {
+      const n = sidecarCount > 0 ? sidecarCount : 0;
+      progress.stage(0, 5, `ingest: image-folder (${n} images — ${n} interpret_image calls follow)`);
+      return;
+    }
+    case 'multi-pdf': {
+      const pdfCount = typeof metadata.pdfCount === 'number' ? metadata.pdfCount : 0;
+      const hasAnyVision = metadata.hasAnyVisionExtraction === true;
+      if (!hasAnyVision) {
+        progress.stage(0, 5, `ingest: multi-pdf (${pdfCount} PDFs, all-text)`);
+        return;
+      }
+      // Sum vision pages across per-PDF metadata where extraction was vision-driven.
+      const perPdf = Array.isArray(metadata.perPdfMetadata) ? (metadata.perPdfMetadata as unknown[]) : [];
+      let visionPages = 0;
+      let unknown = false;
+      for (const md of perPdf) {
+        const m = (md ?? {}) as Record<string, unknown>;
+        // A scanned-PDF leg sets hasTextLayer=false; vision pages == pageCount of that leg.
+        if (m.hasTextLayer === false) {
+          if (typeof m.pageCount === 'number') {
+            visionPages += m.pageCount;
+          } else {
+            unknown = true;
+          }
+        }
+      }
+      if (unknown || (visionPages === 0 && hasAnyVision)) {
+        progress.stage(
+          0,
+          5,
+          `ingest: multi-pdf (${pdfCount} PDFs, M = unknown total pages — interpret_image calls follow) [warning: per-PDF page counts unavailable]`,
+        );
+        return;
+      }
+      progress.stage(
+        0,
+        5,
+        `ingest: multi-pdf (${pdfCount} PDFs, ${visionPages} total pages — ${visionPages} interpret_image calls follow)`,
+      );
+      return;
+    }
+    case 'bundle': {
+      const fileCount = typeof metadata.fileCount === 'number' ? metadata.fileCount : 0;
+      const manifest = (brief as unknown as { sourceManifest?: Array<{ extractor?: string }> }).sourceManifest;
+      let imageCount = 0;
+      if (Array.isArray(manifest)) {
+        for (const entry of manifest) {
+          const ex = entry?.extractor;
+          if (ex === 'vision-image' || ex === 'vision-pdf') imageCount++;
+        }
+      }
+      if (imageCount === 0) {
+        progress.stage(0, 5, `ingest: bundle (${fileCount} files, no images)`);
+        return;
+      }
+      progress.stage(
+        0,
+        5,
+        `ingest: bundle (${fileCount} files, ${imageCount} images — ${imageCount} interpret_image calls follow)`,
+      );
+      return;
+    }
+    default: {
+      // text-PDF, code-repo, vocab-list, transcript, url, html-file, agent-report, etc.
+      progress.stage(0, 5, `ingest: ${sourceType}`);
+      return;
+    }
+  }
+}
+
 export function stage1Brief(
   ctx: PipelineContext,
   partialBrief: Pick<Brief, 'domain' | 'mode' | 'sourceType' | 'sourcePath' | 'extractedText' | 'metadata'>,
@@ -160,6 +263,9 @@ export function stage1Brief(
     progress.stage(1, 5, `brief refused: ${refusal.reason}`);
     return refusal;
   }
+
+  // FR-028 / R-10 — Stage-0 image-extraction announcement (parent-level, before first MCP call).
+  announceImageExtraction(partialBrief as unknown as Brief, ctx.lessonOutputDir);
 
   // Mode-B delegation per FR-003 — only runs if trigger context is provided.
   if (triggerCtx) {

@@ -1,10 +1,140 @@
-# Chiron Skill — Domain Extensibility (FR-002 / US6)
+# Chiron — Universal Lesson Generator
+
+## TL;DR
+
+Chiron is a domain-agnostic LLM-powered lesson generator that turns a source (codebase, textbook chapter, vocab list, research paper, incident report) into a self-contained interactive HTML lesson. It is built for a single solo learner — Gyasi — with code, medicine, and language as co-equal first-class domains. Output is one `lesson.html` you open in any browser, backed by a per-lesson SQLite state file that tracks quiz attempts, mastery, and spaced-repetition cards.
+
+---
+
+## Quick start
+
+Drop a source on Chiron via natural language or a slash command, and you get a lesson directory back.
+
+### Example invocations
+
+```text
+# Code lesson from a TypeScript repo
+/chiron-code ./my-project
+
+# Italian lesson from a vocab CSV
+/chiron-language ./italian-vocab.csv
+
+# Medicine lesson from a textbook chapter PDF
+/chiron-medicine ./pneumonia-chapter.pdf
+
+# Research-paper lesson (IMRAD-aware)
+/chiron-research-paper ./jones2025.pdf
+
+# Auto-detect (heuristic decides domain + Mode A vs B)
+/chiron ./incident-report.md
+
+# Force case-study form
+/chiron-case-study ./outage-postmortem.md
+```
+
+Natural-language phrasing works equivalently:
+
+```text
+teach me hooks in this React repo at ~/code/my-react-app
+make a course on community-acquired pneumonia from ~/Downloads/cap-amboss.pdf
+make a lesson out of these Italian vocab words from ~/lang/italian-a1.csv
+case-study this incident-report.md
+```
+
+Both styles produce the same output. The slash-command form pre-fills the domain/mode and bypasses the heuristic.
+
+### One-time setup
+
+```bash
+ln -s ~/dev/projects/chiron/skill ~/.claude/skills/chiron
+```
+
+No API keys to set for Chiron itself — the skill uses the parent Claude Code session for text-LLM work, and the already-configured Gemini MCP server for `interpret_image`, optional `gemini_research`, opt-in `start_deep_research`, and Italian TTS.
+
+### Re-opening a lesson
+
+Just open `lesson.html` again. The page reads `.chiron-state.db`, restores scroll position, marks completed chapters, and surfaces due SR cards inline at the top (FR-011, FR-013, SC-006).
+
+### Deep-research opt-in
+
+By default, Chiron does NOT call `start_deep_research` (FR-029). Ask for it explicitly during generation:
+
+```text
+expand on the renin-angiotensin pathway with deep research
+```
+
+Hard cap: one deep-research call per lesson. Results are saved into `<lesson-output-dir>/research/`.
+
+---
+
+## What you get
+
+```text
+<lesson-output-dir>/
+  lesson.html         # self-contained — open in any browser
+  .chiron-state.db    # SQLite — quiz attempts, mastery, SR cards
+  brief.json          # Stage 1 sidecar
+  syllabus.json       # Stage 2 sidecar
+  source/             # copied source files (FR-030)
+  audio/              # TTS audio for language lessons (when TTS provider is wired)
+  research/           # deep-research sidecar (only when opted in via FR-029)
+```
+
+---
+
+## Domains supported in v1
+
+- **Code (US1)** — TypeScript, Python, Go, etc. Concept DAG via `concepts/code.json`.
+- **Italian language (US2)** — vocab + grammar. German is post-v1.
+- **Medicine (US3)** — AMBOSS or UpToDate sub-mode; QUEST-AI verifier loop for safety-critical content.
+- **Research papers (US4)** — IMRAD-aware, forest-plot extraction for meta-analyses.
+- **Music theory (US6 demo)** — extensibility example, demonstrates the 3-file drop.
+
+---
+
+## Two modes
+
+- **Mode A — Course-style**: multi-chapter scroll-snap lesson, Coursera-style. Default for textbooks, codebases, vocab lists.
+- **Mode B — Case-study**: 3-act lecture (Evidence → 2 Lectures → Synthesis). Triggered by incident reports, postmortems, "make this a teaching moment". Delegates to the sibling skill at `~/.claude/skills/case-study.md`.
+
+Mode is auto-detected from user intent + source type. Slash-command variants (`/chiron-case-study`) bypass detection.
+
+---
+
+## Persistence model
+
+| Layer | What it stores | Where |
+|---|---|---|
+| **Per-lesson SQLite** | Quiz attempts, mastery, SR cards, bookmarks, LLM cache | `<lesson-output-dir>/.chiron-state.db` |
+| **In-browser LocalStorage** | Scroll position, chapter-completion checkmarks | Browser-local |
+| **Source copy** | Original PDF/CSV/source files (FR-030) | `<lesson-output-dir>/source/` |
+
+Single learner per lesson — no auth, no multi-tenant infra. The "social" feel comes from AI multi-personas (peer learners + expert + native speaker) rendered into the lesson content, not from real users.
+
+---
+
+## Common pitfalls
+
+| Symptom | Likely cause | Fix |
+|---|---|---|
+| `lesson.html` opens but a chapter is blank | Stage 4 chapter abort — check stderr log | Re-run; if persistent, check validator output |
+| Long run / unexpected token spend | No in-tree cost guard (Q8) — interrupt the parent Claude Code session manually if needed; trim chapter count in `curricula/<domain>.json` |
+| Re-open shows no due cards | Either no cards are due yet, or `_chiron_meta.schema_version` mismatch | Check stderr for migration errors |
+| Italian fill-blank rejects "caffe" but accepts "caffè" | `fuzzyMatch` not set to `'accent'` for that blank | Inspect generated WidgetSpec; re-grade prompt if recurring |
+| `code-runner` widget says "Pyodide unavailable" | Offline + Pyodide CDN unreachable | Expected per R-03 — rest of lesson works |
+| Gemini TTS sounds robotic | Acceptable for Phase 3; if persistent, switch to ElevenLabs per R-01 | Replace TTS provider in `lib/` |
+
+---
+
+# Adding a new domain (US6 extensibility)
+
+This section is for **domain extenders** — adding a brand-new domain to Chiron without touching pipeline code.
 
 ## TL;DR
 
 Adding a new domain to Chiron = drop **3 files**. The pipeline auto-discovers them, validates them, and routes to them based on `TriggerContext.domain`. No pipeline code changes required — that's the whole point of FR-002.
 
-See `SKILL.md` for the top-level skill descriptor; this file documents the extensibility contract.
+See `SKILL.md` for the top-level skill descriptor; this section documents the extensibility contract.
 
 ---
 

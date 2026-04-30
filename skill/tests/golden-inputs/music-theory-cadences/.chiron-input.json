@@ -1,0 +1,9 @@
+{
+  "domain": "music-theory",
+  "files": [
+    {
+      "path": "intro.md",
+      "role": "primary"
+    }
+  ]
+}
