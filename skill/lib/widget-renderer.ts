@@ -1674,6 +1674,232 @@ registerRenderer('slider-estimation', (widget) =>
   renderSliderEstimation(widget as SliderEstimationWidget),
 );
 
+/**
+ * Narrowed shape for the forest-plot widget (T102, US4 — medicine).
+ *
+ * Contract gap: `ForestPlotWidgetSchema` (as of T102) defines only
+ * `{ type, studies: [{ label, effect, ci }] }`. The renderer brief and the
+ * T107 test validators expect a richer payload — `pooledEffect`, `pooledCi`,
+ * `effectMetric` (OR/RR/HR/MD), `modelType` (fixed/random),
+ * `heterogeneityI2`, `heterogeneityP`, optional per-study `weight`/`n`,
+ * plus optional `title` and `explanation`. We carry those as optional
+ * structural fields (intersection) until a schema PR tightens the Zod
+ * definition. Greppable test attributes (`data-pooled-hr`, `data-i2`,
+ * `class="forest-plot"`, `class="forest-plot-row"`) are emitted regardless.
+ */
+type ForestPlotWidget = Extract<WidgetSpec, { type: 'forest-plot' }> & {
+  title?: string;
+  explanation?: string;
+  pooledEffect?: number;
+  pooledCi?: [number, number];
+  effectMetric?: 'OR' | 'RR' | 'HR' | 'MD' | string;
+  modelType?: 'fixed' | 'random' | string;
+  heterogeneityI2?: number;
+  heterogeneityP?: number;
+  studies: Array<{
+    label: string;
+    effect: number;
+    ci: [number, number];
+    weight?: number;
+    n?: number;
+  }>;
+};
+
+/**
+ * Renderer for `forest-plot` widgets (T102, US4 — medicine meta-analysis).
+ *
+ * Emits:
+ *   - <div class="forest-plot" data-pooled-hr=... data-i2=...> wrapper with
+ *     greppable attributes the T107 validators rely on.
+ *   - An SVG container (`#fp-<id>`) that the vendored window.ForestPlot lib
+ *     populates client-side. The vendor lib lives at
+ *     `skill/shell/vendor/forest-plot/forest-plot.js` (T010).
+ *   - A <table class="forest-data" hidden> textual fallback. Each per-study
+ *     row carries `class="forest-plot-row"` for greppable counting; the
+ *     pooled row uses `class="forest-pooled"`.
+ *   - An inline IIFE that:
+ *       1. waits up to ~2s for `window.ForestPlot` to load,
+ *       2. calls `window.ForestPlot.render(selector, opts)` if found,
+ *       3. falls back by un-hiding the data table if the lib never appears
+ *          (graceful degradation per task brief),
+ *       4. wires the "Show data table" toggle button.
+ *
+ * Numeric formatting follows the brief: effects + CI bounds → 2 decimals,
+ * weights → 1 decimal, I² → integer. CI bounds rendered with an en-dash.
+ */
+export function renderForestPlot(spec: ForestPlotWidget): string {
+  const id = nextWidgetId('fp');
+  const containerId = `fp-${id}`;
+  const studies = Array.isArray(spec.studies) ? spec.studies : [];
+
+  const fmt2 = (n: number | undefined): string =>
+    typeof n === 'number' && Number.isFinite(n) ? n.toFixed(2) : '';
+  const fmt1 = (n: number | undefined): string =>
+    typeof n === 'number' && Number.isFinite(n) ? n.toFixed(1) : '';
+  const fmtInt = (n: number | undefined): string =>
+    typeof n === 'number' && Number.isFinite(n) ? String(Math.round(n)) : '';
+  const fmtCi = (ci: [number, number] | undefined): string =>
+    Array.isArray(ci) && ci.length === 2 ? `${fmt2(ci[0])}–${fmt2(ci[1])}` : '';
+
+  const effectMetric = spec.effectMetric ?? 'Effect';
+  const modelType = spec.modelType ?? 'random';
+  const pooledEffect = typeof spec.pooledEffect === 'number' ? spec.pooledEffect : NaN;
+  const pooledCi = spec.pooledCi;
+  const i2 = spec.heterogeneityI2;
+  const i2P = spec.heterogeneityP;
+
+  const totalN = studies.reduce(
+    (acc, s) => acc + (typeof s.n === 'number' && Number.isFinite(s.n) ? s.n : 0),
+    0,
+  );
+
+  const titleHtml = spec.title
+    ? `  <h3 class="forest-title">${escapeHtml(spec.title)}</h3>`
+    : '';
+
+  const studyRows = studies
+    .map((s) => {
+      const weightPct =
+        typeof s.weight === 'number' && Number.isFinite(s.weight)
+          ? `${fmt1(s.weight)}%`
+          : '';
+      const nDisplay = typeof s.n === 'number' && Number.isFinite(s.n) ? String(s.n) : '';
+      return (
+        `      <tr class="forest-plot-row" data-label="${escapeHtml(s.label)}">` +
+        `<td>${escapeHtml(s.label)}</td>` +
+        `<td>${fmt2(s.effect)}</td>` +
+        `<td>${fmtCi(s.ci)}</td>` +
+        `<td>${weightPct}</td>` +
+        `<td>${nDisplay}</td>` +
+        `</tr>`
+      );
+    })
+    .join('\n');
+
+  const pooledRow =
+    `      <tr class="forest-pooled" data-pooled="true">` +
+    `<td><strong>Pooled (${escapeHtml(modelType)})</strong></td>` +
+    `<td>${fmt2(pooledEffect)}</td>` +
+    `<td>${fmtCi(pooledCi)}</td>` +
+    `<td>100%</td>` +
+    `<td>${totalN > 0 ? String(totalN) : ''}</td>` +
+    `</tr>`;
+
+  const explanationHtml = spec.explanation
+    ? `  <p class="explanation">${escapeHtml(spec.explanation)}</p>`
+    : '';
+
+  // Build the JS payload for window.ForestPlot.render(...).
+  const logScale = ['OR', 'RR', 'HR'].includes(String(effectMetric));
+  const renderOpts: Record<string, unknown> = {
+    studies: studies.map((s) => ({
+      label: s.label,
+      effect: s.effect,
+      ci: s.ci,
+      weight: s.weight,
+      n: s.n,
+    })),
+    effectMetric,
+    effectLabel: effectMetric,
+    logScale,
+    modelType,
+  };
+  if (typeof pooledEffect === 'number' && Number.isFinite(pooledEffect) && pooledCi) {
+    renderOpts.pooled = { effect: pooledEffect, ci: pooledCi };
+    // Vendor mini-lib accepts `summary` as the diamond payload.
+    renderOpts.summary = { effect: pooledEffect, ci: pooledCi };
+  }
+  if (spec.title) renderOpts.title = spec.title;
+
+  const renderOptsJson = JSON.stringify(renderOpts);
+  const containerIdJson = JSON.stringify(containerId);
+
+  // Wrapper data attributes — must match exactly for T107 test validators.
+  const dataAttrs = [
+    `class="forest-plot"`,
+    `data-section="forest-plot"`,
+    `data-widget="forest-plot"`,
+    `data-pooled-hr="${escapeHtml(fmt2(pooledEffect))}"`,
+    `data-effect-metric="${escapeHtml(String(effectMetric))}"`,
+    `data-model-type="${escapeHtml(String(modelType))}"`,
+    `data-i2="${escapeHtml(fmtInt(i2))}"`,
+    `data-i2-p="${escapeHtml(fmt2(i2P))}"`,
+  ].join(' ');
+
+  const i2Display = typeof i2 === 'number' ? `I² = ${fmtInt(i2)}%` : '';
+  const i2PDisplay = typeof i2P === 'number' ? `p = ${fmt2(i2P)}` : '';
+
+  return [
+    `<div ${dataAttrs}>`,
+    titleHtml,
+    `  <div class="forest-svg-container" id="${containerId}"></div>`,
+    `  <table class="forest-data" hidden>`,
+    `    <thead><tr><th>Study</th><th>${escapeHtml(String(effectMetric))}</th><th>95% CI</th><th>Weight</th><th>N</th></tr></thead>`,
+    `    <tbody>`,
+    studyRows,
+    pooledRow,
+    `    </tbody>`,
+    `  </table>`,
+    `  <div class="forest-meta">`,
+    `    <span class="i2">${i2Display}</span>`,
+    `    <span class="i2-p">${i2PDisplay}</span>`,
+    `  </div>`,
+    `  <button type="button" class="data-toggle" data-action="toggle-data">Show data table</button>`,
+    explanationHtml,
+    `  <script>`,
+    `  (function(){`,
+    `    var root = document.getElementById(${containerIdJson});`,
+    `    if (!root) return;`,
+    `    var wrapper = root.closest('.forest-plot');`,
+    `    var table = wrapper ? wrapper.querySelector('.forest-data') : null;`,
+    `    var toggle = wrapper ? wrapper.querySelector('[data-action="toggle-data"]') : null;`,
+    `    var opts = ${renderOptsJson};`,
+    `    var attempts = 0;`,
+    `    var maxAttempts = 40; // ~2s at 50ms intervals`,
+    `    function tryRender(){`,
+    `      attempts++;`,
+    `      var lib = (typeof window !== 'undefined') ? window.ForestPlot : null;`,
+    `      if (lib && (typeof lib.render === 'function' || typeof lib.renderForestPlot === 'function')) {`,
+    `        try {`,
+    `          var fn = (typeof lib.render === 'function') ? lib.render : lib.renderForestPlot;`,
+    `          fn(root, opts);`,
+    `        } catch(e) {`,
+    `          if (table) table.hidden = false;`,
+    `        }`,
+    `        return;`,
+    `      }`,
+    `      if (attempts >= maxAttempts) {`,
+    `        // Fallback: vendor lib never loaded — show the data table inline.`,
+    `        if (table) table.hidden = false;`,
+    `        if (toggle) toggle.hidden = true;`,
+    `        return;`,
+    `      }`,
+    `      setTimeout(tryRender, 50);`,
+    `    }`,
+    `    if (typeof document !== 'undefined' && document.readyState === 'loading') {`,
+    `      document.addEventListener('DOMContentLoaded', tryRender);`,
+    `    } else {`,
+    `      tryRender();`,
+    `    }`,
+    `    if (toggle && table) {`,
+    `      toggle.addEventListener('click', function(){`,
+    `        var nowHidden = !table.hidden;`,
+    `        table.hidden = nowHidden;`,
+    `        toggle.textContent = nowHidden ? 'Show data table' : 'Hide data table';`,
+    `      });`,
+    `    }`,
+    `  })();`,
+    `  </script>`,
+    `</div>`,
+  ]
+    .filter((s) => s.length > 0)
+    .join('\n');
+}
+
+registerRenderer('forest-plot', (widget) =>
+  renderForestPlot(widget as ForestPlotWidget),
+);
+
 /** List the kinds currently registered. Useful for sanity tests. */
 export function registeredKinds(): WidgetKind[] {
   return Array.from(REGISTRY.keys());

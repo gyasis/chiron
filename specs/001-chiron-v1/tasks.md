@@ -264,7 +264,7 @@ description: "Task list for Chiron v1 — Universal Lesson Generator"
 ### Research widget renderers
 
 - [x] T101 [P] [US4] Extend `skill/lib/widget-renderer.ts` to render `slider-estimation` widgets — value picker with `acceptableRange` band, reveals correct value + unit
-- [ ] T102 [P] [US4] Extend `skill/lib/widget-renderer.ts` to render `forest-plot` widgets — uses the vendored `skill/shell/vendor/forest-plot/` mini-lib from T010
+- [x] T102 [P] [US4] Extend `skill/lib/widget-renderer.ts` to render `forest-plot` widgets — uses the vendored `skill/shell/vendor/forest-plot/` mini-lib from T010
 
 ### Research prompts
 

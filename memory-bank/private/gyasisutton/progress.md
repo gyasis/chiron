@@ -1,12 +1,12 @@
 # Progress
 
-**Last Updated**: 2026-04-30 12:23:29
+**Last Updated**: 2026-04-30 14:37:24
 
 ## Overall Progress
 - Total Tasks: 129
-- Completed: 127 ✅
-- Pending: 2 ⏳
-- Progress: 98%
+- Completed: 128 ✅
+- Pending: 1 ⏳
+- Progress: 99%
 
 ## Task Breakdown
 - [x] T001 Create the `skill/` directory tree per `plan.md`: `skill/{prompts/{00-ingest/,medicine-only/},ingest-adapters/,concepts/,curricula/,personas/,shell/{themes/,vendor/},lib/,tests/{golden-inputs/,snapshots/}}`
@@ -110,7 +110,7 @@
 - [x] T099 [P] [US4] Author `skill/curricula/research-paper.json` — `chapterCountTarget: 6` (fixed: motivation / methods / results / discussion / appraisal / connections); `perChapterQuizTarget: 5-10`
 - [x] T100 [P] [US4] Author `skill/personas/research-paper.json` — Dr. Hofmann (senior PI, expert) + Bob (skeptical peer)
 - [x] T101 [P] [US4] Extend `skill/lib/widget-renderer.ts` to render `slider-estimation` widgets — value picker with `acceptableRange` band, reveals correct value + unit
-- [ ] T102 [P] [US4] Extend `skill/lib/widget-renderer.ts` to render `forest-plot` widgets — uses the vendored `skill/shell/vendor/forest-plot/` mini-lib from T010
+- [x] T102 [P] [US4] Extend `skill/lib/widget-renderer.ts` to render `forest-plot` widgets — uses the vendored `skill/shell/vendor/forest-plot/` mini-lib from T010
 - [x] T103 [P] [US4] Author `skill/prompts/04i-quiz-slider-estimation.md`
 - [x] T104 [P] [US4] Author `skill/prompts/04o-infographic.md` — for forest-plot data extraction from the source paper
 - [x] T105 [US4] Create `skill/tests/golden-inputs/research-paper-jones2025/` — a real (or realistic) research paper PDF
