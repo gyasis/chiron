@@ -131,15 +131,19 @@ export function validateSyllabus(
     }
   }
   // FR-021: every quiz-type widget has non-empty variants[].
-  const QUIZ_TYPES = new Set([
+  const QUIZ_TYPES = new Set<string>([
     'mcq',
+    'mcq-clinical-vignette',
     'true-false',
     'fill-blank',
-    'matching',
+    'matching-pair',
+    'cloze',
     'spot-the-bug',
     'agreement-matrix',
-    'sentence-reorder',
-    'vignette',
+    'assertion-reason',
+    'confidence-weighted',
+    'slider-estimation',
+    'boss',
   ]);
   for (const w of chapter.widgets) {
     const wAny = w as { type: string; variants?: unknown[] };

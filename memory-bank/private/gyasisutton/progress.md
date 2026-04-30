@@ -1,12 +1,12 @@
 # Progress
 
-**Last Updated**: 2026-04-30 17:02:05
+**Last Updated**: 2026-04-30 17:06:30
 
 ## Overall Progress
 - Total Tasks: 182
-- Completed: 131 ✅
-- Pending: 51 ⏳
-- Progress: 71%
+- Completed: 143 ✅
+- Pending: 39 ⏳
+- Progress: 78%
 
 ## Task Breakdown
 - [x] T001 Create the `skill/` directory tree per `plan.md`: `skill/{prompts/{00-ingest/,medicine-only/},ingest-adapters/,concepts/,curricula/,personas/,shell/{themes/,vendor/},lib/,tests/{golden-inputs/,snapshots/}}`
@@ -141,18 +141,18 @@
 - [x] T130 Fix `pipeline.ts` `progress.stage` / `progress.chapter` calls — `progress.ts` exports a function, not a namespace. Either `import * as progress` or use named imports `import { stage as progressStage, chapter as progressChapter }`. Affects: every pipeline entry point (stage0Preflight, stage1Brief, stage2Syllabus, stage3Validate, stage4ChapterWrite, stage4AnswerBalancer, stage5Assemble, announceImageExtraction). Without this, every pipeline call throws TypeError on first progress call.
 - [x] T131 Fix `assemble.ts` ↔ `build.sh` cwd mismatch — `assemble.ts` calls `execFileSync(buildScript, [lessonOutputDir])` but `build.sh` ignores `$1` and writes to its own dir. Either: (a) `build.sh` accepts `${1:-$HERE}` and operates in supplied dir, OR (b) `assemble.ts` cd's into `lessonOutputDir` first. lesson.html lands in wrong place otherwise.
 - [x] T132 Fix `pipeline.ts` `stage5Assemble` to actually call `assembleLesson()` — current version only calls `initDb`, returns a `lessonHtmlPath` to a file that was never created. Import + call `assembleLesson()` from `assemble.ts`.
-- [ ] T133 Reconcile `McqClinicalVignetteWidgetSchema`: prompt 04c emits `text` field; schema has `label` only. Either rename schema field to `text` OR fix prompt example.
-- [ ] T134 Reconcile `AssertionReasonWidgetSchema`: prompt 04j emits `id`, `options[]`, `explanation`; schema has none. Add to schema.
-- [ ] T135 Reconcile `SliderEstimationWidgetSchema`: prompt 04i emits `tolerance` + 5 other fields; schema has only `acceptableRange` + 3 others. Add `tolerance`, `min`, `max`, `step`, `unit`, `correctValue`, `id`, `explanation`.
-- [ ] T136 Reconcile `ForestPlotWidgetSchema`: prompt 04o emits `pooledEffect`, `pooledCi`, `effectMetric`, `modelType`, `heterogeneityI2`, `heterogeneityP`, `explanation`, `title`, plus per-study `weight` and `n`, plus `variants`. Schema has none of these. Add all.
-- [ ] T137 Reconcile `ChemicalReactionWidgetSchema`: prompt emits `id`, `label`, `mhchemNotation`, `explanation`; schema has only `equation`. Add fields.
-- [ ] T138 Reconcile `Molecule2dWidgetSchema`: prompt emits `id`, `label`, `alternateNames`, `explanation`; schema has only `smiles`. Add fields.
-- [ ] T139 Reconcile `AgreementMatrixWidgetSchema`: prompt 04g emits `id`, `promptText`, `rationale[]`; schema has none. Add. Constrain `rationale.length === statements.length`.
-- [ ] T140 Reconcile `SpotTheBugWidgetSchema`: prompt 04f emits `id`, `language`; schema has neither. Add `language: z.string()`.
-- [ ] T141 Fix `validator.ts` `QUIZ_TYPES` — uses non-existent kind names (`matching`, `vignette`, `sentence-reorder`). Replace with canonical 12 quiz-widget kinds from `WIDGET_KINDS`. FR-021 variants[] check is silently bypassed for matching-pair, mcq-clinical-vignette, etc.
-- [ ] T142 Fix every curriculum's `widgetMix` keys — `code.json`, `language-vocab.json`, `language-grammar.json`, `medicine-amboss.json`, `medicine-uptodate.json`, `music-theory.json` all reference `matching`/`vignette`/`sentence-reorder` (drift). Replace with canonical kind names.
-- [ ] T143 Fix Stage-2 syllabus prompt (`02-syllabus.md`) hard-coded widget-kind list — currently lists 4 wrong + many missing.
-- [ ] T144 Fix Stage-4a chapter-writer (`04a-chapter-write.md`) MCQ option example — uses `text` field; canonical schema is `label`.
+- [x] T133 Reconcile `McqClinicalVignetteWidgetSchema`: prompt 04c emits `text` field; schema has `label` only. Either rename schema field to `text` OR fix prompt example.
+- [x] T134 Reconcile `AssertionReasonWidgetSchema`: prompt 04j emits `id`, `options[]`, `explanation`; schema has none. Add to schema.
+- [x] T135 Reconcile `SliderEstimationWidgetSchema`: prompt 04i emits `tolerance` + 5 other fields; schema has only `acceptableRange` + 3 others. Add `tolerance`, `min`, `max`, `step`, `unit`, `correctValue`, `id`, `explanation`.
+- [x] T136 Reconcile `ForestPlotWidgetSchema`: prompt 04o emits `pooledEffect`, `pooledCi`, `effectMetric`, `modelType`, `heterogeneityI2`, `heterogeneityP`, `explanation`, `title`, plus per-study `weight` and `n`, plus `variants`. Schema has none of these. Add all.
+- [x] T137 Reconcile `ChemicalReactionWidgetSchema`: prompt emits `id`, `label`, `mhchemNotation`, `explanation`; schema has only `equation`. Add fields.
+- [x] T138 Reconcile `Molecule2dWidgetSchema`: prompt emits `id`, `label`, `alternateNames`, `explanation`; schema has only `smiles`. Add fields.
+- [x] T139 Reconcile `AgreementMatrixWidgetSchema`: prompt 04g emits `id`, `promptText`, `rationale[]`; schema has none. Add. Constrain `rationale.length === statements.length`.
+- [x] T140 Reconcile `SpotTheBugWidgetSchema`: prompt 04f emits `id`, `language`; schema has neither. Add `language: z.string()`.
+- [x] T141 Fix `validator.ts` `QUIZ_TYPES` — uses non-existent kind names (`matching`, `vignette`, `sentence-reorder`). Replace with canonical 12 quiz-widget kinds from `WIDGET_KINDS`. FR-021 variants[] check is silently bypassed for matching-pair, mcq-clinical-vignette, etc.
+- [x] T142 Fix every curriculum's `widgetMix` keys — `code.json`, `language-vocab.json`, `language-grammar.json`, `medicine-amboss.json`, `medicine-uptodate.json`, `music-theory.json` all reference `matching`/`vignette`/`sentence-reorder` (drift). Replace with canonical kind names.
+- [x] T143 Fix Stage-2 syllabus prompt (`02-syllabus.md`) hard-coded widget-kind list — currently lists 4 wrong + many missing.
+- [x] T144 Fix Stage-4a chapter-writer (`04a-chapter-write.md`) MCQ option example — uses `text` field; canonical schema is `label`.
 - [ ] T145 Add `safeJoin(base, child)` helper in `skill/lib/path-safety.ts` — assert resolved path is inside base. Replace ad-hoc `path.join`/`path.resolve` with this everywhere user/LLM-supplied components land.
 - [ ] T146 Fix `code-repo.ts` walker: use `lstatSync` (not `statSync`); skip symlinks (or resolve and verify still inside repoRoot). Prevents infinite loops AND `.ssh/id_rsa` exfiltration.
 - [ ] T147 Fix `bundle.ts` manifest path-traversal: reject absolute paths in `chiron.manifest.json` entries. Sandbox under manifest dir.

@@ -358,18 +358,18 @@ description: "Task list for Chiron v1 — Universal Lesson Generator"
 
 ### Schema reconciliation (Wave R2 — every quiz widget currently fails Zod parse)
 
-- [ ] T133 Reconcile `McqClinicalVignetteWidgetSchema`: prompt 04c emits `text` field; schema has `label` only. Either rename schema field to `text` OR fix prompt example.
-- [ ] T134 Reconcile `AssertionReasonWidgetSchema`: prompt 04j emits `id`, `options[]`, `explanation`; schema has none. Add to schema.
-- [ ] T135 Reconcile `SliderEstimationWidgetSchema`: prompt 04i emits `tolerance` + 5 other fields; schema has only `acceptableRange` + 3 others. Add `tolerance`, `min`, `max`, `step`, `unit`, `correctValue`, `id`, `explanation`.
-- [ ] T136 Reconcile `ForestPlotWidgetSchema`: prompt 04o emits `pooledEffect`, `pooledCi`, `effectMetric`, `modelType`, `heterogeneityI2`, `heterogeneityP`, `explanation`, `title`, plus per-study `weight` and `n`, plus `variants`. Schema has none of these. Add all.
-- [ ] T137 Reconcile `ChemicalReactionWidgetSchema`: prompt emits `id`, `label`, `mhchemNotation`, `explanation`; schema has only `equation`. Add fields.
-- [ ] T138 Reconcile `Molecule2dWidgetSchema`: prompt emits `id`, `label`, `alternateNames`, `explanation`; schema has only `smiles`. Add fields.
-- [ ] T139 Reconcile `AgreementMatrixWidgetSchema`: prompt 04g emits `id`, `promptText`, `rationale[]`; schema has none. Add. Constrain `rationale.length === statements.length`.
-- [ ] T140 Reconcile `SpotTheBugWidgetSchema`: prompt 04f emits `id`, `language`; schema has neither. Add `language: z.string()`.
-- [ ] T141 Fix `validator.ts` `QUIZ_TYPES` — uses non-existent kind names (`matching`, `vignette`, `sentence-reorder`). Replace with canonical 12 quiz-widget kinds from `WIDGET_KINDS`. FR-021 variants[] check is silently bypassed for matching-pair, mcq-clinical-vignette, etc.
-- [ ] T142 Fix every curriculum's `widgetMix` keys — `code.json`, `language-vocab.json`, `language-grammar.json`, `medicine-amboss.json`, `medicine-uptodate.json`, `music-theory.json` all reference `matching`/`vignette`/`sentence-reorder` (drift). Replace with canonical kind names.
-- [ ] T143 Fix Stage-2 syllabus prompt (`02-syllabus.md`) hard-coded widget-kind list — currently lists 4 wrong + many missing.
-- [ ] T144 Fix Stage-4a chapter-writer (`04a-chapter-write.md`) MCQ option example — uses `text` field; canonical schema is `label`.
+- [x] T133 Reconcile `McqClinicalVignetteWidgetSchema`: prompt 04c emits `text` field; schema has `label` only. Either rename schema field to `text` OR fix prompt example.
+- [x] T134 Reconcile `AssertionReasonWidgetSchema`: prompt 04j emits `id`, `options[]`, `explanation`; schema has none. Add to schema.
+- [x] T135 Reconcile `SliderEstimationWidgetSchema`: prompt 04i emits `tolerance` + 5 other fields; schema has only `acceptableRange` + 3 others. Add `tolerance`, `min`, `max`, `step`, `unit`, `correctValue`, `id`, `explanation`.
+- [x] T136 Reconcile `ForestPlotWidgetSchema`: prompt 04o emits `pooledEffect`, `pooledCi`, `effectMetric`, `modelType`, `heterogeneityI2`, `heterogeneityP`, `explanation`, `title`, plus per-study `weight` and `n`, plus `variants`. Schema has none of these. Add all.
+- [x] T137 Reconcile `ChemicalReactionWidgetSchema`: prompt emits `id`, `label`, `mhchemNotation`, `explanation`; schema has only `equation`. Add fields.
+- [x] T138 Reconcile `Molecule2dWidgetSchema`: prompt emits `id`, `label`, `alternateNames`, `explanation`; schema has only `smiles`. Add fields.
+- [x] T139 Reconcile `AgreementMatrixWidgetSchema`: prompt 04g emits `id`, `promptText`, `rationale[]`; schema has none. Add. Constrain `rationale.length === statements.length`.
+- [x] T140 Reconcile `SpotTheBugWidgetSchema`: prompt 04f emits `id`, `language`; schema has neither. Add `language: z.string()`.
+- [x] T141 Fix `validator.ts` `QUIZ_TYPES` — uses non-existent kind names (`matching`, `vignette`, `sentence-reorder`). Replace with canonical 12 quiz-widget kinds from `WIDGET_KINDS`. FR-021 variants[] check is silently bypassed for matching-pair, mcq-clinical-vignette, etc.
+- [x] T142 Fix every curriculum's `widgetMix` keys — `code.json`, `language-vocab.json`, `language-grammar.json`, `medicine-amboss.json`, `medicine-uptodate.json`, `music-theory.json` all reference `matching`/`vignette`/`sentence-reorder` (drift). Replace with canonical kind names.
+- [x] T143 Fix Stage-2 syllabus prompt (`02-syllabus.md`) hard-coded widget-kind list — currently lists 4 wrong + many missing.
+- [x] T144 Fix Stage-4a chapter-writer (`04a-chapter-write.md`) MCQ option example — uses `text` field; canonical schema is `label`.
 
 ### Path safety (Wave R3)
 

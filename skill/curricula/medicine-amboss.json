@@ -23,7 +23,7 @@
     "mimicker"
   ],
   "widgetMix": {
-    "vignette": 0.4,
+    "mcq-clinical-vignette": 0.4,
     "mcq": 0.2,
     "true-false": 0.15,
     "agreement-matrix": 0.15,

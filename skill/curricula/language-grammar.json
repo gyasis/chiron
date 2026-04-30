@@ -8,10 +8,9 @@
   "perChapterSrCardTarget": 7,
   "modeAOnly": true,
   "widgetMix": {
-    "mcq": 0.25,
-    "fill-blank": 0.3,
-    "matching": 0.15,
-    "sentence-reorder": 0.15,
+    "mcq": 0.3,
+    "fill-blank": 0.35,
+    "matching-pair": 0.2,
     "cloze": 0.15
   },
   "personasFile": "personas/language-it.json",

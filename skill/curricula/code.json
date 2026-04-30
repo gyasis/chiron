@@ -11,7 +11,7 @@
     "mcq": 0.4,
     "true-false": 0.2,
     "spot-the-bug": 0.3,
-    "matching": 0.1
+    "matching-pair": 0.1
   },
   "personasFile": "personas/code.json",
   "themeId": "warm-paper"

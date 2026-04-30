@@ -25,6 +25,7 @@ export type Variant = z.infer<typeof VariantSchema>;
 
 export const McqOptionSchema = z.object({
   label: z.string(),
+  text: z.string().optional(),
   correct: z.boolean().optional(),
   explanation: z.string(),
 });
@@ -97,7 +98,9 @@ export const ClozeWidgetSchema = z.object({
 
 export const SpotTheBugWidgetSchema = z.object({
   type: z.literal('spot-the-bug'),
+  id: z.string().optional(),
   codeBlock: z.string(),
+  language: z.string().optional(),
   bugLine: z.number().int().min(1),
   explanation: z.string(),
   variants: variantsField,
@@ -105,13 +108,18 @@ export const SpotTheBugWidgetSchema = z.object({
 
 export const AgreementMatrixWidgetSchema = z.object({
   type: z.literal('agreement-matrix'),
+  id: z.string().optional(),
+  promptText: z.string().optional(),
   statements: z.array(z.string()),
   classifications: z.array(z.enum(['always', 'sometimes', 'never'])),
+  options: z.array(z.string()).optional(),
+  rationale: z.array(z.string()).optional(),
   variants: variantsField,
 });
 
 export const AssertionReasonWidgetSchema = z.object({
   type: z.literal('assertion-reason'),
+  id: z.string().optional(),
   assertion: z.string(),
   reason: z.string(),
   correctRelationship: z.enum([
@@ -121,6 +129,12 @@ export const AssertionReasonWidgetSchema = z.object({
     'assertion-false-reason-true',
     'both-false',
   ]),
+  options: z.array(z.object({
+    label: z.string(),
+    text: z.string(),
+    correct: z.boolean(),
+  })).optional(),
+  explanation: z.string().optional(),
   variants: variantsField,
 });
 
@@ -136,10 +150,16 @@ export const ConfidenceWeightedWidgetSchema = z.object({
 
 export const SliderEstimationWidgetSchema = z.object({
   type: z.literal('slider-estimation'),
+  id: z.string().optional(),
   question: z.string(),
+  min: z.number().optional(),
+  max: z.number().optional(),
+  step: z.number().optional(),
   correctValue: z.number(),
-  acceptableRange: z.number(),
+  acceptableRange: z.number().optional(),
+  tolerance: z.number().optional(),
   unit: z.string(),
+  explanation: z.string().optional(),
   variants: variantsField,
 });
 
@@ -157,12 +177,20 @@ export const BossWidgetSchema = z.object({
 
 export const ChemicalReactionWidgetSchema = z.object({
   type: z.literal('chemical-reaction'),
+  id: z.string().optional(),
+  label: z.string().optional(),
   equation: z.string(),
+  mhchemNotation: z.string().optional(),
+  explanation: z.string().optional(),
 });
 
 export const Molecule2dWidgetSchema = z.object({
   type: z.literal('molecule-2d'),
+  id: z.string().optional(),
+  label: z.string().optional(),
   smiles: z.string(),
+  alternateNames: z.array(z.string()).optional(),
+  explanation: z.string().optional(),
 });
 
 export const PathwayDiagramWidgetSchema = z.object({
@@ -200,11 +228,23 @@ export const CodeRunnerWidgetSchema = z.object({
 
 export const ForestPlotWidgetSchema = z.object({
   type: z.literal('forest-plot'),
+  id: z.string().optional(),
+  title: z.string().optional(),
   studies: z.array(z.object({
     label: z.string(),
     effect: z.number(),
     ci: z.tuple([z.number(), z.number()]),
+    weight: z.number().optional(),
+    n: z.number().int().optional(),
   })),
+  pooledEffect: z.number().optional(),
+  pooledCi: z.tuple([z.number(), z.number()]).optional(),
+  effectMetric: z.enum(['OR', 'RR', 'HR', 'MD']).optional(),
+  modelType: z.enum(['fixed-effects', 'random-effects']).optional(),
+  heterogeneityI2: z.number().optional(),
+  heterogeneityP: z.number().optional(),
+  explanation: z.string().optional(),
+  variants: variantsField.optional(),
 });
 
 export const AudioTtsWidgetSchema = z.object({
@@ -217,7 +257,7 @@ export const AudioTtsWidgetSchema = z.object({
 // Discriminated union — the public schema
 // ----------------------------------------------------------------------------
 
-export const WidgetSchema = z.discriminatedUnion('type', [
+const WidgetUnionSchema = z.discriminatedUnion('type', [
   // Quiz primitives
   McqWidgetSchema,
   McqClinicalVignetteWidgetSchema,
@@ -242,6 +282,34 @@ export const WidgetSchema = z.discriminatedUnion('type', [
   ForestPlotWidgetSchema,
   AudioTtsWidgetSchema,
 ]);
+
+/**
+ * Cross-field refinements that can't live on individual ZodObject members
+ * (because `discriminatedUnion` requires raw ZodObject — not ZodEffects).
+ * Applied at the union level via superRefine.
+ */
+export const WidgetSchema = WidgetUnionSchema.superRefine((val, ctx) => {
+  // T135: slider-estimation must have at least one of acceptableRange or tolerance
+  if (val.type === 'slider-estimation') {
+    if (val.acceptableRange === undefined && val.tolerance === undefined) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'slider-estimation requires at least one of `acceptableRange` or `tolerance`',
+        path: ['acceptableRange'],
+      });
+    }
+  }
+  // T139: agreement-matrix rationale.length must equal statements.length
+  if (val.type === 'agreement-matrix') {
+    if (val.rationale !== undefined && val.rationale.length !== val.statements.length) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'rationale.length must equal statements.length',
+        path: ['rationale'],
+      });
+    }
+  }
+});
 
 export type WidgetSpec = z.infer<typeof WidgetSchema>;
 export type WidgetKind = WidgetSpec['type'];

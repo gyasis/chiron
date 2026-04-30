@@ -10,7 +10,7 @@
   "widgetMix": {
     "fill-blank": 0.4,
     "cloze": 0.3,
-    "matching": 0.2,
+    "matching-pair": 0.2,
     "audio-tts": 0.1
   },
   "personasFile": "personas/language-it.json",

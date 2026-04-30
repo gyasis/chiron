@@ -45,9 +45,16 @@ Return a JSON array; each entry conforms to `lib/schemas/chapter-syllabus.ts`
    `spacing | interleaving | retrieval | examples | dual-coding`.
 2. **`spacingConnections.length` ∈ [2, 4]`** for chapter ≥ 8 only.
    Earlier chapters MAY include them but are not required to.
-3. **Every quiz-type widget** (`mcq`, `true-false`, `fill-blank`, `matching`,
-   `spot-the-bug`, `agreement-matrix`, `sentence-reorder`, `vignette`) MUST
-   declare `variants: Variant[]` with at least one entry (FR-021).
+3. **Every quiz-type widget** (`mcq`, `mcq-clinical-vignette`, `true-false`,
+   `fill-blank`, `matching-pair`, `cloze`, `spot-the-bug`, `agreement-matrix`,
+   `assertion-reason`, `confidence-weighted`, `slider-estimation`, `boss`)
+   MUST declare `variants: Variant[]` with at least one entry (FR-021).
+   `WidgetSpec.type` MUST be one of the 21 canonical kinds (verbatim):
+   `mcq`, `mcq-clinical-vignette`, `true-false`, `fill-blank`, `matching-pair`,
+   `cloze`, `spot-the-bug`, `agreement-matrix`, `assertion-reason`,
+   `confidence-weighted`, `slider-estimation`, `boss`, `chemical-reaction`,
+   `molecule-2d`, `pathway-diagram`, `mermaid`, `mathjax`, `reactive-math`,
+   `code-runner`, `forest-plot`, `audio-tts`.
 4. **`keyConcepts`** entries MUST exist in the supplied concept DAG.
 5. **`priorChapterStruggleSummary`**: `null` for chapter 1; for chapter 2+,
    either omit (if generating from scratch) or echo the value Stage 4 produced

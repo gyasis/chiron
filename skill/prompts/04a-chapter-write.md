@@ -26,7 +26,7 @@ Return a JSON object:
       "id": "...",
       "stem": "...",
       "options": [
-        {"text": "...", "correct": true, "explanation": "..."},
+        {"label": "A", "text": "Plain English option content", "correct": true, "explanation": "..."},
         ...
       ],
       "variants": [...]
@@ -47,7 +47,10 @@ Return a JSON object:
 2. **Source-grounded (FR-016).** Every factual claim ties back to the
    `extractedText` from the Brief or to a `keyConcepts` entry. No fabrication.
 3. **Per-distractor explanations.** Every wrong MCQ option must say *why*
-   it's wrong (USMLE/AMBOSS pedagogy).
+   it's wrong (USMLE/AMBOSS pedagogy). Each MCQ option object MUST include
+   both `label` (the position letter — `"A"`, `"B"`, `"C"`, `"D"`) and
+   `text` (the plain-English option content), in addition to `correct` and
+   `explanation`.
 4. **`personaDialogue` is NOT generated here.** Peer-learner / mentor dialogue
    is generated separately by Stage 4l (`04l-peer-dialogue.md`). Do NOT emit
    a `personaDialogue` field — Stage 4l owns that output and the rendering
