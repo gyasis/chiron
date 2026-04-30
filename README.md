@@ -8,6 +8,8 @@
 
 Chiron is a universal LLM-powered lesson generator for solo learners across code, medicine, and language. Drop in any source — repo, PDF, vocab CSV, research paper — and get a self-contained interactive lesson HTML.
 
+**Fresh clone? Read [`SETUP.md`](./SETUP.md) first.** It covers prerequisites, install, build, and verification — including how a brand-new Claude Code session bootstraps the skill.
+
 ## Foundational facts
 
 - **Three co-equal domains: code, medicine, and language.** Not a code-tutorial tool with the others bolted on. Specialized paths per domain are encouraged where pedagogy demands it.

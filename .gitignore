@@ -8,3 +8,20 @@ build/
 .cache/
 .tmp/
 
+# Local dev state — not portable across machines / contributors
+.claude/AGENT_STATE*.json
+.claude/AGENT_STATE.backup.*.json
+.claude/active_stack.md
+.claude/activity_stream.md
+.claude/process_registry.*
+.claude/system_bus.json
+.claude/schema_snapshots/
+.claude/session_snapshots/
+.claude/settings.local.json
+
+# SQLite scratch DBs at repo root (these are runtime state, not source)
+deep_research.db
+deep_research.db-journal
+*.chiron-state.db
+*.chiron-state.db-journal
+
