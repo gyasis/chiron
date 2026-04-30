@@ -78,6 +78,8 @@
 
     let pendingTimer = null;
     let pendingEntry = null;
+    // T119 — track current chapter for boundary-crossing detection
+    let currentChapter = null;
 
     function flush() {
       if (!pendingEntry) return;
@@ -92,9 +94,42 @@
       pendingTimer = null;
     }
 
+    // T119 — immediate (non-debounced) write of a specific entry; used at chapter boundaries.
+    function writeImmediate(entry) {
+      if (!entry || !entry.chapter_id) return;
+      const bookmarks = readBookmarks();
+      const idx = bookmarks.findIndex(b => b.chapter_id === entry.chapter_id);
+      if (idx >= 0) bookmarks[idx] = entry;
+      else bookmarks.push(entry);
+      bookmarks.sort((a, b) => (b.last_visited_at || 0) - (a.last_visited_at || 0));
+      writeBookmarks(bookmarks);
+    }
+
     function onScroll() {
       const chapterId = currentChapterId();
       if (!chapterId) return;
+
+      // T119 — chapter-switch detection: fires immediately, bypasses debounce
+      if (currentChapter !== null && chapterId !== currentChapter) {
+        const fromChapter = currentChapter;
+        // Cancel any pending debounced write for the OLD chapter
+        if (pendingTimer) { clearTimeout(pendingTimer); pendingTimer = null; }
+        // Capture the old chapter's last-known scroll position immediately.
+        // Prefer the pendingEntry if it's for the old chapter (most recent); else synthesize.
+        const oldEntry = (pendingEntry && pendingEntry.chapter_id === fromChapter)
+          ? pendingEntry
+          : { chapter_id: fromChapter, scroll_position: window.scrollY, last_visited_at: Date.now() };
+        writeImmediate(oldEntry);
+        pendingEntry = null;
+        // Notify other listeners (e.g., chapter-completion checker from T117)
+        try {
+          document.dispatchEvent(new CustomEvent('chiron:chapter-switched', {
+            detail: { from: fromChapter, to: chapterId }
+          }));
+        } catch (e) { /* CustomEvent unavailable — silently ignore */ }
+      }
+      currentChapter = chapterId;
+
       pendingEntry = {
         chapter_id: chapterId,
         scroll_position: window.scrollY,

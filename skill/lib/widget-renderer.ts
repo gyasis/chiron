@@ -1521,6 +1521,159 @@ registerRenderer('pathway-diagram', (widget) =>
   renderPathwayDiagram(widget as PathwayDiagramWidget),
 );
 
+/** Narrowed shape for the slider-estimation widget (T101, US4 — code).
+ *
+ * Contract: `SliderEstimationWidgetSchema` defines
+ * `{ type, question, correctValue, acceptableRange, unit, variants }` where
+ * `acceptableRange` is a single tolerance number (the half-width of the
+ * accepted band — answer is correct if |user - correctValue| <= acceptableRange).
+ *
+ * The renderer brief also references optional alternative shape variants —
+ * `acceptableRange: [low, high]` tuple, explicit `tolerance`, `min`, `max`,
+ * `step`, and `explanation` — that may appear on future schema revisions or
+ * already on widgets emitted by the LLM. We carry those as optional structural
+ * fields so the renderer can prefer richer shapes when available without
+ * breaking against the current Zod schema.
+ */
+type SliderEstimationWidget = Extract<WidgetSpec, { type: 'slider-estimation' }> & {
+  tolerance?: number;
+  min?: number;
+  max?: number;
+  step?: number;
+  explanation?: string;
+};
+
+/**
+ * Renderer for `slider-estimation` widgets (T101, US4).
+ *
+ * Emits a self-contained HTML fragment:
+ *   - A `<input type="range">` slider whose value the learner adjusts to
+ *     estimate the correct quantity.
+ *   - Live `<output>` showing the current value + unit.
+ *   - "Check" button that compares the user's value against the spec's
+ *     `correctValue` ± tolerance band, reveals the actual value, the
+ *     acceptable range, and (when present) an explanation, then locks
+ *     the slider + button.
+ *
+ * Tolerance derivation (handles both schema variants):
+ *   1. `acceptableRange` as `[low, high]` tuple → tolerance = (high - low) / 2
+ *      (and the spec's `correctValue` should sit at the midpoint of the band).
+ *   2. `acceptableRange` as a single number → that's the tolerance directly
+ *      (the current Zod schema shape).
+ *   3. Falls back to spec.tolerance if `acceptableRange` is missing.
+ *
+ * Range derivation (min/max/step): prefers explicit spec.min/spec.max/spec.step,
+ * else widens the slider to `correctValue ± 2 * tolerance` so the correct
+ * answer lives in the middle 50% of the slider's travel — gives the learner
+ * room to be wrong on either side without making the band trivially obvious.
+ */
+export function renderSliderEstimation(spec: SliderEstimationWidget): string {
+  const id = nextWidgetId('sl');
+  const correctValue = Number(spec.correctValue);
+
+  // Derive tolerance from whichever shape the spec uses.
+  const ar: unknown = (spec as { acceptableRange?: unknown }).acceptableRange;
+  let tolerance: number;
+  if (Array.isArray(ar) && ar.length === 2 && typeof ar[0] === 'number' && typeof ar[1] === 'number') {
+    tolerance = Math.abs((ar[1] - ar[0]) / 2);
+  } else if (typeof ar === 'number') {
+    tolerance = Math.abs(ar);
+  } else if (typeof spec.tolerance === 'number') {
+    tolerance = Math.abs(spec.tolerance);
+  } else {
+    // Last-ditch fallback — 10% of |correctValue|, or 1 if correctValue is 0.
+    tolerance = Math.max(Math.abs(correctValue) * 0.1, 1);
+  }
+
+  // Derive slider bounds.
+  const defaultSpan = Math.max(tolerance * 4, 1);
+  const min = typeof spec.min === 'number' ? spec.min : correctValue - defaultSpan / 2 - tolerance;
+  const max = typeof spec.max === 'number' ? spec.max : correctValue + defaultSpan / 2 + tolerance;
+  // Sensible default step: 1/100 of the slider span, snapped to a clean increment.
+  const span = max - min;
+  const rawStep = typeof spec.step === 'number' ? spec.step : span / 100;
+  // If the rawStep is sub-integer but correctValue looks integer, prefer 1.
+  const step = rawStep > 0 ? rawStep : 1;
+
+  const initialValue = min + (max - min) / 2;
+  const unit = spec.unit ?? '';
+  const unitHtml = escapeHtml(unit);
+  const questionHtml = escapeHtml(spec.question ?? '');
+  const explanationHtml = escapeHtml(spec.explanation ?? '');
+  const lowBand = correctValue - tolerance;
+  const highBand = correctValue + tolerance;
+
+  // Format numbers with up to 4 decimal places, stripping trailing zeros.
+  const fmt = (n: number): string => {
+    if (!isFinite(n)) return String(n);
+    const s = n.toFixed(4);
+    return s.replace(/\.?0+$/, '') || '0';
+  };
+
+  return [
+    `<div class="slider-estimation" id="${id}" data-widget="slider-estimation"`,
+    `     data-correct-value="${correctValue}" data-tolerance="${tolerance}">`,
+    `  <p class="question">${questionHtml}</p>`,
+    `  <div class="slider-controls">`,
+    `    <input type="range" class="value-slider" min="${fmt(min)}" max="${fmt(max)}" step="${fmt(step)}" value="${fmt(initialValue)}">`,
+    `    <output class="slider-output">${fmt(initialValue)}${unit ? ' ' + unitHtml : ''}</output>`,
+    `  </div>`,
+    `  <button type="button" class="check-button" data-action="check">Check</button>`,
+    `  <div class="feedback" hidden>`,
+    `    <div class="result"></div>`,
+    `    <div class="actual">Actual value: <strong>${fmt(correctValue)}${unit ? ' ' + unitHtml : ''}</strong></div>`,
+    `    <div class="acceptable-range">Acceptable range: ${fmt(lowBand)} to ${fmt(highBand)}${unit ? ' ' + unitHtml : ''}</div>`,
+    explanationHtml ? `    <p class="explanation">${explanationHtml}</p>` : '',
+    `  </div>`,
+    `  <script>`,
+    `  (function(){`,
+    `    var root = document.getElementById(${JSON.stringify(id)});`,
+    `    if (!root) return;`,
+    `    var slider = root.querySelector('.value-slider');`,
+    `    var output = root.querySelector('.slider-output');`,
+    `    var btn = root.querySelector('[data-action="check"]');`,
+    `    var feedback = root.querySelector('.feedback');`,
+    `    var result = root.querySelector('.result');`,
+    `    var unit = ${JSON.stringify(unit)};`,
+    `    var correctValue = parseFloat(root.getAttribute('data-correct-value'));`,
+    `    var tolerance = parseFloat(root.getAttribute('data-tolerance'));`,
+    `    function formatNum(n){`,
+    `      if (!isFinite(n)) return String(n);`,
+    `      var s = n.toFixed(4);`,
+    `      return s.replace(/\\.?0+$/, '') || '0';`,
+    `    }`,
+    `    slider.addEventListener('input', function(){`,
+    `      output.textContent = formatNum(parseFloat(slider.value)) + (unit ? ' ' + unit : '');`,
+    `    });`,
+    `    btn.addEventListener('click', function(){`,
+    `      var userValue = parseFloat(slider.value);`,
+    `      var diff = Math.abs(userValue - correctValue);`,
+    `      var pct = correctValue !== 0 ? (diff / Math.abs(correctValue)) * 100 : diff;`,
+    `      if (diff <= tolerance) {`,
+    `        root.classList.add('correct');`,
+    `        result.textContent = 'Correct — within ' + formatNum(pct) + '% of the actual value.';`,
+    `        result.className = 'result correct';`,
+    `      } else {`,
+    `        root.classList.add('incorrect');`,
+    `        result.textContent = 'Off by ' + formatNum(diff) + (unit ? ' ' + unit : '') + ' (' + formatNum(pct) + '% from the actual value).';`,
+    `        result.className = 'result incorrect';`,
+    `      }`,
+    `      feedback.hidden = false;`,
+    `      slider.disabled = true;`,
+    `      btn.disabled = true;`,
+    `    });`,
+    `  })();`,
+    `  </script>`,
+    `</div>`,
+  ]
+    .filter((s) => s.length > 0)
+    .join('\n');
+}
+
+registerRenderer('slider-estimation', (widget) =>
+  renderSliderEstimation(widget as SliderEstimationWidget),
+);
+
 /** List the kinds currently registered. Useful for sanity tests. */
 export function registeredKinds(): WidgetKind[] {
   return Array.from(REGISTRY.keys());

@@ -1,12 +1,12 @@
 # Progress
 
-**Last Updated**: 2026-04-30 09:30:08
+**Last Updated**: 2026-04-30 12:23:29
 
 ## Overall Progress
 - Total Tasks: 129
-- Completed: 124 ✅
-- Pending: 5 ⏳
-- Progress: 96%
+- Completed: 127 ✅
+- Pending: 2 ⏳
+- Progress: 98%
 
 ## Task Breakdown
 - [x] T001 Create the `skill/` directory tree per `plan.md`: `skill/{prompts/{00-ingest/,medicine-only/},ingest-adapters/,concepts/,curricula/,personas/,shell/{themes/,vendor/},lib/,tests/{golden-inputs/,snapshots/}}`
@@ -109,7 +109,7 @@
 - [x] T098 [P] [US4] Author `skill/concepts/research-paper.json` — IMRAD-aware concept DAG (study-design / methods / statistics / interpretation)
 - [x] T099 [P] [US4] Author `skill/curricula/research-paper.json` — `chapterCountTarget: 6` (fixed: motivation / methods / results / discussion / appraisal / connections); `perChapterQuizTarget: 5-10`
 - [x] T100 [P] [US4] Author `skill/personas/research-paper.json` — Dr. Hofmann (senior PI, expert) + Bob (skeptical peer)
-- [ ] T101 [P] [US4] Extend `skill/lib/widget-renderer.ts` to render `slider-estimation` widgets — value picker with `acceptableRange` band, reveals correct value + unit
+- [x] T101 [P] [US4] Extend `skill/lib/widget-renderer.ts` to render `slider-estimation` widgets — value picker with `acceptableRange` band, reveals correct value + unit
 - [ ] T102 [P] [US4] Extend `skill/lib/widget-renderer.ts` to render `forest-plot` widgets — uses the vendored `skill/shell/vendor/forest-plot/` mini-lib from T010
 - [x] T103 [P] [US4] Author `skill/prompts/04i-quiz-slider-estimation.md`
 - [x] T104 [P] [US4] Author `skill/prompts/04o-infographic.md` — for forest-plot data extraction from the source paper
@@ -127,7 +127,7 @@
 - [x] T116 [P] Implement scroll-position restore in `skill/shell/main.js` — on lesson re-open, read `bookmarks.scroll_position` for the most-recent-`last_visited_at` row and `window.scrollTo()` once content is laid out
 - [x] T117 [P] Implement chapter-completion marking in `skill/shell/main.js` — chapters listed in `chapter_completion` get a visual checkmark in the TOC
 - [x] T118 Implement in-lesson SR review surface in `skill/shell/main.js` — query `sr_cards WHERE next_due_at <= NOW() AND suspended = 0`; render a "Due cards" panel pinned at the top of the page; on rating click, write to `sr_review_log`, update `sr_cards` SM-2 state via the bundled `lib/sr-scheduler.ts` (compiled to JS for the browser). Depends on T014, T116.
-- [ ] T119 [P] Implement bookmark write in `skill/shell/main.js` — debounced scroll-position writer; updates `bookmarks` row on scroll-pause + on chapter switch
+- [x] T119 [P] Implement bookmark write in `skill/shell/main.js` — debounced scroll-position writer; updates `bookmarks` row on scroll-pause + on chapter switch
 - [x] T120 [P] Author `skill/lib/apkg-export.ts` — one-way export of `sr_cards` to a standard `.apkg` file; preserves cloze / term-def / vignette card types. Stretch goal per spec assumptions; v1 may stub if time-pressed.
 - [x] T121 Add German-deferred refusal in `skill/lib/trigger-context.ts` — when input contains "german", "deutsch", "language-de", or `/chiron-language-de`, return a clear "deferred to post-v1" error and exit. Depends on T026.
 - [x] T122 Add image-count-up-front announcement in `skill/lib/pipeline.ts` Stage 0 — for any source containing images (scanned-PDF, image, image-folder, multi-pdf with images, bundle), emit `[stage 0/5] ingest: <type> (<N> pages/images — <N> interpret_image calls follow)` BEFORE the first MCP call (R-10 replacement, FR-028). Depends on T024.
@@ -137,7 +137,7 @@
 - [x] T126 Run `skill/tests/test.sh` against all 5 golden inputs (code, language-it, medicine, research-paper, music-theory extensibility check) — all snapshots match, all `lesson.html` files render in headless browser without console errors
 - [x] T127 Run `quickstart.md` validation manually — go through every "Generate a lesson" example (both natural-language and slash-command styles) for all 4 domains; confirm re-open behavior, due-card surfacing, scroll-restore
 - [x] T128 Confirm `git diff` and `git ls-files` show zero `@anthropic-ai/sdk` / `@google/generative-ai` references anywhere under `skill/` (Q8 invariant)
-- [ ] T129 Confirm vendored libraries are checked in under `skill/shell/vendor/` and the assembled `lesson.html` from any golden input contains the libraries inline (no `<script src="https://cdn...">` references — Pyodide CDN reference exempted only when a `code-runner` widget is present per R-03)
+- [x] T129 Confirm vendored libraries are checked in under `skill/shell/vendor/` and the assembled `lesson.html` from any golden input contains the libraries inline (no `<script src="https://cdn...">` references — Pyodide CDN reference exempted only when a `code-runner` widget is present per R-03)
 
 ## Recent Milestones
 0af7c85 [MILESTONE] Dev-kid initialized

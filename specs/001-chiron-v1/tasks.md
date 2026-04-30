@@ -263,7 +263,7 @@ description: "Task list for Chiron v1 — Universal Lesson Generator"
 
 ### Research widget renderers
 
-- [ ] T101 [P] [US4] Extend `skill/lib/widget-renderer.ts` to render `slider-estimation` widgets — value picker with `acceptableRange` band, reveals correct value + unit
+- [x] T101 [P] [US4] Extend `skill/lib/widget-renderer.ts` to render `slider-estimation` widgets — value picker with `acceptableRange` band, reveals correct value + unit
 - [ ] T102 [P] [US4] Extend `skill/lib/widget-renderer.ts` to render `forest-plot` widgets — uses the vendored `skill/shell/vendor/forest-plot/` mini-lib from T010
 
 ### Research prompts
@@ -320,7 +320,7 @@ description: "Task list for Chiron v1 — Universal Lesson Generator"
 - [x] T116 [P] Implement scroll-position restore in `skill/shell/main.js` — on lesson re-open, read `bookmarks.scroll_position` for the most-recent-`last_visited_at` row and `window.scrollTo()` once content is laid out
 - [x] T117 [P] Implement chapter-completion marking in `skill/shell/main.js` — chapters listed in `chapter_completion` get a visual checkmark in the TOC
 - [x] T118 Implement in-lesson SR review surface in `skill/shell/main.js` — query `sr_cards WHERE next_due_at <= NOW() AND suspended = 0`; render a "Due cards" panel pinned at the top of the page; on rating click, write to `sr_review_log`, update `sr_cards` SM-2 state via the bundled `lib/sr-scheduler.ts` (compiled to JS for the browser). Depends on T014, T116.
-- [ ] T119 [P] Implement bookmark write in `skill/shell/main.js` — debounced scroll-position writer; updates `bookmarks` row on scroll-pause + on chapter switch
+- [x] T119 [P] Implement bookmark write in `skill/shell/main.js` — debounced scroll-position writer; updates `bookmarks` row on scroll-pause + on chapter switch
 
 ### Optional Anki export (SC-009)
 
@@ -342,7 +342,7 @@ description: "Task list for Chiron v1 — Universal Lesson Generator"
 - [x] T126 Run `skill/tests/test.sh` against all 5 golden inputs (code, language-it, medicine, research-paper, music-theory extensibility check) — all snapshots match, all `lesson.html` files render in headless browser without console errors
 - [x] T127 Run `quickstart.md` validation manually — go through every "Generate a lesson" example (both natural-language and slash-command styles) for all 4 domains; confirm re-open behavior, due-card surfacing, scroll-restore
 - [x] T128 Confirm `git diff` and `git ls-files` show zero `@anthropic-ai/sdk` / `@google/generative-ai` references anywhere under `skill/` (Q8 invariant)
-- [ ] T129 Confirm vendored libraries are checked in under `skill/shell/vendor/` and the assembled `lesson.html` from any golden input contains the libraries inline (no `<script src="https://cdn...">` references — Pyodide CDN reference exempted only when a `code-runner` widget is present per R-03)
+- [x] T129 Confirm vendored libraries are checked in under `skill/shell/vendor/` and the assembled `lesson.html` from any golden input contains the libraries inline (no `<script src="https://cdn...">` references — Pyodide CDN reference exempted only when a `code-runner` widget is present per R-03)
 
 ---
 

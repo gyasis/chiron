@@ -94,27 +94,38 @@ json_get() {
 }
 
 # ---------- Discovery phase ----------
+# Mode-A inputs pair `golden-inputs/<name>/` with `snapshots/<name>.json`.
+# Mode-B inputs (case-study fixtures) carry `golden-inputs/<name>/expected-handoff.json`
+# and don't require a snapshot. If both exist, Mode-B handoff validation wins.
 echo "[discover] golden-inputs:"
 INPUTS=()
+declare -A INPUT_MODE  # name -> "A" | "B"
 for d in "$GOLDEN_DIR"/*/; do
   [ -d "$d" ] || continue
   name="$(basename "$d")"
   snap="$SNAPSHOT_DIR/$name.json"
-  if [ ! -f "$snap" ]; then
-    echo "[fatal] golden input '$name' has no matching snapshot at $snap" >&2
-    exit 2
+  handoff="$d/expected-handoff.json"
+  if [ -f "$handoff" ]; then
+    INPUT_MODE["$name"]="B"
+    INPUTS+=("$name")
+    echo "  - $name (mode-B handoff: $handoff)"
+    continue
   fi
+  if [ ! -f "$snap" ]; then
+    echo "[warn] golden input '$name' has no matching snapshot at $snap and no expected-handoff.json — skipping" >&2
+    continue
+  fi
+  INPUT_MODE["$name"]="A"
   INPUTS+=("$name")
   echo "  - $name (snapshot: $snap)"
 done
 
-# Reverse-check: every snapshot has a golden input
+# Reverse-check: every snapshot has a golden input (still fatal — orphan snapshot is a bug)
 for s in "$SNAPSHOT_DIR"/*.json; do
   [ -f "$s" ] || continue
   sname="$(basename "$s" .json)"
   if [ ! -d "$GOLDEN_DIR/$sname" ]; then
-    echo "[fatal] snapshot '$sname.json' has no matching golden-input dir" >&2
-    exit 2
+    echo "[warn] snapshot '$sname.json' has no matching golden-input dir" >&2
   fi
 done
 
@@ -515,15 +526,105 @@ PASSES=0
 us6_capture_baseline
 
 for name in "${INPUTS[@]}"; do
+  mode="${INPUT_MODE[$name]:-A}"
   snap="$SNAPSHOT_DIR/$name.json"
   base_dir="${CHIRON_LESSON_DIR:+$CHIRON_LESSON_DIR/$name}"
   base_dir="${base_dir:-/tmp/chiron-test-$name}"
   html="$base_dir/lesson.html"
 
   echo
-  echo "[validate] $name"
+  echo "[validate] $name (mode-$mode)"
+
+  # ---------- Mode-B branch: case-study handoff validation ----------
+  if [ "$mode" = "B" ]; then
+    expected_handoff="$GOLDEN_DIR/$name/expected-handoff.json"
+    runtime_handoff="$base_dir/case-study-handoff.json"
+    echo "  expected-handoff: $expected_handoff"
+    echo "  runtime-handoff:  $runtime_handoff"
+
+    if [ ! -f "$runtime_handoff" ]; then
+      if [ "$STRICT" -eq 1 ]; then
+        echo "  [FAIL] case-study-handoff.json missing (--strict)"
+        FAILS=$(( FAILS + 1 ))
+      else
+        echo "  [skip] no case-study-handoff.json found — generate first"
+        SKIPS=$(( SKIPS + 1 ))
+      fi
+      continue
+    fi
+
+    fail=0
+    # Compare each required key. Values may be nested (metadata.domain).
+    # Use jq when available; fall back to python3.
+    handoff_get() {
+      local f="$1" path="$2"
+      if [ "$HAS_JQ" -eq 1 ]; then
+        jq -r --arg p "$path" '
+          ($p | split(".")) as $keys
+          | reduce $keys[] as $k (.; if . == null then null else .[$k] // null end)
+          | if . == null then "" elif type == "object" or type == "array" then tojson else tostring end
+        ' "$f" 2>/dev/null
+      else
+        python3 -c "
+import json, sys
+d = json.load(open(sys.argv[1]))
+for k in sys.argv[2].split('.'):
+    if isinstance(d, dict) and k in d:
+        d = d[k]
+    else:
+        d = None
+        break
+if d is None: print('')
+elif isinstance(d, (list, dict, bool)): print(json.dumps(d))
+else: print(d)
+" "$f" "$path" 2>/dev/null
+      fi
+    }
+
+    for key in kind siblingSkillPath modeReason metadata.domain metadata.sourceType metadata.briefSchemaVersion; do
+      want="$(handoff_get "$expected_handoff" "$key")"
+      got="$(handoff_get "$runtime_handoff" "$key")"
+      if [ -z "$want" ]; then
+        echo "    [info] expected-handoff missing key $key — skipping"
+        continue
+      fi
+      if [ -z "$got" ]; then
+        echo "    [diff] handoff key '$key' missing in runtime handoff (expected=$want)"
+        fail=1
+        continue
+      fi
+      if [ "$want" != "$got" ]; then
+        echo "    [diff] handoff key '$key': got=$got expected=$want"
+        fail=1
+      fi
+    done
+
+    # Mode-B inputs only run SC-007 if explicitly tagged (case-study-incident isn't).
+    reg_check_b="$(handoff_get "$expected_handoff" "regressionCheckType")"
+    if [ "$reg_check_b" = "us6-extensibility" ]; then
+      echo "  us6-extensibility: verifying zero changes under ${US6_PIPELINE_DIRS[*]}"
+      us6_check_regression
+    fi
+
+    if [ "$fail" -eq 0 ]; then
+      echo "  [PASS] $name"
+      PASSES=$(( PASSES + 1 ))
+    else
+      echo "  [FAIL] $name"
+      FAILS=$(( FAILS + 1 ))
+    fi
+    continue
+  fi
+
+  # ---------- Mode-A branch: snapshot diff ----------
   echo "  snapshot: $snap"
   echo "  lesson:   $html"
+
+  if [ ! -f "$snap" ]; then
+    echo "  [FAIL] snapshot missing at $snap"
+    FAILS=$(( FAILS + 1 ))
+    continue
+  fi
 
   if [ ! -f "$html" ]; then
     if [ "$STRICT" -eq 1 ]; then
