@@ -635,6 +635,10 @@ else: print(d)
       SKIPS=$(( SKIPS + 1 ))
     fi
     continue
+  elif [ ! -s "$html" ]; then
+    echo "  [FAIL] lesson.html for '$name' exists but is empty"
+    FAILS=$(( FAILS + 1 ))
+    continue
   fi
 
   # Read snapshot expectations

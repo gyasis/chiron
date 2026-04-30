@@ -147,6 +147,28 @@ function detectGerman(
   return false;
 }
 
+// T156: content-based German detection — prevents Italian-flag bypass.
+interface ParsedEntry {
+  l1: string;
+  l2: string;
+}
+
+function looksGerman(entries: ParsedEntry[]): boolean {
+  if (entries.length < 5) return false;
+  let germanScore = 0;
+  for (const e of entries) {
+    const text = ((e.l1 ?? '') + ' ' + (e.l2 ?? '')).toLowerCase();
+    // Umlauts and ß are highly distinctive.
+    if (/[äöüß]/.test(text)) germanScore += 2;
+    // Common German articles.
+    if (/\b(der|die|das|den|dem|des)\b/.test(text)) germanScore += 1;
+    // Capitalized common nouns (German rule) — heuristic on the L2 column.
+    if (/^[A-Z][a-zäöü]+/.test(e.l2 ?? '')) germanScore += 0.3;
+  }
+  // If score-per-entry > 0.5, refuse.
+  return germanScore / entries.length > 0.5;
+}
+
 // ---------- Public API ----------
 
 export interface IngestVocabListOptions {
@@ -198,18 +220,29 @@ export function ingestVocabList(opts: IngestVocabListOptions): Brief {
   const lines: string[] = [];
   lines.push(`Vocab list (${dataRows.length} entries):`);
   let hasExamples = false;
+  const parsedEntries: ParsedEntry[] = [];
   dataRows.forEach((r, idx) => {
     const l1 = (r[0] ?? '').trim();
     const l2 = (r[1] ?? '').trim();
     const pos = (r[2] ?? '').trim();
     const example = (r[3] ?? '').trim();
     if (example !== '') hasExamples = true;
+    parsedEntries.push({ l1, l2 });
     let line = `${idx + 1}. ${l1} = ${l2}`;
     if (pos !== '') line += ` [${pos}]`;
     if (example !== '') line += ` — example: "${example}"`;
     lines.push(line);
   });
   const extractedText = lines.join('\n');
+
+  // T156: content-based German detection — prevents Italian-flag bypass.
+  if (looksGerman(parsedEntries)) {
+    throw new Error(
+      'ingestVocabList: German vocab ingest is deferred to post-v1 (see CLAUDE.md). ' +
+        'Only Italian (it) is supported in v1. ' +
+        '[code: german-deferred-to-post-v1]',
+    );
+  }
 
   // Sample: first 3 data rows (echo for downstream prompts / debug).
   const sample = dataRows.slice(0, 3).map((r) => r.map((c) => c.trim()));

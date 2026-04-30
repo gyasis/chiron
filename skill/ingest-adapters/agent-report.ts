@@ -214,20 +214,20 @@ function extractFromMarkdown(raw: string): MarkdownExtraction {
 
 // Filename-based provenance hint, e.g. `audit-claude-2026-04-29.md` → "Claude".
 function provenanceFromFilename(name: string): string | null {
-  const lower = name.toLowerCase();
-  const known: Array<[string, string]> = [
-    ['claude', 'Claude'],
-    ['gemini', 'Gemini'],
-    ['gpt-4', 'GPT-4'],
-    ['gpt4', 'GPT-4'],
-    ['gpt-3', 'GPT-3'],
-    ['openai', 'OpenAI'],
-    ['anthropic', 'Anthropic'],
-    ['llama', 'Llama'],
-    ['mistral', 'Mistral'],
+  // T181: word-boundary regex matching to avoid substring false positives
+  // (e.g. "exclude" matching "claude").
+  const known: Array<[RegExp, string]> = [
+    [/\bclaude\b/i, 'Claude'],
+    [/\bgemini\b/i, 'Gemini'],
+    [/\bgpt[-_]?4\b/i, 'GPT-4'],
+    [/\bgpt[-_]?3\b/i, 'GPT-3'],
+    [/\bopenai\b/i, 'OpenAI'],
+    [/\banthropic\b/i, 'Anthropic'],
+    [/\bllama\b/i, 'Llama'],
+    [/\bmistral\b/i, 'Mistral'],
   ];
-  for (const [needle, label] of known) {
-    if (lower.includes(needle)) return label;
+  for (const [re, label] of known) {
+    if (re.test(name)) return label;
   }
   return null;
 }

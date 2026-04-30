@@ -36,7 +36,7 @@
       "id": "arrays",
       "label": "Arrays",
       "summary": "Ordered collections with index access plus core methods like map, filter, and reduce.",
-      "prereqs": ["objects", "functions"]
+      "prereqs": ["functions"]
     },
     {
       "id": "error-handling",

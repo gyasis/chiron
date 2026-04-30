@@ -20,9 +20,9 @@ final `personaDialogue` array — your job is the expert side only.
 - `{{expertPersona}}` — object loaded from `personas/<domain>.json`:
   ```json
   {
-    "id": "chiron-mentor" | "dr-reyes" | "klaus" | "sofia" | "dr-hofmann",
+    "id": "chiron-mentor" | "dr-reyes" | "maria" | "dr-hofmann" | "prof-sofia",
     "name": "...",
-    "domain": "code" | "medicine" | "language-it" | "research-paper",
+    "domain": "code" | "medicine" | "language-it" | "research-paper" | "music-theory",
     "traits": ["socratic", "patient", "...precise"],
     "register": "clinical" | "idiomatic" | "tu-formal-it" | "methodological"
   }
@@ -88,13 +88,17 @@ Return ONLY a JSON array of expert turns. No prose, no markdown wrapper.
   > "Bob, your differential is solid. Now — the ECG shows ST depression in
   > V1-V3. What does that change about your top three?"
 
-- **language-it** (`klaus` or `sofia`):
+- **language-it** (`maria`):
   > "Bene, ma `essere` o `avere`? Riprovate con questa frase: «Ieri ___
   > andato al mercato.»"
 
 - **research-paper** (`dr-hofmann`):
   > "Mike, the authors used a fixed-effects model. Why fixed and not
   > random here? What assumption about the studies are they making?"
+
+- **music-theory** (`prof-sofia`):
+  > "Theo, before we name that chord — listen. Move the top note up a
+  > half step. What changes about the feeling, not just the label?"
 
 ## Hard rules
 

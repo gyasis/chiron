@@ -18,7 +18,7 @@
   "srCardCount": 80,
   "srCardCountTolerance": 20,
   "personaDialogueLineCount": 60,
-  "personaDialogueLineCountTolerance": 25,
+  "personaDialogueLineCountTolerance": 15,
   "expectedKeyConcepts": ["pneumonia-community-acquired", "antibiotics-penicillins-cephalosporins", "antibiotics-fluoroquinolones-macrolides", "sepsis"],
   "expectedPersonaSpeakers": ["dr-reyes", "mike", "priya"],
   "fhassrequireQuestAiVerification": true,

@@ -16,12 +16,57 @@
 // R-10 replacement: page count is announced up front via `progress.stage()`.
 // This file MUST NOT call any LLM/MCP — it only structures handoffs.
 
+import * as fs from 'node:fs';
 import { existsSync, statSync, readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { resolve, basename, join } from 'node:path';
 
 import type { Brief, Domain, SourceType } from '../lib/schemas/brief.js';
 import { copySources } from '../lib/source-copy.js';
 import { stage as progressStage, chapter as progressChapter } from '../lib/progress.js';
+
+// ---------- Atomic sidecar write helpers ----------
+
+/**
+ * Atomic JSON write via temp-file-and-rename. Prevents partial/corrupt
+ * sidecar files if the process is killed mid-write.
+ */
+function atomicWriteJson(filePath: string, data: unknown): void {
+  const tmpPath = filePath + '.tmp.' + process.pid + '.' + Date.now();
+  fs.writeFileSync(tmpPath, JSON.stringify(data, null, 2));
+  fs.renameSync(tmpPath, filePath);
+}
+
+/**
+ * Synchronous file-lock pattern using a `.lock` sidecar created with the
+ * `wx` flag (exclusive create). Concurrent invocations of
+ * `recordVisionResult` for the same brief serialize through this lock.
+ */
+function withFileLock<T>(lockPath: string, fn: () => T, maxWaitMs = 5000): T {
+  const start = Date.now();
+  while (Date.now() - start < maxWaitMs) {
+    try {
+      const fd = fs.openSync(lockPath, 'wx');
+      try {
+        return fn();
+      } finally {
+        fs.closeSync(fd);
+        try {
+          fs.unlinkSync(lockPath);
+        } catch {
+          // best-effort cleanup
+        }
+      }
+    } catch (e) {
+      if ((e as NodeJS.ErrnoException).code !== 'EEXIST') throw e;
+      // busy wait briefly before retrying
+      const until = Date.now() + 50;
+      while (Date.now() < until) {
+        /* spin */
+      }
+    }
+  }
+  throw new Error('Timed out waiting for file lock: ' + lockPath);
+}
 
 // Threshold: a non-cover page with <= this many trimmed chars is treated as
 // having no usable text layer (i.e. the PDF is scanned).
@@ -188,22 +233,14 @@ export async function ingestPdf(opts: IngestPdfOptions): Promise<Brief> {
   }
 
   const handoffsPath = join(scratchDir, 'vision-handoffs.json');
-  writeFileSync(
-    handoffsPath,
-    JSON.stringify(
-      {
-        sourcePdf: absInput,
-        pageCount,
-        coverPagesSkipped,
-        handoffs: visionHandoffs,
-        // Per-page results are filled by recordVisionResult().
-        results: {} as Record<string, string>,
-      },
-      null,
-      2,
-    ),
-    'utf8',
-  );
+  atomicWriteJson(handoffsPath, {
+    sourcePdf: absInput,
+    pageCount,
+    coverPagesSkipped,
+    handoffs: visionHandoffs,
+    // Per-page results are filled by recordVisionResult().
+    results: {} as Record<string, string>,
+  });
 
   const brief: Brief = {
     domain: opts.domain,
@@ -246,42 +283,47 @@ export function recordVisionResult(
   if (!existsSync(absBrief)) {
     throw new Error(`recordVisionResult: brief not found: ${absBrief}`);
   }
-  const brief = JSON.parse(readFileSync(absBrief, 'utf8')) as Brief;
 
-  const meta = brief.metadata as Record<string, unknown>;
-  const handoffsPath = meta['visionHandoffsPath'];
-  if (typeof handoffsPath !== 'string' || !existsSync(handoffsPath)) {
-    throw new Error(
-      `recordVisionResult: vision-handoffs.json missing for ${absBrief}`,
-    );
-  }
+  // Serialize concurrent vision-result folds for the same brief. The lock
+  // sidecar lives next to the brief and is removed on release.
+  withFileLock(absBrief + '.lock', () => {
+    const brief = JSON.parse(readFileSync(absBrief, 'utf8')) as Brief;
 
-  const sidecar = JSON.parse(readFileSync(handoffsPath, 'utf8')) as {
-    sourcePdf: string;
-    pageCount: number;
-    coverPagesSkipped: number;
-    handoffs: VisionHandoff[];
-    results: Record<string, string>;
-  };
-
-  if (pageN < 1 || pageN > sidecar.pageCount) {
-    throw new Error(
-      `recordVisionResult: pageN ${pageN} out of range 1..${sidecar.pageCount}`,
-    );
-  }
-
-  sidecar.results[String(pageN)] = extractedTextForPage;
-  writeFileSync(handoffsPath, JSON.stringify(sidecar, null, 2), 'utf8');
-
-  // If every page is filled, materialize the full extractedText.
-  const filled = Object.keys(sidecar.results).length;
-  if (filled === sidecar.pageCount) {
-    const chunks: string[] = [];
-    for (let i = 1; i <= sidecar.pageCount; i++) {
-      const body = (sidecar.results[String(i)] ?? '').trim();
-      chunks.push(`[Page ${i} of ${sidecar.pageCount}]\n${body}`);
+    const meta = brief.metadata as Record<string, unknown>;
+    const handoffsPath = meta['visionHandoffsPath'];
+    if (typeof handoffsPath !== 'string' || !existsSync(handoffsPath)) {
+      throw new Error(
+        `recordVisionResult: vision-handoffs.json missing for ${absBrief}`,
+      );
     }
-    brief.extractedText = chunks.join('\n\n');
-    writeFileSync(absBrief, JSON.stringify(brief, null, 2), 'utf8');
-  }
+
+    const sidecar = JSON.parse(readFileSync(handoffsPath, 'utf8')) as {
+      sourcePdf: string;
+      pageCount: number;
+      coverPagesSkipped: number;
+      handoffs: VisionHandoff[];
+      results: Record<string, string>;
+    };
+
+    if (pageN < 1 || pageN > sidecar.pageCount) {
+      throw new Error(
+        `recordVisionResult: pageN ${pageN} out of range 1..${sidecar.pageCount}`,
+      );
+    }
+
+    sidecar.results[String(pageN)] = extractedTextForPage;
+    atomicWriteJson(handoffsPath, sidecar);
+
+    // If every page is filled, materialize the full extractedText.
+    const filled = Object.keys(sidecar.results).length;
+    if (filled === sidecar.pageCount) {
+      const chunks: string[] = [];
+      for (let i = 1; i <= sidecar.pageCount; i++) {
+        const body = (sidecar.results[String(i)] ?? '').trim();
+        chunks.push(`[Page ${i} of ${sidecar.pageCount}]\n${body}`);
+      }
+      brief.extractedText = chunks.join('\n\n');
+      atomicWriteJson(absBrief, brief);
+    }
+  });
 }

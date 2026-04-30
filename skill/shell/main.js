@@ -24,6 +24,57 @@
   function $(sel, ctx) { return (ctx || document).querySelector(sel); }
   function $$(sel, ctx) { return Array.from((ctx || document).querySelectorAll(sel)); }
 
+  /* ── T180: localStorage quota-aware setter ─────────────────── */
+  function getLessonId() {
+    const meta = document.querySelector('meta[name="chiron-lesson-id"]');
+    return (meta && meta.getAttribute('content')) || document.title || 'unknown';
+  }
+
+  function showBanner(msg) {
+    let banner = document.querySelector('.chiron-storage-banner');
+    if (!banner) {
+      banner = document.createElement('div');
+      banner.className = 'chiron-storage-banner';
+      banner.style.cssText = 'position:fixed;top:0;left:0;right:0;background:#fff3cd;color:#856404;padding:8px;text-align:center;z-index:9999';
+      document.body.prepend(banner);
+    }
+    banner.textContent = msg;
+  }
+
+  function trimLocalStorage() {
+    // Drop SR review log first (largest, most evictable).
+    const lessonId = getLessonId();
+    if (!lessonId) return;
+    const logKey = 'chiron:lesson:' + lessonId + ':sr-review-log';
+    try {
+      const log = JSON.parse(localStorage.getItem(logKey) || '[]');
+      if (Array.isArray(log) && log.length > 100) {
+        localStorage.setItem(logKey, JSON.stringify(log.slice(-100)));
+      }
+    } catch (e) { /* ignore parse errors */ }
+  }
+
+  function safeSetItem(key, value) {
+    try {
+      localStorage.setItem(key, value);
+      return true;
+    } catch (e) {
+      if (e && (e.name === 'QuotaExceededError' || e.code === 22)) {
+        // eslint-disable-next-line no-console
+        console.warn('[chiron] localStorage quota exceeded; trimming...');
+        trimLocalStorage();
+        try {
+          localStorage.setItem(key, value);
+          return true;
+        } catch (e2) {
+          showBanner('Lesson progress not saving — clear other lessons or reset state.');
+          return false;
+        }
+      }
+      return false;
+    }
+  }
+
   /* ── BOOKMARKS / SCROLL-POSITION RESTORE (FR-005 / FR-026) ── */
   (function setupBookmarks() {
     const META = document.querySelector('meta[name="chiron-lesson-id"]');
@@ -44,11 +95,7 @@
     }
 
     function writeBookmarks(arr) {
-      try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(arr.slice(0, MAX_ENTRIES)));
-      } catch (e) {
-        /* quota or disabled — silently ignore */
-      }
+      safeSetItem(STORAGE_KEY, JSON.stringify(arr.slice(0, MAX_ENTRIES)));
     }
 
     function currentChapterId() {
@@ -174,11 +221,7 @@
     }
 
     function writeCompletion(obj) {
-      try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(obj));
-      } catch (e) {
-        /* quota or disabled — silently ignore */
-      }
+      safeSetItem(STORAGE_KEY, JSON.stringify(obj));
     }
 
     function currentChapterId() {
@@ -317,7 +360,7 @@
     }
 
     function writeCards(arr) {
-      try { localStorage.setItem(CARDS_KEY, JSON.stringify(arr)); } catch (e) {}
+      safeSetItem(CARDS_KEY, JSON.stringify(arr));
     }
 
     function readLog() {
@@ -334,7 +377,7 @@
       log.push(entry);
       // FIFO eviction
       const trimmed = log.length > MAX_LOG_ENTRIES ? log.slice(log.length - MAX_LOG_ENTRIES) : log;
-      try { localStorage.setItem(LOG_KEY, JSON.stringify(trimmed)); } catch (e) {}
+      safeSetItem(LOG_KEY, JSON.stringify(trimmed));
     }
 
     function seedFromDom() {

@@ -395,6 +395,8 @@ export function stage4AnswerBalancer(
   draftWidgets: unknown[],
 ): PipelinePromptHandoff {
   progress.chapter(4, chapterNumber, totalChapters, 'answer-balancer post-pass');
+  // T173: medicine balancer output should re-run Stage-2 verifier on new distractors
+  // to catch length-balancing edits that introduce unsourced clinical claims.
   const { p, t } = loadTemplate(ctx.promptsDir, '05-answer-balancer.md');
   return {
     stage: 4,
@@ -611,4 +613,56 @@ export function runVerifierLoop(
   }
 
   throw new Error(`runVerifierLoop: unknown action '${action as string}'`);
+}
+
+// ─── T166: programmatic source-span enforcement for Stage-3 refined output ──
+/**
+ * For every claim with action `corrected` or `replaced`, assert that its
+ * `sourceSpan` is a verbatim substring of `sourceExcerpt`. Returns
+ * `{ok: true}` if all spans verify; otherwise `{ok: false, offenders: [...]}`
+ * with the list of offending claimIds. The orchestrator should reject the
+ * refined draft (treat as `readyForApproval: false`) when `ok === false`.
+ */
+export function assertVerifierStage3SourceSpans(
+  refinedOutput: { factualClaims: Array<{ action?: string; claimId: string; sourceSpan?: string }> },
+  sourceExcerpt: string,
+): { ok: boolean; offenders: string[] } {
+  const offenders: string[] = [];
+  const claims = Array.isArray(refinedOutput?.factualClaims) ? refinedOutput.factualClaims : [];
+  for (const claim of claims) {
+    const action = claim?.action;
+    if (action !== 'corrected' && action !== 'replaced') continue;
+    const span = typeof claim?.sourceSpan === 'string' ? claim.sourceSpan : '';
+    if (span.length === 0 || !sourceExcerpt.includes(span)) {
+      offenders.push(claim.claimId);
+    }
+  }
+  return offenders.length === 0 ? { ok: true, offenders: [] } : { ok: false, offenders };
+}
+
+// ─── T167: anti-rubber-stamp programmatic check for Stage-2 verify output ──
+/**
+ * If Stage-2's `claimVerifications` array has ≥5 entries and every verdict is
+ * `verified` (zero `unverifiable-from-source` and zero `contradicted`), the
+ * orchestrator should REJECT and request a stricter second pass with bumped
+ * temperature. Empirically a 0-issue verdict on a 5+-claim chapter strongly
+ * indicates skipped verification.
+ */
+export function assertVerifierStage2NotRubberStamping(
+  verifyOutput: { claimVerifications: Array<{ verdict: string }> },
+): { ok: boolean; reason?: string } {
+  const verifications = Array.isArray(verifyOutput?.claimVerifications)
+    ? verifyOutput.claimVerifications
+    : [];
+  if (verifications.length < 5) {
+    return { ok: true };
+  }
+  const allVerified = verifications.every((v) => v?.verdict === 'verified');
+  if (allVerified) {
+    return {
+      ok: false,
+      reason: `T167: rubber-stamp suspected — ${verifications.length} claims all verdict='verified' with 0 unverifiable-from-source and 0 contradicted entries. Re-run Stage-2 with bumped temperature.`,
+    };
+  }
+  return { ok: true };
 }

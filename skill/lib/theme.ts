@@ -8,7 +8,7 @@
  * inline into `lesson.html`.
  */
 
-export type Domain = 'medicine' | 'language' | 'code' | 'research-paper';
+export type Domain = 'medicine' | 'language-it' | 'code' | 'research-paper';
 
 export interface Theme {
   /** Stable id — matches `[data-theme="<id>"]` selector in the CSS files. */
@@ -50,7 +50,7 @@ export const THEMES: Record<string, Theme> = {
     id: 'linguistic',
     name: 'Linguistic',
     cssFile: 'themes/linguistic.css',
-    defaultFor: 'language',
+    defaultFor: 'language-it',
   },
 };
 
@@ -58,7 +58,7 @@ export const THEMES: Record<string, Theme> = {
 export const DEFAULT_THEME: Theme = THEMES['warm-paper'];
 
 /**
- * Pick a theme for a domain. Medicine → clinical, language → linguistic,
+ * Pick a theme for a domain. Medicine → clinical, language-it → linguistic,
  * code → midnight, anything else (or unknown) → warm-paper.
  */
 export function getThemeForDomain(domain: string): Theme {

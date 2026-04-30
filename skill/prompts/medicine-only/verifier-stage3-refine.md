@@ -79,6 +79,9 @@ Return a JSON object — no prose, no preamble:
    permitted them upstream). Quote the supporting span in
    `factualClaims[i].sourceSpan`. Do NOT invoke training-data recall — that is
    exactly the failure mode QUEST-AI exists to catch.
+
+**Source-span verbatim enforcement (T166 / programmatic):**
+For every claim where `action ∈ {corrected, replaced}`, the new `sourceSpan` field MUST be a verbatim substring of `{{sourceExcerpt}}`. If you cannot find a verbatim match for a corrected claim, set `action: removed` instead. The orchestrator runs `assert sourceSpan in sourceExcerpt` on every claim before accepting the refined draft; non-substring sourceSpans cause `readyForApproval: false` regardless of what you emit.
 7. **Preserve the chapter's pedagogical arc**, learning objectives, and
    target difficulty. Do not flatten a vignette into a definition list, do
    not drop AMBOSS-style stems, do not change the reading level. The Stage-1

@@ -2,7 +2,7 @@
   "domain": "music-theory",
   "version": "1",
   "expert": {
-    "id": "sofia",
+    "id": "prof-sofia",
     "name": "Sofia",
     "role": "subject-expert-mentor",
     "traits": ["encouraging", "ear-anchored", "imaginative-at-keyboard", "Socratic-listener"],

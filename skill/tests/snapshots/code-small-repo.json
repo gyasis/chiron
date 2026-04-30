@@ -9,7 +9,7 @@
   "srCardCount": 56,
   "srCardCountTolerance": 14,
   "peerDialogueLineCount": 64,
-  "peerDialogueLineCountTolerance": 24,
+  "peerDialogueLineCountTolerance": 16,
   "hasSpotTheBug": true,
   "hasMcq": true,
   "hasTrueFalse": true,

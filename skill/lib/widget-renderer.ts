@@ -1904,3 +1904,425 @@ registerRenderer('forest-plot', (widget) =>
 export function registeredKinds(): WidgetKind[] {
   return Array.from(REGISTRY.keys());
 }
+
+// ---------------------------------------------------------------------------
+// T182 — Register 9 missing renderers (mcq, true-false, mathjax, mermaid,
+// chemical-reaction, molecule-2d, confidence-weighted, boss, reactive-math)
+// so plain `mcq` and other common widget kinds don't throw NotImplemented.
+// ---------------------------------------------------------------------------
+
+type McqWidget = Extract<WidgetSpec, { type: 'mcq' }>;
+type TrueFalseWidget = Extract<WidgetSpec, { type: 'true-false' }>;
+type MathjaxWidget = Extract<WidgetSpec, { type: 'mathjax' }>;
+type MermaidWidget = Extract<WidgetSpec, { type: 'mermaid' }>;
+type ChemicalReactionWidget = Extract<WidgetSpec, { type: 'chemical-reaction' }>;
+type Molecule2dWidget = Extract<WidgetSpec, { type: 'molecule-2d' }>;
+type ConfidenceWeightedWidget = Extract<WidgetSpec, { type: 'confidence-weighted' }>;
+type BossWidget = Extract<WidgetSpec, { type: 'boss' }>;
+type ReactiveMathWidget = Extract<WidgetSpec, { type: 'reactive-math' }>;
+
+/**
+ * Plain MCQ — simpler cousin of mcq-clinical-vignette. 2-5 options, single
+ * correct, per-option explanation revealed on Check.
+ *
+ * Contract gap: `McqWidgetSchema` has no top-level `explanation` — overall
+ * rationale is encoded via per-option `explanation` strings only.
+ */
+export function renderMcq(spec: McqWidget): string {
+  const id = nextWidgetId('mcq');
+  const stem = spec.stem ?? '';
+  const options = spec.options ?? [];
+
+  const letters = ['A', 'B', 'C', 'D', 'E'];
+  const optionsHtml = options
+    .map((opt, idx) => {
+      const letter = letters[idx] ?? String(idx + 1);
+      const correct = opt.correct === true ? 'true' : 'false';
+      return [
+        `      <li class="option" data-correct="${correct}" data-option-letter="${letter}" data-option-index="${idx}">`,
+        `        <label class="option-label">`,
+        `          <input type="radio" name="${id}-opt" value="${idx}" />`,
+        `          <span class="option-letter">${letter}.</span>`,
+        `          <span class="option-text">${escapeHtml(opt.label ?? '')}</span>`,
+        `        </label>`,
+        `        <div class="explanation" hidden>${escapeHtml(opt.explanation ?? '')}</div>`,
+        `      </li>`,
+      ].join('\n');
+    })
+    .join('\n');
+
+  return [
+    `<div class="mcq" id="${id}" data-widget="mcq">`,
+    `  <div class="stem">${escapeHtml(stem)}</div>`,
+    `  <ol class="options" type="A">`,
+    optionsHtml,
+    `  </ol>`,
+    `  <div class="mcq-controls">`,
+    `    <button type="button" class="check-button" data-action="check">Check</button>`,
+    `    <span class="mcq-feedback" role="status" aria-live="polite"></span>`,
+    `  </div>`,
+    `  <script>`,
+    `  (function(){`,
+    `    var root = document.getElementById(${JSON.stringify(id)});`,
+    `    if (!root) return;`,
+    `    var btn = root.querySelector('button[data-action="check"]');`,
+    `    var feedback = root.querySelector('.mcq-feedback');`,
+    `    btn.addEventListener('click', function(){`,
+    `      var sel = root.querySelector('input[type="radio"]:checked');`,
+    `      var opts = root.querySelectorAll('.option');`,
+    `      opts.forEach(function(li){`,
+    `        var exp = li.querySelector('.explanation');`,
+    `        if (exp) exp.hidden = false;`,
+    `        if (li.getAttribute('data-correct') === 'true') li.classList.add('correct');`,
+    `      });`,
+    `      var ok = sel && sel.closest('.option').getAttribute('data-correct') === 'true';`,
+    `      if (sel) sel.closest('.option').classList.add(ok ? 'selected-correct' : 'selected-wrong');`,
+    `      feedback.textContent = ok ? 'Correct.' : 'Incorrect.';`,
+    `      feedback.className = 'mcq-feedback ' + (ok ? 'correct' : 'incorrect');`,
+    `      root.querySelectorAll('input[type="radio"]').forEach(function(i){ i.disabled = true; });`,
+    `      btn.disabled = true;`,
+    `    });`,
+    `  })();`,
+    `  </script>`,
+    `</div>`,
+  ].join('\n');
+}
+
+/** True/False renderer — single statement, two radio options, reveals on check. */
+export function renderTrueFalse(spec: TrueFalseWidget): string {
+  const id = nextWidgetId('tf');
+  const statement = spec.statement ?? '';
+  const correct = spec.correct === true;
+  const explanation = spec.explanation ?? '';
+
+  return [
+    `<div class="true-false" id="${id}" data-widget="true-false" data-correct="${correct}">`,
+    `  <p class="statement">${escapeHtml(statement)}</p>`,
+    `  <div class="tf-options">`,
+    `    <label><input type="radio" name="${id}-tf" value="true" /> True</label>`,
+    `    <label><input type="radio" name="${id}-tf" value="false" /> False</label>`,
+    `  </div>`,
+    `  <div class="tf-controls">`,
+    `    <button type="button" class="check-button" data-action="check">Check</button>`,
+    `    <span class="tf-feedback" role="status" aria-live="polite"></span>`,
+    `  </div>`,
+    `  <div class="explanation" hidden>${escapeHtml(explanation)}</div>`,
+    `  <script>`,
+    `  (function(){`,
+    `    var root = document.getElementById(${JSON.stringify(id)});`,
+    `    if (!root) return;`,
+    `    var correct = root.getAttribute('data-correct') === 'true';`,
+    `    var btn = root.querySelector('button[data-action="check"]');`,
+    `    var feedback = root.querySelector('.tf-feedback');`,
+    `    var exp = root.querySelector('.explanation');`,
+    `    btn.addEventListener('click', function(){`,
+    `      var sel = root.querySelector('input[type="radio"]:checked');`,
+    `      if (!sel) { feedback.textContent = 'Pick True or False.'; return; }`,
+    `      var ok = (sel.value === 'true') === correct;`,
+    `      feedback.textContent = ok ? 'Correct.' : 'Incorrect — answer was ' + (correct ? 'True' : 'False') + '.';`,
+    `      feedback.className = 'tf-feedback ' + (ok ? 'correct' : 'incorrect');`,
+    `      if (exp) exp.hidden = false;`,
+    `      root.querySelectorAll('input[type="radio"]').forEach(function(i){ i.disabled = true; });`,
+    `      btn.disabled = true;`,
+    `    });`,
+    `  })();`,
+    `  </script>`,
+    `</div>`,
+  ].join('\n');
+}
+
+/** MathJax — emits a wrapped equation div + a typeset call. */
+export function renderMathjax(spec: MathjaxWidget): string {
+  const id = nextWidgetId('mjx');
+  const source = spec.source ?? '';
+  return [
+    `<div class="mathjax" id="${id}" data-widget="mathjax">${escapeHtml(source)}</div>`,
+    `<script>`,
+    `(function(){`,
+    `  function typeset(){`,
+    `    var el = document.getElementById(${JSON.stringify(id)});`,
+    `    if (!el) return;`,
+    `    if (window.MathJax && window.MathJax.typesetPromise) {`,
+    `      window.MathJax.typesetPromise([el]).catch(function(){});`,
+    `    }`,
+    `  }`,
+    `  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', typeset);`,
+    `  else typeset();`,
+    `})();`,
+    `</script>`,
+  ].join('\n');
+}
+
+/** Mermaid — emits the mermaid div + lazy init. */
+export function renderMermaid(spec: MermaidWidget): string {
+  const id = nextWidgetId('mmd');
+  const source = spec.source ?? '';
+  return [
+    `<div class="mermaid" id="${id}" data-widget="mermaid">${escapeHtml(source)}</div>`,
+    `<script>`,
+    `(function(){`,
+    `  function run(){`,
+    `    if (!window.mermaid) return;`,
+    `    try {`,
+    `      if (!window.__chironMermaidInit) {`,
+    `        window.mermaid.initialize({ startOnLoad: false, securityLevel: 'loose' });`,
+    `        window.__chironMermaidInit = true;`,
+    `      }`,
+    `      var el = document.getElementById(${JSON.stringify(id)});`,
+    `      if (el && window.mermaid.run) window.mermaid.run({ nodes: [el] });`,
+    `    } catch(e) { /* mermaid render failed — leave source visible */ }`,
+    `  }`,
+    `  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', run);`,
+    `  else run();`,
+    `})();`,
+    `</script>`,
+  ].join('\n');
+}
+
+/**
+ * Chemical reaction — uses MathJax + mhchem extension to render the equation.
+ * Prefers `mhchemNotation` (e.g. `\\ce{H2O + CO2 -> H2CO3}`); falls back to
+ * `equation` if not supplied. Wrapped in `\\(...\\)` for inline MathJax.
+ */
+export function renderChemicalReaction(spec: ChemicalReactionWidget): string {
+  const id = nextWidgetId('cr');
+  const notation = spec.mhchemNotation ?? spec.equation ?? '';
+  const explanation = spec.explanation ?? '';
+  return [
+    `<div class="chemical-reaction" id="${id}" data-widget="chemical-reaction">`,
+    `  <span class="mhchem">\\(${escapeHtml(notation)}\\)</span>`,
+    explanation ? `  <p class="explanation">${escapeHtml(explanation)}</p>` : '',
+    `  <script>`,
+    `  (function(){`,
+    `    var el = document.getElementById(${JSON.stringify(id)});`,
+    `    if (!el) return;`,
+    `    if (window.MathJax && window.MathJax.typesetPromise) {`,
+    `      window.MathJax.typesetPromise([el]).catch(function(){});`,
+    `    }`,
+    `  })();`,
+    `  </script>`,
+    `</div>`,
+  ]
+    .filter((s) => s.length > 0)
+    .join('\n');
+}
+
+/**
+ * 2D molecule — lazy-loads `chemistry-renderer.js` (which exports
+ * `getMoleculeRenderer()` returning a Kekule.js or RDKit-JS adapter — concrete
+ * choice deferred per FR-031) and renders the SMILES string into the container.
+ *
+ * Contract gap: `Molecule2dWidgetSchema` requires `smiles`; we still guard
+ * against empty strings in case generation produced a degenerate widget.
+ */
+export function renderMolecule2d(spec: Molecule2dWidget): string {
+  const id = nextWidgetId('mol');
+  const smiles = spec.smiles ?? '';
+  const explanation = spec.explanation ?? '';
+
+  if (!smiles) {
+    return [
+      `<div class="molecule-2d molecule-2d-empty" id="${id}" data-widget="molecule-2d">`,
+      `  <p class="molecule-fallback">Molecule structure not available.</p>`,
+      explanation ? `  <p class="explanation">${escapeHtml(explanation)}</p>` : '',
+      `</div>`,
+    ]
+      .filter((s) => s.length > 0)
+      .join('\n');
+  }
+
+  return [
+    `<div class="molecule-2d" id="${id}" data-widget="molecule-2d" data-smiles="${escapeHtml(smiles)}">`,
+    `  <div class="molecule-svg-container"></div>`,
+    explanation ? `  <p class="explanation">${escapeHtml(explanation)}</p>` : '',
+    `  <script type="module">`,
+    `  (async function(){`,
+    `    var root = document.getElementById(${JSON.stringify(id)});`,
+    `    if (!root) return;`,
+    `    var container = root.querySelector('.molecule-svg-container');`,
+    `    var smiles = root.getAttribute('data-smiles') || '';`,
+    `    try {`,
+    `      var mod = await import('./chemistry-renderer.js');`,
+    `      var renderer = (mod.getMoleculeRenderer ? mod.getMoleculeRenderer() : (mod.default && mod.default.getMoleculeRenderer && mod.default.getMoleculeRenderer()));`,
+    `      if (renderer && renderer.render) {`,
+    `        await renderer.render(smiles, container);`,
+    `      } else {`,
+    `        container.textContent = 'Molecule renderer unavailable.';`,
+    `      }`,
+    `    } catch(e) {`,
+    `      container.textContent = 'Failed to render molecule: ' + (e && e.message ? e.message : 'unknown error');`,
+    `    }`,
+    `  })();`,
+    `  </script>`,
+    `</div>`,
+  ]
+    .filter((s) => s.length > 0)
+    .join('\n');
+}
+
+/**
+ * Confidence-weighted MCQ — pick an answer AND a confidence percentage (0-100).
+ * Brier-style scoring: score = correct ? +confidence : -confidence. Encourages
+ * calibrated metacognition.
+ *
+ * Contract gap: `ConfidenceWeightedWidgetSchema.mcq` has no per-option `correct`
+ * required; we read it where present and fall back to "no correct answer
+ * specified" if all options are unmarked.
+ */
+export function renderConfidenceWeighted(spec: ConfidenceWeightedWidget): string {
+  const id = nextWidgetId('cw');
+  const stem = spec.mcq?.stem ?? '';
+  const options = spec.mcq?.options ?? [];
+
+  const letters = ['A', 'B', 'C', 'D', 'E'];
+  const optionsHtml = options
+    .map((opt, idx) => {
+      const letter = letters[idx] ?? String(idx + 1);
+      const correct = opt.correct === true ? 'true' : 'false';
+      return [
+        `      <li class="option" data-correct="${correct}" data-option-index="${idx}">`,
+        `        <label class="option-label">`,
+        `          <input type="radio" name="${id}-opt" value="${idx}" />`,
+        `          <span class="option-letter">${letter}.</span>`,
+        `          <span class="option-text">${escapeHtml(opt.label ?? '')}</span>`,
+        `        </label>`,
+        `        <div class="explanation" hidden>${escapeHtml(opt.explanation ?? '')}</div>`,
+        `      </li>`,
+      ].join('\n');
+    })
+    .join('\n');
+
+  return [
+    `<div class="confidence-weighted" id="${id}" data-widget="confidence-weighted">`,
+    `  <div class="stem">${escapeHtml(stem)}</div>`,
+    `  <ol class="options" type="A">`,
+    optionsHtml,
+    `  </ol>`,
+    `  <div class="confidence-row">`,
+    `    <label for="${id}-conf">Confidence: <span class="confidence-value">50</span>%</label>`,
+    `    <input type="range" id="${id}-conf" class="confidence-slider" min="0" max="100" step="1" value="50" />`,
+    `  </div>`,
+    `  <div class="cw-controls">`,
+    `    <button type="button" class="check-button" data-action="check">Check</button>`,
+    `    <span class="cw-feedback" role="status" aria-live="polite"></span>`,
+    `    <span class="cw-score" data-score=""></span>`,
+    `  </div>`,
+    `  <script>`,
+    `  (function(){`,
+    `    var root = document.getElementById(${JSON.stringify(id)});`,
+    `    if (!root) return;`,
+    `    var slider = root.querySelector('.confidence-slider');`,
+    `    var valEl = root.querySelector('.confidence-value');`,
+    `    var btn = root.querySelector('button[data-action="check"]');`,
+    `    var feedback = root.querySelector('.cw-feedback');`,
+    `    var scoreEl = root.querySelector('.cw-score');`,
+    `    slider.addEventListener('input', function(){ valEl.textContent = slider.value; });`,
+    `    btn.addEventListener('click', function(){`,
+    `      var sel = root.querySelector('input[type="radio"]:checked');`,
+    `      if (!sel) { feedback.textContent = 'Pick an option first.'; return; }`,
+    `      var conf = parseInt(slider.value, 10) || 0;`,
+    `      var ok = sel.closest('.option').getAttribute('data-correct') === 'true';`,
+    `      var score = ok ? conf : -conf;`,
+    `      feedback.textContent = ok ? 'Correct.' : 'Incorrect.';`,
+    `      feedback.className = 'cw-feedback ' + (ok ? 'correct' : 'incorrect');`,
+    `      scoreEl.textContent = '  Score: ' + (score > 0 ? '+' : '') + score;`,
+    `      scoreEl.setAttribute('data-score', String(score));`,
+    `      root.querySelectorAll('.option .explanation').forEach(function(e){ e.hidden = false; });`,
+    `      root.querySelectorAll('input[type="radio"]').forEach(function(i){ i.disabled = true; });`,
+    `      slider.disabled = true;`,
+    `      btn.disabled = true;`,
+    `    });`,
+    `  })();`,
+    `  </script>`,
+    `</div>`,
+  ].join('\n');
+}
+
+/**
+ * Boss widget — large compound multi-stage challenge. Schema currently only
+ * exposes `{ question, requiredConcepts[], rubric }`; sub-widget composition
+ * is not yet defined. Emit a stub framing the challenge so it does not throw,
+ * with `data-boss-stage="pending"` for later wave to upgrade.
+ *
+ * Contract gap: `BossWidgetSchema` lacks any sub-widget array — the
+ * "compound multi-stage" notion lives in the brief, not the schema. Tightening
+ * deferred to a future wave that defines the stage shape.
+ */
+export function renderBoss(spec: BossWidget): string {
+  const id = nextWidgetId('boss');
+  const question = spec.question ?? '';
+  const required = spec.requiredConcepts ?? [];
+  const rubric = spec.rubric ?? '';
+
+  const conceptChips = required
+    .map((c) => `<span class="boss-concept-chip">${escapeHtml(String(c))}</span>`)
+    .join('\n        ');
+
+  return [
+    `<div class="boss" id="${id}" data-widget="boss" data-boss-stage="pending">`,
+    `  <div class="boss-banner">Boss Challenge</div>`,
+    `  <div class="boss-question">${escapeHtml(question)}</div>`,
+    required.length > 0 ? `  <div class="boss-required-concepts">\n    <strong>Required concepts:</strong>\n    <div class="boss-chips">\n        ${conceptChips}\n    </div>\n  </div>` : '',
+    rubric ? `  <details class="boss-rubric"><summary>Rubric</summary><p>${escapeHtml(rubric)}</p></details>` : '',
+    `  <p class="boss-pending-note"><em>Boss challenge — implementation pending.</em></p>`,
+    `</div>`,
+  ]
+    .filter((s) => s.length > 0)
+    .join('\n');
+}
+
+/**
+ * Reactive math — uses the ChalkAI lazy loader (T039) to mount a reactive
+ * widget defined by `chalkDsl`. The loader stub displays a placeholder until
+ * the real ChalkAI bundle is wired up.
+ */
+export function renderReactiveMath(spec: ReactiveMathWidget): string {
+  const id = nextWidgetId('rxm');
+  const dsl = spec.chalkDsl ?? '';
+  // Embed DSL as JSON-string in a data attribute; ChalkAI runtime will parse it.
+  const specJson = JSON.stringify({ chalkDsl: dsl });
+  return [
+    `<div class="reactive-math" id="${id}" data-widget="reactive-math" data-spec='${escapeHtml(specJson)}'>`,
+    `  <p class="reactive-math-loading">Loading reactive widget…</p>`,
+    `  <script type="module">`,
+    `  (async function(){`,
+    `    var root = document.getElementById(${JSON.stringify(id)});`,
+    `    if (!root) return;`,
+    `    try {`,
+    `      var mod = await import('./chalkai-loader.js');`,
+    `      var loadChalkAI = mod.loadChalkAI || (mod.default && mod.default.loadChalkAI);`,
+    `      if (!loadChalkAI) { root.querySelector('.reactive-math-loading').textContent = 'ChalkAI loader unavailable.'; return; }`,
+    `      var rt = await loadChalkAI();`,
+    `      var raw = root.getAttribute('data-spec') || '{}';`,
+    `      var spec = JSON.parse(raw);`,
+    `      if (rt && rt.mount) { rt.mount(root, spec); }`,
+    `    } catch(e) {`,
+    `      var msg = root.querySelector('.reactive-math-loading');`,
+    `      if (msg) msg.textContent = 'Reactive widget failed to load: ' + (e && e.message ? e.message : 'unknown error');`,
+    `    }`,
+    `  })();`,
+    `  </script>`,
+    `</div>`,
+  ].join('\n');
+}
+
+// Registrations (alphabetical)
+registerRenderer('boss', (widget) => renderBoss(widget as BossWidget));
+registerRenderer('chemical-reaction', (widget) =>
+  renderChemicalReaction(widget as ChemicalReactionWidget),
+);
+registerRenderer('confidence-weighted', (widget) =>
+  renderConfidenceWeighted(widget as ConfidenceWeightedWidget),
+);
+registerRenderer('mathjax', (widget) => renderMathjax(widget as MathjaxWidget));
+registerRenderer('mcq', (widget) => renderMcq(widget as McqWidget));
+registerRenderer('mermaid', (widget) => renderMermaid(widget as MermaidWidget));
+registerRenderer('molecule-2d', (widget) =>
+  renderMolecule2d(widget as Molecule2dWidget),
+);
+registerRenderer('reactive-math', (widget) =>
+  renderReactiveMath(widget as ReactiveMathWidget),
+);
+registerRenderer('true-false', (widget) =>
+  renderTrueFalse(widget as TrueFalseWidget),
+);

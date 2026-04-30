@@ -130,12 +130,21 @@ class RdkitMoleculeRenderer implements MoleculeRenderer {
         '</div>';
       return;
     }
-    const mol = mod.get_mol(smiles);
+    let mol: RDKitMol | null = null;
+    try {
+      mol = mod.get_mol(smiles);
+    } catch {
+      mol = null;
+    }
+    if (!mol) {
+      container.textContent = `[invalid SMILES: ${smiles}]`;
+      return;
+    }
     try {
       const svg = mol.get_svg(options?.width ?? 300, options?.height ?? 200);
-      container.innerHTML = svg;
+      container.innerHTML = svg; // (T165 will sanitize this later; out of scope here)
     } finally {
-      mol.delete();
+      mol.delete?.();
     }
   }
 }

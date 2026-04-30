@@ -41,10 +41,15 @@ export function loadChalkAI(): Promise<ChalkAIRuntime> {
   if (cachedRuntime) return Promise.resolve(cachedRuntime);
   if (pendingLoad) return pendingLoad;
   pendingLoad = (async () => {
-    // v1: no real CDN/vendor import. Future: dynamic import of ChalkAI bundle here.
-    const runtime = createStubRuntime();
-    cachedRuntime = runtime;
-    return runtime;
+    try {
+      // v1: no real CDN/vendor import. Future: dynamic import of ChalkAI bundle here.
+      const runtime = createStubRuntime();
+      cachedRuntime = runtime;
+      return runtime;
+    } catch (e) {
+      pendingLoad = null; // T177: clear cached rejection so retry is possible
+      throw e;
+    }
   })();
   return pendingLoad;
 }

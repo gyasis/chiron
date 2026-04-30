@@ -25,6 +25,95 @@ export interface IngestUrlOptions {
   domain: Domain;
 }
 
+// ---------- T179: SSRF guard + body-size cap ----------
+
+const MAX_BODY_BYTES = 10 * 1024 * 1024; // 10 MB
+const MAX_REDIRECTS = 5;
+
+function isPrivateHostname(hostname: string): boolean {
+  // localhost / loopback
+  if (/^(localhost|127\.|::1)/i.test(hostname)) return true;
+  // RFC1918
+  if (/^(10\.|192\.168\.|172\.(1[6-9]|2[0-9]|3[01])\.)/.test(hostname)) return true;
+  // link-local + cloud metadata (169.254.169.254 etc.)
+  if (/^(169\.254\.|fe80:)/i.test(hostname)) return true;
+  // ULA + carrier-grade NAT
+  if (
+    /^(fc|fd)[0-9a-f]{2}:/i.test(hostname) ||
+    /^100\.(6[4-9]|[7-9]\d|1[0-1]\d|12[0-7])\./.test(hostname)
+  ) {
+    return true;
+  }
+  return false;
+}
+
+function assertPublicUrl(url: string): URL {
+  const parsed = new URL(url);
+  if (isPrivateHostname(parsed.hostname)) {
+    throw new Error(
+      `SSRF blocked: refusing to fetch private/loopback host: ${parsed.hostname}`,
+    );
+  }
+  return parsed;
+}
+
+async function readBodyCapped(resp: Response): Promise<string> {
+  if (!resp.body) return await resp.text();
+  const reader = (resp.body as ReadableStream<Uint8Array>).getReader();
+  const decoder = new TextDecoder('utf-8');
+  let total = 0;
+  let out = '';
+  for (;;) {
+    const { value, done } = await reader.read();
+    if (done) break;
+    if (value) {
+      total += value.byteLength;
+      if (total > MAX_BODY_BYTES) {
+        try {
+          await reader.cancel();
+        } catch {
+          /* ignore */
+        }
+        throw new Error(
+          `ingestUrl: response body exceeds 10MB cap (${total} bytes received)`,
+        );
+      }
+      out += decoder.decode(value, { stream: true });
+    }
+  }
+  out += decoder.decode();
+  return out;
+}
+
+async function fetchWithSsrfGuard(
+  initialUrl: string,
+  signal: AbortSignal,
+): Promise<Response> {
+  let currentUrl = initialUrl;
+  for (let hops = 0; hops <= MAX_REDIRECTS; hops++) {
+    assertPublicUrl(currentUrl);
+    const resp = await fetch(currentUrl, { signal, redirect: 'manual' });
+    const status = resp.status;
+    if (status >= 300 && status < 400) {
+      const loc = resp.headers.get('location');
+      if (!loc) return resp;
+      // Resolve relative redirect against current URL.
+      const next = new URL(loc, currentUrl).toString();
+      try {
+        await resp.body?.cancel?.();
+      } catch {
+        /* ignore */
+      }
+      currentUrl = next;
+      continue;
+    }
+    return resp;
+  }
+  throw new Error(
+    `ingestUrl: too many redirects (>${MAX_REDIRECTS}) starting from ${initialUrl}`,
+  );
+}
+
 // ---------- HTML sanitization ----------
 
 const NAMED_ENTITIES: Record<string, string> = {
@@ -154,10 +243,8 @@ export async function ingestUrl(opts: IngestUrlOptions): Promise<Brief> {
 
     let resp: Response;
     try {
-      resp = await fetch(opts.sourcePath, {
-        signal: AbortSignal.timeout(30_000),
-        redirect: 'follow',
-      });
+      // T179: SSRF guard + manual redirect walking + 10MB body cap.
+      resp = await fetchWithSsrfGuard(opts.sourcePath, AbortSignal.timeout(30_000));
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
       throw new Error(`ingestUrl: fetch failed for ${opts.sourcePath}: ${msg}`);
@@ -182,7 +269,7 @@ export async function ingestUrl(opts: IngestUrlOptions): Promise<Brief> {
       );
     }
 
-    rawHtml = await resp.text();
+    rawHtml = await readBodyCapped(resp);
     metadata = {
       httpStatus: resp.status,
       contentType,

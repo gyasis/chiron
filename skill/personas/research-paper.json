@@ -17,7 +17,7 @@
   },
   "peers": [
     {
-      "id": "bob",
+      "id": "bob-rp",
       "name": "Bob",
       "role": "fellow-learner-skeptical",
       "traits": ["skeptical", "pedantic", "rigor-obsessed", "occasionally-too-quick-to-dismiss", "jargon-prone"],
@@ -31,7 +31,7 @@
       ]
     },
     {
-      "id": "mike",
+      "id": "mike-rp",
       "name": "Mike",
       "role": "fellow-learner-eager-credulous",
       "traits": ["optimistic", "clinically-oriented", "sometimes-credulous", "asks-about-real-world-impact", "warmer-than-bob"],

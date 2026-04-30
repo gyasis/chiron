@@ -84,6 +84,9 @@ issues across a multi-claim chapter, **re-check** — you almost certainly
 missed something. The verifier's job is not to be agreeable; it is to catch
 errors before they reach a learner.
 
+**Anti-rubber-stamp enforcement (T167 / programmatic):**
+If your `claimVerifications` array has ZERO `unverifiable-from-source` AND ZERO `contradicted` entries over N≥5 claims, the orchestrator REJECTS your output and asks for a stricter second pass with a bumped temperature. (Empirically: ≥80% of Stage-1 drafts have at least one issue. A 0-issue verdict on a 5+-claim chapter strongly indicates skipped verification.)
+
 ## Verdict mapping
 
 - **`approved`** — every claim `verified`, no `unflaggedConcerns`, no

@@ -60,7 +60,7 @@
       "id": "voice-leading",
       "label": "Voice Leading",
       "summary": "Voice leading is the craft of moving each individual note from one chord to the next as smoothly as possible, usually by step or common tone.",
-      "prereqs": ["chord-progressions"]
+      "prereqs": ["chord-progressions", "cadences"]
     }
   ]
 }

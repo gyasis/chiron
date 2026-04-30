@@ -48,7 +48,7 @@
       "id": "essere-vs-avere",
       "label": "Essere vs Avere",
       "summary": "The two foundational verbs essere (to be) and avere (to have): present-tense conjugations and the meanings each one carries (identity/state vs possession/age).",
-      "prereqs": ["nouns-gender-number"]
+      "prereqs": []
     },
     {
       "id": "weather-and-seasons",

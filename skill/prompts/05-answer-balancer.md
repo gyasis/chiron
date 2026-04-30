@@ -47,3 +47,6 @@ order, same widget IDs.
    once per chapter.
 2. **No new widgets.** Only edit the ones supplied.
 3. **JSON only.** Do not return prose explanations of what you changed.
+
+**Medicine carve-out (T173):**
+For widgets in the medicine domain (vignettes especially), the orchestrator routes the rebalanced output through the QUEST-AI Stage-2 verifier on every newly-elaborated distractor. If a length-balancing edit introduces a factual claim not supported by the source excerpt, the verifier rejects and reverts that distractor to its original. Implication for you: when balancing, prefer SHORTENING the correct option over LENGTHENING distractors with new clinical claims. New clinical content in distractors is verifier-gated.

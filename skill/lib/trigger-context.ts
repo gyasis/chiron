@@ -40,20 +40,39 @@ export interface TriggerContext {
 // FR-002 / spec.md — German is post-v1; refused at the trigger boundary.
 
 /**
- * Patterns covering every way a user might request German tutoring:
- *   - bare English word "german"
- *   - bare German word "deutsch"
- *   - the slug "language-de"
- *   - the slash-command "/chiron-language-de" at start of input
- *   - intent verbs ("teach", "tutor", "learn", "it") paired with "german"/"deutsch"
+ * Patterns covering ways a user might request German tutoring.
+ *
+ * Layered detection (T154):
+ *  1. Direct slash-command form: `/chiron-language-de` (anchored at start)
+ *  2. Slug `language-de` anywhere in input
+ *  3. Intent verb (`tutor|learn|teach|study|practice`) within 80 chars of
+ *     `german`/`deutsch` — bounded proximity to avoid long-range false
+ *     positives. Note: `it` is NOT an intent verb (English pronoun "it"
+ *     was the original over-trigger source).
+ *
+ * Standalone `\bgerman\b` / `\bdeutsch\b` are NOT in this list — those words
+ * legitimately appear in non-tutoring contexts ("german history", "german
+ * shepherd", "german engineering"). `containsGermanTutoringIntent` handles
+ * the standalone case with a non-tutoring-noun negative lookaside.
  */
-const GERMAN_PATTERNS: RegExp[] = [
-  /\bgerman\b/i,
-  /\bdeutsch\b/i,
-  /\blanguage-de\b/i,
-  /^\/chiron-language-de\b/i,
-  /\b(it|tutor|learn|teach)\b[\s\S]*\b(german|deutsch)\b/i,
+const GERMAN_DIRECT_TRIGGERS: RegExp[] = [
+  /^\/chiron[\s-]language[\s-]de\b/i,
+  /\b(?:\/chiron-language-de|language-de)\b/i,
 ];
+
+const GERMAN_INTENT_PROXIMITY: RegExp[] = [
+  /\b(tutor|learn|teach|study|practice)\b[\s\S]{0,80}\b(german|deutsch)\b/i,
+  /\b(german|deutsch)\b[\s\S]{0,80}\b(tutor|learn|teach|study|practice)\b/i,
+];
+
+/**
+ * Non-language-tutoring nouns. If `german`/`deutsch` appears alongside one
+ * of these (within reasonable distance), we ABSTAIN from refusing — the
+ * user is talking about German history / cuisine / engineering / etc.,
+ * not asking us to tutor them in German.
+ */
+const NON_LANGUAGE_GERMAN_NOUNS =
+  /\b(history|geography|literature|cuisine|engineering|car|cars|football|shepherd|measles|philosophy|music|art|architecture|expressionism|cinema|film)\b/i;
 
 /** Canonical message from skill/SKILL.md — keep verbatim. */
 export const GERMAN_DEFERRED_MESSAGE =
@@ -81,11 +100,31 @@ export class GermanDeferredError extends Error {
 export function assertGermanNotRequested(raw: string): void {
   if (typeof raw !== 'string' || raw.length === 0) return;
   const trimmed = raw.trim();
-  for (const re of GERMAN_PATTERNS) {
+
+  // Layer 1: direct slash-command / slug form — always refuse.
+  for (const re of GERMAN_DIRECT_TRIGGERS) {
     if (re.test(trimmed)) {
       throw new GermanDeferredError();
     }
   }
+
+  // Layer 2: intent + german/deutsch within 80 chars — refuse UNLESS the
+  // message also references a non-language-tutoring noun (history,
+  // cuisine, shepherd, etc.). That signals topical interest, not a
+  // request for German-language tutoring.
+  for (const re of GERMAN_INTENT_PROXIMITY) {
+    if (re.test(trimmed)) {
+      if (NON_LANGUAGE_GERMAN_NOUNS.test(trimmed)) {
+        // Topic-of-interest in German, not a tutoring request — let through.
+        return;
+      }
+      throw new GermanDeferredError();
+    }
+  }
+
+  // Layer 3: standalone "german" / "deutsch" without intent verbs — DO NOT
+  // refuse. Could be German history, German shepherd, German engineering,
+  // etc. Downstream domain inference will route appropriately.
 }
 
 // --- Constants ------------------------------------------------------------
