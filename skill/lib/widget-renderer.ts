@@ -57,6 +57,19 @@ type MatchingPairWidget = Extract<WidgetSpec, { type: 'matching-pair' }>;
 /** Narrowed shape for the cloze widget (mirrors ClozeWidgetSchema). */
 type ClozeWidget = Extract<WidgetSpec, { type: 'cloze' }>;
 
+/** Narrowed shape for the pathway-diagram widget (T081, US3 — medicine).
+ *
+ * Contract gap: `PathwayDiagramWidgetSchema` currently defines
+ * `{ type, nodes, edges, renderer }`. The renderer brief also references
+ * optional `mermaidSource` (raw mermaid graph DSL — bypass auto-generation)
+ * and `legend` (symbol/meaning rows shown beneath the diagram). We carry
+ * those as optional structural fields until a schema PR lands.
+ */
+type PathwayDiagramWidget = Extract<WidgetSpec, { type: 'pathway-diagram' }> & {
+  mermaidSource?: string;
+  legend?: Array<{ symbol: string; meaning: string }>;
+};
+
 /** Narrowed shape for the audio-tts widget (mirrors AudioTtsWidgetSchema).
  *
  * NOTE — contract gap: as of T058, `AudioTtsWidgetSchema` only defines
@@ -1251,6 +1264,261 @@ export function renderAssertionReason(spec: AssertionReasonWidget): string {
 
 registerRenderer('assertion-reason', (widget) =>
   renderAssertionReason(widget as AssertionReasonWidget),
+);
+
+/**
+ * Renderer for `pathway-diagram` widgets (T081, US3 — medicine domain).
+ *
+ * Two render paths driven by `spec.renderer`:
+ *
+ *   - `'mermaid'` — Use the vendored Mermaid library at runtime
+ *     (`window.mermaid`). If `spec.mermaidSource` is provided, it's used
+ *     verbatim inside `<div class="mermaid">`. Otherwise we synthesise a
+ *     `graph LR` diagram from `nodes` + `edges`. An inline IIFE calls
+ *     `mermaid.init()` idempotently on first render so the diagram
+ *     renders even if the page already passed Mermaid's autoload phase.
+ *
+ *   - `'d3-custom'` — Emit an `<svg>` and lay out the nodes left-to-right
+ *     using a minimal in-line topological-sort layout in vanilla JS (no
+ *     d3 dependency). Nodes are `<g><rect/><text/></g>`; edges are
+ *     `<line marker-end="url(#arrow-<id>)">` with one `<defs><marker>`
+ *     per widget instance (id-namespaced to avoid collisions when the
+ *     page hosts multiple pathway diagrams).
+ *
+ * Optional `spec.legend` renders as a `<dl class="pathway-legend">` below
+ * the diagram so the learner can map symbols (e.g. ⊕ activator, ⊖ inhibitor)
+ * to meaning.
+ *
+ * Used in medicine for biochemical pathways (glycolysis, TCA cycle, beta-
+ * oxidation), in research-paper for methodology flow charts, and
+ * occasionally in code for state-machine diagrams.
+ *
+ * Contract gaps surfaced (flagged for a future schema PR):
+ *   1. `mermaidSource?: string` — raw Mermaid DSL bypass (medicine pathways
+ *      sometimes ship as hand-tuned mermaid for visual fidelity).
+ *   2. `legend?: Array<{symbol, meaning}>` — symbol legend table.
+ */
+export function renderPathwayDiagram(spec: PathwayDiagramWidget): string {
+  const id = nextWidgetId('pd');
+  const renderer = spec.renderer;
+  const nodes = spec.nodes ?? [];
+  const edges = spec.edges ?? [];
+  const legend = spec.legend ?? [];
+
+  // Legend block (shared by both render paths).
+  const legendHtml =
+    legend.length > 0
+      ? [
+          `  <dl class="pathway-legend">`,
+          ...legend.flatMap((row) => [
+            `    <dt>${escapeHtml(row.symbol ?? '')}</dt>`,
+            `    <dd>${escapeHtml(row.meaning ?? '')}</dd>`,
+          ]),
+          `  </dl>`,
+        ].join('\n')
+      : '';
+
+  if (renderer === 'mermaid') {
+    // Use spec.mermaidSource if provided; otherwise synthesise from nodes+edges.
+    let source = (spec.mermaidSource ?? '').trim();
+    if (!source) {
+      const lines: string[] = ['graph LR'];
+      for (const n of nodes) {
+        // Mermaid node syntax: id["label"] — quote labels to allow spaces/punct.
+        const safeLabel = String(n.label ?? '').replace(/"/g, '&quot;');
+        lines.push(`  ${n.id}["${safeLabel}"]`);
+      }
+      for (const e of edges) {
+        if (e.label) {
+          const safeEdgeLabel = String(e.label).replace(/\|/g, '');
+          lines.push(`  ${e.from} -->|${safeEdgeLabel}| ${e.to}`);
+        } else {
+          lines.push(`  ${e.from} --> ${e.to}`);
+        }
+      }
+      source = lines.join('\n');
+    }
+
+    return [
+      `<div class="pathway-diagram" id="${id}" data-widget="pathway-diagram" data-renderer="mermaid">`,
+      `  <div class="mermaid">${escapeHtml(source)}</div>`,
+      legendHtml,
+      `  <script>`,
+      `  (function(){`,
+      `    var root = document.getElementById(${JSON.stringify(id)});`,
+      `    if (!root) return;`,
+      `    function tryInit(){`,
+      `      if (typeof window === 'undefined' || !window.mermaid) return false;`,
+      `      try {`,
+      `        if (typeof window.mermaid.run === 'function') {`,
+      `          window.mermaid.run({ nodes: root.querySelectorAll('.mermaid') });`,
+      `        } else if (typeof window.mermaid.init === 'function') {`,
+      `          window.mermaid.init(undefined, root.querySelectorAll('.mermaid'));`,
+      `        }`,
+      `        return true;`,
+      `      } catch(e) { return false; }`,
+      `    }`,
+      `    if (!tryInit()) {`,
+      `      // Mermaid not yet loaded — retry after DOMContentLoaded / window.load.`,
+      `      var fired = false;`,
+      `      function retry(){ if (!fired && tryInit()) fired = true; }`,
+      `      if (document.readyState === 'loading') {`,
+      `        document.addEventListener('DOMContentLoaded', retry);`,
+      `      }`,
+      `      window.addEventListener('load', retry);`,
+      `    }`,
+      `  })();`,
+      `  </script>`,
+      `</div>`,
+    ]
+      .filter((s) => s.length > 0)
+      .join('\n');
+  }
+
+  // ---------- D3-custom path (vanilla JS, no d3 dep) ----------
+
+  // Pre-compute a stable topological order at render time so the layout is
+  // deterministic across page loads. Cycle-safe: nodes whose deps form a
+  // cycle drop into the next available column.
+  const idIndex: Record<string, number> = {};
+  nodes.forEach((n, i) => {
+    idIndex[n.id] = i;
+  });
+  const incoming: number[] = nodes.map(() => 0);
+  for (const e of edges) {
+    const ti = idIndex[e.to];
+    if (ti != null) incoming[ti] = (incoming[ti] ?? 0) + 1;
+  }
+  const layer: number[] = nodes.map(() => -1);
+  const queue: number[] = [];
+  for (let i = 0; i < nodes.length; i += 1) {
+    if ((incoming[i] ?? 0) === 0) {
+      layer[i] = 0;
+      queue.push(i);
+    }
+  }
+  while (queue.length > 0) {
+    const i = queue.shift()!;
+    for (const e of edges) {
+      if (idIndex[e.from] !== i) continue;
+      const ti = idIndex[e.to];
+      if (ti == null) continue;
+      const newLayer = (layer[i] ?? 0) + 1;
+      if (newLayer > (layer[ti] ?? -1)) layer[ti] = newLayer;
+      incoming[ti] = (incoming[ti] ?? 1) - 1;
+      if ((incoming[ti] ?? 0) === 0) queue.push(ti);
+    }
+  }
+  // Any node still at -1 is in a cycle — place it after the deepest assigned layer.
+  let maxLayer = 0;
+  for (const l of layer) if (l > maxLayer) maxLayer = l;
+  for (let i = 0; i < layer.length; i += 1) {
+    if ((layer[i] ?? -1) < 0) {
+      maxLayer += 1;
+      layer[i] = maxLayer;
+    }
+  }
+
+  // Group node indices by layer to compute (col, row).
+  const byLayer: Record<number, number[]> = {};
+  for (let i = 0; i < nodes.length; i += 1) {
+    const l = layer[i] ?? 0;
+    if (!byLayer[l]) byLayer[l] = [];
+    byLayer[l]!.push(i);
+  }
+
+  const NODE_W = 140;
+  const NODE_H = 44;
+  const COL_GAP = 60;
+  const ROW_GAP = 24;
+  const PAD = 20;
+
+  // Compute positions.
+  const pos: Array<{ x: number; y: number }> = nodes.map(() => ({ x: 0, y: 0 }));
+  const layerKeys = Object.keys(byLayer)
+    .map((k) => parseInt(k, 10))
+    .sort((a, b) => a - b);
+  let svgWidth = PAD * 2;
+  let svgHeight = PAD * 2;
+  for (const lyr of layerKeys) {
+    const col = layerKeys.indexOf(lyr);
+    const x = PAD + col * (NODE_W + COL_GAP);
+    const ids = byLayer[lyr] ?? [];
+    ids.forEach((nIdx, rowIdx) => {
+      const y = PAD + rowIdx * (NODE_H + ROW_GAP);
+      pos[nIdx] = { x, y };
+      if (x + NODE_W + PAD > svgWidth) svgWidth = x + NODE_W + PAD;
+      if (y + NODE_H + PAD > svgHeight) svgHeight = y + NODE_H + PAD;
+    });
+  }
+  if (svgHeight < 200) svgHeight = 200;
+
+  const markerId = `arrow-${id}`;
+
+  // Build node + edge SVG fragments.
+  const nodeSvg = nodes
+    .map((n, i) => {
+      const p = pos[i] ?? { x: 0, y: 0 };
+      const cx = p.x + NODE_W / 2;
+      const cy = p.y + NODE_H / 2 + 4; // baseline tweak
+      return [
+        `      <g class="pathway-node" data-node-id="${escapeHtml(n.id)}">`,
+        `        <rect x="${p.x}" y="${p.y}" width="${NODE_W}" height="${NODE_H}" rx="6" ry="6"></rect>`,
+        `        <text x="${cx}" y="${cy}" text-anchor="middle">${escapeHtml(n.label ?? n.id)}</text>`,
+        `      </g>`,
+      ].join('\n');
+    })
+    .join('\n');
+
+  const edgeSvg = edges
+    .map((e) => {
+      const fi = idIndex[e.from];
+      const ti = idIndex[e.to];
+      if (fi == null || ti == null) return '';
+      const fp = pos[fi] ?? { x: 0, y: 0 };
+      const tp = pos[ti] ?? { x: 0, y: 0 };
+      const x1 = fp.x + NODE_W;
+      const y1 = fp.y + NODE_H / 2;
+      const x2 = tp.x;
+      const y2 = tp.y + NODE_H / 2;
+      const labelSvg = e.label
+        ? `        <text class="edge-label" x="${(x1 + x2) / 2}" y="${(y1 + y2) / 2 - 4}" text-anchor="middle">${escapeHtml(e.label)}</text>`
+        : '';
+      return [
+        `      <g class="pathway-edge">`,
+        `        <line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" marker-end="url(#${markerId})"></line>`,
+        labelSvg,
+        `      </g>`,
+      ]
+        .filter((s) => s.length > 0)
+        .join('\n');
+    })
+    .join('\n');
+
+  return [
+    `<div class="pathway-diagram" id="${id}" data-widget="pathway-diagram" data-renderer="d3-custom">`,
+    `  <svg class="pathway-svg" width="100%" viewBox="0 0 ${svgWidth} ${svgHeight}" preserveAspectRatio="xMidYMid meet" height="${svgHeight}">`,
+    `    <defs>`,
+    `      <marker id="${markerId}" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">`,
+    `        <path d="M 0 0 L 10 5 L 0 10 z"></path>`,
+    `      </marker>`,
+    `    </defs>`,
+    `    <g class="pathway-edges">`,
+    edgeSvg,
+    `    </g>`,
+    `    <g class="pathway-nodes">`,
+    nodeSvg,
+    `    </g>`,
+    `  </svg>`,
+    legendHtml,
+    `</div>`,
+  ]
+    .filter((s) => s.length > 0)
+    .join('\n');
+}
+
+registerRenderer('pathway-diagram', (widget) =>
+  renderPathwayDiagram(widget as PathwayDiagramWidget),
 );
 
 /** List the kinds currently registered. Useful for sanity tests. */

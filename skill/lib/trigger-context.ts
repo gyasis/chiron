@@ -36,14 +36,59 @@ export interface TriggerContext {
   flags: { theme?: string; subMode?: TriggerSubMode };
 }
 
+// --- German-deferred refusal (FR-002 / spec.md) ---------------------------
+// FR-002 / spec.md — German is post-v1; refused at the trigger boundary.
+
+/**
+ * Patterns covering every way a user might request German tutoring:
+ *   - bare English word "german"
+ *   - bare German word "deutsch"
+ *   - the slug "language-de"
+ *   - the slash-command "/chiron-language-de" at start of input
+ *   - intent verbs ("teach", "tutor", "learn", "it") paired with "german"/"deutsch"
+ */
+const GERMAN_PATTERNS: RegExp[] = [
+  /\bgerman\b/i,
+  /\bdeutsch\b/i,
+  /\blanguage-de\b/i,
+  /^\/chiron-language-de\b/i,
+  /\b(it|tutor|learn|teach)\b[\s\S]*\b(german|deutsch)\b/i,
+];
+
+/** Canonical message from skill/SKILL.md — keep verbatim. */
+export const GERMAN_DEFERRED_MESSAGE =
+  'Chiron v1 supports Italian only on the language axis. ' +
+  'German tutoring is deferred to post-v1. ' +
+  'The blockers are TTS-voice quality validation and the verb-conjugation-table widget, ' +
+  'both planned for v1.1.';
+
+/** Typed error so upstream callers can `instanceof`-discriminate this case. */
+export class GermanDeferredError extends Error {
+  readonly code = 'GERMAN_DEFERRED';
+  constructor(message: string = GERMAN_DEFERRED_MESSAGE) {
+    super(message);
+    this.name = 'GermanDeferredError';
+    // Preserve prototype chain when targeting older ES targets.
+    Object.setPrototypeOf(this, GermanDeferredError.prototype);
+  }
+}
+
+/**
+ * Throws `GermanDeferredError` if `raw` requests German tutoring in any of
+ * the supported forms. Called from both `parseTrigger` (initial trigger
+ * boundary) and `applyModeOverride` (mid-conversation defense-in-depth).
+ */
+export function assertGermanNotRequested(raw: string): void {
+  if (typeof raw !== 'string' || raw.length === 0) return;
+  const trimmed = raw.trim();
+  for (const re of GERMAN_PATTERNS) {
+    if (re.test(trimmed)) {
+      throw new GermanDeferredError();
+    }
+  }
+}
+
 // --- Constants ------------------------------------------------------------
-
-const GERMAN_PATTERN = /(\bgerman\b|\bdeutsch\b|language-de|\/chiron-language-de)/i;
-
-const GERMAN_REFUSAL_MESSAGE =
-  'German (language-de) is deferred to post-v1. ' +
-  'Chiron v1 supports Italian only for the language domain. ' +
-  'Re-issue without the German request, or pick another domain.';
 
 interface SlashSpec {
   domain: TriggerDomain;
@@ -98,10 +143,8 @@ export function parseTrigger(raw: string, source: TriggerSource): TriggerContext
 
   const trimmed = raw.trim();
 
-  // Validation #2 — refuse German up-front (covers both styles).
-  if (GERMAN_PATTERN.test(trimmed)) {
-    throw new Error(GERMAN_REFUSAL_MESSAGE);
-  }
+  // Validation #2 — refuse German up-front (FR-002, before any other parsing).
+  assertGermanNotRequested(trimmed);
 
   const flags = parseFlags(trimmed);
 
@@ -253,6 +296,10 @@ export function applyModeOverride(
   if (typeof userMessage !== 'string' || userMessage.length === 0) {
     return currentCtx;
   }
+
+  // Defense-in-depth: catch a mid-conversation switch like
+  // "actually let's do this in German". Throws GermanDeferredError.
+  assertGermanNotRequested(userMessage);
 
   let bestIndex = -1;
   let bestMode: TriggerMode | null = null;

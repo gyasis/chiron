@@ -262,6 +262,228 @@
     }
   })();
 
+  /* ── SR REVIEW SURFACE ────────────────────────────────────── */
+  // FR-005 — in-lesson SR review surface; Option A persistence (localStorage; SQLite is for CLI analytics only)
+  (function setupSrReview() {
+    const META = document.querySelector('meta[name="chiron-lesson-id"]');
+    const lessonId = (META && META.getAttribute('content')) || document.title || 'unknown';
+    const CARDS_KEY = 'chiron:lesson:' + lessonId + ':sr-cards';
+    const LOG_KEY = 'chiron:lesson:' + lessonId + ':sr-review-log';
+    const MAX_LOG_ENTRIES = 1000;
+    const MAX_SESSION_CARDS = 20;
+
+    function readCards() {
+      try {
+        const raw = localStorage.getItem(CARDS_KEY);
+        if (!raw) return null;
+        const parsed = JSON.parse(raw);
+        return Array.isArray(parsed) ? parsed : null;
+      } catch (e) { return null; }
+    }
+
+    function writeCards(arr) {
+      try { localStorage.setItem(CARDS_KEY, JSON.stringify(arr)); } catch (e) {}
+    }
+
+    function readLog() {
+      try {
+        const raw = localStorage.getItem(LOG_KEY);
+        if (!raw) return [];
+        const parsed = JSON.parse(raw);
+        return Array.isArray(parsed) ? parsed : [];
+      } catch (e) { return []; }
+    }
+
+    function appendLog(entry) {
+      const log = readLog();
+      log.push(entry);
+      // FIFO eviction
+      const trimmed = log.length > MAX_LOG_ENTRIES ? log.slice(log.length - MAX_LOG_ENTRIES) : log;
+      try { localStorage.setItem(LOG_KEY, JSON.stringify(trimmed)); } catch (e) {}
+    }
+
+    function seedFromDom() {
+      const seed = document.getElementById('sr-cards-seed');
+      if (!seed) return [];
+      try {
+        const parsed = JSON.parse(seed.textContent || '[]');
+        return Array.isArray(parsed) ? parsed : [];
+      } catch (e) { return []; }
+    }
+
+    // Inline SM-2 (matches lib/sr-scheduler.ts semantics)
+    function nextDueSm2(card, rating) {
+      let ease_factor = card.ease_factor || 2.5;
+      let interval_days = card.interval_days || 0;
+      let repetitions = card.repetitions || 0;
+      const MIN_EASE = 1.3;
+      if (rating === 1) {
+        repetitions = 0;
+        interval_days = 1;
+        ease_factor = Math.max(MIN_EASE, ease_factor - 0.2);
+      } else {
+        const q = rating === 2 ? 3 : rating === 3 ? 4 : 5;
+        ease_factor = Math.max(MIN_EASE, ease_factor + (0.1 - (5 - q) * (0.08 + (5 - q) * 0.02)));
+        repetitions += 1;
+        if (repetitions === 1) interval_days = 1;
+        else if (repetitions === 2) interval_days = 6;
+        else interval_days = Math.round(interval_days * ease_factor);
+        if (rating === 4) {
+          interval_days = Math.max(interval_days, Math.round(interval_days * 1.3));
+        }
+      }
+      const next_due_at = Date.now() + interval_days * 86400000;
+      return { ease_factor: ease_factor, interval_days: interval_days, repetitions: repetitions, next_due_at: next_due_at };
+    }
+
+    function ensureSeeded() {
+      let cards = readCards();
+      if (cards) return cards;
+      const seeded = seedFromDom();
+      writeCards(seeded);
+      return seeded;
+    }
+
+    function dueCards(cards) {
+      const now = Date.now();
+      return cards
+        .filter(c => c && c.suspended !== 1 && c.suspended !== true && (c.next_due_at || 0) <= now)
+        .slice(0, MAX_SESSION_CARDS);
+    }
+
+    function findHostBeforeMain() {
+      const main = document.querySelector('main') || document.body;
+      return main;
+    }
+
+    function buildPanel(dueCount) {
+      const panel = document.createElement('aside');
+      panel.className = 'sr-review-panel';
+      panel.setAttribute('aria-label', 'Spaced repetition review');
+      panel.hidden = dueCount === 0;
+      panel.innerHTML = ''
+        + '<div class="sr-review-summary">'
+        + '  <button type="button" class="sr-review-toggle">Review <span class="sr-due-count">' + dueCount + '</span> due cards</button>'
+        + '  <span class="sr-session-progress" hidden></span>'
+        + '</div>'
+        + '<div class="sr-review-body" hidden>'
+        + '  <div class="sr-card-front" aria-live="polite"></div>'
+        + '  <button type="button" class="sr-show-answer">Show answer</button>'
+        + '  <div class="sr-card-back" hidden></div>'
+        + '  <div class="sr-rating-buttons" hidden>'
+        + '    <button type="button" class="sr-rating" data-rating="1">Again</button>'
+        + '    <button type="button" class="sr-rating" data-rating="2">Hard</button>'
+        + '    <button type="button" class="sr-rating" data-rating="3">Good</button>'
+        + '    <button type="button" class="sr-rating" data-rating="4">Easy</button>'
+        + '  </div>'
+        + '  <div class="sr-done" hidden></div>'
+        + '</div>';
+      return panel;
+    }
+
+    function init() {
+      const cards = ensureSeeded();
+      let queue = dueCards(cards);
+      const host = findHostBeforeMain();
+      const panel = buildPanel(queue.length);
+      host.insertBefore(panel, host.firstChild);
+
+      if (queue.length === 0) return;
+
+      const toggleBtn = panel.querySelector('.sr-review-toggle');
+      const body = panel.querySelector('.sr-review-body');
+      const frontEl = panel.querySelector('.sr-card-front');
+      const backEl = panel.querySelector('.sr-card-back');
+      const showBtn = panel.querySelector('.sr-show-answer');
+      const ratingWrap = panel.querySelector('.sr-rating-buttons');
+      const doneEl = panel.querySelector('.sr-done');
+      const progressEl = panel.querySelector('.sr-session-progress');
+      const dueCountEl = panel.querySelector('.sr-due-count');
+
+      let idx = 0;
+      let reviewedThisSession = 0;
+
+      function renderCurrent() {
+        if (idx >= queue.length) {
+          frontEl.hidden = true;
+          showBtn.hidden = true;
+          backEl.hidden = true;
+          ratingWrap.hidden = true;
+          doneEl.hidden = false;
+          doneEl.textContent = 'All caught up — ' + reviewedThisSession + ' review' + (reviewedThisSession === 1 ? '' : 's') + ' complete this session';
+          dueCountEl.textContent = '0';
+          return;
+        }
+        const card = queue[idx];
+        frontEl.hidden = false;
+        frontEl.textContent = card.front || '';
+        backEl.hidden = true;
+        backEl.textContent = card.back || '';
+        showBtn.hidden = false;
+        showBtn.disabled = false;
+        ratingWrap.hidden = true;
+        doneEl.hidden = true;
+        progressEl.hidden = false;
+        progressEl.textContent = (idx + 1) + ' / ' + queue.length;
+      }
+
+      toggleBtn.addEventListener('click', () => {
+        const collapsed = body.hidden;
+        body.hidden = !collapsed;
+        if (collapsed) renderCurrent();
+      });
+
+      showBtn.addEventListener('click', () => {
+        backEl.hidden = false;
+        showBtn.disabled = true;
+        ratingWrap.hidden = false;
+      });
+
+      panel.querySelectorAll('.sr-rating').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const rating = parseInt(btn.getAttribute('data-rating'), 10);
+          if (!(rating >= 1 && rating <= 4)) return;
+          const card = queue[idx];
+          if (!card) return;
+          const priorEase = card.ease_factor || 2.5;
+          const priorInterval = card.interval_days || 0;
+          const updated = nextDueSm2(card, rating);
+          const merged = Object.assign({}, card, updated);
+
+          // Update working state in localStorage (replace by card_id)
+          const all = readCards() || [];
+          const matchIdx = all.findIndex(c => c && c.card_id === card.card_id);
+          if (matchIdx >= 0) all[matchIdx] = merged;
+          else all.push(merged);
+          writeCards(all);
+
+          appendLog({
+            card_id: card.card_id,
+            rating: rating,
+            prior_ease: priorEase,
+            new_ease: updated.ease_factor,
+            prior_interval: priorInterval,
+            new_interval: updated.interval_days,
+            reviewed_at: Date.now()
+          });
+
+          reviewedThisSession += 1;
+          idx += 1;
+          // Update header due count (remaining)
+          const remaining = Math.max(0, queue.length - idx);
+          dueCountEl.textContent = String(remaining);
+          renderCurrent();
+        });
+      });
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', init);
+    } else {
+      init();
+    }
+  })();
+
   /* ── NAVIGATION & PROGRESS BAR ────────────────────────────── */
   const progressBar = $('#progress-bar');
   const navDots     = $$('.nav-dot');

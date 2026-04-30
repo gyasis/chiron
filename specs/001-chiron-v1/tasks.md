@@ -215,7 +215,7 @@ description: "Task list for Chiron v1 — Universal Lesson Generator"
 - [x] T078 [P] [US3] Extend `skill/lib/widget-renderer.ts` to render `agreement-matrix` widgets — N statements × {always / sometimes / never} grid
 - [x] T079 [P] [US3] Extend `skill/lib/widget-renderer.ts` to render `assertion-reason` widgets — 5-relationship picker per `contracts/widget-spec.ts`
 - [x] T080 [US3] Extend `skill/lib/chemistry-renderer.ts` — concrete `MoleculeRenderer` impl. **Phase 5 prototype rubric** per R-02: prototype both Kekule.js and RDKit-JS against the metformin SMILES, pick the smaller / faster one, drop the loser. Vendor the winning library into `skill/shell/vendor/molecule-renderer/`. Ships a single dep at runtime per FR-031.
-- [ ] T081 [P] [US3] Extend `skill/lib/widget-renderer.ts` to render `pathway-diagram` widgets — supports `renderer: 'mermaid'` (uses vendored Mermaid) and `renderer: 'd3-custom'` (vanilla JS / SVG)
+- [x] T081 [P] [US3] Extend `skill/lib/widget-renderer.ts` to render `pathway-diagram` widgets — supports `renderer: 'mermaid'` (uses vendored Mermaid) and `renderer: 'd3-custom'` (vanilla JS / SVG)
 
 ### QUEST-AI medicine verifier loop (FR-007, SC-011)
 
@@ -319,7 +319,7 @@ description: "Task list for Chiron v1 — Universal Lesson Generator"
 
 - [x] T116 [P] Implement scroll-position restore in `skill/shell/main.js` — on lesson re-open, read `bookmarks.scroll_position` for the most-recent-`last_visited_at` row and `window.scrollTo()` once content is laid out
 - [x] T117 [P] Implement chapter-completion marking in `skill/shell/main.js` — chapters listed in `chapter_completion` get a visual checkmark in the TOC
-- [ ] T118 Implement in-lesson SR review surface in `skill/shell/main.js` — query `sr_cards WHERE next_due_at <= NOW() AND suspended = 0`; render a "Due cards" panel pinned at the top of the page; on rating click, write to `sr_review_log`, update `sr_cards` SM-2 state via the bundled `lib/sr-scheduler.ts` (compiled to JS for the browser). Depends on T014, T116.
+- [x] T118 Implement in-lesson SR review surface in `skill/shell/main.js` — query `sr_cards WHERE next_due_at <= NOW() AND suspended = 0`; render a "Due cards" panel pinned at the top of the page; on rating click, write to `sr_review_log`, update `sr_cards` SM-2 state via the bundled `lib/sr-scheduler.ts` (compiled to JS for the browser). Depends on T014, T116.
 - [ ] T119 [P] Implement bookmark write in `skill/shell/main.js` — debounced scroll-position writer; updates `bookmarks` row on scroll-pause + on chapter switch
 
 ### Optional Anki export (SC-009)
@@ -328,7 +328,7 @@ description: "Task list for Chiron v1 — Universal Lesson Generator"
 
 ### Italian-only refusals + Stage 0 progress
 
-- [ ] T121 Add German-deferred refusal in `skill/lib/trigger-context.ts` — when input contains "german", "deutsch", "language-de", or `/chiron-language-de`, return a clear "deferred to post-v1" error and exit. Depends on T026.
+- [x] T121 Add German-deferred refusal in `skill/lib/trigger-context.ts` — when input contains "german", "deutsch", "language-de", or `/chiron-language-de`, return a clear "deferred to post-v1" error and exit. Depends on T026.
 - [x] T122 Add image-count-up-front announcement in `skill/lib/pipeline.ts` Stage 0 — for any source containing images (scanned-PDF, image, image-folder, multi-pdf with images, bundle), emit `[stage 0/5] ingest: <type> (<N> pages/images — <N> interpret_image calls follow)` BEFORE the first MCP call (R-10 replacement, FR-028). Depends on T024.
 
 ### Documentation
@@ -339,8 +339,8 @@ description: "Task list for Chiron v1 — Universal Lesson Generator"
 
 ### Final validation
 
-- [ ] T126 Run `skill/tests/test.sh` against all 5 golden inputs (code, language-it, medicine, research-paper, music-theory extensibility check) — all snapshots match, all `lesson.html` files render in headless browser without console errors
-- [ ] T127 Run `quickstart.md` validation manually — go through every "Generate a lesson" example (both natural-language and slash-command styles) for all 4 domains; confirm re-open behavior, due-card surfacing, scroll-restore
+- [x] T126 Run `skill/tests/test.sh` against all 5 golden inputs (code, language-it, medicine, research-paper, music-theory extensibility check) — all snapshots match, all `lesson.html` files render in headless browser without console errors
+- [x] T127 Run `quickstart.md` validation manually — go through every "Generate a lesson" example (both natural-language and slash-command styles) for all 4 domains; confirm re-open behavior, due-card surfacing, scroll-restore
 - [x] T128 Confirm `git diff` and `git ls-files` show zero `@anthropic-ai/sdk` / `@google/generative-ai` references anywhere under `skill/` (Q8 invariant)
 - [ ] T129 Confirm vendored libraries are checked in under `skill/shell/vendor/` and the assembled `lesson.html` from any golden input contains the libraries inline (no `<script src="https://cdn...">` references — Pyodide CDN reference exempted only when a `code-runner` widget is present per R-03)
 
