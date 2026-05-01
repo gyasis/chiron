@@ -6,13 +6,20 @@ git clone, or another contributor's environment.
 ## TL;DR
 
 ```bash
-git clone <chiron-repo-url> chiron && cd chiron
-bash skill/scripts/install.sh    # symlinks skill into ~/.claude/skills/chiron
-cd skill && npm install && npm run build
-cd ..
-# Test the harness without LLM:
-bash skill/tests/test.sh
+git clone https://github.com/gyasis/chiron.git && cd chiron
+bash skill/scripts/install.sh    # one-shot: symlink + npm install + build + test
 ```
+
+`install.sh` is idempotent and does ALL of:
+1. Verifies Node ≥ 20 + npm
+2. Symlinks `skill/` into `~/.claude/skills/chiron`
+3. Runs `npm install` (zod, better-sqlite3, pdfjs-dist, pdf-to-img)
+4. Runs `npm run build` (TypeScript → `dist/`)
+5. Runs `tests/test.sh` to verify the harness
+
+**Note: Chiron is Node/TypeScript, not Python.** No `uv venv`, no `pip`, no
+`requirements.txt` anywhere. All runtime deps are Node packages declared in
+`skill/package.json`.
 
 That's it. The skill is now invocable from any Claude Code session via `/chiron`,
 `/chiron-code`, `/chiron-medicine`, `/chiron-language`, `/chiron-research-paper`,
