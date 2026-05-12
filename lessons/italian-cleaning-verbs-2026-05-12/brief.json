@@ -1,0 +1,24 @@
+{
+  "lesson_id": "italian-cleaning-verbs-2026-05-12",
+  "title": "I verbi delle pulizie — Italian Verbs for Cleaning",
+  "domain": "language-it",
+  "mode": "A",
+  "source_type": "user-prompt",
+  "source_summary": "User-requested Italian vocabulary lesson covering cleaning-related verbs: sweep, wash, pile up, tidy, dust, scrub, rinse, dry, fold, hang laundry, vacuum, throw out trash.",
+  "level": "A2 (advanced beginner)",
+  "estimated_minutes": 20,
+  "learning_objectives": [
+    "Recognize and pronounce 14 core Italian cleaning verbs.",
+    "Conjugate -are, -ere, and -isco regulars in the present tense.",
+    "Build practical sentences combining verbs with household nouns.",
+    "Use simple negative imperatives ('non + infinitive') in context.",
+    "Practice retrieval via fill-blank quiz and spaced-repetition cards."
+  ],
+  "personas": [
+    { "name": "Alice", "role": "peer-learner", "level": "A2" },
+    { "name": "Marco", "role": "native-tutor", "region": "Roma" }
+  ],
+  "default_theme": "linguistic",
+  "generated_by": "Chiron skill (parent agent)",
+  "generated_at": "2026-05-12"
+}

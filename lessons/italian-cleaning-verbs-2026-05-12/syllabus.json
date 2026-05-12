@@ -1,0 +1,48 @@
+{
+  "chapters": [
+    {
+      "id": "ch1",
+      "title": "Core verbs — meet the 14",
+      "objectives": ["recognize each verb's infinitive + meaning"],
+      "widgets": ["vocab-table"]
+    },
+    {
+      "id": "ch2",
+      "title": "Conjugation patterns",
+      "objectives": ["conjugate -are, -ere regulars", "handle -isco verbs (pulire, finire pattern)"],
+      "widgets": ["conjugation-table"]
+    },
+    {
+      "id": "ch3",
+      "title": "Verbs in context — household nouns",
+      "objectives": ["pair verbs with objects: scopa, piatti, bucato, etc."],
+      "widgets": ["example-sentences"]
+    },
+    {
+      "id": "ch4",
+      "title": "Mini-dialogue with Alice",
+      "objectives": ["follow A2-level peer dialogue", "imitate question/answer pairs"],
+      "widgets": ["dialogue"]
+    },
+    {
+      "id": "ch5",
+      "title": "Retrieval — fill the blank",
+      "objectives": ["recall correct conjugated form from context"],
+      "widgets": ["quiz-fill-blank"]
+    },
+    {
+      "id": "ch6",
+      "title": "Spaced repetition — flashcards",
+      "objectives": ["rate retention; queue for SR scheduler (SM-2)"],
+      "widgets": ["sr-cards"]
+    }
+  ],
+  "concept_dag": [
+    { "from": "ch1", "to": "ch2" },
+    { "from": "ch1", "to": "ch3" },
+    { "from": "ch2", "to": "ch3" },
+    { "from": "ch3", "to": "ch4" },
+    { "from": "ch3", "to": "ch5" },
+    { "from": "ch5", "to": "ch6" }
+  ]
+}
