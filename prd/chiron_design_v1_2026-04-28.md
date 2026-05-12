@@ -749,7 +749,14 @@ These are explicit unknowns to resolve during build. Tracked in [`memory-bank/fo
 - [`memory-bank/systemPatterns.md`](../memory-bank/systemPatterns.md) — architecture + 11 key patterns
 - [`memory-bank/techContext.md`](../memory-bank/techContext.md) — stack + SQLite schemas
 - [`memory-bank/follow_ups.md`](../memory-bank/follow_ups.md) — open questions + hypotheses
-- [`prd/universal_lesson_generator_2026-04-28.md`](universal_lesson_generator_2026-04-28.md) — tracking PRD (decisions log + open items)
+- [`universal_lesson_generator_2026-04-28.md`](./universal_lesson_generator_2026-04-28.md) — tracking PRD (decisions log + open items)
+
+### Child PRDs (added 2026-05-12)
+This parent design PRD covers the Chiron *skill / generator core*. Three child PRDs extend it along orthogonal axes:
+
+- [`chiron_server_cms_2026-05-12.md`](./chiron_server_cms_2026-05-12.md) — **Server CMS.** Hosts, serves, and aggregates the lesson bundles this design produces. Hono+Bun stack, Docker-portable laptop → Pi 4 → AWS. Phone-side library + cross-lesson SR review.
+- [`chiron_generator_cureiq_synthesis_2026-05-12.md`](./chiron_generator_cureiq_synthesis_2026-05-12.md) — **Generator enhancements umbrella.** Image-source adapter (AMBOSS-screenshot ingest), RAG-source adapter (named-index sourcing), multi-hop pipeline integration. Derived from prior-art `gyasis/CureIQ`.
+- [`chiron_lesson_expander_2026-05-12.md`](./chiron_lesson_expander_2026-05-12.md) — **Lesson expander.** First sub-feature of the generator enhancements umbrella; ships first. Appends N more vignettes/MCQs to an existing lesson without regenerating it. CLI + CMS-driven (mark-then-regenerate) modes.
 
 ### Heritage repos (locally cloned at `~/dev/audits/`)
 - [zarazhangrui/codebase-to-course](https://github.com/zarazhangrui/codebase-to-course) — HTML rendering shell forked
