@@ -28,6 +28,37 @@ allowed-tools:
 
 # Chiron — Universal Lesson Generator
 
+## ⛔ BLOCKING — NO HARDCODED PALETTES IN GENERATED LESSONS
+
+When emitting `lesson.html`, the parent agent **MUST**:
+
+1. **Copy theme files NEXT TO the lesson, link via `<link>`** — copy
+   `skill/shell/themes/_tokens.css` + `themes/{midnight,warm-paper,clinical,linguistic,ocean}.css`
+   into `<lesson-output-dir>/themes/`, then add 6 `<link rel="stylesheet">`
+   tags. **DO NOT inline theme CSS into the HTML.** Editing one CSS file must
+   re-theme the lesson without touching `lesson.html`.
+2. **Set `<html data-theme="<theme>">`** with a sensible default
+   (medicine→clinical, language→linguistic, code→midnight).
+3. **Include the `?theme=…` URL-param + localStorage switcher script**
+   so the harness and the user can flip themes at runtime.
+4. **NEVER define hardcoded color hex / rgb in `:root`.** All component
+   styles MUST consume `var(--chiron-*)` tokens (or a thin alias layer
+   that maps to them). This is what makes themes swappable.
+5. **Self-check before writing:** `grep -E '#[0-9a-fA-F]{3,6}' lesson.html`
+   should return ONLY matches inside theme-block definitions, never inside
+   component CSS.
+
+**Reference output that satisfies the contract:**
+`~/dev/projects/chiron/lessons/klinefelter-syndrome-2026-05-03/lesson.html`
+
+**Why blocking:** The 2026-05-03 Klinefelter lesson initially shipped with
+hardcoded dark colors and bypassed the entire theme system. This rule prevents
+recurrence. Any future generation that fails self-check #5 must be refactored
+before delivery.
+
+---
+
+
 Chiron turns any source — a code repo, a medical PDF, an Italian vocab list, a
 research paper — into a self-contained interactive lesson that runs in any
 modern browser. It is built around three foundational facts:

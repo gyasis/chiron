@@ -1,0 +1,24 @@
+{
+  "name": "chiron-runtime",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Chiron lesson runtime — Svelte 5 + Vite + Tailwind, builds to single self-contained HTML.",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "build:lesson": "node ../scripts/build-lesson.mjs",
+    "preview": "vite preview"
+  },
+  "devDependencies": {
+    "@sveltejs/vite-plugin-svelte": "^5.0.0",
+    "@tailwindcss/postcss": "^4.0.0",
+    "autoprefixer": "^10.4.20",
+    "postcss": "^8.4.49",
+    "svelte": "^5.1.0",
+    "tailwindcss": "^4.0.0",
+    "typescript": "^5.6.0",
+    "vite": "^6.0.0",
+    "vite-plugin-singlefile": "^2.1.0"
+  }
+}

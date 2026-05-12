@@ -1,0 +1,76 @@
+@import "tailwindcss";
+
+/* ============================================================
+   CHIRON TOKEN CONTRACT
+   The bridge between chiron's --chiron-* tokens and Tailwind.
+   Themes still live in skill/shell/themes/*.css and are referenced
+   by data-theme="...". This @theme block exposes those tokens to
+   Tailwind utilities (e.g., bg-bg, text-fg, border-border).
+   ============================================================ */
+
+@theme {
+  --color-bg:           var(--chiron-bg, #ffffff);
+  --color-surface:      var(--chiron-surface, #f8fafc);
+  --color-elevated:     var(--chiron-elevated, #eef4fb);
+  --color-fg:           var(--chiron-fg, #0f1f33);
+  --color-fg-secondary: var(--chiron-fg-secondary, #334155);
+  --color-muted:        var(--chiron-muted, #64748b);
+  --color-accent:       var(--chiron-accent, #1e6fbf);
+  --color-accent-light: var(--chiron-accent-light, #3a8edb);
+  --color-warm-accent:  var(--chiron-warm-accent, #0d9488);
+  --color-success:      var(--chiron-success, #15803d);
+  --color-warning:      var(--chiron-warning, #b45309);
+  --color-error:        var(--chiron-error, #b91c1c);
+  --color-info:         var(--chiron-info, #1e6fbf);
+  --color-border:       var(--chiron-border, #d8e3f0);
+  --color-divider:      var(--chiron-divider, #e6eef7);
+}
+
+/* ============================================================
+   THEME PALETTES — sourced from skill/shell/themes/*.css
+   Inlined here so the launcher is self-contained per rule #3.
+   Same content as the source-of-truth CSS files.
+   ============================================================ */
+
+:root, [data-theme="clinical"] {
+  --chiron-bg: #ffffff; --chiron-surface: #f8fafc; --chiron-elevated: #eef4fb;
+  --chiron-fg: #0f1f33; --chiron-fg-secondary: #334155; --chiron-muted: #64748b;
+  --chiron-accent: #1e6fbf; --chiron-accent-light: #3a8edb; --chiron-warm-accent: #0d9488;
+  --chiron-success: #15803d; --chiron-warning: #b45309; --chiron-error: #b91c1c; --chiron-info: #1e6fbf;
+  --chiron-border: #d8e3f0; --chiron-divider: #e6eef7;
+}
+[data-theme="midnight"] {
+  --chiron-bg: #0f0f1a; --chiron-surface: #1a1a2e; --chiron-elevated: #252540;
+  --chiron-fg: #f1f5f9; --chiron-fg-secondary: #94a3b8; --chiron-muted: #64748b;
+  --chiron-accent: #8b5cf6; --chiron-accent-light: #a78bfa; --chiron-warm-accent: #f59e0b;
+  --chiron-success: #22c55e; --chiron-warning: #f59e0b; --chiron-error: #ef4444; --chiron-info: #38bdf8;
+  --chiron-border: #2e2e4a; --chiron-divider: #1f1f35;
+}
+[data-theme="warm-paper"] {
+  --chiron-bg: #faf5f0; --chiron-surface: #ffffff; --chiron-elevated: #f5ebe0;
+  --chiron-fg: #1c1917; --chiron-fg-secondary: #44403c; --chiron-muted: #78716c;
+  --chiron-accent: #c2410c; --chiron-accent-light: #ea580c; --chiron-warm-accent: #92400e;
+  --chiron-success: #166534; --chiron-warning: #b45309; --chiron-error: #b91c1c; --chiron-info: #1e6fbf;
+  --chiron-border: #e7d8c5; --chiron-divider: #f0e4d3;
+}
+[data-theme="linguistic"] {
+  --chiron-bg: #fbf5ec; --chiron-surface: #ffffff; --chiron-elevated: #f3e9d8;
+  --chiron-fg: #2b1d12; --chiron-fg-secondary: #5b4632; --chiron-muted: #8a7560;
+  --chiron-accent: #b3522e; --chiron-accent-light: #d97a4f; --chiron-warm-accent: #6b8e4e;
+  --chiron-success: #4f7a3a; --chiron-warning: #b45309; --chiron-error: #a93423; --chiron-info: #386b8a;
+  --chiron-border: #e6d5b8; --chiron-divider: #efe2c9;
+}
+[data-theme="ocean"] {
+  --chiron-bg: #0c1929; --chiron-surface: #132337; --chiron-elevated: #1b3148;
+  --chiron-fg: #e2e8f0; --chiron-fg-secondary: #94a3b8; --chiron-muted: #64748b;
+  --chiron-accent: #06b6d4; --chiron-accent-light: #22d3ee; --chiron-warm-accent: #f59e0b;
+  --chiron-success: #22c55e; --chiron-warning: #f59e0b; --chiron-error: #ef4444; --chiron-info: #38bdf8;
+  --chiron-border: #1f3a55; --chiron-divider: #16293e;
+}
+
+body {
+  background: var(--chiron-bg);
+  color: var(--chiron-fg);
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}

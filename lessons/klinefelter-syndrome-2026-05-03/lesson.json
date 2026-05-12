@@ -1,0 +1,648 @@
+{
+  "meta": {
+    "id": "klinefelter-syndrome-2026-05-03",
+    "title": "Klinefelter Syndrome",
+    "domain": "medicine",
+    "subMode": "AMBOSS",
+    "generated": "2026-05-03",
+    "learner": "gyasisutton",
+    "sourceGrounding": "parent-LLM"
+  },
+  "chapters": [
+    {
+      "id": "ch1",
+      "number": 1,
+      "title": "Definition & Epidemiology",
+      "objective": "Define Klinefelter syndrome and place it among sex chromosome aneuploidies.",
+      "blocks": [
+        { "type": "objective", "text": "Define Klinefelter syndrome and place it among sex chromosome aneuploidies." },
+        { "type": "paragraph", "html": "<strong>Klinefelter syndrome (KS)</strong> is a chromosomal disorder of phenotypic males caused by the presence of one or more extra X chromosomes — most commonly the karyotype <strong>47,XXY</strong>. It is the most common sex chromosome aneuploidy in males and the most common genetic cause of male hypogonadism and infertility." },
+        { "type": "highYield", "items": [
+          "<strong>Prevalence:</strong> ~1 in 500–1,000 live male births",
+          "<strong>Most common sex chromosome aneuploidy in males</strong>",
+          "<strong>Underdiagnosed:</strong> ~75% of affected men are never diagnosed in their lifetime; many present as adults with infertility",
+          "<strong>Variants:</strong> 48,XXXY • 48,XXYY • 49,XXXXY • mosaic 46,XY/47,XXY (milder phenotype, may be fertile)"
+        ] },
+        { "type": "heading", "level": 2, "text": "Where it sits in the differential of male hypogonadism" },
+        { "type": "table",
+          "headers": ["Cause", "FSH/LH", "Testosterone", "Mechanism"],
+          "rows": [
+            ["<strong>Klinefelter (47,XXY)</strong>", "↑↑", "↓ / low-normal", "Primary testicular failure"],
+            ["Kallmann syndrome", "↓", "↓", "GnRH neuron migration defect (hypothalamic)"],
+            ["Pituitary tumor", "↓", "↓", "Secondary hypogonadism"],
+            ["Anabolic steroid use", "↓", "↓ endogenous", "HPG axis suppression"],
+            ["Cryptorchidism / orchitis", "↑", "↓", "Acquired primary failure"]
+          ] },
+        { "type": "mnemonic", "text": "\"Klinefelter has Klimbing FSH\" — primary testicular failure → high gonadotropins (hyper<u>gonado</u>tropic <u>hypo</u>gonadism)." },
+        { "type": "quiz", "quiz": {
+          "qid": "ch1q1", "qhead": "Question 1 of 17",
+          "qstem": "Klinefelter syndrome is best classified as which of the following?",
+          "options": [
+            { "key": "a", "text": "Hypogonadotropic hypogonadism" },
+            { "key": "b", "text": "Hypergonadotropic hypogonadism" },
+            { "key": "c", "text": "Eugonadal infertility" },
+            { "key": "d", "text": "Hyperandrogenism" },
+            { "key": "e", "text": "Disorder of sexual differentiation with ambiguous genitalia" }
+          ],
+          "correct": "b",
+          "feedback": {
+            "headline": "Correct: B — Hypergonadotropic hypogonadism",
+            "body": "The defect is at the <strong>testis</strong> (primary failure). Because the testes cannot produce adequate testosterone or inhibin, negative feedback on the hypothalamus and pituitary is lost → FSH and LH rise.",
+            "distractors": [
+              { "key": "a", "body": "Describes Kallmann syndrome or pituitary disease, where the lesion is central and gonadotropins are inappropriately low." },
+              { "key": "b", "body": "Correct — primary testicular failure." },
+              { "key": "c", "body": "Implies normal hormones (e.g., obstructive azoospermia from CBAVD in CF). KS shows abnormal hormones." },
+              { "key": "d", "body": "KS is hypoandrogenic. Hyperandrogenism in a 46,XY male suggests an androgen-secreting tumor or CAH." },
+              { "key": "e", "body": "KS patients have unambiguous male external genitalia. Ambiguity suggests androgen insensitivity, 5α-reductase deficiency, or CAH." }
+            ]
+          }
+        } },
+        { "type": "quiz", "quiz": {
+          "qid": "ch1q2", "qhead": "Question 2 of 17",
+          "qstem": "Which statement about the epidemiology of Klinefelter syndrome is most accurate?",
+          "options": [
+            { "key": "a", "text": "It is rare, occurring in ~1 in 50,000 male births" },
+            { "key": "b", "text": "Approximately 95% of cases are diagnosed in childhood" },
+            { "key": "c", "text": "It is the most common sex chromosome aneuploidy in males, with the majority of cases never diagnosed" },
+            { "key": "d", "text": "It exclusively occurs in patients of European ancestry" },
+            { "key": "e", "text": "Maternal age is protective; risk decreases with advancing maternal age" }
+          ],
+          "correct": "c",
+          "feedback": {
+            "headline": "Correct: C",
+            "body": "Prevalence ≈ 1:500–1:1000. Most patients are never diagnosed; many present as adults during fertility workup. <strong>Advanced maternal age</strong> is a risk factor (parallels trisomy 21 etiology — maternal meiotic nondisjunction).",
+            "distractors": [
+              { "key": "a", "body": "Prevalence is ~50–100x higher than stated." },
+              { "key": "b", "body": "Roughly the inverse — ~75% are never diagnosed; pediatric diagnosis is uncommon unless prenatal karyotype was performed." },
+              { "key": "c", "body": "" },
+              { "key": "d", "body": "No ethnic predilection." },
+              { "key": "e", "body": "Reversed — advanced maternal age <em>increases</em> risk." }
+            ]
+          }
+        } }
+      ]
+    },
+    {
+      "id": "ch2",
+      "number": 2,
+      "title": "Genetics & Pathophysiology",
+      "objective": "Trace 47,XXY from meiotic nondisjunction to seminiferous tubule failure.",
+      "blocks": [
+        { "type": "objective", "text": "Trace 47,XXY from meiotic nondisjunction to seminiferous tubule failure." },
+        { "type": "heading", "level": 2, "text": "Origin of the extra X" },
+        { "type": "list", "ordered": false, "items": [
+          "<strong>~50% maternal meiosis I nondisjunction</strong> (homologous chromosomes fail to separate)",
+          "~30% paternal meiosis I (X and Y fail to separate)",
+          "~20% post-zygotic mitotic errors → <strong>mosaicism</strong> (46,XY/47,XXY) — milder phenotype, occasional fertility"
+        ] },
+        { "type": "heading", "level": 2, "text": "From karyotype to phenotype" },
+        { "type": "list", "ordered": true, "items": [
+          "<strong>Extra X →</strong> One X is randomly inactivated (Lyonization) → forms a Barr body. KS patients have <strong>1 Barr body</strong>.",
+          "Despite inactivation, genes that <strong>escape X-inactivation</strong> (especially in pseudoautosomal regions, e.g. <em>SHOX</em>) are expressed in double dose → tall stature.",
+          "Seminiferous tubules undergo progressive <strong>hyalinization and fibrosis</strong> beginning at puberty → azoospermia.",
+          "Leydig cells dysfunction → ↓ testosterone → ↑ LH → aromatization to estradiol → <strong>gynecomastia</strong>.",
+          "Sertoli cell loss → ↓ inhibin B → ↑↑ FSH (FSH rises higher than LH)."
+        ] },
+        { "type": "highYield", "items": [
+          "<strong>Barr body count = (number of X chromosomes) − 1.</strong> KS = 1; normal female = 1; Turner (45,X) = 0.",
+          "<strong>FSH typically rises higher than LH</strong> in KS because Sertoli cells fail before Leydig cells.",
+          "Mosaic 46,XY/47,XXY may have <strong>preserved spermatogenesis</strong> in 46,XY clones → occasional natural fertility."
+        ] },
+        { "type": "dialogue", "turns": [
+          { "persona": "alice", "speaker": "Alice", "body": "Wait — if one X gets inactivated, why is there any phenotype at all? Shouldn't it be silent?" },
+          { "persona": "bob", "speaker": "Bob", "body": "I had the same question. Not <em>every gene</em> on the inactive X is silenced. Pseudoautosomal-region genes like <strong>SHOX</strong> escape and end up dosage-doubled. That's why bones grow long." },
+          { "persona": "tutor", "speaker": "Dr. Mendel", "body": "Exactly. Lyonization is incomplete. ~15–25% of X-linked genes escape inactivation, and dosage of those drives the somatic phenotype. The hypogonadism is a downstream consequence of progressive germ cell apoptosis from puberty onward." }
+        ] },
+        { "type": "quiz", "quiz": {
+          "qid": "ch2q1", "qhead": "Question 3 of 17",
+          "qstem": "A 32-year-old man with 47,XXY karyotype is most likely to inherit the supernumerary X chromosome through which mechanism?",
+          "options": [
+            { "key": "a", "text": "Paternal meiosis II nondisjunction" },
+            { "key": "b", "text": "Maternal meiosis I nondisjunction" },
+            { "key": "c", "text": "Post-zygotic mitotic error" },
+            { "key": "d", "text": "Robertsonian translocation" },
+            { "key": "e", "text": "Uniparental disomy" }
+          ],
+          "correct": "b",
+          "feedback": {
+            "headline": "Correct: B — Maternal meiosis I nondisjunction",
+            "body": "About 50% of cases. Paternal meiosis I is second most common (~30%); post-zygotic errors cause mosaicism (~20%).",
+            "distractors": [
+              { "key": "a", "body": "Paternal meiosis II would produce 47,XYY, not 47,XXY." },
+              { "key": "b", "body": "" },
+              { "key": "c", "body": "Causes mosaicism (46,XY/47,XXY), not pure 47,XXY — second-most likely but not most." },
+              { "key": "d", "body": "Robertsonian translocations involve acrocentric chromosomes (13/14/15/21/22). The X is not acrocentric." },
+              { "key": "e", "body": "UPD = both copies of a chromosome from one parent. Not the mechanism for KS." }
+            ]
+          }
+        } },
+        { "type": "quiz", "quiz": {
+          "qid": "ch2q2", "qhead": "Question 4 of 17",
+          "qstem": "Which laboratory pattern best characterizes the hormonal milieu of an adult man with classic Klinefelter syndrome?",
+          "options": [
+            { "key": "a", "text": "↓ FSH, ↓ LH, ↓ testosterone" },
+            { "key": "b", "text": "Normal FSH, normal LH, ↓ testosterone" },
+            { "key": "c", "text": "↑ FSH, ↑ LH, ↑ testosterone" },
+            { "key": "d", "text": "↑↑ FSH, ↑ LH, ↓ testosterone, ↑ estradiol" },
+            { "key": "e", "text": "↑ FSH only; LH and testosterone normal" }
+          ],
+          "correct": "d",
+          "feedback": {
+            "headline": "Correct: D",
+            "body": "Sertoli cell failure raises FSH first and highest (loss of inhibin B). Leydig dysfunction lowers T → LH rises compensatorily. Aromatization elevates estradiol → gynecomastia.",
+            "distractors": [
+              { "key": "a", "body": "Hypogonadotropic — Kallmann or pituitary disease." },
+              { "key": "b", "body": "Suggests subtle/early failure or analytical issue." },
+              { "key": "c", "body": "Hyperandrogenism with high gonadotropins is non-physiologic; consider exogenous gonadotropin or hCG-secreting tumor." },
+              { "key": "d", "body": "" },
+              { "key": "e", "body": "Isolated FSH elevation seen in early Sertoli-only syndrome but doesn't capture classic KS." }
+            ]
+          }
+        } },
+        { "type": "heading", "level": 2, "text": "Concept-map flashcards" },
+        { "type": "deck", "cards": [
+          { "front": "SHOX gene", "back": "Escapes X-inactivation; double dose → tall stature with eunuchoid proportions" },
+          { "front": "Inhibin B", "back": "Sertoli cell hormone; provides negative feedback on FSH. Loss → ↑↑ FSH" },
+          { "front": "Aromatase", "back": "Converts testosterone → estradiol; activity not suppressed in KS → gynecomastia" },
+          { "front": "Barr body", "back": "Inactivated X. Count = (X chromosomes) − 1. KS = 1 Barr body." }
+        ] }
+      ]
+    },
+    {
+      "id": "ch3",
+      "number": 3,
+      "title": "Clinical Presentation",
+      "objective": "Recognize the age-stratified phenotype from infancy through adulthood.",
+      "blocks": [
+        { "type": "objective", "text": "Recognize the age-stratified phenotype from infancy through adulthood." },
+        { "type": "heading", "level": 2, "text": "Age-stratified findings" },
+        { "type": "table",
+          "headers": ["Age", "Findings"],
+          "rows": [
+            ["Infancy", "Often normal. Subtle hypotonia, mildly small phallus, occasionally cryptorchidism. Most are missed."],
+            ["Childhood", "Tall stature with long legs (out of proportion to trunk). Mild language delay; expressive > receptive deficit. Social/behavioral concerns."],
+            ["Adolescence", "Incomplete or delayed puberty; small firm testes (cardinal sign); gynecomastia in ~50%; sparse body hair; high-pitched voice in some."],
+            ["Adulthood", "Infertility (most common presentation), low libido, fatigue, decreased muscle mass, osteopenia. Increased risk of metabolic and autoimmune disease."]
+          ] },
+        { "type": "heading", "level": 2, "text": "Cardinal signs" },
+        { "type": "list", "ordered": false, "items": [
+          "<strong>Small, firm testes</strong> — typically <strong>&lt;6 mL</strong> (often &lt;4 mL); the most specific physical finding.",
+          "<strong>Tall stature with eunuchoid proportions</strong> — arm span exceeds height by &gt;2 cm.",
+          "<strong>Gynecomastia</strong> — true glandular breast tissue, often bilateral.",
+          "<strong>Azoospermia / infertility</strong> — &gt;90% have non-obstructive azoospermia.",
+          "<strong>Cognitive/language profile</strong> — verbal IQ typically lower than performance IQ; reading and expressive language delays."
+        ] },
+        { "type": "pearl", "text": "In an adult man presenting with infertility + small firm testes + gynecomastia, <strong>karyotype before any other endocrine test</strong> in the right clinical setting." },
+        { "type": "mnemonic", "text": "\"Tall, thin, testes tiny\" — three Ts of Klinefelter on physical exam." },
+        { "type": "quiz", "quiz": {
+          "qid": "ch3q1", "qhead": "Question 5 of 17",
+          "qstem": "Which physical finding is the MOST specific for Klinefelter syndrome in an adult male?",
+          "options": [
+            { "key": "a", "text": "Tall stature" },
+            { "key": "b", "text": "Bilateral gynecomastia" },
+            { "key": "c", "text": "Small firm testes (&lt;6 mL)" },
+            { "key": "d", "text": "Decreased body hair" },
+            { "key": "e", "text": "Eunuchoid body proportions" }
+          ],
+          "correct": "c",
+          "feedback": {
+            "headline": "Correct: C — Small firm testes",
+            "body": "Each finding is consistent with KS, but small firm testes are <strong>most specific</strong>. Firmness reflects tubular hyalinization characteristic of KS.",
+            "distractors": [
+              { "key": "a", "body": "Many causes (constitutional, Marfan, homocystinuria, gigantism)." },
+              { "key": "b", "body": "Common in puberty, obesity, drug-induced, cirrhosis, hCG tumors. Not specific." },
+              { "key": "c", "body": "" },
+              { "key": "d", "body": "Nonspecific feature of any chronic hypogonadism." },
+              { "key": "e", "body": "Also seen in Marfan, panhypopituitarism with pre-pubertal onset." }
+            ]
+          }
+        } },
+        { "type": "quiz", "quiz": {
+          "qid": "ch3q2", "qhead": "Question 6 of 17",
+          "qstem": "A 28-year-old man presents to a fertility clinic after 2 years of unsuccessful conception. Examination reveals tall stature, sparse facial hair, mild bilateral gynecomastia, bilateral testes ~3 mL. Semen analysis: azoospermia. Which cognitive profile is MOST likely?",
+          "options": [
+            { "key": "a", "text": "Severe intellectual disability with IQ &lt;50" },
+            { "key": "b", "text": "Normal-range IQ with relative weakness in expressive language" },
+            { "key": "c", "text": "Selective deficit in visuospatial reasoning" },
+            { "key": "d", "text": "Specific learning disability in mathematics" },
+            { "key": "e", "text": "No measurable difference from population norms" }
+          ],
+          "correct": "b",
+          "feedback": {
+            "headline": "Correct: B",
+            "body": "Most 47,XXY men have IQ in the normal range with verbal IQ &lt; performance IQ and expressive language delay. Severe intellectual disability is uncommon in 47,XXY but more frequent in higher-X variants.",
+            "distractors": [
+              { "key": "a", "body": "Wrong — typical of higher-X variants (XXXXY)." },
+              { "key": "b", "body": "" },
+              { "key": "c", "body": "Visuospatial reasoning is typically a relative <em>strength</em>." },
+              { "key": "d", "body": "Dyscalculia may occur but is not the dominant deficit." },
+              { "key": "e", "body": "A subtle but reproducible difference exists." }
+            ]
+          }
+        } },
+        { "type": "quiz", "quiz": {
+          "qid": "ch3q3", "qhead": "Question 7 of 17",
+          "qstem": "During a sports physical, a 16-year-old has height 97th percentile, arm span 5 cm &gt; height, sparse pubic hair (Tanner II), bilateral testes ~3 mL (Tanner I), \"shy\", reading struggles. Which BEST explains the disproportionate growth?",
+          "options": [
+            { "key": "a", "text": "GH excess from a pituitary adenoma" },
+            { "key": "b", "text": "Constitutional tall stature" },
+            { "key": "c", "text": "Marfan syndrome (FBN1 mutation)" },
+            { "key": "d", "text": "Delayed epiphyseal closure due to androgen deficiency, plus dosage effect of SHOX gene escape from X-inactivation" },
+            { "key": "e", "text": "Familial hypogonadotropic hypogonadism" }
+          ],
+          "correct": "d",
+          "feedback": {
+            "headline": "Correct: D",
+            "body": "Classic KS picture. Two mechanisms: <strong>SHOX dosage</strong> drives long-bone growth, and <strong>delayed epiphyseal fusion</strong> from low T means epiphyses stay open longer.",
+            "distractors": [
+              { "key": "a", "body": "GH excess (gigantism) features acromegaloid changes, not delayed puberty." },
+              { "key": "b", "body": "Doesn't explain delayed puberty or small testes." },
+              { "key": "c", "body": "Marfan has aortic root dilation, lens dislocation, joint hypermobility." },
+              { "key": "d", "body": "" },
+              { "key": "e", "body": "Kallmann/HH delays puberty but doesn't drive eunuchoid <em>tall</em> stature with SHOX-style proportions; gonadotropins would be low." }
+            ]
+          }
+        } }
+      ]
+    },
+    {
+      "id": "ch4",
+      "number": 4,
+      "title": "Diagnosis",
+      "objective": "Order and interpret the diagnostic workup. Karyotype is confirmatory.",
+      "blocks": [
+        { "type": "objective", "text": "Order and interpret the diagnostic workup. Karyotype is confirmatory." },
+        { "type": "heading", "level": 2, "text": "Workup tier" },
+        { "type": "list", "ordered": true, "items": [
+          "<strong>Targeted history & exam</strong> — fertility, libido, pubertal milestones, school. Measure testes (orchidometer/US), span vs height, Tanner.",
+          "<strong>Hormones</strong> (morning): total T, free T, LH, FSH, estradiol, SHBG. Repeat low T to confirm.",
+          "<strong>Semen analysis</strong> — non-obstructive azoospermia in &gt;90%.",
+          "<strong>Karyotype</strong> — peripheral blood lymphocytes, ≥30 metaphases. <strong>Definitive diagnostic test.</strong>",
+          "<strong>Optional:</strong> FISH if borderline; baseline DEXA, fasting glucose, lipids; thyroid function; testicular US if mass."
+        ] },
+        { "type": "heading", "level": 2, "text": "Lab pattern recap" },
+        { "type": "table",
+          "headers": ["Marker", "Direction", "Why"],
+          "rows": [
+            ["Total testosterone", "↓ or low-normal", "Leydig cell dysfunction"],
+            ["Free testosterone", "↓", "Total ↓ + SHBG ↑"],
+            ["FSH", "↑↑", "Sertoli cell loss; ↓ inhibin B"],
+            ["LH", "↑", "Compensatory rise"],
+            ["Estradiol", "Normal–↑", "Aromatization"],
+            ["SHBG", "↑", "↑ E2:T ratio"],
+            ["Inhibin B", "↓", "Sertoli failure"]
+          ] },
+        { "type": "highYield", "items": [
+          "<strong>Karyotype is the gold standard.</strong> Hormones support but do not confirm.",
+          "Confirm low T with a <strong>second morning sample</strong> before TRT.",
+          "Order ≥30 metaphases to detect <strong>mosaicism</strong>.",
+          "Consider <strong>prenatal diagnosis</strong> via amnio/CVS if abnormal NIPT."
+        ] },
+        { "type": "quiz", "quiz": {
+          "qid": "ch4q1", "qhead": "Question 8 of 17",
+          "qstem": "Which test definitively confirms Klinefelter syndrome?",
+          "options": [
+            { "key": "a", "text": "Karyotype on peripheral blood" },
+            { "key": "b", "text": "Serum testosterone &lt; 200 ng/dL" },
+            { "key": "c", "text": "FSH &gt; 30 mIU/mL" },
+            { "key": "d", "text": "Buccal smear demonstrating a Barr body" },
+            { "key": "e", "text": "Testicular biopsy" }
+          ],
+          "correct": "a",
+          "feedback": {
+            "headline": "Correct: A",
+            "body": "Karyotype is the diagnostic gold standard. Hormones support but cannot confirm. Buccal smear is historical and insensitive. Testicular biopsy is for sperm retrieval (TESE), not diagnosis.",
+            "distractors": [
+              { "key": "a", "body": "" },
+              { "key": "b", "body": "Suggests hypogonadism but is nonspecific." },
+              { "key": "c", "body": "Confirms primary testicular failure but not the chromosomal cause." },
+              { "key": "d", "body": "Obsolete screening method." },
+              { "key": "e", "body": "Therapeutic (TESE), not diagnostic." }
+            ]
+          }
+        } },
+        { "type": "quiz", "quiz": {
+          "qid": "ch4q2", "qhead": "Question 9 of 17",
+          "qstem": "A 24-year-old has T 240 ng/dL (low), LH 18 (high), FSH 42 (high). Karyotype on 30 cells: 28 cells 47,XXY and 2 cells 46,XY. The MOST appropriate interpretation is:",
+          "options": [
+            { "key": "a", "text": "Lab error; repeat karyotype" },
+            { "key": "b", "text": "Mosaic Klinefelter (46,XY/47,XXY); fertility counseling reflects possible residual spermatogenesis" },
+            { "key": "c", "text": "Normal male variant with hormonal disturbance" },
+            { "key": "d", "text": "XX male syndrome" },
+            { "key": "e", "text": "Robertsonian translocation" }
+          ],
+          "correct": "b",
+          "feedback": {
+            "headline": "Correct: B",
+            "body": "Mixed cell lines = mosaicism. Fertility prognosis is better than pure 47,XXY because 46,XY clones may support some spermatogenesis.",
+            "distractors": [
+              { "key": "a", "body": "Mosaicism is real and clinically meaningful." },
+              { "key": "b", "body": "" },
+              { "key": "c", "body": "Hormones are clearly abnormal in primary failure pattern." },
+              { "key": "d", "body": "XX male = 46,XX with SRY translocation." },
+              { "key": "e", "body": "Acrocentric chromosomes only; X is not acrocentric." }
+            ]
+          }
+        } },
+        { "type": "quiz", "quiz": {
+          "qid": "ch4q3", "qhead": "Question 10 of 17",
+          "qstem": "In addition to karyotype, what is the MOST important screening test at initial KS diagnosis in an adult?",
+          "options": [
+            { "key": "a", "text": "Echocardiogram" },
+            { "key": "b", "text": "CT chest for mediastinal mass" },
+            { "key": "c", "text": "Mammogram" },
+            { "key": "d", "text": "Bone mineral density (DEXA scan)" },
+            { "key": "e", "text": "Brain MRI" }
+          ],
+          "correct": "d",
+          "feedback": {
+            "headline": "Correct: D",
+            "body": "Hypogonadism → low BMD. Baseline DEXA informs whether T replacement plus calcium/vitamin D suffices or whether bisphosphonates are needed.",
+            "distractors": [
+              { "key": "a", "body": "Echo only if MVP suspected — not routine." },
+              { "key": "b", "body": "Mediastinal GCT screening is symptom-driven." },
+              { "key": "c", "body": "Routine mammography in men is not standard." },
+              { "key": "d", "body": "" },
+              { "key": "e", "body": "Not indicated unless neurologic findings." }
+            ]
+          }
+        } }
+      ]
+    },
+    {
+      "id": "ch5",
+      "number": 5,
+      "title": "Management",
+      "objective": "Apply guideline-directed care across endocrine, fertility, and psychosocial axes.",
+      "blocks": [
+        { "type": "objective", "text": "Apply guideline-directed care across endocrine, fertility, and psychosocial axes." },
+        { "type": "heading", "level": 2, "text": "Pillars of management" },
+        { "type": "list", "ordered": true, "items": [
+          "<strong>Testosterone replacement (TRT)</strong> — IM, transdermal, or pellets. Goal: mid-normal serum T. Monitor hematocrit, PSA, lipids, sleep apnea. <strong>Caveat:</strong> TRT does NOT restore fertility and CAN suppress spermatogenesis.",
+          "<strong>Fertility</strong> — refer to reproductive endocrinology. <strong>mTESE + ICSI</strong> retrieves sperm in ~50% of non-mosaic 47,XXY. Best yield before age 35.",
+          "<strong>Bone health</strong> — DEXA at diagnosis, q1–2y. Calcium 1000–1200 mg/d + vitamin D. Bisphosphonates if osteoporotic.",
+          "<strong>Metabolic</strong> — annual fasting glucose, lipid panel, BP, BMI. KS confers ~3x relative risk of T2DM.",
+          "<strong>Breast cancer surveillance</strong> — annual clinical breast exam.",
+          "<strong>Psychosocial</strong> — speech-language therapy in childhood; academic accommodations; screen for depression/anxiety/ADHD.",
+          "<strong>Cardiovascular</strong> — listen for MVP murmur. Lifelong VTE awareness.",
+          "<strong>Genetic counseling</strong> — for patient and partner."
+        ] },
+        { "type": "pearl", "text": "If a young man with KS asks \"can I have biological children?\" — the answer is \"possibly, with help, and the window is now.\" mTESE+ICSI yield drops with age. Don't defer the fertility conversation behind the testosterone conversation." },
+        { "type": "highYield", "items": [
+          "<strong>Bank sperm or perform TESE BEFORE starting testosterone</strong> — TRT suppresses spermatogenesis.",
+          "Goal of TRT: <strong>mid-normal</strong> total testosterone.",
+          "Monitor: <strong>hematocrit, PSA, lipids, sleep apnea</strong> on TRT.",
+          "Lifelong specialist follow-up: endocrinology + reproductive medicine + primary care."
+        ] },
+        { "type": "quiz", "quiz": {
+          "qid": "ch5q1", "qhead": "Question 11 of 17",
+          "qstem": "A 22-year-old just diagnosed with non-mosaic 47,XXY KS asks about both fertility and \"feeling normal.\" What is the MOST appropriate sequence?",
+          "options": [
+            { "key": "a", "text": "Start TRT immediately; pursue fertility later" },
+            { "key": "b", "text": "Refer for sperm cryo or TESE BEFORE initiating TRT" },
+            { "key": "c", "text": "Start clomiphene citrate as first-line for both" },
+            { "key": "d", "text": "Begin hCG injections to suppress LH" },
+            { "key": "e", "text": "Defer all therapy until age 30" }
+          ],
+          "correct": "b",
+          "feedback": {
+            "headline": "Correct: B",
+            "body": "Exogenous T suppresses gonadotropins → suppresses any residual spermatogenesis. <strong>Always preserve fertility options first.</strong>",
+            "distractors": [
+              { "key": "a", "body": "Common error — T first then fertility is the wrong order." },
+              { "key": "b", "body": "" },
+              { "key": "c", "body": "Clomiphene can raise T in some hypogonadal men but is not first-line in primary failure." },
+              { "key": "d", "body": "hCG is an adjunct in fertility protocols, not first-line for symptoms." },
+              { "key": "e", "body": "Delays needed therapy." }
+            ]
+          }
+        } },
+        { "type": "quiz", "quiz": {
+          "qid": "ch5q2", "qhead": "Question 12 of 17",
+          "qstem": "Which is a recognized adverse effect of TRT requiring routine monitoring?",
+          "options": [
+            { "key": "a", "text": "Hypocalcemia" },
+            { "key": "b", "text": "Adrenal insufficiency" },
+            { "key": "c", "text": "Polycythemia (erythrocytosis)" },
+            { "key": "d", "text": "Hypothyroidism" },
+            { "key": "e", "text": "Hypoglycemia" }
+          ],
+          "correct": "c",
+          "feedback": {
+            "headline": "Correct: C",
+            "body": "Testosterone stimulates EPO and bone marrow erythropoiesis → polycythemia and thrombosis. Monitor hematocrit at baseline, 3–6 months, then annually. Hold/reduce TRT if Hct &gt;54%.",
+            "distractors": [
+              { "key": "a", "body": "Not a TRT effect." },
+              { "key": "b", "body": "Not caused by TRT." },
+              { "key": "c", "body": "" },
+              { "key": "d", "body": "Not caused by TRT; KS has elevated autoimmune thyroid risk independently." },
+              { "key": "e", "body": "Not a TRT effect." }
+            ]
+          }
+        } }
+      ]
+    },
+    {
+      "id": "ch6",
+      "number": 6,
+      "title": "Complications & Comorbidities",
+      "objective": "Anticipate and screen for the long tail of associated conditions.",
+      "blocks": [
+        { "type": "objective", "text": "Anticipate and screen for the long tail of associated conditions." },
+        { "type": "heading", "level": 2, "text": "Increased risks in Klinefelter syndrome" },
+        { "type": "table",
+          "headers": ["Condition", "Magnitude / Note", "Why it matters"],
+          "rows": [
+            ["<strong>Male breast cancer</strong>", "~20–50× baseline male risk (~1% lifetime)", "Annual clinical breast exam; low threshold for imaging"],
+            ["<strong>Mediastinal germ cell tumors</strong>", "~50× baseline; classically extragonadal", "Investigate mediastinal mass, β-hCG↑, or worsening gynecomastia"],
+            ["Osteoporosis / osteopenia", "Common; chronic hypogonadism", "DEXA, calcium/vit D, treat if osteoporotic"],
+            ["Type 2 DM", "~3× relative risk; metabolic syndrome", "Annual glucose, lipid screening"],
+            ["VTE", "~3–4× baseline", "Higher risk in surgery/hospitalization"],
+            ["Autoimmune", "↑ SLE, RA, T1DM, Sjögren", "Investigate when symptomatic"],
+            ["Mitral valve prolapse", "Reported in ~50% in some series", "Auscultate; echo if murmur"],
+            ["Psychiatric", "↑ depression, anxiety, ADHD, autism", "Screen and treat — major QoL driver"],
+            ["Non-Hodgkin lymphoma", "Modest ↑ risk", "Awareness only"]
+          ] },
+        { "type": "highYield", "items": [
+          "<strong>Mediastinal germ cell tumor + KS</strong> is a buzzword pairing — extragonadal site is classic.",
+          "Male breast cancer absolute lifetime risk in KS approaches that of average woman in some series.",
+          "The metabolic-vascular cluster (T2DM + dyslipidemia + VTE + obesity) drives most excess mortality."
+        ] },
+        { "type": "quiz", "quiz": {
+          "qid": "ch6q1", "qhead": "Question 13 of 17",
+          "qstem": "A 19-year-old with known 47,XXY presents with shortness of breath, anterior chest discomfort, worsening gynecomastia over 3 months. CXR: 6 cm anterior mediastinal mass. β-hCG markedly elevated. MOST likely diagnosis?",
+          "options": [
+            { "key": "a", "text": "Thymoma" },
+            { "key": "b", "text": "Mediastinal (extragonadal) non-seminomatous germ cell tumor" },
+            { "key": "c", "text": "Hodgkin lymphoma" },
+            { "key": "d", "text": "Bronchogenic carcinoma" },
+            { "key": "e", "text": "Tuberculous lymphadenitis" }
+          ],
+          "correct": "b",
+          "feedback": {
+            "headline": "Correct: B",
+            "body": "<strong>KS + anterior mediastinal mass + ↑ β-hCG</strong> is a classic AMBOSS/USMLE pairing. β-hCG also explains worsening gynecomastia (paraneoplastic).",
+            "distractors": [
+              { "key": "a", "body": "Thymoma doesn't elevate β-hCG; classically associated with myasthenia gravis." },
+              { "key": "b", "body": "" },
+              { "key": "c", "body": "Lymphoma typically without β-hCG elevation; B-symptoms more characteristic." },
+              { "key": "d", "body": "At this age and hormonal profile, highly unlikely." },
+              { "key": "e", "body": "TB has constitutional symptoms; β-hCG normal." }
+            ]
+          }
+        } },
+        { "type": "quiz", "quiz": {
+          "qid": "ch6q2", "qhead": "Question 14 of 17",
+          "qstem": "Which screening recommendation is MOST appropriate for an adult with KS?",
+          "options": [
+            { "key": "a", "text": "Annual mammography starting at age 30" },
+            { "key": "b", "text": "Annual chest CT for germ cell tumor surveillance" },
+            { "key": "c", "text": "Annual clinical breast exam, fasting metabolic panel, periodic DEXA" },
+            { "key": "d", "text": "Quarterly serum β-hCG" },
+            { "key": "e", "text": "Annual colonoscopy starting at age 25" }
+          ],
+          "correct": "c",
+          "feedback": {
+            "headline": "Correct: C",
+            "body": "Routine high-yield surveillance: clinical breast exam annually, metabolic panel annually, DEXA at diagnosis with periodic follow-up. Imaging and tumor markers reserved for evaluation of symptoms.",
+            "distractors": [
+              { "key": "a", "body": "Mammography in men is not standard screening." },
+              { "key": "b", "body": "Imaging is symptom-driven." },
+              { "key": "c", "body": "" },
+              { "key": "d", "body": "Not a standard screening test in KS." },
+              { "key": "e", "body": "CRC screening follows general adult guidelines." }
+            ]
+          }
+        } },
+        { "type": "heading", "level": 2, "text": "Risk-table flashcards" },
+        { "type": "deck", "cards": [
+          { "front": "Mediastinal germ cell tumor", "back": "~50x baseline; presents with mass + ↑ β-hCG ± worsening gynecomastia" },
+          { "front": "Male breast cancer", "back": "~20–50x baseline male risk; annual clinical breast exam" },
+          { "front": "VTE", "back": "~3–4x baseline; consider in perioperative risk" },
+          { "front": "T2DM / metabolic syndrome", "back": "~3x relative risk; major mortality driver" },
+          { "front": "SLE / autoimmune", "back": "↑ SLE, RA, type 1 DM, Sjögren" }
+        ] }
+      ]
+    },
+    {
+      "id": "ch7",
+      "number": 7,
+      "title": "⚡ Deep USMLE-Style Vignette",
+      "objective": "Integrate everything from chapters 1–6 in a multi-step clinical reasoning challenge.",
+      "blocks": [
+        { "type": "objective", "text": "Integrate everything from chapters 1–6 in a multi-step clinical reasoning challenge." },
+        { "type": "deepVignette",
+          "badge": "USMLE STEP 1 / STEP 2 STYLE",
+          "vignette": "A 27-year-old man presents to a fertility clinic for evaluation after 18 months of unsuccessful conception with his wife. He reports decreased libido, fatigue, and recent diagnosis of bilateral breast tenderness. He was always \"the tallest kid in class\" and struggled with reading in elementary school.<br><br>On examination: height 192 cm (6'3\"), arm span 198 cm. Scant facial hair, bilateral non-tender Tanner stage III gynecomastia, bilateral testes ~3 mL, firm. No testicular mass.<br><br><strong>Initial labs (0800):</strong><br>• Total T 180 ng/dL (ref 264–916)<br>• Free T 45 pg/mL (ref 47–244)<br>• LH 22 mIU/mL (ref 1.7–8.6)<br>• FSH 48 mIU/mL (ref 1.5–12.4)<br>• Estradiol 52 pg/mL (ref &lt;39)<br>• Prolactin 14 (ref 4–15) · TSH 2.1 (normal)<br>• Semen analysis: azoospermia (×2)<br><br>Karyotype on 30 peripheral blood metaphases: 47,XXY. Wife asks whether they have any chance of biological parenthood. Patient asks about treatment for fatigue/libido.<br><br><strong>Which is the MOST appropriate next step in management?</strong>",
+          "quiz": {
+            "qid": "ch7q1", "qhead": "Question 15 of 17 — Deep Vignette",
+            "qstem": "",
+            "options": [
+              { "key": "a", "text": "Initiate testosterone replacement (IM testosterone cypionate 200 mg q2w); defer fertility discussion" },
+              { "key": "b", "text": "Begin clomiphene citrate 25 mg daily and reassess in 3 months" },
+              { "key": "c", "text": "Refer for immediate testicular biopsy to confirm Sertoli cell-only syndrome before any other treatment" },
+              { "key": "d", "text": "Refer to reproductive urology for microdissection TESE with cryopreservation, AND coordinate genetic counseling — initiate TRT only after fertility planning" },
+              { "key": "e", "text": "Order CT chest/abdomen/pelvis with contrast to rule out an extragonadal germ cell tumor before treating" }
+            ],
+            "correct": "d",
+            "feedback": {
+              "headline": "Correct: D",
+              "body": "Classic non-mosaic 47,XXY with hypergonadotropic hypogonadism and azoospermia. Two priorities collide: hypogonadal symptoms (fatigue, low libido, gynecomastia) and fertility (mTESE retrieves sperm in ~50% of non-mosaic 47,XXY; yield highest before age 35). The order matters — exogenous T suppresses gonadotropins → suppresses residual intratesticular spermatogenesis. Correct sequence: <strong>fertility planning first</strong>, then TRT.",
+              "distractors": [
+                { "key": "a", "body": "<strong>Single most common error.</strong> Once gonadotropins are suppressed, you compromise spermatogenesis and biological fatherhood. The fertility window must be addressed first or in parallel." },
+                { "key": "b", "body": "Clomiphene (SERM) raises endogenous T in some secondary hypogonadism but is not effective in <em>primary</em> failure (the testes can't respond because tubules are hyalinized). Wrong mechanism for KS." },
+                { "key": "c", "body": "Diagnosis already established by karyotype. Biopsy in KS is therapeutic (mTESE for sperm retrieval), not diagnostic — exactly what choice D recommends." },
+                { "key": "d", "body": "Preserves fertility optionality, addresses the patient's actual question, and sequences therapy correctly." },
+                { "key": "e", "body": "Mediastinal GCT is an associated risk in KS, but no clinical findings here suggest it (no mass, no chest symptoms, no β-hCG elevation, no rapidly worsening gynecomastia). Reflexive imaging without indication is wrong and delays time-sensitive fertility intervention." }
+              ]
+            }
+          }
+        },
+        { "type": "heading", "level": 2, "text": "Two follow-up questions to lock the concept" },
+        { "type": "quiz", "quiz": {
+          "qid": "ch7q2", "qhead": "Question 16 of 17",
+          "qstem": "The wife asks: \"If we use his sperm and ICSI to conceive, what is the chromosomal risk for the baby?\" BEST counseling response?",
+          "options": [
+            { "key": "a", "text": "\"There is no increased risk above the general population.\"" },
+            { "key": "b", "text": "\"There is a small but measurable increased risk of sex chromosome aneuploidy (47,XXY/47,XXX/47,XYY) in offspring; PGT or prenatal diagnosis can be offered.\"" },
+            { "key": "c", "text": "\"All offspring will have Klinefelter syndrome.\"" },
+            { "key": "d", "text": "\"All daughters unaffected; all sons will have Klinefelter syndrome.\"" },
+            { "key": "e", "text": "\"The risk is the same as a couple where the father has a Robertsonian translocation.\"" }
+          ],
+          "correct": "b",
+          "feedback": {
+            "headline": "Correct: B",
+            "body": "Sperm from 47,XXY men show a slightly elevated rate of sex chromosome aneuploidy. Absolute risk is small but real — PGT-A during IVF or prenatal diagnosis (CVS/amnio) can be offered. Counseling should be honest but not catastrophizing.",
+            "distractors": [
+              { "key": "a", "body": "Understates the risk." },
+              { "key": "b", "body": "" },
+              { "key": "c", "body": "Mendelian-style \"all\" doesn't apply to chromosomal aneuploidy with sperm-derived risk." },
+              { "key": "d", "body": "Same — Mendelian framing wrong." },
+              { "key": "e", "body": "Different mechanism (translocations have different inheritance and risks)." }
+            ]
+          }
+        } },
+        { "type": "quiz", "quiz": {
+          "qid": "ch7q3", "qhead": "Question 17 of 17",
+          "qstem": "Three months after starting TRT (post-fertility planning), the patient returns. He feels better — improved energy, libido. Hematocrit was 44% baseline; today 56%. Lipids and PSA stable. MOST appropriate next step?",
+          "options": [
+            { "key": "a", "text": "Continue current TRT dose; recheck in 6 months" },
+            { "key": "b", "text": "Increase TRT dose to push T into upper-normal range" },
+            { "key": "c", "text": "Hold TRT, perform therapeutic phlebotomy if symptomatic, then resume at lower dose or switch formulation" },
+            { "key": "d", "text": "Add aspirin 81 mg daily and continue current dose" },
+            { "key": "e", "text": "Order JAK2 V617F mutation analysis" }
+          ],
+          "correct": "c",
+          "feedback": {
+            "headline": "Correct: C",
+            "body": "Hct &gt;54% on TRT is the threshold above which thrombotic risk rises sharply. Hold or reduce TRT, consider phlebotomy, and reassess. Switching from IM (supraphysiologic peaks) to transdermal gel often avoids the spike. KS already confers elevated VTE risk — TRT-induced erythrocytosis compounds it.",
+            "distractors": [
+              { "key": "a", "body": "Continuing current dose with Hct 56% accepts unnecessary thrombotic risk." },
+              { "key": "b", "body": "Increasing dose worsens the problem; supraphysiologic T is not the goal." },
+              { "key": "c", "body": "" },
+              { "key": "d", "body": "Aspirin alone does not address underlying erythrocytosis." },
+              { "key": "e", "body": "JAK2 testing is for primary polycythemia vera. Cause here is iatrogenic — secondary erythrocytosis from TRT." }
+            ]
+          }
+        } },
+        { "type": "heading", "level": 2, "text": "Synthesis — what to remember" },
+        { "type": "highYield", "items": [
+          "<strong>Order matters in KS management:</strong> fertility planning (mTESE + cryopreservation) <em>before</em> TRT.",
+          "<strong>mTESE retrieves sperm in ~50%</strong> of non-mosaic 47,XXY men; yield drops with age.",
+          "<strong>Hematocrit &gt;54%</strong> on TRT triggers dose adjustment and/or formulation change.",
+          "<strong>Genetic counseling</strong> for offspring is part of the package.",
+          "<strong>Recognize the KS gestalt:</strong> tall, eunuchoid, gynecomastia, small firm testes, infertility, primary hypogonadism (↑↑ FSH, ↑ LH, ↓ T), normal-range IQ with verbal &lt; performance."
+        ] },
+        { "type": "dialogue", "turns": [
+          { "persona": "alice", "speaker": "Alice", "body": "The TRT-then-fertility error feels like such a \"common knowledge\" mistake — why do residents keep falling for it on Step 2?" },
+          { "persona": "bob", "speaker": "Bob", "body": "Because the patient's <em>chief complaint</em> is fatigue and libido. The gut response is to treat the symptom in front of you." },
+          { "persona": "tutor", "speaker": "Dr. Mendel", "body": "Right — and that's exactly what the question writers are testing. KS demands that you zoom out from the immediate complaint and ask: \"What does this patient want over the next decade?\" If biological children are part of that picture, the order of operations changes." }
+        ] }
+      ]
+    }
+  ],
+  "cards": [
+    { "front": "Most common karyotype in Klinefelter syndrome", "back": "47,XXY (one supernumerary X chromosome)", "chapterId": "Ch 1 · Definition & Epidemiology" },
+    { "front": "Most common sex chromosome aneuploidy in males", "back": "Klinefelter syndrome (~1:500–1:1000)", "chapterId": "Ch 1 · Definition & Epidemiology" },
+    { "front": "Hypogonadism category in KS", "back": "Hypergonadotropic hypogonadism (primary testicular failure)", "chapterId": "Ch 1 · Definition & Epidemiology" },
+    { "front": "Most common origin of extra X in KS", "back": "Maternal meiosis I nondisjunction (~50%)", "chapterId": "Ch 2 · Genetics" },
+    { "front": "Barr body count in 47,XXY", "back": "1 (formula: number of X − 1)", "chapterId": "Ch 2 · Genetics" },
+    { "front": "Gene escaping X-inactivation that drives tall stature", "back": "SHOX (pseudoautosomal region)", "chapterId": "Ch 2 · Genetics" },
+    { "front": "Hormone that rises FIRST and HIGHEST in KS", "back": "FSH (Sertoli cell loss → ↓ inhibin B)", "chapterId": "Ch 2 · Genetics" },
+    { "front": "Most specific physical exam finding in adult KS", "back": "Small firm testes (<6 mL, often <4 mL)", "chapterId": "Ch 3 · Clinical Presentation" },
+    { "front": "Classic cognitive profile in 47,XXY", "back": "Normal-range IQ; verbal IQ < performance IQ; expressive language delay", "chapterId": "Ch 3 · Clinical Presentation" },
+    { "front": "Diagnostic gold standard for KS", "back": "Karyotype on peripheral blood (≥30 metaphases to detect mosaicism)", "chapterId": "Ch 4 · Diagnosis" },
+    { "front": "Classic KS hormone pattern", "back": "↑↑ FSH, ↑ LH, ↓ T, normal-to-↑ estradiol, ↑ SHBG", "chapterId": "Ch 4 · Diagnosis" },
+    { "front": "Baseline screening test besides karyotype at KS diagnosis", "back": "DEXA scan (bone mineral density)", "chapterId": "Ch 4 · Diagnosis" },
+    { "front": "Critical sequencing rule in KS management", "back": "Fertility planning (sperm bank or TESE) BEFORE testosterone replacement", "chapterId": "Ch 5 · Management" },
+    { "front": "Sperm retrieval rate with mTESE in non-mosaic 47,XXY", "back": "~50%", "chapterId": "Ch 5 · Management" },
+    { "front": "TRT monitoring labs", "back": "Hematocrit, PSA, lipids; assess for sleep apnea", "chapterId": "Ch 5 · Management" },
+    { "front": "Hematocrit threshold to hold TRT", "back": ">54%", "chapterId": "Ch 5 · Management" },
+    { "front": "Male breast cancer risk multiplier in KS", "back": "~20–50× baseline male risk", "chapterId": "Ch 6 · Complications" },
+    { "front": "Classic extragonadal tumor associated with KS", "back": "Mediastinal germ cell tumor (anterior mediastinum, ↑ β-hCG)", "chapterId": "Ch 6 · Complications" },
+    { "front": "VTE risk in KS vs baseline", "back": "~3–4× elevated", "chapterId": "Ch 6 · Complications" },
+    { "front": "T2DM relative risk in KS", "back": "~3× baseline", "chapterId": "Ch 6 · Complications" },
+    { "front": "Cardiac association reported in KS", "back": "Mitral valve prolapse", "chapterId": "Ch 6 · Complications" },
+    { "front": "Why TRT first then fertility is wrong", "back": "Exogenous T suppresses gonadotropins → suppresses spermatogenesis → reduces TESE yield", "chapterId": "Ch 7 · USMLE Vignette" }
+  ]
+}
