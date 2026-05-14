@@ -200,3 +200,50 @@ Delete this PRD when:
 4. Diff between Klinefelter and Italian lesson structural CSS is empty (component-layer parity verified), AND
 5. BLOCKING contract self-check passes on regenerated Italian lesson (grep returns zero hardcoded hex/rgb in lesson.html), AND
 6. PRD has been open for ≥ 7 days with no follow-up edits.
+
+### 4.10 — 2026-05-14 — MAJOR PIVOT: Match Madness reconceived as multi-SET retrieval anchor
+
+**Decision:** Match Madness is NOT a one-shot 3-round timed game. It is the **canonical retrieval-practice section** the learner returns to across sessions to refresh ALL prior learning. Nested structure:
+
+- **Round** = one 105s timed 2×5 grid (current MM unit)
+- **Set** = a group of rounds testing ONE content type (3–5 rounds)
+- **Super-Set** = comprehensive mixed-content final (up to 10 rounds)
+
+**Concrete shape for `italian-cleaning-verbs-2026-05-12` (11 sets + SUPER):**
+
+| # | Set | Rounds | Mode |
+|---|---|---|---|
+| 1 | Verbs ↔ EN | 3 | vocab-pair |
+| 2 | Nouns ↔ EN | 5 | vocab-pair |
+| 3 | Noun gender (la/lo/il/l') | 5 | gender-pair |
+| 4 | Prepositions (sotto/sul/dal...) | 5 | prep-pair |
+| 5 | Collocations (verb ↔ object) | 5 | vocab-pair |
+| 6 | Presente | 5 | conjugation |
+| 7 | Passato prossimo | 5 | conjugation |
+| 8 | Imperfetto | 5 | conjugation |
+| 9 | Futuro semplice | 5 | conjugation |
+| 10 | Congiuntivo presente | 5 | conjugation |
+| 11 | Passato remoto | 5 | conjugation |
+| 🔥 | SUPER (mixed from all above) | up to 10 | mixed |
+
+**Why:** User directive 2026-05-14. MM is the lesson's *return-to* component for spaced retrieval. Pedagogically: this is the canonical anchor for desirable difficulty (Bjork) + interleaved practice (Rohrer). All Chiron language lessons inherit this structure.
+
+### 4.11 — 2026-05-14 — Widget generalization: typed `mode` discriminator
+
+**Decision:** `match-madness.ts` widget supports modes:
+- `vocab-pair` (L1 ↔ L2, the original)
+- `gender-pair` (article ↔ noun)
+- `prep-pair` (preposition phrase ↔ context-EN)
+- `conjugation` (inflected form ↔ EN gloss with subject pronoun)
+- `mixed` (super-set; pulls from all completed sets in the lesson)
+
+Math/medicine modes deferred (user opted out this session). Schema is forward-compatible — adding a mode = new Zod variant + new pair-generator function.
+
+### 4.12 — 2026-05-14 — Persistence: SQLite-backed across sessions
+
+**Decision:** Wire MM to `.chiron-state.db` per PRD §8 schema:
+- `match_madness_sessions` — one row per set-play (set_id, started_at, completed_at, score, accuracy)
+- `match_madness_pair_log` — one row per pair shown (pair_id, latency_ms, was_wrong_first, set_id, round_idx) → feeds SR scheduler
+
+On lesson reload, Set cards show: "Set 3 — last played 3d ago — 67% mastery — 4 weak pairs flagged for SR."
+
