@@ -797,6 +797,68 @@ registerRenderer('matching-pair', (widget) =>
 
 registerRenderer('cloze', (widget) => renderCloze(widget as ClozeWidget));
 
+// ---------------------------------------------------------------------------
+// Multi-set Match Madness (PRD canonical_shell_and_match_madness §4.10–4.12,
+// 2026-05-14). Universal retrieval-practice anchor — vocab / gender / prep /
+// collocation / conjugation / mixed modes. The widget itself is domain-
+// agnostic; per-language helpers (Italian conjugator) live in widgets/.
+// ---------------------------------------------------------------------------
+import { emitMatchMadness } from './widgets/match-madness.js';
+import { emitSrDeck, emitSrCardCss } from './widgets/sr-card.js';
+
+type MatchMadnessWidget = Extract<WidgetSpec, { type: 'match-madness' }>;
+type LanguageFlashcardDeckWidget = Extract<WidgetSpec, { type: 'language-flashcard-deck' }>;
+
+/** Match Madness — emit HTML + scoped <style> + IIFE <script>. */
+export function renderMatchMadness(spec: MatchMadnessWidget): string {
+  const emitted = emitMatchMadness({
+    lessonId: spec.lessonId,
+    domain: spec.domain,
+    title: spec.title,
+    description: spec.description,
+    defaults: spec.defaults,
+    sets: spec.sets,
+    unlockAccuracyThreshold: spec.unlockAccuracyThreshold,
+    superSetUnlockAfterNSetsCompleted: spec.superSetUnlockAfterNSetsCompleted,
+  });
+  return [
+    `<section class="chiron-widget match-madness-widget" data-widget-type="match-madness">`,
+    `<style>${emitted.css}</style>`,
+    emitted.html,
+    `<script>${emitted.js}</script>`,
+    `</section>`,
+  ].join('\n');
+}
+
+registerRenderer('match-madness', (widget) =>
+  renderMatchMadness(widget as MatchMadnessWidget),
+);
+
+/** Rich language flashcard deck — verb conjugation tables + nouns + idioms. */
+export function renderLanguageFlashcardDeck(spec: LanguageFlashcardDeckWidget): string {
+  // The flip-on-click JS is shared by every deck on the page; emit once per widget
+  // instance (duplicate `forEach` listeners on the same DOM are idempotent enough).
+  const flipJs = `
+    (function () {
+      document.querySelectorAll('[data-widget-type="language-flashcard-deck"] .sr-card').forEach(function (card) {
+        card.addEventListener('click', function () { card.classList.toggle('flipped'); });
+      });
+    })();`;
+  return [
+    `<section class="chiron-widget language-flashcard-deck" data-widget-type="language-flashcard-deck" data-language="${spec.language}">`,
+    `<style>${emitSrCardCss()}</style>`,
+    `<div class="sr-deck">`,
+    emitSrDeck({ verbs: spec.verbs, nouns: spec.nouns, idioms: spec.idioms }),
+    `</div>`,
+    `<script>${flipJs}</script>`,
+    `</section>`,
+  ].join('\n');
+}
+
+registerRenderer('language-flashcard-deck', (widget) =>
+  renderLanguageFlashcardDeck(widget as LanguageFlashcardDeckWidget),
+);
+
 /**
  * Renderer for `audio-tts` widgets (T058, US2 — Italian native-speaker persona).
  *

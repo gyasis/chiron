@@ -38,14 +38,18 @@ export const PairSchema = z.object({
 });
 export type Pair = z.infer<typeof PairSchema>;
 
-/** Mode discriminator — drives pair authoring + UI hints. */
+/** Mode discriminator — drives pair authoring + UI hints. Universal across
+ * code/medicine/language. Language-specific modes (gender-pair, prep-pair,
+ * collocation, conjugation) are no-ops in non-language domains. */
 export const MmModeSchema = z.enum([
-  'vocab-pair', // L1 ↔ L2 (the original)
-  'gender-pair', // article ↔ noun (la ↔ scopa)
-  'prep-pair', // preposition phrase ↔ context gloss
-  'collocation', // verb ↔ object (spazzare ↔ la scopa)
-  'conjugation', // inflected form ↔ EN gloss-with-subject
-  'mixed', // SUPER-SET: pulls from all completed sets in lesson
+  'vocab-pair',    // L1 ↔ L2 (universal: word↔translation, term↔synonym)
+  'gender-pair',   // article ↔ noun (lang only)
+  'prep-pair',     // preposition phrase ↔ context gloss (lang only)
+  'collocation',   // verb ↔ object (lang only)
+  'conjugation',   // inflected form ↔ EN gloss-with-subject (lang only)
+  'mixed',         // SUPER-SET: pulls from all completed sets in lesson
+  'term-def',      // term ↔ definition (universal: medicine/code/concept)
+  'formula-result',// formula ↔ result (universal: math/code constants)
 ]);
 export type MmMode = z.infer<typeof MmModeSchema>;
 
