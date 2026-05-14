@@ -686,44 +686,56 @@ export function emitMatchMadnessJs(config: MatchMadnessConfig): string {
 export function emitMatchMadnessCss(): string {
   return `
   /* ========================= Match Madness (multi-set) ========================= */
-  .mm-section { margin: var(--chiron-space-6) 0; }
-  .mm-intro { color: var(--chiron-fg-secondary); font-size: 0.95rem; margin-bottom: var(--chiron-space-5); }
+  .mm-section { margin: var(--chiron-space-6) 0 var(--chiron-space-8); }
+  .mm-intro {
+    color: var(--chiron-fg-secondary);
+    font-size: 1rem;
+    line-height: 1.65;
+    margin: 0 0 var(--chiron-space-6);
+    max-width: 720px;
+  }
 
   .mm-sets-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-    gap: var(--chiron-space-4);
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: var(--chiron-space-5);
   }
 
   .mm-set-card {
     background: var(--chiron-surface);
     border: 1px solid var(--chiron-border);
     border-radius: var(--chiron-radius-md);
-    padding: var(--chiron-space-5);
-    display: flex; flex-direction: column; gap: var(--chiron-space-3);
+    padding: var(--chiron-space-6);
+    display: flex; flex-direction: column; gap: var(--chiron-space-4);
     transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+    min-height: 220px;
   }
   .mm-set-card:hover { transform: translateY(-2px); box-shadow: var(--chiron-shadow-md); border-color: var(--chiron-accent); }
   .mm-set-card[data-mode="conjugation"] { border-left: 3px solid var(--chiron-warm-accent); }
   .mm-set-card[data-mode="mixed"] { border-left: 3px solid var(--chiron-accent); background: linear-gradient(135deg, var(--chiron-surface), var(--chiron-elevated)); }
 
-  .mm-set-card-header { display: flex; justify-content: space-between; align-items: center; font-size: 11px; }
-  .mm-set-num { font-family: var(--chiron-font-mono, monospace); color: var(--chiron-muted); letter-spacing: 0.08em; text-transform: uppercase; }
-  .mm-set-mode { font-family: var(--chiron-font-mono, monospace); color: var(--chiron-accent); font-size: 10px; padding: 2px 6px; background: var(--chiron-accent-light); border-radius: var(--chiron-radius-sm); }
-  .mm-set-title { font-family: var(--chiron-font-heading); font-size: 1.1rem; margin: 0; color: var(--chiron-fg); }
-  .mm-set-subtitle { color: var(--chiron-fg-secondary); font-size: 0.85rem; margin: 0; font-style: italic; }
-  .mm-set-meta { display: flex; gap: var(--chiron-space-3); font-size: 0.85rem; color: var(--chiron-fg-secondary); }
-  .mm-set-mastery { display: flex; flex-wrap: wrap; gap: var(--chiron-space-2); font-size: 0.78rem; color: var(--chiron-muted); padding: var(--chiron-space-2) 0; border-top: 1px dashed var(--chiron-divider); margin-top: auto; }
+  .mm-set-card-header { display: flex; justify-content: space-between; align-items: center; font-size: 11px; gap: var(--chiron-space-2); }
+  .mm-set-num { font-family: var(--chiron-font-mono, monospace); color: var(--chiron-muted); letter-spacing: 0.1em; text-transform: uppercase; font-size: 11px; font-weight: 600; }
+  .mm-set-mode { font-family: var(--chiron-font-mono, monospace); color: var(--chiron-accent); font-size: 10px; padding: 3px 8px; background: var(--chiron-accent-light); border-radius: var(--chiron-radius-sm); letter-spacing: 0.04em; }
+  .mm-set-title { font-family: var(--chiron-font-heading); font-size: 1.2rem; line-height: 1.25; margin: 0; color: var(--chiron-fg); }
+  .mm-set-subtitle { color: var(--chiron-fg-secondary); font-size: 0.88rem; line-height: 1.5; margin: 0; font-style: italic; }
+  .mm-set-meta { display: flex; gap: var(--chiron-space-4); font-size: 0.85rem; color: var(--chiron-fg-secondary); padding-top: var(--chiron-space-1, 4px); }
+  .mm-set-meta strong { color: var(--chiron-fg); }
+  .mm-set-mastery { display: flex; flex-wrap: wrap; gap: var(--chiron-space-3); font-size: 0.78rem; color: var(--chiron-muted); padding: var(--chiron-space-3) 0 0; border-top: 1px dashed var(--chiron-divider); margin-top: auto; }
   .mm-mastery-pct strong { color: var(--chiron-accent); }
   .mm-mastery-weak strong { color: var(--chiron-warm-accent); }
   .mm-set-play.primary {
     background: var(--chiron-accent); color: var(--chiron-surface);
-    border: none; padding: var(--chiron-space-2) var(--chiron-space-4); border-radius: var(--chiron-radius-sm);
-    cursor: pointer; font-weight: 600; font-size: 0.9rem;
+    border: none; padding: var(--chiron-space-3) var(--chiron-space-5); border-radius: var(--chiron-radius-sm);
+    cursor: pointer; font-weight: 600; font-size: 0.92rem;
+    align-self: flex-start;
+    margin-top: var(--chiron-space-2);
   }
-  .mm-set-play.primary:hover { background: var(--chiron-accent-hover, var(--chiron-accent)); }
+  .mm-set-play.primary:hover { background: var(--chiron-accent-hover, var(--chiron-accent)); transform: translateY(-1px); }
 
-  /* Play surface = full-screen overlay */
+  /* Play surface = full-screen overlay. [hidden] MUST win over display:flex. */
+  .mm-play-surface[hidden] { display: none !important; }
+  .mm-result[hidden] { display: none !important; }
   .mm-play-surface {
     position: fixed; inset: 0; z-index: 1000;
     background: var(--chiron-bg);

@@ -12,6 +12,10 @@ import {
   buildConjugationSet,
   emitMatchMadness,
 } from '../dist/lib/widgets/match-madness.js';
+import {
+  emitSrDeck,
+  emitSrCardCss,
+} from '../dist/lib/widgets/sr-card.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const REPO = resolve(__dirname, '..', '..');
@@ -231,11 +235,11 @@ const emitted = emitMatchMadness(config);
 
 let html = readFileSync(LESSON_HTML, 'utf8');
 
-// 1) Replace the CSS block between `/* ---- Match Madness ---- */`
-//    and the next major comment heading.
+// 1) Replace the CSS block between any `/* ---- Match Madness ... ---- */`
+//    heading and the next major comment heading. Idempotent.
 {
   const css = '\n    /* ---- Match Madness (multi-set) ---- */' + emitted.css.replace(/\n/g,'\n    ') + '\n';
-  const re = /\n    \/\* ---- Match Madness ----[\s\S]*?(?=\n    \/\* ---- SR drawer)/;
+  const re = /\n    \/\* ---- Match Madness[\s\S]*?(?=\n    \/\* ---- SR drawer)/;
   if (!re.test(html)) throw new Error('Could not locate MM CSS block');
   html = html.replace(re, css);
 }
@@ -252,21 +256,51 @@ let html = readFileSync(LESSON_HTML, 'utf8');
   html = html.replace(re, newSection);
 }
 
-// 3) Replace JS block from `/* ===== Match Madness ===== */` to the end of
-//    the old IIFE (matched by `MM.init();` line). We also accept the
-//    earlier inline assignment form.
+// 3) Replace JS block from `/* ===== Match Madness ... ===== */` to just
+//    before the closing </script>. Idempotent.
 {
-  const re = /    \/\* ===== Match Madness =====[\s\S]*?MM\.init\(\);\s*\n/;
-  if (!re.test(html)) {
-    // Fallback — old version may not have MM.init exactly. Try a broader end.
-    const re2 = /    \/\* ===== Match Madness =====[\s\S]*?(?=  <\/script>)/;
-    if (!re2.test(html)) throw new Error('Could not locate MM JS block');
-    html = html.replace(re2, '    /* ===== Match Madness (multi-set) ===== */' + emitted.js + '\n');
-  } else {
-    html = html.replace(re, '    /* ===== Match Madness (multi-set) ===== */' + emitted.js + '\n');
-  }
+  const re = /    \/\* ===== Match Madness[\s\S]*?(?=\n  <\/script>)/;
+  if (!re.test(html)) throw new Error('Could not locate MM JS block');
+  html = html.replace(re, '    /* ===== Match Madness (multi-set) ===== */' + emitted.js);
+}
+
+// ============================================================================
+// 4) Patch the SR drawer (section s7) with rich conjugation-tabled cards.
+// ============================================================================
+
+const NOUNS_FOR_SR = [
+  { it: 'la scopa',       en: 'broom',        article: 'la', bare: 'la scopa',       pairsWith: 'spazzare' },
+  { it: 'lo straccio',    en: 'rag / mop cloth', article: 'lo', bare: 'lo straccio', pairsWith: 'strofinare' },
+  { it: 'il bucato',      en: 'laundry',      article: 'il', bare: 'il bucato',      pairsWith: 'lavare / stendere / piegare' },
+  { it: 'la pattumiera',  en: 'dustbin',      article: 'la', bare: 'la pattumiera',  note: 'Calvino — "il rito della pattumiera"' },
+  { it: 'la candeggina',  en: 'bleach',       article: 'la', bare: 'la candeggina',  note: 'essential Italian household' },
+  { it: 'lo sgrassatore', en: 'degreaser',    article: 'lo', bare: 'lo sgrassatore', note: 'kitchen "holy grail"' },
+];
+
+const IDIOMS_FOR_SR = [
+  { it: 'essere uno specchio',  literal: 'to be a mirror',     meaning: 'a shiningly clean house' },
+  { it: 'fare piazza pulita',   literal: 'to make a clean square', meaning: 'to make a clean sweep (figurative)' },
+];
+
+const srHtml = emitSrDeck({ verbs: VERBS, nouns: NOUNS_FOR_SR, idioms: IDIOMS_FOR_SR });
+
+// 4a) Replace the deck contents.
+{
+  const re = /<div class="sr-deck">[\s\S]*?<\/div>\s*\n(?=    <\/section>)/;
+  if (!re.test(html)) throw new Error('Could not locate SR deck');
+  const indented = srHtml.split('\n').map(l => l ? '        ' + l : '').join('\n');
+  html = html.replace(re, `<div class="sr-deck">\n${indented}\n      </div>\n`);
+}
+
+// 4b) Append SR card CSS once (idempotent guard).
+if (!html.includes('/* ---- SR cards (rich, multi-tense back) ---- */')) {
+  const re = /(\n    \/\* ---- SR drawer ----[\s\S]*?\.sr-card\.flipped \.back \{ display: block; \}\n)/;
+  if (!re.test(html)) throw new Error('Could not locate SR drawer CSS block');
+  const css = emitSrCardCss().replace(/\n/g, '\n    ');
+  html = html.replace(re, `$1    ${css}\n`);
 }
 
 writeFileSync(LESSON_HTML, html);
+console.error('[sr-build] Patched SR deck with rich cards.');
 console.error('[mm-build] Patched lesson.html');
 console.error(`[mm-build] New file length: ${html.length} chars (was 74298 before)`);

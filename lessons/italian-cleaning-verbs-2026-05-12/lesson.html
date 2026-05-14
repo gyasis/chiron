@@ -184,44 +184,56 @@
 
     /* ---- Match Madness (multi-set) ---- */
       /* ========================= Match Madness (multi-set) ========================= */
-      .mm-section { margin: var(--chiron-space-6) 0; }
-      .mm-intro { color: var(--chiron-fg-secondary); font-size: 0.95rem; margin-bottom: var(--chiron-space-5); }
+      .mm-section { margin: var(--chiron-space-6) 0 var(--chiron-space-8); }
+      .mm-intro {
+        color: var(--chiron-fg-secondary);
+        font-size: 1rem;
+        line-height: 1.65;
+        margin: 0 0 var(--chiron-space-6);
+        max-width: 720px;
+      }
     
       .mm-sets-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-        gap: var(--chiron-space-4);
+        grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+        gap: var(--chiron-space-5);
       }
     
       .mm-set-card {
         background: var(--chiron-surface);
         border: 1px solid var(--chiron-border);
         border-radius: var(--chiron-radius-md);
-        padding: var(--chiron-space-5);
-        display: flex; flex-direction: column; gap: var(--chiron-space-3);
+        padding: var(--chiron-space-6);
+        display: flex; flex-direction: column; gap: var(--chiron-space-4);
         transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+        min-height: 220px;
       }
       .mm-set-card:hover { transform: translateY(-2px); box-shadow: var(--chiron-shadow-md); border-color: var(--chiron-accent); }
       .mm-set-card[data-mode="conjugation"] { border-left: 3px solid var(--chiron-warm-accent); }
       .mm-set-card[data-mode="mixed"] { border-left: 3px solid var(--chiron-accent); background: linear-gradient(135deg, var(--chiron-surface), var(--chiron-elevated)); }
     
-      .mm-set-card-header { display: flex; justify-content: space-between; align-items: center; font-size: 11px; }
-      .mm-set-num { font-family: var(--chiron-font-mono, monospace); color: var(--chiron-muted); letter-spacing: 0.08em; text-transform: uppercase; }
-      .mm-set-mode { font-family: var(--chiron-font-mono, monospace); color: var(--chiron-accent); font-size: 10px; padding: 2px 6px; background: var(--chiron-accent-light); border-radius: var(--chiron-radius-sm); }
-      .mm-set-title { font-family: var(--chiron-font-heading); font-size: 1.1rem; margin: 0; color: var(--chiron-fg); }
-      .mm-set-subtitle { color: var(--chiron-fg-secondary); font-size: 0.85rem; margin: 0; font-style: italic; }
-      .mm-set-meta { display: flex; gap: var(--chiron-space-3); font-size: 0.85rem; color: var(--chiron-fg-secondary); }
-      .mm-set-mastery { display: flex; flex-wrap: wrap; gap: var(--chiron-space-2); font-size: 0.78rem; color: var(--chiron-muted); padding: var(--chiron-space-2) 0; border-top: 1px dashed var(--chiron-divider); margin-top: auto; }
+      .mm-set-card-header { display: flex; justify-content: space-between; align-items: center; font-size: 11px; gap: var(--chiron-space-2); }
+      .mm-set-num { font-family: var(--chiron-font-mono, monospace); color: var(--chiron-muted); letter-spacing: 0.1em; text-transform: uppercase; font-size: 11px; font-weight: 600; }
+      .mm-set-mode { font-family: var(--chiron-font-mono, monospace); color: var(--chiron-accent); font-size: 10px; padding: 3px 8px; background: var(--chiron-accent-light); border-radius: var(--chiron-radius-sm); letter-spacing: 0.04em; }
+      .mm-set-title { font-family: var(--chiron-font-heading); font-size: 1.2rem; line-height: 1.25; margin: 0; color: var(--chiron-fg); }
+      .mm-set-subtitle { color: var(--chiron-fg-secondary); font-size: 0.88rem; line-height: 1.5; margin: 0; font-style: italic; }
+      .mm-set-meta { display: flex; gap: var(--chiron-space-4); font-size: 0.85rem; color: var(--chiron-fg-secondary); padding-top: var(--chiron-space-1, 4px); }
+      .mm-set-meta strong { color: var(--chiron-fg); }
+      .mm-set-mastery { display: flex; flex-wrap: wrap; gap: var(--chiron-space-3); font-size: 0.78rem; color: var(--chiron-muted); padding: var(--chiron-space-3) 0 0; border-top: 1px dashed var(--chiron-divider); margin-top: auto; }
       .mm-mastery-pct strong { color: var(--chiron-accent); }
       .mm-mastery-weak strong { color: var(--chiron-warm-accent); }
       .mm-set-play.primary {
         background: var(--chiron-accent); color: var(--chiron-surface);
-        border: none; padding: var(--chiron-space-2) var(--chiron-space-4); border-radius: var(--chiron-radius-sm);
-        cursor: pointer; font-weight: 600; font-size: 0.9rem;
+        border: none; padding: var(--chiron-space-3) var(--chiron-space-5); border-radius: var(--chiron-radius-sm);
+        cursor: pointer; font-weight: 600; font-size: 0.92rem;
+        align-self: flex-start;
+        margin-top: var(--chiron-space-2);
       }
-      .mm-set-play.primary:hover { background: var(--chiron-accent-hover, var(--chiron-accent)); }
+      .mm-set-play.primary:hover { background: var(--chiron-accent-hover, var(--chiron-accent)); transform: translateY(-1px); }
     
-      /* Play surface = full-screen overlay */
+      /* Play surface = full-screen overlay. [hidden] MUST win over display:flex. */
+      .mm-play-surface[hidden] { display: none !important; }
+      .mm-result[hidden] { display: none !important; }
       .mm-play-surface {
         position: fixed; inset: 0; z-index: 1000;
         background: var(--chiron-bg);
@@ -305,6 +317,86 @@
     .sr-card .back { font-size: 0.95em; color: var(--chiron-fg-secondary); display: none; }
     .sr-card.flipped .front { display: none; }
     .sr-card.flipped .back { display: block; }
+    
+      /* ---- SR cards (rich, multi-tense back) ---- */
+      .sr-card[data-card-type] {
+        min-height: 150px;
+        padding: var(--chiron-space-4);
+        display: flex; align-items: stretch; justify-content: center; text-align: center;
+        overflow: hidden;
+        position: relative;
+      }
+      .sr-card[data-card-type] .front {
+        display: flex; align-items: center; justify-content: center; width: 100%;
+        font-size: 1.15em; color: var(--chiron-accent); font-weight: 700;
+        line-height: 1.3;
+      }
+      .sr-card[data-card-type] .back {
+        text-align: left;
+        width: 100%;
+        display: none;
+        flex-direction: column;
+        gap: var(--chiron-space-2);
+      }
+      .sr-card.flipped[data-card-type] .front { display: none; }
+      .sr-card.flipped[data-card-type] .back { display: flex; }
+      .sr-card.flipped[data-card-type='verb'],
+      .sr-card.flipped[data-card-type='noun'] {
+        min-height: 260px;
+      }
+    
+      .sr-back-head {
+        display: flex; align-items: center; justify-content: space-between;
+        gap: var(--chiron-space-2);
+        padding-bottom: var(--chiron-space-2);
+        border-bottom: 1px dashed var(--chiron-divider);
+        margin-bottom: var(--chiron-space-2);
+      }
+      .sr-back-gloss { color: var(--chiron-fg); font-family: var(--chiron-font-heading); font-size: 0.92em; font-weight: 700; line-height: 1.3; }
+      .sr-back-tag {
+        font-family: var(--chiron-font-mono, monospace);
+        font-size: 0.65em; letter-spacing: 0.06em; text-transform: uppercase;
+        padding: 2px 6px; border-radius: var(--chiron-radius-sm);
+        background: var(--chiron-elevated); color: var(--chiron-muted);
+        flex-shrink: 0;
+      }
+      .sr-back-tag.sr-article {
+        background: var(--chiron-accent-light); color: var(--chiron-accent);
+        font-weight: 700; font-size: 0.78em; text-transform: none; letter-spacing: 0;
+      }
+      .sr-back-full { margin: 0; font-size: 0.86em; color: var(--chiron-fg-secondary); }
+      .sr-back-full .sr-it { color: var(--chiron-fg); font-style: italic; }
+      .sr-back-plural,
+      .sr-back-pair,
+      .sr-back-note,
+      .sr-back-literal { margin: 0; font-size: 0.78em; color: var(--chiron-fg-secondary); line-height: 1.45; }
+      .sr-back-pair em { color: var(--chiron-accent); font-style: italic; }
+      .sr-back-literal em { color: var(--chiron-fg); }
+    
+      .sr-conj-table {
+        width: 100%; border-collapse: collapse;
+        font-size: 0.78em;
+        font-family: var(--chiron-font-body);
+      }
+      .sr-conj-table thead th {
+        text-align: center; padding: var(--chiron-space-1) 0 var(--chiron-space-2);
+        color: var(--chiron-muted); font-weight: 600; font-family: var(--chiron-font-mono, monospace);
+        letter-spacing: 0.08em; text-transform: uppercase; font-size: 0.85em;
+        border-bottom: 1px solid var(--chiron-divider);
+      }
+      .sr-conj-table tbody th {
+        text-align: left; padding: var(--chiron-space-1) var(--chiron-space-2) var(--chiron-space-1) 0;
+        color: var(--chiron-muted); font-weight: 500;
+        font-size: 0.92em;
+        width: 45%;
+      }
+      .sr-conj-table tbody td {
+        text-align: right; padding: var(--chiron-space-1) 0;
+        color: var(--chiron-fg); font-family: var(--chiron-font-heading);
+        font-weight: 600;
+      }
+      .sr-conj-table tbody tr + tr th,
+      .sr-conj-table tbody tr + tr td { border-top: 1px dotted var(--chiron-divider); }
 
     /* ---- Closing ---- */
     .closing { background: var(--chiron-surface); border-radius: var(--chiron-radius-lg); padding: var(--chiron-space-6); border-left: 4px solid var(--chiron-warm-accent); }
@@ -1010,28 +1102,588 @@
       <h2 class="section-h"><span class="num">7</span>Carte SR — ripasso spaziato</h2>
       <p>Tap to flip. In a full Chiron run, each flip schedules a re-show via SM-2 in <code>.chiron-state.db</code>. For today's test, flipping demonstrates the front/back contract.</p>
       <div class="sr-deck">
-        <div class="sr-card"><div class="front">spazzare</div><div class="back">to sweep · io spazzo</div></div>
-        <div class="sr-card"><div class="front">lavare</div><div class="back">to wash · io lavo</div></div>
-        <div class="sr-card"><div class="front">pulire (-isco)</div><div class="back">to clean · io pulisco · lui pulisce</div></div>
-        <div class="sr-card"><div class="front">spolverare</div><div class="back">to dust · io spolvero</div></div>
-        <div class="sr-card"><div class="front">strofinare</div><div class="back">to scrub · io strofino</div></div>
-        <div class="sr-card"><div class="front">sciacquare</div><div class="back">to rinse · io sciacquo</div></div>
-        <div class="sr-card"><div class="front">asciugare</div><div class="back">to dry · io asciugo</div></div>
-        <div class="sr-card"><div class="front">stendere</div><div class="back">to hang out · io stendo il bucato</div></div>
-        <div class="sr-card"><div class="front">piegare</div><div class="back">to fold · io piego</div></div>
-        <div class="sr-card"><div class="front">ammucchiare</div><div class="back">to pile up · io ammucchio</div></div>
-        <div class="sr-card"><div class="front">mettere in pila</div><div class="back">to stack · io metto in pila</div></div>
-        <div class="sr-card"><div class="front">riordinare</div><div class="back">to tidy · io riordino</div></div>
-        <div class="sr-card"><div class="front">buttare</div><div class="back">to throw out · io butto la spazzatura</div></div>
-        <div class="sr-card"><div class="front">passare l'aspirapolvere</div><div class="back">to vacuum · io passo l'aspirapolvere</div></div>
-        <div class="sr-card"><div class="front">la scopa</div><div class="back">broom · pairs with spazzare</div></div>
-        <div class="sr-card"><div class="front">lo straccio</div><div class="back">rag / mop cloth</div></div>
-        <div class="sr-card"><div class="front">il bucato</div><div class="back">laundry · lavare / stendere / piegare</div></div>
-        <div class="sr-card"><div class="front">la pattumiera</div><div class="back">dustbin · Calvino's "rito"</div></div>
-        <div class="sr-card"><div class="front">la candeggina</div><div class="back">bleach · essential Italian household</div></div>
-        <div class="sr-card"><div class="front">lo sgrassatore</div><div class="back">degreaser · kitchen "holy grail"</div></div>
-        <div class="sr-card"><div class="front">essere uno specchio</div><div class="back">idiom: "to be a mirror" — house shines</div></div>
-        <div class="sr-card"><div class="front">fare piazza pulita</div><div class="back">idiom: make a clean sweep (figurative)</div></div>
+
+          <div class="sr-card" data-card-type="verb">
+            <div class="front">spazzare</div>
+            <div class="back">
+              <div class="sr-back-head">
+                <strong class="sr-back-gloss">to sweep</strong>
+                <span class="sr-back-tag">are</span>
+              </div>
+              <table class="sr-conj-table">
+                <tbody>
+                <tr>
+                  <th class="sr-tense-label"><span class="sr-tense-it">presente</span><span class="sr-tense-aspect">now</span></th>
+                  <td class="sr-form">spazzo</td>
+                  <td class="sr-tense-gloss">I sweep</td>
+                </tr>
+                <tr>
+                  <th class="sr-tense-label"><span class="sr-tense-it">pass. pross.</span><span class="sr-tense-aspect">did</span></th>
+                  <td class="sr-form">ho spazzato</td>
+                  <td class="sr-tense-gloss">I swept</td>
+                </tr>
+                <tr>
+                  <th class="sr-tense-label"><span class="sr-tense-it">imperfetto</span><span class="sr-tense-aspect">was -ing</span></th>
+                  <td class="sr-form">spazzavo</td>
+                  <td class="sr-tense-gloss">I was sweeping</td>
+                </tr>
+                <tr>
+                  <th class="sr-tense-label"><span class="sr-tense-it">futuro</span><span class="sr-tense-aspect">will</span></th>
+                  <td class="sr-form">spazzerò</td>
+                  <td class="sr-tense-gloss">I will sweep</td>
+                </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="sr-card" data-card-type="verb">
+            <div class="front">spolverare</div>
+            <div class="back">
+              <div class="sr-back-head">
+                <strong class="sr-back-gloss">to dust</strong>
+                <span class="sr-back-tag">are</span>
+              </div>
+              <table class="sr-conj-table">
+                <tbody>
+                <tr>
+                  <th class="sr-tense-label"><span class="sr-tense-it">presente</span><span class="sr-tense-aspect">now</span></th>
+                  <td class="sr-form">spolvero</td>
+                  <td class="sr-tense-gloss">I dust</td>
+                </tr>
+                <tr>
+                  <th class="sr-tense-label"><span class="sr-tense-it">pass. pross.</span><span class="sr-tense-aspect">did</span></th>
+                  <td class="sr-form">ho spolverato</td>
+                  <td class="sr-tense-gloss">I dusted</td>
+                </tr>
+                <tr>
+                  <th class="sr-tense-label"><span class="sr-tense-it">imperfetto</span><span class="sr-tense-aspect">was -ing</span></th>
+                  <td class="sr-form">spolveravo</td>
+                  <td class="sr-tense-gloss">I was dusting</td>
+                </tr>
+                <tr>
+                  <th class="sr-tense-label"><span class="sr-tense-it">futuro</span><span class="sr-tense-aspect">will</span></th>
+                  <td class="sr-form">spolvererò</td>
+                  <td class="sr-tense-gloss">I will dust</td>
+                </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="sr-card" data-card-type="verb">
+            <div class="front">pulire</div>
+            <div class="back">
+              <div class="sr-back-head">
+                <strong class="sr-back-gloss">to clean</strong>
+                <span class="sr-back-tag">isco-ire</span>
+              </div>
+              <table class="sr-conj-table">
+                <tbody>
+                <tr>
+                  <th class="sr-tense-label"><span class="sr-tense-it">presente</span><span class="sr-tense-aspect">now</span></th>
+                  <td class="sr-form">pulisco</td>
+                  <td class="sr-tense-gloss">I clean</td>
+                </tr>
+                <tr>
+                  <th class="sr-tense-label"><span class="sr-tense-it">pass. pross.</span><span class="sr-tense-aspect">did</span></th>
+                  <td class="sr-form">ho pulito</td>
+                  <td class="sr-tense-gloss">I cleaned</td>
+                </tr>
+                <tr>
+                  <th class="sr-tense-label"><span class="sr-tense-it">imperfetto</span><span class="sr-tense-aspect">was -ing</span></th>
+                  <td class="sr-form">pulivo</td>
+                  <td class="sr-tense-gloss">I was cleaning</td>
+                </tr>
+                <tr>
+                  <th class="sr-tense-label"><span class="sr-tense-it">futuro</span><span class="sr-tense-aspect">will</span></th>
+                  <td class="sr-form">pulirò</td>
+                  <td class="sr-tense-gloss">I will clean</td>
+                </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="sr-card" data-card-type="verb">
+            <div class="front">strofinare</div>
+            <div class="back">
+              <div class="sr-back-head">
+                <strong class="sr-back-gloss">to scrub</strong>
+                <span class="sr-back-tag">are</span>
+              </div>
+              <table class="sr-conj-table">
+                <tbody>
+                <tr>
+                  <th class="sr-tense-label"><span class="sr-tense-it">presente</span><span class="sr-tense-aspect">now</span></th>
+                  <td class="sr-form">strofino</td>
+                  <td class="sr-tense-gloss">I scrub</td>
+                </tr>
+                <tr>
+                  <th class="sr-tense-label"><span class="sr-tense-it">pass. pross.</span><span class="sr-tense-aspect">did</span></th>
+                  <td class="sr-form">ho strofinato</td>
+                  <td class="sr-tense-gloss">I scrubed</td>
+                </tr>
+                <tr>
+                  <th class="sr-tense-label"><span class="sr-tense-it">imperfetto</span><span class="sr-tense-aspect">was -ing</span></th>
+                  <td class="sr-form">strofinavo</td>
+                  <td class="sr-tense-gloss">I was scrubing</td>
+                </tr>
+                <tr>
+                  <th class="sr-tense-label"><span class="sr-tense-it">futuro</span><span class="sr-tense-aspect">will</span></th>
+                  <td class="sr-form">strofinerò</td>
+                  <td class="sr-tense-gloss">I will scrub</td>
+                </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="sr-card" data-card-type="verb">
+            <div class="front">lavare</div>
+            <div class="back">
+              <div class="sr-back-head">
+                <strong class="sr-back-gloss">to wash</strong>
+                <span class="sr-back-tag">are</span>
+              </div>
+              <table class="sr-conj-table">
+                <tbody>
+                <tr>
+                  <th class="sr-tense-label"><span class="sr-tense-it">presente</span><span class="sr-tense-aspect">now</span></th>
+                  <td class="sr-form">lavo</td>
+                  <td class="sr-tense-gloss">I wash</td>
+                </tr>
+                <tr>
+                  <th class="sr-tense-label"><span class="sr-tense-it">pass. pross.</span><span class="sr-tense-aspect">did</span></th>
+                  <td class="sr-form">ho lavato</td>
+                  <td class="sr-tense-gloss">I washed</td>
+                </tr>
+                <tr>
+                  <th class="sr-tense-label"><span class="sr-tense-it">imperfetto</span><span class="sr-tense-aspect">was -ing</span></th>
+                  <td class="sr-form">lavavo</td>
+                  <td class="sr-tense-gloss">I was washing</td>
+                </tr>
+                <tr>
+                  <th class="sr-tense-label"><span class="sr-tense-it">futuro</span><span class="sr-tense-aspect">will</span></th>
+                  <td class="sr-form">laverò</td>
+                  <td class="sr-tense-gloss">I will wash</td>
+                </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="sr-card" data-card-type="verb">
+            <div class="front">sciacquare</div>
+            <div class="back">
+              <div class="sr-back-head">
+                <strong class="sr-back-gloss">to rinse</strong>
+                <span class="sr-back-tag">are</span>
+              </div>
+              <table class="sr-conj-table">
+                <tbody>
+                <tr>
+                  <th class="sr-tense-label"><span class="sr-tense-it">presente</span><span class="sr-tense-aspect">now</span></th>
+                  <td class="sr-form">sciacquo</td>
+                  <td class="sr-tense-gloss">I rinse</td>
+                </tr>
+                <tr>
+                  <th class="sr-tense-label"><span class="sr-tense-it">pass. pross.</span><span class="sr-tense-aspect">did</span></th>
+                  <td class="sr-form">ho sciacquato</td>
+                  <td class="sr-tense-gloss">I rinsed</td>
+                </tr>
+                <tr>
+                  <th class="sr-tense-label"><span class="sr-tense-it">imperfetto</span><span class="sr-tense-aspect">was -ing</span></th>
+                  <td class="sr-form">sciacquavo</td>
+                  <td class="sr-tense-gloss">I was rinsing</td>
+                </tr>
+                <tr>
+                  <th class="sr-tense-label"><span class="sr-tense-it">futuro</span><span class="sr-tense-aspect">will</span></th>
+                  <td class="sr-form">sciacquerò</td>
+                  <td class="sr-tense-gloss">I will rinse</td>
+                </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="sr-card" data-card-type="verb">
+            <div class="front">asciugare</div>
+            <div class="back">
+              <div class="sr-back-head">
+                <strong class="sr-back-gloss">to dry</strong>
+                <span class="sr-back-tag">are</span>
+              </div>
+              <table class="sr-conj-table">
+                <tbody>
+                <tr>
+                  <th class="sr-tense-label"><span class="sr-tense-it">presente</span><span class="sr-tense-aspect">now</span></th>
+                  <td class="sr-form">asciugo</td>
+                  <td class="sr-tense-gloss">I dry</td>
+                </tr>
+                <tr>
+                  <th class="sr-tense-label"><span class="sr-tense-it">pass. pross.</span><span class="sr-tense-aspect">did</span></th>
+                  <td class="sr-form">ho asciugato</td>
+                  <td class="sr-tense-gloss">I dried</td>
+                </tr>
+                <tr>
+                  <th class="sr-tense-label"><span class="sr-tense-it">imperfetto</span><span class="sr-tense-aspect">was -ing</span></th>
+                  <td class="sr-form">asciugavo</td>
+                  <td class="sr-tense-gloss">I was drying</td>
+                </tr>
+                <tr>
+                  <th class="sr-tense-label"><span class="sr-tense-it">futuro</span><span class="sr-tense-aspect">will</span></th>
+                  <td class="sr-form">asciugherò</td>
+                  <td class="sr-tense-gloss">I will dry</td>
+                </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="sr-card" data-card-type="verb">
+            <div class="front">stendere</div>
+            <div class="back">
+              <div class="sr-back-head">
+                <strong class="sr-back-gloss">to hang out</strong>
+                <span class="sr-back-tag">ere</span>
+              </div>
+              <table class="sr-conj-table">
+                <tbody>
+                <tr>
+                  <th class="sr-tense-label"><span class="sr-tense-it">presente</span><span class="sr-tense-aspect">now</span></th>
+                  <td class="sr-form">stendo</td>
+                  <td class="sr-tense-gloss">I hang out</td>
+                </tr>
+                <tr>
+                  <th class="sr-tense-label"><span class="sr-tense-it">pass. pross.</span><span class="sr-tense-aspect">did</span></th>
+                  <td class="sr-form">ho steso</td>
+                  <td class="sr-tense-gloss">I hung out</td>
+                </tr>
+                <tr>
+                  <th class="sr-tense-label"><span class="sr-tense-it">imperfetto</span><span class="sr-tense-aspect">was -ing</span></th>
+                  <td class="sr-form">stendevo</td>
+                  <td class="sr-tense-gloss">I was hang outing</td>
+                </tr>
+                <tr>
+                  <th class="sr-tense-label"><span class="sr-tense-it">futuro</span><span class="sr-tense-aspect">will</span></th>
+                  <td class="sr-form">stenderò</td>
+                  <td class="sr-tense-gloss">I will hang out</td>
+                </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="sr-card" data-card-type="verb">
+            <div class="front">piegare</div>
+            <div class="back">
+              <div class="sr-back-head">
+                <strong class="sr-back-gloss">to fold</strong>
+                <span class="sr-back-tag">are</span>
+              </div>
+              <table class="sr-conj-table">
+                <tbody>
+                <tr>
+                  <th class="sr-tense-label"><span class="sr-tense-it">presente</span><span class="sr-tense-aspect">now</span></th>
+                  <td class="sr-form">piego</td>
+                  <td class="sr-tense-gloss">I fold</td>
+                </tr>
+                <tr>
+                  <th class="sr-tense-label"><span class="sr-tense-it">pass. pross.</span><span class="sr-tense-aspect">did</span></th>
+                  <td class="sr-form">ho piegato</td>
+                  <td class="sr-tense-gloss">I folded</td>
+                </tr>
+                <tr>
+                  <th class="sr-tense-label"><span class="sr-tense-it">imperfetto</span><span class="sr-tense-aspect">was -ing</span></th>
+                  <td class="sr-form">piegavo</td>
+                  <td class="sr-tense-gloss">I was folding</td>
+                </tr>
+                <tr>
+                  <th class="sr-tense-label"><span class="sr-tense-it">futuro</span><span class="sr-tense-aspect">will</span></th>
+                  <td class="sr-form">piegherò</td>
+                  <td class="sr-tense-gloss">I will fold</td>
+                </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="sr-card" data-card-type="verb">
+            <div class="front">ammucchiare</div>
+            <div class="back">
+              <div class="sr-back-head">
+                <strong class="sr-back-gloss">to pile up</strong>
+                <span class="sr-back-tag">are</span>
+              </div>
+              <table class="sr-conj-table">
+                <tbody>
+                <tr>
+                  <th class="sr-tense-label"><span class="sr-tense-it">presente</span><span class="sr-tense-aspect">now</span></th>
+                  <td class="sr-form">ammucchio</td>
+                  <td class="sr-tense-gloss">I pile up</td>
+                </tr>
+                <tr>
+                  <th class="sr-tense-label"><span class="sr-tense-it">pass. pross.</span><span class="sr-tense-aspect">did</span></th>
+                  <td class="sr-form">ho ammucchiato</td>
+                  <td class="sr-tense-gloss">I pile uped</td>
+                </tr>
+                <tr>
+                  <th class="sr-tense-label"><span class="sr-tense-it">imperfetto</span><span class="sr-tense-aspect">was -ing</span></th>
+                  <td class="sr-form">ammucchiavo</td>
+                  <td class="sr-tense-gloss">I was pile uping</td>
+                </tr>
+                <tr>
+                  <th class="sr-tense-label"><span class="sr-tense-it">futuro</span><span class="sr-tense-aspect">will</span></th>
+                  <td class="sr-form">ammucchierò</td>
+                  <td class="sr-tense-gloss">I will pile up</td>
+                </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="sr-card" data-card-type="verb">
+            <div class="front">riordinare</div>
+            <div class="back">
+              <div class="sr-back-head">
+                <strong class="sr-back-gloss">to tidy</strong>
+                <span class="sr-back-tag">are</span>
+              </div>
+              <table class="sr-conj-table">
+                <tbody>
+                <tr>
+                  <th class="sr-tense-label"><span class="sr-tense-it">presente</span><span class="sr-tense-aspect">now</span></th>
+                  <td class="sr-form">riordino</td>
+                  <td class="sr-tense-gloss">I tidy</td>
+                </tr>
+                <tr>
+                  <th class="sr-tense-label"><span class="sr-tense-it">pass. pross.</span><span class="sr-tense-aspect">did</span></th>
+                  <td class="sr-form">ho riordinato</td>
+                  <td class="sr-tense-gloss">I tidied</td>
+                </tr>
+                <tr>
+                  <th class="sr-tense-label"><span class="sr-tense-it">imperfetto</span><span class="sr-tense-aspect">was -ing</span></th>
+                  <td class="sr-form">riordinavo</td>
+                  <td class="sr-tense-gloss">I was tidying</td>
+                </tr>
+                <tr>
+                  <th class="sr-tense-label"><span class="sr-tense-it">futuro</span><span class="sr-tense-aspect">will</span></th>
+                  <td class="sr-form">riordinerò</td>
+                  <td class="sr-tense-gloss">I will tidy</td>
+                </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="sr-card" data-card-type="verb">
+            <div class="front">buttare</div>
+            <div class="back">
+              <div class="sr-back-head">
+                <strong class="sr-back-gloss">to throw out</strong>
+                <span class="sr-back-tag">are</span>
+              </div>
+              <table class="sr-conj-table">
+                <tbody>
+                <tr>
+                  <th class="sr-tense-label"><span class="sr-tense-it">presente</span><span class="sr-tense-aspect">now</span></th>
+                  <td class="sr-form">butto</td>
+                  <td class="sr-tense-gloss">I throw out</td>
+                </tr>
+                <tr>
+                  <th class="sr-tense-label"><span class="sr-tense-it">pass. pross.</span><span class="sr-tense-aspect">did</span></th>
+                  <td class="sr-form">ho buttato</td>
+                  <td class="sr-tense-gloss">I threw out</td>
+                </tr>
+                <tr>
+                  <th class="sr-tense-label"><span class="sr-tense-it">imperfetto</span><span class="sr-tense-aspect">was -ing</span></th>
+                  <td class="sr-form">buttavo</td>
+                  <td class="sr-tense-gloss">I was throw outing</td>
+                </tr>
+                <tr>
+                  <th class="sr-tense-label"><span class="sr-tense-it">futuro</span><span class="sr-tense-aspect">will</span></th>
+                  <td class="sr-form">butterò</td>
+                  <td class="sr-tense-gloss">I will throw out</td>
+                </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="sr-card" data-card-type="verb">
+            <div class="front">mettere</div>
+            <div class="back">
+              <div class="sr-back-head">
+                <strong class="sr-back-gloss">to put</strong>
+                <span class="sr-back-tag">ere</span>
+              </div>
+              <table class="sr-conj-table">
+                <tbody>
+                <tr>
+                  <th class="sr-tense-label"><span class="sr-tense-it">presente</span><span class="sr-tense-aspect">now</span></th>
+                  <td class="sr-form">metto</td>
+                  <td class="sr-tense-gloss">I put</td>
+                </tr>
+                <tr>
+                  <th class="sr-tense-label"><span class="sr-tense-it">pass. pross.</span><span class="sr-tense-aspect">did</span></th>
+                  <td class="sr-form">ho messo</td>
+                  <td class="sr-tense-gloss">I put</td>
+                </tr>
+                <tr>
+                  <th class="sr-tense-label"><span class="sr-tense-it">imperfetto</span><span class="sr-tense-aspect">was -ing</span></th>
+                  <td class="sr-form">mettevo</td>
+                  <td class="sr-tense-gloss">I was puting</td>
+                </tr>
+                <tr>
+                  <th class="sr-tense-label"><span class="sr-tense-it">futuro</span><span class="sr-tense-aspect">will</span></th>
+                  <td class="sr-form">metterò</td>
+                  <td class="sr-tense-gloss">I will put</td>
+                </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="sr-card" data-card-type="verb">
+            <div class="front">passare</div>
+            <div class="back">
+              <div class="sr-back-head">
+                <strong class="sr-back-gloss">to vacuum</strong>
+                <span class="sr-back-tag">are</span>
+              </div>
+              <table class="sr-conj-table">
+                <tbody>
+                <tr>
+                  <th class="sr-tense-label"><span class="sr-tense-it">presente</span><span class="sr-tense-aspect">now</span></th>
+                  <td class="sr-form">passo</td>
+                  <td class="sr-tense-gloss">I vacuum</td>
+                </tr>
+                <tr>
+                  <th class="sr-tense-label"><span class="sr-tense-it">pass. pross.</span><span class="sr-tense-aspect">did</span></th>
+                  <td class="sr-form">ho passato</td>
+                  <td class="sr-tense-gloss">I vacuumed</td>
+                </tr>
+                <tr>
+                  <th class="sr-tense-label"><span class="sr-tense-it">imperfetto</span><span class="sr-tense-aspect">was -ing</span></th>
+                  <td class="sr-form">passavo</td>
+                  <td class="sr-tense-gloss">I was vacuuming</td>
+                </tr>
+                <tr>
+                  <th class="sr-tense-label"><span class="sr-tense-it">futuro</span><span class="sr-tense-aspect">will</span></th>
+                  <td class="sr-form">passerò</td>
+                  <td class="sr-tense-gloss">I will vacuum</td>
+                </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="sr-card" data-card-type="noun">
+            <div class="front">la scopa</div>
+            <div class="back">
+              <div class="sr-back-head">
+                <strong class="sr-back-gloss">broom</strong>
+                <span class="sr-back-tag sr-article">la</span>
+              </div>
+              <p class="sr-back-full"><em class="sr-it">la scopa</em></p>
+              
+              <p class="sr-back-pair">pairs with <em>spazzare</em></p>
+              
+            </div>
+          </div>
+
+          <div class="sr-card" data-card-type="noun">
+            <div class="front">lo straccio</div>
+            <div class="back">
+              <div class="sr-back-head">
+                <strong class="sr-back-gloss">rag / mop cloth</strong>
+                <span class="sr-back-tag sr-article">lo</span>
+              </div>
+              <p class="sr-back-full"><em class="sr-it">lo straccio</em></p>
+              
+              <p class="sr-back-pair">pairs with <em>strofinare</em></p>
+              
+            </div>
+          </div>
+
+          <div class="sr-card" data-card-type="noun">
+            <div class="front">il bucato</div>
+            <div class="back">
+              <div class="sr-back-head">
+                <strong class="sr-back-gloss">laundry</strong>
+                <span class="sr-back-tag sr-article">il</span>
+              </div>
+              <p class="sr-back-full"><em class="sr-it">il bucato</em></p>
+              
+              <p class="sr-back-pair">pairs with <em>lavare / stendere / piegare</em></p>
+              
+            </div>
+          </div>
+
+          <div class="sr-card" data-card-type="noun">
+            <div class="front">la pattumiera</div>
+            <div class="back">
+              <div class="sr-back-head">
+                <strong class="sr-back-gloss">dustbin</strong>
+                <span class="sr-back-tag sr-article">la</span>
+              </div>
+              <p class="sr-back-full"><em class="sr-it">la pattumiera</em></p>
+              
+              
+              <p class="sr-back-note">Calvino — "il rito della pattumiera"</p>
+            </div>
+          </div>
+
+          <div class="sr-card" data-card-type="noun">
+            <div class="front">la candeggina</div>
+            <div class="back">
+              <div class="sr-back-head">
+                <strong class="sr-back-gloss">bleach</strong>
+                <span class="sr-back-tag sr-article">la</span>
+              </div>
+              <p class="sr-back-full"><em class="sr-it">la candeggina</em></p>
+              
+              
+              <p class="sr-back-note">essential Italian household</p>
+            </div>
+          </div>
+
+          <div class="sr-card" data-card-type="noun">
+            <div class="front">lo sgrassatore</div>
+            <div class="back">
+              <div class="sr-back-head">
+                <strong class="sr-back-gloss">degreaser</strong>
+                <span class="sr-back-tag sr-article">lo</span>
+              </div>
+              <p class="sr-back-full"><em class="sr-it">lo sgrassatore</em></p>
+              
+              
+              <p class="sr-back-note">kitchen "holy grail"</p>
+            </div>
+          </div>
+
+          <div class="sr-card" data-card-type="idiom">
+            <div class="front">essere uno specchio</div>
+            <div class="back">
+              <div class="sr-back-head">
+                <strong class="sr-back-gloss">a shiningly clean house</strong>
+                <span class="sr-back-tag">idiom</span>
+              </div>
+              <p class="sr-back-literal">lit. <em>to be a mirror</em></p>
+            </div>
+          </div>
+
+          <div class="sr-card" data-card-type="idiom">
+            <div class="front">fare piazza pulita</div>
+            <div class="back">
+              <div class="sr-back-head">
+                <strong class="sr-back-gloss">to make a clean sweep (figurative)</strong>
+                <span class="sr-back-tag">idiom</span>
+              </div>
+              <p class="sr-back-literal">lit. <em>to make a clean square</em></p>
+            </div>
+          </div>
       </div>
     </section>
 
