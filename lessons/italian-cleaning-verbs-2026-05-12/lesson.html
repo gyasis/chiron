@@ -182,83 +182,120 @@
     .jokes-sidebar .joke { margin: var(--chiron-space-4) 0; }
     .jokes-sidebar .joke-title { font-family: var(--chiron-font-heading); font-weight: 700; color: var(--chiron-warm-accent); font-size: 0.95em; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: var(--chiron-space-2); }
 
-    /* ---- Match Madness ---- */
-    .mm-container {
-      background: var(--chiron-surface);
-      border-radius: var(--chiron-radius-lg);
-      padding: var(--chiron-space-6);
-      box-shadow: var(--chiron-shadow-md);
-      border: 1px solid var(--chiron-border);
-      position: relative;
-      overflow: hidden;
-    }
-    .mm-container::before {
-      content: ''; position: absolute; inset: 0;
-      background: radial-gradient(circle at center, var(--chiron-warm-accent) 0%, transparent 60%);
-      opacity: 0; pointer-events: none;
-      animation: mm-pulse var(--mm-pulse-ms, 2000ms) ease-in-out infinite;
-    }
-    .mm-container[data-active="false"]::before { animation: none; }
-    @keyframes mm-pulse {
-      0%, 100% { opacity: 0; }
-      50% { opacity: var(--mm-pulse-strength, 0.08); }
-    }
-
-    .mm-header { display: flex; justify-content: space-between; align-items: center; gap: var(--chiron-space-3); flex-wrap: wrap; margin-bottom: var(--chiron-space-4); position: relative; z-index: 2; }
-    .mm-timer { font-family: var(--chiron-font-mono, monospace); font-size: 1.8rem; font-weight: 700; color: var(--chiron-fg); padding: var(--chiron-space-2) var(--chiron-space-4); background: var(--chiron-elevated); border-radius: var(--chiron-radius-md); min-width: 110px; text-align: center; }
-    .mm-timer.warning { color: var(--chiron-warning); }
-    .mm-timer.critical { color: var(--chiron-error); animation: mm-flash 0.4s ease-in-out infinite; }
-    @keyframes mm-flash { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
-    .mm-stats { display: flex; gap: var(--chiron-space-4); font-size: 0.95em; }
-    .mm-stats .stat { color: var(--chiron-fg-secondary); }
-    .mm-stats .stat strong { color: var(--chiron-fg); font-family: var(--chiron-font-heading); font-size: 1.15em; display: block; }
-    .mm-combo {
-      display: inline-flex; align-items: center; gap: 4px;
-      padding: 4px 10px; border-radius: var(--chiron-radius-sm);
-      background: var(--chiron-elevated); color: var(--chiron-warm-accent);
-      font-family: var(--chiron-font-heading); font-weight: 700;
-      transition: transform 0.2s ease;
-    }
-    .mm-combo.hot { background: var(--chiron-warm-accent); color: var(--chiron-surface); transform: scale(1.15); }
-
-    .mm-round-label { text-align: center; font-family: var(--chiron-font-heading); color: var(--chiron-muted); font-size: 0.85em; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: var(--chiron-space-3); }
-
-    .mm-grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--chiron-space-3); max-width: 560px; margin: 0 auto; position: relative; z-index: 2; }
-    .mm-tile {
-      padding: var(--chiron-space-3) var(--chiron-space-4);
-      background: var(--chiron-bg);
-      border: 2px solid var(--chiron-border);
-      border-radius: var(--chiron-radius-md);
-      cursor: pointer;
-      font-family: var(--chiron-font-heading);
-      font-size: 1.05em;
-      text-align: center;
-      color: var(--chiron-fg);
-      transition: transform 0.15s ease, background 0.15s ease, border-color 0.15s ease;
-      user-select: none;
-      min-height: 56px;
-      display: flex; align-items: center; justify-content: center;
-    }
-    .mm-tile:hover { background: var(--chiron-elevated); transform: translateY(-1px); }
-    .mm-tile[data-state="selected"] { background: var(--chiron-accent); color: var(--chiron-surface); border-color: var(--chiron-accent); }
-    .mm-tile[data-state="correct"] { background: var(--chiron-success); color: var(--chiron-surface); border-color: var(--chiron-success); animation: mm-burst 0.5s ease-out; }
-    .mm-tile[data-state="wrong"] { background: var(--chiron-error); color: var(--chiron-surface); border-color: var(--chiron-error); animation: mm-shake 0.4s ease-in-out; }
-    .mm-tile[data-state="empty"] { visibility: hidden; }
-    @keyframes mm-burst { 0% { transform: scale(1); } 50% { transform: scale(1.12); } 100% { transform: scale(1); } }
-    @keyframes mm-shake { 0%, 100% { transform: translateX(0); } 20% { transform: translateX(-6px); } 40% { transform: translateX(6px); } 60% { transform: translateX(-4px); } 80% { transform: translateX(4px); } }
-
-    .mm-controls { margin-top: var(--chiron-space-4); display: flex; gap: var(--chiron-space-3); justify-content: center; flex-wrap: wrap; }
-    .mm-controls button { font: inherit; padding: var(--chiron-space-2) var(--chiron-space-4); border-radius: var(--chiron-radius-sm); cursor: pointer; border: 1px solid var(--chiron-border); background: var(--chiron-surface); color: var(--chiron-fg); }
-    .mm-controls button.primary { background: var(--chiron-accent); color: var(--chiron-surface); border-color: var(--chiron-accent); }
-    .mm-controls button.primary:hover { background: var(--chiron-accent-light); }
-
-    .mm-result { padding: var(--chiron-space-4); background: var(--chiron-elevated); border-radius: var(--chiron-radius-md); margin-top: var(--chiron-space-4); text-align: center; display: none; }
-    .mm-result.show { display: block; }
-    .mm-result h4 { font-family: var(--chiron-font-heading); margin: 0 0 var(--chiron-space-2); color: var(--chiron-accent); font-size: 1.4em; }
-    .mm-result .latency-table { font-size: 0.85em; margin-top: var(--chiron-space-3); width: 100%; }
-    .mm-result .latency-table th, .mm-result .latency-table td { padding: 4px 8px; }
-
-    .mm-keyboard-hint { font-size: 0.8em; color: var(--chiron-muted); text-align: center; margin-top: var(--chiron-space-3); font-family: var(--chiron-font-mono, monospace); }
+    /* ---- Match Madness (multi-set) ---- */
+      /* ========================= Match Madness (multi-set) ========================= */
+      .mm-section { margin: var(--chiron-space-6) 0; }
+      .mm-intro { color: var(--chiron-fg-secondary); font-size: 0.95rem; margin-bottom: var(--chiron-space-5); }
+    
+      .mm-sets-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+        gap: var(--chiron-space-4);
+      }
+    
+      .mm-set-card {
+        background: var(--chiron-surface);
+        border: 1px solid var(--chiron-border);
+        border-radius: var(--chiron-radius-md);
+        padding: var(--chiron-space-5);
+        display: flex; flex-direction: column; gap: var(--chiron-space-3);
+        transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+      }
+      .mm-set-card:hover { transform: translateY(-2px); box-shadow: var(--chiron-shadow-md); border-color: var(--chiron-accent); }
+      .mm-set-card[data-mode="conjugation"] { border-left: 3px solid var(--chiron-warm-accent); }
+      .mm-set-card[data-mode="mixed"] { border-left: 3px solid var(--chiron-accent); background: linear-gradient(135deg, var(--chiron-surface), var(--chiron-elevated)); }
+    
+      .mm-set-card-header { display: flex; justify-content: space-between; align-items: center; font-size: 11px; }
+      .mm-set-num { font-family: var(--chiron-font-mono, monospace); color: var(--chiron-muted); letter-spacing: 0.08em; text-transform: uppercase; }
+      .mm-set-mode { font-family: var(--chiron-font-mono, monospace); color: var(--chiron-accent); font-size: 10px; padding: 2px 6px; background: var(--chiron-accent-light); border-radius: var(--chiron-radius-sm); }
+      .mm-set-title { font-family: var(--chiron-font-heading); font-size: 1.1rem; margin: 0; color: var(--chiron-fg); }
+      .mm-set-subtitle { color: var(--chiron-fg-secondary); font-size: 0.85rem; margin: 0; font-style: italic; }
+      .mm-set-meta { display: flex; gap: var(--chiron-space-3); font-size: 0.85rem; color: var(--chiron-fg-secondary); }
+      .mm-set-mastery { display: flex; flex-wrap: wrap; gap: var(--chiron-space-2); font-size: 0.78rem; color: var(--chiron-muted); padding: var(--chiron-space-2) 0; border-top: 1px dashed var(--chiron-divider); margin-top: auto; }
+      .mm-mastery-pct strong { color: var(--chiron-accent); }
+      .mm-mastery-weak strong { color: var(--chiron-warm-accent); }
+      .mm-set-play.primary {
+        background: var(--chiron-accent); color: var(--chiron-surface);
+        border: none; padding: var(--chiron-space-2) var(--chiron-space-4); border-radius: var(--chiron-radius-sm);
+        cursor: pointer; font-weight: 600; font-size: 0.9rem;
+      }
+      .mm-set-play.primary:hover { background: var(--chiron-accent-hover, var(--chiron-accent)); }
+    
+      /* Play surface = full-screen overlay */
+      .mm-play-surface {
+        position: fixed; inset: 0; z-index: 1000;
+        background: var(--chiron-bg);
+        display: flex; align-items: center; justify-content: center;
+        padding: var(--chiron-space-6);
+        overflow: auto;
+      }
+      .mm-close {
+        position: absolute; top: var(--chiron-space-4); right: var(--chiron-space-4);
+        background: var(--chiron-surface); border: 1px solid var(--chiron-border);
+        width: 36px; height: 36px; border-radius: 50%;
+        font-size: 1.2rem; cursor: pointer; color: var(--chiron-fg);
+      }
+      .mm-close:hover { background: var(--chiron-elevated); }
+    
+      .mm-container {
+        --mm-pulse-ms: 2000ms;
+        --mm-pulse-strength: 0;
+        width: 100%; max-width: 720px;
+        background: var(--chiron-surface);
+        border: 1px solid var(--chiron-border);
+        border-radius: var(--chiron-radius-lg);
+        padding: var(--chiron-space-6);
+        box-shadow: var(--chiron-shadow-lg);
+        position: relative; overflow: hidden;
+      }
+      .mm-container::before {
+        content: ''; position: absolute; inset: 0; pointer-events: none;
+        background: var(--chiron-accent);
+        opacity: var(--mm-pulse-strength);
+        animation: mm-pulse var(--mm-pulse-ms) ease-in-out infinite;
+      }
+      @keyframes mm-pulse { 0%, 100% { opacity: var(--mm-pulse-strength); } 50% { opacity: calc(var(--mm-pulse-strength) * 1.8); } }
+    
+      .mm-header { display: flex; justify-content: space-between; align-items: center; gap: var(--chiron-space-4); margin-bottom: var(--chiron-space-4); }
+      .mm-set-label { font-size: 0.9rem; color: var(--chiron-fg-secondary); }
+      .mm-timer { font-family: var(--chiron-font-mono, monospace); font-size: 2rem; font-weight: 700; color: var(--chiron-accent); }
+      .mm-stats { display: flex; gap: var(--chiron-space-3); font-size: 0.85rem; }
+      .mm-stats .stat strong { display: block; font-size: 1.4rem; color: var(--chiron-fg); }
+      .mm-combo strong { color: var(--chiron-warm-accent); }
+      .mm-round-label { text-align: center; font-size: 0.85rem; color: var(--chiron-muted); margin-bottom: var(--chiron-space-3); }
+    
+      .mm-grid {
+        display: grid; grid-template-columns: 1fr 1fr;
+        gap: var(--chiron-space-3); margin: var(--chiron-space-4) 0;
+      }
+      .mm-tile {
+        background: var(--chiron-elevated);
+        color: var(--chiron-fg);
+        border: 2px solid var(--chiron-border);
+        border-radius: var(--chiron-radius-md);
+        padding: var(--chiron-space-4) var(--chiron-space-3);
+        font: inherit; font-size: 0.95rem; font-weight: 500;
+        cursor: pointer; min-height: 56px;
+        transition: transform 0.12s ease, border-color 0.12s ease, background 0.12s ease;
+      }
+      .mm-tile:hover:not([data-state="empty"]):not([data-state="correct"]) { border-color: var(--chiron-accent); transform: translateY(-1px); }
+      .mm-tile[data-state="selected"] { border-color: var(--chiron-accent); background: var(--chiron-accent-light); color: var(--chiron-fg); }
+      .mm-tile[data-state="correct"] { border-color: var(--chiron-success, var(--chiron-accent)); background: var(--chiron-success-bg, var(--chiron-accent-light)); opacity: 0.55; cursor: default; }
+      .mm-tile[data-state="wrong"] { border-color: var(--chiron-warm-accent); background: var(--chiron-warm-accent); color: var(--chiron-surface); animation: mm-shake 0.4s; }
+      .mm-tile[data-state="empty"] { background: transparent; border-style: dashed; cursor: default; }
+      @keyframes mm-shake { 0%,100% { transform: translateX(0);} 25%{transform:translateX(-4px);} 75%{transform:translateX(4px);} }
+    
+      .mm-keyboard-hint { font-size: 0.78rem; color: var(--chiron-muted); text-align: center; margin: var(--chiron-space-3) 0; }
+      .mm-keyboard-hint code { background: var(--chiron-elevated); padding: 2px 6px; border-radius: var(--chiron-radius-sm); font-family: var(--chiron-font-mono, monospace); }
+      .mm-controls { display: flex; gap: var(--chiron-space-2); justify-content: center; flex-wrap: wrap; }
+      .mm-controls button { font: inherit; padding: var(--chiron-space-2) var(--chiron-space-4); border-radius: var(--chiron-radius-sm); border: 1px solid var(--chiron-border); background: var(--chiron-surface); color: var(--chiron-fg); cursor: pointer; }
+      .mm-controls button.primary { background: var(--chiron-accent); color: var(--chiron-surface); border-color: var(--chiron-accent); }
+      .mm-controls button:hover { background: var(--chiron-elevated); }
+    
+      .mm-result { margin-top: var(--chiron-space-5); padding: var(--chiron-space-4); background: var(--chiron-elevated); border-radius: var(--chiron-radius-md); border-left: 3px solid var(--chiron-accent); }
+      .mm-result h4 { margin: 0 0 var(--chiron-space-2); color: var(--chiron-accent); font-family: var(--chiron-font-heading); }
+      .mm-result p { margin: var(--chiron-space-2) 0; color: var(--chiron-fg-secondary); }
+      .mm-result strong { color: var(--chiron-fg); }
 
     /* ---- SR drawer ---- */
     .sr-deck { display: grid; gap: var(--chiron-space-3); grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); margin-top: var(--chiron-space-4); }
@@ -695,34 +732,247 @@
     <!-- ========================= 5. MATCH MADNESS ========================= -->
     <section class="lesson-section" id="s5">
       <h2 class="section-h"><span class="num">5</span>Match Madness — automatismo</h2>
-      <p>Three rounds, 105 seconds total. Click a tile on the left, then its match on the right. Wrong matches lock input for 1.5s. The background pulse and combo meter speed up as your streak grows. Per-pair latency is logged for the SR scheduler.</p>
 
-      <div class="mm-container" id="mm-game" data-active="false" style="--mm-pulse-ms: 2000ms; --mm-pulse-strength: 0;">
-        <div class="mm-header">
-          <div class="mm-timer" id="mm-timer">1:45</div>
-          <div class="mm-stats">
-            <span class="stat"><strong id="mm-correct">0</strong>correct</span>
-            <span class="stat"><strong id="mm-wrong">0</strong>wrong</span>
-            <span class="stat mm-combo" id="mm-combo">×0</span>
+          <!-- ========================= Match Madness (multi-set) ========================= -->
+          <div class="mm-section" data-mm-lesson="italian-cleaning-verbs-2026-05-12">
+            <p class="mm-intro">Twelve sets of timed retrieval practice. Each set drills one slice — vocab, gender, prepositions, collocations, six tenses. The final SUPER-SET interleaves everything. Per-pair latency is logged in your browser; weak pairs come back next session.</p>
+
+            <div class="mm-sets-grid">
+              
+            <article class="mm-set-card" data-set-id="set-1-verbs" data-mode="vocab-pair">
+              <div class="mm-set-card-header">
+                <span class="mm-set-num">Set 1</span>
+                <span class="mm-set-mode">vocab-pair</span>
+              </div>
+              <h3 class="mm-set-title">Verbi ↔ English</h3>
+              <p class="mm-set-subtitle">Core 14 verbs of cleaning</p>
+              <div class="mm-set-meta">
+                <span><strong>3</strong> rounds</span>
+                <span><strong>14</strong> pairs</span>
+              </div>
+              <div class="mm-set-mastery" data-mastery-for="set-1-verbs">
+                <span class="mm-mastery-label">No history yet</span>
+              </div>
+              <button class="mm-set-play primary" data-play-set="set-1-verbs">Play set</button>
+            </article>
+
+            <article class="mm-set-card" data-set-id="set-2-nouns" data-mode="vocab-pair">
+              <div class="mm-set-card-header">
+                <span class="mm-set-num">Set 2</span>
+                <span class="mm-set-mode">vocab-pair</span>
+              </div>
+              <h3 class="mm-set-title">Nomi ↔ English</h3>
+              <p class="mm-set-subtitle">Household nouns</p>
+              <div class="mm-set-meta">
+                <span><strong>5</strong> rounds</span>
+                <span><strong>11</strong> pairs</span>
+              </div>
+              <div class="mm-set-mastery" data-mastery-for="set-2-nouns">
+                <span class="mm-mastery-label">No history yet</span>
+              </div>
+              <button class="mm-set-play primary" data-play-set="set-2-nouns">Play set</button>
+            </article>
+
+            <article class="mm-set-card" data-set-id="set-3-gender" data-mode="gender-pair">
+              <div class="mm-set-card-header">
+                <span class="mm-set-num">Set 3</span>
+                <span class="mm-set-mode">gender-pair</span>
+              </div>
+              <h3 class="mm-set-title">Genere — la / lo / il / l'</h3>
+              <p class="mm-set-subtitle">Match each noun with its correct article</p>
+              <div class="mm-set-meta">
+                <span><strong>5</strong> rounds</span>
+                <span><strong>11</strong> pairs</span>
+              </div>
+              <div class="mm-set-mastery" data-mastery-for="set-3-gender">
+                <span class="mm-mastery-label">No history yet</span>
+              </div>
+              <button class="mm-set-play primary" data-play-set="set-3-gender">Play set</button>
+            </article>
+
+            <article class="mm-set-card" data-set-id="set-4-preps" data-mode="prep-pair">
+              <div class="mm-set-card-header">
+                <span class="mm-set-num">Set 4</span>
+                <span class="mm-set-mode">prep-pair</span>
+              </div>
+              <h3 class="mm-set-title">Preposizioni in contesto</h3>
+              <p class="mm-set-subtitle">Cleaning-context preposition phrases</p>
+              <div class="mm-set-meta">
+                <span><strong>5</strong> rounds</span>
+                <span><strong>10</strong> pairs</span>
+              </div>
+              <div class="mm-set-mastery" data-mastery-for="set-4-preps">
+                <span class="mm-mastery-label">No history yet</span>
+              </div>
+              <button class="mm-set-play primary" data-play-set="set-4-preps">Play set</button>
+            </article>
+
+            <article class="mm-set-card" data-set-id="set-5-collocations" data-mode="collocation">
+              <div class="mm-set-card-header">
+                <span class="mm-set-num">Set 5</span>
+                <span class="mm-set-mode">collocation</span>
+              </div>
+              <h3 class="mm-set-title">Collocazioni — verbo + oggetto</h3>
+              <p class="mm-set-subtitle">Which object goes with which verb</p>
+              <div class="mm-set-meta">
+                <span><strong>5</strong> rounds</span>
+                <span><strong>10</strong> pairs</span>
+              </div>
+              <div class="mm-set-mastery" data-mastery-for="set-5-collocations">
+                <span class="mm-mastery-label">No history yet</span>
+              </div>
+              <button class="mm-set-play primary" data-play-set="set-5-collocations">Play set</button>
+            </article>
+
+            <article class="mm-set-card" data-set-id="set-6-presente" data-mode="conjugation">
+              <div class="mm-set-card-header">
+                <span class="mm-set-num">Set 6</span>
+                <span class="mm-set-mode">conjugation</span>
+              </div>
+              <h3 class="mm-set-title">Presente — io</h3>
+              <p class="mm-set-subtitle">Today, right now — io spazzo, io pulisco, io lavo</p>
+              <div class="mm-set-meta">
+                <span><strong>5</strong> rounds</span>
+                <span><strong>14</strong> pairs</span>
+              </div>
+              <div class="mm-set-mastery" data-mastery-for="set-6-presente">
+                <span class="mm-mastery-label">No history yet</span>
+              </div>
+              <button class="mm-set-play primary" data-play-set="set-6-presente">Play set</button>
+            </article>
+
+            <article class="mm-set-card" data-set-id="set-7-passato-prossimo" data-mode="conjugation">
+              <div class="mm-set-card-header">
+                <span class="mm-set-num">Set 7</span>
+                <span class="mm-set-mode">conjugation</span>
+              </div>
+              <h3 class="mm-set-title">Passato prossimo — io</h3>
+              <p class="mm-set-subtitle">Compound past — io ho spazzato, io ho pulito</p>
+              <div class="mm-set-meta">
+                <span><strong>5</strong> rounds</span>
+                <span><strong>14</strong> pairs</span>
+              </div>
+              <div class="mm-set-mastery" data-mastery-for="set-7-passato-prossimo">
+                <span class="mm-mastery-label">No history yet</span>
+              </div>
+              <button class="mm-set-play primary" data-play-set="set-7-passato-prossimo">Play set</button>
+            </article>
+
+            <article class="mm-set-card" data-set-id="set-8-imperfetto" data-mode="conjugation">
+              <div class="mm-set-card-header">
+                <span class="mm-set-num">Set 8</span>
+                <span class="mm-set-mode">conjugation</span>
+              </div>
+              <h3 class="mm-set-title">Imperfetto — io</h3>
+              <p class="mm-set-subtitle">Habitual / continuous past — io spazzavo, io pulivo</p>
+              <div class="mm-set-meta">
+                <span><strong>5</strong> rounds</span>
+                <span><strong>14</strong> pairs</span>
+              </div>
+              <div class="mm-set-mastery" data-mastery-for="set-8-imperfetto">
+                <span class="mm-mastery-label">No history yet</span>
+              </div>
+              <button class="mm-set-play primary" data-play-set="set-8-imperfetto">Play set</button>
+            </article>
+
+            <article class="mm-set-card" data-set-id="set-9-futuro-semplice" data-mode="conjugation">
+              <div class="mm-set-card-header">
+                <span class="mm-set-num">Set 9</span>
+                <span class="mm-set-mode">conjugation</span>
+              </div>
+              <h3 class="mm-set-title">Futuro semplice — io</h3>
+              <p class="mm-set-subtitle">Simple future — io spazzerò, io pulirò</p>
+              <div class="mm-set-meta">
+                <span><strong>5</strong> rounds</span>
+                <span><strong>14</strong> pairs</span>
+              </div>
+              <div class="mm-set-mastery" data-mastery-for="set-9-futuro-semplice">
+                <span class="mm-mastery-label">No history yet</span>
+              </div>
+              <button class="mm-set-play primary" data-play-set="set-9-futuro-semplice">Play set</button>
+            </article>
+
+            <article class="mm-set-card" data-set-id="set-10-congiuntivo-presente" data-mode="conjugation">
+              <div class="mm-set-card-header">
+                <span class="mm-set-num">Set 10</span>
+                <span class="mm-set-mode">conjugation</span>
+              </div>
+              <h3 class="mm-set-title">Congiuntivo presente — che io</h3>
+              <p class="mm-set-subtitle">Subjunctive — che io spazzi, che io pulisca</p>
+              <div class="mm-set-meta">
+                <span><strong>5</strong> rounds</span>
+                <span><strong>14</strong> pairs</span>
+              </div>
+              <div class="mm-set-mastery" data-mastery-for="set-10-congiuntivo-presente">
+                <span class="mm-mastery-label">No history yet</span>
+              </div>
+              <button class="mm-set-play primary" data-play-set="set-10-congiuntivo-presente">Play set</button>
+            </article>
+
+            <article class="mm-set-card" data-set-id="set-11-passato-remoto" data-mode="conjugation">
+              <div class="mm-set-card-header">
+                <span class="mm-set-num">Set 11</span>
+                <span class="mm-set-mode">conjugation</span>
+              </div>
+              <h3 class="mm-set-title">Passato remoto — io</h3>
+              <p class="mm-set-subtitle">Literary past — io spazzai (Calvino, Ginzburg)</p>
+              <div class="mm-set-meta">
+                <span><strong>5</strong> rounds</span>
+                <span><strong>14</strong> pairs</span>
+              </div>
+              <div class="mm-set-mastery" data-mastery-for="set-11-passato-remoto">
+                <span class="mm-mastery-label">No history yet</span>
+              </div>
+              <button class="mm-set-play primary" data-play-set="set-11-passato-remoto">Play set</button>
+            </article>
+
+            <article class="mm-set-card" data-set-id="set-super" data-mode="mixed">
+              <div class="mm-set-card-header">
+                <span class="mm-set-num">Set 12</span>
+                <span class="mm-set-mode">mixed</span>
+              </div>
+              <h3 class="mm-set-title">🔥 SUPER-SET — Tutto insieme</h3>
+              <p class="mm-set-subtitle">Up to 10 rounds, all content mixed. The retrieval anchor.</p>
+              <div class="mm-set-meta">
+                <span><strong>10</strong> rounds</span>
+                <span><strong>140</strong> pairs</span>
+              </div>
+              <div class="mm-set-mastery" data-mastery-for="set-super">
+                <span class="mm-mastery-label">No history yet</span>
+              </div>
+              <button class="mm-set-play primary" data-play-set="set-super">Play set</button>
+            </article>
+            </div>
+
+            <!-- The play surface is overlaid when a set is selected -->
+            <div class="mm-play-surface" id="mm-play-surface" hidden>
+              <button class="mm-close" id="mm-close" aria-label="Close Match Madness">×</button>
+              <div class="mm-container" id="mm-game" data-active="false">
+                <div class="mm-header">
+                  <div class="mm-set-label" id="mm-set-label">—</div>
+                  <div class="mm-timer" id="mm-timer">1:45</div>
+                  <div class="mm-stats">
+                    <span class="stat"><strong id="mm-correct">0</strong>correct</span>
+                    <span class="stat"><strong id="mm-wrong">0</strong>wrong</span>
+                    <span class="stat mm-combo" id="mm-combo">×0</span>
+                  </div>
+                </div>
+                <div class="mm-round-label" id="mm-round">Round — / —</div>
+                <div class="mm-grid" id="mm-grid"></div>
+                <div class="mm-keyboard-hint">Keyboard: <code>1–5</code> left · <code>Q W E R T</code> right · <code>Space</code> start/pause</div>
+                <div class="mm-controls">
+                  <button class="primary" id="mm-start">Start</button>
+                  <button id="mm-reset">Reset</button>
+                  <button id="mm-accessibility">Accessibility mode (timer off)</button>
+                </div>
+                <div class="mm-result" id="mm-result" hidden>
+                  <h4 id="mm-result-title">Round complete!</h4>
+                  <div id="mm-result-body"></div>
+                </div>
+              </div>
+            </div>
           </div>
-        </div>
-        <div class="mm-round-label" id="mm-round">Round — / 3</div>
-        <div class="mm-grid" id="mm-grid">
-          <!-- 10 tiles injected by JS -->
-        </div>
-        <div class="mm-keyboard-hint">Keyboard: <code>1–5</code> left column · <code>Q W E R T</code> right column · <code>Space</code> = start / pause</div>
-        <div class="mm-controls">
-          <button class="primary" id="mm-start">Start</button>
-          <button id="mm-reset">Reset</button>
-          <button id="mm-accessibility">Accessibility mode (timer off)</button>
-        </div>
-        <div class="mm-result" id="mm-result">
-          <h4 id="mm-result-title">Round complete!</h4>
-          <div id="mm-result-body"></div>
-        </div>
-      </div>
     </section>
-
     <!-- ========================= 6. EXTENDED DIALOGUE ========================= -->
     <section class="lesson-section" id="s6">
       <h2 class="section-h"><span class="num">6</span>Dialogo lungo — sabato a casa di Marco</h2>
@@ -858,380 +1108,296 @@
       card.addEventListener('click', () => card.classList.toggle('flipped'));
     });
 
-    /* ===== Match Madness ===== */
-    const MM = {
-      pairs: [
-        { l1: 'to sweep',          l2: 'spazzare' },
-        { l1: 'to wash',           l2: 'lavare' },
-        { l1: 'to clean',          l2: 'pulire' },
-        { l1: 'to dust',           l2: 'spolverare' },
-        { l1: 'to scrub',          l2: 'strofinare' },
-        { l1: 'to rinse',          l2: 'sciacquare' },
-        { l1: 'to dry',            l2: 'asciugare' },
-        { l1: 'to pile up',        l2: 'ammucchiare' },
-        { l1: 'to stack',          l2: 'mettere in pila' },
-        { l1: 'to throw out',      l2: 'buttare' },
-        { l1: 'to tidy up',        l2: 'riordinare' },
-        { l1: 'to vacuum',         l2: "passare l'aspirapolvere" },
-        { l1: 'to hang out',       l2: 'stendere' },
-        { l1: 'to fold',           l2: 'piegare' },
-        { l1: 'broom',             l2: 'la scopa' },
-        { l1: 'rag',               l2: 'lo straccio' },
-        { l1: 'sponge',            l2: 'la spugna' },
-        { l1: 'bucket',            l2: 'il secchio' },
-        { l1: 'detergent',         l2: 'il detersivo' },
-        { l1: 'trash',             l2: 'la spazzatura' },
-        { l1: 'laundry',           l2: 'il bucato' },
-        { l1: 'vacuum cleaner',    l2: "l'aspirapolvere" }
-      ],
-      ROUNDS: [
-        { count: 7,  label: 'Round 1 / 3' },
-        { count: 7,  label: 'Round 2 / 3' },
-        { count: 8,  label: 'Round 3 / 3' }
-      ],
-      TIMER_SEC: 105,
-      WRONG_LOCK_MS: 1500,
-      REFILL_BASE_MS: 200,
-      // chiron-can-do-better visual speed-up
-      pulseFromMs: 2000,
-      pulseToMs: 600,
-      strengthFromOpacity: 0.04,
-      strengthToOpacity: 0.18,
+    /* ===== Match Madness (multi-set) ===== */
+  /* ========================= Match Madness (multi-set) ========================= */
+  (function() {
+    const CONFIG = {"lessonId":"italian-cleaning-verbs-2026-05-12","defaults":{"timerSec":105,"wrongLockMs":1500,"accessibilityModeAllowed":true,"keyboardShortcuts":true,"visualSpeedUp":{"pulseFromMs":2000,"pulseToMs":600,"strengthFromOpacity":0.04,"strengthToOpacity":0.18,"refillFromMs":200,"refillToMs":100}},"sets":[{"id":"set-1-verbs","index":1,"title":"Verbi ↔ English","subtitle":"Core 14 verbs of cleaning","mode":"vocab-pair","rounds":3,"pairs":[{"id":"verb:spazzare","left":"to sweep","right":"spazzare"},{"id":"verb:spolverare","left":"to dust","right":"spolverare"},{"id":"verb:pulire","left":"to clean","right":"pulire"},{"id":"verb:strofinare","left":"to scrub","right":"strofinare"},{"id":"verb:lavare","left":"to wash","right":"lavare"},{"id":"verb:sciacquare","left":"to rinse","right":"sciacquare"},{"id":"verb:asciugare","left":"to dry","right":"asciugare"},{"id":"verb:stendere","left":"to hang out","right":"stendere"},{"id":"verb:piegare","left":"to fold","right":"piegare"},{"id":"verb:ammucchiare","left":"to pile up","right":"ammucchiare"},{"id":"verb:riordinare","left":"to tidy","right":"riordinare"},{"id":"verb:buttare","left":"to throw out","right":"buttare"},{"id":"verb:mettere","left":"to put","right":"mettere"},{"id":"verb:passare","left":"to vacuum","right":"passare"}]},{"id":"set-2-nouns","index":2,"title":"Nomi ↔ English","subtitle":"Household nouns","mode":"vocab-pair","rounds":5,"pairs":[{"id":"noun:scopa","left":"broom","right":"la scopa"},{"id":"noun:straccio","left":"rag","right":"lo straccio"},{"id":"noun:bucato","left":"laundry","right":"il bucato"},{"id":"noun:pattumiera","left":"dustbin","right":"la pattumiera"},{"id":"noun:candeggina","left":"bleach","right":"la candeggina"},{"id":"noun:sgrassatore","left":"degreaser","right":"lo sgrassatore"},{"id":"noun:spugna","left":"sponge","right":"la spugna"},{"id":"noun:secchio","left":"bucket","right":"il secchio"},{"id":"noun:aspirapolvere","left":"vacuum cleaner","right":"l'aspirapolvere"},{"id":"noun:spazzatura","left":"trash","right":"la spazzatura"},{"id":"noun:detersivo","left":"detergent","right":"il detersivo"}]},{"id":"set-3-gender","index":3,"title":"Genere — la / lo / il / l'","subtitle":"Match each noun with its correct article","mode":"gender-pair","rounds":5,"pairs":[{"id":"gender:scopa","left":"scopa","right":"la","hint":"broom"},{"id":"gender:straccio","left":"straccio","right":"lo","hint":"rag"},{"id":"gender:bucato","left":"bucato","right":"il","hint":"laundry"},{"id":"gender:pattumiera","left":"pattumiera","right":"la","hint":"dustbin"},{"id":"gender:candeggina","left":"candeggina","right":"la","hint":"bleach"},{"id":"gender:sgrassatore","left":"sgrassatore","right":"lo","hint":"degreaser"},{"id":"gender:spugna","left":"spugna","right":"la","hint":"sponge"},{"id":"gender:secchio","left":"secchio","right":"il","hint":"bucket"},{"id":"gender:aspirapolvere","left":"aspirapolvere","right":"l'","hint":"vacuum cleaner"},{"id":"gender:spazzatura","left":"spazzatura","right":"la","hint":"trash"},{"id":"gender:detersivo","left":"detersivo","right":"il","hint":"detergent"}]},{"id":"set-4-preps","index":4,"title":"Preposizioni in contesto","subtitle":"Cleaning-context preposition phrases","mode":"prep-pair","rounds":5,"pairs":[{"id":"prep:0","left":"under the sink","right":"sotto il lavandino"},{"id":"prep:1","left":"on the balcony","right":"sul balcone"},{"id":"prep:2","left":"from the balcony","right":"dal balcone"},{"id":"prep:3","left":"in the washing machine","right":"in lavatrice"},{"id":"prep:4","left":"into the dustbin","right":"nella pattumiera"},{"id":"prep:5","left":"above the table","right":"sopra il tavolo"},{"id":"prep:6","left":"with the degreaser","right":"con lo sgrassatore"},{"id":"prep:7","left":"without bleach","right":"senza candeggina"},{"id":"prep:8","left":"during the cleaning","right":"durante le pulizie"},{"id":"prep:9","left":"after dinner","right":"dopo la cena"}]},{"id":"set-5-collocations","index":5,"title":"Collocazioni — verbo + oggetto","subtitle":"Which object goes with which verb","mode":"collocation","rounds":5,"pairs":[{"id":"coll:0","left":"spazzare","right":"la scopa"},{"id":"coll:1","left":"lavare","right":"i piatti"},{"id":"coll:2","left":"stendere","right":"il bucato"},{"id":"coll:3","left":"passare","right":"l'aspirapolvere"},{"id":"coll:4","left":"pulire","right":"con lo sgrassatore"},{"id":"coll:5","left":"buttare","right":"la spazzatura"},{"id":"coll:6","left":"piegare","right":"la maglietta"},{"id":"coll:7","left":"riordinare","right":"la stanza"},{"id":"coll:8","left":"spolverare","right":"i mobili"},{"id":"coll:9","left":"sciacquare","right":"le posate"}]},{"id":"set-6-presente","index":6,"title":"Presente — io","subtitle":"Today, right now — io spazzo, io pulisco, io lavo","mode":"conjugation","rounds":5,"pairs":[{"id":"presente:io:spazzare","left":"I sweep","right":"spazzo","hint":"spazzare"},{"id":"presente:io:spolverare","left":"I dust","right":"spolvero","hint":"spolverare"},{"id":"presente:io:pulire","left":"I clean","right":"pulisco","hint":"pulire"},{"id":"presente:io:strofinare","left":"I scrub","right":"strofino","hint":"strofinare"},{"id":"presente:io:lavare","left":"I wash","right":"lavo","hint":"lavare"},{"id":"presente:io:sciacquare","left":"I rinse","right":"sciacquo","hint":"sciacquare"},{"id":"presente:io:asciugare","left":"I dry","right":"asciugo","hint":"asciugare"},{"id":"presente:io:stendere","left":"I hang out","right":"stendo","hint":"stendere"},{"id":"presente:io:piegare","left":"I fold","right":"piego","hint":"piegare"},{"id":"presente:io:ammucchiare","left":"I pile up","right":"ammucchio","hint":"ammucchiare"},{"id":"presente:io:riordinare","left":"I tidy","right":"riordino","hint":"riordinare"},{"id":"presente:io:buttare","left":"I throw out","right":"butto","hint":"buttare"},{"id":"presente:io:mettere","left":"I put","right":"metto","hint":"mettere"},{"id":"presente:io:passare","left":"I vacuum","right":"passo","hint":"passare"}]},{"id":"set-7-passato-prossimo","index":7,"title":"Passato prossimo — io","subtitle":"Compound past — io ho spazzato, io ho pulito","mode":"conjugation","rounds":5,"pairs":[{"id":"passato-prossimo:io:spazzare","left":"I sweeped","right":"ho spazzato","hint":"spazzare"},{"id":"passato-prossimo:io:spolverare","left":"I dusted","right":"ho spolverato","hint":"spolverare"},{"id":"passato-prossimo:io:pulire","left":"I cleaned","right":"ho pulito","hint":"pulire"},{"id":"passato-prossimo:io:strofinare","left":"I scrubed","right":"ho strofinato","hint":"strofinare"},{"id":"passato-prossimo:io:lavare","left":"I washed","right":"ho lavato","hint":"lavare"},{"id":"passato-prossimo:io:sciacquare","left":"I rinseed","right":"ho sciacquato","hint":"sciacquare"},{"id":"passato-prossimo:io:asciugare","left":"I dryed","right":"ho asciugato","hint":"asciugare"},{"id":"passato-prossimo:io:stendere","left":"I hang outed","right":"ho steso","hint":"stendere"},{"id":"passato-prossimo:io:piegare","left":"I folded","right":"ho piegato","hint":"piegare"},{"id":"passato-prossimo:io:ammucchiare","left":"I pile uped","right":"ho ammucchiato","hint":"ammucchiare"},{"id":"passato-prossimo:io:riordinare","left":"I tidyed","right":"ho riordinato","hint":"riordinare"},{"id":"passato-prossimo:io:buttare","left":"I throw outed","right":"ho buttato","hint":"buttare"},{"id":"passato-prossimo:io:mettere","left":"I puted","right":"ho messo","hint":"mettere"},{"id":"passato-prossimo:io:passare","left":"I vacuumed","right":"ho passato","hint":"passare"}]},{"id":"set-8-imperfetto","index":8,"title":"Imperfetto — io","subtitle":"Habitual / continuous past — io spazzavo, io pulivo","mode":"conjugation","rounds":5,"pairs":[{"id":"imperfetto:io:spazzare","left":"I used to sweep","right":"spazzavo","hint":"spazzare"},{"id":"imperfetto:io:spolverare","left":"I used to dust","right":"spolveravo","hint":"spolverare"},{"id":"imperfetto:io:pulire","left":"I used to clean","right":"pulivo","hint":"pulire"},{"id":"imperfetto:io:strofinare","left":"I used to scrub","right":"strofinavo","hint":"strofinare"},{"id":"imperfetto:io:lavare","left":"I used to wash","right":"lavavo","hint":"lavare"},{"id":"imperfetto:io:sciacquare","left":"I used to rinse","right":"sciacquavo","hint":"sciacquare"},{"id":"imperfetto:io:asciugare","left":"I used to dry","right":"asciugavo","hint":"asciugare"},{"id":"imperfetto:io:stendere","left":"I used to hang out","right":"stendevo","hint":"stendere"},{"id":"imperfetto:io:piegare","left":"I used to fold","right":"piegavo","hint":"piegare"},{"id":"imperfetto:io:ammucchiare","left":"I used to pile up","right":"ammucchiavo","hint":"ammucchiare"},{"id":"imperfetto:io:riordinare","left":"I used to tidy","right":"riordinavo","hint":"riordinare"},{"id":"imperfetto:io:buttare","left":"I used to throw out","right":"buttavo","hint":"buttare"},{"id":"imperfetto:io:mettere","left":"I used to put","right":"mettevo","hint":"mettere"},{"id":"imperfetto:io:passare","left":"I used to vacuum","right":"passavo","hint":"passare"}]},{"id":"set-9-futuro-semplice","index":9,"title":"Futuro semplice — io","subtitle":"Simple future — io spazzerò, io pulirò","mode":"conjugation","rounds":5,"pairs":[{"id":"futuro-semplice:io:spazzare","left":"I will sweep","right":"spazzerò","hint":"spazzare"},{"id":"futuro-semplice:io:spolverare","left":"I will dust","right":"spolvererò","hint":"spolverare"},{"id":"futuro-semplice:io:pulire","left":"I will clean","right":"pulirò","hint":"pulire"},{"id":"futuro-semplice:io:strofinare","left":"I will scrub","right":"strofinerò","hint":"strofinare"},{"id":"futuro-semplice:io:lavare","left":"I will wash","right":"laverò","hint":"lavare"},{"id":"futuro-semplice:io:sciacquare","left":"I will rinse","right":"sciacquerò","hint":"sciacquare"},{"id":"futuro-semplice:io:asciugare","left":"I will dry","right":"asciugherò","hint":"asciugare"},{"id":"futuro-semplice:io:stendere","left":"I will hang out","right":"stenderò","hint":"stendere"},{"id":"futuro-semplice:io:piegare","left":"I will fold","right":"piegherò","hint":"piegare"},{"id":"futuro-semplice:io:ammucchiare","left":"I will pile up","right":"ammucchierò","hint":"ammucchiare"},{"id":"futuro-semplice:io:riordinare","left":"I will tidy","right":"riordinerò","hint":"riordinare"},{"id":"futuro-semplice:io:buttare","left":"I will throw out","right":"butterò","hint":"buttare"},{"id":"futuro-semplice:io:mettere","left":"I will put","right":"metterò","hint":"mettere"},{"id":"futuro-semplice:io:passare","left":"I will vacuum","right":"passerò","hint":"passare"}]},{"id":"set-10-congiuntivo-presente","index":10,"title":"Congiuntivo presente — che io","subtitle":"Subjunctive — che io spazzi, che io pulisca","mode":"conjugation","rounds":5,"pairs":[{"id":"congiuntivo-presente:io:spazzare","left":"(that) I sweep","right":"spazzi","hint":"spazzare"},{"id":"congiuntivo-presente:io:spolverare","left":"(that) I dust","right":"spolveri","hint":"spolverare"},{"id":"congiuntivo-presente:io:pulire","left":"(that) I clean","right":"pulisca","hint":"pulire"},{"id":"congiuntivo-presente:io:strofinare","left":"(that) I scrub","right":"strofini","hint":"strofinare"},{"id":"congiuntivo-presente:io:lavare","left":"(that) I wash","right":"lavi","hint":"lavare"},{"id":"congiuntivo-presente:io:sciacquare","left":"(that) I rinse","right":"sciacqui","hint":"sciacquare"},{"id":"congiuntivo-presente:io:asciugare","left":"(that) I dry","right":"asciughi","hint":"asciugare"},{"id":"congiuntivo-presente:io:stendere","left":"(that) I hang out","right":"stenda","hint":"stendere"},{"id":"congiuntivo-presente:io:piegare","left":"(that) I fold","right":"pieghi","hint":"piegare"},{"id":"congiuntivo-presente:io:ammucchiare","left":"(that) I pile up","right":"ammucchii","hint":"ammucchiare"},{"id":"congiuntivo-presente:io:riordinare","left":"(that) I tidy","right":"riordini","hint":"riordinare"},{"id":"congiuntivo-presente:io:buttare","left":"(that) I throw out","right":"butti","hint":"buttare"},{"id":"congiuntivo-presente:io:mettere","left":"(that) I put","right":"metta","hint":"mettere"},{"id":"congiuntivo-presente:io:passare","left":"(that) I vacuum","right":"passi","hint":"passare"}]},{"id":"set-11-passato-remoto","index":11,"title":"Passato remoto — io","subtitle":"Literary past — io spazzai (Calvino, Ginzburg)","mode":"conjugation","rounds":5,"pairs":[{"id":"passato-remoto:io:spazzare","left":"I sweeped (lit.)","right":"spazzai","hint":"spazzare"},{"id":"passato-remoto:io:spolverare","left":"I dusted (lit.)","right":"spolverai","hint":"spolverare"},{"id":"passato-remoto:io:pulire","left":"I cleaned (lit.)","right":"pulii","hint":"pulire"},{"id":"passato-remoto:io:strofinare","left":"I scrubed (lit.)","right":"strofinai","hint":"strofinare"},{"id":"passato-remoto:io:lavare","left":"I washed (lit.)","right":"lavai","hint":"lavare"},{"id":"passato-remoto:io:sciacquare","left":"I rinseed (lit.)","right":"sciacquai","hint":"sciacquare"},{"id":"passato-remoto:io:asciugare","left":"I dryed (lit.)","right":"asciugai","hint":"asciugare"},{"id":"passato-remoto:io:stendere","left":"I hang outed (lit.)","right":"stesi","hint":"stendere"},{"id":"passato-remoto:io:piegare","left":"I folded (lit.)","right":"piegai","hint":"piegare"},{"id":"passato-remoto:io:ammucchiare","left":"I pile uped (lit.)","right":"ammucchiai","hint":"ammucchiare"},{"id":"passato-remoto:io:riordinare","left":"I tidyed (lit.)","right":"riordinai","hint":"riordinare"},{"id":"passato-remoto:io:buttare","left":"I throw outed (lit.)","right":"buttai","hint":"buttare"},{"id":"passato-remoto:io:mettere","left":"I puted (lit.)","right":"misi","hint":"mettere"},{"id":"passato-remoto:io:passare","left":"I vacuumed (lit.)","right":"passai","hint":"passare"}]},{"id":"set-super","index":12,"title":"🔥 SUPER-SET — Tutto insieme","subtitle":"Up to 10 rounds, all content mixed. The retrieval anchor.","mode":"mixed","rounds":10,"pairs":[{"id":"verb:spazzare","left":"to sweep","right":"spazzare"},{"id":"verb:spolverare","left":"to dust","right":"spolverare"},{"id":"verb:pulire","left":"to clean","right":"pulire"},{"id":"verb:strofinare","left":"to scrub","right":"strofinare"},{"id":"verb:lavare","left":"to wash","right":"lavare"},{"id":"verb:sciacquare","left":"to rinse","right":"sciacquare"},{"id":"verb:asciugare","left":"to dry","right":"asciugare"},{"id":"verb:stendere","left":"to hang out","right":"stendere"},{"id":"verb:piegare","left":"to fold","right":"piegare"},{"id":"verb:ammucchiare","left":"to pile up","right":"ammucchiare"},{"id":"verb:riordinare","left":"to tidy","right":"riordinare"},{"id":"verb:buttare","left":"to throw out","right":"buttare"},{"id":"verb:mettere","left":"to put","right":"mettere"},{"id":"verb:passare","left":"to vacuum","right":"passare"},{"id":"noun:scopa","left":"broom","right":"la scopa"},{"id":"noun:straccio","left":"rag","right":"lo straccio"},{"id":"noun:bucato","left":"laundry","right":"il bucato"},{"id":"noun:pattumiera","left":"dustbin","right":"la pattumiera"},{"id":"noun:candeggina","left":"bleach","right":"la candeggina"},{"id":"noun:sgrassatore","left":"degreaser","right":"lo sgrassatore"},{"id":"noun:spugna","left":"sponge","right":"la spugna"},{"id":"noun:secchio","left":"bucket","right":"il secchio"},{"id":"noun:aspirapolvere","left":"vacuum cleaner","right":"l'aspirapolvere"},{"id":"noun:spazzatura","left":"trash","right":"la spazzatura"},{"id":"noun:detersivo","left":"detergent","right":"il detersivo"},{"id":"gender:scopa","left":"scopa","right":"la","hint":"broom"},{"id":"gender:straccio","left":"straccio","right":"lo","hint":"rag"},{"id":"gender:bucato","left":"bucato","right":"il","hint":"laundry"},{"id":"gender:pattumiera","left":"pattumiera","right":"la","hint":"dustbin"},{"id":"gender:candeggina","left":"candeggina","right":"la","hint":"bleach"},{"id":"gender:sgrassatore","left":"sgrassatore","right":"lo","hint":"degreaser"},{"id":"gender:spugna","left":"spugna","right":"la","hint":"sponge"},{"id":"gender:secchio","left":"secchio","right":"il","hint":"bucket"},{"id":"gender:aspirapolvere","left":"aspirapolvere","right":"l'","hint":"vacuum cleaner"},{"id":"gender:spazzatura","left":"spazzatura","right":"la","hint":"trash"},{"id":"gender:detersivo","left":"detersivo","right":"il","hint":"detergent"},{"id":"prep:0","left":"under the sink","right":"sotto il lavandino"},{"id":"prep:1","left":"on the balcony","right":"sul balcone"},{"id":"prep:2","left":"from the balcony","right":"dal balcone"},{"id":"prep:3","left":"in the washing machine","right":"in lavatrice"},{"id":"prep:4","left":"into the dustbin","right":"nella pattumiera"},{"id":"prep:5","left":"above the table","right":"sopra il tavolo"},{"id":"prep:6","left":"with the degreaser","right":"con lo sgrassatore"},{"id":"prep:7","left":"without bleach","right":"senza candeggina"},{"id":"prep:8","left":"during the cleaning","right":"durante le pulizie"},{"id":"prep:9","left":"after dinner","right":"dopo la cena"},{"id":"coll:0","left":"spazzare","right":"la scopa"},{"id":"coll:1","left":"lavare","right":"i piatti"},{"id":"coll:2","left":"stendere","right":"il bucato"},{"id":"coll:3","left":"passare","right":"l'aspirapolvere"},{"id":"coll:4","left":"pulire","right":"con lo sgrassatore"},{"id":"coll:5","left":"buttare","right":"la spazzatura"},{"id":"coll:6","left":"piegare","right":"la maglietta"},{"id":"coll:7","left":"riordinare","right":"la stanza"},{"id":"coll:8","left":"spolverare","right":"i mobili"},{"id":"coll:9","left":"sciacquare","right":"le posate"},{"id":"presente:io:spazzare","left":"I sweep","right":"spazzo","hint":"spazzare"},{"id":"presente:io:spolverare","left":"I dust","right":"spolvero","hint":"spolverare"},{"id":"presente:io:pulire","left":"I clean","right":"pulisco","hint":"pulire"},{"id":"presente:io:strofinare","left":"I scrub","right":"strofino","hint":"strofinare"},{"id":"presente:io:lavare","left":"I wash","right":"lavo","hint":"lavare"},{"id":"presente:io:sciacquare","left":"I rinse","right":"sciacquo","hint":"sciacquare"},{"id":"presente:io:asciugare","left":"I dry","right":"asciugo","hint":"asciugare"},{"id":"presente:io:stendere","left":"I hang out","right":"stendo","hint":"stendere"},{"id":"presente:io:piegare","left":"I fold","right":"piego","hint":"piegare"},{"id":"presente:io:ammucchiare","left":"I pile up","right":"ammucchio","hint":"ammucchiare"},{"id":"presente:io:riordinare","left":"I tidy","right":"riordino","hint":"riordinare"},{"id":"presente:io:buttare","left":"I throw out","right":"butto","hint":"buttare"},{"id":"presente:io:mettere","left":"I put","right":"metto","hint":"mettere"},{"id":"presente:io:passare","left":"I vacuum","right":"passo","hint":"passare"},{"id":"passato-prossimo:io:spazzare","left":"I sweeped","right":"ho spazzato","hint":"spazzare"},{"id":"passato-prossimo:io:spolverare","left":"I dusted","right":"ho spolverato","hint":"spolverare"},{"id":"passato-prossimo:io:pulire","left":"I cleaned","right":"ho pulito","hint":"pulire"},{"id":"passato-prossimo:io:strofinare","left":"I scrubed","right":"ho strofinato","hint":"strofinare"},{"id":"passato-prossimo:io:lavare","left":"I washed","right":"ho lavato","hint":"lavare"},{"id":"passato-prossimo:io:sciacquare","left":"I rinseed","right":"ho sciacquato","hint":"sciacquare"},{"id":"passato-prossimo:io:asciugare","left":"I dryed","right":"ho asciugato","hint":"asciugare"},{"id":"passato-prossimo:io:stendere","left":"I hang outed","right":"ho steso","hint":"stendere"},{"id":"passato-prossimo:io:piegare","left":"I folded","right":"ho piegato","hint":"piegare"},{"id":"passato-prossimo:io:ammucchiare","left":"I pile uped","right":"ho ammucchiato","hint":"ammucchiare"},{"id":"passato-prossimo:io:riordinare","left":"I tidyed","right":"ho riordinato","hint":"riordinare"},{"id":"passato-prossimo:io:buttare","left":"I throw outed","right":"ho buttato","hint":"buttare"},{"id":"passato-prossimo:io:mettere","left":"I puted","right":"ho messo","hint":"mettere"},{"id":"passato-prossimo:io:passare","left":"I vacuumed","right":"ho passato","hint":"passare"},{"id":"imperfetto:io:spazzare","left":"I used to sweep","right":"spazzavo","hint":"spazzare"},{"id":"imperfetto:io:spolverare","left":"I used to dust","right":"spolveravo","hint":"spolverare"},{"id":"imperfetto:io:pulire","left":"I used to clean","right":"pulivo","hint":"pulire"},{"id":"imperfetto:io:strofinare","left":"I used to scrub","right":"strofinavo","hint":"strofinare"},{"id":"imperfetto:io:lavare","left":"I used to wash","right":"lavavo","hint":"lavare"},{"id":"imperfetto:io:sciacquare","left":"I used to rinse","right":"sciacquavo","hint":"sciacquare"},{"id":"imperfetto:io:asciugare","left":"I used to dry","right":"asciugavo","hint":"asciugare"},{"id":"imperfetto:io:stendere","left":"I used to hang out","right":"stendevo","hint":"stendere"},{"id":"imperfetto:io:piegare","left":"I used to fold","right":"piegavo","hint":"piegare"},{"id":"imperfetto:io:ammucchiare","left":"I used to pile up","right":"ammucchiavo","hint":"ammucchiare"},{"id":"imperfetto:io:riordinare","left":"I used to tidy","right":"riordinavo","hint":"riordinare"},{"id":"imperfetto:io:buttare","left":"I used to throw out","right":"buttavo","hint":"buttare"},{"id":"imperfetto:io:mettere","left":"I used to put","right":"mettevo","hint":"mettere"},{"id":"imperfetto:io:passare","left":"I used to vacuum","right":"passavo","hint":"passare"},{"id":"futuro-semplice:io:spazzare","left":"I will sweep","right":"spazzerò","hint":"spazzare"},{"id":"futuro-semplice:io:spolverare","left":"I will dust","right":"spolvererò","hint":"spolverare"},{"id":"futuro-semplice:io:pulire","left":"I will clean","right":"pulirò","hint":"pulire"},{"id":"futuro-semplice:io:strofinare","left":"I will scrub","right":"strofinerò","hint":"strofinare"},{"id":"futuro-semplice:io:lavare","left":"I will wash","right":"laverò","hint":"lavare"},{"id":"futuro-semplice:io:sciacquare","left":"I will rinse","right":"sciacquerò","hint":"sciacquare"},{"id":"futuro-semplice:io:asciugare","left":"I will dry","right":"asciugherò","hint":"asciugare"},{"id":"futuro-semplice:io:stendere","left":"I will hang out","right":"stenderò","hint":"stendere"},{"id":"futuro-semplice:io:piegare","left":"I will fold","right":"piegherò","hint":"piegare"},{"id":"futuro-semplice:io:ammucchiare","left":"I will pile up","right":"ammucchierò","hint":"ammucchiare"},{"id":"futuro-semplice:io:riordinare","left":"I will tidy","right":"riordinerò","hint":"riordinare"},{"id":"futuro-semplice:io:buttare","left":"I will throw out","right":"butterò","hint":"buttare"},{"id":"futuro-semplice:io:mettere","left":"I will put","right":"metterò","hint":"mettere"},{"id":"futuro-semplice:io:passare","left":"I will vacuum","right":"passerò","hint":"passare"},{"id":"congiuntivo-presente:io:spazzare","left":"(that) I sweep","right":"spazzi","hint":"spazzare"},{"id":"congiuntivo-presente:io:spolverare","left":"(that) I dust","right":"spolveri","hint":"spolverare"},{"id":"congiuntivo-presente:io:pulire","left":"(that) I clean","right":"pulisca","hint":"pulire"},{"id":"congiuntivo-presente:io:strofinare","left":"(that) I scrub","right":"strofini","hint":"strofinare"},{"id":"congiuntivo-presente:io:lavare","left":"(that) I wash","right":"lavi","hint":"lavare"},{"id":"congiuntivo-presente:io:sciacquare","left":"(that) I rinse","right":"sciacqui","hint":"sciacquare"},{"id":"congiuntivo-presente:io:asciugare","left":"(that) I dry","right":"asciughi","hint":"asciugare"},{"id":"congiuntivo-presente:io:stendere","left":"(that) I hang out","right":"stenda","hint":"stendere"},{"id":"congiuntivo-presente:io:piegare","left":"(that) I fold","right":"pieghi","hint":"piegare"},{"id":"congiuntivo-presente:io:ammucchiare","left":"(that) I pile up","right":"ammucchii","hint":"ammucchiare"},{"id":"congiuntivo-presente:io:riordinare","left":"(that) I tidy","right":"riordini","hint":"riordinare"},{"id":"congiuntivo-presente:io:buttare","left":"(that) I throw out","right":"butti","hint":"buttare"},{"id":"congiuntivo-presente:io:mettere","left":"(that) I put","right":"metta","hint":"mettere"},{"id":"congiuntivo-presente:io:passare","left":"(that) I vacuum","right":"passi","hint":"passare"},{"id":"passato-remoto:io:spazzare","left":"I sweeped (lit.)","right":"spazzai","hint":"spazzare"},{"id":"passato-remoto:io:spolverare","left":"I dusted (lit.)","right":"spolverai","hint":"spolverare"},{"id":"passato-remoto:io:pulire","left":"I cleaned (lit.)","right":"pulii","hint":"pulire"},{"id":"passato-remoto:io:strofinare","left":"I scrubed (lit.)","right":"strofinai","hint":"strofinare"},{"id":"passato-remoto:io:lavare","left":"I washed (lit.)","right":"lavai","hint":"lavare"},{"id":"passato-remoto:io:sciacquare","left":"I rinseed (lit.)","right":"sciacquai","hint":"sciacquare"},{"id":"passato-remoto:io:asciugare","left":"I dryed (lit.)","right":"asciugai","hint":"asciugare"},{"id":"passato-remoto:io:stendere","left":"I hang outed (lit.)","right":"stesi","hint":"stendere"},{"id":"passato-remoto:io:piegare","left":"I folded (lit.)","right":"piegai","hint":"piegare"},{"id":"passato-remoto:io:ammucchiare","left":"I pile uped (lit.)","right":"ammucchiai","hint":"ammucchiare"},{"id":"passato-remoto:io:riordinare","left":"I tidyed (lit.)","right":"riordinai","hint":"riordinare"},{"id":"passato-remoto:io:buttare","left":"I throw outed (lit.)","right":"buttai","hint":"buttare"},{"id":"passato-remoto:io:mettere","left":"I puted (lit.)","right":"misi","hint":"mettere"},{"id":"passato-remoto:io:passare","left":"I vacuumed (lit.)","right":"passai","hint":"passare"}],"drawsFromSetIds":["set-1-verbs","set-2-nouns","set-3-gender","set-4-preps","set-5-collocations","set-6-presente","set-7-passato-prossimo","set-8-imperfetto","set-9-futuro-semplice","set-10-congiuntivo-presente","set-11-passato-remoto"]}],"unlockAccuracyThreshold":0.6,"superSetUnlockAfterNSetsCompleted":3};
+    const STORE_KEY = 'chiron-mm::' + CONFIG.lessonId;
 
-      state: {
-        running: false, paused: false, accessibility: false,
-        remainingSec: 105, roundIdx: 0, roundPool: [],
-        onGrid: [], selected: null,
-        correct: 0, wrong: 0, streak: 0, bestStreak: 0,
-        lockUntil: 0, startedAt: 0, tileShownAt: {},
-        pairLog: []  // { l1, l2, latency_ms, was_wrong_first }
-      },
+    function loadState() {
+      try {
+        const raw = localStorage.getItem(STORE_KEY);
+        return raw ? JSON.parse(raw) : { sets: {}, sessions: [], pairLog: [] };
+      } catch (_) { return { sets: {}, sessions: [], pairLog: [] }; }
+    }
+    function saveState(st) {
+      try { localStorage.setItem(STORE_KEY, JSON.stringify(st)); } catch (_) {}
+    }
 
-      $: (id) => document.getElementById(id),
+    const STATE = loadState();
 
-      shuffle(arr) {
-        const a = arr.slice();
-        for (let i = a.length - 1; i > 0; i--) {
-          const j = Math.floor(Math.random() * (i + 1));
-          [a[i], a[j]] = [a[j], a[i]];
-        }
-        return a;
-      },
-
-      buildRoundPool() {
-        const round = this.ROUNDS[this.state.roundIdx];
-        this.state.roundPool = this.shuffle(this.pairs.slice()).slice(0, round.count);
-        this.$('mm-round').textContent = round.label + ' · ' + round.count + ' pairs';
-      },
-
-      renderGrid() {
-        const grid = this.$('mm-grid');
-        grid.innerHTML = '';
-        const onGrid = this.state.onGrid;
-        // Build 5 left tiles (l1) and 5 right tiles (l2) from onGrid
-        const leftL1 = onGrid.map(p => p ? { side: 'L', l1: p.l1, l2: p.l2 } : null);
-        const rightL2 = this.shuffle(onGrid.filter(Boolean).map(p => ({ side: 'R', l1: p.l1, l2: p.l2 })));
-        // Pad to 5
-        while (rightL2.length < 5) rightL2.push(null);
-        // Render interleaved: row1 left, row1 right, row2 left, row2 right...
-        for (let i = 0; i < 5; i++) {
-          // Left
-          const lp = leftL1[i];
-          const lt = document.createElement('button');
-          lt.className = 'mm-tile';
-          lt.setAttribute('data-side', 'L');
-          lt.setAttribute('data-row', i);
-          if (lp) { lt.textContent = lp.l1; lt.setAttribute('data-pair-l1', lp.l1); }
-          else { lt.setAttribute('data-state', 'empty'); }
-          grid.appendChild(lt);
-          // Right
-          const rp = rightL2[i];
-          const rt = document.createElement('button');
-          rt.className = 'mm-tile';
-          rt.setAttribute('data-side', 'R');
-          rt.setAttribute('data-row', i);
-          if (rp) { rt.textContent = rp.l2; rt.setAttribute('data-pair-l2', rp.l2); }
-          else { rt.setAttribute('data-state', 'empty'); }
-          grid.appendChild(rt);
-        }
-        // Wire up tile clicks
-        grid.querySelectorAll('.mm-tile').forEach(t => {
-          t.addEventListener('click', () => this.onTile(t));
-        });
-        // Mark shown timestamps
-        const now = performance.now();
-        onGrid.forEach(p => { if (p) this.state.tileShownAt[p.l1 + '|' + p.l2] = now; });
-      },
-
-      seedGrid() {
-        const pool = this.state.roundPool;
-        const take = Math.min(5, pool.length);
-        const seed = [];
-        for (let i = 0; i < 5; i++) {
-          if (i < take) seed.push(pool.shift());
-          else seed.push(null);
-        }
-        this.state.onGrid = seed;
-      },
-
-      onTile(tile) {
-        if (!this.state.running || this.state.paused) return;
-        if (performance.now() < this.state.lockUntil) return;
-        const side = tile.getAttribute('data-side');
-        if (tile.getAttribute('data-state') === 'empty') return;
-        if (tile.getAttribute('data-state') === 'correct') return;
-
-        if (!this.state.selected) {
-          // First pick
-          tile.setAttribute('data-state', 'selected');
-          this.state.selected = tile;
+    // ----- Render mastery on each set card -----
+    function renderMasteryAll() {
+      document.querySelectorAll('[data-mastery-for]').forEach(node => {
+        const id = node.getAttribute('data-mastery-for');
+        const s = STATE.sets[id];
+        if (!s || !s.attempts) {
+          node.innerHTML = '<span class="mm-mastery-label">No history yet</span>';
           return;
         }
-        if (this.state.selected === tile) {
-          tile.removeAttribute('data-state');
-          this.state.selected = null;
-          return;
-        }
-        const sel = this.state.selected;
-        if (sel.getAttribute('data-side') === side) {
-          // Both same side — switch selection
-          sel.removeAttribute('data-state');
-          tile.setAttribute('data-state', 'selected');
-          this.state.selected = tile;
-          return;
-        }
-        // Different sides — evaluate
-        const leftTile = side === 'L' ? tile : sel;
-        const rightTile = side === 'R' ? tile : sel;
-        const l1 = leftTile.getAttribute('data-pair-l1');
-        const l2 = rightTile.getAttribute('data-pair-l2');
-        const pair = this.pairs.find(p => p.l1 === l1 && p.l2 === l2);
-        if (pair) {
-          // Correct
-          leftTile.setAttribute('data-state', 'correct');
-          rightTile.setAttribute('data-state', 'correct');
-          this.state.correct++;
-          this.state.streak++;
-          if (this.state.streak > this.state.bestStreak) this.state.bestStreak = this.state.streak;
-          this.$('mm-correct').textContent = this.state.correct;
-          const combo = this.$('mm-combo');
-          combo.textContent = '×' + this.state.streak;
-          if (this.state.streak >= 3) combo.classList.add('hot'); else combo.classList.remove('hot');
-          // Latency
-          const shownAt = this.state.tileShownAt[l1 + '|' + l2];
-          if (shownAt) {
-            this.state.pairLog.push({ l1, l2, latency_ms: Math.round(performance.now() - shownAt) });
-          }
-          this.state.selected = null;
-          // chiron-can-do-better: speed up visuals with streak
-          this.updateSpeed();
-          // Refill or advance
-          setTimeout(() => this.refillSlots(leftTile, rightTile), this.refillMs());
-        } else {
-          // Wrong
-          leftTile.setAttribute('data-state', 'wrong');
-          rightTile.setAttribute('data-state', 'wrong');
-          this.state.wrong++;
-          this.state.streak = 0;
-          this.$('mm-wrong').textContent = this.state.wrong;
-          this.$('mm-combo').textContent = '×0';
-          this.$('mm-combo').classList.remove('hot');
-          this.state.lockUntil = performance.now() + this.WRONG_LOCK_MS;
-          this.updateSpeed();
-          setTimeout(() => {
-            leftTile.removeAttribute('data-state');
-            rightTile.removeAttribute('data-state');
-            this.state.selected = null;
-          }, this.WRONG_LOCK_MS);
-        }
-      },
+        const mastery = Math.round((s.bestAccuracy || 0) * 100);
+        const last = s.lastPlayedIso ? new Date(s.lastPlayedIso) : null;
+        const ago = last ? timeAgo(last) : '';
+        const weak = (s.weakPairs || []).length;
+        node.innerHTML =
+          '<span class="mm-mastery-pct" data-mastery="' + mastery + '"><strong>' + mastery + '%</strong> mastery</span>' +
+          '<span class="mm-mastery-when">last ' + ago + '</span>' +
+          (weak > 0 ? '<span class="mm-mastery-weak"><strong>' + weak + '</strong> weak pairs</span>' : '');
+      });
+    }
 
-      refillMs() {
-        // Streak-based shorter refill
-        const s = Math.min(this.state.streak, 10);
-        return this.REFILL_BASE_MS - (s * 10);
-      },
+    function timeAgo(d) {
+      const diff = (Date.now() - d.getTime()) / 1000;
+      if (diff < 60) return 'just now';
+      if (diff < 3600) return Math.floor(diff/60) + 'm ago';
+      if (diff < 86400) return Math.floor(diff/3600) + 'h ago';
+      return Math.floor(diff/86400) + 'd ago';
+    }
 
-      updateSpeed() {
-        if (this.state.accessibility) return;
-        const game = this.$('mm-game');
-        const s = Math.min(this.state.streak, 10) / 10;
-        const pulseMs = Math.round(this.pulseFromMs + (this.pulseToMs - this.pulseFromMs) * s);
-        const strength = (this.strengthFromOpacity + (this.strengthToOpacity - this.strengthFromOpacity) * s).toFixed(3);
-        game.style.setProperty('--mm-pulse-ms', pulseMs + 'ms');
-        game.style.setProperty('--mm-pulse-strength', strength);
-      },
-
-      refillSlots(leftTile, rightTile) {
-        const row = leftTile.getAttribute('data-row');
-        const next = this.state.roundPool.shift();
-        if (next) {
-          this.state.onGrid[row] = next;
-          leftTile.textContent = next.l1;
-          leftTile.setAttribute('data-pair-l1', next.l1);
-          leftTile.removeAttribute('data-state');
-          // For right side: pick another empty/random slot row to keep shuffle alive
-          // Simpler: replace this row's right tile with this pair's l2 in a randomly shuffled position
-          // For v1 just put it back in same row (Duolingo behavior: same slot positions)
-          rightTile.textContent = next.l2;
-          rightTile.setAttribute('data-pair-l2', next.l2);
-          rightTile.removeAttribute('data-state');
-          this.state.tileShownAt[next.l1 + '|' + next.l2] = performance.now();
-        } else {
-          // Pool empty — mark this row as empty
-          this.state.onGrid[row] = null;
-          leftTile.setAttribute('data-state', 'empty');
-          rightTile.setAttribute('data-state', 'empty');
-          // Check round complete
-          if (this.state.onGrid.every(p => p === null)) {
-            this.endRound();
-          }
-        }
-      },
-
-      endRound() {
-        if (this.state.roundIdx + 1 < this.ROUNDS.length) {
-          this.state.roundIdx++;
-          this.buildRoundPool();
-          this.seedGrid();
-          this.renderGrid();
-        } else {
-          this.finish();
-        }
-      },
-
-      tick() {
-        if (!this.state.running || this.state.paused) return;
-        if (this.state.accessibility) return;
-        this.state.remainingSec--;
-        this.renderTimer();
-        if (this.state.remainingSec <= 0) {
-          this.finish();
-          return;
-        }
-        this.tickHandle = setTimeout(() => this.tick(), 1000);
-      },
-
-      renderTimer() {
-        const m = Math.floor(this.state.remainingSec / 60);
-        const s = this.state.remainingSec % 60;
-        const el = this.$('mm-timer');
-        el.textContent = m + ':' + String(s).padStart(2, '0');
-        el.classList.toggle('warning', this.state.remainingSec <= 30 && this.state.remainingSec > 10);
-        el.classList.toggle('critical', this.state.remainingSec <= 10);
-      },
-
-      start() {
-        if (this.state.running) return;
-        this.state.running = true;
-        this.state.paused = false;
-        this.state.startedAt = performance.now();
-        this.$('mm-game').setAttribute('data-active', 'true');
-        this.$('mm-start').textContent = 'Pause';
-        this.$('mm-result').classList.remove('show');
-        if (this.state.onGrid.every(p => p === null)) {
-          this.buildRoundPool();
-          this.seedGrid();
-        }
-        this.renderGrid();
-        this.renderTimer();
-        if (!this.state.accessibility) this.tick();
-      },
-
-      pause() {
-        if (!this.state.running) return;
-        this.state.paused = !this.state.paused;
-        this.$('mm-start').textContent = this.state.paused ? 'Resume' : 'Pause';
-        if (!this.state.paused && !this.state.accessibility) this.tick();
-      },
-
-      reset() {
-        this.state = {
-          running: false, paused: false, accessibility: this.state.accessibility,
-          remainingSec: this.TIMER_SEC, roundIdx: 0, roundPool: [],
-          onGrid: [null, null, null, null, null], selected: null,
-          correct: 0, wrong: 0, streak: 0, bestStreak: 0,
-          lockUntil: 0, startedAt: 0, tileShownAt: {}, pairLog: []
-        };
-        this.$('mm-correct').textContent = '0';
-        this.$('mm-wrong').textContent = '0';
-        this.$('mm-combo').textContent = '×0';
-        this.$('mm-combo').classList.remove('hot');
-        this.$('mm-game').setAttribute('data-active', 'false');
-        this.$('mm-start').textContent = 'Start';
-        this.$('mm-grid').innerHTML = '';
-        this.$('mm-round').textContent = 'Round — / 3';
-        this.$('mm-result').classList.remove('show');
-        this.$('mm-game').style.setProperty('--mm-pulse-strength', 0);
-        this.renderTimer();
-      },
-
-      finish() {
-        this.state.running = false;
-        clearTimeout(this.tickHandle);
-        this.$('mm-game').setAttribute('data-active', 'false');
-        this.$('mm-start').textContent = 'Restart';
-        this.$('mm-game').style.setProperty('--mm-pulse-strength', 0);
-        const total = this.state.correct + this.state.wrong;
-        const acc = total ? Math.round((this.state.correct / total) * 100) : 0;
-        const avgLat = this.state.pairLog.length
-          ? Math.round(this.state.pairLog.reduce((a, b) => a + b.latency_ms, 0) / this.state.pairLog.length)
-          : 0;
-        // Find slowest 3 pairs (would be weighted into SR scheduler in full Chiron)
-        const slowest = this.state.pairLog.slice().sort((a, b) => b.latency_ms - a.latency_ms).slice(0, 3);
-        let html = '<p>' + this.state.correct + ' correct · ' + this.state.wrong + ' wrong · ' + acc + '% · best streak ×' + this.state.bestStreak + ' · avg latency ' + avgLat + 'ms</p>';
-        if (slowest.length) {
-          html += '<table class="latency-table"><thead><tr><th>Slowest pairs (→ SR queue)</th><th>ms</th></tr></thead><tbody>';
-          slowest.forEach(s => html += '<tr><td>' + s.l1 + ' ↔ ' + s.l2 + '</td><td>' + s.latency_ms + '</td></tr>');
-          html += '</tbody></table>';
-        }
-        this.$('mm-result-body').innerHTML = html;
-        this.$('mm-result').classList.add('show');
-      },
-
-      toggleAccessibility() {
-        this.state.accessibility = !this.state.accessibility;
-        const btn = this.$('mm-accessibility');
-        btn.textContent = this.state.accessibility ? 'Accessibility ON (timer off)' : 'Accessibility mode (timer off)';
-        if (this.state.accessibility) {
-          this.$('mm-timer').textContent = '∞';
-          this.$('mm-timer').classList.remove('warning', 'critical');
-          this.$('mm-game').style.setProperty('--mm-pulse-strength', 0);
-        } else {
-          this.renderTimer();
-        }
-      },
-
-      init() {
-        this.$('mm-start').addEventListener('click', () => {
-          if (!this.state.running) this.start();
-          else this.pause();
-        });
-        this.$('mm-reset').addEventListener('click', () => this.reset());
-        this.$('mm-accessibility').addEventListener('click', () => this.toggleAccessibility());
-
-        // Keyboard
-        document.addEventListener('keydown', (e) => {
-          if (e.key === ' ' && document.activeElement && document.activeElement.id === 'mm-start') {
-            // default button behavior
-            return;
-          }
-          if (!this.state.running) return;
-          const leftKeys = { '1': 0, '2': 1, '3': 2, '4': 3, '5': 4 };
-          const rightKeys = { 'q': 0, 'w': 1, 'e': 2, 'r': 3, 't': 4 };
-          const k = e.key.toLowerCase();
-          let row, side;
-          if (k in leftKeys) { row = leftKeys[k]; side = 'L'; }
-          else if (k in rightKeys) { row = rightKeys[k]; side = 'R'; }
-          else return;
-          const tile = this.$('mm-grid').querySelector('.mm-tile[data-row="' + row + '"][data-side="' + side + '"]');
-          if (tile) this.onTile(tile);
-        });
-
-        this.reset();
-      }
+    // ----- Play loop -----
+    const G = {
+      activeSet: null,
+      pool: [],
+      onGrid: [],
+      selected: null,
+      roundIdx: 0,
+      correct: 0, wrong: 0, streak: 0, bestStreak: 0,
+      remainingSec: 0,
+      running: false, paused: false, accessibility: false,
+      lockUntil: 0, tickHandle: 0, sessionStart: 0,
+      tileShownAt: {},
+      pairLog: []
     };
-    MM.init();
+
+    function $(id) { return document.getElementById(id); }
+    function shuffle(a) { const r = a.slice(); for (let i=r.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [r[i],r[j]]=[r[j],r[i]];} return r; }
+
+    function openSet(setId) {
+      const set = CONFIG.sets.find(s => s.id === setId);
+      if (!set) return;
+      G.activeSet = set;
+      $('mm-set-label').textContent = 'Set ' + set.index + ' · ' + set.title;
+      $('mm-play-surface').hidden = false;
+      G.roundIdx = 0; G.correct = 0; G.wrong = 0; G.streak = 0; G.bestStreak = 0;
+      G.pool = shuffle(set.pairs.slice());
+      G.remainingSec = set.timerSec || CONFIG.defaults.timerSec;
+      G.running = false; G.paused = false; G.accessibility = false;
+      G.tileShownAt = {}; G.pairLog = []; G.sessionStart = Date.now();
+      seedGrid(); renderGrid(); updateHud();
+      $('mm-result').hidden = true;
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeSet() {
+      G.running = false;
+      clearInterval(G.tickHandle);
+      $('mm-play-surface').hidden = true;
+      document.body.style.overflow = '';
+      renderMasteryAll();
+    }
+
+    function seedGrid() {
+      const seed = [];
+      for (let i = 0; i < 5; i++) seed.push(G.pool.length ? G.pool.shift() : null);
+      G.onGrid = seed;
+    }
+
+    function renderGrid() {
+      const grid = $('mm-grid'); grid.innerHTML = '';
+      const leftL1 = G.onGrid.map(p => p ? { l1: p.left, right: p.right, id: p.id } : null);
+      const rightL2 = shuffle(G.onGrid.filter(Boolean).map(p => ({ left: p.left, right: p.right, id: p.id })));
+      while (rightL2.length < 5) rightL2.push(null);
+      for (let i = 0; i < 5; i++) {
+        const lp = leftL1[i], rp = rightL2[i];
+        const lt = document.createElement('button');
+        lt.className = 'mm-tile'; lt.setAttribute('data-side','L'); lt.setAttribute('data-row', String(i));
+        if (lp) { lt.textContent = lp.l1; lt.setAttribute('data-pair-id', lp.id); }
+        else lt.setAttribute('data-state','empty');
+        grid.appendChild(lt);
+        const rt = document.createElement('button');
+        rt.className = 'mm-tile'; rt.setAttribute('data-side','R'); rt.setAttribute('data-row', String(i));
+        if (rp) { rt.textContent = rp.right; rt.setAttribute('data-pair-id', rp.id); }
+        else rt.setAttribute('data-state','empty');
+        grid.appendChild(rt);
+      }
+      const now = performance.now();
+      G.onGrid.forEach(p => { if (p) G.tileShownAt[p.id] = now; });
+      grid.querySelectorAll('.mm-tile').forEach(t => t.addEventListener('click', () => onTile(t)));
+    }
+
+    function onTile(tile) {
+      if (!G.running || G.paused) return;
+      if (performance.now() < G.lockUntil) return;
+      if (tile.getAttribute('data-state') === 'empty') return;
+      if (tile.getAttribute('data-state') === 'correct') return;
+      if (!G.selected) { tile.setAttribute('data-state','selected'); G.selected = tile; return; }
+      // Second pick
+      const a = G.selected, b = tile;
+      if (a === b) { a.removeAttribute('data-state'); G.selected = null; return; }
+      const aSide = a.getAttribute('data-side'), bSide = b.getAttribute('data-side');
+      if (aSide === bSide) { a.removeAttribute('data-state'); b.setAttribute('data-state','selected'); G.selected = b; return; }
+      const aId = a.getAttribute('data-pair-id'), bId = b.getAttribute('data-pair-id');
+      if (aId === bId) {
+        a.setAttribute('data-state','correct'); b.setAttribute('data-state','correct');
+        G.selected = null; G.correct++; G.streak++; if (G.streak > G.bestStreak) G.bestStreak = G.streak;
+        const lat = performance.now() - (G.tileShownAt[aId] || performance.now());
+        G.pairLog.push({ id: aId, latency_ms: Math.round(lat), was_wrong_first: false });
+        // Refill this slot with a new pair
+        setTimeout(() => refillSlot(a, b), refillDelay());
+        updateHud(); updateVisualSpeedUp();
+      } else {
+        a.setAttribute('data-state','wrong'); b.setAttribute('data-state','wrong');
+        G.wrong++; G.streak = 0;
+        G.pairLog.push({ id: aId, latency_ms: 0, was_wrong_first: true });
+        G.lockUntil = performance.now() + (G.activeSet.wrongLockMs || CONFIG.defaults.wrongLockMs);
+        setTimeout(() => { a.removeAttribute('data-state'); b.removeAttribute('data-state'); }, CONFIG.defaults.wrongLockMs);
+        G.selected = null;
+        updateHud();
+      }
+    }
+
+    function refillSlot(aTile, bTile) {
+      // Replace whichever side has data-pair-id with a fresh pair from pool
+      const next = G.pool.shift();
+      const replaceTile = (t) => {
+        if (next) {
+          t.removeAttribute('data-state');
+          const side = t.getAttribute('data-side');
+          t.textContent = side === 'L' ? next.left : next.right;
+          t.setAttribute('data-pair-id', next.id);
+          G.tileShownAt[next.id] = performance.now();
+        } else {
+          t.setAttribute('data-state','empty'); t.textContent = '';
+        }
+      };
+      // Pair the same next on both sides (L=left, R=right)
+      replaceTile(aTile); replaceTile(bTile);
+      checkRoundEnd();
+    }
+
+    function refillDelay() {
+      const vs = CONFIG.defaults.visualSpeedUp;
+      // Scale by streak — more streak = shorter delay
+      const t = Math.min(1, G.streak / 10);
+      return Math.round(vs.refillFromMs + (vs.refillToMs - vs.refillFromMs) * t);
+    }
+
+    function updateVisualSpeedUp() {
+      const vs = CONFIG.defaults.visualSpeedUp;
+      const t = Math.min(1, G.streak / 10);
+      const pulseMs = vs.pulseFromMs + (vs.pulseToMs - vs.pulseFromMs) * t;
+      const strength = vs.strengthFromOpacity + (vs.strengthToOpacity - vs.strengthFromOpacity) * t;
+      const root = document.getElementById('mm-game');
+      if (root && !G.accessibility) {
+        root.style.setProperty('--mm-pulse-ms', pulseMs + 'ms');
+        root.style.setProperty('--mm-pulse-strength', String(strength));
+      }
+    }
+
+    function checkRoundEnd() {
+      const tilesLeft = G.onGrid.filter(Boolean).length;
+      const poolLeft = G.pool.length;
+      // Round ends when grid is empty AND pool is empty
+      if (tilesLeft === 0 && poolLeft === 0) endRound();
+    }
+
+    function endRound() {
+      G.roundIdx++;
+      const totalRounds = G.activeSet.rounds;
+      if (G.roundIdx >= totalRounds) endSession(true);
+      else {
+        // Start next round: reshuffle a fresh pool from full pairs
+        G.pool = shuffle(G.activeSet.pairs.slice());
+        seedGrid(); renderGrid(); updateHud();
+      }
+    }
+
+    function endSession(completed) {
+      G.running = false;
+      clearInterval(G.tickHandle);
+      const total = G.correct + G.wrong;
+      const accuracy = total > 0 ? G.correct / total : 0;
+      // Persist
+      const setId = G.activeSet.id;
+      STATE.sets[setId] = STATE.sets[setId] || { attempts: 0, bestAccuracy: 0, weakPairs: [] };
+      STATE.sets[setId].attempts++;
+      if (accuracy > STATE.sets[setId].bestAccuracy) STATE.sets[setId].bestAccuracy = accuracy;
+      STATE.sets[setId].lastPlayedIso = new Date().toISOString();
+      // Weak pairs = those that had a wrong_first event
+      const weak = {};
+      G.pairLog.forEach(p => { if (p.was_wrong_first) weak[p.id] = (weak[p.id]||0) + 1; });
+      STATE.sets[setId].weakPairs = Object.entries(weak).map(([id,n]) => ({ id, misses: n }));
+      STATE.sessions.push({ setId, startedAt: G.sessionStart, endedAt: Date.now(), correct: G.correct, wrong: G.wrong, accuracy, completed });
+      saveState(STATE);
+      // Show result
+      $('mm-result-title').textContent = completed ? 'Set complete!' : 'Time up!';
+      $('mm-result-body').innerHTML =
+        '<p><strong>' + G.correct + '</strong> correct · <strong>' + G.wrong + '</strong> wrong · <strong>' + Math.round(accuracy*100) + '%</strong> accuracy</p>' +
+        '<p>Best streak: <strong>' + G.bestStreak + '</strong></p>' +
+        (Object.keys(weak).length > 0 ? '<p>Weak pairs flagged: <strong>' + Object.keys(weak).length + '</strong> — they\'ll come back in spaced review.</p>' : '<p>No weak pairs — nice.</p>');
+      $('mm-result').hidden = false;
+    }
+
+    function updateHud() {
+      $('mm-correct').textContent = String(G.correct);
+      $('mm-wrong').textContent = String(G.wrong);
+      $('mm-combo').textContent = '×' + G.streak;
+      $('mm-round').textContent = 'Round ' + (G.roundIdx + 1) + ' / ' + (G.activeSet ? G.activeSet.rounds : '—');
+      const m = Math.floor(G.remainingSec / 60), s = G.remainingSec % 60;
+      $('mm-timer').textContent = m + ':' + (s < 10 ? '0' + s : s);
+    }
+
+    function start() {
+      if (!G.activeSet) return;
+      G.running = true; G.paused = false;
+      G.tickHandle = setInterval(() => {
+        if (!G.running || G.paused || G.accessibility) return;
+        G.remainingSec--;
+        if (G.remainingSec <= 0) { G.remainingSec = 0; updateHud(); endSession(false); }
+        else updateHud();
+      }, 1000);
+    }
+
+    function reset() {
+      if (G.activeSet) openSet(G.activeSet.id);
+    }
+
+    function toggleAccessibility() {
+      G.accessibility = !G.accessibility;
+      const btn = $('mm-accessibility');
+      btn.setAttribute('aria-pressed', String(G.accessibility));
+      btn.textContent = G.accessibility ? 'Accessibility ON (no timer)' : 'Accessibility mode (timer off)';
+      if (G.accessibility) {
+        const root = $('mm-game');
+        root.style.setProperty('--mm-pulse-strength','0');
+      }
+    }
+
+    // ----- Wire-up -----
+    document.querySelectorAll('[data-play-set]').forEach(btn => {
+      btn.addEventListener('click', () => openSet(btn.getAttribute('data-play-set')));
+    });
+    $('mm-close')?.addEventListener('click', closeSet);
+    $('mm-start')?.addEventListener('click', start);
+    $('mm-reset')?.addEventListener('click', reset);
+    $('mm-accessibility')?.addEventListener('click', toggleAccessibility);
+
+    document.addEventListener('keydown', (e) => {
+      if ($('mm-play-surface').hidden) return;
+      if (e.key === 'Escape') closeSet();
+      if (e.key === ' ' && !e.repeat) { e.preventDefault(); if (!G.running) start(); else G.paused = !G.paused; }
+      if (G.running && !G.paused) {
+        const leftKeys = ['1','2','3','4','5'];
+        const rightKeys = ['q','w','e','r','t'];
+        const k = e.key.toLowerCase();
+        const li = leftKeys.indexOf(k); const ri = rightKeys.indexOf(k);
+        if (li >= 0) { const tiles = document.querySelectorAll('.mm-tile[data-side="L"]'); tiles[li] && onTile(tiles[li]); }
+        if (ri >= 0) { const tiles = document.querySelectorAll('.mm-tile[data-side="R"]'); tiles[ri] && onTile(tiles[ri]); }
+      }
+    });
+
+    renderMasteryAll();
+  })();
   </script>
 </body>
 </html>
