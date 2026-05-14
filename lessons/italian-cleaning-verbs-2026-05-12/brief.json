@@ -1,24 +1,35 @@
 {
   "lesson_id": "italian-cleaning-verbs-2026-05-12",
+  "version": "v2",
   "title": "I verbi delle pulizie — Italian Verbs for Cleaning",
+  "subtitle": "Una lezione tessuta — vocabolario, racconti, e una mattinata con Alice e Marco",
   "domain": "language-it",
   "mode": "A",
-  "source_type": "user-prompt",
-  "source_summary": "User-requested Italian vocabulary lesson covering cleaning-related verbs: sweep, wash, pile up, tidy, dust, scrub, rinse, dry, fold, hang laundry, vacuum, throw out trash.",
-  "level": "A2 (advanced beginner)",
-  "estimated_minutes": 20,
+  "skeleton": "language-lesson-skeleton-v1",
+  "source_type": "user-prompt + authentic-italian-corpus",
+  "source_summary": "User-requested vocabulary lesson on Italian cleaning verbs, woven through a narrative spine. Authentic source material from: Natalia Ginzburg (Lessico famigliare, 1963), Italo Calvino (La poubelle agréée, 1977), Umberto Saba (1901), Italian folk humor (barzellette).",
+  "level": "A2-B1 (intermediate, with stretch B1 stories alongside A2 core)",
+  "estimated_minutes": 45,
   "learning_objectives": [
-    "Recognize and pronounce 14 core Italian cleaning verbs.",
-    "Conjugate -are, -ere, and -isco regulars in the present tense.",
-    "Build practical sentences combining verbs with household nouns.",
-    "Use simple negative imperatives ('non + infinitive') in context.",
-    "Practice retrieval via fill-blank quiz and spaced-repetition cards."
+    "Master 14 cleaning verbs + 8 household nouns + 4 cultural collocations.",
+    "Conjugate -are, -isco, and regular -ere verbs in the present tense.",
+    "Use negative imperatives (non + infinitive) in domestic context.",
+    "Read authentic Italian literary excerpts (Ginzburg, Calvino, Saba).",
+    "Understand cultural register: pulizie di sabato, pulizie di primavera, regional idioms.",
+    "Build automaticity via timed Match Madness (per-pair latency feeds SR scheduler)."
   ],
   "personas": [
-    { "name": "Alice", "role": "peer-learner", "level": "A2" },
-    { "name": "Marco", "role": "native-tutor", "region": "Roma" }
+    { "name": "Alice", "role": "peer-learner", "level": "A2", "color_token": "warm-accent" },
+    { "name": "Marco", "role": "native-tutor", "region": "Roma", "color_token": "accent" }
+  ],
+  "authentic_sources_used": [
+    "Natalia Ginzburg — Lessico famigliare (1963) — Story B1: 'Il padre e l'ordine'",
+    "Italo Calvino — La poubelle agréée (1977) — Story B1 immersion: 'Il rito della pattumiera'",
+    "Umberto Saba — La casa della mia nutrice (1901) — Story B1 serious: 'La casa'",
+    "Barzellette popolari italiane sulle pulizie (public-domain jokes)"
   ],
   "default_theme": "linguistic",
-  "generated_by": "Chiron skill (parent agent)",
+  "available_themes": ["linguistic", "warm-paper", "clinical", "midnight", "ocean"],
+  "generated_by": "Chiron skill (parent agent) under PRD canonical_shell_and_match_madness_2026-05-12",
   "generated_at": "2026-05-12"
 }

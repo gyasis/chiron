@@ -1,15 +1,15 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="linguistic" data-view="lesson">
+<html lang="it" data-theme="linguistic" data-view="lesson" data-skeleton="language-lesson-skeleton-v1">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Chiron — I verbi delle pulizie</title>
+  <title>Chiron · I verbi delle pulizie</title>
 
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Source+Serif+4:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,700;12..96,800&family=Source+Serif+4:ital,wght@0,400;0,600;1,400;1,600&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
 
-  <!-- Theme tokens + variants (BLOCKING contract: copied next to lesson, linked via <link>) -->
+  <!-- Theme tokens + variants (BLOCKING contract) -->
   <link rel="stylesheet" href="themes/_tokens.css" />
   <link rel="stylesheet" href="themes/midnight.css" />
   <link rel="stylesheet" href="themes/warm-paper.css" />
@@ -18,7 +18,6 @@
   <link rel="stylesheet" href="themes/ocean.css" />
 
   <script>
-    // Theme switcher — ?theme=… URL param or persisted localStorage
     (function () {
       const valid = ['linguistic','midnight','warm-paper','clinical','ocean'];
       const params = new URLSearchParams(location.search);
@@ -31,57 +30,38 @@
   </script>
 
   <style>
-    /* All component styles consume var(--chiron-*) tokens only.
-       No hardcoded hex/rgb here — themes are swappable via <link>. */
+    /* =========================================================================
+       LANGUAGE-LESSON-SKELETON v1 — component CSS
+       All colors consume var(--chiron-*). No hardcoded hex/rgb.
+       ========================================================================= */
+
     * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; }
     body {
-      margin: 0;
       background: var(--chiron-bg);
       color: var(--chiron-fg);
       font-family: var(--chiron-font-body);
-      line-height: 1.6;
       font-size: 17px;
+      line-height: 1.65;
     }
-    .container { max-width: 880px; margin: 0 auto; padding: var(--chiron-space-8) var(--chiron-space-6); }
-    header.lesson-header {
-      border-bottom: 1px solid var(--chiron-divider);
-      padding-bottom: var(--chiron-space-6);
-      margin-bottom: var(--chiron-space-8);
-    }
-    .eyebrow {
-      text-transform: uppercase;
-      letter-spacing: 0.12em;
-      font-size: 12px;
-      color: var(--chiron-muted);
-      font-family: var(--chiron-font-heading);
-    }
-    h1 {
-      font-family: var(--chiron-font-heading);
-      font-size: 2.4rem;
-      margin: var(--chiron-space-2) 0 var(--chiron-space-3);
-      color: var(--chiron-fg);
-      line-height: 1.15;
-    }
-    h2 {
-      font-family: var(--chiron-font-heading);
-      font-size: 1.5rem;
-      margin-top: var(--chiron-space-8);
-      color: var(--chiron-accent);
-      border-left: 4px solid var(--chiron-accent);
-      padding-left: var(--chiron-space-3);
-    }
-    h3 { font-family: var(--chiron-font-heading); color: var(--chiron-fg-secondary); margin-top: var(--chiron-space-6); }
-    p.lead { color: var(--chiron-fg-secondary); font-size: 1.08rem; }
-    .chapter { margin-bottom: var(--chiron-space-8); }
 
-    /* Theme switcher controls */
-    .theme-bar {
-      display: flex; gap: var(--chiron-space-2); flex-wrap: wrap;
-      margin-bottom: var(--chiron-space-4);
+    /* ---- Layout shell ---- */
+    .lesson-shell { max-width: 920px; margin: 0 auto; padding: var(--chiron-space-8) var(--chiron-space-6); }
+
+    /* ---- Top bar ---- */
+    .top-bar {
+      position: sticky; top: 0; z-index: 100;
+      background: var(--chiron-bg);
+      border-bottom: 1px solid var(--chiron-divider);
+      padding: var(--chiron-space-3) var(--chiron-space-6);
+      display: flex; align-items: center; justify-content: space-between; gap: var(--chiron-space-4);
+      backdrop-filter: blur(8px);
     }
+    .top-bar .brand { font-family: var(--chiron-font-heading); font-weight: 700; font-size: 15px; color: var(--chiron-accent); letter-spacing: -0.01em; }
+    .top-bar .brand .dot { color: var(--chiron-warm-accent); }
+    .theme-bar { display: flex; gap: var(--chiron-space-2); flex-wrap: wrap; }
     .theme-bar button {
-      font: inherit; font-size: 13px;
-      padding: 6px 12px;
+      font: inherit; font-size: 12px; padding: 5px 10px;
       background: var(--chiron-surface);
       color: var(--chiron-fg-secondary);
       border: 1px solid var(--chiron-border);
@@ -89,115 +69,384 @@
       cursor: pointer;
     }
     .theme-bar button:hover { background: var(--chiron-elevated); }
+    .theme-bar button[aria-pressed="true"] { background: var(--chiron-accent); color: var(--chiron-surface); border-color: var(--chiron-accent); }
 
-    /* Tables */
-    table { border-collapse: collapse; width: 100%; margin: var(--chiron-space-4) 0; background: var(--chiron-surface); border-radius: var(--chiron-radius-md); overflow: hidden; box-shadow: var(--chiron-shadow-sm); }
-    th, td { padding: var(--chiron-space-3) var(--chiron-space-4); text-align: left; border-bottom: 1px solid var(--chiron-divider); }
-    th { background: var(--chiron-elevated); font-family: var(--chiron-font-heading); color: var(--chiron-fg); font-weight: 600; font-size: 14px; text-transform: uppercase; letter-spacing: 0.06em; }
-    td.it { font-weight: 600; color: var(--chiron-accent); }
-    td.example { font-style: italic; color: var(--chiron-fg-secondary); }
-
-    /* Dialogue */
-    .dialogue { background: var(--chiron-surface); border-left: 4px solid var(--chiron-warm-accent); padding: var(--chiron-space-4) var(--chiron-space-6); border-radius: var(--chiron-radius-md); margin: var(--chiron-space-4) 0; box-shadow: var(--chiron-shadow-sm); }
-    .turn { margin: var(--chiron-space-3) 0; }
-    .speaker { font-weight: 700; color: var(--chiron-accent); font-family: var(--chiron-font-heading); }
-    .speaker.peer { color: var(--chiron-warm-accent); }
-    .it-line { color: var(--chiron-fg); }
-    .gloss { color: var(--chiron-muted); font-size: 14px; display: block; margin-top: 2px; font-style: italic; }
-
-    /* Quiz */
-    .quiz-item { background: var(--chiron-surface); border: 1px solid var(--chiron-border); border-radius: var(--chiron-radius-md); padding: var(--chiron-space-4); margin: var(--chiron-space-3) 0; }
-    .quiz-item .q { color: var(--chiron-fg); }
-    .quiz-item input[type="text"] {
-      font: inherit; padding: 6px 10px;
-      border: 1px solid var(--chiron-border); border-radius: var(--chiron-radius-sm);
-      background: var(--chiron-bg); color: var(--chiron-fg);
-      width: 180px;
+    /* ---- Progress dots (nav) ---- */
+    .nav-dots {
+      display: flex; justify-content: center; gap: 8px;
+      margin: var(--chiron-space-4) 0 var(--chiron-space-6);
+      padding: 0; list-style: none;
     }
-    .quiz-item .hint { font-size: 13px; color: var(--chiron-muted); margin-left: var(--chiron-space-2); }
-    .quiz-item .feedback { margin-top: var(--chiron-space-2); font-weight: 600; }
-    .quiz-item .feedback.correct { color: var(--chiron-success); }
-    .quiz-item .feedback.incorrect { color: var(--chiron-error); }
-    button.check { font: inherit; padding: 6px 14px; background: var(--chiron-accent); color: var(--chiron-surface); border: none; border-radius: var(--chiron-radius-sm); cursor: pointer; margin-left: var(--chiron-space-2); }
-    button.check:hover { background: var(--chiron-accent-light); }
+    .nav-dot {
+      width: 9px; height: 9px; border-radius: 50%;
+      background: var(--chiron-border); border: none; padding: 0; cursor: pointer;
+      transition: transform 0.18s ease, background 0.18s ease;
+    }
+    .nav-dot:hover { transform: scale(1.4); background: var(--chiron-accent-light); }
+    .nav-dot[aria-current="true"] { background: var(--chiron-accent); transform: scale(1.3); }
 
-    /* Flashcards */
-    .card-deck { display: grid; gap: var(--chiron-space-3); grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); margin-top: var(--chiron-space-4); }
-    .sr-card {
+    /* ---- Header ---- */
+    .lesson-header { border-bottom: 1px solid var(--chiron-divider); padding-bottom: var(--chiron-space-6); margin-bottom: var(--chiron-space-8); }
+    .eyebrow { text-transform: uppercase; letter-spacing: 0.14em; font-size: 11px; color: var(--chiron-muted); font-family: var(--chiron-font-body); font-weight: 600; }
+    h1.lesson-title { font-family: var(--chiron-font-heading); font-size: 2.6rem; line-height: 1.1; margin: var(--chiron-space-2) 0 var(--chiron-space-3); color: var(--chiron-fg); }
+    .subtitle { color: var(--chiron-fg-secondary); font-size: 1.1rem; font-style: italic; }
+
+    /* ---- Sections ---- */
+    section.lesson-section { margin: var(--chiron-space-8) 0; scroll-margin-top: 80px; }
+    h2.section-h {
+      font-family: var(--chiron-font-heading);
+      font-size: 1.55rem;
+      color: var(--chiron-accent);
+      border-left: 4px solid var(--chiron-accent);
+      padding-left: var(--chiron-space-4);
+      margin: 0 0 var(--chiron-space-4);
+    }
+    h2.section-h .num { color: var(--chiron-muted); font-size: 0.7em; font-weight: 400; margin-right: var(--chiron-space-3); font-family: var(--chiron-font-mono, monospace); }
+    h3.subsection-h { font-family: var(--chiron-font-heading); color: var(--chiron-fg-secondary); margin-top: var(--chiron-space-6); font-size: 1.15rem; }
+
+    /* ---- Cold open ---- */
+    .cold-open {
       background: var(--chiron-surface);
-      border: 1px solid var(--chiron-border);
-      border-radius: var(--chiron-radius-md);
-      padding: var(--chiron-space-4);
-      cursor: pointer;
-      transition: transform 0.15s ease;
-      box-shadow: var(--chiron-shadow-sm);
-      min-height: 110px;
-      display: flex; align-items: center; justify-content: center;
-      text-align: center;
+      border-radius: var(--chiron-radius-lg);
+      padding: var(--chiron-space-6) var(--chiron-space-8);
+      box-shadow: var(--chiron-shadow-md);
+      border-left: 4px solid var(--chiron-warm-accent);
+      font-family: var(--chiron-font-heading);
+      font-size: 1.18rem;
+      line-height: 1.6;
+      color: var(--chiron-fg);
+      font-style: italic;
     }
+    .cold-open .it { color: var(--chiron-fg); font-style: italic; }
+    .cold-open .gloss { color: var(--chiron-muted); font-size: 0.9em; display: block; margin-top: var(--chiron-space-2); font-style: normal; }
+
+    /* ---- Vocab arc ---- */
+    .vocab-arc { background: var(--chiron-surface); border-radius: var(--chiron-radius-lg); padding: var(--chiron-space-6); margin-bottom: var(--chiron-space-6); border: 1px solid var(--chiron-border); }
+    .mini-context { font-style: italic; color: var(--chiron-fg-secondary); border-left: 3px solid var(--chiron-accent-light); padding-left: var(--chiron-space-3); margin-bottom: var(--chiron-space-4); }
+
+    /* ---- Tables ---- */
+    .v-table { border-collapse: collapse; width: 100%; margin: var(--chiron-space-3) 0; }
+    .v-table th, .v-table td { padding: var(--chiron-space-3); text-align: left; border-bottom: 1px solid var(--chiron-divider); }
+    .v-table th { background: var(--chiron-elevated); font-family: var(--chiron-font-heading); font-weight: 600; font-size: 13px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--chiron-fg); }
+    .v-table td.it { font-weight: 600; color: var(--chiron-accent); font-family: var(--chiron-font-heading); }
+    .v-table td.ex { font-style: italic; color: var(--chiron-fg-secondary); font-size: 0.95em; }
+
+    /* ---- Speaker turns ---- */
+    .turn { display: grid; grid-template-columns: 90px 1fr; gap: var(--chiron-space-3); margin: var(--chiron-space-3) 0; align-items: start; }
+    .turn .speaker { font-family: var(--chiron-font-heading); font-weight: 700; font-size: 0.95em; padding: 2px 8px; border-radius: var(--chiron-radius-sm); text-align: center; }
+    .turn.alice .speaker { background: var(--chiron-warm-accent); color: var(--chiron-surface); }
+    .turn.marco .speaker { background: var(--chiron-accent); color: var(--chiron-surface); }
+    .turn.you .speaker { background: var(--chiron-elevated); color: var(--chiron-fg); border: 1px solid var(--chiron-border); }
+    .turn .what { line-height: 1.55; }
+    .turn .it { color: var(--chiron-fg); }
+    .turn .gloss { color: var(--chiron-muted); font-size: 0.88em; display: block; margin-top: 2px; font-style: italic; }
+
+    /* ---- Pedagogical callouts ---- */
+    .callout { padding: var(--chiron-space-3) var(--chiron-space-4); margin: var(--chiron-space-3) 0; border-radius: var(--chiron-radius-md); border-left: 3px solid var(--chiron-info); background: var(--chiron-elevated); font-size: 0.95em; }
+    .callout .tag { display: inline-block; font-family: var(--chiron-font-heading); font-weight: 700; font-size: 0.75em; text-transform: uppercase; letter-spacing: 0.08em; padding: 2px 8px; border-radius: var(--chiron-radius-sm); margin-right: var(--chiron-space-2); }
+    .callout.grammar-pearl { border-left-color: var(--chiron-accent); }
+    .callout.grammar-pearl .tag { background: var(--chiron-accent); color: var(--chiron-surface); }
+    .callout.false-friend { border-left-color: var(--chiron-error); }
+    .callout.false-friend .tag { background: var(--chiron-error); color: var(--chiron-surface); }
+    .callout.cultural-note { border-left-color: var(--chiron-warm-accent); }
+    .callout.cultural-note .tag { background: var(--chiron-warm-accent); color: var(--chiron-surface); }
+
+    /* ---- Inline cloze ---- */
+    .cloze-line { background: var(--chiron-bg); border: 1px dashed var(--chiron-border); padding: var(--chiron-space-3); margin: var(--chiron-space-3) 0; border-radius: var(--chiron-radius-sm); font-style: italic; }
+    .cloze-line input { font: inherit; padding: 3px 8px; width: 140px; border: 1px solid var(--chiron-border); border-radius: var(--chiron-radius-sm); background: var(--chiron-surface); color: var(--chiron-fg); font-style: normal; }
+    .cloze-line input.correct { border-color: var(--chiron-success); background: var(--chiron-elevated); }
+    .cloze-line input.incorrect { border-color: var(--chiron-error); }
+    .cloze-line .hint { color: var(--chiron-muted); font-size: 0.85em; margin-left: var(--chiron-space-2); font-style: normal; }
+
+    /* ---- Story block — two-column gloss ---- */
+    .story-block { background: var(--chiron-surface); border-radius: var(--chiron-radius-lg); padding: var(--chiron-space-6); margin: var(--chiron-space-4) 0; box-shadow: var(--chiron-shadow-sm); border: 1px solid var(--chiron-border); }
+    .story-block .meta { display: flex; gap: var(--chiron-space-3); align-items: center; margin-bottom: var(--chiron-space-3); flex-wrap: wrap; }
+    .story-block .level { display: inline-block; font-family: var(--chiron-font-heading); font-weight: 700; font-size: 0.78em; padding: 3px 9px; border-radius: var(--chiron-radius-sm); }
+    .story-block.level-a2 .level { background: var(--chiron-success); color: var(--chiron-surface); }
+    .story-block.level-b1 .level { background: var(--chiron-warm-accent); color: var(--chiron-surface); }
+    .story-block .tone { font-family: var(--chiron-font-heading); font-size: 0.85em; color: var(--chiron-muted); text-transform: uppercase; letter-spacing: 0.08em; }
+    .story-block h4 { font-family: var(--chiron-font-heading); margin: 0 0 var(--chiron-space-3); font-size: 1.25rem; color: var(--chiron-fg); }
+    .story-block .source { font-size: 0.82em; color: var(--chiron-muted); font-style: italic; margin-top: var(--chiron-space-3); }
+    .story-grid { display: grid; grid-template-columns: 1fr 220px; gap: var(--chiron-space-5); align-items: start; }
+    @media (max-width: 720px) { .story-grid { grid-template-columns: 1fr; } }
+    .story-grid .it-text { font-family: var(--chiron-font-heading); font-size: 1.04em; line-height: 1.7; color: var(--chiron-fg); }
+    .story-grid .it-text .g { border-bottom: 1px dotted var(--chiron-warm-accent); cursor: help; }
+    .story-grid .gloss-panel { background: var(--chiron-elevated); border-radius: var(--chiron-radius-md); padding: var(--chiron-space-3); font-size: 0.86em; line-height: 1.5; color: var(--chiron-fg-secondary); }
+    .story-grid .gloss-panel h5 { font-family: var(--chiron-font-heading); font-size: 0.78em; text-transform: uppercase; letter-spacing: 0.06em; color: var(--chiron-muted); margin: 0 0 var(--chiron-space-2); }
+    .story-grid .gloss-panel dl { margin: 0; }
+    .story-grid .gloss-panel dt { font-weight: 700; color: var(--chiron-accent); margin-top: var(--chiron-space-2); }
+    .story-grid .gloss-panel dd { margin: 0 0 0 var(--chiron-space-3); }
+
+    /* ---- Jokes sidebar ---- */
+    .jokes-sidebar { background: var(--chiron-surface); border-radius: var(--chiron-radius-lg); padding: var(--chiron-space-5); border-left: 4px solid var(--chiron-warm-accent); margin: var(--chiron-space-4) 0; }
+    .jokes-sidebar .joke { margin: var(--chiron-space-4) 0; }
+    .jokes-sidebar .joke-title { font-family: var(--chiron-font-heading); font-weight: 700; color: var(--chiron-warm-accent); font-size: 0.95em; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: var(--chiron-space-2); }
+
+    /* ---- Match Madness ---- */
+    .mm-container {
+      background: var(--chiron-surface);
+      border-radius: var(--chiron-radius-lg);
+      padding: var(--chiron-space-6);
+      box-shadow: var(--chiron-shadow-md);
+      border: 1px solid var(--chiron-border);
+      position: relative;
+      overflow: hidden;
+    }
+    .mm-container::before {
+      content: ''; position: absolute; inset: 0;
+      background: radial-gradient(circle at center, var(--chiron-warm-accent) 0%, transparent 60%);
+      opacity: 0; pointer-events: none;
+      animation: mm-pulse var(--mm-pulse-ms, 2000ms) ease-in-out infinite;
+    }
+    .mm-container[data-active="false"]::before { animation: none; }
+    @keyframes mm-pulse {
+      0%, 100% { opacity: 0; }
+      50% { opacity: var(--mm-pulse-strength, 0.08); }
+    }
+
+    .mm-header { display: flex; justify-content: space-between; align-items: center; gap: var(--chiron-space-3); flex-wrap: wrap; margin-bottom: var(--chiron-space-4); position: relative; z-index: 2; }
+    .mm-timer { font-family: var(--chiron-font-mono, monospace); font-size: 1.8rem; font-weight: 700; color: var(--chiron-fg); padding: var(--chiron-space-2) var(--chiron-space-4); background: var(--chiron-elevated); border-radius: var(--chiron-radius-md); min-width: 110px; text-align: center; }
+    .mm-timer.warning { color: var(--chiron-warning); }
+    .mm-timer.critical { color: var(--chiron-error); animation: mm-flash 0.4s ease-in-out infinite; }
+    @keyframes mm-flash { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+    .mm-stats { display: flex; gap: var(--chiron-space-4); font-size: 0.95em; }
+    .mm-stats .stat { color: var(--chiron-fg-secondary); }
+    .mm-stats .stat strong { color: var(--chiron-fg); font-family: var(--chiron-font-heading); font-size: 1.15em; display: block; }
+    .mm-combo {
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: 4px 10px; border-radius: var(--chiron-radius-sm);
+      background: var(--chiron-elevated); color: var(--chiron-warm-accent);
+      font-family: var(--chiron-font-heading); font-weight: 700;
+      transition: transform 0.2s ease;
+    }
+    .mm-combo.hot { background: var(--chiron-warm-accent); color: var(--chiron-surface); transform: scale(1.15); }
+
+    .mm-round-label { text-align: center; font-family: var(--chiron-font-heading); color: var(--chiron-muted); font-size: 0.85em; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: var(--chiron-space-3); }
+
+    .mm-grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--chiron-space-3); max-width: 560px; margin: 0 auto; position: relative; z-index: 2; }
+    .mm-tile {
+      padding: var(--chiron-space-3) var(--chiron-space-4);
+      background: var(--chiron-bg);
+      border: 2px solid var(--chiron-border);
+      border-radius: var(--chiron-radius-md);
+      cursor: pointer;
+      font-family: var(--chiron-font-heading);
+      font-size: 1.05em;
+      text-align: center;
+      color: var(--chiron-fg);
+      transition: transform 0.15s ease, background 0.15s ease, border-color 0.15s ease;
+      user-select: none;
+      min-height: 56px;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .mm-tile:hover { background: var(--chiron-elevated); transform: translateY(-1px); }
+    .mm-tile[data-state="selected"] { background: var(--chiron-accent); color: var(--chiron-surface); border-color: var(--chiron-accent); }
+    .mm-tile[data-state="correct"] { background: var(--chiron-success); color: var(--chiron-surface); border-color: var(--chiron-success); animation: mm-burst 0.5s ease-out; }
+    .mm-tile[data-state="wrong"] { background: var(--chiron-error); color: var(--chiron-surface); border-color: var(--chiron-error); animation: mm-shake 0.4s ease-in-out; }
+    .mm-tile[data-state="empty"] { visibility: hidden; }
+    @keyframes mm-burst { 0% { transform: scale(1); } 50% { transform: scale(1.12); } 100% { transform: scale(1); } }
+    @keyframes mm-shake { 0%, 100% { transform: translateX(0); } 20% { transform: translateX(-6px); } 40% { transform: translateX(6px); } 60% { transform: translateX(-4px); } 80% { transform: translateX(4px); } }
+
+    .mm-controls { margin-top: var(--chiron-space-4); display: flex; gap: var(--chiron-space-3); justify-content: center; flex-wrap: wrap; }
+    .mm-controls button { font: inherit; padding: var(--chiron-space-2) var(--chiron-space-4); border-radius: var(--chiron-radius-sm); cursor: pointer; border: 1px solid var(--chiron-border); background: var(--chiron-surface); color: var(--chiron-fg); }
+    .mm-controls button.primary { background: var(--chiron-accent); color: var(--chiron-surface); border-color: var(--chiron-accent); }
+    .mm-controls button.primary:hover { background: var(--chiron-accent-light); }
+
+    .mm-result { padding: var(--chiron-space-4); background: var(--chiron-elevated); border-radius: var(--chiron-radius-md); margin-top: var(--chiron-space-4); text-align: center; display: none; }
+    .mm-result.show { display: block; }
+    .mm-result h4 { font-family: var(--chiron-font-heading); margin: 0 0 var(--chiron-space-2); color: var(--chiron-accent); font-size: 1.4em; }
+    .mm-result .latency-table { font-size: 0.85em; margin-top: var(--chiron-space-3); width: 100%; }
+    .mm-result .latency-table th, .mm-result .latency-table td { padding: 4px 8px; }
+
+    .mm-keyboard-hint { font-size: 0.8em; color: var(--chiron-muted); text-align: center; margin-top: var(--chiron-space-3); font-family: var(--chiron-font-mono, monospace); }
+
+    /* ---- SR drawer ---- */
+    .sr-deck { display: grid; gap: var(--chiron-space-3); grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); margin-top: var(--chiron-space-4); }
+    .sr-card { background: var(--chiron-surface); border: 1px solid var(--chiron-border); border-radius: var(--chiron-radius-md); padding: var(--chiron-space-4); cursor: pointer; transition: transform 0.15s ease, box-shadow 0.15s ease; box-shadow: var(--chiron-shadow-sm); min-height: 100px; display: flex; align-items: center; justify-content: center; text-align: center; font-family: var(--chiron-font-heading); }
     .sr-card:hover { transform: translateY(-2px); box-shadow: var(--chiron-shadow-md); }
-    .sr-card .front { font-family: var(--chiron-font-heading); font-size: 1.2rem; color: var(--chiron-accent); font-weight: 600; }
-    .sr-card .back { font-size: 1rem; color: var(--chiron-fg-secondary); display: none; }
+    .sr-card .front { font-size: 1.08em; color: var(--chiron-accent); font-weight: 600; }
+    .sr-card .back { font-size: 0.95em; color: var(--chiron-fg-secondary); display: none; }
     .sr-card.flipped .front { display: none; }
     .sr-card.flipped .back { display: block; }
 
-    /* Callouts */
-    .callout { background: var(--chiron-elevated); border-radius: var(--chiron-radius-md); padding: var(--chiron-space-3) var(--chiron-space-4); margin: var(--chiron-space-3) 0; border-left: 3px solid var(--chiron-info); }
-    .callout strong { color: var(--chiron-info); }
+    /* ---- Closing ---- */
+    .closing { background: var(--chiron-surface); border-radius: var(--chiron-radius-lg); padding: var(--chiron-space-6); border-left: 4px solid var(--chiron-warm-accent); }
 
-    footer { margin-top: var(--chiron-space-8); padding-top: var(--chiron-space-4); border-top: 1px solid var(--chiron-divider); color: var(--chiron-muted); font-size: 13px; }
+    footer.lesson-footer { margin-top: var(--chiron-space-8); padding-top: var(--chiron-space-4); border-top: 1px solid var(--chiron-divider); color: var(--chiron-muted); font-size: 0.85em; text-align: center; }
   </style>
 </head>
 <body>
-  <div class="container">
 
+  <!-- ========================= TOP BAR ========================= -->
+  <div class="top-bar">
+    <div class="brand">Chiron<span class="dot">·</span> language-it</div>
+    <nav class="theme-bar" aria-label="Theme">
+      <button data-set-theme="linguistic" aria-pressed="true">Linguistic</button>
+      <button data-set-theme="warm-paper">Warm Paper</button>
+      <button data-set-theme="clinical">Clinical</button>
+      <button data-set-theme="midnight">Midnight</button>
+      <button data-set-theme="ocean">Ocean</button>
+    </nav>
+  </div>
+
+  <div class="lesson-shell">
+
+    <!-- ========================= NAV DOTS ========================= -->
+    <div class="nav-dots" role="tablist" aria-label="Sections">
+      <button class="nav-dot" data-target="s0" role="tab" aria-label="Cold open"></button>
+      <button class="nav-dot" data-target="s1a" role="tab" aria-label="Verb cluster 1"></button>
+      <button class="nav-dot" data-target="s1b" role="tab" aria-label="Verb cluster 2"></button>
+      <button class="nav-dot" data-target="s1c" role="tab" aria-label="Verb cluster 3"></button>
+      <button class="nav-dot" data-target="s2" role="tab" aria-label="Conjugation"></button>
+      <button class="nav-dot" data-target="s3" role="tab" aria-label="Collocations"></button>
+      <button class="nav-dot" data-target="s4" role="tab" aria-label="Stories"></button>
+      <button class="nav-dot" data-target="s4-funny" role="tab" aria-label="Jokes"></button>
+      <button class="nav-dot" data-target="s5" role="tab" aria-label="Match Madness"></button>
+      <button class="nav-dot" data-target="s6" role="tab" aria-label="Extended dialogue"></button>
+      <button class="nav-dot" data-target="s7" role="tab" aria-label="SR drawer"></button>
+      <button class="nav-dot" data-target="s8" role="tab" aria-label="Closing"></button>
+    </div>
+
+    <!-- ========================= HEADER ========================= -->
     <header class="lesson-header">
-      <div class="theme-bar" aria-label="Theme switcher">
-        <button data-set-theme="linguistic">Linguistic</button>
-        <button data-set-theme="warm-paper">Warm Paper</button>
-        <button data-set-theme="clinical">Clinical</button>
-        <button data-set-theme="midnight">Midnight</button>
-        <button data-set-theme="ocean">Ocean</button>
-      </div>
-      <div class="eyebrow">Chiron · Italian · Mode A · A2</div>
-      <h1>I verbi delle pulizie</h1>
-      <p class="lead">Italian verbs for cleaning — what you do at home, in the kitchen, with the laundry. Fourteen verbs, real conjugations, a chat with Alice, and a quiz you can fail safely.</p>
+      <div class="eyebrow">Chiron · Italian · A2-B1 · Mode A · skeleton v1</div>
+      <h1 class="lesson-title">I verbi delle pulizie</h1>
+      <p class="subtitle">Una lezione tessuta — vocabolario, racconti, e una mattinata con Alice e Marco.</p>
     </header>
 
-    <!-- Chapter 1 — Core verbs -->
-    <section class="chapter" id="ch1">
-      <h2>1 · Core verbs</h2>
-      <p>Each verb shows the infinitive (the form you find in the dictionary), its English meaning, the "io" (I) form for the present tense, and a real-world example.</p>
-      <table>
-        <thead>
-          <tr><th>Italian</th><th>English</th><th>io (I…)</th><th>Example</th></tr>
-        </thead>
-        <tbody>
-          <tr><td class="it">spazzare</td><td>to sweep</td><td>spazzo</td><td class="example">Spazzo il pavimento. — I sweep the floor.</td></tr>
-          <tr><td class="it">lavare</td><td>to wash</td><td>lavo</td><td class="example">Lavo i piatti. — I wash the dishes.</td></tr>
-          <tr><td class="it">pulire *</td><td>to clean</td><td>pulisco</td><td class="example">Pulisco il bagno. — I clean the bathroom.</td></tr>
-          <tr><td class="it">spolverare</td><td>to dust</td><td>spolvero</td><td class="example">Spolvero i mobili. — I dust the furniture.</td></tr>
-          <tr><td class="it">strofinare</td><td>to scrub / rub</td><td>strofino</td><td class="example">Strofino la pentola. — I scrub the pot.</td></tr>
-          <tr><td class="it">sciacquare</td><td>to rinse</td><td>sciacquo</td><td class="example">Sciacquo il bicchiere. — I rinse the glass.</td></tr>
-          <tr><td class="it">asciugare</td><td>to dry</td><td>asciugo</td><td class="example">Asciugo i piatti. — I dry the dishes.</td></tr>
-          <tr><td class="it">ammucchiare</td><td>to pile up</td><td>ammucchio</td><td class="example">Ammucchio i vestiti. — I pile up the clothes.</td></tr>
-          <tr><td class="it">mettere in pila</td><td>to put in a pile</td><td>metto in pila</td><td class="example">Metto in pila i libri. — I stack the books.</td></tr>
-          <tr><td class="it">buttare</td><td>to throw (out)</td><td>butto</td><td class="example">Butto la spazzatura. — I throw out the trash.</td></tr>
-          <tr><td class="it">riordinare</td><td>to tidy up</td><td>riordino</td><td class="example">Riordino la stanza. — I tidy the room.</td></tr>
-          <tr><td class="it">passare l'aspirapolvere</td><td>to vacuum</td><td>passo l'aspirapolvere</td><td class="example">Passo l'aspirapolvere in salotto.</td></tr>
-          <tr><td class="it">stendere</td><td>to hang out (laundry)</td><td>stendo</td><td class="example">Stendo il bucato. — I hang the laundry.</td></tr>
-          <tr><td class="it">piegare</td><td>to fold</td><td>piego</td><td class="example">Piego le magliette. — I fold the t-shirts.</td></tr>
-        </tbody>
-      </table>
-      <div class="callout"><strong>* Note:</strong> <em>pulire</em> is an <code>-isco</code> verb. Its present-tense stem inserts <em>-isc-</em> in all singular forms and the 3rd-person plural: <em>pulisco, pulisci, pulisce, puliamo, pulite, puliscono</em>.</div>
+    <!-- ========================= 0. COLD OPEN ========================= -->
+    <section class="lesson-section" id="s0">
+      <h2 class="section-h"><span class="num">0</span>Apertura</h2>
+      <div class="cold-open">
+        <span class="it">Sabato, ore otto. Casa silenziosa. Marco prende la scopa. Alice porta un secchio d'acqua. Tu apri le finestre — l'aria fresca entra. <em>Cominciamo.</em></span>
+        <span class="gloss">Saturday, eight o'clock. The house is quiet. Marco picks up the broom. Alice carries a bucket of water. You open the windows — fresh air comes in. Let's begin.</span>
+      </div>
     </section>
 
-    <!-- Chapter 2 — Conjugation -->
-    <section class="chapter" id="ch2">
-      <h2>2 · Conjugation patterns</h2>
-      <p>Most verbs above are regular <strong>-are</strong> verbs (lavare, spazzare, spolverare, strofinare, asciugare, ammucchiare, buttare, riordinare, piegare, sciacquare). Two exceptions: <em>pulire</em> is <strong>-isco</strong>, <em>stendere</em> is regular <strong>-ere</strong>.</p>
-      <h3>lavare (regular -are)</h3>
-      <table>
+    <!-- ========================= 1a. VERB CLUSTER 1 ========================= -->
+    <section class="lesson-section" id="s1a">
+      <h2 class="section-h"><span class="num">1A</span>Cluster 1 — pulire la casa</h2>
+      <div class="vocab-arc">
+        <p class="mini-context">Marco entra in soggiorno. C'è polvere ovunque. "Prima cosa," dice, "spolveriamo. Poi spazziamo. Poi puliamo."</p>
+
+        <table class="v-table">
+          <thead><tr><th>Italian</th><th>English</th><th>io (I…)</th><th>Example</th></tr></thead>
+          <tbody>
+            <tr><td class="it">spazzare</td><td>to sweep</td><td>spazzo</td><td class="ex">Spazzo il pavimento.</td></tr>
+            <tr><td class="it">spolverare</td><td>to dust</td><td>spolvero</td><td class="ex">Spolvero i mobili.</td></tr>
+            <tr><td class="it">pulire (-isco)</td><td>to clean</td><td>pulisco</td><td class="ex">Pulisco il bagno.</td></tr>
+            <tr><td class="it">strofinare</td><td>to scrub</td><td>strofino</td><td class="ex">Strofino la pentola.</td></tr>
+          </tbody>
+        </table>
+
+        <div class="turn alice">
+          <span class="speaker">Alice</span>
+          <div class="what">
+            <span class="it">Marco, io <em>pulo</em> il bagno…?</span>
+            <span class="gloss">Marco, I "pulo" the bathroom…?</span>
+          </div>
+        </div>
+        <div class="turn marco">
+          <span class="speaker">Marco</span>
+          <div class="what">
+            <span class="it">No, Alice — <em>pulisco</em>. <em>Pulire</em> è un verbo speciale: aggiunge <strong>-isc-</strong> alla radice. Pulisco, pulisci, pulisce.</span>
+            <span class="gloss">No, Alice — <em>pulisco</em>. <em>Pulire</em> is a special verb: it adds <strong>-isc-</strong> to the stem. I clean, you clean, he/she cleans.</span>
+          </div>
+        </div>
+
+        <div class="callout grammar-pearl">
+          <span class="tag">Grammar pearl</span>
+          <strong>-isco verbs</strong> follow the pattern: <em>pulisco, pulisci, pulisce, puliamo, pulite, puliscono.</em> The <em>-isc-</em> appears in singular forms and 3rd-person plural — not in <em>noi/voi</em>. Same family: <em>finire, capire, preferire, dormire</em> (wait, no — <em>dormire</em> is regular!). Memorize the pattern by the rhythm, not the rule.
+        </div>
+
+        <div class="cloze-line" data-answer="spazzo">
+          Marco entra in cucina. "Adesso <input type="text" />," dice. <span class="hint">(io form of spazzare)</span>
+        </div>
+        <div class="cloze-line" data-answer="pulisce">
+          Alice dice: "Mia madre <input type="text" /> la casa ogni sabato." <span class="hint">(lui/lei form of pulire — careful, -isco!)</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================= 1b. VERB CLUSTER 2 ========================= -->
+    <section class="lesson-section" id="s1b">
+      <h2 class="section-h"><span class="num">1B</span>Cluster 2 — il bucato</h2>
+      <div class="vocab-arc">
+        <p class="mini-context">Mucchio di vestiti sul letto. Marco sospira. "Tocca al bucato," dice. "Prima laviamo, poi sciacquiamo, poi asciughiamo, poi stendiamo, poi pieghiamo."</p>
+
+        <table class="v-table">
+          <thead><tr><th>Italian</th><th>English</th><th>io (I…)</th><th>Example</th></tr></thead>
+          <tbody>
+            <tr><td class="it">lavare</td><td>to wash</td><td>lavo</td><td class="ex">Lavo i piatti.</td></tr>
+            <tr><td class="it">sciacquare</td><td>to rinse</td><td>sciacquo</td><td class="ex">Sciacquo il bicchiere.</td></tr>
+            <tr><td class="it">asciugare</td><td>to dry</td><td>asciugo</td><td class="ex">Asciugo le mani.</td></tr>
+            <tr><td class="it">stendere (-ere)</td><td>to hang out</td><td>stendo</td><td class="ex">Stendo il bucato.</td></tr>
+            <tr><td class="it">piegare</td><td>to fold</td><td>piego</td><td class="ex">Piego le magliette.</td></tr>
+          </tbody>
+        </table>
+
+        <div class="turn alice">
+          <span class="speaker">Alice</span>
+          <div class="what">
+            <span class="it">Marco, prima si <em>stende</em> o si <em>piega</em>?</span>
+            <span class="gloss">Marco, do we hang out or fold first?</span>
+          </div>
+        </div>
+        <div class="turn marco">
+          <span class="speaker">Marco</span>
+          <div class="what">
+            <span class="it">Prima <em>stendiamo</em>, perché il bucato è <strong>bagnato</strong>. Poi, quando è <strong>asciutto</strong>, <em>pieghiamo</em>.</span>
+            <span class="gloss">First we hang it, because the laundry is wet. Then, when it's dry, we fold.</span>
+          </div>
+        </div>
+
+        <div class="callout cultural-note">
+          <span class="tag">Cultural note</span>
+          In Italy, you almost always see laundry hanging on balconies — even in big cities. Indoor dryers (<em>asciugatrici</em>) are still rare. <em>Stendere il bucato sul balcone</em> is part of the visual texture of Italian streets.
+        </div>
+
+        <div class="cloze-line" data-answer="stendo">
+          Ogni mattina <input type="text" /> il bucato sul balcone. <span class="hint">(io form of stendere)</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================= 1c. VERB CLUSTER 3 ========================= -->
+    <section class="lesson-section" id="s1c">
+      <h2 class="section-h"><span class="num">1C</span>Cluster 3 — ordine e rifiuti</h2>
+      <div class="vocab-arc">
+        <p class="mini-context">"Ultima fase," dice Marco. "Riordiniamo, ammucchiamo quello che si butta, passiamo l'aspirapolvere, e poi… caffè."</p>
+
+        <table class="v-table">
+          <thead><tr><th>Italian</th><th>English</th><th>io (I…)</th><th>Example</th></tr></thead>
+          <tbody>
+            <tr><td class="it">ammucchiare</td><td>to pile up</td><td>ammucchio</td><td class="ex">Ammucchio i vestiti.</td></tr>
+            <tr><td class="it">mettere in pila</td><td>to stack</td><td>metto in pila</td><td class="ex">Metto in pila i libri.</td></tr>
+            <tr><td class="it">riordinare</td><td>to tidy up</td><td>riordino</td><td class="ex">Riordino la stanza.</td></tr>
+            <tr><td class="it">buttare</td><td>to throw out</td><td>butto</td><td class="ex">Butto la spazzatura.</td></tr>
+            <tr><td class="it">passare l'aspirapolvere</td><td>to vacuum</td><td>passo l'aspirapolvere</td><td class="ex">Passo l'aspirapolvere in salotto.</td></tr>
+          </tbody>
+        </table>
+
+        <div class="callout false-friend">
+          <span class="tag">False friend warning</span>
+          <strong>scopare</strong> = to sweep (from <em>scopa</em>, broom). BUT it is also vulgar slang for sex. When you want "to sweep" without ambiguity, prefer <em>spazzare</em>. Use <em>scopare</em> only when context makes the meaning impossible to mistake (e.g. <em>scopare il pavimento</em>).
+        </div>
+
+        <div class="callout cultural-note">
+          <span class="tag">Cultural note · la raccolta differenziata</span>
+          Trash in Italy is <strong>strictly separated</strong>: <em>carta, plastica, vetro, umido, indifferenziato.</em> Each has its own pickup day. <em>Buttare la spazzatura</em> isn't one act — it's a weekly schedule. (Calvino called it <em>un rito</em>, a ritual — see the B1 story below.)
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================= 2. CONJUGATION ========================= -->
+    <section class="lesson-section" id="s2">
+      <h2 class="section-h"><span class="num">2</span>Coniugazione — le tre famiglie</h2>
+      <p>Italian has three verb families based on the infinitive ending: <strong>-are, -ere, -ire</strong>. Most cleaning verbs are <strong>-are</strong> (regular). A few key exceptions need their own attention.</p>
+
+      <h3 class="subsection-h">lavare — regular -are</h3>
+      <table class="v-table">
         <thead><tr><th>Pronoun</th><th>Form</th></tr></thead>
         <tbody>
           <tr><td>io</td><td class="it">lavo</td></tr>
@@ -208,8 +457,9 @@
           <tr><td>loro</td><td class="it">lavano</td></tr>
         </tbody>
       </table>
-      <h3>pulire (-isco pattern)</h3>
-      <table>
+
+      <h3 class="subsection-h">pulire — -isco pattern</h3>
+      <table class="v-table">
         <thead><tr><th>Pronoun</th><th>Form</th></tr></thead>
         <tbody>
           <tr><td>io</td><td class="it">pulisco</td></tr>
@@ -220,8 +470,9 @@
           <tr><td>loro</td><td class="it">puliscono</td></tr>
         </tbody>
       </table>
-      <h3>stendere (regular -ere)</h3>
-      <table>
+
+      <h3 class="subsection-h">stendere — regular -ere</h3>
+      <table class="v-table">
         <thead><tr><th>Pronoun</th><th>Form</th></tr></thead>
         <tbody>
           <tr><td>io</td><td class="it">stendo</td></tr>
@@ -232,166 +483,755 @@
           <tr><td>loro</td><td class="it">stendono</td></tr>
         </tbody>
       </table>
+
+      <div class="callout grammar-pearl">
+        <span class="tag">Grammar pearl · negative imperative</span>
+        Telling someone "Don't pile up the clothes!" uses <strong>non + infinitive</strong>: <em>Non ammucchiare i vestiti!</em> Telling more than one person uses the regular voi-form: <em>Non ammucchiate i vestiti!</em>
+      </div>
+
+      <div class="turn alice">
+        <span class="speaker">Alice</span>
+        <div class="what"><span class="it">Marco, io <em>stendio</em> il bucato…?</span></div>
+      </div>
+      <div class="turn marco">
+        <span class="speaker">Marco</span>
+        <div class="what"><span class="it">No no — <em>stendo</em>. <em>Stendere</em> è regolare -ere: io stendo, tu stendi, lui stende. La <em>-i-</em> appartiene alla terminazione, non alla radice.</span></div>
+      </div>
     </section>
 
-    <!-- Chapter 3 — Nouns in context -->
-    <section class="chapter" id="ch3">
-      <h2>3 · The stuff (household nouns)</h2>
-      <table>
-        <thead><tr><th>Italian</th><th>English</th><th>Pairs with</th></tr></thead>
+    <!-- ========================= 3. COLLOCATIONS ========================= -->
+    <section class="lesson-section" id="s3">
+      <h2 class="section-h"><span class="num">3</span>Collocazioni — verbo + oggetto</h2>
+      <p>Each tool wants its own verb. Italians don't say "use the broom" — they say <em>scopare/spazzare con la scopa</em>. Memorize the pairings.</p>
+
+      <table class="v-table">
+        <thead><tr><th>Oggetto</th><th>Inglese</th><th>Verbo principale</th></tr></thead>
         <tbody>
           <tr><td class="it">la scopa</td><td>broom</td><td>spazzare</td></tr>
-          <tr><td class="it">lo straccio</td><td>rag / mop cloth</td><td>pulire, strofinare</td></tr>
-          <tr><td class="it">la spugna</td><td>sponge</td><td>lavare, strofinare</td></tr>
-          <tr><td class="it">il secchio</td><td>bucket</td><td>riempire, sciacquare</td></tr>
-          <tr><td class="it">il detersivo</td><td>detergent</td><td>lavare</td></tr>
+          <tr><td class="it">lo straccio</td><td>rag / mop cloth</td><td>strofinare / lavare per terra</td></tr>
+          <tr><td class="it">la spugna</td><td>sponge</td><td>lavare / strofinare</td></tr>
+          <tr><td class="it">il secchio</td><td>bucket</td><td>riempire / sciacquare</td></tr>
+          <tr><td class="it">il detersivo</td><td>detergent</td><td>lavare con</td></tr>
           <tr><td class="it">la spazzatura</td><td>trash</td><td>buttare</td></tr>
-          <tr><td class="it">il bucato</td><td>laundry</td><td>lavare, stendere, piegare</td></tr>
+          <tr><td class="it">il bucato</td><td>laundry</td><td>lavare / stendere / piegare</td></tr>
           <tr><td class="it">l'aspirapolvere</td><td>vacuum cleaner</td><td>passare</td></tr>
         </tbody>
       </table>
+
+      <p class="mini-context">Mattina di sabato: <em>Marco prende la scopa e <strong>spazza</strong> il pavimento. Alice riempie il secchio e <strong>strofina</strong> il tavolo con lo straccio. Tu apri la lavatrice, <strong>lavi</strong> il bucato col detersivo, e dopo lo <strong>stendi</strong> sul balcone. Alla fine, qualcuno <strong>passa l'aspirapolvere</strong>, e <strong>butti</strong> la spazzatura.</em></p>
     </section>
 
-    <!-- Chapter 4 — Mini dialogue -->
-    <section class="chapter" id="ch4">
-      <h2>4 · Dialogo — sabato mattina con Alice</h2>
-      <p>Alice is your AI peer-learner, also at A2. She's chatty; she asks questions you can borrow.</p>
-      <div class="dialogue">
-        <div class="turn">
-          <span class="speaker peer">Alice:</span>
-          <span class="it-line">Ciao! Cosa fai oggi?</span>
-          <span class="gloss">Hi! What are you doing today?</span>
+    <!-- ========================= 4. STORIES ========================= -->
+    <section class="lesson-section" id="s4">
+      <h2 class="section-h"><span class="num">4</span>Racconti — sei storie</h2>
+      <p>Sei racconti brevi su due livelli. <em>A2</em> usa solo il vocabolario di questa lezione. <em>B1</em> introduce parole nuove, spiegate nella colonna laterale. Inclusi: tre storie originali, e tre adattate da Ginzburg, Calvino e Saba.</p>
+
+      <!-- Story 1: Funny A2 -->
+      <article class="story-block level-a2">
+        <div class="meta">
+          <span class="level">A2</span><span class="tone">divertente · originale</span>
+          <h4 style="margin: 0;">Il gatto e la scopa</h4>
         </div>
-        <div class="turn">
-          <span class="speaker">Tu:</span>
-          <span class="it-line">Pulisco la cucina. Prima lavo i piatti, poi spazzo il pavimento.</span>
-          <span class="gloss">I'm cleaning the kitchen. First I wash the dishes, then I sweep the floor.</span>
+        <div class="story-grid">
+          <div class="it-text">
+            <p>Il gatto si chiama Pepe, e Pepe ha un nemico: la scopa. Ogni sabato mattina, Marco prende la scopa dal balcone. Pepe lo guarda con due occhi gialli. Marco comincia a spazzare il corridoio. Pepe arriva, salta, attacca la scopa con le zampe. Marco ride. Spazza ancora. Pepe corre, salta di nuovo. Le sue zampe sono veloci, ma la scopa è più grande.</p>
+            <p>«Pepe, basta!» dice Marco. Il gatto si ferma un momento, guarda Marco con curiosità, e poi torna ad attaccare la scopa. Marco non riesce a spazzare il pavimento. La polvere rimane. I peli del gatto rimangono. «Va bene,» dice Marco. «Tu vinci. Io prendo l'aspirapolvere.» Quando Marco accende l'aspirapolvere, Pepe sente il rumore e scappa sotto il letto. Marco passa l'aspirapolvere in dieci minuti. La casa è pulita. Marco sorride: il gatto pensa di aver vinto. In realtà, ha perso.</p>
+          </div>
+          <aside class="gloss-panel">
+            <h5>note</h5>
+            <p>A2 — every cleaning verb from the lesson appears in context. <em>nemico, zampe, peli, polvere, rumore, vincere, perdere</em> are A2 expansion vocab — common enough to absorb in context.</p>
+          </aside>
         </div>
-        <div class="turn">
-          <span class="speaker peer">Alice:</span>
-          <span class="it-line">E i vestiti sporchi?</span>
-          <span class="gloss">And the dirty clothes?</span>
+      </article>
+
+      <!-- Story 2: Funny B1 (Ginzburg-adapted) -->
+      <article class="story-block level-b1">
+        <div class="meta">
+          <span class="level">B1</span><span class="tone">divertente · da Ginzburg</span>
+          <h4 style="margin: 0;">Il padre e l'ordine</h4>
         </div>
-        <div class="turn">
-          <span class="speaker">Tu:</span>
-          <span class="it-line">Li ammucchio in un angolo, poi li metto in lavatrice. Dopo, stendo il bucato sul balcone.</span>
-          <span class="gloss">I pile them in a corner, then put them in the washer. After, I hang the laundry on the balcony.</span>
+        <div class="story-grid">
+          <div class="it-text">
+            <p>Mio padre stava sempre a leggere nella parte opposta della casa. Ogni tanto si affacciava nella stanza dove noi figli chiacchieravamo, e si lamentava con mia madre della nostra <span class="g">serva</span> Natalina, che gli aveva messo in <span class="g">disordine</span> i libri. «La tua cara Natalina,» diceva mio padre con <span class="g">sospetto</span>. «Una <span class="g">demente</span>!» Se a tavola <span class="g">inzuppavamo</span> il pane nella salsa, gridava: «Non leccate i piatti! Non fate <span class="g">sbrodeghezzi</span>!»</p>
+          </div>
+          <aside class="gloss-panel">
+            <h5>glosse</h5>
+            <dl>
+              <dt>serva</dt><dd>(historical) housemaid</dd>
+              <dt>disordine</dt><dd>disorder, mess</dd>
+              <dt>sospetto</dt><dd>suspicion</dd>
+              <dt>demente</dt><dd>lunatic, demented</dd>
+              <dt>inzuppare</dt><dd>to dip / soak (bread in sauce)</dd>
+              <dt>sbrodeghezzi</dt><dd>(family-lexicon dialect) messy spills, slop</dd>
+            </dl>
+          </aside>
         </div>
-        <div class="turn">
-          <span class="speaker peer">Alice:</span>
-          <span class="it-line">Anche io oggi pulisco. Spolvero i mobili e poi passo l'aspirapolvere.</span>
-          <span class="gloss">I'm cleaning too. I dust the furniture and then vacuum.</span>
+        <p class="source">Adattato da Natalia Ginzburg, <em>Lessico famigliare</em> (Einaudi, 1963). Ginzburg coniò il "lessico famigliare" per descrivere le parole che esistono solo dentro una famiglia.</p>
+      </article>
+
+      <!-- Story 3: Serious A2 -->
+      <article class="story-block level-a2">
+        <div class="meta">
+          <span class="level">A2</span><span class="tone">serio · originale</span>
+          <h4 style="margin: 0;">La domenica di mia nonna</h4>
         </div>
-        <div class="turn">
-          <span class="speaker peer">Alice:</span>
-          <span class="it-line">Non ammucchiare i libri sul tavolo, eh? Mettili in pila bene!</span>
-          <span class="gloss">Don't pile the books on the table, OK? Stack them properly!</span>
+        <div class="story-grid">
+          <div class="it-text">
+            <p>Mia nonna pulisce la casa ogni sabato. Spazza il pavimento. Lava i piatti. Stende il bucato. Riordina i mobili. Dice: «Quando la casa è pulita, anche il cuore è pulito.» Io non capisco bene queste parole. Ma quando entro in casa di mia nonna — quando l'aria è fresca, il pavimento brilla, e c'è l'odore di limone — capisco un po'.</p>
+          </div>
+          <aside class="gloss-panel">
+            <h5>note</h5>
+            <p>A2 — <em>brilla, odore, cuore</em> are A2 essentials. The point is the reflective tone, not new vocabulary.</p>
+          </aside>
         </div>
-      </div>
-      <div class="callout"><strong>Grammar pearl:</strong> Negative imperative for <em>tu</em> uses <code>non + infinitive</code>. So "don't pile up!" = <em>non ammucchiare!</em></div>
+      </article>
+
+      <!-- Story 4: Serious B1 (Saba-adapted) -->
+      <article class="story-block level-b1">
+        <div class="meta">
+          <span class="level">B1</span><span class="tone">serio · ispirato a Saba</span>
+          <h4 style="margin: 0;">La casa</h4>
+        </div>
+        <div class="story-grid">
+          <div class="it-text">
+            <p>La casa <span class="g">posa</span> <span class="g">tacita</span> sulla collina. Le finestre guardano il mare. Dentro, qualcuno spazza il pavimento, qualcuno apre le finestre. È un gesto piccolo, ma <span class="g">pensoso</span>. Pulire una casa è un modo di abitarla — di dire: «Io vivo qui. Questa è la mia <span class="g">soglia</span>.» Saba scriveva di una casa simile, la casa della sua <span class="g">nutrice</span>, che <span class="g">posava tacita</span> sulla collina, amica delle <span class="g">caprette</span>. Le pulizie sono, alla fine, una forma di <span class="g">memoria</span>.</p>
+          </div>
+          <aside class="gloss-panel">
+            <h5>glosse</h5>
+            <dl>
+              <dt>posa</dt><dd>rests, lies (poetic)</dd>
+              <dt>tacita</dt><dd>silent, tacit</dd>
+              <dt>pensoso</dt><dd>thoughtful</dd>
+              <dt>soglia</dt><dd>threshold</dd>
+              <dt>nutrice</dt><dd>wet-nurse</dd>
+              <dt>caprette</dt><dd>little goats</dd>
+              <dt>memoria</dt><dd>memory</dd>
+            </dl>
+          </aside>
+        </div>
+        <p class="source">Ispirato a Umberto Saba, <em>La casa della mia nutrice</em> (1901).</p>
+      </article>
+
+      <!-- Story 5: Immersion A2 -->
+      <article class="story-block level-a2">
+        <div class="meta">
+          <span class="level">A2</span><span class="tone">immersione · originale</span>
+          <h4 style="margin: 0;">Sabato mattina a Roma</h4>
+        </div>
+        <div class="story-grid">
+          <div class="it-text">
+            <p>Sabato, ore nove. Alice apre la finestra. L'aria di Roma entra: caffè, motorini, un cane che abbaia. «Cominciamo,» dice Marco. Lui spolvera i libri. Alice spazza il corridoio. Tu lavi i piatti della cena di ieri. Dopo un'ora, la casa è quasi pulita. Marco fa il caffè. Alice stende il bucato sul balcone. Tu butti la spazzatura. Sono le dieci e mezza. Adesso, finalmente — colazione.</p>
+          </div>
+          <aside class="gloss-panel">
+            <h5>note</h5>
+            <p>A2 — every verb is from this lesson. <em>motorini, abbaia, ieri, colazione</em> are common A1/A2.</p>
+          </aside>
+        </div>
+      </article>
+
+      <!-- Story 6: Immersion B1 (Calvino) -->
+      <article class="story-block level-b1">
+        <div class="meta">
+          <span class="level">B1</span><span class="tone">immersione · da Calvino</span>
+          <h4 style="margin: 0;">Il rito della pattumiera</h4>
+        </div>
+        <div class="story-grid">
+          <div class="it-text">
+            <p>Delle <span class="g">faccende domestiche</span>, l'unica che io <span class="g">disimpegno</span> con qualche competenza e soddisfazione è quella di buttare l'<span class="g">immondizia</span>. L'operazione si divide in varie fasi: <span class="g">prelievo</span> della <span class="g">pattumiera</span> di cucina, suo svuotamento nel recipiente più grande che sta nel garage, poi trasporto del detto recipiente sul <span class="g">marciapiede</span> fuori della porta di casa. Il portar fuori la spazzatura va dunque interpretato come un <span class="g">rito</span> — un piccolo gesto quotidiano che mi <span class="g">collega</span> alla città, alla strada, agli altri.</p>
+          </div>
+          <aside class="gloss-panel">
+            <h5>glosse</h5>
+            <dl>
+              <dt>faccende domestiche</dt><dd>housework, chores</dd>
+              <dt>disimpegnare</dt><dd>to discharge, perform</dd>
+              <dt>immondizia</dt><dd>trash (synonym: spazzatura)</dd>
+              <dt>prelievo</dt><dd>collection, pick-up</dd>
+              <dt>pattumiera</dt><dd>dustbin (kitchen)</dd>
+              <dt>marciapiede</dt><dd>sidewalk</dd>
+              <dt>rito</dt><dd>ritual</dd>
+              <dt>collegare</dt><dd>to connect, link</dd>
+            </dl>
+          </aside>
+        </div>
+        <p class="source">Adattato da Italo Calvino, <em>La poubelle agréée</em> (Einaudi, 1977). Calvino trasforma la routine in filosofia.</p>
+      </article>
     </section>
 
-    <!-- Chapter 5 — Fill the blank -->
-    <section class="chapter" id="ch5">
-      <h2>5 · Riempi gli spazi — fill the blank</h2>
-      <p>Conjugate the verb in parentheses to fit the sentence. Click Check.</p>
+    <!-- ========================= 4-funny. JOKES SIDEBAR ========================= -->
+    <section class="lesson-section" id="s4-funny">
+      <h2 class="section-h"><span class="num">4·</span>Pausa umoristica — due barzellette</h2>
+      <div class="jokes-sidebar">
 
-      <div class="quiz-item" data-answer="spazzo">
-        <p class="q">1. Ogni mattina io <input type="text" /> il pavimento. <span class="hint">(spazzare)</span> <button class="check">Check</button></p>
-        <div class="feedback"></div>
+        <div class="joke">
+          <div class="joke-title">Barzelletta 1 · il doppio senso</div>
+          <p><em>«Mamma, ho finito i compiti. Adesso posso andare a <strong>scopare</strong>?»</em></p>
+          <p>La mamma, scioccata: <em>«Ma cosa dici?! Con chi?!»</em></p>
+          <p>Il bambino: <em>«Ma come, con chi? Con la <strong>scopa</strong>! Devo pulire la mia camera!»</em></p>
+          <div class="callout false-friend" style="margin-top: var(--chiron-space-3);">
+            <span class="tag">Why it's funny</span>
+            <em>scopare</em> means "to sweep" but is also vulgar slang for sex. The child uses the literal meaning. The mother hears the slang.
+          </div>
+        </div>
+
+        <div class="joke">
+          <div class="joke-title">Barzelletta 2 · il marito pigro</div>
+          <p>Un uomo dice a un amico: <em>«Mia moglie è fissata con la pulizia. Lava, spolvera, riordina tutto il giorno. Ieri sono tornato a casa e non ho trovato neanche il telecomando!»</em></p>
+          <p>L'amico: <em>«Perché, l'aveva messo in ordine?»</em></p>
+          <p>L'uomo: <em>«No — l'aveva lavato in lavatrice insieme ai miei pantaloni!»</em></p>
+        </div>
+
       </div>
-      <div class="quiz-item" data-answer="lavo">
-        <p class="q">2. Dopo cena, <input type="text" /> i piatti nel lavandino. <span class="hint">(lavare)</span> <button class="check">Check</button></p>
-        <div class="feedback"></div>
+
+      <div class="callout cultural-note">
+        <span class="tag">Cultural note · "essere uno specchio"</span>
+        When an Italian house is shiningly clean, you say <em>«Questa casa è uno specchio!»</em> — "This house is a mirror!" Compliment to bring next time you visit.
       </div>
-      <div class="quiz-item" data-answer="ammucchiare">
-        <p class="q">3. Non <input type="text" /> i vestiti sul letto! <span class="hint">(negative imperative — non + infinitive)</span> <button class="check">Check</button></p>
-        <div class="feedback"></div>
-      </div>
-      <div class="quiz-item" data-answer="riordinare">
-        <p class="q">4. Devo <input type="text" /> la mia camera, è un disastro. <span class="hint">(infinitive after dovere)</span> <button class="check">Check</button></p>
-        <div class="feedback"></div>
-      </div>
-      <div class="quiz-item" data-answer="passo">
-        <p class="q">5. <input type="text" /> l'aspirapolvere due volte alla settimana. <span class="hint">(passare, io form)</span> <button class="check">Check</button></p>
-        <div class="feedback"></div>
-      </div>
-      <div class="quiz-item" data-answer="pulisce">
-        <p class="q">6. Marco <input type="text" /> il bagno ogni domenica. <span class="hint">(pulire, lui form — careful, -isco verb!)</span> <button class="check">Check</button></p>
-        <div class="feedback"></div>
-      </div>
-      <div class="quiz-item" data-answer="stendiamo">
-        <p class="q">7. Noi <input type="text" /> il bucato sul balcone. <span class="hint">(stendere, noi form)</span> <button class="check">Check</button></p>
-        <div class="feedback"></div>
+      <div class="callout cultural-note">
+        <span class="tag">Regional idioms</span>
+        <strong>Milanese:</strong> <em>«Dà una netada a la cà»</em> — give the house a cleaning. <strong>Napoletano:</strong> <em>«Fà 'o strascino»</em> — drag the wet rag (mop the floor). <strong>National:</strong> <em>«Fare piazza pulita»</em> = to clean house (figurative — get rid of everything/everyone).
       </div>
     </section>
 
-    <!-- Chapter 6 — SR Flashcards -->
-    <section class="chapter" id="ch6">
-      <h2>6 · Flashcards — click to flip</h2>
-      <p>These are your spaced-repetition cards. In a full Chiron run they would be persisted to <code>.chiron-state.db</code> and resurfaced on an SM-2 schedule. For this test, flipping demonstrates the front/back contract.</p>
-      <div class="card-deck">
+    <!-- ========================= 5. MATCH MADNESS ========================= -->
+    <section class="lesson-section" id="s5">
+      <h2 class="section-h"><span class="num">5</span>Match Madness — automatismo</h2>
+      <p>Three rounds, 105 seconds total. Click a tile on the left, then its match on the right. Wrong matches lock input for 1.5s. The background pulse and combo meter speed up as your streak grows. Per-pair latency is logged for the SR scheduler.</p>
+
+      <div class="mm-container" id="mm-game" data-active="false" style="--mm-pulse-ms: 2000ms; --mm-pulse-strength: 0;">
+        <div class="mm-header">
+          <div class="mm-timer" id="mm-timer">1:45</div>
+          <div class="mm-stats">
+            <span class="stat"><strong id="mm-correct">0</strong>correct</span>
+            <span class="stat"><strong id="mm-wrong">0</strong>wrong</span>
+            <span class="stat mm-combo" id="mm-combo">×0</span>
+          </div>
+        </div>
+        <div class="mm-round-label" id="mm-round">Round — / 3</div>
+        <div class="mm-grid" id="mm-grid">
+          <!-- 10 tiles injected by JS -->
+        </div>
+        <div class="mm-keyboard-hint">Keyboard: <code>1–5</code> left column · <code>Q W E R T</code> right column · <code>Space</code> = start / pause</div>
+        <div class="mm-controls">
+          <button class="primary" id="mm-start">Start</button>
+          <button id="mm-reset">Reset</button>
+          <button id="mm-accessibility">Accessibility mode (timer off)</button>
+        </div>
+        <div class="mm-result" id="mm-result">
+          <h4 id="mm-result-title">Round complete!</h4>
+          <div id="mm-result-body"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================= 6. EXTENDED DIALOGUE ========================= -->
+    <section class="lesson-section" id="s6">
+      <h2 class="section-h"><span class="num">6</span>Dialogo lungo — sabato a casa di Marco</h2>
+      <p>Three voices, twelve turns. Comprehension questions at the end.</p>
+
+      <div class="vocab-arc">
+        <div class="turn marco"><span class="speaker">Marco</span><div class="what"><span class="it">Buongiorno! Allora, oggi puliamo. Alice, tu cosa vuoi fare?</span><span class="gloss">Good morning! So, today we clean. Alice, what do you want to do?</span></div></div>
+        <div class="turn alice"><span class="speaker">Alice</span><div class="what"><span class="it">Io preferisco lavare i piatti. Non mi piace spazzare.</span><span class="gloss">I prefer to wash the dishes. I don't like sweeping.</span></div></div>
+        <div class="turn you"><span class="speaker">Tu</span><div class="what"><span class="it">Allora io spazzo e Marco spolvera. Va bene?</span><span class="gloss">Then I'll sweep and Marco will dust. OK?</span></div></div>
+        <div class="turn marco"><span class="speaker">Marco</span><div class="what"><span class="it">Perfetto. Ma prima — apriamo le finestre. È importante cambiare l'aria.</span><span class="gloss">Perfect. But first — let's open the windows. It's important to change the air.</span></div></div>
+        <div class="turn alice"><span class="speaker">Alice</span><div class="what"><span class="it">Marco, il detersivo è finito! Cosa uso per i piatti?</span><span class="gloss">Marco, the detergent is finished! What do I use for the dishes?</span></div></div>
+        <div class="turn marco"><span class="speaker">Marco</span><div class="what"><span class="it">Sotto il lavandino c'è un'altra bottiglia. Lo sgrassatore va bene per i piatti grassi.</span><span class="gloss">Under the sink there's another bottle. Degreaser is good for greasy dishes.</span></div></div>
+        <div class="turn you"><span class="speaker">Tu</span><div class="what"><span class="it">Marco, dove butto la plastica?</span><span class="gloss">Marco, where do I throw the plastic?</span></div></div>
+        <div class="turn marco"><span class="speaker">Marco</span><div class="what"><span class="it">Il sacco giallo, sul balcone. La raccolta passa il martedì.</span><span class="gloss">The yellow bag, on the balcony. Collection comes on Tuesday.</span></div></div>
+        <div class="turn alice"><span class="speaker">Alice</span><div class="what"><span class="it">Ho finito i piatti! Adesso stendiamo il bucato?</span><span class="gloss">I've finished the dishes! Now shall we hang the laundry?</span></div></div>
+        <div class="turn you"><span class="speaker">Tu</span><div class="what"><span class="it">Sì — il bucato è ancora in lavatrice, lo prendo io.</span><span class="gloss">Yes — the laundry is still in the washer, I'll get it.</span></div></div>
+        <div class="turn marco"><span class="speaker">Marco</span><div class="what"><span class="it">Bravi tutti e due! Ora la casa è uno specchio. Caffè?</span><span class="gloss">Well done both of you! Now the house is a mirror. Coffee?</span></div></div>
+        <div class="turn alice"><span class="speaker">Alice</span><div class="what"><span class="it">Sì, grazie. Tanto zucchero!</span><span class="gloss">Yes, thanks. Lots of sugar!</span></div></div>
+      </div>
+
+      <h3 class="subsection-h">Domande di comprensione</h3>
+      <div class="cloze-line" data-answer="lavare i piatti">
+        1. Cosa preferisce fare Alice? <input type="text" /> <span class="hint">(2-3 parole)</span>
+      </div>
+      <div class="cloze-line" data-answer="lo sgrassatore">
+        2. Cosa usa Alice quando finisce il detersivo? <input type="text" /> <span class="hint">(con articolo)</span>
+      </div>
+      <div class="cloze-line" data-answer="martedì">
+        3. Che giorno passa la raccolta della plastica? <input type="text" />
+      </div>
+    </section>
+
+    <!-- ========================= 7. SR DRAWER ========================= -->
+    <section class="lesson-section" id="s7">
+      <h2 class="section-h"><span class="num">7</span>Carte SR — ripasso spaziato</h2>
+      <p>Tap to flip. In a full Chiron run, each flip schedules a re-show via SM-2 in <code>.chiron-state.db</code>. For today's test, flipping demonstrates the front/back contract.</p>
+      <div class="sr-deck">
         <div class="sr-card"><div class="front">spazzare</div><div class="back">to sweep · io spazzo</div></div>
         <div class="sr-card"><div class="front">lavare</div><div class="back">to wash · io lavo</div></div>
-        <div class="sr-card"><div class="front">pulire (-isco)</div><div class="back">to clean · io pulisco, lui pulisce</div></div>
+        <div class="sr-card"><div class="front">pulire (-isco)</div><div class="back">to clean · io pulisco · lui pulisce</div></div>
         <div class="sr-card"><div class="front">spolverare</div><div class="back">to dust · io spolvero</div></div>
         <div class="sr-card"><div class="front">strofinare</div><div class="back">to scrub · io strofino</div></div>
         <div class="sr-card"><div class="front">sciacquare</div><div class="back">to rinse · io sciacquo</div></div>
         <div class="sr-card"><div class="front">asciugare</div><div class="back">to dry · io asciugo</div></div>
+        <div class="sr-card"><div class="front">stendere</div><div class="back">to hang out · io stendo il bucato</div></div>
+        <div class="sr-card"><div class="front">piegare</div><div class="back">to fold · io piego</div></div>
         <div class="sr-card"><div class="front">ammucchiare</div><div class="back">to pile up · io ammucchio</div></div>
         <div class="sr-card"><div class="front">mettere in pila</div><div class="back">to stack · io metto in pila</div></div>
+        <div class="sr-card"><div class="front">riordinare</div><div class="back">to tidy · io riordino</div></div>
         <div class="sr-card"><div class="front">buttare</div><div class="back">to throw out · io butto la spazzatura</div></div>
-        <div class="sr-card"><div class="front">riordinare</div><div class="back">to tidy up · io riordino</div></div>
         <div class="sr-card"><div class="front">passare l'aspirapolvere</div><div class="back">to vacuum · io passo l'aspirapolvere</div></div>
-        <div class="sr-card"><div class="front">stendere</div><div class="back">to hang (laundry) · io stendo il bucato</div></div>
-        <div class="sr-card"><div class="front">piegare</div><div class="back">to fold · io piego le magliette</div></div>
+        <div class="sr-card"><div class="front">la scopa</div><div class="back">broom · pairs with spazzare</div></div>
+        <div class="sr-card"><div class="front">lo straccio</div><div class="back">rag / mop cloth</div></div>
+        <div class="sr-card"><div class="front">il bucato</div><div class="back">laundry · lavare / stendere / piegare</div></div>
+        <div class="sr-card"><div class="front">la pattumiera</div><div class="back">dustbin · Calvino's "rito"</div></div>
+        <div class="sr-card"><div class="front">la candeggina</div><div class="back">bleach · essential Italian household</div></div>
+        <div class="sr-card"><div class="front">lo sgrassatore</div><div class="back">degreaser · kitchen "holy grail"</div></div>
+        <div class="sr-card"><div class="front">essere uno specchio</div><div class="back">idiom: "to be a mirror" — house shines</div></div>
+        <div class="sr-card"><div class="front">fare piazza pulita</div><div class="back">idiom: make a clean sweep (figurative)</div></div>
       </div>
     </section>
 
-    <footer>
-      Lesson generated by Chiron · 2026-05-12 · single learner: Gyasi · theme: <span id="theme-readout">linguistic</span> ·
-      try <code>?theme=midnight</code>, <code>?theme=warm-paper</code>, <code>?theme=clinical</code>, <code>?theme=ocean</code> in the URL.
+    <!-- ========================= 8. CLOSING ========================= -->
+    <section class="lesson-section" id="s8">
+      <h2 class="section-h"><span class="num">8</span>Chiusura</h2>
+      <div class="closing">
+        <div class="turn marco">
+          <span class="speaker">Marco</span>
+          <div class="what">
+            <span class="it">Hai imparato i verbi delle pulizie. Hai letto Ginzburg, Calvino, Saba. Hai riso con due barzellette. La prossima lezione: <strong>i verbi della cucina</strong> — tagliare, mescolare, friggere, bollire. <em>A presto!</em></span>
+            <span class="gloss">You learned the cleaning verbs. You read Ginzburg, Calvino, Saba. You laughed at two jokes. Next lesson: the kitchen verbs — to cut, mix, fry, boil. See you soon!</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <footer class="lesson-footer">
+      Chiron · language-lesson-skeleton v1 · 2026-05-12 · linguistic theme by default ·
+      try <code>?theme=midnight</code>, <code>?theme=warm-paper</code>, <code>?theme=clinical</code>, <code>?theme=ocean</code> in the URL
     </footer>
+
   </div>
 
+  <!-- ========================= JS ========================= -->
   <script>
-    // Theme buttons
+    /* ===== Theme switcher ===== */
     document.querySelectorAll('[data-set-theme]').forEach(btn => {
       btn.addEventListener('click', () => {
         const t = btn.getAttribute('data-set-theme');
         document.documentElement.setAttribute('data-theme', t);
         localStorage.setItem('chiron-theme', t);
-        document.getElementById('theme-readout').textContent = t;
+        document.querySelectorAll('[data-set-theme]').forEach(b => b.setAttribute('aria-pressed', b === btn ? 'true' : 'false'));
       });
     });
-    document.getElementById('theme-readout').textContent = document.documentElement.getAttribute('data-theme');
+    {
+      const current = document.documentElement.getAttribute('data-theme');
+      document.querySelectorAll('[data-set-theme]').forEach(b => b.setAttribute('aria-pressed', b.getAttribute('data-set-theme') === current ? 'true' : 'false'));
+    }
 
-    // Quiz check
-    document.querySelectorAll('.quiz-item').forEach(item => {
-      const btn = item.querySelector('.check');
-      const input = item.querySelector('input');
-      const fb = item.querySelector('.feedback');
-      const answer = item.getAttribute('data-answer').toLowerCase().trim();
-      btn.addEventListener('click', () => {
-        const val = (input.value || '').toLowerCase().trim();
-        if (val === answer) {
-          fb.textContent = '✓ Corretto! — ' + answer;
-          fb.className = 'feedback correct';
-        } else if (val === '') {
-          fb.textContent = 'Type your answer first.';
-          fb.className = 'feedback';
-        } else {
-          fb.textContent = '✗ Not quite. Correct: ' + answer;
-          fb.className = 'feedback incorrect';
+    /* ===== Nav dot scrollspy + click ===== */
+    const dots = document.querySelectorAll('.nav-dot');
+    dots.forEach(d => d.addEventListener('click', () => {
+      const target = document.getElementById(d.getAttribute('data-target'));
+      if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }));
+    const sections = Array.from(document.querySelectorAll('section.lesson-section'));
+    const io = new IntersectionObserver(entries => {
+      entries.forEach(e => {
+        if (e.isIntersecting) {
+          const id = e.target.id;
+          dots.forEach(d => d.setAttribute('aria-current', d.getAttribute('data-target') === id ? 'true' : 'false'));
         }
       });
-      input.addEventListener('keydown', e => { if (e.key === 'Enter') btn.click(); });
+    }, { rootMargin: '-40% 0px -55% 0px' });
+    sections.forEach(s => io.observe(s));
+
+    /* ===== Cloze grading ===== */
+    document.querySelectorAll('.cloze-line').forEach(line => {
+      const input = line.querySelector('input');
+      const answer = line.getAttribute('data-answer').toLowerCase().trim();
+      const check = () => {
+        const val = (input.value || '').toLowerCase().trim();
+        if (!val) return;
+        if (val === answer) input.classList.add('correct'), input.classList.remove('incorrect');
+        else input.classList.add('incorrect'), input.classList.remove('correct');
+      };
+      input.addEventListener('blur', check);
+      input.addEventListener('keydown', e => { if (e.key === 'Enter') check(); });
     });
 
-    // Flashcard flip
+    /* ===== Flashcard flip ===== */
     document.querySelectorAll('.sr-card').forEach(card => {
       card.addEventListener('click', () => card.classList.toggle('flipped'));
     });
+
+    /* ===== Match Madness ===== */
+    const MM = {
+      pairs: [
+        { l1: 'to sweep',          l2: 'spazzare' },
+        { l1: 'to wash',           l2: 'lavare' },
+        { l1: 'to clean',          l2: 'pulire' },
+        { l1: 'to dust',           l2: 'spolverare' },
+        { l1: 'to scrub',          l2: 'strofinare' },
+        { l1: 'to rinse',          l2: 'sciacquare' },
+        { l1: 'to dry',            l2: 'asciugare' },
+        { l1: 'to pile up',        l2: 'ammucchiare' },
+        { l1: 'to stack',          l2: 'mettere in pila' },
+        { l1: 'to throw out',      l2: 'buttare' },
+        { l1: 'to tidy up',        l2: 'riordinare' },
+        { l1: 'to vacuum',         l2: "passare l'aspirapolvere" },
+        { l1: 'to hang out',       l2: 'stendere' },
+        { l1: 'to fold',           l2: 'piegare' },
+        { l1: 'broom',             l2: 'la scopa' },
+        { l1: 'rag',               l2: 'lo straccio' },
+        { l1: 'sponge',            l2: 'la spugna' },
+        { l1: 'bucket',            l2: 'il secchio' },
+        { l1: 'detergent',         l2: 'il detersivo' },
+        { l1: 'trash',             l2: 'la spazzatura' },
+        { l1: 'laundry',           l2: 'il bucato' },
+        { l1: 'vacuum cleaner',    l2: "l'aspirapolvere" }
+      ],
+      ROUNDS: [
+        { count: 7,  label: 'Round 1 / 3' },
+        { count: 7,  label: 'Round 2 / 3' },
+        { count: 8,  label: 'Round 3 / 3' }
+      ],
+      TIMER_SEC: 105,
+      WRONG_LOCK_MS: 1500,
+      REFILL_BASE_MS: 200,
+      // chiron-can-do-better visual speed-up
+      pulseFromMs: 2000,
+      pulseToMs: 600,
+      strengthFromOpacity: 0.04,
+      strengthToOpacity: 0.18,
+
+      state: {
+        running: false, paused: false, accessibility: false,
+        remainingSec: 105, roundIdx: 0, roundPool: [],
+        onGrid: [], selected: null,
+        correct: 0, wrong: 0, streak: 0, bestStreak: 0,
+        lockUntil: 0, startedAt: 0, tileShownAt: {},
+        pairLog: []  // { l1, l2, latency_ms, was_wrong_first }
+      },
+
+      $: (id) => document.getElementById(id),
+
+      shuffle(arr) {
+        const a = arr.slice();
+        for (let i = a.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [a[i], a[j]] = [a[j], a[i]];
+        }
+        return a;
+      },
+
+      buildRoundPool() {
+        const round = this.ROUNDS[this.state.roundIdx];
+        this.state.roundPool = this.shuffle(this.pairs.slice()).slice(0, round.count);
+        this.$('mm-round').textContent = round.label + ' · ' + round.count + ' pairs';
+      },
+
+      renderGrid() {
+        const grid = this.$('mm-grid');
+        grid.innerHTML = '';
+        const onGrid = this.state.onGrid;
+        // Build 5 left tiles (l1) and 5 right tiles (l2) from onGrid
+        const leftL1 = onGrid.map(p => p ? { side: 'L', l1: p.l1, l2: p.l2 } : null);
+        const rightL2 = this.shuffle(onGrid.filter(Boolean).map(p => ({ side: 'R', l1: p.l1, l2: p.l2 })));
+        // Pad to 5
+        while (rightL2.length < 5) rightL2.push(null);
+        // Render interleaved: row1 left, row1 right, row2 left, row2 right...
+        for (let i = 0; i < 5; i++) {
+          // Left
+          const lp = leftL1[i];
+          const lt = document.createElement('button');
+          lt.className = 'mm-tile';
+          lt.setAttribute('data-side', 'L');
+          lt.setAttribute('data-row', i);
+          if (lp) { lt.textContent = lp.l1; lt.setAttribute('data-pair-l1', lp.l1); }
+          else { lt.setAttribute('data-state', 'empty'); }
+          grid.appendChild(lt);
+          // Right
+          const rp = rightL2[i];
+          const rt = document.createElement('button');
+          rt.className = 'mm-tile';
+          rt.setAttribute('data-side', 'R');
+          rt.setAttribute('data-row', i);
+          if (rp) { rt.textContent = rp.l2; rt.setAttribute('data-pair-l2', rp.l2); }
+          else { rt.setAttribute('data-state', 'empty'); }
+          grid.appendChild(rt);
+        }
+        // Wire up tile clicks
+        grid.querySelectorAll('.mm-tile').forEach(t => {
+          t.addEventListener('click', () => this.onTile(t));
+        });
+        // Mark shown timestamps
+        const now = performance.now();
+        onGrid.forEach(p => { if (p) this.state.tileShownAt[p.l1 + '|' + p.l2] = now; });
+      },
+
+      seedGrid() {
+        const pool = this.state.roundPool;
+        const take = Math.min(5, pool.length);
+        const seed = [];
+        for (let i = 0; i < 5; i++) {
+          if (i < take) seed.push(pool.shift());
+          else seed.push(null);
+        }
+        this.state.onGrid = seed;
+      },
+
+      onTile(tile) {
+        if (!this.state.running || this.state.paused) return;
+        if (performance.now() < this.state.lockUntil) return;
+        const side = tile.getAttribute('data-side');
+        if (tile.getAttribute('data-state') === 'empty') return;
+        if (tile.getAttribute('data-state') === 'correct') return;
+
+        if (!this.state.selected) {
+          // First pick
+          tile.setAttribute('data-state', 'selected');
+          this.state.selected = tile;
+          return;
+        }
+        if (this.state.selected === tile) {
+          tile.removeAttribute('data-state');
+          this.state.selected = null;
+          return;
+        }
+        const sel = this.state.selected;
+        if (sel.getAttribute('data-side') === side) {
+          // Both same side — switch selection
+          sel.removeAttribute('data-state');
+          tile.setAttribute('data-state', 'selected');
+          this.state.selected = tile;
+          return;
+        }
+        // Different sides — evaluate
+        const leftTile = side === 'L' ? tile : sel;
+        const rightTile = side === 'R' ? tile : sel;
+        const l1 = leftTile.getAttribute('data-pair-l1');
+        const l2 = rightTile.getAttribute('data-pair-l2');
+        const pair = this.pairs.find(p => p.l1 === l1 && p.l2 === l2);
+        if (pair) {
+          // Correct
+          leftTile.setAttribute('data-state', 'correct');
+          rightTile.setAttribute('data-state', 'correct');
+          this.state.correct++;
+          this.state.streak++;
+          if (this.state.streak > this.state.bestStreak) this.state.bestStreak = this.state.streak;
+          this.$('mm-correct').textContent = this.state.correct;
+          const combo = this.$('mm-combo');
+          combo.textContent = '×' + this.state.streak;
+          if (this.state.streak >= 3) combo.classList.add('hot'); else combo.classList.remove('hot');
+          // Latency
+          const shownAt = this.state.tileShownAt[l1 + '|' + l2];
+          if (shownAt) {
+            this.state.pairLog.push({ l1, l2, latency_ms: Math.round(performance.now() - shownAt) });
+          }
+          this.state.selected = null;
+          // chiron-can-do-better: speed up visuals with streak
+          this.updateSpeed();
+          // Refill or advance
+          setTimeout(() => this.refillSlots(leftTile, rightTile), this.refillMs());
+        } else {
+          // Wrong
+          leftTile.setAttribute('data-state', 'wrong');
+          rightTile.setAttribute('data-state', 'wrong');
+          this.state.wrong++;
+          this.state.streak = 0;
+          this.$('mm-wrong').textContent = this.state.wrong;
+          this.$('mm-combo').textContent = '×0';
+          this.$('mm-combo').classList.remove('hot');
+          this.state.lockUntil = performance.now() + this.WRONG_LOCK_MS;
+          this.updateSpeed();
+          setTimeout(() => {
+            leftTile.removeAttribute('data-state');
+            rightTile.removeAttribute('data-state');
+            this.state.selected = null;
+          }, this.WRONG_LOCK_MS);
+        }
+      },
+
+      refillMs() {
+        // Streak-based shorter refill
+        const s = Math.min(this.state.streak, 10);
+        return this.REFILL_BASE_MS - (s * 10);
+      },
+
+      updateSpeed() {
+        if (this.state.accessibility) return;
+        const game = this.$('mm-game');
+        const s = Math.min(this.state.streak, 10) / 10;
+        const pulseMs = Math.round(this.pulseFromMs + (this.pulseToMs - this.pulseFromMs) * s);
+        const strength = (this.strengthFromOpacity + (this.strengthToOpacity - this.strengthFromOpacity) * s).toFixed(3);
+        game.style.setProperty('--mm-pulse-ms', pulseMs + 'ms');
+        game.style.setProperty('--mm-pulse-strength', strength);
+      },
+
+      refillSlots(leftTile, rightTile) {
+        const row = leftTile.getAttribute('data-row');
+        const next = this.state.roundPool.shift();
+        if (next) {
+          this.state.onGrid[row] = next;
+          leftTile.textContent = next.l1;
+          leftTile.setAttribute('data-pair-l1', next.l1);
+          leftTile.removeAttribute('data-state');
+          // For right side: pick another empty/random slot row to keep shuffle alive
+          // Simpler: replace this row's right tile with this pair's l2 in a randomly shuffled position
+          // For v1 just put it back in same row (Duolingo behavior: same slot positions)
+          rightTile.textContent = next.l2;
+          rightTile.setAttribute('data-pair-l2', next.l2);
+          rightTile.removeAttribute('data-state');
+          this.state.tileShownAt[next.l1 + '|' + next.l2] = performance.now();
+        } else {
+          // Pool empty — mark this row as empty
+          this.state.onGrid[row] = null;
+          leftTile.setAttribute('data-state', 'empty');
+          rightTile.setAttribute('data-state', 'empty');
+          // Check round complete
+          if (this.state.onGrid.every(p => p === null)) {
+            this.endRound();
+          }
+        }
+      },
+
+      endRound() {
+        if (this.state.roundIdx + 1 < this.ROUNDS.length) {
+          this.state.roundIdx++;
+          this.buildRoundPool();
+          this.seedGrid();
+          this.renderGrid();
+        } else {
+          this.finish();
+        }
+      },
+
+      tick() {
+        if (!this.state.running || this.state.paused) return;
+        if (this.state.accessibility) return;
+        this.state.remainingSec--;
+        this.renderTimer();
+        if (this.state.remainingSec <= 0) {
+          this.finish();
+          return;
+        }
+        this.tickHandle = setTimeout(() => this.tick(), 1000);
+      },
+
+      renderTimer() {
+        const m = Math.floor(this.state.remainingSec / 60);
+        const s = this.state.remainingSec % 60;
+        const el = this.$('mm-timer');
+        el.textContent = m + ':' + String(s).padStart(2, '0');
+        el.classList.toggle('warning', this.state.remainingSec <= 30 && this.state.remainingSec > 10);
+        el.classList.toggle('critical', this.state.remainingSec <= 10);
+      },
+
+      start() {
+        if (this.state.running) return;
+        this.state.running = true;
+        this.state.paused = false;
+        this.state.startedAt = performance.now();
+        this.$('mm-game').setAttribute('data-active', 'true');
+        this.$('mm-start').textContent = 'Pause';
+        this.$('mm-result').classList.remove('show');
+        if (this.state.onGrid.every(p => p === null)) {
+          this.buildRoundPool();
+          this.seedGrid();
+        }
+        this.renderGrid();
+        this.renderTimer();
+        if (!this.state.accessibility) this.tick();
+      },
+
+      pause() {
+        if (!this.state.running) return;
+        this.state.paused = !this.state.paused;
+        this.$('mm-start').textContent = this.state.paused ? 'Resume' : 'Pause';
+        if (!this.state.paused && !this.state.accessibility) this.tick();
+      },
+
+      reset() {
+        this.state = {
+          running: false, paused: false, accessibility: this.state.accessibility,
+          remainingSec: this.TIMER_SEC, roundIdx: 0, roundPool: [],
+          onGrid: [null, null, null, null, null], selected: null,
+          correct: 0, wrong: 0, streak: 0, bestStreak: 0,
+          lockUntil: 0, startedAt: 0, tileShownAt: {}, pairLog: []
+        };
+        this.$('mm-correct').textContent = '0';
+        this.$('mm-wrong').textContent = '0';
+        this.$('mm-combo').textContent = '×0';
+        this.$('mm-combo').classList.remove('hot');
+        this.$('mm-game').setAttribute('data-active', 'false');
+        this.$('mm-start').textContent = 'Start';
+        this.$('mm-grid').innerHTML = '';
+        this.$('mm-round').textContent = 'Round — / 3';
+        this.$('mm-result').classList.remove('show');
+        this.$('mm-game').style.setProperty('--mm-pulse-strength', 0);
+        this.renderTimer();
+      },
+
+      finish() {
+        this.state.running = false;
+        clearTimeout(this.tickHandle);
+        this.$('mm-game').setAttribute('data-active', 'false');
+        this.$('mm-start').textContent = 'Restart';
+        this.$('mm-game').style.setProperty('--mm-pulse-strength', 0);
+        const total = this.state.correct + this.state.wrong;
+        const acc = total ? Math.round((this.state.correct / total) * 100) : 0;
+        const avgLat = this.state.pairLog.length
+          ? Math.round(this.state.pairLog.reduce((a, b) => a + b.latency_ms, 0) / this.state.pairLog.length)
+          : 0;
+        // Find slowest 3 pairs (would be weighted into SR scheduler in full Chiron)
+        const slowest = this.state.pairLog.slice().sort((a, b) => b.latency_ms - a.latency_ms).slice(0, 3);
+        let html = '<p>' + this.state.correct + ' correct · ' + this.state.wrong + ' wrong · ' + acc + '% · best streak ×' + this.state.bestStreak + ' · avg latency ' + avgLat + 'ms</p>';
+        if (slowest.length) {
+          html += '<table class="latency-table"><thead><tr><th>Slowest pairs (→ SR queue)</th><th>ms</th></tr></thead><tbody>';
+          slowest.forEach(s => html += '<tr><td>' + s.l1 + ' ↔ ' + s.l2 + '</td><td>' + s.latency_ms + '</td></tr>');
+          html += '</tbody></table>';
+        }
+        this.$('mm-result-body').innerHTML = html;
+        this.$('mm-result').classList.add('show');
+      },
+
+      toggleAccessibility() {
+        this.state.accessibility = !this.state.accessibility;
+        const btn = this.$('mm-accessibility');
+        btn.textContent = this.state.accessibility ? 'Accessibility ON (timer off)' : 'Accessibility mode (timer off)';
+        if (this.state.accessibility) {
+          this.$('mm-timer').textContent = '∞';
+          this.$('mm-timer').classList.remove('warning', 'critical');
+          this.$('mm-game').style.setProperty('--mm-pulse-strength', 0);
+        } else {
+          this.renderTimer();
+        }
+      },
+
+      init() {
+        this.$('mm-start').addEventListener('click', () => {
+          if (!this.state.running) this.start();
+          else this.pause();
+        });
+        this.$('mm-reset').addEventListener('click', () => this.reset());
+        this.$('mm-accessibility').addEventListener('click', () => this.toggleAccessibility());
+
+        // Keyboard
+        document.addEventListener('keydown', (e) => {
+          if (e.key === ' ' && document.activeElement && document.activeElement.id === 'mm-start') {
+            // default button behavior
+            return;
+          }
+          if (!this.state.running) return;
+          const leftKeys = { '1': 0, '2': 1, '3': 2, '4': 3, '5': 4 };
+          const rightKeys = { 'q': 0, 'w': 1, 'e': 2, 'r': 3, 't': 4 };
+          const k = e.key.toLowerCase();
+          let row, side;
+          if (k in leftKeys) { row = leftKeys[k]; side = 'L'; }
+          else if (k in rightKeys) { row = rightKeys[k]; side = 'R'; }
+          else return;
+          const tile = this.$('mm-grid').querySelector('.mm-tile[data-row="' + row + '"][data-side="' + side + '"]');
+          if (tile) this.onTile(tile);
+        });
+
+        this.reset();
+      }
+    };
+    MM.init();
   </script>
 </body>
 </html>
