@@ -254,6 +254,111 @@ export const AudioTtsWidgetSchema = z.object({
 });
 
 // ----------------------------------------------------------------------------
+// match-madness — multi-set timed retrieval anchor (PRD §4.10–4.12, 2026-05-14)
+//
+// Domain-agnostic. The `mode` field on each set drives content shape:
+//   - vocab-pair, term-def, formula-result : universal (any domain)
+//   - gender-pair, prep-pair, collocation, conjugation : language only
+//   - mixed : super-set drawing from prior sets
+//
+// Per-language helpers (e.g. Italian conjugator) live in
+// `skill/lib/widgets/match-madness.ts`. The widget itself is universal.
+// ----------------------------------------------------------------------------
+
+export const MmModeSchema = z.enum([
+  'vocab-pair', 'gender-pair', 'prep-pair', 'collocation',
+  'conjugation', 'mixed', 'term-def', 'formula-result',
+]);
+
+export const MmPairSchema = z.object({
+  id: z.string(),
+  left: z.string(),
+  right: z.string(),
+  hint: z.string().optional(),
+});
+
+export const MmSetSchema = z.object({
+  id: z.string(),
+  index: z.number().int().min(1),
+  title: z.string(),
+  subtitle: z.string().optional(),
+  mode: MmModeSchema,
+  rounds: z.number().int().min(1).max(20),
+  pairs: z.array(MmPairSchema).min(5),
+  timerSec: z.number().int().min(30).max(600).optional(),
+  wrongLockMs: z.number().int().min(100).max(5000).optional(),
+  drawsFromSetIds: z.array(z.string()).optional(),
+});
+
+export const MmVisualSpeedUpSchema = z.object({
+  pulseFromMs: z.number().int().default(2000),
+  pulseToMs: z.number().int().default(600),
+  strengthFromOpacity: z.number().default(0.04),
+  strengthToOpacity: z.number().default(0.18),
+  refillFromMs: z.number().int().default(200),
+  refillToMs: z.number().int().default(100),
+});
+
+export const MatchMadnessWidgetSchema = z.object({
+  type: z.literal('match-madness'),
+  lessonId: z.string(),
+  domain: z.enum(['language-it', 'language-de', 'medicine', 'code']),
+  title: z.string().default('Match Madness'),
+  description: z.string().optional(),
+  defaults: z.object({
+    timerSec: z.number().int().default(105),
+    wrongLockMs: z.number().int().default(1500),
+    accessibilityModeAllowed: z.boolean().default(true),
+    keyboardShortcuts: z.boolean().default(true),
+    visualSpeedUp: MmVisualSpeedUpSchema.default({}),
+  }),
+  sets: z.array(MmSetSchema).min(1),
+  unlockAccuracyThreshold: z.number().min(0).max(1).default(0.6),
+  superSetUnlockAfterNSetsCompleted: z.number().int().min(0).default(3),
+});
+
+// ----------------------------------------------------------------------------
+// language-flashcard-deck — rich SR cards with conjugation paradigms
+//
+// Front: headword. Back: gloss + 4-tense table (verbs) or article + gloss
+// (nouns) or meaning + literal (idioms). The renderer reuses the per-language
+// conjugator in `skill/lib/widgets/match-madness.ts`.
+// ----------------------------------------------------------------------------
+
+export const LangVerbEntrySchema = z.object({
+  infinitive: z.string(),
+  family: z.enum(['are', 'ere', 'ire', 'isco-ire']),
+  englishGloss: z.string(),
+  participle: z.string().optional(),
+  auxiliary: z.enum(['ho', 'sono']).optional(),
+  irregular: z.record(z.string(), z.string()).optional(),
+});
+
+export const LangNounEntrySchema = z.object({
+  it: z.string(),
+  en: z.string(),
+  article: z.enum(['la', 'lo', 'il', "l'", 'le', 'gli', 'i']),
+  bare: z.string(),
+  pairsWith: z.string().optional(),
+  plural: z.string().optional(),
+  note: z.string().optional(),
+});
+
+export const LangIdiomEntrySchema = z.object({
+  it: z.string(),
+  literal: z.string().optional(),
+  meaning: z.string(),
+});
+
+export const LanguageFlashcardDeckWidgetSchema = z.object({
+  type: z.literal('language-flashcard-deck'),
+  language: z.enum(['it', 'de']),
+  verbs: z.array(LangVerbEntrySchema).default([]),
+  nouns: z.array(LangNounEntrySchema).default([]),
+  idioms: z.array(LangIdiomEntrySchema).default([]),
+});
+
+// ----------------------------------------------------------------------------
 // Discriminated union — the public schema
 // ----------------------------------------------------------------------------
 
@@ -281,6 +386,9 @@ const WidgetUnionSchema = z.discriminatedUnion('type', [
   CodeRunnerWidgetSchema,
   ForestPlotWidgetSchema,
   AudioTtsWidgetSchema,
+  // Retrieval-practice anchors (PRD canonical_shell_and_match_madness §4.10–4.12)
+  MatchMadnessWidgetSchema,
+  LanguageFlashcardDeckWidgetSchema,
 ]);
 
 /**
@@ -317,11 +425,12 @@ export type WidgetKind = WidgetSpec['type'];
 /** Backwards-compatible alias used by some callers. */
 export const WidgetSpecSchema = WidgetSchema;
 
-/** Set of all 21 widget kinds — handy for renderer dispatch tables. */
+/** Set of all 23 widget kinds — handy for renderer dispatch tables. */
 export const WIDGET_KINDS: WidgetKind[] = [
   'mcq', 'mcq-clinical-vignette', 'true-false', 'fill-blank', 'matching-pair',
   'cloze', 'spot-the-bug', 'agreement-matrix', 'assertion-reason',
   'confidence-weighted', 'slider-estimation', 'boss',
   'chemical-reaction', 'molecule-2d', 'pathway-diagram', 'mermaid', 'mathjax',
   'reactive-math', 'code-runner', 'forest-plot', 'audio-tts',
+  'match-madness', 'language-flashcard-deck',
 ];
