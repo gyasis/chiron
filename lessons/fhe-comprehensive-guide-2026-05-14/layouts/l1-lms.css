@@ -1,0 +1,41 @@
+/* Layout L1 — LMS / Coursera-style (default).
+   Fixed left TOC, narrow centered scroll-snap chapters.
+   Default behavior — no overrides needed beyond what's in lesson.html.
+   This file exists so the layout system is uniform: every layout has a CSS file. */
+
+[data-layout="l1"] body {
+  grid-template-columns: 240px 1fr;
+}
+[data-layout="l1"] main {
+  scroll-snap-type: y mandatory;
+}
+[data-layout="l1"] section.chapter {
+  scroll-snap-align: start;
+  min-height: 100vh;
+  max-width: 920px;
+  margin: 0 auto;
+  padding: 3rem 4rem 4rem 4rem;
+}
+
+/* Mobile: collapse fixed sidebar to top bar */
+@media (max-width: 880px) {
+  [data-layout="l1"] body {
+    grid-template-columns: 1fr;
+  }
+  [data-layout="l1"] nav.toc {
+    position: relative;
+    height: auto;
+    max-height: none;
+    border-right: none;
+    border-bottom: 1px solid var(--chiron-border);
+    padding: 0.8rem 1rem;
+  }
+  [data-layout="l1"] main {
+    height: auto;
+    scroll-snap-type: none;
+  }
+  [data-layout="l1"] section.chapter {
+    padding: 2rem 1.2rem;
+    min-height: auto;
+  }
+}

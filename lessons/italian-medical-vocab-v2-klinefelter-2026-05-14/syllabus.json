@@ -1,0 +1,26 @@
+{
+  "skeleton": "language-lesson-skeleton-v1",
+  "sections": [
+    { "id": "s0", "title": "Cold open — al pronto soccorso", "type": "cold-open" },
+    { "id": "s1a", "title": "Corpo 1 — la testa e il viso", "type": "vocab-arc", "items": ["la testa","il viso","l'occhio","l'orecchio","la bocca","il naso","la gola","i denti"] },
+    { "id": "s1b", "title": "Corpo 2 — il tronco e gli organi", "type": "vocab-arc", "items": ["il petto","la pancia","lo stomaco","il cuore","il polmone","la schiena","il sangue"] },
+    { "id": "s1c", "title": "Corpo 3 — gli arti", "type": "vocab-arc", "items": ["il braccio","la mano","la gamba","il piede","il ginocchio","la spalla"] },
+    { "id": "s2", "title": "Sintomi — i verbi del paziente", "type": "vocab-arc", "items": ["avere mal di","sentire dolore","fare male","tossire","vomitare","sudare","tremare","respirare","bruciare","soffrire"] },
+    { "id": "s3", "title": "Conversazione — al pronto soccorso", "type": "extended-dialogue" },
+    { "id": "s4", "title": "Frasi salvavita — 10 espressioni essenziali", "type": "phrasebook" },
+    { "id": "s5", "title": "Match Madness — automatismo medico", "type": "match-madness", "pair_count_target": 200, "rounds_per_set_target": 5 },
+    { "id": "s7", "title": "Carte SR — ripasso spaziato", "type": "language-flashcard-deck" },
+    { "id": "s8", "title": "Chiusura — Dottoressa Bianchi", "type": "closing" }
+  ],
+  "concept_dag": [
+    { "from": "s0", "to": "s1a" },
+    { "from": "s1a", "to": "s1b" },
+    { "from": "s1b", "to": "s1c" },
+    { "from": "s1c", "to": "s2" },
+    { "from": "s2", "to": "s3" },
+    { "from": "s3", "to": "s4" },
+    { "from": "s4", "to": "s5" },
+    { "from": "s5", "to": "s7" },
+    { "from": "s7", "to": "s8" }
+  ]
+}

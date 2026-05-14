@@ -1,0 +1,33 @@
+{
+  "lesson_id": "italian-medical-vocab-2026-05-14",
+  "version": "v1",
+  "title": "Italiano in ospedale — sintomi, corpo, dottore",
+  "subtitle": "Medical Italian for speaking with doctors and nurses in Italy",
+  "domain": "language-it",
+  "mode": "A",
+  "skeleton": "language-lesson-skeleton-v1",
+  "source_type": "user-prompt",
+  "source_summary": "User-requested cross-domain lesson on Italian medical vocabulary for hospital communication. Covers body parts, common symptoms, and patient-doctor dialogue patterns. Designed for travelers and visitors who may need to navigate Italian healthcare. Cross-domain test for the chiron pipeline (language-it + medical context).",
+  "level": "A2-B1 (intermediate)",
+  "estimated_minutes": 40,
+  "learning_objectives": [
+    "Master 14 medical/body verbs (avere male, sentire, soffrire, respirare, tossire, ...) and their conjugation in 4 daily tenses.",
+    "Use 15 body-part nouns with correct articles (la testa, il petto, lo stomaco, ...).",
+    "Describe a symptom using fare male / avere mal di / sentire dolore.",
+    "Handle a triage conversation at pronto soccorso (ER) in Italian.",
+    "Recognize core hospital signage (uscita, pronto soccorso, farmacia, dottore, infermiera).",
+    "Build automaticity via Match Madness across vocab, gender, prepositions, collocations, and tenses."
+  ],
+  "personas": [
+    { "name": "Alice", "role": "peer-learner", "level": "A2", "color_token": "warm-accent" },
+    { "name": "Dottoressa Bianchi", "role": "subject-expert", "region": "Bologna", "color_token": "accent" }
+  ],
+  "authentic_sources_used": [
+    "Italian patient information leaflets (foglietto illustrativo) — public-domain",
+    "Italian National Health Service (Servizio Sanitario Nazionale) signage standards"
+  ],
+  "default_theme": "linguistic",
+  "available_themes": ["linguistic", "warm-paper", "clinical", "midnight", "ocean"],
+  "generated_by": "chiron skill (parent agent) — pipeline validation 2026-05-14",
+  "generated_at": "2026-05-14"
+}

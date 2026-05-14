@@ -1,0 +1,55 @@
+{
+  "lesson_id": "fhe-comprehensive-guide-2026-05-14",
+  "version": "v1",
+  "title": "Fully Homomorphic Encryption — A Technical Walkthrough",
+  "subtitle": "Schemes, libraries, performance, and code — grounded in the FHE Comprehensive Guide",
+  "domain": "code",
+  "mode": "A",
+  "source_type": "pdf-text",
+  "source_summary": "Single markdown source: FHE_Comprehensive_Guide.md (1184 lines, 56KB, 39 H2/H3 sections, 54 code blocks). Covers historical evolution, mathematical foundations (LWE/RLWE), 4 FHE schemes (BGV/BFV/CKKS/TFHE), 6+ implementation libraries (SEAL/OpenFHE/HElib/Lattigo/TFHE-rs/TFHEpp), performance benchmarks, real-world applications, and getting-started code examples in Python/C++/Rust.",
+  "level": "intermediate–advanced (assumes basic cryptography + linear algebra)",
+  "estimated_minutes": 60,
+  "learning_objectives": [
+    "Explain the LWE / RLWE foundation that underpins modern FHE.",
+    "Distinguish the four production schemes (BGV, BFV, CKKS, TFHE) and pick the right one for a task.",
+    "Identify and choose between the six major FHE libraries.",
+    "Read and follow real SEAL (Python), OpenFHE (C++), and TFHE-rs (Rust) examples.",
+    "Understand the noise/bootstrapping trade-off and why it dominates FHE performance."
+  ],
+  "personas": [
+    {
+      "name": "Alex",
+      "role": "peer-learner",
+      "level": "CS graduate, no FHE background",
+      "color_token": "warm-accent"
+    },
+    {
+      "name": "Dr. Chen",
+      "role": "subject-expert",
+      "region": "Microsoft Research",
+      "color_token": "accent"
+    }
+  ],
+  "source_manifest": [
+    {
+      "path": "source/FHE_Comprehensive_Guide.md",
+      "role": "primary",
+      "extractor": "text-pdf",
+      "tokenCount": 14196,
+      "extractedAt": 1778769823
+    }
+  ],
+  "authentic_sources_used": [
+    "FHE_Comprehensive_Guide.md (the ONLY source — no external research performed)"
+  ],
+  "default_theme": "linguistic",
+  "available_themes": [
+    "linguistic",
+    "warm-paper",
+    "clinical",
+    "midnight",
+    "ocean"
+  ],
+  "generated_by": "chiron skill (parent agent) — pipeline TODAY (no Stage 2.5 enrichment)",
+  "generated_at": "2026-05-14"
+}
