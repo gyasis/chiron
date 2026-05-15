@@ -19,6 +19,13 @@
       "status": "open",
       "created": "2026-05-14",
       "descriptor": "payor_sftp_prefect_template"
+    },
+    {
+      "id": "heatmap_volume_sort_via_secondary_query_2026-05-15",
+      "path": "/home/gyasisutton/dev/prd/scratch/heatmap_volume_sort_via_secondary_query_2026-05-15.md",
+      "status": "open",
+      "created": "2026-05-15",
+      "descriptor": "heatmap_volume_sort_via_secondary_query"
     }
   ]
 }
