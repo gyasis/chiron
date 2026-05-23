@@ -359,6 +359,180 @@ export const LanguageFlashcardDeckWidgetSchema = z.object({
 });
 
 // ----------------------------------------------------------------------------
+// Universal widgets (v1 — additive; usable in code / medicine / language)
+//
+// Added 2026-05-23 after codebase-to-course audit. These widgets fill the
+// "engagement primitives" gap that was empirically present across all three
+// chiron domains: chiron-shell.css carried the CSS classes (.chat-window,
+// .flow-animation, .term-tooltip, etc.) but no schema kind referenced them,
+// so no Stage-4 prompt could produce them. The lesson v1 sandbox
+// (lessons/graphiti-implementation-2026-05-23-v1/) is the design target.
+//
+// IMPORTANT — these are ADDITIVE for medicine and language. Medicine still
+// uses mcq-clinical-vignette / agreement-matrix / pathway-diagram as primary
+// assessment. Language still uses conjugation / audio-tts / match-madness as
+// primary practice. The universal widgets show up ALONGSIDE those, not in
+// place of them.
+// ----------------------------------------------------------------------------
+
+/** Group chat animation — iMessage/WeChat-style multi-actor dialog reveal.
+ *  Universal. Each message reveals on "Next" via chiron-shell's chat engine.
+ *  Use cases: code = system/agent dialog; medicine = attending↔resident,
+ *  drug↔receptor; language = native-speaker↔learner roleplay. */
+export const GroupChatAnimationSchema = z.object({
+  type: z.literal('group-chat-animation'),
+  id: z.string(),
+  title: z.string().optional(),
+  framing: z.string().optional(),       // brief one-line lead-in shown above the chat
+  messages: z.array(z.object({
+    sender: z.string(),                  // actor id (e.g., "you", "agent", "native-speaker")
+    senderLabel: z.string(),             // display name
+    avatarChar: z.string().min(1).max(2),// 1-2 char initial / emoji
+    avatarColorVar: z.string().optional(),// e.g., "--chiron-accent" — defaults to the sender's auto-color
+    body: z.string(),                    // bubble text (can contain inline <code>)
+  })).min(2),
+});
+
+/** Flow / data-flow / decision-tree animation. Universal — the same engine
+ *  drives code data-flows AND medical algorithm walks AND language
+ *  sentence-construction sequences.
+ *
+ *  Each `step` highlights one actor and optionally animates a "packet" from
+ *  one actor to another, with a step label. The renderer wires this to
+ *  chiron-shell's flow engine; the host page needs no extra JS. */
+export const FlowAnimationSchema = z.object({
+  type: z.literal('flow-animation'),
+  id: z.string(),
+  title: z.string().optional(),
+  intro: z.string().optional(),
+  actors: z.array(z.object({
+    id: z.string(),                      // actor id; referenced by steps[].highlight + .from/.to
+    label: z.string(),
+    icon: z.string().optional(),         // single emoji or 1-2 char
+  })).min(2),
+  steps: z.array(z.object({
+    label: z.string(),                   // shown in the .flow-step-label
+    highlight: z.string().optional(),    // actor id to light up
+    packet: z.boolean().optional(),      // true = animate a packet
+    from: z.string().optional(),         // actor id (when packet=true)
+    to: z.string().optional(),           // actor id (when packet=true)
+  })).min(1),
+});
+
+/** Inline glossary tooltip set. Universal — every domain has jargon.
+ *  Renderer emits a small inline span per (term, definition) pair via
+ *  chiron-shell's .term / .term-tooltip pattern, and Stage 4 prose can
+ *  reference any of these terms by string-match for auto-tooltip injection.
+ *  USAGE: every CS term (code), clinical term (medicine), or vocabulary
+ *  word (language) on first mention in a chapter should appear here. */
+export const GlossaryTooltipsSchema = z.object({
+  type: z.literal('glossary-tooltips'),
+  id: z.string(),
+  entries: z.array(z.object({
+    term: z.string().min(1),
+    definition: z.string().min(1),
+    firstMentionChapter: z.number().int().min(1).optional(),
+  })).min(1),
+});
+
+/** Pattern / feature cards. Universal — code patterns, drug classes,
+ *  verb families. A small grid of cards each with a title + body + footer. */
+export const PatternCardsSchema = z.object({
+  type: z.literal('pattern-cards'),
+  id: z.string(),
+  title: z.string().optional(),
+  cards: z.array(z.object({
+    num: z.string().optional(),          // e.g., "Move 1", "Class A"
+    title: z.string(),
+    body: z.string(),
+    foot: z.string().optional(),         // small footer text — typically the lever/cost
+  })).min(2),
+});
+
+/** Numbered step cards. Universal — process steps, clinical protocols,
+ *  sentence construction. Static companion to flow-animation. */
+export const StepCardsSchema = z.object({
+  type: z.literal('step-cards'),
+  id: z.string(),
+  title: z.string().optional(),
+  steps: z.array(z.object({
+    n: z.number().int().min(1),
+    label: z.string(),                   // short caption like "Anchor", "Expand"
+    body: z.string(),                    // 1-2 sentence detail
+  })).min(2),
+});
+
+/** Visual file/path tree. Universal — file system (code), anatomy/taxonomy
+ *  (medicine), morphology trees (language).  The renderer indents by .depth. */
+export const FileTreeSchema = z.object({
+  type: z.literal('file-tree'),
+  id: z.string(),
+  title: z.string().optional(),
+  lines: z.array(z.object({
+    depth: z.number().int().min(1).max(6),
+    icon: z.string().optional(),         // emoji or short string
+    name: z.string(),
+    tag: z.string().optional(),          // small badge text on the right
+    highlight: z.boolean().optional(),
+  })).min(1),
+});
+
+/** Permission / cost / status badge. Tiny atomic widget — universal.
+ *  Renderer emits a single .badge span. Variants control color. */
+export const PermissionBadgeSchema = z.object({
+  type: z.literal('permission-badge'),
+  id: z.string(),
+  label: z.string().min(1),
+  variant: z.enum(['free', 'paid', 'hot', 'read']),  // color cue
+});
+
+/** Layer-toggle. Universal — two-axis comparisons (code = group_id vs
+ *  entity_type; medicine = diagnosis vs differential; language = formal
+ *  vs informal register).  Shows axis A only / axis B only / both. */
+export const LayerToggleSchema = z.object({
+  type: z.literal('layer-toggle'),
+  id: z.string(),
+  caption: z.string().optional(),
+  axes: z.array(z.object({
+    key: z.string(),                     // "1" / "2" / etc.
+    label: z.string(),                   // button label
+    title: z.string(),                   // bold title in the panel
+    body: z.string(),                    // panel body markdown-light
+  })).min(2),
+  defaultShow: z.string().default('both'),
+});
+
+/** "Why you care" callout. Universal — codifies codebase-to-course's
+ *  "answer 'why should I care?' before 'how does it work?'" rule.
+ *  Renderer emits a left-bar callout above chapter content. */
+export const WhyCareCalloutSchema = z.object({
+  type: z.literal('why-care-callout'),
+  id: z.string(),
+  body: z.string().min(1),               // 1-3 sentence rationale
+});
+
+// ----------------------------------------------------------------------------
+// Code-only widget (v1) — needs literal source code on the left
+// ----------------------------------------------------------------------------
+
+/** Code↔English translation block. CODE-ONLY (no analog in medicine/lang).
+ *  Side-by-side: code lines on left, plain-English explanation on right,
+ *  row N pairs across both sides via chiron-shell's row-tint cycle.
+ *  Originates from codebase-to-course; lives here under chiron's schema. */
+export const CodeEnglishTranslationSchema = z.object({
+  type: z.literal('code-english-translation'),
+  id: z.string(),
+  domain: z.literal('code'),             // schema-level enforcement
+  codeLabel: z.string().default('CODE'),
+  englishLabel: z.string().default('PLAIN ENGLISH'),
+  language: z.string().default('python'),// syntax-highlight hint
+  pairs: z.array(z.object({
+    code: z.string(),                    // the code line (preserve indentation)
+    english: z.string(),                 // the plain-English explanation for THIS line
+  })).min(2),
+});
+
+// ----------------------------------------------------------------------------
 // Discriminated union — the public schema
 // ----------------------------------------------------------------------------
 
@@ -389,6 +563,18 @@ const WidgetUnionSchema = z.discriminatedUnion('type', [
   // Retrieval-practice anchors (PRD canonical_shell_and_match_madness §4.10–4.12)
   MatchMadnessWidgetSchema,
   LanguageFlashcardDeckWidgetSchema,
+  // Universal engagement primitives (v1 — added 2026-05-23, all 3 domains)
+  GroupChatAnimationSchema,
+  FlowAnimationSchema,
+  GlossaryTooltipsSchema,
+  PatternCardsSchema,
+  StepCardsSchema,
+  FileTreeSchema,
+  PermissionBadgeSchema,
+  LayerToggleSchema,
+  WhyCareCalloutSchema,
+  // Code-only widget (v1)
+  CodeEnglishTranslationSchema,
 ]);
 
 /**
@@ -417,6 +603,37 @@ export const WidgetSchema = WidgetUnionSchema.superRefine((val, ctx) => {
       });
     }
   }
+  // 2026-05-23: flow-animation — every step.highlight / .from / .to must
+  // reference an existing actor.id. Catches typos at validate time, not at
+  // runtime when the engine silently fails to highlight.
+  if (val.type === 'flow-animation') {
+    const ids = new Set(val.actors.map(a => a.id));
+    val.steps.forEach((s, i) => {
+      (['highlight', 'from', 'to'] as const).forEach(field => {
+        const v = s[field];
+        if (v !== undefined && !ids.has(v)) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: `flow-animation step[${i}].${field} = "${v}" does not match any actor.id`,
+            path: ['steps', i, field],
+          });
+        }
+      });
+      if (s.packet === true && (s.from === undefined || s.to === undefined)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: `flow-animation step[${i}] has packet=true but missing 'from' or 'to'`,
+          path: ['steps', i, 'packet'],
+        });
+      }
+    });
+  }
+  // 2026-05-23: code-english-translation — code and english arrays must be
+  // the same length (one-to-one row pairing is the whole point of the widget).
+  if (val.type === 'code-english-translation') {
+    // pairs already enforces this via .object — no extra check needed
+    // (kept as a hook for future "min 2 pairs" extension)
+  }
 });
 
 export type WidgetSpec = z.infer<typeof WidgetSchema>;
@@ -425,12 +642,44 @@ export type WidgetKind = WidgetSpec['type'];
 /** Backwards-compatible alias used by some callers. */
 export const WidgetSpecSchema = WidgetSchema;
 
-/** Set of all 23 widget kinds — handy for renderer dispatch tables. */
+/** Set of all 33 widget kinds — handy for renderer dispatch tables. */
 export const WIDGET_KINDS: WidgetKind[] = [
+  // Quiz primitives
   'mcq', 'mcq-clinical-vignette', 'true-false', 'fill-blank', 'matching-pair',
   'cloze', 'spot-the-bug', 'agreement-matrix', 'assertion-reason',
   'confidence-weighted', 'slider-estimation', 'boss',
+  // Domain-specific renderables
   'chemical-reaction', 'molecule-2d', 'pathway-diagram', 'mermaid', 'mathjax',
   'reactive-math', 'code-runner', 'forest-plot', 'audio-tts',
+  // Retrieval-practice anchors
   'match-madness', 'language-flashcard-deck',
+  // Universal engagement primitives (v1)
+  'group-chat-animation', 'flow-animation', 'glossary-tooltips',
+  'pattern-cards', 'step-cards', 'file-tree', 'permission-badge',
+  'layer-toggle', 'why-care-callout',
+  // Code-only (v1)
+  'code-english-translation',
+];
+
+/** Which widgets are universal (no domain constraint) vs domain-gated.
+ *  Used by the validator (03-validate-rubric) + Stage 4 prompts to know
+ *  what to offer for a given chapter. */
+export const UNIVERSAL_WIDGETS: WidgetKind[] = [
+  'mcq', 'true-false', 'mermaid', 'mathjax',
+  'group-chat-animation', 'flow-animation', 'glossary-tooltips',
+  'pattern-cards', 'step-cards', 'file-tree', 'permission-badge',
+  'layer-toggle', 'why-care-callout',
+];
+export const CODE_ONLY_WIDGETS: WidgetKind[] = [
+  'spot-the-bug', 'code-runner', 'code-english-translation',
+];
+export const MEDICINE_ONLY_WIDGETS: WidgetKind[] = [
+  'mcq-clinical-vignette', 'agreement-matrix', 'assertion-reason',
+  'chemical-reaction', 'molecule-2d', 'pathway-diagram',
+  'reactive-math', 'forest-plot', 'slider-estimation', 'boss',
+  'confidence-weighted',
+];
+export const LANGUAGE_ONLY_WIDGETS: WidgetKind[] = [
+  'fill-blank', 'matching-pair', 'cloze',
+  'audio-tts', 'match-madness', 'language-flashcard-deck',
 ];
