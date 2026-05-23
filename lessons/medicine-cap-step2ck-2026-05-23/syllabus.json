@@ -1,0 +1,203 @@
+[
+  {
+    "chapterId": "community-acquired-pneumonia",
+    "chapterNumber": 1,
+    "title": "Community-Acquired Pneumonia — Step 2 CK",
+    "narrative": "Pneumonia is an acute infection of the lung parenchyma. CAP refers to cases arising outside hospital or long-term care. This chapter covers the Step-2-CK required arc: clinical features, diagnostics, and treatment — with epidemiology, complications, and prognosis as supporting context. Pathophysiology and etiology are touched lightly (Step 1 territory) but included as glossary depth.",
+    "keyConcepts": [
+      "cap-definition", "curb-65", "psi-score", "typical-vs-atypical",
+      "outpatient-vs-inpatient-vs-icu", "empiric-antibiotics"
+    ],
+    "clinicalAtlasUnit": "community-acquired-pneumonia",
+    "medicineSections": [
+      "overview",
+      "epidemiology",
+      "etiology",
+      "pathophysiology",
+      "clinical-features",
+      "diagnostics",
+      "differential-diagnosis",
+      "treatment",
+      "complications",
+      "prognosis",
+      "references"
+    ],
+    "scienceAnnotations": [
+      { "principle": "examples",     "description": "Worked CURB-65 calculation in step-cards grounds severity stratification." },
+      { "principle": "interleaving", "description": "Differential-diagnosis flow contrasts CAP against PE, HF, lung CA — discriminative reasoning." },
+      { "principle": "retrieval",    "description": "Closing clinical-vignette MCQ forces application of dx + tx, not memorisation." },
+      { "principle": "dual-coding",  "description": "Pathway diagram (V/Q mismatch) pairs with verbal pathophys explanation." }
+    ],
+    "priorChapterStruggleSummary": null,
+    "widgets": [
+
+      { "type": "why-care-callout", "id": "cap-whycare",
+        "body": "Pneumonia is one of the highest-yield Step 2 CK topics — it appears across IM, peds, and EM blocks. Knowing CURB-65 and the outpatient-vs-inpatient-vs-ICU decision distinguishes a passing answer from a stalled one." },
+
+      { "type": "glossary-tooltips", "id": "cap-glossary",
+        "entries": [
+          { "term": "parenchyma",        "definition": "The functional tissue of the lung — alveoli and capillaries where gas exchange occurs (vs the stroma, which is structural connective tissue)." },
+          { "term": "consolidation",     "definition": "Alveoli filled with exudate instead of air — appears as opaque density on chest X-ray." },
+          { "term": "egophony",          "definition": "When the patient says 'eee', it sounds like 'aaa' on auscultation — a sign of consolidation." },
+          { "term": "V/Q mismatch",      "definition": "Ventilation-perfusion mismatch — alveoli are perfused but not ventilated (or vice versa), causing hypoxemia." },
+          { "term": "atypical pneumonia","definition": "Pneumonia caused by Mycoplasma, Chlamydophila, or Legionella — typically subacute, dry cough, often extrapulmonary symptoms." },
+          { "term": "CURB-65",           "definition": "Severity score: Confusion, Urea>7mmol/L, RR≥30, BP<90/60, age≥65. 0-1 outpatient, 2 admit, 3-5 ICU." }
+        ] },
+
+      { "type": "step-cards", "id": "cap-epi",
+        "title": "Epidemiology at a glance",
+        "steps": [
+          { "n": 1, "label": "Incidence",  "body": "~5-6 cases per 1,000 adults per year in the US. Over 1 million hospitalisations annually." },
+          { "n": 2, "label": "At-risk",    "body": "Highest incidence in <2y and >65y. Smokers, COPD, asthma, immunosuppression, recent viral URI." },
+          { "n": 3, "label": "Mortality",  "body": "Outpatient <1%. Admitted 5-15%. ICU mortality varies with severity and timely abx." },
+          { "n": 4, "label": "Top pathogen", "body": "Streptococcus pneumoniae remains the most common typical pathogen across age groups." }
+        ] },
+
+      { "type": "pattern-cards", "id": "cap-etiology",
+        "title": "Pathogens — typical vs atypical vs viral",
+        "cards": [
+          { "num": "Typical",  "title": "Bacterial typical",
+            "body": "Strep. pneumoniae · Haemophilus influenzae · Moraxella catarrhalis. Classic lobar pattern, productive cough, high fever.",
+            "foot": "Often urinary antigen positive (Pneumococcus)" },
+          { "num": "Atypical", "title": "Bacterial atypical",
+            "body": "Mycoplasma · Chlamydophila · Legionella. Subacute course, dry cough, headache, GI symptoms. Walking pneumonia.",
+            "foot": "Treat with macrolide or fluoroquinolone" },
+          { "num": "Viral",    "title": "Viral",
+            "body": "Influenza A/B · SARS-CoV-2 · RSV · adenovirus. Often precedes a secondary bacterial infection.",
+            "foot": "Antiviral (oseltamivir, paxlovid) if early" }
+        ] },
+
+      { "type": "mermaid", "source": "graph TD;\n  A[Alveolar infection] --> B[Inflammation + exudate];\n  B --> C[Consolidation];\n  C --> D[V/Q mismatch];\n  D --> E[Hypoxemia];\n  B --> F[Systemic inflammatory response];\n  F --> G[Fever / leukocytosis / sepsis if severe];" },
+
+      { "type": "pattern-cards", "id": "cap-clinical-features",
+        "title": "Clinical features — typical presentation",
+        "cards": [
+          { "num": "Hx", "title": "History",
+            "body": "Acute onset fever, productive cough (yellow/green sputum), pleuritic chest pain, dyspnea on exertion. Recent viral URI common.",
+            "foot": "Atypical: subacute, dry cough, headache" },
+          { "num": "PE", "title": "Physical exam",
+            "body": "Tachypnea (RR>20), tachycardia, fever. Crackles on auscultation. Egophony, increased fremitus, dullness to percussion over consolidation.",
+            "foot": "Atypical PE often normal-sounding lung" },
+          { "num": "Vit", "title": "Vitals red flags",
+            "body": "RR ≥30, SBP <90, HR >120, SpO2 <90% on room air, AMS. Any one triggers admission consideration.",
+            "foot": "CURB-65 quantifies this" }
+        ] },
+
+      { "type": "flow-animation", "id": "cap-workup",
+        "title": "Diagnostic workup",
+        "actors": [
+          { "id": "hx",      "label": "Hx + PE",       "icon": "👤" },
+          { "id": "cxr",     "label": "CXR",           "icon": "📷" },
+          { "id": "labs",    "label": "Labs",          "icon": "🧪" },
+          { "id": "score",   "label": "CURB-65 / PSI", "icon": "📊" },
+          { "id": "dispo",   "label": "Disposition",   "icon": "🏥" }
+        ],
+        "steps": [
+          { "label": "Take focused respiratory history + cough/fever/dyspnea screen. Auscultate.",         "highlight": "hx" },
+          { "label": "Obtain chest X-ray — lobar OR interstitial infiltrate confirms diagnosis.",           "highlight": "cxr",   "packet": true, "from": "hx",    "to": "cxr"   },
+          { "label": "CBC, CMP. If admitted: blood cultures, sputum gram + culture, urinary antigens.",     "highlight": "labs",  "packet": true, "from": "cxr",   "to": "labs"  },
+          { "label": "Compute CURB-65 (or PSI) to stratify severity.",                                       "highlight": "score", "packet": true, "from": "labs",  "to": "score" },
+          { "label": "0-1 = outpatient · 2 = admit ward · ≥3 = consider ICU.",                              "highlight": "dispo", "packet": true, "from": "score", "to": "dispo" }
+        ] },
+
+      { "type": "step-cards", "id": "cap-curb65",
+        "title": "CURB-65 — one point each",
+        "steps": [
+          { "n": 1, "label": "C — Confusion",       "body": "New-onset altered mental status. Often subtle in elderly." },
+          { "n": 2, "label": "U — Urea",            "body": "BUN > 19 mg/dL (urea > 7 mmol/L). Marker of dehydration / severity." },
+          { "n": 3, "label": "R — Respiratory rate","body": "≥ 30 breaths/min. Indicator of respiratory compromise." },
+          { "n": 4, "label": "B — Blood pressure",  "body": "SBP < 90 OR DBP ≤ 60. Hemodynamic instability." }
+        ] },
+
+      { "type": "flow-animation", "id": "cap-ddx",
+        "title": "Differential diagnosis — what else could it be",
+        "actors": [
+          { "id": "cap",   "label": "CAP",          "icon": "🫁" },
+          { "id": "pe",    "label": "PE",           "icon": "🩸" },
+          { "id": "hf",    "label": "Heart failure","icon": "❤️" },
+          { "id": "ca",    "label": "Lung cancer",  "icon": "⚠️" },
+          { "id": "exac",  "label": "COPD/asthma exac", "icon": "💨" }
+        ],
+        "steps": [
+          { "label": "Fever + infiltrate + productive cough → CAP most likely.",                           "highlight": "cap" },
+          { "label": "Low-grade fever + pleuritic pain + risk factors (immobility, OCP) → consider PE.",   "highlight": "pe",   "packet": true, "from": "cap",  "to": "pe"   },
+          { "label": "Bilateral findings + orthopnea + JVD + elevated BNP → heart failure.",                "highlight": "hf",   "packet": true, "from": "pe",   "to": "hf"   },
+          { "label": "Smoker, weight loss, recurrent post-obstructive PNA → lung cancer workup.",           "highlight": "ca",   "packet": true, "from": "hf",   "to": "ca"   },
+          { "label": "Known COPD/asthma + wheezing + minimal infiltrate → exacerbation, not CAP.",          "highlight": "exac", "packet": true, "from": "ca",   "to": "exac" }
+        ] },
+
+      { "type": "step-cards", "id": "cap-treatment",
+        "title": "Empiric antibiotic ladder",
+        "steps": [
+          { "n": 1, "label": "Outpatient (healthy)",   "body": "Amoxicillin OR doxycycline OR azithromycin (macrolide). 5-7 days." },
+          { "n": 2, "label": "Outpatient (comorbid)",  "body": "Amoxicillin/clavulanate + macrolide, OR respiratory fluoroquinolone (levofloxacin, moxifloxacin)." },
+          { "n": 3, "label": "Inpatient non-ICU",      "body": "Beta-lactam (ceftriaxone) + macrolide, OR respiratory fluoroquinolone monotherapy." },
+          { "n": 4, "label": "ICU",                    "body": "Beta-lactam + macrolide OR + fluoroquinolone. Add anti-MRSA (vancomycin/linezolid) and/or anti-Pseudomonas (piperacillin/tazobactam) if risk factors." }
+        ] },
+
+      { "type": "pattern-cards", "id": "cap-complications",
+        "title": "Complications — what goes wrong",
+        "cards": [
+          { "num": "C1", "title": "Parapneumonic effusion → empyema", "body": "Fluid collection adjacent to pneumonia. If infected (empyema) requires drainage in addition to antibiotics.",
+            "foot": "Thoracentesis if effusion > 1cm on decub" },
+          { "num": "C2", "title": "Lung abscess",                     "body": "Cavitary lesion with air-fluid level on imaging. Anaerobic coverage often needed.",
+            "foot": "Risk: aspiration, alcoholism, poor dentition" },
+          { "num": "C3", "title": "Sepsis / septic shock",            "body": "Most common cause of CAP mortality. Recognise early via SIRS/qSOFA, treat per sepsis bundle.",
+            "foot": "qSOFA ≥2 → high risk" },
+          { "num": "C4", "title": "ARDS",                              "body": "Bilateral infiltrates, PaO2/FiO2 < 300, requiring mechanical ventilation. ICU course.",
+            "foot": "Lung-protective ventilation strategy" }
+        ] },
+
+      { "type": "chart-xy", "id": "cap-recovery",
+        "variant": "line",
+        "title": "Typical recovery — symptom resolution timeline",
+        "xLabel": "day", "yLabel": "% with symptom",
+        "series": [
+          { "label": "Fever",          "color": "var(--color-error)",   "points": [{"x":0,"y":100},{"x":1,"y":85},{"x":2,"y":55},{"x":3,"y":25},{"x":4,"y":12},{"x":5,"y":5},{"x":7,"y":2}] },
+          { "label": "Productive cough","color": "var(--color-warning)","points": [{"x":0,"y":100},{"x":3,"y":80},{"x":7,"y":55},{"x":14,"y":30},{"x":21,"y":15},{"x":28,"y":7}] },
+          { "label": "Fatigue",         "color": "var(--color-info)",    "points": [{"x":0,"y":100},{"x":7,"y":75},{"x":14,"y":50},{"x":21,"y":30},{"x":28,"y":18},{"x":42,"y":10}] }
+        ] },
+
+      { "type": "mcq-clinical-vignette",
+        "vignette": "A 68-year-old man with COPD on tiotropium presents to the ED with 3 days of productive cough, fever to 38.9°C, and pleuritic right-sided chest pain. RR 28, BP 102/64, HR 110, SpO2 92% on room air. Crackles and egophony in the right lower lung field. WBC 16,400 with left shift, BUN 22 mg/dL, creatinine 1.1. CXR shows right lower lobe consolidation. He is alert and oriented.",
+        "keyInfo": [
+          "Age 68 (≥65 → +1 CURB-65)",
+          "BUN 22 mg/dL (>19 → +1 CURB-65)",
+          "RR 28 (<30 → 0)",
+          "BP 102/64 (>90 SBP, >60 DBP → 0)",
+          "Alert and oriented (no confusion → 0)",
+          "CURB-65 = 2",
+          "Has COPD comorbidity"
+        ],
+        "stem": "What is the next best step in management?",
+        "options": [
+          { "label": "A", "text": "Discharge on amoxicillin 5-day course with 48-hour follow-up.",                                "correct": false, "explanation": "Wrong — CURB-65 of 2 indicates admission. Outpatient amoxicillin alone is insufficient even setting CURB aside (COPD comorbidity)." },
+          { "label": "B", "text": "Admit to ward and start IV ceftriaxone + azithromycin.",                                       "correct": true,  "explanation": "Correct — CURB-65 = 2 (age + BUN) supports admission. Standard inpatient non-ICU empiric therapy is beta-lactam + macrolide." },
+          { "label": "C", "text": "Admit to ICU and start broad-spectrum coverage including vancomycin + piperacillin/tazobactam.","correct": false, "explanation": "Overtreatment — CURB-65 = 2, no MRSA/Pseudomonas risk factors, hemodynamically stable. Reserve broad coverage for ICU-level severity with risk factors." },
+          { "label": "D", "text": "Order CT pulmonary angiography to rule out PE first.",                                          "correct": false, "explanation": "PE not consistent with clear consolidation + productive cough + fever + leukocytosis. CXR findings + clinical picture establish CAP." },
+          { "label": "E", "text": "Discharge home on respiratory fluoroquinolone (levofloxacin) with 48-hour follow-up.",          "correct": false, "explanation": "Levofloxacin is correct outpatient option for COPD comorbidity, BUT CURB-65 = 2 mandates admission. The drug choice is right; the disposition is wrong." }
+        ],
+        "hammer": 3,
+        "attendingTip": "Step 2 CK loves combining CURB-65 with comorbidity. Always compute CURB-65 explicitly — the score determines disposition, comorbidity guides drug class.",
+        "vignetteCategory": "classic",
+        "variants": [
+          { "name": "ICU variant", "altered": "RR 34, BP 84/52, confused — CURB-65 = 4" },
+          { "name": "Outpatient variant", "altered": "55yo healthy, CURB-65 = 0, mild infiltrate" }
+        ]
+      },
+
+      { "type": "step-cards", "id": "cap-prognosis",
+        "title": "Prognosis — what to tell the patient",
+        "steps": [
+          { "n": 1, "label": "Outpatient",       "body": "<1% 30-day mortality. Most improve in 48-72 hours of appropriate abx." },
+          { "n": 2, "label": "Inpatient ward",   "body": "5-10% in-hospital mortality. Older / comorbid trend higher." },
+          { "n": 3, "label": "ICU",              "body": "15-30% mortality, higher with shock or ARDS. Mortality drops with timely (≤1hr from suspicion) antibiotics." },
+          { "n": 4, "label": "Long-term",         "body": "Cough can persist 4 weeks; fatigue often longer. Pulmonary fibrosis is rare. Reinfection risk slightly elevated for 12 months." }
+        ] },
+
+      { "type": "why-care-callout", "id": "cap-references-note",
+        "body": "References: IDSA/ATS 2019 CAP guidelines · UpToDate 'Community-acquired pneumonia in adults' · AMBOSS CAP article · NEJM 2014;370:543-51 (Mandell, severity scoring)." }
+
+    ]
+  }
+]

@@ -1,0 +1,263 @@
+<!doctype html>
+<html lang="en" data-theme="clinical">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>CAP (Step 2 CK) — chiron medicine pipeline lesson</title>
+<link rel="stylesheet" href="themes/_tokens.css" />
+<link rel="stylesheet" href="themes/midnight.css" />
+<link rel="stylesheet" href="themes/warm-paper.css" />
+<link rel="stylesheet" href="themes/clinical.css" />
+<link rel="stylesheet" href="themes/linguistic.css" />
+<link rel="stylesheet" href="themes/ocean.css" />
+<link rel="stylesheet" href="chiron-shell.css" />
+<script>
+  window.MathJax = {
+    tex: { inlineMath: [['\\(','\\)']], displayMath: [['\\[','\\]']] },
+    options: { skipHtmlTags: ['script','noscript','style','textarea','pre','code'] },
+    startup: { typeset: false }
+  };
+</script>
+<script src="vendor/mathjax/tex-mml-chtml.js" id="MathJax-script" async></script>
+<style>
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;background:var(--chiron-bg);color:var(--chiron-fg)}
+  body{font-family:var(--chiron-font-body, Georgia, serif); font-size:16px; line-height:1.6; padding:0 0 80px;}
+  header.bar{position:sticky; top:0; z-index:20; display:flex; justify-content:space-between; align-items:center;
+    padding:10px 24px; background:var(--chiron-surface); border-bottom:1px solid var(--chiron-border);
+    font-family:'JetBrains Mono', ui-monospace, monospace; font-size:11px; letter-spacing:.08em; text-transform:uppercase;}
+  header.bar .pill{display:inline-block; margin-left:8px; padding:2px 8px; background:var(--chiron-elevated); color:var(--chiron-fg-secondary); border:1px solid var(--chiron-border); border-radius:99px; text-transform:none; letter-spacing:.04em;}
+  header.bar select{background:var(--chiron-elevated); color:var(--chiron-fg); border:1px solid var(--chiron-border); padding:4px 8px; font-family:inherit; font-size:11px; border-radius:3px;}
+  main.page{max-width:920px; margin:0 auto; padding:36px 28px 60px;}
+  .hero{padding:32px 0 24px; border-bottom:1px solid var(--chiron-border); margin-bottom:36px;}
+  .hero .kicker{font-family:'JetBrains Mono', ui-monospace, monospace; font-size:11px; letter-spacing:.18em; text-transform:uppercase; color:var(--chiron-fg-secondary); margin-bottom:14px;}
+  .hero h1{font-family:var(--chiron-font-heading); font-size:42px; line-height:1.1; margin:0 0 14px; color:var(--chiron-fg); letter-spacing:-0.01em;}
+  .hero .lede{font-size:18px; color:var(--chiron-fg-secondary); margin:0; max-width:62ch;}
+  .hero .stage-banner{margin-top:14px; padding:10px 14px; background:var(--chiron-elevated); border:1px dashed var(--chiron-border); border-radius:4px; font-family:'JetBrains Mono', ui-monospace, monospace; font-size:12px; line-height:1.6; color:var(--chiron-fg-secondary);}
+  .hero .stage-banner b{color:var(--chiron-fg); font-weight:600;}
+  section.chapter{padding:36px 0; border-bottom:1px solid var(--chiron-divider);}
+  section.chapter:last-of-type{border-bottom:none;}
+  section.chapter .chap-id{font-family:'JetBrains Mono', ui-monospace, monospace; font-size:11px; letter-spacing:.18em; text-transform:uppercase; color:var(--chiron-fg-secondary); margin-bottom:6px;}
+  section.chapter h2{font-family:var(--chiron-font-heading); font-size:32px; line-height:1.15; margin:0 0 16px; color:var(--chiron-fg);}
+  section.chapter .kicker-prose{font-style:italic; color:var(--chiron-fg-secondary); margin:0 0 18px; font-size:16px; max-width:62ch;}
+  .amboss-sections-bar{
+    display:flex; gap:6px; flex-wrap:wrap; align-items:center;
+    margin:0 0 20px; padding:8px 12px;
+    background:var(--chiron-surface); border:1px solid var(--chiron-border); border-radius:4px;
+    font-family:'JetBrains Mono', ui-monospace, monospace; font-size:10.5px;
+  }
+  .amboss-sections-bar .amboss-label{ text-transform:uppercase; letter-spacing:.12em; color:var(--chiron-fg-secondary); margin-right:6px;}
+  .amboss-section{
+    padding:2px 7px; background:var(--chiron-elevated); color:var(--chiron-fg);
+    border:1px solid var(--chiron-border); border-radius:99px; font-size:10px;
+  }
+  .chiron-mathjax, .mathjax, [class^="mathjax"]{
+    display:block; padding:14px 18px;
+    background:var(--chiron-elevated);
+    border-left:3px solid var(--chiron-accent);
+    border-radius:0 4px 4px 0;
+    font-size:14px; line-height:1.7; color:var(--chiron-fg);
+    margin:14px 0; overflow-x:auto;
+  }
+  footer.colophon{margin-top:48px; padding-top:18px; border-top:1px solid var(--chiron-border); color:var(--chiron-fg-secondary); font-size:12.5px; font-family:'JetBrains Mono', ui-monospace, monospace; letter-spacing:.04em;}
+  :root{ --chiron-paper: white; --chiron-ink: black; }
+</style>
+</head>
+<body>
+<header class="bar">
+  <div>CAP · Step 2 CK <span class="pill">medicine · internal-med · step-2-ck</span></div>
+  <div>
+    <label for="theme">Theme</label>
+    <select id="theme">
+      <option value="clinical" selected>Clinical</option>
+      <option value="midnight">Midnight</option>
+      <option value="warm-paper">Warm paper</option>
+      <option value="linguistic">Linguistic</option>
+      <option value="ocean">Ocean</option>
+    </select>
+  </div>
+</header>
+
+<main class="page">
+  <section class="hero">
+    <div class="kicker">Chiron · medicine · AMBOSS-style canonical layout · 2026-05-23</div>
+    <h1>Community-Acquired Pneumonia</h1>
+    <p class="lede">Step 2 CK primer. One chapter, 11 canonical sections, 15 widgets. Chapter count came from <code>brief.clinicalAtlasUnits</code> — not a hardcoded array.</p>
+    <div class="stage-banner">
+      <b>Stage 1 brief.json:</b> domain=medicine · specialty=internal-med · level=step-2-ck<br>
+      <b>Stage 1 atlas:</b> [community-acquired-pneumonia] → 1 chapter(s)<br>
+      <b>Stage 2 syllabus.json:</b> 1 chapter · 11 sections in canonical AMBOSS order<br>
+      <b>validateLesson():</b> ✓ atlas binding · ✓ section presence · ✓ section order · ✓ Step-2-CK required set (cf/dx/tx) all present
+    </div>
+  </section>
+
+  <section class="chapter" id="ch1"><div class="chap-id">Chapter 1 of 1 · community-acquired-pneumonia</div><h2>Community-Acquired Pneumonia — Step 2 CK</h2><p class="kicker-prose">Pneumonia is an acute infection of the lung parenchyma. CAP refers to cases arising outside hospital or long-term care. This chapter covers the Step-2-CK required arc: clinical features, diagnostics, and treatment — with epidemiology, complications, and prognosis as supporting context. Pathophysiology and etiology are touched lightly (Step 1 territory) but included as glossary depth.</p><div class="amboss-sections-bar"><span class="amboss-label">AMBOSS sections covered:</span> <span class="amboss-section">overview</span><span class="amboss-section">epidemiology</span><span class="amboss-section">etiology</span><span class="amboss-section">pathophysiology</span><span class="amboss-section">clinical-features</span><span class="amboss-section">diagnostics</span><span class="amboss-section">differential-diagnosis</span><span class="amboss-section">treatment</span><span class="amboss-section">complications</span><span class="amboss-section">prognosis</span><span class="amboss-section">references</span></div><div class="why-care" id="cap-whycare"><b>Why you care</b>Pneumonia is one of the highest-yield Step 2 CK topics — it appears across IM, peds, and EM blocks. Knowing CURB-65 and the outpatient-vs-inpatient-vs-ICU decision distinguishes a passing answer from a stalled one.</div>
+<aside class="glossary-block" id="cap-glossary"><h4>Glossary</h4><dl><dt><span class="term" data-definition="The functional tissue of the lung — alveoli and capillaries where gas exchange occurs (vs the stroma, which is structural connective tissue).">parenchyma</span></dt><dd>The functional tissue of the lung — alveoli and capillaries where gas exchange occurs (vs the stroma, which is structural connective tissue).</dd><dt><span class="term" data-definition="Alveoli filled with exudate instead of air — appears as opaque density on chest X-ray.">consolidation</span></dt><dd>Alveoli filled with exudate instead of air — appears as opaque density on chest X-ray.</dd><dt><span class="term" data-definition="When the patient says &#39;eee&#39;, it sounds like &#39;aaa&#39; on auscultation — a sign of consolidation.">egophony</span></dt><dd>When the patient says &#39;eee&#39;, it sounds like &#39;aaa&#39; on auscultation — a sign of consolidation.</dd><dt><span class="term" data-definition="Ventilation-perfusion mismatch — alveoli are perfused but not ventilated (or vice versa), causing hypoxemia.">V/Q mismatch</span></dt><dd>Ventilation-perfusion mismatch — alveoli are perfused but not ventilated (or vice versa), causing hypoxemia.</dd><dt><span class="term" data-definition="Pneumonia caused by Mycoplasma, Chlamydophila, or Legionella — typically subacute, dry cough, often extrapulmonary symptoms.">atypical pneumonia</span></dt><dd>Pneumonia caused by Mycoplasma, Chlamydophila, or Legionella — typically subacute, dry cough, often extrapulmonary symptoms.</dd><dt><span class="term" data-definition="Severity score: Confusion, Urea&gt;7mmol/L, RR≥30, BP&lt;90/60, age≥65. 0-1 outpatient, 2 admit, 3-5 ICU.">CURB-65</span></dt><dd>Severity score: Confusion, Urea&gt;7mmol/L, RR≥30, BP&lt;90/60, age≥65. 0-1 outpatient, 2 admit, 3-5 ICU.</dd></dl></aside>
+<h3>Epidemiology at a glance</h3><div class="step-cards" id="cap-epi"><div class="sc"><div class="sc-num">1</div><h5>Incidence</h5><p>~5-6 cases per 1,000 adults per year in the US. Over 1 million hospitalisations annually.</p></div><div class="sc"><div class="sc-num">2</div><h5>At-risk</h5><p>Highest incidence in &lt;2y and &gt;65y. Smokers, COPD, asthma, immunosuppression, recent viral URI.</p></div><div class="sc"><div class="sc-num">3</div><h5>Mortality</h5><p>Outpatient &lt;1%. Admitted 5-15%. ICU mortality varies with severity and timely abx.</p></div><div class="sc"><div class="sc-num">4</div><h5>Top pathogen</h5><p>Streptococcus pneumoniae remains the most common typical pathogen across age groups.</p></div></div>
+<h3>Pathogens — typical vs atypical vs viral</h3><div class="pattern-cards" id="cap-etiology"><div class="pattern-card"><span class="pc-num">Typical</span><h4>Bacterial typical</h4><p class="pc-body">Strep. pneumoniae · Haemophilus influenzae · Moraxella catarrhalis. Classic lobar pattern, productive cough, high fever.</p><div class="pc-foot">Often urinary antigen positive (Pneumococcus)</div></div><div class="pattern-card"><span class="pc-num">Atypical</span><h4>Bacterial atypical</h4><p class="pc-body">Mycoplasma · Chlamydophila · Legionella. Subacute course, dry cough, headache, GI symptoms. Walking pneumonia.</p><div class="pc-foot">Treat with macrolide or fluoroquinolone</div></div><div class="pattern-card"><span class="pc-num">Viral</span><h4>Viral</h4><p class="pc-body">Influenza A/B · SARS-CoV-2 · RSV · adenovirus. Often precedes a secondary bacterial infection.</p><div class="pc-foot">Antiviral (oseltamivir, paxlovid) if early</div></div></div>
+<div class="mermaid" id="mmd-1" data-widget="mermaid">graph TD;
+  A[Alveolar infection] --&gt; B[Inflammation + exudate];
+  B --&gt; C[Consolidation];
+  C --&gt; D[V/Q mismatch];
+  D --&gt; E[Hypoxemia];
+  B --&gt; F[Systemic inflammatory response];
+  F --&gt; G[Fever / leukocytosis / sepsis if severe];</div>
+<script>
+(function(){
+  function run(){
+    if (!window.mermaid) return;
+    try {
+      if (!window.__chironMermaidInit) {
+        window.mermaid.initialize({ startOnLoad: false, securityLevel: 'loose' });
+        window.__chironMermaidInit = true;
+      }
+      var el = document.getElementById("mmd-1");
+      if (el && window.mermaid.run) window.mermaid.run({ nodes: [el] });
+    } catch(e) { /* mermaid render failed — leave source visible */ }
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', run);
+  else run();
+})();
+</script>
+<h3>Clinical features — typical presentation</h3><div class="pattern-cards" id="cap-clinical-features"><div class="pattern-card"><span class="pc-num">Hx</span><h4>History</h4><p class="pc-body">Acute onset fever, productive cough (yellow/green sputum), pleuritic chest pain, dyspnea on exertion. Recent viral URI common.</p><div class="pc-foot">Atypical: subacute, dry cough, headache</div></div><div class="pattern-card"><span class="pc-num">PE</span><h4>Physical exam</h4><p class="pc-body">Tachypnea (RR&gt;20), tachycardia, fever. Crackles on auscultation. Egophony, increased fremitus, dullness to percussion over consolidation.</p><div class="pc-foot">Atypical PE often normal-sounding lung</div></div><div class="pattern-card"><span class="pc-num">Vit</span><h4>Vitals red flags</h4><p class="pc-body">RR ≥30, SBP &lt;90, HR &gt;120, SpO2 &lt;90% on room air, AMS. Any one triggers admission consideration.</p><div class="pc-foot">CURB-65 quantifies this</div></div></div>
+<h4>Diagnostic workup</h4><div class="flow-animation" id="cap-workup" data-steps="[{&quot;label&quot;:&quot;Take focused respiratory history + cough/fever/dyspnea screen. Auscultate.&quot;,&quot;highlight&quot;:&quot;hx&quot;},{&quot;label&quot;:&quot;Obtain chest X-ray — lobar OR interstitial infiltrate confirms diagnosis.&quot;,&quot;highlight&quot;:&quot;cxr&quot;,&quot;packet&quot;:true,&quot;from&quot;:&quot;hx&quot;,&quot;to&quot;:&quot;cxr&quot;},{&quot;label&quot;:&quot;CBC, CMP. If admitted: blood cultures, sputum gram + culture, urinary antigens.&quot;,&quot;highlight&quot;:&quot;labs&quot;,&quot;packet&quot;:true,&quot;from&quot;:&quot;cxr&quot;,&quot;to&quot;:&quot;labs&quot;},{&quot;label&quot;:&quot;Compute CURB-65 (or PSI) to stratify severity.&quot;,&quot;highlight&quot;:&quot;score&quot;,&quot;packet&quot;:true,&quot;from&quot;:&quot;labs&quot;,&quot;to&quot;:&quot;score&quot;},{&quot;label&quot;:&quot;0-1 = outpatient · 2 = admit ward · ≥3 = consider ICU.&quot;,&quot;highlight&quot;:&quot;dispo&quot;,&quot;packet&quot;:true,&quot;from&quot;:&quot;score&quot;,&quot;to&quot;:&quot;dispo&quot;}]"><div class="flow-actors"><div class="flow-actor" id="flow-hx"><div class="flow-actor-icon">👤</div><span>Hx + PE</span></div><div class="flow-actor" id="flow-cxr"><div class="flow-actor-icon">📷</div><span>CXR</span></div><div class="flow-actor" id="flow-labs"><div class="flow-actor-icon">🧪</div><span>Labs</span></div><div class="flow-actor" id="flow-score"><div class="flow-actor-icon">📊</div><span>CURB-65 / PSI</span></div><div class="flow-actor" id="flow-dispo"><div class="flow-actor-icon">🏥</div><span>Disposition</span></div></div><div class="flow-packet"></div><div class="flow-step-label">Press Next to start.</div><div class="flow-controls"><button class="btn btn-primary flow-next-btn">Next →</button><button class="btn flow-reset-btn">Reset</button><span class="flow-progress">Step 0 / 5</span></div></div>
+<h3>CURB-65 — one point each</h3><div class="step-cards" id="cap-curb65"><div class="sc"><div class="sc-num">1</div><h5>C — Confusion</h5><p>New-onset altered mental status. Often subtle in elderly.</p></div><div class="sc"><div class="sc-num">2</div><h5>U — Urea</h5><p>BUN &gt; 19 mg/dL (urea &gt; 7 mmol/L). Marker of dehydration / severity.</p></div><div class="sc"><div class="sc-num">3</div><h5>R — Respiratory rate</h5><p>≥ 30 breaths/min. Indicator of respiratory compromise.</p></div><div class="sc"><div class="sc-num">4</div><h5>B — Blood pressure</h5><p>SBP &lt; 90 OR DBP ≤ 60. Hemodynamic instability.</p></div></div>
+<h4>Differential diagnosis — what else could it be</h4><div class="flow-animation" id="cap-ddx" data-steps="[{&quot;label&quot;:&quot;Fever + infiltrate + productive cough → CAP most likely.&quot;,&quot;highlight&quot;:&quot;cap&quot;},{&quot;label&quot;:&quot;Low-grade fever + pleuritic pain + risk factors (immobility, OCP) → consider PE.&quot;,&quot;highlight&quot;:&quot;pe&quot;,&quot;packet&quot;:true,&quot;from&quot;:&quot;cap&quot;,&quot;to&quot;:&quot;pe&quot;},{&quot;label&quot;:&quot;Bilateral findings + orthopnea + JVD + elevated BNP → heart failure.&quot;,&quot;highlight&quot;:&quot;hf&quot;,&quot;packet&quot;:true,&quot;from&quot;:&quot;pe&quot;,&quot;to&quot;:&quot;hf&quot;},{&quot;label&quot;:&quot;Smoker, weight loss, recurrent post-obstructive PNA → lung cancer workup.&quot;,&quot;highlight&quot;:&quot;ca&quot;,&quot;packet&quot;:true,&quot;from&quot;:&quot;hf&quot;,&quot;to&quot;:&quot;ca&quot;},{&quot;label&quot;:&quot;Known COPD/asthma + wheezing + minimal infiltrate → exacerbation, not CAP.&quot;,&quot;highlight&quot;:&quot;exac&quot;,&quot;packet&quot;:true,&quot;from&quot;:&quot;ca&quot;,&quot;to&quot;:&quot;exac&quot;}]"><div class="flow-actors"><div class="flow-actor" id="flow-cap"><div class="flow-actor-icon">🫁</div><span>CAP</span></div><div class="flow-actor" id="flow-pe"><div class="flow-actor-icon">🩸</div><span>PE</span></div><div class="flow-actor" id="flow-hf"><div class="flow-actor-icon">❤️</div><span>Heart failure</span></div><div class="flow-actor" id="flow-ca"><div class="flow-actor-icon">⚠️</div><span>Lung cancer</span></div><div class="flow-actor" id="flow-exac"><div class="flow-actor-icon">💨</div><span>COPD/asthma exac</span></div></div><div class="flow-packet"></div><div class="flow-step-label">Press Next to start.</div><div class="flow-controls"><button class="btn btn-primary flow-next-btn">Next →</button><button class="btn flow-reset-btn">Reset</button><span class="flow-progress">Step 0 / 5</span></div></div>
+<h3>Empiric antibiotic ladder</h3><div class="step-cards" id="cap-treatment"><div class="sc"><div class="sc-num">1</div><h5>Outpatient (healthy)</h5><p>Amoxicillin OR doxycycline OR azithromycin (macrolide). 5-7 days.</p></div><div class="sc"><div class="sc-num">2</div><h5>Outpatient (comorbid)</h5><p>Amoxicillin/clavulanate + macrolide, OR respiratory fluoroquinolone (levofloxacin, moxifloxacin).</p></div><div class="sc"><div class="sc-num">3</div><h5>Inpatient non-ICU</h5><p>Beta-lactam (ceftriaxone) + macrolide, OR respiratory fluoroquinolone monotherapy.</p></div><div class="sc"><div class="sc-num">4</div><h5>ICU</h5><p>Beta-lactam + macrolide OR + fluoroquinolone. Add anti-MRSA (vancomycin/linezolid) and/or anti-Pseudomonas (piperacillin/tazobactam) if risk factors.</p></div></div>
+<h3>Complications — what goes wrong</h3><div class="pattern-cards" id="cap-complications"><div class="pattern-card"><span class="pc-num">C1</span><h4>Parapneumonic effusion → empyema</h4><p class="pc-body">Fluid collection adjacent to pneumonia. If infected (empyema) requires drainage in addition to antibiotics.</p><div class="pc-foot">Thoracentesis if effusion &gt; 1cm on decub</div></div><div class="pattern-card"><span class="pc-num">C2</span><h4>Lung abscess</h4><p class="pc-body">Cavitary lesion with air-fluid level on imaging. Anaerobic coverage often needed.</p><div class="pc-foot">Risk: aspiration, alcoholism, poor dentition</div></div><div class="pattern-card"><span class="pc-num">C3</span><h4>Sepsis / septic shock</h4><p class="pc-body">Most common cause of CAP mortality. Recognise early via SIRS/qSOFA, treat per sepsis bundle.</p><div class="pc-foot">qSOFA ≥2 → high risk</div></div><div class="pattern-card"><span class="pc-num">C4</span><h4>ARDS</h4><p class="pc-body">Bilateral infiltrates, PaO2/FiO2 &lt; 300, requiring mechanical ventilation. ICU course.</p><div class="pc-foot">Lung-protective ventilation strategy</div></div></div>
+<figure class="chart-xy" id="cap-recovery" data-variant="line"><figcaption class="chart-title">Typical recovery — symptom resolution timeline</figcaption><svg viewBox="0 0 640 320" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Typical recovery — symptom resolution timeline"><defs><clipPath id="cap-recovery-clip"><rect x="56" y="32" width="568" height="244"/></clipPath></defs><rect class="chart-plot-bg" x="56" y="32" width="568" height="244"/><line class="chart-grid" x1="56.0" y1="32" x2="56.0" y2="276"/><text class="chart-tick" x="56.0" y="290" text-anchor="middle">-2.10</text><line class="chart-grid" x1="198.0" y1="32" x2="198.0" y2="276"/><text class="chart-tick" x="198.0" y="290" text-anchor="middle">9.45</text><line class="chart-grid" x1="340.0" y1="32" x2="340.0" y2="276"/><text class="chart-tick" x="340.0" y="290" text-anchor="middle">21</text><line class="chart-grid" x1="482.0" y1="32" x2="482.0" y2="276"/><text class="chart-tick" x="482.0" y="290" text-anchor="middle">32.55</text><line class="chart-grid" x1="624.0" y1="32" x2="624.0" y2="276"/><text class="chart-tick" x="624.0" y="290" text-anchor="middle">44.10</text><line class="chart-grid" x1="56" y1="276.0" x2="624" y2="276.0"/><text class="chart-tick" x="50" y="280.0" text-anchor="end">-2.90</text><line class="chart-grid" x1="56" y1="215.0" x2="624" y2="215.0"/><text class="chart-tick" x="50" y="219.0" text-anchor="end">24.05</text><line class="chart-grid" x1="56" y1="154.0" x2="624" y2="154.0"/><text class="chart-tick" x="50" y="158.0" text-anchor="end">51.00</text><line class="chart-grid" x1="56" y1="93.0" x2="624" y2="93.0"/><text class="chart-tick" x="50" y="97.0" text-anchor="end">77.95</text><line class="chart-grid" x1="56" y1="32.0" x2="624" y2="32.0"/><text class="chart-tick" x="50" y="36.0" text-anchor="end">104.90</text><g clip-path="url(#cap-recovery-clip)"><path class="chart-line chart-series-0" d="M81.8,43.1 L94.1,77.0 L106.4,144.9 L118.7,212.8 L131.0,242.3 L143.3,258.1 L167.9,264.9" style="--chart-color:var(--color-error)"/><circle class="chart-dot chart-series-0" cx="81.8" cy="43.1" r="2.5" style="--chart-color:var(--color-error)"><title>(0, 100)</title></circle><circle class="chart-dot chart-series-0" cx="94.1" cy="77.0" r="2.5" style="--chart-color:var(--color-error)"><title>(1, 85)</title></circle><circle class="chart-dot chart-series-0" cx="106.4" cy="144.9" r="2.5" style="--chart-color:var(--color-error)"><title>(2, 55)</title></circle><circle class="chart-dot chart-series-0" cx="118.7" cy="212.8" r="2.5" style="--chart-color:var(--color-error)"><title>(3, 25)</title></circle><circle class="chart-dot chart-series-0" cx="131.0" cy="242.3" r="2.5" style="--chart-color:var(--color-error)"><title>(4, 12)</title></circle><circle class="chart-dot chart-series-0" cx="143.3" cy="258.1" r="2.5" style="--chart-color:var(--color-error)"><title>(5, 5)</title></circle><circle class="chart-dot chart-series-0" cx="167.9" cy="264.9" r="2.5" style="--chart-color:var(--color-error)"><title>(7, 2)</title></circle><path class="chart-line chart-series-1" d="M81.8,43.1 L118.7,88.4 L167.9,144.9 L253.9,201.5 L340.0,235.5 L426.1,253.6" style="--chart-color:var(--color-warning)"/><circle class="chart-dot chart-series-1" cx="81.8" cy="43.1" r="2.5" style="--chart-color:var(--color-warning)"><title>(0, 100)</title></circle><circle class="chart-dot chart-series-1" cx="118.7" cy="88.4" r="2.5" style="--chart-color:var(--color-warning)"><title>(3, 80)</title></circle><circle class="chart-dot chart-series-1" cx="167.9" cy="144.9" r="2.5" style="--chart-color:var(--color-warning)"><title>(7, 55)</title></circle><circle class="chart-dot chart-series-1" cx="253.9" cy="201.5" r="2.5" style="--chart-color:var(--color-warning)"><title>(14, 30)</title></circle><circle class="chart-dot chart-series-1" cx="340.0" cy="235.5" r="2.5" style="--chart-color:var(--color-warning)"><title>(21, 15)</title></circle><circle class="chart-dot chart-series-1" cx="426.1" cy="253.6" r="2.5" style="--chart-color:var(--color-warning)"><title>(28, 7)</title></circle><path class="chart-line chart-series-2" d="M81.8,43.1 L167.9,99.7 L253.9,156.3 L340.0,201.5 L426.1,228.7 L598.2,246.8" style="--chart-color:var(--color-info)"/><circle class="chart-dot chart-series-2" cx="81.8" cy="43.1" r="2.5" style="--chart-color:var(--color-info)"><title>(0, 100)</title></circle><circle class="chart-dot chart-series-2" cx="167.9" cy="99.7" r="2.5" style="--chart-color:var(--color-info)"><title>(7, 75)</title></circle><circle class="chart-dot chart-series-2" cx="253.9" cy="156.3" r="2.5" style="--chart-color:var(--color-info)"><title>(14, 50)</title></circle><circle class="chart-dot chart-series-2" cx="340.0" cy="201.5" r="2.5" style="--chart-color:var(--color-info)"><title>(21, 30)</title></circle><circle class="chart-dot chart-series-2" cx="426.1" cy="228.7" r="2.5" style="--chart-color:var(--color-info)"><title>(28, 18)</title></circle><circle class="chart-dot chart-series-2" cx="598.2" cy="246.8" r="2.5" style="--chart-color:var(--color-info)"><title>(42, 10)</title></circle></g><line class="chart-axis" x1="56" y1="276" x2="624" y2="276"/><line class="chart-axis" x1="56" y1="32" x2="56" y2="276"/><text class="chart-axis-label" x="340" y="314" text-anchor="middle">day</text><text class="chart-axis-label" x="14" y="154" text-anchor="middle" transform="rotate(-90 14 154)">% with symptom</text></svg><div class="chart-legend"><span class="chart-legend-item chart-series-0" style="--chart-color:var(--color-error)"><span class="chart-legend-swatch"></span>Fever</span><span class="chart-legend-item chart-series-1" style="--chart-color:var(--color-warning)"><span class="chart-legend-swatch"></span>Productive cough</span><span class="chart-legend-item chart-series-2" style="--chart-color:var(--color-info)"><span class="chart-legend-swatch"></span>Fatigue</span></div></figure>
+<div class="mcq-clinical-vignette" id="mcv-2" data-widget="mcq-clinical-vignette" data-category="classic" data-hammer="3">
+  <div class="vignette-block">
+    <div class="vignette-text">A 68-year-old man with COPD on tiotropium presents to the ED with 3 days of productive cough, fever to 38.9°C, and pleuritic right-sided chest pain. RR 28, BP 102/64, HR 110, SpO2 92% on room air. Crackles and egophony in the right lower lung field. WBC 16,400 with left shift, BUN 22 mg/dL, creatinine 1.1. CXR shows right lower lobe consolidation. He is alert and oriented.</div>
+    <div class="key-info-chips">
+        <span class="chip">Age 68 (≥65 → +1 CURB-65)</span>
+        <span class="chip">BUN 22 mg/dL (&gt;19 → +1 CURB-65)</span>
+        <span class="chip">RR 28 (&lt;30 → 0)</span>
+        <span class="chip">BP 102/64 (&gt;90 SBP, &gt;60 DBP → 0)</span>
+        <span class="chip">Alert and oriented (no confusion → 0)</span>
+        <span class="chip">CURB-65 = 2</span>
+        <span class="chip">Has COPD comorbidity</span>
+    </div>
+  </div>
+  <div class="leading-question">What is the next best step in management?</div>
+  <ol class="options" type="A">
+      <li class="option" data-correct="false" data-option-letter="A" data-option-index="0">
+        <label class="option-label">
+          <input type="radio" name="mcv-2-opt" value="0" />
+          <span class="option-letter">A.</span>
+          <span class="option-text">A</span>
+        </label>
+        <div class="explanation" hidden>Wrong — CURB-65 of 2 indicates admission. Outpatient amoxicillin alone is insufficient even setting CURB aside (COPD comorbidity).</div>
+      </li>
+      <li class="option" data-correct="true" data-option-letter="B" data-option-index="1">
+        <label class="option-label">
+          <input type="radio" name="mcv-2-opt" value="1" />
+          <span class="option-letter">B.</span>
+          <span class="option-text">B</span>
+        </label>
+        <div class="explanation" hidden>Correct — CURB-65 = 2 (age + BUN) supports admission. Standard inpatient non-ICU empiric therapy is beta-lactam + macrolide.</div>
+      </li>
+      <li class="option" data-correct="false" data-option-letter="C" data-option-index="2">
+        <label class="option-label">
+          <input type="radio" name="mcv-2-opt" value="2" />
+          <span class="option-letter">C.</span>
+          <span class="option-text">C</span>
+        </label>
+        <div class="explanation" hidden>Overtreatment — CURB-65 = 2, no MRSA/Pseudomonas risk factors, hemodynamically stable. Reserve broad coverage for ICU-level severity with risk factors.</div>
+      </li>
+      <li class="option" data-correct="false" data-option-letter="D" data-option-index="3">
+        <label class="option-label">
+          <input type="radio" name="mcv-2-opt" value="3" />
+          <span class="option-letter">D.</span>
+          <span class="option-text">D</span>
+        </label>
+        <div class="explanation" hidden>PE not consistent with clear consolidation + productive cough + fever + leukocytosis. CXR findings + clinical picture establish CAP.</div>
+      </li>
+      <li class="option" data-correct="false" data-option-letter="E" data-option-index="4">
+        <label class="option-label">
+          <input type="radio" name="mcv-2-opt" value="4" />
+          <span class="option-letter">E.</span>
+          <span class="option-text">E</span>
+        </label>
+        <div class="explanation" hidden>Levofloxacin is correct outpatient option for COPD comorbidity, BUT CURB-65 = 2 mandates admission. The drug choice is right; the disposition is wrong.</div>
+      </li>
+  </ol>
+  <div class="mcv-controls">
+    <button type="button" class="check-button" data-action="check">Check</button>
+    <span class="mcv-feedback" role="status" aria-live="polite"></span>
+  </div>
+  <div class="hammer-chip" title="Difficulty">Hammer: ★★★ (3/3)</div>
+  <div class="attending-tip" hidden>
+    <strong>Attending Tip — Dr. Reyes:</strong>
+    <p>Step 2 CK loves combining CURB-65 with comorbidity. Always compute CURB-65 explicitly — the score determines disposition, comorbidity guides drug class.</p>
+  </div>
+  <script>
+  (function(){
+    var root = document.getElementById("mcv-2");
+    if (!root) return;
+    var optionEls = root.querySelectorAll('.option');
+    var radios = root.querySelectorAll('input[type="radio"][name="mcv-2-opt"]');
+    var btn = root.querySelector('[data-action="check"]');
+    var feedback = root.querySelector('.mcv-feedback');
+    var tip = root.querySelector('.attending-tip');
+    var locked = false;
+    btn.addEventListener('click', function(){
+      if (locked) return;
+      var selectedIdx = -1;
+      radios.forEach(function(r){ if (r.checked) selectedIdx = parseInt(r.value, 10); });
+      if (selectedIdx < 0) {
+        feedback.textContent = 'Pick an option first.';
+        feedback.className = 'mcv-feedback';
+        return;
+      }
+      var correctIdx = -1;
+      optionEls.forEach(function(el){
+        var idx = parseInt(el.getAttribute('data-option-index'), 10);
+        var isCorrect = el.getAttribute('data-correct') === 'true';
+        if (isCorrect) correctIdx = idx;
+        var exp = el.querySelector('.explanation');
+        if (exp) exp.hidden = false;
+        el.classList.remove('selected', 'correct', 'incorrect');
+        if (isCorrect) el.classList.add('correct');
+        if (idx === selectedIdx && !isCorrect) el.classList.add('incorrect');
+        if (idx === selectedIdx) el.classList.add('selected');
+      });
+      var ok = selectedIdx === correctIdx;
+      feedback.textContent = ok ? 'Correct.' : 'Incorrect — see Attending Tip below.';
+      feedback.className = 'mcv-feedback ' + (ok ? 'correct' : 'incorrect');
+      if (tip) tip.hidden = false;
+      // Lock — no re-answer.
+      radios.forEach(function(r){ r.disabled = true; });
+      btn.disabled = true;
+      locked = true;
+    });
+  })();
+  </script>
+</div>
+<h3>Prognosis — what to tell the patient</h3><div class="step-cards" id="cap-prognosis"><div class="sc"><div class="sc-num">1</div><h5>Outpatient</h5><p>&lt;1% 30-day mortality. Most improve in 48-72 hours of appropriate abx.</p></div><div class="sc"><div class="sc-num">2</div><h5>Inpatient ward</h5><p>5-10% in-hospital mortality. Older / comorbid trend higher.</p></div><div class="sc"><div class="sc-num">3</div><h5>ICU</h5><p>15-30% mortality, higher with shock or ARDS. Mortality drops with timely (≤1hr from suspicion) antibiotics.</p></div><div class="sc"><div class="sc-num">4</div><h5>Long-term</h5><p>Cough can persist 4 weeks; fatigue often longer. Pulmonary fibrosis is rare. Reinfection risk slightly elevated for 12 months.</p></div></div>
+<div class="why-care" id="cap-references-note"><b>Why you care</b>References: IDSA/ATS 2019 CAP guidelines · UpToDate &#39;Community-acquired pneumonia in adults&#39; · AMBOSS CAP article · NEJM 2014;370:543-51 (Mandell, severity scoring).</div></section>
+
+  <footer class="colophon">
+    chiron · lessons/medicine-cap-step2ck-2026-05-23 · domain=medicine · specialty=internal-med · level=step-2-ck · atlas=[community-acquired-pneumonia] · built 2026-05-23T21:04:07.192Z
+  </footer>
+</main>
+
+<script>
+  (function(){
+    var p = new URLSearchParams(location.search).get('theme');
+    var s = localStorage.getItem('chiron-theme');
+    var t0 = p || s || 'clinical';
+    document.documentElement.setAttribute('data-theme', t0);
+    var sel = document.getElementById('theme');
+    if(sel){
+      sel.value = t0;
+      sel.addEventListener('change', function(){
+        document.documentElement.setAttribute('data-theme', sel.value);
+        localStorage.setItem('chiron-theme', sel.value);
+      });
+    }
+  })();
+</script>
+<script src="chiron-shell.js" defer></script>
+</body>
+</html>

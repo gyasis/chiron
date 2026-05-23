@@ -1,0 +1,18 @@
+{
+  "domain": "medicine",
+  "mode": "A",
+  "sourceType": "text",
+  "sourcePath": "source/cap-brief.md",
+  "sourceCopiedTo": "source/cap-brief.md",
+  "extractedText": "Community-acquired pneumonia (CAP) — Step 2 CK primer. Epidemiology ~5-6/1000 adults/yr. Typical: S. pneumoniae, H. influenzae, Moraxella. Atypical: Mycoplasma, Chlamydophila, Legionella. CXR confirms. CURB-65 / PSI stratify. Tx: outpatient amoxicillin/macrolide; inpatient beta-lactam + macrolide; ICU adds anti-MRSA/Pseudomonas if risk. Complications: empyema, abscess, sepsis, ARDS.",
+  "agentSourceProvenance": null,
+  "medicalSpecialty": "internal-med",
+  "medicalLevel": "step-2-ck",
+  "clinicalAtlasUnits": ["community-acquired-pneumonia"],
+  "metadata": {
+    "subject": "infectious-disease",
+    "audience": "Step 2 CK candidate — clinical-decision focus",
+    "wordCountSource": 380
+  },
+  "briefSchemaVersion": "1.0.0"
+}

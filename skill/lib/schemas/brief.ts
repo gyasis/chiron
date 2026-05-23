@@ -33,6 +33,11 @@ export const SourceTypeSchema = z.enum([
   'html-file',
   'agent-report',
   'bundle',
+  // 2026-05-23 — plain markdown/text brief, hand-written or extracted.
+  // Common case when a brief is composed directly rather than ingested
+  // from a PDF, repo, etc.
+  'text',
+  'markdown',
 ]);
 
 export type SourceType = z.infer<typeof SourceTypeSchema>;
