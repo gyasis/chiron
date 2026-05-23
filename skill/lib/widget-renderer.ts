@@ -2388,3 +2388,282 @@ registerRenderer('reactive-math', (widget) =>
 registerRenderer('true-false', (widget) =>
   renderTrueFalse(widget as TrueFalseWidget),
 );
+
+// ===========================================================================
+// Universal engagement primitives (v1 — added 2026-05-23).
+// Each renderer emits chiron-shell-compatible markup. Control buttons receive
+// both their widget-JS hook class AND the `.btn` / `.btn-primary` style class
+// (close the undocumented chiron-shell contract that bit us in v1 sandbox).
+// ===========================================================================
+
+type GroupChatAnimationWidget = Extract<WidgetSpec, { type: 'group-chat-animation' }>;
+type FlowAnimationWidget = Extract<WidgetSpec, { type: 'flow-animation' }>;
+type GlossaryTooltipsWidget = Extract<WidgetSpec, { type: 'glossary-tooltips' }>;
+type PatternCardsWidget = Extract<WidgetSpec, { type: 'pattern-cards' }>;
+type StepCardsWidget = Extract<WidgetSpec, { type: 'step-cards' }>;
+type FileTreeWidget = Extract<WidgetSpec, { type: 'file-tree' }>;
+type PermissionBadgeWidget = Extract<WidgetSpec, { type: 'permission-badge' }>;
+type LayerToggleWidget = Extract<WidgetSpec, { type: 'layer-toggle' }>;
+type WhyCareCalloutWidget = Extract<WidgetSpec, { type: 'why-care-callout' }>;
+type CodeEnglishTranslationWidget = Extract<WidgetSpec, { type: 'code-english-translation' }>;
+
+/** Default avatar color cycle (CSS variable references) — used when a chat
+ *  message doesn't override avatarColorVar. Order: accent → info → warm. */
+const AVATAR_COLOR_VARS = ['--chiron-accent', '--chiron-info', '--chiron-warm-accent', '--chiron-success'];
+
+/** group-chat-animation. Chiron-shell engine drives Next / Skip / Reset. */
+export function renderGroupChatAnimation(spec: GroupChatAnimationWidget): string {
+  const id = spec.id || nextWidgetId('chat');
+  const senderColors = new Map<string, string>();
+  spec.messages.forEach((m) => {
+    if (!senderColors.has(m.sender)) {
+      const fallback = AVATAR_COLOR_VARS[senderColors.size % AVATAR_COLOR_VARS.length];
+      senderColors.set(m.sender, m.avatarColorVar || fallback);
+    }
+  });
+  const msgsHtml = spec.messages
+    .map((m) => {
+      const colorVar = m.avatarColorVar || senderColors.get(m.sender)!;
+      return (
+        `<div class="chat-message" data-sender="${escapeHtml(m.sender)}" style="display:none">` +
+        `<div class="chat-avatar" style="background:var(${escapeHtml(colorVar)})">${escapeHtml(m.avatarChar)}</div>` +
+        `<div class="chat-bubble">` +
+        `<div class="chat-sender">${escapeHtml(m.senderLabel)}</div>` +
+        `<p>${m.body}</p>` +
+        `</div></div>`
+      );
+    })
+    .join('');
+  return (
+    (spec.title ? `<h4>${escapeHtml(spec.title)}</h4>` : '') +
+    (spec.framing ? `<p>${escapeHtml(spec.framing)}</p>` : '') +
+    `<div class="chat-window" id="${id}">` +
+    `<div class="chat-messages">${msgsHtml}</div>` +
+    `<div class="chat-typing" style="display:none">` +
+      `<div class="chat-avatar"></div>` +
+      `<div class="chat-typing-dots"><span></span><span></span><span></span></div>` +
+    `</div>` +
+    `<div class="chat-controls">` +
+      `<button class="btn btn-primary chat-next-btn">Next →</button>` +
+      `<button class="btn chat-all-btn">Skip to end</button>` +
+      `<button class="btn chat-reset-btn">Reset</button>` +
+      `<span class="chat-progress">0 / ${spec.messages.length} messages</span>` +
+    `</div></div>`
+  );
+}
+
+/** flow-animation. Chiron-shell engine consumes the data-steps JSON. */
+export function renderFlowAnimation(spec: FlowAnimationWidget): string {
+  const id = spec.id || nextWidgetId('flow');
+  const actorsHtml = spec.actors
+    .map(
+      (a) =>
+        `<div class="flow-actor" id="flow-${escapeHtml(a.id)}">` +
+        `<div class="flow-actor-icon">${escapeHtml(a.icon ?? '●')}</div>` +
+        `<span>${escapeHtml(a.label)}</span>` +
+        `</div>`,
+    )
+    .join('');
+  const stepsJson = JSON.stringify(
+    spec.steps.map((s) => ({
+      label: s.label,
+      ...(s.highlight ? { highlight: s.highlight } : {}),
+      ...(s.packet ? { packet: true } : {}),
+      ...(s.from ? { from: s.from } : {}),
+      ...(s.to ? { to: s.to } : {}),
+    })),
+  ).replace(/"/g, '&quot;');
+  return (
+    (spec.title ? `<h4>${escapeHtml(spec.title)}</h4>` : '') +
+    (spec.intro ? `<p>${escapeHtml(spec.intro)}</p>` : '') +
+    `<div class="flow-animation" id="${id}" data-steps="${stepsJson}">` +
+    `<div class="flow-actors">${actorsHtml}</div>` +
+    `<div class="flow-packet"></div>` +
+    `<div class="flow-step-label">Press Next to start.</div>` +
+    `<div class="flow-controls">` +
+      `<button class="btn btn-primary flow-next-btn">Next →</button>` +
+      `<button class="btn flow-reset-btn">Reset</button>` +
+      `<span class="flow-progress">Step 0 / ${spec.steps.length}</span>` +
+    `</div></div>`
+  );
+}
+
+/** glossary-tooltips. Emits a small index block + relies on shell's inline
+ *  .term / .term-tooltip pattern. Stage 4 prose can use class="term"
+ *  data-definition="..." inline; this widget provides the catalog. */
+export function renderGlossaryTooltips(spec: GlossaryTooltipsWidget): string {
+  const id = spec.id || nextWidgetId('gloss');
+  const rows = spec.entries
+    .map(
+      (e) =>
+        `<dt><span class="term" data-definition="${escapeHtml(e.definition)}">${escapeHtml(e.term)}</span></dt>` +
+        `<dd>${escapeHtml(e.definition)}</dd>`,
+    )
+    .join('');
+  return (
+    `<aside class="glossary-block" id="${id}">` +
+    `<h4>Glossary</h4>` +
+    `<dl>${rows}</dl>` +
+    `</aside>`
+  );
+}
+
+/** pattern-cards. */
+export function renderPatternCards(spec: PatternCardsWidget): string {
+  const id = spec.id || nextWidgetId('pcards');
+  const cards = spec.cards
+    .map(
+      (c) =>
+        `<div class="pattern-card">` +
+        (c.num ? `<span class="pc-num">${escapeHtml(c.num)}</span>` : '') +
+        `<h4>${escapeHtml(c.title)}</h4>` +
+        `<p class="pc-body">${escapeHtml(c.body)}</p>` +
+        (c.foot ? `<div class="pc-foot">${escapeHtml(c.foot)}</div>` : '') +
+        `</div>`,
+    )
+    .join('');
+  return (
+    (spec.title ? `<h3>${escapeHtml(spec.title)}</h3>` : '') +
+    `<div class="pattern-cards" id="${id}">${cards}</div>`
+  );
+}
+
+/** step-cards. */
+export function renderStepCards(spec: StepCardsWidget): string {
+  const id = spec.id || nextWidgetId('scards');
+  const cards = spec.steps
+    .map(
+      (s) =>
+        `<div class="sc">` +
+        `<div class="sc-num">${s.n}</div>` +
+        `<h5>${escapeHtml(s.label)}</h5>` +
+        `<p>${escapeHtml(s.body)}</p>` +
+        `</div>`,
+    )
+    .join('');
+  return (
+    (spec.title ? `<h3>${escapeHtml(spec.title)}</h3>` : '') +
+    `<div class="step-cards" id="${id}">${cards}</div>`
+  );
+}
+
+/** file-tree. */
+export function renderFileTree(spec: FileTreeWidget): string {
+  const id = spec.id || nextWidgetId('ftree');
+  const lines = spec.lines
+    .map((ln) => {
+      const cls = `ft-line ft-l${ln.depth}${ln.highlight ? ' highlight' : ''}`;
+      return (
+        `<div class="${cls}">` +
+        `<span class="ft-icon">${escapeHtml(ln.icon ?? '📁')}</span>` +
+        `<span class="ft-name">${escapeHtml(ln.name)}</span>` +
+        (ln.tag ? `<span class="ft-tag">${escapeHtml(ln.tag)}</span>` : '') +
+        `</div>`
+      );
+    })
+    .join('');
+  return (
+    (spec.title ? `<h4>${escapeHtml(spec.title)}</h4>` : '') +
+    `<div class="filetree" id="${id}">${lines}</div>`
+  );
+}
+
+/** permission-badge — atomic. */
+export function renderPermissionBadge(spec: PermissionBadgeWidget): string {
+  return `<span class="badge ${escapeHtml(spec.variant)}" id="${escapeHtml(spec.id || nextWidgetId('badge'))}">${escapeHtml(spec.label)}</span>`;
+}
+
+/** layer-toggle. Inline JS-free; relies on chiron-shell's binding on
+ *  .lt-btn → setAttribute('data-axis-show', btn.dataset.show). */
+export function renderLayerToggle(spec: LayerToggleWidget): string {
+  const id = spec.id || nextWidgetId('lt');
+  const buttons = spec.axes
+    .map(
+      (a) =>
+        `<button class="btn lt-btn${a.key === spec.defaultShow ? ' active' : ''}" data-show="${escapeHtml(a.key)}" type="button">${escapeHtml(a.label)}</button>`,
+    )
+    .join('');
+  const panels = spec.axes
+    .map(
+      (a) =>
+        `<div class="lt-axis-${escapeHtml(a.key)}">` +
+        `<b>${escapeHtml(a.title)}</b> — ${escapeHtml(a.body)}` +
+        `</div>`,
+    )
+    .join('');
+  // also add a "both" button
+  const bothBtn = `<button class="btn lt-btn${spec.defaultShow === 'both' ? ' active' : ''}" data-show="both" type="button">Both</button>`;
+  return (
+    `<div class="layer-toggle" id="${id}" data-axis-show="${escapeHtml(spec.defaultShow)}">` +
+    (spec.caption ? `<span class="lt-tag">${escapeHtml(spec.caption)}</span>` : '') +
+    `<div class="lt-buttons">${buttons}${bothBtn}</div>` +
+    panels +
+    `</div>`
+  );
+}
+
+/** why-care-callout. */
+export function renderWhyCareCallout(spec: WhyCareCalloutWidget): string {
+  return (
+    `<div class="why-care" id="${escapeHtml(spec.id || nextWidgetId('whycare'))}">` +
+    `<b>Why you care</b>` +
+    `${escapeHtml(spec.body)}` +
+    `</div>`
+  );
+}
+
+/** code-english-translation. CODE-ONLY. Row-tinted pairing baked in via
+ *  chiron-shell.css :nth-child(6n+N) selectors — no inline color logic. */
+export function renderCodeEnglishTranslation(spec: CodeEnglishTranslationWidget): string {
+  const id = spec.id || nextWidgetId('cet');
+  const codeLines = spec.pairs
+    .map((p) => `<div class="tl">${escapeHtml(p.code)}</div>`)
+    .join('');
+  const englishLines = spec.pairs
+    .map((p) => `<div class="tl">${escapeHtml(p.english)}</div>`)
+    .join('');
+  return (
+    `<div class="translation-block" id="${id}" data-language="${escapeHtml(spec.language)}">` +
+    `<div class="translation-code">` +
+      `<span class="translation-label">${escapeHtml(spec.codeLabel)}</span>` +
+      `<div class="translation-lines">${codeLines}</div>` +
+    `</div>` +
+    `<div class="translation-english">` +
+      `<span class="translation-label">${escapeHtml(spec.englishLabel)}</span>` +
+      `<div class="translation-lines">${englishLines}</div>` +
+    `</div>` +
+    `</div>`
+  );
+}
+
+// Register all 10 new renderers (overrides Wave-2 throwing stubs)
+registerRenderer('group-chat-animation', (w) =>
+  renderGroupChatAnimation(w as GroupChatAnimationWidget),
+);
+registerRenderer('flow-animation', (w) =>
+  renderFlowAnimation(w as FlowAnimationWidget),
+);
+registerRenderer('glossary-tooltips', (w) =>
+  renderGlossaryTooltips(w as GlossaryTooltipsWidget),
+);
+registerRenderer('pattern-cards', (w) =>
+  renderPatternCards(w as PatternCardsWidget),
+);
+registerRenderer('step-cards', (w) =>
+  renderStepCards(w as StepCardsWidget),
+);
+registerRenderer('file-tree', (w) =>
+  renderFileTree(w as FileTreeWidget),
+);
+registerRenderer('permission-badge', (w) =>
+  renderPermissionBadge(w as PermissionBadgeWidget),
+);
+registerRenderer('layer-toggle', (w) =>
+  renderLayerToggle(w as LayerToggleWidget),
+);
+registerRenderer('why-care-callout', (w) =>
+  renderWhyCareCallout(w as WhyCareCalloutWidget),
+);
+registerRenderer('code-english-translation', (w) =>
+  renderCodeEnglishTranslation(w as CodeEnglishTranslationWidget),
+);
