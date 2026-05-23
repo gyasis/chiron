@@ -1,0 +1,64 @@
+/*
+ * Chiron base theme tokens
+ *
+ * Default values applied at :root. Theme files override these under
+ * [data-theme="<name>"]. All Chiron shell + widget styles should consume
+ * these custom properties — never hardcode colors.
+ *
+ * Variable names ported from ClassBuild's themes.ts (see
+ * ~/dev/audits/classbuild/src/themes.ts) and renamed under the
+ * --chiron-* prefix for namespace safety.
+ */
+
+:root {
+  /* Surfaces */
+  --chiron-bg: #faf8f5;
+  --chiron-surface: #ffffff;
+  --chiron-elevated: #f0ebe4;
+
+  /* Foreground / text */
+  --chiron-fg: #1a1a1a;
+  --chiron-fg-secondary: #4a4a4a;
+  --chiron-muted: #7a7a7a;
+
+  /* Accents */
+  --chiron-accent: #1e3a5f;
+  --chiron-accent-light: #2d5986;
+  --chiron-warm-accent: #b45309;
+
+  /* Status */
+  --chiron-success: #166534;
+  --chiron-warning: #b45309;
+  --chiron-error: #b91c1c;
+  --chiron-info: #1e6fbf;
+
+  /* Borders / dividers */
+  --chiron-border: #e5e0d8;
+  --chiron-divider: #ede8df;
+
+  /* Typography */
+  --chiron-font-heading: 'Georgia', 'Times New Roman', serif;
+  --chiron-font-body: 'Georgia', 'Times New Roman', serif;
+  --chiron-font-mono: 'JetBrains Mono', 'Menlo', 'Consolas', monospace;
+
+  /* Spacing scale (rem) */
+  --chiron-space-1: 0.25rem;
+  --chiron-space-2: 0.5rem;
+  --chiron-space-3: 0.75rem;
+  --chiron-space-4: 1rem;
+  --chiron-space-6: 1.5rem;
+  --chiron-space-8: 2rem;
+
+  /* Radius */
+  --chiron-radius-sm: 4px;
+  --chiron-radius-md: 8px;
+  --chiron-radius-lg: 12px;
+
+  /* Shadow */
+  --chiron-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --chiron-shadow-md: 0 4px 6px rgba(0, 0, 0, 0.07);
+  --chiron-shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
+
+  /* Dark mode flag (overridden by themes) */
+  --chiron-is-dark: 0;
+}

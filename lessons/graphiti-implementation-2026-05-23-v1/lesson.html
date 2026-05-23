@@ -1,0 +1,907 @@
+<!doctype html>
+<html lang="en" data-theme="midnight">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Your Graphiti — the two-axis tour · Chiron v1 (gap-fix)</title>
+<link rel="stylesheet" href="themes/_tokens.css" />
+<link rel="stylesheet" href="themes/midnight.css" />
+<link rel="stylesheet" href="themes/warm-paper.css" />
+<link rel="stylesheet" href="themes/clinical.css" />
+<link rel="stylesheet" href="themes/linguistic.css" />
+<link rel="stylesheet" href="themes/ocean.css" />
+<link rel="stylesheet" href="chiron-shell.css" />
+<style>
+  /* Component layer — uses chiron shell tokens AND theme tokens. No hex literals. */
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;background:var(--chiron-bg); color:var(--chiron-fg)}
+  body{
+    font-family:var(--chiron-font-body, Georgia, serif);
+    font-size:16px;
+    line-height:1.6;
+    padding:0 0 80px;
+  }
+  a{color:var(--chiron-accent-light); text-underline-offset:3px}
+  strong{color:var(--chiron-fg)}
+  em{color:var(--chiron-fg-secondary)}
+
+  header.bar{
+    position:sticky; top:0; z-index:20;
+    display:flex; justify-content:space-between; align-items:center;
+    padding:10px 24px;
+    background:var(--chiron-surface);
+    border-bottom:1px solid var(--chiron-border);
+    font-family:'JetBrains Mono', ui-monospace, monospace;
+    font-size:11px;
+    letter-spacing:.08em;
+    text-transform:uppercase;
+  }
+  header.bar .pill{
+    display:inline-block; margin-left:8px;
+    padding:2px 8px;
+    background:var(--chiron-elevated); color:var(--chiron-fg-secondary);
+    border:1px solid var(--chiron-border); border-radius:99px;
+    text-transform:none; letter-spacing:.04em;
+  }
+  header.bar select{
+    background:var(--chiron-elevated); color:var(--chiron-fg);
+    border:1px solid var(--chiron-border);
+    padding:4px 8px; font-family:inherit; font-size:11px; border-radius:3px;
+  }
+
+  main.page{ max-width:880px; margin:0 auto; padding:36px 28px 60px; }
+  .hero{ padding:32px 0 24px; border-bottom:1px solid var(--chiron-border); margin-bottom:36px; }
+  .hero .kicker{
+    font-family:'JetBrains Mono', ui-monospace, monospace;
+    font-size:11px; letter-spacing:.18em; text-transform:uppercase;
+    color:var(--chiron-fg-secondary); margin-bottom:14px;
+  }
+  .hero h1{
+    font-family:var(--chiron-font-heading);
+    font-size:42px; line-height:1.1; margin:0 0 14px;
+    color:var(--chiron-fg); letter-spacing:-0.01em;
+  }
+  .hero .lede{ font-size:18px; color:var(--chiron-fg-secondary); margin:0; max-width:62ch; }
+  .hero .audience{
+    margin-top:16px; padding:12px 16px;
+    border:1px dashed var(--chiron-border); border-radius:4px;
+    background:var(--chiron-elevated);
+    font-size:14px; color:var(--chiron-fg);
+  }
+  .hero .audience b{
+    display:block; font-family:'JetBrains Mono', ui-monospace, monospace;
+    font-size:10px; letter-spacing:.14em; text-transform:uppercase;
+    color:var(--chiron-warm-accent); margin-bottom:6px;
+  }
+
+  section.chapter{ padding:36px 0; border-bottom:1px solid var(--chiron-divider); }
+  section.chapter:last-of-type{ border-bottom:none; }
+  section.chapter .chap-id{
+    font-family:'JetBrains Mono', ui-monospace, monospace;
+    font-size:11px; letter-spacing:.18em; text-transform:uppercase;
+    color:var(--chiron-fg-secondary); margin-bottom:6px;
+  }
+  section.chapter h2{
+    font-family:var(--chiron-font-heading);
+    font-size:30px; line-height:1.15; margin:0 0 16px; color:var(--chiron-fg);
+  }
+  section.chapter h3{
+    font-family:var(--chiron-font-heading);
+    font-size:20px; margin:28px 0 10px; color:var(--chiron-fg);
+  }
+  section.chapter p{ margin:0 0 14px; }
+  section.chapter ul, section.chapter ol{ margin:6px 0 14px 22px; padding:0 }
+  section.chapter li{ margin-bottom:6px }
+  section.chapter code{
+    font-family:'JetBrains Mono', ui-monospace, monospace;
+    font-size:.92em; color:var(--chiron-warm-accent);
+  }
+
+  /* ── Why-care callout — codebase-to-course pattern ── */
+  .why-care{
+    margin:12px 0 22px; padding:12px 18px;
+    border-left:4px solid var(--chiron-warm-accent);
+    background:var(--chiron-elevated); border-radius:0 4px 4px 0;
+    font-size:14.5px; line-height:1.55;
+  }
+  .why-care b{
+    display:block; font-family:'JetBrains Mono', ui-monospace, monospace;
+    font-size:10px; letter-spacing:.14em; text-transform:uppercase;
+    color:var(--chiron-warm-accent); margin-bottom:6px;
+  }
+
+  /* ── Glossary terms — use chiron's .term/.term-tooltip from chiron-shell.css ── */
+  /* Tooltip styling lives in chiron-shell.css; we just need .term underline cue */
+  .term{ border-bottom:1px dotted var(--chiron-accent-light); cursor:help; }
+
+  /* ── Axis side-by-side and types grid (unchanged from v0) ── */
+  .axis-table{ display:grid; grid-template-columns:1fr 1fr; gap:14px; margin:16px 0 24px; }
+  .axis-table .axis{ border:1px solid var(--chiron-border); border-radius:4px; padding:14px 16px; background:var(--chiron-surface); }
+  .axis-table .axis h4{
+    font-family:'JetBrains Mono', ui-monospace, monospace;
+    font-size:11px; letter-spacing:.14em; text-transform:uppercase;
+    color:var(--chiron-fg-secondary); margin:0 0 8px;
+  }
+  .axis-table .axis .label{ font-family:var(--chiron-font-heading); font-size:22px; color:var(--chiron-fg); margin-bottom:6px; font-weight:600; }
+  .axis-table .axis .role{ font-style:italic; color:var(--chiron-fg-secondary); margin-bottom:8px; }
+  .axis-table .axis ul{ margin:0; padding-left:18px; font-size:14px; }
+
+  .types{ display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:12px; margin:18px 0 24px; }
+  .types .t{ border:1px solid var(--chiron-border); padding:12px 14px 14px; background:var(--chiron-surface); border-radius:4px; }
+  .types .t h4{ font-family:var(--chiron-font-heading); font-size:18px; margin:0 0 6px; color:var(--chiron-accent-light); }
+  .types .t .ex{
+    font-family:'JetBrains Mono', ui-monospace, monospace;
+    font-size:12px; color:var(--chiron-fg-secondary);
+    margin-top:6px; padding-top:6px; border-top:1px dashed var(--chiron-divider);
+  }
+  .types .t p{ margin:0; font-size:14px; }
+
+  .pull{
+    margin:20px 0; padding:14px 18px;
+    border-left:4px solid var(--chiron-accent);
+    background:var(--chiron-elevated);
+    font-size:17px; line-height:1.5;
+  }
+  .story{
+    border-left:3px solid var(--chiron-warm-accent);
+    padding:8px 16px; margin:14px 0;
+    background:var(--chiron-surface);
+  }
+  .story h4{ font-family:var(--chiron-font-heading); margin:0 0 4px; font-size:18px; color:var(--chiron-fg); }
+  .story .arc{
+    font-family:'JetBrains Mono', ui-monospace, monospace;
+    font-size:10.5px; letter-spacing:.14em; text-transform:uppercase;
+    color:var(--chiron-fg-secondary); margin-bottom:6px;
+  }
+  .callout{
+    margin:18px 0; padding:12px 16px;
+    border:1px solid var(--chiron-accent);
+    background:var(--chiron-elevated); border-radius:4px; font-size:14.5px;
+  }
+  .callout b{
+    display:block; font-family:'JetBrains Mono', ui-monospace, monospace;
+    font-size:10px; letter-spacing:.14em; text-transform:uppercase;
+    color:var(--chiron-accent-light); margin-bottom:6px;
+  }
+  .callout.warn{ border-color:var(--chiron-warning); }
+  .callout.warn b{ color:var(--chiron-warning); }
+  .callout.danger{ border-color:var(--chiron-error); }
+  .callout.danger b{ color:var(--chiron-error); }
+  .callout.good{ border-color:var(--chiron-success); }
+  .callout.good b{ color:var(--chiron-success); }
+  table.matrix{ width:100%; border-collapse:collapse; margin:14px 0 20px; font-size:14px; }
+  table.matrix th, table.matrix td{ border:1px solid var(--chiron-border); padding:8px 10px; text-align:left; vertical-align:top; }
+  table.matrix th{ background:var(--chiron-elevated); font-family:'JetBrains Mono', ui-monospace, monospace; font-size:11px; letter-spacing:.1em; text-transform:uppercase; color:var(--chiron-fg-secondary); }
+  .toc{
+    border:1px solid var(--chiron-border); background:var(--chiron-surface);
+    padding:14px 18px; border-radius:4px; margin:0 0 32px;
+  }
+  .toc h3{
+    font-family:'JetBrains Mono', ui-monospace, monospace;
+    font-size:11px; letter-spacing:.18em; text-transform:uppercase;
+    color:var(--chiron-fg-secondary); margin:0 0 10px;
+  }
+  .toc ol{ margin:0; padding-left:20px; }
+  .toc li{ margin:4px 0; font-size:15px; }
+  .toc li a{ color:var(--chiron-fg); text-decoration:none; }
+  footer.colophon{
+    margin-top:48px; padding-top:18px;
+    border-top:1px solid var(--chiron-border);
+    color:var(--chiron-fg-secondary); font-size:12.5px;
+    font-family:'JetBrains Mono', ui-monospace, monospace; letter-spacing:.04em;
+  }
+
+  /* Translation block: BOTH panes stay dark (theme-driven). Drop the underline grid.
+     Pair code-row N to english-row N via cycling low-opacity tints — the colors
+     are line-pairing cues so the eye matches code line → English explanation. */
+  .translation-code .tl,
+  .translation-english .tl{
+    border-bottom: none;
+    padding: 5px 10px;
+    border-radius: 2px;
+    margin: 1px 0;
+  }
+  /* Six-color cycle at full saturation — highlighter-marker effect.
+     Bright pastels force dark text on top for contrast (otherwise the light Catppuccin
+     code colors would disappear into the bright bg). Identical position-N both sides. */
+  .translation-code .tl:nth-child(6n+1),
+  .translation-english .tl:nth-child(6n+1){ background: rgb(243,139,168); }   /* pink   */
+  .translation-code .tl:nth-child(6n+2),
+  .translation-english .tl:nth-child(6n+2){ background: rgb(250,179,135); }   /* peach  */
+  .translation-code .tl:nth-child(6n+3),
+  .translation-english .tl:nth-child(6n+3){ background: rgb(166,227,161); }   /* green  */
+  .translation-code .tl:nth-child(6n+4),
+  .translation-english .tl:nth-child(6n+4){ background: rgb(148,226,213); }   /* teal   */
+  .translation-code .tl:nth-child(6n+5),
+  .translation-english .tl:nth-child(6n+5){ background: rgb(137,180,250); }   /* blue   */
+  .translation-code .tl:nth-child(6n+6),
+  .translation-english .tl:nth-child(6n+6){ background: rgb(203,166,247); }   /* mauve  */
+  /* Force dark text on the bright tinted rows — overrides chiron-shell's light code colors
+     for these rows only, so contrast stays clean. */
+  .translation-code .tl,
+  .translation-english .tl{
+    color: #14111a !important;
+    font-weight: 500;
+  }
+  /* Inline <code> + <strong> inside .tl also need the dark color */
+  .translation-code .tl *,
+  .translation-english .tl *{ color: #14111a !important; }
+  /* Strong left bar on English side so the row pairing is unambiguous on quick scan */
+  .translation-english .tl{ border-left: 4px solid transparent; padding-left: 14px; }
+  .translation-english .tl:nth-child(6n+1){ border-left-color: rgba(243,139,168,.90); }
+  .translation-english .tl:nth-child(6n+2){ border-left-color: rgba(250,179,135,.90); }
+  .translation-english .tl:nth-child(6n+3){ border-left-color: rgba(166,227,161,.90); }
+  .translation-english .tl:nth-child(6n+4){ border-left-color: rgba(148,226,213,.90); }
+  .translation-english .tl:nth-child(6n+5){ border-left-color: rgba(137,180,250,.90); }
+  .translation-english .tl:nth-child(6n+6){ border-left-color: rgba(203,166,247,.90); }
+
+  /* Chat windows: keep theme-driven backgrounds */
+  [data-theme="midnight"] .chat-window,
+  [data-theme="ocean"]    .chat-window{ background:var(--chiron-surface); }
+
+  /* ─────────────────────────────────────────────────────────────
+     Gap-closure widgets v2 — quizzes, dnd, layer toggle, file tree,
+     pattern cards, permission badges, numbered step cards.
+     Every selector token-driven so themes still swap cleanly.
+     ───────────────────────────────────────────────────────────── */
+
+  /* Quiz opt-out: ?quiz=off OR data-quiz="off" hides quiz blocks. */
+  [data-quiz="off"] .quiz-block,
+  [data-quiz="off"] .dnd-block{ display:none !important; }
+
+  /* Quiz block wrapper */
+  .quiz-block{
+    margin:20px 0;
+    padding:16px 18px;
+    border:1px solid var(--chiron-border);
+    border-radius:6px;
+    background:var(--chiron-surface);
+  }
+  .quiz-block .q-tag{
+    display:inline-block;
+    font-family:'JetBrains Mono', ui-monospace, monospace;
+    font-size:9.5px; letter-spacing:.16em; text-transform:uppercase;
+    color:var(--chiron-warm-accent);
+    margin-bottom:6px;
+  }
+  .quiz-block .quiz-question{
+    font-family:var(--chiron-font-heading);
+    font-size:17px; margin:0 0 12px; color:var(--chiron-fg);
+  }
+  .quiz-block .quiz-options{ display:flex; flex-direction:column; gap:6px; margin-bottom:10px; }
+  .quiz-block .quiz-option{
+    text-align:left;
+    padding:10px 12px;
+    background:var(--chiron-elevated);
+    color:var(--chiron-fg);
+    border:1px solid var(--chiron-border);
+    border-radius:4px;
+    font:inherit; font-size:14px;
+    cursor:pointer;
+  }
+  .quiz-block .quiz-option:hover:not(:disabled){ border-color:var(--chiron-accent-light); }
+  .quiz-block .quiz-option.selected{ border-color:var(--chiron-accent); background:var(--chiron-elevated); }
+  .quiz-block .quiz-option.correct{ border-color:var(--chiron-success); background:rgba(34,197,94,.10); }
+  .quiz-block .quiz-option.incorrect{ border-color:var(--chiron-error); background:rgba(239,68,68,.10); }
+  .quiz-block .quiz-feedback{
+    display:none; padding:10px 12px; border-radius:4px;
+    font-size:13.5px; line-height:1.5; margin-top:8px;
+    background:var(--chiron-elevated); color:var(--chiron-fg);
+  }
+  .quiz-block .quiz-feedback.show{ display:block; }
+  .quiz-block .check-btn{
+    padding:6px 14px; font-family:inherit; font-size:13px;
+    border:1px solid var(--chiron-accent); background:var(--chiron-accent); color:#fff;
+    border-radius:4px; cursor:pointer; margin-top:4px;
+  }
+
+  /* Drag-and-drop block (Ch3) */
+  .dnd-block{
+    margin:20px 0; padding:16px 18px;
+    border:1px solid var(--chiron-border); border-radius:6px;
+    background:var(--chiron-surface);
+  }
+  .dnd-block h4{
+    font-family:var(--chiron-font-heading);
+    font-size:17px; margin:0 0 6px; color:var(--chiron-fg);
+  }
+  .dnd-block .dnd-instructions{
+    font-style:italic; color:var(--chiron-fg-secondary);
+    font-size:13.5px; margin-bottom:14px;
+  }
+  .dnd-chips{ display:flex; flex-wrap:wrap; gap:8px; padding:12px; background:var(--chiron-elevated); border-radius:4px; margin-bottom:14px; }
+  .dnd-chip{
+    padding:6px 10px; background:var(--chiron-surface); color:var(--chiron-fg);
+    border:1px solid var(--chiron-border); border-radius:99px;
+    font-size:13px; cursor:grab;
+    font-family:'JetBrains Mono', ui-monospace, monospace;
+  }
+  .dnd-chip:active{ cursor:grabbing; }
+  .dnd-chip.placed{ opacity:.35; pointer-events:none; }
+  .dnd-zones{ display:grid; grid-template-columns:repeat(auto-fit, minmax(160px, 1fr)); gap:10px; }
+  .dnd-zone-label{ font-size:12px; color:var(--chiron-fg-secondary); margin-bottom:4px; font-family:'JetBrains Mono', ui-monospace, monospace; }
+  .dnd-zone-target{
+    min-height:60px; padding:10px;
+    border:2px dashed var(--chiron-border); border-radius:4px;
+    background:var(--chiron-elevated); color:var(--chiron-fg-secondary);
+    font-size:13px; display:flex; align-items:center; justify-content:center; text-align:center;
+  }
+  .dnd-zone-target.drag-over{ border-color:var(--chiron-accent); }
+  .dnd-zone-target.correct-placed{ border-color:var(--chiron-success); border-style:solid; background:rgba(34,197,94,.10); color:var(--chiron-success); font-weight:600; }
+  .dnd-zone-target.incorrect-placed{ border-color:var(--chiron-error); border-style:solid; background:rgba(239,68,68,.10); }
+
+  /* Layer-toggle (Ch1) */
+  .layer-toggle{
+    margin:14px 0 18px;
+    padding:14px 16px;
+    border:1px solid var(--chiron-border); border-radius:6px;
+    background:var(--chiron-surface);
+  }
+  .layer-toggle .lt-tag{
+    display:block;
+    font-family:'JetBrains Mono', ui-monospace, monospace;
+    font-size:10px; letter-spacing:.14em; text-transform:uppercase;
+    color:var(--chiron-fg-secondary); margin-bottom:8px;
+  }
+  .layer-toggle .lt-buttons{ display:flex; gap:6px; margin-bottom:12px; flex-wrap:wrap; }
+  .layer-toggle button.lt-btn{
+    padding:5px 12px; font-family:inherit; font-size:13px;
+    background:var(--chiron-elevated); color:var(--chiron-fg);
+    border:1px solid var(--chiron-border); border-radius:99px;
+    cursor:pointer;
+  }
+  .layer-toggle button.lt-btn.active{
+    background:var(--chiron-accent); color:#fff; border-color:var(--chiron-accent);
+  }
+  /* Toggle behavior via [data-axis-show] on the layer-toggle root */
+  .layer-toggle[data-axis-show="1"] .lt-axis-2,
+  .layer-toggle[data-axis-show="2"] .lt-axis-1{ display:none; }
+  .layer-toggle .lt-axis-1,
+  .layer-toggle .lt-axis-2{
+    padding:10px 14px;
+    background:var(--chiron-elevated);
+    border-left:3px solid var(--chiron-accent-light);
+    border-radius:0 4px 4px 0;
+    margin-bottom:8px;
+    font-size:14px;
+  }
+  .layer-toggle .lt-axis-1 b,
+  .layer-toggle .lt-axis-2 b{
+    font-family:'JetBrains Mono', ui-monospace, monospace;
+    color:var(--chiron-accent-light);
+  }
+
+  /* Visual file tree (Ch4) */
+  .filetree{
+    margin:14px 0;
+    padding:12px 14px;
+    background:var(--chiron-surface); border:1px solid var(--chiron-border);
+    border-radius:6px;
+    font-family:'JetBrains Mono', ui-monospace, monospace;
+    font-size:12.5px;
+    line-height:1.7;
+    color:var(--chiron-fg);
+  }
+  .filetree .ft-line{ display:flex; gap:6px; }
+  .filetree .ft-line .ft-icon{ width:14px; opacity:.7; color:var(--chiron-accent-light); }
+  .filetree .ft-line .ft-name{ flex:1 1 auto; }
+  .filetree .ft-line .ft-tag{
+    font-size:10px; letter-spacing:.08em; text-transform:uppercase;
+    color:var(--chiron-fg-secondary); align-self:center;
+    padding:1px 6px; border:1px solid var(--chiron-border); border-radius:99px;
+  }
+  .filetree .ft-line.ft-l1{ padding-left:0; }
+  .filetree .ft-line.ft-l2{ padding-left:18px; }
+  .filetree .ft-line.ft-l3{ padding-left:36px; }
+  .filetree .ft-line.highlight{ background:rgba(245,158,11,.08); border-radius:3px; }
+
+  /* Permission / cost badges */
+  .badge{
+    display:inline-block;
+    padding:2px 7px;
+    border-radius:99px;
+    font-family:'JetBrains Mono', ui-monospace, monospace;
+    font-size:10px; letter-spacing:.08em; text-transform:uppercase;
+    border:1px solid currentColor;
+    vertical-align:middle;
+  }
+  .badge.free{ color:var(--chiron-success); }
+  .badge.paid{ color:var(--chiron-warning); }
+  .badge.hot { color:var(--chiron-error); }
+  .badge.read{ color:var(--chiron-info); }
+
+  /* Pattern / feature cards (Ch5) */
+  .pattern-cards{
+    display:grid;
+    grid-template-columns:repeat(auto-fit, minmax(260px, 1fr));
+    gap:12px;
+    margin:14px 0 22px;
+  }
+  .pattern-card{
+    border:1px solid var(--chiron-border);
+    border-radius:6px;
+    padding:14px 16px;
+    background:var(--chiron-surface);
+    display:flex; flex-direction:column; gap:8px;
+  }
+  .pattern-card .pc-num{
+    font-family:'JetBrains Mono', ui-monospace, monospace;
+    font-size:10px; letter-spacing:.16em; text-transform:uppercase;
+    color:var(--chiron-warm-accent);
+  }
+  .pattern-card h4{
+    font-family:var(--chiron-font-heading);
+    font-size:18px; margin:0; color:var(--chiron-fg);
+  }
+  .pattern-card .pc-body{ font-size:13.5px; line-height:1.5; color:var(--chiron-fg-secondary); margin:0; }
+  .pattern-card .pc-foot{
+    border-top:1px dashed var(--chiron-divider);
+    padding-top:6px;
+    font-size:12px;
+    color:var(--chiron-fg-secondary);
+    font-style:italic;
+  }
+
+  /* Numbered step cards (Ch4 static companion to flow) */
+  .step-cards{
+    display:grid;
+    grid-template-columns:repeat(auto-fit, minmax(180px, 1fr));
+    gap:10px;
+    margin:14px 0 22px;
+  }
+  .step-cards .sc{
+    padding:12px 14px;
+    border:1px solid var(--chiron-border);
+    border-radius:6px;
+    background:var(--chiron-surface);
+    position:relative;
+  }
+  .step-cards .sc .sc-num{
+    font-family:var(--chiron-font-heading);
+    font-size:30px; line-height:1;
+    color:var(--chiron-accent);
+    margin-bottom:6px;
+  }
+  .step-cards .sc h5{
+    font-family:'JetBrains Mono', ui-monospace, monospace;
+    font-size:10px; letter-spacing:.14em; text-transform:uppercase;
+    margin:0 0 4px;
+    color:var(--chiron-fg-secondary);
+  }
+  .step-cards .sc p{ font-size:13.5px; margin:0; color:var(--chiron-fg); }
+
+  @media print{ header.bar{ display:none } }
+  :root{ --chiron-paper: white; --chiron-ink: black; }
+</style>
+</head>
+<body>
+
+<header class="bar">
+  <div class="title">Graphiti, your way <span class="pill">code · mode A · v1 gap-fix</span></div>
+  <div class="theme-pick">
+    <label for="theme">Theme</label>
+    <select id="theme">
+      <option value="midnight">Midnight</option>
+      <option value="warm-paper">Warm paper</option>
+      <option value="clinical">Clinical</option>
+      <option value="linguistic">Linguistic</option>
+      <option value="ocean">Ocean</option>
+    </select>
+  </div>
+</header>
+
+<main class="page">
+
+  <section class="hero">
+    <div class="kicker">Chiron · Code · 2026-05-23 · Mode A · v1 (gap-fix sandbox)</div>
+    <h1>Your Graphiti — the two-axis tour</h1>
+    <p class="lede">You've been treating <code>group_ids</code> and <code>entity_types</code> as one thing. They aren't. Here's what each really does — with live demos of how you actually <em>use</em> them.</p>
+    <div class="audience">
+      <b>If you've never touched a knowledge graph before</b>
+      <span class="term" data-definition="A knowledge graph stores facts as nodes (things) and edges (relationships between things) rather than as rows in a table. Think of Wikipedia's 'links between articles' — but searchable like a database.">Knowledge graphs</span> sound abstract. They're easier than they look once you see the two coordinates: <strong>which world</strong> (the namespace) and <strong>what shape</strong> (the type). Every search hits both. Most people only ever use one.
+    </div>
+  </section>
+
+  <nav class="toc">
+    <h3>Six chapters</h3>
+    <ol>
+      <li><a href="#ch1">The two-axis insight</a></li>
+      <li><a href="#ch2">Axis 1 — group_ids (the namespace)</a></li>
+      <li><a href="#ch3">Axis 2 — entity_types (the five categories)</a></li>
+      <li><a href="#ch4">The cascade — how a query actually runs</a></li>
+      <li><a href="#ch5">What's possible</a></li>
+      <li><a href="#ch6">Four stories</a></li>
+    </ol>
+  </nav>
+
+  <!-- CH 1 -->
+  <section class="chapter" id="ch1">
+    <div class="chap-id">Chapter 1 / 6</div>
+    <h2>The two-axis insight</h2>
+
+    <div class="why-care">
+      <b>Why you care</b>
+      You're about to invest minutes-to-hours into deciding how to organise everything you save. Picking the wrong axis-mental-model means your queries return noise forever and you can't fix it without a data migration. Five minutes here saves you those queries.
+    </div>
+
+    <p>
+      Knowledge-graph systems collapse easily in your head: <em>"it's where I save things."</em>
+      But Graphiti — like every <span class="term" data-definition="A piece of software you run somewhere else (a server, the cloud) that your code talks to. The 'backend' of your memory system is just the storage software it actually uses.">memory backend</span> worth using —
+      has two independent coordinates. Mix them up and you'll either over-share data across contexts or starve a query you should have been able to answer.
+    </p>
+
+    <div class="axis-table">
+      <div class="axis">
+        <h4>Axis 1 — namespace</h4>
+        <div class="label">group_ids</div>
+        <div class="role">"Which world"</div>
+        <ul>
+          <li>Lets you ask: "answer only from <em>this</em> world."</li>
+          <li>You write <strong>once</strong> to a group; every query must declare which group(s).</li>
+          <li>Today: one value — <code>developer_gyasisutton</code>.</li>
+        </ul>
+      </div>
+      <div class="axis">
+        <h4>Axis 2 — domain</h4>
+        <div class="label">entity_types</div>
+        <div class="role">"What shape"</div>
+        <ul>
+          <li>Lets you ask: "what's my <em>workflow</em> for X" not "anything about X."</li>
+          <li>Five categories only. Hard-defined, not free-text.</li>
+          <li>This is where your real domain modelling lives.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="pull"><em>Axis 1 is "which world." Axis 2 is "what shape."</em></div>
+  </section>
+
+  <!-- CH 2 — code↔english translation gap-fix -->
+  <section class="chapter" id="ch2">
+    <div class="chap-id">Chapter 2 / 6</div>
+    <h2>Axis 1 — <code>group_ids</code>: the namespace</h2>
+
+    <div class="why-care">
+      <b>Why you care</b>
+      Every query you'll ever make has to declare a <span class="term" data-definition="A namespace is a 'last-name' for data. Two things with the same first name (e.g., 'invoices') but different namespaces are different things. Programming languages, databases, and graph stores all use namespaces to keep collisions from happening.">namespace</span>. If you don't understand what a group_id is, you'll either silently bleed personal data into work queries or vice versa.
+    </div>
+
+    <p>A <code>group_id</code> is a data partition. Two episodes in two different groups are invisible to each other unless a query explicitly names both groups. Think <span class="term" data-definition="A tenant is one customer's slice of a shared database — like everyone living in the same apartment building but only having keys to their own unit.">tenant</span>. Think Postgres schema. Think Notion workspace.</p>
+
+    <h3>Reading a real call — code on the left, English on the right</h3>
+    <div class="translation-block">
+      <div class="translation-code">
+<span class="translation-label">PYTHON</span>
+<div class="translation-lines">
+<div class="tl">mcp__graphiti__search_nodes(</div>
+<div class="tl">&nbsp;&nbsp;query="cube measure failing",</div>
+<div class="tl">&nbsp;&nbsp;group_ids=["developer_gyasisutton"],</div>
+<div class="tl">&nbsp;&nbsp;entity_types=["Workflow"],</div>
+<div class="tl">&nbsp;&nbsp;max_nodes=5</div>
+<div class="tl">)</div>
+</div>
+      </div>
+      <div class="translation-english">
+<span class="translation-label">PLAIN ENGLISH</span>
+<div class="translation-lines">
+<div class="tl">Ask Graphiti to look something up.</div>
+<div class="tl">The actual question you're asking, in plain English.</div>
+<div class="tl">Which "world" to look in. Today you only have one.</div>
+<div class="tl">What kind of thing. "Workflow" = multi-step processes only — skip preferences/findings/tool-tips.</div>
+<div class="tl">Don't return more than 5 results.</div>
+<div class="tl">Close the call.</div>
+</div>
+      </div>
+    </div>
+
+    <h3>What you could do with more namespaces</h3>
+    <table class="matrix">
+      <thead><tr><th>Hypothetical group_id</th><th>What lives there</th><th>Why partition</th></tr></thead>
+      <tbody>
+        <tr><td><code>developer_gyasisutton</code></td><td>Cross-project DNA (preferences, workflows, tool patterns)</td><td>Identity-level. Highest universality.</td></tr>
+        <tr><td><code>hh_dev_team</code></td><td>HH-only governance: dbt/Cube/Zeno rules, MDM joins, AP-010 zombie patterns</td><td>HH-specific work doesn't need to influence personal projects</td></tr>
+        <tr><td><code>sio_pipeline</code></td><td>SIO-discovered patterns that haven't earned cross-project universality</td><td>Quarantine: useful but not yet promoted</td></tr>
+        <tr><td><code>onboarding_machine_N</code></td><td>Per-machine bootstrap memory (paths, creds-by-location)</td><td>Travels with the laptop, not the developer</td></tr>
+      </tbody>
+    </table>
+
+    <div class="callout warn">
+      <b>Important caveat</b>
+      Multiple group_ids only earn their keep when queries get tighter. Don't split until a query actually needs the cut.
+    </div>
+  </section>
+
+  <!-- CH 3 — code↔english translation gap-fix #2 + drag-and-drop suggestion -->
+  <section class="chapter" id="ch3">
+    <div class="chap-id">Chapter 3 / 6</div>
+    <h2>Axis 2 — <code>entity_types</code>: the five categories</h2>
+
+    <div class="why-care">
+      <b>Why you care</b>
+      This is the lever most people miss. Searching with no <code>entity_types</code> filter means every preference, finding, and one-off pattern competes for relevance. Searching <strong>just</strong> for one type narrows the noise to "the kind of thing you actually need right now."
+    </div>
+
+    <p>Inside one group_id, every <span class="term" data-definition="In Graphiti, an episode is one chunk of information you saved — a single fact, workflow, or preference. Episodes are the 'rows' of the knowledge graph; nodes (entities) are extracted from episodes by an LLM.">episode</span> carries a type that says <em>what kind of knowledge</em> it is. Your rules nail it down to exactly five — no improvisation, no twelfth category for "stuff."</p>
+
+    <div class="types">
+      <div class="t">
+        <h4>Preference</h4>
+        <p>How you want things done. Coding style, tool choices, interaction style.</p>
+        <div class="ex">"Preference: ANSI SQL for Snowflake+Databricks"</div>
+      </div>
+      <div class="t">
+        <h4>Workflow</h4>
+        <p>Reusable multi-step processes. Setup patterns. Deployment recipes.</p>
+        <div class="ex">"Workflow: CREATE VIEW → GRANT SELECT → appears in Databricks"</div>
+      </div>
+      <div class="t">
+        <h4>ToolPattern</h4>
+        <p>Proven command/API call sequences. The "do X, then Y" patterns.</p>
+        <div class="ex">"ToolPattern: Superset auth → API call → verify result"</div>
+      </div>
+      <div class="t">
+        <h4>Recipe</h4>
+        <p>Documented fix patterns. Each one points at a file under <code>~/.claude/recipes/</code>.</p>
+        <div class="ex">"Recipe: Superset params must be JSON string."</div>
+      </div>
+      <div class="t">
+        <h4>Finding</h4>
+        <p>Atomic recurring facts: IDs, connection strings, auth tokens, project keys.</p>
+        <div class="ex">"Finding: Atlassian cloud ID is e29377f4-..."</div>
+      </div>
+    </div>
+
+    <h3>The same query, sharper</h3>
+    <div class="translation-block">
+      <div class="translation-code">
+<span class="translation-label">PYTHON · with the filter</span>
+<div class="translation-lines">
+<div class="tl">mcp__graphiti__search_nodes(</div>
+<div class="tl">&nbsp;&nbsp;query="how do I ship to Databricks",</div>
+<div class="tl">&nbsp;&nbsp;group_ids=["developer_gyasisutton"],</div>
+<div class="tl">&nbsp;&nbsp;entity_types=["Workflow"],</div>
+<div class="tl">&nbsp;&nbsp;max_nodes=5</div>
+<div class="tl">)</div>
+</div>
+      </div>
+      <div class="translation-english">
+<span class="translation-label">WHAT CHANGED</span>
+<div class="translation-lines">
+<div class="tl">Same ask, same world.</div>
+<div class="tl">Same question.</div>
+<div class="tl">Same namespace.</div>
+<div class="tl"><strong>The lever.</strong> Without it, you got 5 random hits across all 5 types. With it, you only get Workflows — the shape of answer you actually want.</div>
+<div class="tl">Same cap.</div>
+<div class="tl">Close.</div>
+</div>
+      </div>
+    </div>
+
+    <div class="pull"><em>group_ids partition the universe. entity_types shape the question.</em></div>
+  </section>
+
+  <!-- CH 4 — flow-animation gap-fix: cascade search -->
+  <section class="chapter" id="ch4">
+    <div class="chap-id">Chapter 4 / 6</div>
+    <h2>The cascade — how a query actually runs</h2>
+
+    <div class="why-care">
+      <b>Why you care</b>
+      Graphiti isn't called alone. It sits at the bottom of a four-step cascade. Knowing the order means you stop running expensive vector searches when a free literal grep would have answered the question.
+    </div>
+
+    <p>Press <strong>Next</strong> to walk the four steps. Each one is independent — the cheap free step often answers the question on its own.</p>
+
+    <div class="flow-animation" id="cascade-flow" data-steps='[
+      {"label":"Step 1 — ANCHOR. Run session-search over JSONL transcripts. 189 ms. FREE. Pulls dates, IDs, error codes as pivot hints.","highlight":"jsonl","packet":true,"from":"agent","to":"jsonl"},
+      {"label":"Step 2 — EXPAND. Use those pivots to query L2 (HybridRAG) and L3 (Graphiti) in parallel. Paid, but cheap.","highlight":"hybridrag","packet":true,"from":"jsonl","to":"hybridrag"},
+      {"label":"Step 2 cont. — Same pivots fan out to Graphiti.","highlight":"graphiti","packet":true,"from":"jsonl","to":"graphiti"},
+      {"label":"Step 3 — SYNTHESIZE. Agent connects findings, keeps the total under 2000 tokens of injected context.","highlight":"agent","packet":true,"from":"graphiti","to":"agent"},
+      {"label":"Step 4 — REFLECT. If findings contradict, flag for /memory-reconcile. Trust file memory over Graphiti.","highlight":"agent"}
+    ]'>
+      <div class="flow-actors">
+        <div class="flow-actor" id="flow-agent">
+          <div class="flow-actor-icon">🤖</div>
+          <span>Agent</span>
+        </div>
+        <div class="flow-actor" id="flow-jsonl">
+          <div class="flow-actor-icon">📀</div>
+          <span>JSONL (L1.5)</span>
+        </div>
+        <div class="flow-actor" id="flow-hybridrag">
+          <div class="flow-actor-icon">📚</div>
+          <span>HybridRAG (L2)</span>
+        </div>
+        <div class="flow-actor" id="flow-graphiti">
+          <div class="flow-actor-icon">🆔</div>
+          <span>Graphiti (L3)</span>
+        </div>
+      </div>
+      <div class="flow-packet"></div>
+      <div class="flow-step-label">Press Next to start.</div>
+      <div class="flow-controls">
+        <button class="btn btn-primary flow-next-btn">Next →</button>
+        <button class="btn flow-reset-btn">Reset</button>
+        <span class="flow-progress">Step 0 / 5</span>
+      </div>
+    </div>
+
+    <h3>Current state of your Graphiti (the L3 layer)</h3>
+    <ul>
+      <li><strong>1 group_id</strong> — <code>developer_gyasisutton</code>.</li>
+      <li><strong>5 allowed entity_types</strong> — the catalog above.</li>
+      <li><strong>Hard cap &lt; 30 episodes total</strong> — it's an <span class="term" data-definition="An ID card holds the smallest possible amount of essential identity info. That's the design metaphor for L3 Graphiti — a few high-signal facts, not a library.">ID card</span>, not a library.</li>
+      <li><strong>Admission test (BLOCKING):</strong> Universal? Low-churn? Behavioral? All three YES, else file memory only.</li>
+      <li><strong>Conflict resolution:</strong> File memory always wins over Graphiti in the current session.</li>
+    </ul>
+  </section>
+
+  <!-- CH 5 -->
+  <section class="chapter" id="ch5">
+    <div class="chap-id">Chapter 5 / 6</div>
+    <h2>What's possible</h2>
+
+    <div class="why-care">
+      <b>Why you care</b>
+      You've been using one axis (entity_types) cleanly and ignoring the other (group_ids). Six moves below — pick the ones that match where you actually feel friction.
+    </div>
+
+    <h3>Move 1 — Per-domain namespacing</h3>
+    <p>Spin up <code>hh_dev_team</code> as a second group_id. Migrate HH-only Workflows/Recipes/Findings there. Queries from inside HH work pass <code>group_ids=["developer_gyasisutton", "hh_dev_team"]</code>; queries from personal projects pass only the first. Personal projects no longer pick up "how to scaffold a Cube view" as relevant context.</p>
+
+    <h3>Move 2 — Multi-tenant simulation</h3>
+    <p>Use group_ids for <em>roles</em>: <code>role_pm</code>, <code>role_oncall</code>, <code>role_engineer</code>. Switch personas by switching the group_id. Same brain, different lens.</p>
+
+    <h3>Move 3 — Entity-type-only queries for routine work</h3>
+    <p>Build slash skills that bind to a single entity_type. <code>/find-workflow</code> only searches Workflows. <code>/find-recipe</code> only searches Recipes. Lower noise, faster convergence.</p>
+
+    <h3>Move 4 — Promotion pipelines</h3>
+    <p>Pair group_ids with the admission test to make promotion explicit. New patterns start in <code>sio_pipeline</code> (the holding tank), and only graduate to <code>developer_gyasisutton</code> when they pass Universal + Low-churn + Behavioral.</p>
+
+    <h3>Move 5 — Audit + reconcile by axis</h3>
+    <p>Audit just Workflows quarterly (they decay fastest), just Findings annually (they barely change), and just the smallest group_id whenever you suspect partition rot.</p>
+
+    <h3>Move 6 — Sharing without leakage</h3>
+    <p>If you ever ship a "Gyasi's setup" capability bundle to a teammate, you only export their relevant group_id. <code>developer_gyasisutton</code> stays private; <code>hh_dev_team</code> can ship if they're also on the HH stack.</p>
+  </section>
+
+  <!-- CH 6 — group chat animation gap-fix + stories -->
+  <section class="chapter" id="ch6">
+    <div class="chap-id">Chapter 6 / 6</div>
+    <h2>Four stories</h2>
+
+    <div class="why-care">
+      <b>Why you care</b>
+      Abstract leverage doesn't sell. Concrete Tuesday-morning scenarios do. Press <strong>Next</strong> in the chat below — this is the actual sequence of thoughts and tool calls when the levers click together.
+    </div>
+
+    <div class="story">
+      <div class="arc">Story 1 · Tuesday morning · HH dev session</div>
+      <h4>The Cube measure you "remember solving"</h4>
+      <p>You sit down to fix a Cube measure failing in CI. You vaguely recall debugging this six weeks ago. Watch what happens when entity_types filter is applied vs. not:</p>
+
+      <div class="chat-window" id="story1-chat">
+        <div class="chat-messages">
+
+          <div class="chat-message" data-sender="you" style="display:none">
+            <div class="chat-avatar" style="background:var(--chiron-accent)">G</div>
+            <div class="chat-bubble">
+              <div class="chat-sender">You</div>
+              <p>"Damn. Cube measure failing again. Pretty sure I solved this exact thing six weeks ago…"</p>
+            </div>
+          </div>
+
+          <div class="chat-message" data-sender="agent" style="display:none">
+            <div class="chat-avatar" style="background:var(--chiron-info)">🤖</div>
+            <div class="chat-bubble">
+              <div class="chat-sender">Agent (no filter)</div>
+              <p>Let me check Graphiti. <code>search_nodes(query="cube measure failing")</code> — 4 Preferences about coding style, 2 Findings about Atlassian IDs, 1 unrelated Workflow about Snowflake views… nothing useful. ⏳ 12 seconds gone.</p>
+            </div>
+          </div>
+
+          <div class="chat-message" data-sender="you" style="display:none">
+            <div class="chat-avatar" style="background:var(--chiron-accent)">G</div>
+            <div class="chat-bubble">
+              <div class="chat-sender">You</div>
+              <p>"Wait — filter by entity_types."</p>
+            </div>
+          </div>
+
+          <div class="chat-message" data-sender="agent" style="display:none">
+            <div class="chat-avatar" style="background:var(--chiron-info)">🤖</div>
+            <div class="chat-bubble">
+              <div class="chat-sender">Agent (with filter)</div>
+              <p><code>search_nodes(query="cube measure failing", entity_types=["Workflow","Recipe"])</code> — 1 Recipe. Top hit. ✓</p>
+            </div>
+          </div>
+
+          <div class="chat-message" data-sender="graphiti" style="display:none">
+            <div class="chat-avatar" style="background:var(--chiron-warm-accent)">🆔</div>
+            <div class="chat-bubble">
+              <div class="chat-sender">Graphiti</div>
+              <p>"Recipe: When `__time` dimension fails in Cube, swap to `__userId` granularity first. Path: ~/.claude/recipes/cube-time-dim-swap.md"</p>
+            </div>
+          </div>
+
+          <div class="chat-message" data-sender="you" style="display:none">
+            <div class="chat-avatar" style="background:var(--chiron-accent)">G</div>
+            <div class="chat-bubble">
+              <div class="chat-sender">You</div>
+              <p>"Yes. That's it. Fixed in three minutes."</p>
+            </div>
+          </div>
+
+        </div>
+
+        <div class="chat-typing" style="display:none">
+          <div class="chat-avatar"></div>
+          <div class="chat-typing-dots"><span></span><span></span><span></span></div>
+        </div>
+
+        <div class="chat-controls">
+          <button class="btn btn-primary chat-next-btn">Next →</button>
+          <button class="btn chat-all-btn">Skip to end</button>
+          <button class="btn chat-reset-btn">Reset</button>
+          <span class="chat-progress">0 / 6 messages</span>
+        </div>
+      </div>
+
+      <p><em>Lever: entity_types filter. Cost: zero. Saves: ten minutes per occurrence.</em></p>
+    </div>
+
+    <div class="story">
+      <div class="arc">Story 2 · Onboarding a new laptop</div>
+      <h4>The portable identity, the local quirks</h4>
+      <p>You set up a new MacBook. The cross-machine DNA — <code>developer_gyasisutton</code> — restores via <code>ab compose --capability claude-config-maintainer</code>. But the laptop also needs to know <em>"which paths exist on THIS machine?"</em> — your local Bitbucket clones, the Fusion venv, the ZENO_DIR drift workaround. Those go in <code>onboarding_machine_macbook2026</code>. They never pollute your other machine's queries.</p>
+      <p><em>Lever: group_ids as locality. Cost: one extra arg per query. Saves: ambient cross-machine confusion.</em></p>
+    </div>
+
+    <div class="story">
+      <div class="arc">Story 3 · A six-month-old preference resurfaces</div>
+      <h4>The drift detector</h4>
+      <p>SIO flags "agent keeps suggesting <code>gpt-4o</code> as default." You query <code>entity_types=["Preference"]</code> — five rows — and spot the January Preference that says <code>gpt-4o-mini</code> is the floor. The drift is real. Enrich (not duplicate) the existing node with the 2026-05-08 incident reasoning. Graph stays under 30 episodes.</p>
+      <p><em>Lever: entity_types as audit lens. Cost: one targeted query. Saves: silent rule decay.</em></p>
+    </div>
+
+    <div class="story">
+      <div class="arc">Story 4 · Sharing a capability with a teammate</div>
+      <h4>Public DNA, private DNA</h4>
+      <p>A teammate asks for your dbt-Cube setup. You don't want to hand over the contents of <code>developer_gyasisutton</code> — that's your interaction style, your home paths. But <code>hh_dev_team</code> is fair game. You export only that group. group_ids gave you a clean cut between "me" and "us."</p>
+      <p><em>Lever: group_ids as sharing boundary. Cost: maintaining one extra group. Saves: an awkward "let me sanitize this" review.</em></p>
+    </div>
+
+    <div class="callout danger">
+      <b>What NOT to do</b>
+      Don't shred your one group into eight tiny groups before queries actually need the cut. Partitioning is forever — un-partitioning is a manual data migration.
+    </div>
+
+    <div class="pull"><em>Today you have a 5-category, single-tenant graph. The leverage isn't to "add more" — it's to use the <strong>second</strong> axis you already have.</em></div>
+  </section>
+
+  <footer class="colophon">
+    chiron sandbox · code · mode A · 2026-05-23 · v1 (gap-fix experiment)<br>
+    Adds: code↔English translation blocks · group chat animation · flow animation · glossary tooltips · "why care" audience framing
+  </footer>
+</main>
+
+<script>
+  // Theme switcher
+  (function(){
+    var p = new URLSearchParams(location.search).get('theme');
+    var saved = localStorage.getItem('chiron-theme');
+    var initial = p || saved || 'midnight';
+    var html = document.documentElement;
+    html.setAttribute('data-theme', initial);
+    var sel = document.getElementById('theme');
+    if(sel){
+      sel.value = initial;
+      sel.addEventListener('change', function(){
+        html.setAttribute('data-theme', sel.value);
+        localStorage.setItem('chiron-theme', sel.value);
+      });
+    }
+  })();
+</script>
+<script src="chiron-shell.js" defer></script>
+</body>
+</html>

@@ -1,0 +1,604 @@
+<!doctype html>
+<html lang="en" data-theme="midnight">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Your Graphiti — the two-axis tour · Chiron</title>
+<link rel="stylesheet" href="themes/_tokens.css" />
+<link rel="stylesheet" href="themes/midnight.css" />
+<link rel="stylesheet" href="themes/warm-paper.css" />
+<link rel="stylesheet" href="themes/clinical.css" />
+<link rel="stylesheet" href="themes/linguistic.css" />
+<link rel="stylesheet" href="themes/ocean.css" />
+<style>
+  /* Component styles — all colors via var(--chiron-*). No hex literals here. */
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;background:var(--chiron-bg);color:var(--chiron-fg)}
+  body{
+    font-family:var(--chiron-font-body, Georgia, serif);
+    font-size:16px;
+    line-height:1.6;
+    padding:0 0 80px;
+    scroll-behavior:auto;
+  }
+  a{color:var(--chiron-accent-light); text-decoration:underline; text-underline-offset:3px}
+  code{
+    font-family:'JetBrains Mono', ui-monospace, monospace;
+    font-size:0.92em;
+    color:var(--chiron-warm-accent);
+  }
+  pre{
+    background:var(--chiron-elevated);
+    border:1px solid var(--chiron-border);
+    padding:14px 16px;
+    overflow:auto;
+    border-radius:4px;
+    font-family:'JetBrains Mono', ui-monospace, monospace;
+    font-size:13px;
+    line-height:1.5;
+    color:var(--chiron-fg);
+  }
+  pre code{color:inherit}
+  strong{color:var(--chiron-fg)}
+  em{color:var(--chiron-fg-secondary)}
+
+  /* Header bar */
+  header.bar{
+    position:sticky; top:0; z-index:10;
+    display:flex; justify-content:space-between; align-items:center;
+    padding:10px 24px;
+    background:var(--chiron-surface);
+    border-bottom:1px solid var(--chiron-border);
+    font-family:'JetBrains Mono', ui-monospace, monospace;
+    font-size:11px;
+    letter-spacing:.08em;
+    text-transform:uppercase;
+  }
+  header.bar .title{color:var(--chiron-fg)}
+  header.bar .pill{
+    display:inline-block;
+    margin-left:8px;
+    padding:2px 8px;
+    background:var(--chiron-elevated);
+    color:var(--chiron-fg-secondary);
+    border:1px solid var(--chiron-border);
+    border-radius:99px;
+    letter-spacing:.04em;
+    text-transform:none;
+  }
+  header.bar .theme-pick{display:flex; gap:6px; align-items:center}
+  header.bar select{
+    background:var(--chiron-elevated);
+    color:var(--chiron-fg);
+    border:1px solid var(--chiron-border);
+    padding:4px 8px;
+    font-family:inherit;
+    font-size:11px;
+    border-radius:3px;
+  }
+
+  main.page{ max-width:880px; margin:0 auto; padding:36px 28px 60px; }
+
+  /* Hero */
+  .hero{
+    padding:32px 0 24px;
+    border-bottom:1px solid var(--chiron-border);
+    margin-bottom:36px;
+  }
+  .hero .kicker{
+    font-family:'JetBrains Mono', ui-monospace, monospace;
+    font-size:11px;
+    letter-spacing:.18em;
+    text-transform:uppercase;
+    color:var(--chiron-fg-secondary);
+    margin-bottom:14px;
+  }
+  .hero h1{
+    font-family:var(--chiron-font-heading);
+    font-size:42px;
+    line-height:1.1;
+    margin:0 0 14px;
+    color:var(--chiron-fg);
+    letter-spacing:-0.01em;
+  }
+  .hero .lede{
+    font-size:18px;
+    color:var(--chiron-fg-secondary);
+    margin:0;
+    max-width:62ch;
+  }
+
+  /* Chapters */
+  section.chapter{ padding:36px 0; border-bottom:1px solid var(--chiron-divider); }
+  section.chapter:last-of-type{ border-bottom:none; }
+  section.chapter .chap-id{
+    font-family:'JetBrains Mono', ui-monospace, monospace;
+    font-size:11px;
+    letter-spacing:.18em;
+    text-transform:uppercase;
+    color:var(--chiron-fg-secondary);
+    margin-bottom:6px;
+  }
+  section.chapter h2{
+    font-family:var(--chiron-font-heading);
+    font-size:30px;
+    line-height:1.15;
+    margin:0 0 16px;
+    color:var(--chiron-fg);
+    letter-spacing:-0.005em;
+  }
+  section.chapter h3{
+    font-family:var(--chiron-font-heading);
+    font-size:20px;
+    margin:28px 0 10px;
+    color:var(--chiron-fg);
+  }
+  section.chapter p{ margin:0 0 14px; }
+  section.chapter ul, section.chapter ol{ margin:6px 0 14px 22px; padding:0 }
+  section.chapter li{ margin-bottom:6px }
+
+  /* Pull quote */
+  .pull{
+    margin:20px 0;
+    padding:14px 18px;
+    border-left:4px solid var(--chiron-accent);
+    background:var(--chiron-elevated);
+    font-size:17px;
+    line-height:1.5;
+  }
+  .pull em{color:var(--chiron-fg)}
+
+  /* Side-by-side axis table */
+  .axis-table{
+    display:grid;
+    grid-template-columns: 1fr 1fr;
+    gap:14px;
+    margin:16px 0 24px;
+  }
+  .axis-table .axis{
+    border:1px solid var(--chiron-border);
+    border-radius:4px;
+    padding:14px 16px;
+    background:var(--chiron-surface);
+  }
+  .axis-table .axis h4{
+    font-family:'JetBrains Mono', ui-monospace, monospace;
+    font-size:11px;
+    letter-spacing:.14em;
+    text-transform:uppercase;
+    color:var(--chiron-fg-secondary);
+    margin:0 0 8px;
+  }
+  .axis-table .axis .label{
+    font-family:var(--chiron-font-heading);
+    font-size:22px;
+    color:var(--chiron-fg);
+    margin-bottom:6px;
+    font-weight:600;
+  }
+  .axis-table .axis .role{
+    font-style:italic;
+    color:var(--chiron-fg-secondary);
+    margin-bottom:8px;
+  }
+  .axis-table .axis ul{ margin:0; padding-left:18px; font-size:14px; }
+
+  /* Entity-type cards */
+  .types{
+    display:grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap:12px;
+    margin:18px 0 24px;
+  }
+  .types .t{
+    border:1px solid var(--chiron-border);
+    padding:12px 14px 14px;
+    background:var(--chiron-surface);
+    border-radius:4px;
+  }
+  .types .t h4{
+    font-family:var(--chiron-font-heading);
+    font-size:18px;
+    margin:0 0 6px;
+    color:var(--chiron-accent-light);
+  }
+  .types .t .ex{
+    font-family:'JetBrains Mono', ui-monospace, monospace;
+    font-size:12px;
+    color:var(--chiron-fg-secondary);
+    margin-top:6px;
+    padding-top:6px;
+    border-top:1px dashed var(--chiron-divider);
+  }
+  .types .t p{ margin:0; font-size:14px; }
+
+  /* Callout */
+  .callout{
+    margin:18px 0;
+    padding:12px 16px;
+    border:1px solid var(--chiron-accent);
+    background:var(--chiron-elevated);
+    border-radius:4px;
+    font-size:14.5px;
+  }
+  .callout b{
+    display:block;
+    font-family:'JetBrains Mono', ui-monospace, monospace;
+    font-size:10px;
+    letter-spacing:.14em;
+    text-transform:uppercase;
+    color:var(--chiron-accent-light);
+    margin-bottom:6px;
+  }
+  .callout.warn{ border-color:var(--chiron-warning); }
+  .callout.warn b{ color:var(--chiron-warning); }
+  .callout.danger{ border-color:var(--chiron-error); }
+  .callout.danger b{ color:var(--chiron-error); }
+  .callout.good{ border-color:var(--chiron-success); }
+  .callout.good b{ color:var(--chiron-success); }
+
+  /* Stories */
+  .story{
+    border-left:3px solid var(--chiron-warm-accent);
+    padding:8px 16px;
+    margin:14px 0;
+    background:var(--chiron-surface);
+  }
+  .story h4{
+    font-family:var(--chiron-font-heading);
+    margin:0 0 4px;
+    font-size:18px;
+    color:var(--chiron-fg);
+  }
+  .story .arc{
+    font-family:'JetBrains Mono', ui-monospace, monospace;
+    font-size:10.5px;
+    letter-spacing:.14em;
+    text-transform:uppercase;
+    color:var(--chiron-fg-secondary);
+    margin-bottom:6px;
+  }
+
+  /* Decision matrix */
+  table.matrix{
+    width:100%;
+    border-collapse:collapse;
+    margin:14px 0 20px;
+    font-size:14px;
+  }
+  table.matrix th, table.matrix td{
+    border:1px solid var(--chiron-border);
+    padding:8px 10px;
+    text-align:left;
+    vertical-align:top;
+  }
+  table.matrix th{
+    background:var(--chiron-elevated);
+    font-family:'JetBrains Mono', ui-monospace, monospace;
+    font-size:11px;
+    letter-spacing:.1em;
+    text-transform:uppercase;
+    color:var(--chiron-fg-secondary);
+    font-weight:600;
+  }
+  table.matrix code{font-size:11.5px}
+
+  /* TOC */
+  .toc{
+    border:1px solid var(--chiron-border);
+    background:var(--chiron-surface);
+    padding:14px 18px;
+    border-radius:4px;
+    margin:0 0 32px;
+  }
+  .toc h3{
+    font-family:'JetBrains Mono', ui-monospace, monospace;
+    font-size:11px;
+    letter-spacing:.18em;
+    text-transform:uppercase;
+    color:var(--chiron-fg-secondary);
+    margin:0 0 10px;
+  }
+  .toc ol{ margin:0; padding-left:20px; }
+  .toc li{ margin:4px 0; font-size:15px; }
+  .toc li a{ color:var(--chiron-fg); text-decoration:none; }
+  .toc li a:hover{ color:var(--chiron-accent-light); }
+
+  /* Footer */
+  footer.colophon{
+    margin-top:48px;
+    padding-top:18px;
+    border-top:1px solid var(--chiron-border);
+    color:var(--chiron-fg-secondary);
+    font-size:12.5px;
+    font-family:'JetBrains Mono', ui-monospace, monospace;
+    letter-spacing:.04em;
+  }
+
+  @media print{
+    /* Force the warm-paper theme on paper, regardless of on-screen theme.
+       Avoids dark-theme black rectangles when user hits print. */
+    html{ --chiron-bg: var(--chiron-paper, white); --chiron-fg: var(--chiron-ink, black); }
+    header.bar{ display:none }
+    pre, .types .t, .axis-table .axis, .callout, .story, .toc, table.matrix{ break-inside:avoid; }
+  }
+  /* Print fallbacks — token aliases for paper white / ink black */
+  :root{ --chiron-paper: white; --chiron-ink: black; }
+</style>
+</head>
+<body>
+
+<header class="bar">
+  <div class="title">Graphiti, your way <span class="pill">code · mode A</span></div>
+  <div class="theme-pick">
+    <label for="theme">Theme</label>
+    <select id="theme" aria-label="Theme">
+      <option value="midnight">Midnight</option>
+      <option value="warm-paper">Warm paper</option>
+      <option value="clinical">Clinical</option>
+      <option value="linguistic">Linguistic</option>
+      <option value="ocean">Ocean</option>
+    </select>
+  </div>
+</header>
+
+<main class="page">
+
+  <section class="hero">
+    <div class="kicker">Chiron · Code · 2026-05-23 · Mode A</div>
+    <h1>Your Graphiti — the two-axis tour</h1>
+    <p class="lede">You're right about the concept, wrong about the mechanism. Graphiti gives you <strong>two</strong> orthogonal axes — <code>group_ids</code> and <code>entity_types</code> — and you've been treating them as one. Here's what each really does, what you have today, what you could have, and four stories about what to build next.</p>
+  </section>
+
+  <nav class="toc" aria-label="Contents">
+    <h3>Six chapters</h3>
+    <ol>
+      <li><a href="#ch1">The two-axis insight</a></li>
+      <li><a href="#ch2">Axis 1 — group_ids (the namespace)</a></li>
+      <li><a href="#ch3">Axis 2 — entity_types (the five categories)</a></li>
+      <li><a href="#ch4">What you have right now</a></li>
+      <li><a href="#ch5">What's possible</a></li>
+      <li><a href="#ch6">Four stories</a></li>
+    </ol>
+  </nav>
+
+  <!-- CH 1 -->
+  <section class="chapter" id="ch1">
+    <div class="chap-id">Chapter 1 / 6</div>
+    <h2>The two-axis insight</h2>
+    <p>Knowledge-graph systems collapse easily in your head: "it's where I save things." But Graphiti — like every memory backend worth using — has at least two independent coordinates. Conflate them and you'll either over-share data across contexts or starve a query you should have been able to answer.</p>
+
+    <div class="axis-table">
+      <div class="axis">
+        <h4>Axis 1 — namespace</h4>
+        <div class="label">group_ids</div>
+        <div class="role">Tenant / partition / "which world"</div>
+        <ul>
+          <li>Lets you ask: "answer only from <em>this</em> world."</li>
+          <li>You write <strong>once</strong> to a group; every query must declare which group(s).</li>
+          <li>Today: one value — <code>developer_gyasisutton</code>.</li>
+        </ul>
+      </div>
+      <div class="axis">
+        <h4>Axis 2 — domain</h4>
+        <div class="label">entity_types</div>
+        <div class="role">What kind of thing is this</div>
+        <ul>
+          <li>Lets you ask: "what's my <em>workflow</em> for X" not "anything about X."</li>
+          <li>Five categories only. Hard-defined, not free-text.</li>
+          <li>This is where your real domain modelling lives.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="pull">
+      <em>Axis 1 is "which world." Axis 2 is "what shape."</em> The mistake was treating "domain" as a synonym for "world." It isn't. Your domains are entity-types; your worlds are group_ids.
+    </div>
+  </section>
+
+  <!-- CH 2 -->
+  <section class="chapter" id="ch2">
+    <div class="chap-id">Chapter 2 / 6</div>
+    <h2>Axis 1 — <code>group_ids</code>: the namespace</h2>
+
+    <p>A group_id is a data partition. Two episodes in two different groups are invisible to each other unless a query explicitly names both groups. Think tenant. Think Postgres schema. Think Notion workspace.</p>
+
+    <h3>Your current state</h3>
+    <pre>$ mcp__graphiti__search_nodes(
+    query="...",
+    group_ids=["developer_gyasisutton"],   <em># one tenant only</em>
+    max_nodes=5
+)</pre>
+
+    <p>You have a single namespace: <code>developer_gyasisutton</code>. Everything universal you've ever recorded lives in there together. That's been fine for the <code>&lt;30 episodes</code> rule because at that size, partitioning would be over-engineering.</p>
+
+    <h3>What you could do with more namespaces</h3>
+    <table class="matrix">
+      <thead><tr><th>Hypothetical group_id</th><th>What lives there</th><th>Why partition</th></tr></thead>
+      <tbody>
+        <tr><td><code>developer_gyasisutton</code></td><td>Cross-project DNA (preferences, workflows, tool patterns)</td><td>Identity-level. Highest universality.</td></tr>
+        <tr><td><code>hh_dev_team</code></td><td>HH-only governance: dbt/Cube/Zeno rules, MDM joins, AP-010 zombie patterns</td><td>HH-specific work doesn't need to influence personal projects</td></tr>
+        <tr><td><code>sio_pipeline</code></td><td>SIO-discovered patterns that haven't earned cross-project universality</td><td>Quarantine: useful but not yet promoted</td></tr>
+        <tr><td><code>onboarding_machine_N</code></td><td>Per-machine bootstrap memory (paths, creds-by-location)</td><td>Travels with the laptop, not the developer</td></tr>
+      </tbody>
+    </table>
+
+    <div class="callout warn">
+      <b>Important caveat</b>
+      Multiple group_ids only earn their keep when queries get tighter. If 95% of your queries hit "all groups," you've just paid the partition tax without the benefit. <em>Don't split until a query actually needs the cut.</em>
+    </div>
+  </section>
+
+  <!-- CH 3 -->
+  <section class="chapter" id="ch3">
+    <div class="chap-id">Chapter 3 / 6</div>
+    <h2>Axis 2 — <code>entity_types</code>: the five categories</h2>
+    <p>This is your real "domain" axis. Inside one group_id, every episode carries a type that says <em>what kind of knowledge</em> it is. Your <code>rules/tools/graphiti.md</code> nails it down to exactly five — no improvisation, no twelfth category for "stuff."</p>
+
+    <div class="types">
+      <div class="t">
+        <h4>Preference</h4>
+        <p>How you want things done. Coding style, tool choices, interaction style.</p>
+        <div class="ex">"Preference: ANSI SQL for Snowflake+Databricks"</div>
+      </div>
+      <div class="t">
+        <h4>Workflow</h4>
+        <p>Reusable multi-step processes. Setup patterns. Deployment recipes.</p>
+        <div class="ex">"Workflow: CREATE VIEW → GRANT SELECT → appears in Databricks"</div>
+      </div>
+      <div class="t">
+        <h4>ToolPattern</h4>
+        <p>Proven command/API call sequences. The "do X, then Y" patterns.</p>
+        <div class="ex">"ToolPattern: Superset auth → API call → verify result"</div>
+      </div>
+      <div class="t">
+        <h4>Recipe</h4>
+        <p>Documented fix patterns. Each one points at a file under <code>~/.claude/recipes/</code>.</p>
+        <div class="ex">"Recipe: Superset params must be JSON string. Path: ~/.claude/recipes/superset-params-json-string.md"</div>
+      </div>
+      <div class="t">
+        <h4>Finding</h4>
+        <p>Atomic recurring facts: IDs, connection strings, auth tokens, project keys.</p>
+        <div class="ex">"Finding: Atlassian cloud ID is e29377f4-..."</div>
+      </div>
+    </div>
+
+    <h3>How to query a single type</h3>
+    <pre>mcp__graphiti__search_nodes(
+    query="how do I ship to Databricks",
+    group_ids=["developer_gyasisutton"],
+    entity_types=["Workflow"],     <em># the underused axis</em>
+    max_nodes=5
+)</pre>
+
+    <p>This is the lever most people miss. Searching with no <code>entity_types</code> filter means every preference, finding, and one-off ToolPattern competes for relevance. Searching <strong>just</strong> for Workflows narrows the noise to "the multi-step processes you've blessed."</p>
+
+    <div class="pull">
+      <em>group_ids partition the universe. entity_types shape the question.</em>
+    </div>
+  </section>
+
+  <!-- CH 4 -->
+  <section class="chapter" id="ch4">
+    <div class="chap-id">Chapter 4 / 6</div>
+    <h2>What you have right now</h2>
+    <p>Current state of your Graphiti:</p>
+    <ul>
+      <li><strong>1 group_id</strong> — <code>developer_gyasisutton</code>.</li>
+      <li><strong>5 allowed entity_types</strong> — the catalog above.</li>
+      <li><strong>Hard cap &lt; 30 episodes total</strong> — soft constitution from <code>rules/tools/graphiti.md</code>.</li>
+      <li><strong>Admission test (BLOCKING):</strong> Universal? Low-churn? Behavioral? All three YES, else file memory only.</li>
+      <li><strong>Read protocol:</strong> max 2 <code>search_nodes</code> + 1 <code>search_memory_facts</code> per message (cost guard).</li>
+      <li><strong>Conflict resolution:</strong> File memory always wins over Graphiti in the current session.</li>
+    </ul>
+
+    <h3>The forces that shape this design</h3>
+    <table class="matrix">
+      <thead><tr><th>Constraint</th><th>Consequence</th></tr></thead>
+      <tbody>
+        <tr><td>Each write costs an LLM extraction call</td><td>Don't write fragments; consolidate before saving</td></tr>
+        <tr><td>Each read is paid query-time (~1s, modest tokens)</td><td>Cheap relative to L2 HybridRAG; still rate-limited</td></tr>
+        <tr><td>Deletion is hard — node ids matter</td><td>Quality over quantity; <code>/memory-reconcile</code> monthly</td></tr>
+        <tr><td>The $5K HybridRAG incident (2026-04-20)</td><td>Economy-first principle applies to L3 too: dedupe first, write second</td></tr>
+      </tbody>
+    </table>
+
+    <div class="callout good">
+      <b>Why this works</b>
+      You've kept Graphiti small enough that the model can hold the whole graph as a mental cache. That's the point — it's an <em>ID card</em>, not a library. The library job belongs to L2 (HybridRAG).
+    </div>
+  </section>
+
+  <!-- CH 5 -->
+  <section class="chapter" id="ch5">
+    <div class="chap-id">Chapter 5 / 6</div>
+    <h2>What's possible</h2>
+    <p>You've been using one axis (entity_types) cleanly and ignoring the other (group_ids). Here are the moves that open up once you treat them as orthogonal.</p>
+
+    <h3>Move 1 — Per-domain namespacing</h3>
+    <p>Spin up <code>hh_dev_team</code> as a second group_id. Migrate HH-only Workflows/Recipes/Findings there. Queries from inside HH work pass <code>group_ids=["developer_gyasisutton", "hh_dev_team"]</code>; queries from personal projects pass only the first. Personal projects no longer pick up "how to scaffold a Cube view" as relevant context.</p>
+
+    <h3>Move 2 — Multi-tenant simulation</h3>
+    <p>Use group_ids for <em>roles</em>: <code>role_pm</code>, <code>role_oncall</code>, <code>role_engineer</code>. Switch personas by switching the group_id passed to <code>search_nodes</code>. Same brain, different lens. Useful when writing different kinds of doc.</p>
+
+    <h3>Move 3 — Entity-type-only queries for routine work</h3>
+    <p>Build slash skills that bind to a single entity_type. <code>/find-workflow</code> only searches <code>entity_types=["Workflow"]</code>. <code>/find-recipe</code> only searches <code>["Recipe"]</code>. Lower noise, faster convergence.</p>
+
+    <h3>Move 4 — Promotion pipelines</h3>
+    <p>Pair group_ids with the admission test to make promotion explicit. New patterns start in <code>sio_pipeline</code> (the holding tank), and only graduate to <code>developer_gyasisutton</code> when they pass Universal + Low-churn + Behavioral. The graph becomes a quality-controlled pipeline, not a dumping ground.</p>
+
+    <h3>Move 5 — Audit + reconcile by axis</h3>
+    <p>Run <code>/memory-reconcile</code> with axis filters. Audit just Workflows quarterly (they decay fastest), just Findings annually (they barely change), and just the smallest group_id whenever you suspect partition rot.</p>
+
+    <h3>Move 6 — Sharing without leakage</h3>
+    <p>If you ever ship a "Gyasi's setup" capability bundle to a teammate, you only export their relevant group_id. <code>developer_gyasisutton</code> stays private. <code>hh_dev_team</code> can ship if they're also on the HH stack. This is how Graphiti pays you back at transfer time.</p>
+  </section>
+
+  <!-- CH 6 -->
+  <section class="chapter" id="ch6">
+    <div class="chap-id">Chapter 6 / 6</div>
+    <h2>Four stories</h2>
+
+    <div class="story">
+      <div class="arc">Story 1 · Tuesday morning · HH dev session</div>
+      <h4>The Cube measure you "remember solving"</h4>
+      <p>You sit down to fix a Cube measure failing in CI. You vaguely recall debugging this exact failure six weeks ago. With only one group_id and no entity-type filter, <code>search_nodes(query="cube measure failing")</code> returns four preferences, two findings, one workflow — half of them about unrelated Snowflake work. With <code>entity_types=["Workflow", "Recipe"]</code>, you get the one Recipe that matters in the first two results. You apply the fix in under three minutes.</p>
+      <p><em>Lever: entity_types filter. Cost: zero. Saves: ten minutes.</em></p>
+    </div>
+
+    <div class="story">
+      <div class="arc">Story 2 · Onboarding a new laptop</div>
+      <h4>The portable identity, the local quirks</h4>
+      <p>You set up a new MacBook. The cross-machine DNA — <code>developer_gyasisutton</code> — restores via <code>ab compose --capability claude-config-maintainer</code>. But the laptop also needs to know "<em>which paths exist on THIS machine?</em>" — your local Bitbucket clones, the Fusion venv, the ZENO_DIR drift workaround. Those are <code>onboarding_machine_macbook2026</code>. They never pollute your other machine's queries. When the laptop dies, only that group disappears.</p>
+      <p><em>Lever: group_ids as locality. Cost: one extra arg per query. Saves: ambient cross-machine confusion.</em></p>
+    </div>
+
+    <div class="story">
+      <div class="arc">Story 3 · A six-month-old preference resurfaces</div>
+      <h4>The drift detector</h4>
+      <p>An SIO-mined pattern says "agent keeps suggesting <code>gpt-4o</code> as default." You check Graphiti: there's a Preference from January saying <code>gpt-4o-mini</code> is the floor. The drift is real. Because you partitioned by entity_type, you can query <code>entity_types=["Preference"]</code> alone — five rows — and spot the conflict in two seconds. You enrich (not duplicate) the existing node with the 2026-05-08 incident reasoning. Graph stays at &lt; 30 episodes. No new node added.</p>
+      <p><em>Lever: entity_types as audit lens. Cost: one targeted query. Saves: silent rule decay.</em></p>
+    </div>
+
+    <div class="story">
+      <div class="arc">Story 4 · Sharing a capability with a teammate</div>
+      <h4>Public DNA, private DNA</h4>
+      <p>A teammate asks for your dbt-Cube setup. You don't want to hand over the contents of <code>developer_gyasisutton</code> — that's your interaction style, your unrelated personal preferences, your home-network paths. But <code>hh_dev_team</code> is fair game: those are team Workflows and Recipes. You export only that group. They ingest it under their own developer_*. group_ids gave you a clean cut between "me" and "us" without inventing a new system.</p>
+      <p><em>Lever: group_ids as sharing boundary. Cost: maintaining one extra group. Saves: an awkward "let me sanitize this" review.</em></p>
+    </div>
+
+    <div class="callout danger">
+      <b>What NOT to do</b>
+      Don't shred your one group into eight tiny groups before you have queries that need the cut. Partitioning is forever — un-partitioning is a manual data migration. Walk before you fork.
+    </div>
+
+    <div class="pull">
+      <em>Today you have a 5-category, single-tenant graph. The leverage isn't to "add more" — it's to use the <strong>second</strong> axis you already have.</em>
+    </div>
+  </section>
+
+  <footer class="colophon">
+    chiron · code · mode A · 2026-05-23 · lessons/graphiti-implementation-2026-05-23/<br>
+    Sources: ~/.claude/rules/tools/graphiti.md · ~/.claude/rules/domains/memory.md · live convo 2026-05-23
+  </footer>
+</main>
+
+<script>
+  (function(){
+    var p = new URLSearchParams(location.search).get('theme');
+    var saved = localStorage.getItem('chiron-theme');
+    var initial = p || saved || 'midnight';
+    var html = document.documentElement;
+    html.setAttribute('data-theme', initial);
+    var sel = document.getElementById('theme');
+    if(sel){
+      sel.value = initial;
+      sel.addEventListener('change', function(){
+        html.setAttribute('data-theme', sel.value);
+        localStorage.setItem('chiron-theme', sel.value);
+      });
+    }
+  })();
+</script>
+</body>
+</html>
