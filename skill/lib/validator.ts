@@ -1,5 +1,9 @@
 import { BriefSchema, type Brief } from './schemas/brief.js';
-import { ChapterSyllabusSchema, type ChapterSyllabus } from './schemas/chapter-syllabus.js';
+import {
+  ChapterSyllabusSchema,
+  CANONICAL_MEDICINE_SECTIONS,
+  type ChapterSyllabus,
+} from './schemas/chapter-syllabus.js';
 
 // Concept DAG — adjacency map: conceptId -> prereq conceptIds
 export type ConceptDag = Record<string, string[]>;
@@ -18,7 +22,13 @@ export interface ValidationIssue {
     | 'rubric-engagement-floor-code'
     | 'rubric-engagement-floor-medicine'
     | 'rubric-engagement-floor-language'
-    | 'rubric-engagement-floor-concepts';
+    | 'rubric-engagement-floor-concepts'
+    | 'rubric-chapter-count-exact'
+    | 'rubric-chapter-count-target'
+    | 'rubric-medicine-atlas-mismatch'
+    | 'rubric-medicine-sections-missing'
+    | 'rubric-medicine-sections-out-of-order'
+    | 'rubric-medicine-level-coverage';
 }
 
 export interface ValidationResult {
@@ -271,6 +281,133 @@ export function validateSyllabus(
         code: 'rubric-engagement-floor-language',
       });
     }
+  }
+
+  return { ok: issues.length === 0, issues };
+}
+
+// ============================================================================
+// 2026-05-23 — Lesson-level validator (syllabus + brief together)
+//
+// Per-chapter rules live in validateSyllabus(). Whole-lesson invariants
+// (chapter count vs brief target/exact/atlas) need both pieces. This is
+// the entry point for the chapter-count overrides + medicine atlas binding.
+// ============================================================================
+
+export function validateLesson(
+  brief: unknown,
+  syllabus: unknown[],
+): ValidationResult {
+  const issues: ValidationIssue[] = [];
+  const briefParsed = BriefSchema.safeParse(brief);
+  if (!briefParsed.success) {
+    return {
+      ok: false,
+      issues: briefParsed.error.issues.map((i) => ({
+        path: `brief.${i.path.join('.')}`,
+        message: i.message,
+        code: 'zod' as const,
+      })),
+    };
+  }
+  const b = briefParsed.data;
+  const n = syllabus.length;
+
+  // ── Universal: chapter count constraints ─────────────────────
+  if (b.chapterCountExact !== undefined) {
+    if (n !== b.chapterCountExact) {
+      issues.push({
+        path: 'syllabus',
+        message: `brief.chapterCountExact=${b.chapterCountExact} but syllabus has ${n} chapters — hard lock violated`,
+        code: 'rubric-chapter-count-exact',
+      });
+    }
+  } else if (b.chapterCountTarget !== undefined) {
+    const diff = Math.abs(n - b.chapterCountTarget);
+    if (diff > 1) {
+      issues.push({
+        path: 'syllabus',
+        message: `brief.chapterCountTarget=${b.chapterCountTarget} allows ±1 (range ${b.chapterCountTarget - 1}-${b.chapterCountTarget + 1}); syllabus has ${n}`,
+        code: 'rubric-chapter-count-target',
+      });
+    }
+  }
+
+  // ── Medicine: atlas binding ─────────────────────────────────
+  if (b.domain === 'medicine' && b.clinicalAtlasUnits && b.clinicalAtlasUnits.length > 0) {
+    if (n !== b.clinicalAtlasUnits.length) {
+      issues.push({
+        path: 'syllabus',
+        message: `brief.clinicalAtlasUnits has ${b.clinicalAtlasUnits.length} entities but syllabus has ${n} chapters — one chapter per entity required`,
+        code: 'rubric-medicine-atlas-mismatch',
+      });
+    }
+    // Each chapter should bind to a known atlas unit
+    const atlasSet = new Set(b.clinicalAtlasUnits);
+    syllabus.forEach((ch, i) => {
+      const chAny = ch as { clinicalAtlasUnit?: string; chapterNumber?: number };
+      if (chAny.clinicalAtlasUnit && !atlasSet.has(chAny.clinicalAtlasUnit)) {
+        issues.push({
+          path: `syllabus[${i}].clinicalAtlasUnit`,
+          message: `chapter ${chAny.chapterNumber} bound to '${chAny.clinicalAtlasUnit}' not in brief.clinicalAtlasUnits`,
+          code: 'rubric-medicine-atlas-mismatch',
+        });
+      }
+    });
+  }
+
+  // ── Medicine: per-chapter canonical sections ────────────────
+  if (b.domain === 'medicine') {
+    const level = b.medicalLevel;
+    // Required minimum sections by level. Step 1 requires basic-science
+    // (etio + path); Step 2 CK requires clinical-decision (cf + dx + tx);
+    // others require the core. References + overview ALWAYS required.
+    const requiredCore: ReadonlyArray<string> = ['overview', 'references'];
+    const levelRequired: Record<string, ReadonlyArray<string>> = {
+      'step-1':    ['etiology', 'pathophysiology', 'clinical-features'],
+      'step-2-ck': ['clinical-features', 'diagnostics', 'treatment'],
+      'step-2-cs': ['clinical-features', 'diagnostics'],
+      'step-3':    ['clinical-features', 'diagnostics', 'treatment', 'complications', 'prognosis'],
+      'shelf-medicine': ['clinical-features', 'diagnostics', 'treatment'],
+      'shelf-peds':     ['epidemiology', 'clinical-features', 'diagnostics', 'treatment'],
+      'shelf-surgery':  ['clinical-features', 'diagnostics', 'treatment', 'complications'],
+      'shelf-ob-gyn':   ['epidemiology', 'clinical-features', 'diagnostics', 'treatment'],
+      'shelf-psych':    ['clinical-features', 'diagnostics', 'treatment'],
+      'shelf-family-med': ['clinical-features', 'diagnostics', 'treatment', 'prognosis'],
+      'attending-ce':   ['clinical-features', 'diagnostics', 'treatment', 'complications', 'prognosis'],
+      'intern':         ['overview', 'clinical-features', 'diagnostics', 'treatment'],
+      'resident':       ['clinical-features', 'diagnostics', 'differential-diagnosis', 'treatment', 'complications'],
+      'fellow':         ['pathophysiology', 'clinical-features', 'diagnostics', 'treatment', 'complications', 'prognosis'],
+    };
+    const levelReq = level ? (levelRequired[level] ?? []) : [];
+    const required = [...new Set([...requiredCore, ...levelReq])];
+    const canonicalOrder = CANONICAL_MEDICINE_SECTIONS as ReadonlyArray<string>;
+
+    syllabus.forEach((ch, i) => {
+      const chAny = ch as { medicineSections?: string[]; chapterNumber?: number };
+      const sections = chAny.medicineSections ?? [];
+      // Missing required
+      const missing = required.filter((s) => !sections.includes(s));
+      if (missing.length > 0) {
+        issues.push({
+          path: `syllabus[${i}].medicineSections`,
+          message: `chapter ${chAny.chapterNumber} missing required sections for level=${level ?? 'unspecified'}: ${missing.join(', ')}`,
+          code: 'rubric-medicine-sections-missing',
+        });
+      }
+      // Out of canonical order
+      const indices = sections.map((s) => canonicalOrder.indexOf(s));
+      for (let k = 1; k < indices.length; k++) {
+        if (indices[k] !== -1 && indices[k - 1] !== -1 && indices[k] < indices[k - 1]) {
+          issues.push({
+            path: `syllabus[${i}].medicineSections[${k}]`,
+            message: `chapter ${chAny.chapterNumber} sections out of canonical order at '${sections[k]}' — see CANONICAL_MEDICINE_SECTIONS`,
+            code: 'rubric-medicine-sections-out-of-order',
+          });
+          break;
+        }
+      }
+    });
   }
 
   return { ok: issues.length === 0, issues };

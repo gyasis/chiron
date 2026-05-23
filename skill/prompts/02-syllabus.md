@@ -83,4 +83,40 @@ narrative — but do NOT inline CSS in your output. The shell handles theming.
 ## Curriculum honor
 
 If `{{curriculum}}.modeAOnly === true`, do not propose Mode-B-only widgets.
-If `{{curriculum}}.chapterCountTarget` is set, plan within ±1 chapter.
+
+## Chapter-count rules (2026-05-23 — read in this priority order)
+
+The Brief MAY carry chapter-count directives. **Honor them strictly in this
+order; earlier wins:**
+
+1. **`{{brief}}.clinicalAtlasUnits[]`** (medicine only) — when set, plan
+   EXACTLY `clinicalAtlasUnits.length` chapters, one per entity. Each
+   chapter's `clinicalAtlasUnit` field MUST match a slug from the brief.
+   `chapterCountExact` and `chapterCountTarget` are IGNORED in this case.
+
+2. **`{{brief}}.chapterCountExact`** (universal) — when set, plan EXACTLY
+   that many chapters. NO ±1 latitude. Validator hard-fails on mismatch
+   (`rubric-chapter-count-exact`).
+
+3. **`{{brief}}.chapterCountTarget`** (universal, soft) — when set, plan
+   within ±1 of the target. Validator flags when outside the range
+   (`rubric-chapter-count-target`).
+
+4. **Otherwise** — use source-complexity heuristic (typically 4-7 chapters
+   for source word counts of 600-3000; 8-12 for 3000-8000; 12+ above).
+
+## Medicine-specific chapter structure (when `domain === 'medicine'`)
+
+When the brief is medicine, each chapter represents ONE disease entity
+(AMBOSS-article-shaped). For each chapter:
+
+- Set `clinicalAtlasUnit` to the matching slug from `brief.clinicalAtlasUnits`
+- Set `medicineSections` to the canonical sections this chapter covers,
+  IN CANONICAL ORDER:
+  `overview` → `epidemiology` → `etiology` → `pathophysiology` →
+  `clinical-features` → `diagnostics` → `differential-diagnosis` →
+  `treatment` → `complications` → `prognosis` → `references`
+- The validator enforces a per-level minimum (see `04a-chapter-write.md`
+  § "Canonical AMBOSS-style chapter structure" for the per-level table).
+- ALWAYS include `overview` + `references`. Add the level-required set.
+- May add additional sections beyond the required set if source supports.

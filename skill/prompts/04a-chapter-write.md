@@ -145,6 +145,71 @@ The widgets:
 - DO NOT modify `agreement-matrix`, `pathway-diagram`, `chemical-reaction`,
   `mcq-clinical-vignette` outputs — they remain unchanged.
 
+### Canonical AMBOSS-style chapter structure (2026-05-23, medicine-only)
+
+Every medicine chapter (≈ one disease entity, one AMBOSS article) MUST
+cover the canonical sections IN THIS ORDER inside `narrativeHtml` AND
+declare them in the chapter's `medicineSections` field:
+
+ 1. **overview** — what is this disease, one-paragraph summary
+ 2. **epidemiology** — who gets it, incidence/prevalence, demographics
+ 3. **etiology** — what causes it, risk factors
+ 4. **pathophysiology** — mechanism, organ/system effects
+ 5. **clinical-features** — signs, symptoms, history, exam findings
+ 6. **diagnostics** — labs, imaging, criteria, workup algorithm
+ 7. **differential-diagnosis** — what else it could be, distinguishing features
+ 8. **treatment** — first-line, second-line, escalation, monitoring
+ 9. **complications** — what happens if untreated/mistreated
+10. **prognosis** — outcome data, mortality, recovery timeline
+11. **references** — citations to UpToDate, AMBOSS, primary literature
+
+Per-level required-sections (always include overview + references; add the
+level-specific set):
+
+| Level                  | Required (beyond overview + references)                                              |
+|------------------------|--------------------------------------------------------------------------------------|
+| `step-1`               | etiology, pathophysiology, clinical-features                                         |
+| `step-2-ck`            | clinical-features, diagnostics, treatment                                            |
+| `step-2-cs`            | clinical-features, diagnostics                                                       |
+| `step-3`               | clinical-features, diagnostics, treatment, complications, prognosis                  |
+| `shelf-medicine`       | clinical-features, diagnostics, treatment                                            |
+| `shelf-peds`           | epidemiology, clinical-features, diagnostics, treatment                              |
+| `shelf-surgery`        | clinical-features, diagnostics, treatment, complications                             |
+| `shelf-ob-gyn`         | epidemiology, clinical-features, diagnostics, treatment                              |
+| `shelf-psych`          | clinical-features, diagnostics, treatment                                            |
+| `shelf-family-med`     | clinical-features, diagnostics, treatment, prognosis                                 |
+| `attending-ce`         | clinical-features, diagnostics, treatment, complications, prognosis                  |
+| `intern`               | overview, clinical-features, diagnostics, treatment                                  |
+| `resident`             | clinical-features, diagnostics, differential-diagnosis, treatment, complications     |
+| `fellow`               | pathophysiology, clinical-features, diagnostics, treatment, complications, prognosis |
+
+Widget mix per section (recommendations, not strict mapping):
+
+| Section                | Default widget(s)                                                            |
+|------------------------|------------------------------------------------------------------------------|
+| overview               | `why-care-callout` + one paragraph narrative                                 |
+| epidemiology           | `pattern-cards` (risk groups) or `step-cards` (incidence numbers)             |
+| etiology               | `pattern-cards` (cause categories) + `glossary-tooltips`                      |
+| pathophysiology        | `pathway-diagram` or `mermaid` + optional `mathjax`                           |
+| clinical-features      | `pattern-cards` (symptom clusters) + `agreement-matrix`                       |
+| diagnostics            | `flow-animation` (workup algorithm) + `step-cards` (criteria)                 |
+| differential-diagnosis | `flow-animation` (decision tree) + `pattern-cards` (mimickers)                |
+| treatment              | `step-cards` (protocol) + `agreement-matrix` (drug class indications)         |
+| complications          | `pattern-cards` (complication families) + `pathway-diagram` (sequela paths)   |
+| prognosis              | `chart-xy` (survival/recovery curve) + `step-cards` (risk factors)            |
+| references             | inline citation list; no widget required                                     |
+
+Assessment widgets (`mcq-clinical-vignette`, `agreement-matrix`,
+`assertion-reason`) attach where naturally relevant — typically one
+clinical-features-or-later vignette per chapter; one `boss` at the end
+of long chapters.
+
+**Brief inputs that drive medicine layout:**
+
+- `brief.medicalSpecialty` — sets default widget palette + atlas scope
+- `brief.medicalLevel` — sets the required-sections set above
+- `brief.clinicalAtlasUnits` — one chapter PER entity (chapter count = atlas length; overrides chapterCountTarget/Exact)
+
 **Concepts domain (audience: rigorous learner — wants derivations, models, proofs):**
 - The toolbox is biased toward universal widgets — this domain has no
   unique locked primaries. The PRIMARY widgets here are usually

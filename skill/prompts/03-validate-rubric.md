@@ -25,6 +25,11 @@ You will receive a structured issue list and must produce a corrected
 | `rubric-engagement-floor-medicine` | Medicine chapter looks algorithmic but has no flow-animation/pathway-diagram | Add a `flow-animation` (with branch actors) or a `pathway-diagram` for the ddx / protocol / workup the chapter discusses |
 | `rubric-engagement-floor-language` | Conversational language chapter has no chat/TTS | Add a `group-chat-animation` between learner + native-speaker, OR `audio-tts` exemplars for the dialog lines |
 | `rubric-engagement-floor-concepts` | Concepts chapter has formula/chart primary but no explainer companion | Pair the `mathjax` / `reactive-math` / `chart-xy` primary with a `step-cards` derivation OR a `flow-animation` walk OR (if there's a code form) a `code-english-translation` |
+| `rubric-chapter-count-exact`       | `brief.chapterCountExact` is set but syllabus length != N | Add or remove chapter(s) to match exactly. This is a HARD LOCK from the brief — do not exceed or undershoot |
+| `rubric-chapter-count-target`      | `brief.chapterCountTarget` is set and syllabus length is outside ±1 of target | Adjust by ±1 minimum to land inside the allowed range |
+| `rubric-medicine-atlas-mismatch`   | Medicine domain has `clinicalAtlasUnits[]` but syllabus chapter count != atlas length, OR a chapter's `clinicalAtlasUnit` isn't in the atlas | One chapter per entity. Bind each chapter's `clinicalAtlasUnit` to a slug from `brief.clinicalAtlasUnits` |
+| `rubric-medicine-sections-missing` | Medicine chapter missing required canonical sections for the level | Add the missing sections (declare in `medicineSections` AND include in `narrativeHtml` + widgets). See `04a-chapter-write.md` § "Canonical AMBOSS-style chapter structure" |
+| `rubric-medicine-sections-out-of-order` | Medicine chapter sections out of canonical AMBOSS order | Reorder `medicineSections` to follow: overview → epidemiology → etiology → pathophysiology → clinical-features → diagnostics → differential-diagnosis → treatment → complications → prognosis → references |
 
 ## Rules
 
