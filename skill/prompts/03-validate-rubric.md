@@ -21,6 +21,9 @@ You will receive a structured issue list and must produce a corrected
 | `rubric-science-annotations` | < 3 scienceAnnotations | Add until ≥ 3, picking unused principles when possible |
 | `rubric-spacing-connections` | chapter ≥ 8 has wrong spacingConnections count | Provide 2-4 prior-chapter integers (no self-references, no out-of-range) |
 | `rubric-quiz-variants` | Quiz widget missing `variants[]` | Add at least 2 alternative phrasings/options orderings per FR-021 |
+| `rubric-engagement-floor-code` | Code-domain chapter missing required engagement widget | If chapter shows code in `narrativeHtml`: add a `code-english-translation` widget. If no quiz: add an `mcq` / `spot-the-bug` / `matching-pair`. If neither `glossary-tooltips` nor `why-care-callout`: add at least one. See `04a-chapter-write.md` § "Universal engagement widgets". |
+| `rubric-engagement-floor-medicine` | Medicine chapter looks algorithmic but has no flow-animation/pathway-diagram | Add a `flow-animation` (with branch actors) or a `pathway-diagram` for the ddx / protocol / workup the chapter discusses |
+| `rubric-engagement-floor-language` | Conversational language chapter has no chat/TTS | Add a `group-chat-animation` between learner + native-speaker, OR `audio-tts` exemplars for the dialog lines |
 
 ## Rules
 

@@ -85,3 +85,83 @@ When writing MCQ options, ensure:
   `data-tts-voice="native-it"` attribute.
 - **research-paper**: include figure callouts; reference paper sections by
   IMRaD heading.
+
+## Universal engagement widgets (v1 — added 2026-05-23)
+
+Beyond the primary assessment widgets (mcq, mcq-clinical-vignette,
+fill-blank, match-madness, etc.), Stage 4 SHOULD emit "universal
+engagement primitives" — patterns proven by the codebase-to-course
+audit to lift retention across all three domains. These are
+**ADDITIVE** — they appear alongside primary assessments, never in
+place of them.
+
+The widgets:
+
+| Widget kind | Use when | Domains |
+|---|---|---|
+| `why-care-callout` | Opening of every chapter — answers "why should I care?" before "how does it work?" | all |
+| `glossary-tooltips` | Any technical jargon (CS terms, clinical terminology, foreign vocab) — first mention per chapter | all |
+| `group-chat-animation` | When the concept involves dialog — components talking, attending ↔ resident, native ↔ learner | all |
+| `flow-animation` | Data flow, **clinical decision tree / differential diagnosis**, drug pathway, sentence construction order | all |
+| `pattern-cards` | Cataloguing patterns — design patterns, drug classes, syndrome families, verb families, irregular sets | all |
+| `step-cards` | Numbered processes — protocols, ACLS bundles, grammar rule sequences | all |
+| `file-tree` | Indented hierarchical structures — directory trees, anatomy taxonomies, morphology trees | all |
+| `permission-badge` | Atomic color-cue label — free/paid/hot/read tier markers, cost indicators | all |
+| `layer-toggle` | Two-axis comparison — primary vs differential, formal vs informal register, group_id vs entity_type | all |
+| `code-english-translation` | Side-by-side code + plain-English row-paired explanation | **code only** |
+
+### When to reach for each (by domain)
+
+**Code domain (audience: vibe-coder — non-engineer who steers AI tools):**
+- EVERY code snippet shown beyond ~5 lines SHOULD have a paired
+  `code-english-translation` widget with line-aligned plain-English.
+- EVERY CS jargon term on first mention SHOULD be tooltipped via
+  `glossary-tooltips`. Err on the side of MORE tooltips (REPL, JSON,
+  flag, entry point, PATH, namespace, function, class, module, PR, E2E).
+- EVERY chapter SHOULD open with a `why-care-callout` framing it in
+  practical terms ("this helps you steer AI better / debug faster").
+- Cascades or pipelines SHOULD use a `flow-animation` with the
+  participating components as actors and packets between them.
+- If a `group-chat-animation` fits (system dialog, agent ↔ tool call),
+  emit one — c-to-c finds these the highest-engagement primitive.
+
+**Medicine domain (audience: med student / clinician — USMLE/AMBOSS):**
+- `mcq-clinical-vignette` REMAINS the primary assessment. Do not replace.
+- Differential-diagnosis algorithms SHOULD be emitted as `flow-animation`
+  with branches as actors and the active branch highlighted at each step.
+  This is invaluable for ddx teaching ("post-chest soreness? → next exam?").
+- Clinical protocols (ACLS, sepsis bundles, BLS) SHOULD use `step-cards`
+  for the static reference, optionally paired with a `flow-animation`.
+- Attending ↔ resident dialogues SHOULD use `group-chat-animation`.
+- Clinical terminology SHOULD use `glossary-tooltips` on first mention
+  per chapter.
+- `why-care-callout` SHOULD frame clinical relevance ("shows up on Step 2,"
+  "this question is the difference between admit and discharge").
+- DO NOT modify `agreement-matrix`, `pathway-diagram`, `chemical-reaction`,
+  `mcq-clinical-vignette` outputs — they remain unchanged.
+
+**Language domain (audience: solo language learner — Italian for v1):**
+- Primary widgets (`fill-blank`, `cloze`, `matching-pair`, `audio-tts`,
+  `match-madness`, `conjugation`) REMAIN unchanged.
+- Native-speaker dialogues SHOULD use `group-chat-animation` framed as
+  learner ↔ native, with the native's bubbles also referencing `audio-tts`
+  IDs when audio exists.
+- Verb families, prep families, irregular sets SHOULD use `pattern-cards`.
+- Vocabulary on first mention SHOULD use `glossary-tooltips`.
+- Grammar rule sequences (e.g., "to form the subjunctive: step 1..., 2...")
+  SHOULD use `step-cards`.
+- Formal vs informal register comparisons SHOULD use `layer-toggle`.
+- `why-care-callout` SHOULD frame practical conversational utility.
+
+### Constraints
+
+- The schema enforces domain-only constraints: `code-english-translation`
+  has `domain: z.literal('code')`. Other universal widgets carry no
+  domain field — schema allows them anywhere, but THIS prompt is the
+  contract telling you when they're appropriate.
+- `permission-badge` is atomic (one badge per instance). Use inline in
+  prose or as flow-actor children.
+- `flow-animation` step `highlight`/`from`/`to` MUST reference an
+  existing `actor.id` — the validator will reject mismatches.
+- Every control button in chat / flow / layer-toggle is rendered with
+  `.btn` / `.btn-primary` classes — you don't add them; the renderer does.
