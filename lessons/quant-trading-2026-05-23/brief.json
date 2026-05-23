@@ -1,0 +1,22 @@
+{
+  "domain": "concepts",
+  "mode": "A",
+  "sourceType": "text",
+  "sourcePath": "source/quant-trading-brief.md",
+  "sourceCopiedTo": "source/quant-trading-brief.md",
+  "extractedText": "Quant Trading — a primer for rigorous readers. Covers six core areas: (1) why quantitative thinking matters in markets, (2) time-series decomposition into trend/seasonality/cycle/noise, (3) mean-reversion and pairs trading with cointegration + z-score entry rules, (4) risk-adjusted return via the Sharpe ratio + annualisation, (5) position sizing via the Kelly criterion and fractional-Kelly heuristic, (6) risk management — stops, trailing, drawdown budgets.",
+  "agentSourceProvenance": null,
+  "metadata": {
+    "subject": "quant-trading",
+    "audience": "rigorous reader, technically literate, new to systematic trading",
+    "keyConceptHints": [
+      "alpha", "beta", "sharpe-ratio", "mean-reversion", "cointegration",
+      "kelly-criterion", "fractional-kelly", "drawdown", "stop-loss",
+      "time-series-decomposition", "z-score", "spread"
+    ],
+    "chapterCountTarget": 5,
+    "perChapterQuizTarget": 1,
+    "wordCountSource": 730
+  },
+  "briefSchemaVersion": "1.0.0"
+}

@@ -2688,6 +2688,9 @@ export function renderChartXy(spec: ChartXyWidget): string {
     const gy = yMin + (i / 4) * (yMax - yMin);
     gridX.push(`<line class="chart-grid" x1="${sx(gx).toFixed(1)}" y1="${MT}" x2="${sx(gx).toFixed(1)}" y2="${MT + PH}"/>`);
     gridY.push(`<line class="chart-grid" x1="${ML}" y1="${sy(gy).toFixed(1)}" x2="${ML + PW}" y2="${sy(gy).toFixed(1)}"/>`);
+    // X tick labels go BELOW the plot. Y tick labels go to the LEFT of ML
+    // (in the left margin) — text-anchor=end with x=ML-6 keeps them
+    // outside the plot area so bars never paint over them.
     gridX.push(`<text class="chart-tick" x="${sx(gx).toFixed(1)}" y="${MT + PH + 14}" text-anchor="middle">${formatNumber(gx)}</text>`);
     gridY.push(`<text class="chart-tick" x="${ML - 6}" y="${(sy(gy) + 4).toFixed(1)}" text-anchor="end">${formatNumber(gy)}</text>`);
   }
@@ -2719,10 +2722,18 @@ export function renderChartXy(spec: ChartXyWidget): string {
           .join('')
       );
     } else if (spec.variant === 'bar') {
-      const barW = Math.max(2, (PW / s.points.length) * 0.7);
+      // Bars baseline is the plot-area FLOOR (MT+PH), not sy(yMin) which is
+      // padded slightly above. This keeps bars inside the plot frame.
+      // Also clamp height to non-negative for negative values.
+      const baseY = MT + PH;
+      const barW = Math.max(2, (PW / s.points.length) * 0.65);
       seriesEls.push(
         s.points
-          .map(p => `<rect class="chart-bar chart-series-${si}" x="${(sx(p.x) - barW / 2).toFixed(1)}" y="${sy(p.y).toFixed(1)}" width="${barW.toFixed(1)}" height="${(sy(yMin) - sy(p.y)).toFixed(1)}" ${colorAttr}><title>(${p.x}, ${p.y})</title></rect>`)
+          .map(p => {
+            const yTop = Math.max(MT, Math.min(baseY, sy(p.y)));
+            const h = Math.max(0, baseY - yTop);
+            return `<rect class="chart-bar chart-series-${si}" x="${(sx(p.x) - barW / 2).toFixed(1)}" y="${yTop.toFixed(1)}" width="${barW.toFixed(1)}" height="${h.toFixed(1)}" ${colorAttr}><title>(${p.x}, ${p.y})</title></rect>`;
+          })
           .join('')
       );
     } else if (spec.variant === 'candlestick') {
@@ -2754,15 +2765,24 @@ export function renderChartXy(spec: ChartXyWidget): string {
   const xLabel = spec.xLabel ? `<text class="chart-axis-label" x="${ML + PW / 2}" y="${H - 6}" text-anchor="middle">${escapeHtml(spec.xLabel)}</text>` : '';
   const yLabel = spec.yLabel ? `<text class="chart-axis-label" x="${14}" y="${MT + PH / 2}" text-anchor="middle" transform="rotate(-90 14 ${MT + PH / 2})">${escapeHtml(spec.yLabel)}</text>` : '';
 
+  // 2026-05-23 — clip series content to the plot area so bars/lines/dots
+  // can't overshoot into margins (where tick labels live). The wide bars
+  // bug at line ~2698 was a real regression visible in the quant-trading
+  // Sharpe chart. Series and annotations both go inside the clip group.
+  const clipId = `${id}-clip`;
   return (
     `<figure class="chart-xy" id="${id}" data-variant="${escapeHtml(spec.variant)}">` +
     (spec.title ? `<figcaption class="chart-title">${escapeHtml(spec.title)}</figcaption>` : '') +
     `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid meet" role="img" aria-label="${escapeHtml(spec.title ?? spec.variant + ' chart')}">` +
-      // Plot area background + border
+      // Plot area background + border + clipPath
+      `<defs><clipPath id="${clipId}"><rect x="${ML}" y="${MT}" width="${PW}" height="${PH}"/></clipPath></defs>` +
       `<rect class="chart-plot-bg" x="${ML}" y="${MT}" width="${PW}" height="${PH}"/>` +
       gridX.join('') + gridY.join('') +
-      seriesEls.join('') +
-      annot +
+      // Clipped group — bars/lines/dots/candles/annotations all confined here
+      `<g clip-path="url(#${clipId})">` +
+        seriesEls.join('') +
+        annot +
+      `</g>` +
       `<line class="chart-axis" x1="${ML}" y1="${MT + PH}" x2="${ML + PW}" y2="${MT + PH}"/>` +
       `<line class="chart-axis" x1="${ML}" y1="${MT}" x2="${ML}" y2="${MT + PH}"/>` +
       xLabel + yLabel +

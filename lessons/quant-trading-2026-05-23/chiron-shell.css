@@ -36,6 +36,10 @@
   --color-error-light:    #FDE8E8;
   --color-info:           #2A7B9B;
   --color-info-light:     #E4F2F7;
+  /* 2026-05-23 — added; chart-xy series 3 + any callout/badge using
+     var(--color-warning) was previously falling back to currentColor (text). */
+  --color-warning:        #B45309;
+  --color-warning-light:  #FEF1E0;
 
   /* ACTOR COLORS */
   --color-actor-1:        #D94F30;
