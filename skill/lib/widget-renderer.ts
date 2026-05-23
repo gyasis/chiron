@@ -2616,6 +2616,11 @@ export function renderWhyCareCallout(spec: WhyCareCalloutWidget): string {
  *  chiron-shell.css :nth-child(6n+N) selectors — no inline color logic. */
 export function renderCodeEnglishTranslation(spec: CodeEnglishTranslationWidget): string {
   const id = spec.id || nextWidgetId('cet');
+  // Coalesce Zod defaults defensively — callers may pass partial specs
+  // (e.g., test harnesses bypassing schema parse). Matches schema defaults.
+  const language     = spec.language     ?? 'python';
+  const codeLabel    = spec.codeLabel    ?? 'CODE';
+  const englishLabel = spec.englishLabel ?? 'PLAIN ENGLISH';
   const codeLines = spec.pairs
     .map((p) => `<div class="tl">${escapeHtml(p.code)}</div>`)
     .join('');
@@ -2623,13 +2628,13 @@ export function renderCodeEnglishTranslation(spec: CodeEnglishTranslationWidget)
     .map((p) => `<div class="tl">${escapeHtml(p.english)}</div>`)
     .join('');
   return (
-    `<div class="translation-block" id="${id}" data-language="${escapeHtml(spec.language)}">` +
+    `<div class="translation-block" id="${id}" data-language="${escapeHtml(language)}">` +
     `<div class="translation-code">` +
-      `<span class="translation-label">${escapeHtml(spec.codeLabel)}</span>` +
+      `<span class="translation-label">${escapeHtml(codeLabel)}</span>` +
       `<div class="translation-lines">${codeLines}</div>` +
     `</div>` +
     `<div class="translation-english">` +
-      `<span class="translation-label">${escapeHtml(spec.englishLabel)}</span>` +
+      `<span class="translation-label">${escapeHtml(englishLabel)}</span>` +
       `<div class="translation-lines">${englishLines}</div>` +
     `</div>` +
     `</div>`
