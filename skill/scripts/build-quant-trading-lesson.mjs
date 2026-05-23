@@ -11,7 +11,7 @@
  * a syllabus with these widget specs, this script's HTML is what would
  * land on disk.
  */
-import { writeFileSync } from 'node:fs';
+import { writeFileSync, copyFileSync, mkdirSync, existsSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { WidgetSchema } from '../dist/lib/schemas/widget-spec.js';
@@ -19,6 +19,16 @@ import { renderWidget } from '../dist/lib/widget-renderer.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const OUT = resolve(__dirname, '..', '..', 'lessons', 'quant-trading-2026-05-23');
+const VENDOR_SRC = resolve(__dirname, '..', 'shell', 'vendor');
+
+// Copy MathJax (and mhchem for completeness) into the lesson dir so the
+// HTML can load them locally — no CDN dependency, single self-contained dir.
+const vendorOut = resolve(OUT, 'vendor', 'mathjax');
+mkdirSync(vendorOut, { recursive: true });
+for (const file of ['tex-mml-chtml.js', 'mhchem.js']) {
+  const src = resolve(VENDOR_SRC, 'mathjax', file);
+  if (existsSync(src)) copyFileSync(src, resolve(vendorOut, file));
+}
 
 // Render guard — parses through schema, then renders.
 function R(spec) {
@@ -328,6 +338,16 @@ const html = `<!doctype html>
 <link rel="stylesheet" href="themes/linguistic.css" />
 <link rel="stylesheet" href="themes/ocean.css" />
 <link rel="stylesheet" href="chiron-shell.css" />
+<!-- MathJax — vendored copy, no CDN. Configured to recognise \\[ \\] display
+     and \\( \\) inline delimiters (used by the chiron mathjax renderer). -->
+<script>
+  window.MathJax = {
+    tex: { inlineMath: [['\\\\(', '\\\\)']], displayMath: [['\\\\[', '\\\\]']] },
+    options: { skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'] },
+    startup: { typeset: false }   // typeset is triggered per-element by the widget script
+  };
+</script>
+<script src="vendor/mathjax/tex-mml-chtml.js" id="MathJax-script" async></script>
 <style>
   *{box-sizing:border-box}
   html,body{margin:0;padding:0;background:var(--chiron-bg);color:var(--chiron-fg)}

@@ -2097,8 +2097,13 @@ export function renderTrueFalse(spec: TrueFalseWidget): string {
 export function renderMathjax(spec: MathjaxWidget): string {
   const id = nextWidgetId('mjx');
   const source = spec.source ?? '';
+  // 2026-05-23 fix — wrap source in \[ \] display delimiters so MathJax
+  // actually typesets it. Prior version emitted raw LaTeX → MathJax saw
+  // it as plain text and rendered nothing. Source is escaped only OUTSIDE
+  // the delimiters; LaTeX must remain unescaped INSIDE for MathJax to parse.
+  const safeSource = source.replace(/</g, '&lt;').replace(/>/g, '&gt;');
   return [
-    `<div class="mathjax" id="${id}" data-widget="mathjax">${escapeHtml(source)}</div>`,
+    `<div class="mathjax" id="${id}" data-widget="mathjax">\\[ ${safeSource} \\]</div>`,
     `<script>`,
     `(function(){`,
     `  function typeset(){`,
