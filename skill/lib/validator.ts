@@ -17,7 +17,8 @@ export interface ValidationIssue {
     | 'rubric-quiz-variants'
     | 'rubric-engagement-floor-code'
     | 'rubric-engagement-floor-medicine'
-    | 'rubric-engagement-floor-language';
+    | 'rubric-engagement-floor-language'
+    | 'rubric-engagement-floor-concepts';
 }
 
 export interface ValidationResult {
@@ -230,6 +231,29 @@ export function validateSyllabus(
         path: 'widgets',
         message: 'medicine chapter looks algorithmic (title) but emits no flow-animation or pathway-diagram — ddx algorithms teach best as walks',
         code: 'rubric-engagement-floor-medicine',
+      });
+    }
+  }
+
+  // CONCEPTS domain (soft floor). Formula-heavy or proof-heavy chapters
+  // benefit most from step-cards / flow-animation companion + mathjax.
+  // Universal widgets carry the load here — no domain-locked primaries.
+  if (domain === 'concepts') {
+    const title = (chapter as { title?: string }).title ?? '';
+    const looksFormulaic = /theorem|proof|formula|derivation|equation|model|algorithm|distribution/i.test(title);
+    const hasFormulaPrimary =
+      widgetKinds.has('mathjax') ||
+      widgetKinds.has('reactive-math') ||
+      widgetKinds.has('chart-xy');
+    const hasExplainer =
+      widgetKinds.has('step-cards') ||
+      widgetKinds.has('flow-animation') ||
+      widgetKinds.has('code-english-translation');
+    if (looksFormulaic && hasFormulaPrimary && !hasExplainer) {
+      issues.push({
+        path: 'widgets',
+        message: 'concepts chapter has a formula/chart primary but no companion explainer (step-cards / flow-animation / code-english-translation) — hyper-pedagogy pattern missed',
+        code: 'rubric-engagement-floor-concepts',
       });
     }
   }

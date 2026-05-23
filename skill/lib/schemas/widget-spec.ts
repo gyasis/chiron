@@ -511,6 +511,38 @@ export const WhyCareCalloutSchema = z.object({
   body: z.string().min(1),               // 1-3 sentence rationale
 });
 
+/** XY chart — line / scatter / bar / candlestick. Universal (concepts-first
+ *  but useful for any time-series or distribution rendering). SVG-only,
+ *  no JS chart lib; renderer auto-scales. Added 2026-05-23 for the
+ *  concepts domain (quant trading test lesson). */
+export const ChartXyWidgetSchema = z.object({
+  type: z.literal('chart-xy'),
+  id: z.string(),
+  title: z.string().optional(),
+  xLabel: z.string().optional(),
+  yLabel: z.string().optional(),
+  variant: z.enum(['line', 'scatter', 'bar', 'candlestick']),
+  series: z.array(z.object({
+    label: z.string(),
+    color: z.string().optional(),       // CSS var ref preferred ('var(--chiron-accent)')
+    points: z.array(z.object({
+      x: z.number(),
+      y: z.number(),
+      ohlc: z.object({
+        open: z.number(),
+        high: z.number(),
+        low: z.number(),
+        close: z.number(),
+      }).optional(),
+    })).min(1),
+  })).min(1),
+  annotations: z.array(z.object({       // labels at (x, y) — moving averages, dividers, regime labels
+    x: z.number(),
+    y: z.number(),
+    text: z.string(),
+  })).optional(),
+});
+
 // ----------------------------------------------------------------------------
 // Code-only widget (v1) — needs literal source code on the left
 // ----------------------------------------------------------------------------
@@ -573,6 +605,7 @@ const WidgetUnionSchema = z.discriminatedUnion('type', [
   PermissionBadgeSchema,
   LayerToggleSchema,
   WhyCareCalloutSchema,
+  ChartXyWidgetSchema,
   // Code-only widget (v1)
   CodeEnglishTranslationSchema,
 ]);
@@ -656,7 +689,7 @@ export const WIDGET_KINDS: WidgetKind[] = [
   // Universal engagement primitives (v1)
   'group-chat-animation', 'flow-animation', 'glossary-tooltips',
   'pattern-cards', 'step-cards', 'file-tree', 'permission-badge',
-  'layer-toggle', 'why-care-callout',
+  'layer-toggle', 'why-care-callout', 'chart-xy',
   // Code-only (v1)
   'code-english-translation',
 ];
@@ -668,7 +701,7 @@ export const UNIVERSAL_WIDGETS: WidgetKind[] = [
   'mcq', 'true-false', 'mermaid', 'mathjax',
   'group-chat-animation', 'flow-animation', 'glossary-tooltips',
   'pattern-cards', 'step-cards', 'file-tree', 'permission-badge',
-  'layer-toggle', 'why-care-callout',
+  'layer-toggle', 'why-care-callout', 'chart-xy',
 ];
 export const CODE_ONLY_WIDGETS: WidgetKind[] = [
   'spot-the-bug', 'code-runner', 'code-english-translation',

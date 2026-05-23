@@ -23,7 +23,7 @@ import { detectMode } from './mode-heuristic.js';
 export interface PipelineContext {
   lessonOutputDir: string;
   promptsDir: string; // <skill>/prompts/
-  domain: 'code' | 'medicine' | 'language-it' | 'research-paper';
+  domain: 'code' | 'medicine' | 'language-it' | 'research-paper' | 'concepts';
   conceptDag: ConceptDag;
 }
 

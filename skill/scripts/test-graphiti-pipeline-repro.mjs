@@ -221,5 +221,47 @@ for (const [name, spec, mustContain] of renderTests) {
   }
 }
 
+// ── chart-xy + concepts domain (2026-05-23 follow-up) ─────────
+console.log('\n=== chart-xy widget (4 variants) ===');
+const chartLine = {
+  type: 'chart-xy', id: 'price', variant: 'line',
+  title: 'SPY · 10-day price',
+  xLabel: 'day', yLabel: '$',
+  series: [{ label: 'SPY', points: Array.from({length:10},(_,i)=>({x:i+1, y: 480 + Math.sin(i)*8 + i})) }],
+  annotations: [{ x: 5, y: 488, text: '50d MA' }],
+};
+const chartScatter = {
+  type: 'chart-xy', id: 'corr', variant: 'scatter',
+  title: 'Returns vs volatility',
+  series: [{ label: 'pts', points: [[1,2],[2,3.1],[3,2.9],[4,4],[5,5.2]].map(([x,y])=>({x,y})) }],
+};
+const chartBar = {
+  type: 'chart-xy', id: 'sharpe', variant: 'bar',
+  series: [{ label: 'Strategies', points: [[1,1.2],[2,0.8],[3,1.6],[4,0.4]].map(([x,y])=>({x,y})) }],
+};
+const chartCandle = {
+  type: 'chart-xy', id: 'ohlc', variant: 'candlestick',
+  series: [{ label: 'BTC', points: [
+    { x:1, y:100, ohlc:{open:100,high:106,low:98,close:104} },
+    { x:2, y:104, ohlc:{open:104,high:108,low:102,close:103} },
+    { x:3, y:103, ohlc:{open:103,high:105,low:97,close:99}  },
+  ] }],
+};
+for (const [name, spec, hooks] of [
+  ['line',        chartLine,    ['chart-xy','chart-line','chart-dot','chart-axis','chart-grid','chart-legend','chart-annot']],
+  ['scatter',     chartScatter, ['chart-xy','chart-dot','chart-axis']],
+  ['bar',         chartBar,     ['chart-xy','chart-bar']],
+  ['candlestick', chartCandle,  ['chart-xy','chart-candle','chart-wick','chart-up','chart-down']],
+]) {
+  const parsed = WidgetSchema.safeParse(spec);
+  if (!parsed.success) { bad(`parse chart-xy ${name}`, JSON.stringify(parsed.error.issues[0])); continue; }
+  ok(`parse chart-xy ${name}`);
+  try {
+    const html = renderWidget(spec);
+    const missing = hooks.filter(h => !html.includes(h));
+    missing.length === 0 ? ok(`render chart-xy ${name} — ${hooks.length} hooks present`) : bad(`render chart-xy ${name}`, `missing: ${missing.join(', ')}`);
+  } catch (e) { bad(`render chart-xy ${name}`, e.message); }
+}
+
 console.log(`\n${pass === pass+fail ? GREEN : RED}${pass}/${pass+fail} passed${RESET}`);
 process.exit(fail === 0 ? 0 : 1);

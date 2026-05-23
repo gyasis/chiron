@@ -2406,6 +2406,7 @@ type PermissionBadgeWidget = Extract<WidgetSpec, { type: 'permission-badge' }>;
 type LayerToggleWidget = Extract<WidgetSpec, { type: 'layer-toggle' }>;
 type WhyCareCalloutWidget = Extract<WidgetSpec, { type: 'why-care-callout' }>;
 type CodeEnglishTranslationWidget = Extract<WidgetSpec, { type: 'code-english-translation' }>;
+type ChartXyWidget = Extract<WidgetSpec, { type: 'chart-xy' }>;
 
 /** Default avatar color cycle (CSS variable references) — used when a chat
  *  message doesn't override avatarColorVar. Order: accent → info → warm. */
@@ -2641,6 +2642,136 @@ export function renderCodeEnglishTranslation(spec: CodeEnglishTranslationWidget)
   );
 }
 
+/** chart-xy — SVG line/scatter/bar/candlestick. Universal. No JS dep.
+ *  Auto-scales the data range; pads 5% on each axis; emits axis labels +
+ *  per-series legend. CSS classes (.chart-xy, .chart-axis, .chart-series-N)
+ *  carry theming via chiron-shell.css; renderer never hardcodes colors. */
+export function renderChartXy(spec: ChartXyWidget): string {
+  const id = spec.id || nextWidgetId('chart');
+  // Compute extents across all series
+  let xMin = Infinity, xMax = -Infinity, yMin = Infinity, yMax = -Infinity;
+  for (const s of spec.series) {
+    for (const p of s.points) {
+      if (p.x < xMin) xMin = p.x;
+      if (p.x > xMax) xMax = p.x;
+      const ys = p.ohlc ? [p.ohlc.high, p.ohlc.low] : [p.y];
+      for (const y of ys) {
+        if (y < yMin) yMin = y;
+        if (y > yMax) yMax = y;
+      }
+    }
+  }
+  if (!isFinite(xMin)) { xMin = 0; xMax = 1; yMin = 0; yMax = 1; }
+  if (xMin === xMax) { xMin -= 0.5; xMax += 0.5; }
+  if (yMin === yMax) { yMin -= 0.5; yMax += 0.5; }
+  const xPad = (xMax - xMin) * 0.05;
+  const yPad = (yMax - yMin) * 0.05;
+  xMin -= xPad; xMax += xPad; yMin -= yPad; yMax += yPad;
+
+  // SVG canvas
+  const W = 640, H = 320;
+  const ML = 56, MR = 16, MT = 32, MB = 44;
+  const PW = W - ML - MR, PH = H - MT - MB;
+  const sx = (x: number) => ML + ((x - xMin) / (xMax - xMin)) * PW;
+  const sy = (y: number) => MT + PH - ((y - yMin) / (yMax - yMin)) * PH;
+
+  // axis gridlines (5 each)
+  const gridX: string[] = [];
+  const gridY: string[] = [];
+  for (let i = 0; i <= 4; i++) {
+    const gx = xMin + (i / 4) * (xMax - xMin);
+    const gy = yMin + (i / 4) * (yMax - yMin);
+    gridX.push(`<line class="chart-grid" x1="${sx(gx).toFixed(1)}" y1="${MT}" x2="${sx(gx).toFixed(1)}" y2="${MT + PH}"/>`);
+    gridY.push(`<line class="chart-grid" x1="${ML}" y1="${sy(gy).toFixed(1)}" x2="${ML + PW}" y2="${sy(gy).toFixed(1)}"/>`);
+    gridX.push(`<text class="chart-tick" x="${sx(gx).toFixed(1)}" y="${MT + PH + 14}" text-anchor="middle">${formatNumber(gx)}</text>`);
+    gridY.push(`<text class="chart-tick" x="${ML - 6}" y="${(sy(gy) + 4).toFixed(1)}" text-anchor="end">${formatNumber(gy)}</text>`);
+  }
+
+  // series rendering
+  const seriesEls: string[] = [];
+  const legendItems: string[] = [];
+  spec.series.forEach((s, si) => {
+    const colorAttr = s.color ? `style="--chart-color:${escapeHtml(s.color)}"` : '';
+    legendItems.push(
+      `<span class="chart-legend-item chart-series-${si}" ${colorAttr}>` +
+      `<span class="chart-legend-swatch"></span>${escapeHtml(s.label)}` +
+      `</span>`
+    );
+    if (spec.variant === 'line') {
+      const path = s.points
+        .map((p, i) => `${i === 0 ? 'M' : 'L'}${sx(p.x).toFixed(1)},${sy(p.y).toFixed(1)}`)
+        .join(' ');
+      seriesEls.push(`<path class="chart-line chart-series-${si}" d="${path}" ${colorAttr}/>`);
+      seriesEls.push(
+        s.points
+          .map(p => `<circle class="chart-dot chart-series-${si}" cx="${sx(p.x).toFixed(1)}" cy="${sy(p.y).toFixed(1)}" r="2.5" ${colorAttr}><title>(${p.x}, ${p.y})</title></circle>`)
+          .join('')
+      );
+    } else if (spec.variant === 'scatter') {
+      seriesEls.push(
+        s.points
+          .map(p => `<circle class="chart-dot chart-series-${si}" cx="${sx(p.x).toFixed(1)}" cy="${sy(p.y).toFixed(1)}" r="3.5" ${colorAttr}><title>(${p.x}, ${p.y})</title></circle>`)
+          .join('')
+      );
+    } else if (spec.variant === 'bar') {
+      const barW = Math.max(2, (PW / s.points.length) * 0.7);
+      seriesEls.push(
+        s.points
+          .map(p => `<rect class="chart-bar chart-series-${si}" x="${(sx(p.x) - barW / 2).toFixed(1)}" y="${sy(p.y).toFixed(1)}" width="${barW.toFixed(1)}" height="${(sy(yMin) - sy(p.y)).toFixed(1)}" ${colorAttr}><title>(${p.x}, ${p.y})</title></rect>`)
+          .join('')
+      );
+    } else if (spec.variant === 'candlestick') {
+      seriesEls.push(
+        s.points
+          .map((p) => {
+            const ohlc = p.ohlc;
+            if (!ohlc) return '';
+            const cx = sx(p.x);
+            const bw = Math.max(3, PW / Math.max(s.points.length, 1) * 0.6);
+            const top = Math.min(sy(ohlc.open), sy(ohlc.close));
+            const bot = Math.max(sy(ohlc.open), sy(ohlc.close));
+            const dir = ohlc.close >= ohlc.open ? 'up' : 'down';
+            return (
+              `<line class="chart-wick chart-${dir}" x1="${cx.toFixed(1)}" y1="${sy(ohlc.high).toFixed(1)}" x2="${cx.toFixed(1)}" y2="${sy(ohlc.low).toFixed(1)}"/>` +
+              `<rect class="chart-candle chart-${dir}" x="${(cx - bw / 2).toFixed(1)}" y="${top.toFixed(1)}" width="${bw.toFixed(1)}" height="${Math.max(1, bot - top).toFixed(1)}"><title>O:${ohlc.open} H:${ohlc.high} L:${ohlc.low} C:${ohlc.close}</title></rect>`
+            );
+          })
+          .join('')
+      );
+    }
+  });
+
+  // annotations (text labels)
+  const annot = (spec.annotations ?? [])
+    .map(a => `<text class="chart-annot" x="${sx(a.x).toFixed(1)}" y="${sy(a.y).toFixed(1)}">${escapeHtml(a.text)}</text>`)
+    .join('');
+
+  const xLabel = spec.xLabel ? `<text class="chart-axis-label" x="${ML + PW / 2}" y="${H - 6}" text-anchor="middle">${escapeHtml(spec.xLabel)}</text>` : '';
+  const yLabel = spec.yLabel ? `<text class="chart-axis-label" x="${14}" y="${MT + PH / 2}" text-anchor="middle" transform="rotate(-90 14 ${MT + PH / 2})">${escapeHtml(spec.yLabel)}</text>` : '';
+
+  return (
+    `<figure class="chart-xy" id="${id}" data-variant="${escapeHtml(spec.variant)}">` +
+    (spec.title ? `<figcaption class="chart-title">${escapeHtml(spec.title)}</figcaption>` : '') +
+    `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid meet" role="img" aria-label="${escapeHtml(spec.title ?? spec.variant + ' chart')}">` +
+      // Plot area background + border
+      `<rect class="chart-plot-bg" x="${ML}" y="${MT}" width="${PW}" height="${PH}"/>` +
+      gridX.join('') + gridY.join('') +
+      seriesEls.join('') +
+      annot +
+      `<line class="chart-axis" x1="${ML}" y1="${MT + PH}" x2="${ML + PW}" y2="${MT + PH}"/>` +
+      `<line class="chart-axis" x1="${ML}" y1="${MT}" x2="${ML}" y2="${MT + PH}"/>` +
+      xLabel + yLabel +
+    `</svg>` +
+    `<div class="chart-legend">${legendItems.join('')}</div>` +
+    `</figure>`
+  );
+}
+
+function formatNumber(n: number): string {
+  if (Math.abs(n) >= 1000 || (Math.abs(n) < 0.01 && n !== 0)) return n.toExponential(1);
+  return Number.isInteger(n) ? n.toFixed(0) : n.toFixed(2);
+}
+
 // Register all 10 new renderers (overrides Wave-2 throwing stubs)
 registerRenderer('group-chat-animation', (w) =>
   renderGroupChatAnimation(w as GroupChatAnimationWidget),
@@ -2671,4 +2802,7 @@ registerRenderer('why-care-callout', (w) =>
 );
 registerRenderer('code-english-translation', (w) =>
   renderCodeEnglishTranslation(w as CodeEnglishTranslationWidget),
+);
+registerRenderer('chart-xy', (w) =>
+  renderChartXy(w as ChartXyWidget),
 );

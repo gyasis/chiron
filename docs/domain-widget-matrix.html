@@ -1,0 +1,534 @@
+<!doctype html>
+<html lang="en" data-theme="midnight">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Chiron — what each domain has · widget matrix · post v1</title>
+<link rel="stylesheet" href="../skill/shell/themes/_tokens.css" />
+<link rel="stylesheet" href="../skill/shell/themes/midnight.css" />
+<link rel="stylesheet" href="../skill/shell/themes/warm-paper.css" />
+<link rel="stylesheet" href="../skill/shell/themes/clinical.css" />
+<link rel="stylesheet" href="../skill/shell/themes/linguistic.css" />
+<link rel="stylesheet" href="../skill/shell/themes/ocean.css" />
+<style>
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;background:var(--chiron-bg);color:var(--chiron-fg)}
+  body{
+    font-family:var(--chiron-font-body, Georgia, serif);
+    font-size:15px;
+    line-height:1.55;
+    padding:0 0 60px;
+  }
+  header.bar{
+    position:sticky; top:0; z-index:10;
+    display:flex; justify-content:space-between; align-items:center;
+    padding:10px 24px;
+    background:var(--chiron-surface);
+    border-bottom:1px solid var(--chiron-border);
+    font-family:'JetBrains Mono', ui-monospace, monospace;
+    font-size:11px;
+    letter-spacing:.08em;
+    text-transform:uppercase;
+  }
+  header.bar select{
+    background:var(--chiron-elevated); color:var(--chiron-fg);
+    border:1px solid var(--chiron-border);
+    padding:4px 8px; font-family:inherit; font-size:11px; border-radius:3px;
+  }
+  main.page{ max-width:1240px; margin:0 auto; padding:30px 28px; }
+
+  /* Masthead */
+  h1{
+    font-family:var(--chiron-font-heading);
+    font-size:38px; line-height:1.1; margin:0 0 8px;
+    color:var(--chiron-fg); letter-spacing:-0.01em;
+  }
+  .lede{
+    font-size:17px; color:var(--chiron-fg-secondary);
+    margin:0 0 26px; max-width:68ch;
+    font-style:italic;
+  }
+  .lede strong{ color:var(--chiron-fg); font-style:normal; }
+
+  /* Legend strip */
+  .legend{
+    display:flex; gap:18px; flex-wrap:wrap;
+    padding:12px 16px; margin-bottom:24px;
+    border:1px solid var(--chiron-border); border-radius:4px;
+    background:var(--chiron-surface);
+    font-size:13px;
+  }
+  .legend .l{ display:flex; gap:7px; align-items:center; }
+  .legend .dot{ width:10px; height:10px; border-radius:99px; }
+  .dot.locked{ background:var(--chiron-info); }
+  .dot.universal{ background:var(--chiron-success); }
+  .dot.new{ background:var(--chiron-warm-accent); }
+
+  /* 3-column grid */
+  .matrix{
+    display:grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap:18px;
+  }
+  @media (max-width: 1000px){
+    .matrix{ grid-template-columns: 1fr; }
+  }
+
+  .col{
+    border:1px solid var(--chiron-border);
+    border-radius:6px;
+    background:var(--chiron-surface);
+    overflow:hidden;
+  }
+  .col header.col-head{
+    padding:14px 16px 12px;
+    border-bottom:1px solid var(--chiron-border);
+    background:var(--chiron-elevated);
+    position:static;
+    display:block;
+    text-transform:none;
+    letter-spacing:normal;
+    font-family:var(--chiron-font-body);
+  }
+  .col header.col-head .tag{
+    display:inline-block;
+    font-family:'JetBrains Mono', ui-monospace, monospace;
+    font-size:10px; letter-spacing:.18em; text-transform:uppercase;
+    color:var(--chiron-fg-secondary);
+    margin-bottom:6px;
+  }
+  .col header.col-head h2{
+    margin:0;
+    font-family:var(--chiron-font-heading);
+    font-size:24px; letter-spacing:-0.005em;
+    color:var(--chiron-fg);
+  }
+  .col header.col-head .audience{
+    margin-top:6px;
+    font-size:12.5px;
+    color:var(--chiron-fg-secondary);
+    font-style:italic;
+  }
+
+  .col .body{ padding:6px 16px 14px; }
+
+  .group{ margin-top:14px; }
+  .group:first-child{ margin-top:6px; }
+  .group h3{
+    font-family:'JetBrains Mono', ui-monospace, monospace;
+    font-size:10.5px; letter-spacing:.16em; text-transform:uppercase;
+    color:var(--chiron-fg-secondary);
+    margin:0 0 8px;
+    padding-top:8px;
+    border-top:1px dashed var(--chiron-divider);
+  }
+  .group:first-child h3{ border-top:none; padding-top:2px; }
+
+  .w{
+    display:grid;
+    grid-template-columns: 12px 1fr;
+    gap:6px 10px;
+    padding:5px 0;
+    align-items:start;
+  }
+  .w .pip{
+    width:10px; height:10px; border-radius:99px;
+    margin-top:5px;
+  }
+  .w.locked    .pip{ background:var(--chiron-info); }
+  .w.universal .pip{ background:var(--chiron-success); }
+  .w.new       .pip{ background:var(--chiron-warm-accent); }
+  .w b{
+    font-family:'JetBrains Mono', ui-monospace, monospace;
+    font-size:13px;
+    color:var(--chiron-fg);
+    font-weight:600;
+  }
+  .w p{
+    margin:2px 0 0;
+    font-size:12.5px;
+    line-height:1.5;
+    color:var(--chiron-fg-secondary);
+  }
+  .w small{
+    display:block;
+    font-style:italic;
+    color:var(--chiron-fg-secondary);
+    margin-top:2px;
+    font-size:11.5px;
+  }
+
+  /* Summary footer */
+  .summary{
+    margin-top:30px;
+    padding:16px 18px;
+    border:1px solid var(--chiron-border);
+    border-radius:6px;
+    background:var(--chiron-surface);
+    font-size:13.5px;
+  }
+  .summary h3{
+    margin:0 0 10px;
+    font-family:var(--chiron-font-heading);
+    font-size:18px;
+    color:var(--chiron-fg);
+  }
+  .summary table{ width:100%; border-collapse:collapse; }
+  .summary th, .summary td{
+    text-align:left;
+    padding:6px 8px;
+    border-bottom:1px solid var(--chiron-divider);
+    font-size:13px;
+  }
+  .summary th{
+    font-family:'JetBrains Mono', ui-monospace, monospace;
+    font-size:10.5px;
+    letter-spacing:.12em;
+    text-transform:uppercase;
+    color:var(--chiron-fg-secondary);
+  }
+  .summary td:first-child{
+    font-family:'JetBrains Mono', ui-monospace, monospace;
+    font-size:12px;
+    color:var(--chiron-fg);
+  }
+  .summary .num{
+    font-family:var(--chiron-font-heading);
+    font-size:22px;
+    color:var(--chiron-warm-accent);
+  }
+
+  footer.colophon{
+    margin-top:36px;
+    padding-top:14px;
+    border-top:1px solid var(--chiron-border);
+    color:var(--chiron-fg-secondary);
+    font-size:12px;
+    font-family:'JetBrains Mono', ui-monospace, monospace;
+    letter-spacing:.04em;
+  }
+  :root{ --chiron-paper: white; --chiron-ink: black; }
+</style>
+</head>
+<body>
+
+<header class="bar">
+  <div>Chiron · Domain widget matrix · post v1 (2026-05-23)</div>
+  <div>
+    <label for="theme">Theme</label>
+    <select id="theme">
+      <option value="midnight">Midnight</option>
+      <option value="warm-paper">Warm paper</option>
+      <option value="clinical">Clinical</option>
+      <option value="linguistic">Linguistic</option>
+      <option value="ocean">Ocean</option>
+    </select>
+  </div>
+</header>
+
+<main class="page">
+
+  <h1>What each domain has — after v1</h1>
+  <p class="lede">Three domains, three widget rosters, one shared engine. After the <strong>feat/universal-widgets-v1</strong> work, all three domains gained 9 universal engagement widgets while keeping every domain-locked primary assessment format unchanged. Below: side-by-side of what's available to each Stage-4 chapter writer per domain.</p>
+
+  <div class="legend">
+    <div class="l"><span class="dot locked"></span> <span>Domain-locked primary widget — was here before, untouched</span></div>
+    <div class="l"><span class="dot universal"></span> <span>Universal — new in v1, available to all three domains</span></div>
+    <div class="l"><span class="dot new"></span> <span>Code-only — new in v1</span></div>
+  </div>
+
+  <!-- =============== MATRIX =============== -->
+  <div class="matrix">
+
+    <!-- CODE COLUMN -->
+    <div class="col">
+      <header class="col-head">
+        <span class="tag">domain · code</span>
+        <h2>Code</h2>
+        <div class="audience">Audience: vibe coder — non-engineer who steers AI tools. Goal: read &amp; understand code, not write it from scratch.</div>
+      </header>
+      <div class="body">
+
+        <div class="group">
+          <h3>Locked primary — code-only quiz primitives</h3>
+          <div class="w locked"><span class="pip"></span>
+            <div><b>spot-the-bug</b><p>Marked-line code with a known buggy line; learner identifies it.</p></div>
+          </div>
+          <div class="w locked"><span class="pip"></span>
+            <div><b>code-runner</b><p>Live Pyodide / native runtime — learner edits + runs code in the lesson.</p></div>
+          </div>
+          <div class="w locked"><span class="pip"></span>
+            <div><b>mcq</b><p>Multiple-choice with per-distractor explanations (FR-021 variants).</p></div>
+          </div>
+          <div class="w locked"><span class="pip"></span>
+            <div><b>true-false</b><p>Quick binary check.</p></div>
+          </div>
+          <div class="w locked"><span class="pip"></span>
+            <div><b>mermaid</b><p>Architecture / data-flow diagrams.</p></div>
+          </div>
+        </div>
+
+        <div class="group">
+          <h3>Universal engagement (new — additive)</h3>
+          <div class="w universal"><span class="pip"></span>
+            <div><b>group-chat-animation</b><p>System dialog — agent ↔ tool, function ↔ caller, services on a bus.</p>
+            <small>e.g., demonstrating the entity_types lever as a 6-message dialog</small></div>
+          </div>
+          <div class="w universal"><span class="pip"></span>
+            <div><b>flow-animation</b><p>Data flow, request lifecycle, build pipeline — animated walk between actors.</p>
+            <small>e.g., the 4-step Cascade Memory Protocol walk</small></div>
+          </div>
+          <div class="w universal"><span class="pip"></span>
+            <div><b>glossary-tooltips</b><p>Inline tooltip on every CS jargon term on first mention.</p>
+            <small>REPL · JSON · namespace · entry point · PATH</small></div>
+          </div>
+          <div class="w universal"><span class="pip"></span>
+            <div><b>why-care-callout</b><p>Practical-stakes lead-in: "this helps you steer AI better, debug faster, ship safer."</p></div>
+          </div>
+          <div class="w universal"><span class="pip"></span>
+            <div><b>pattern-cards</b><p>Design patterns, refactor moves, anti-patterns — one card each.</p></div>
+          </div>
+          <div class="w universal"><span class="pip"></span>
+            <div><b>step-cards</b><p>Numbered protocol — deployment sequence, debugging routine.</p></div>
+          </div>
+          <div class="w universal"><span class="pip"></span>
+            <div><b>file-tree</b><p>Project structure / monorepo layout / storage paths.</p></div>
+          </div>
+          <div class="w universal"><span class="pip"></span>
+            <div><b>permission-badge</b><p>Atomic cost / status pill — <code>free</code> / <code>paid</code> / <code>hot</code> / <code>read</code>.</p></div>
+          </div>
+          <div class="w universal"><span class="pip"></span>
+            <div><b>layer-toggle</b><p>Two-axis comparison — local vs prod, sync vs async, axis A vs axis B.</p></div>
+          </div>
+        </div>
+
+        <div class="group">
+          <h3>Code-only (new — schema-gated)</h3>
+          <div class="w new"><span class="pip"></span>
+            <div><b>code-english-translation</b><p>Side-by-side code lines + plain-English line-by-line, row-paired with 6-color tint.</p>
+            <small>The single biggest pedagogy lift for code lessons</small></div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- MEDICINE COLUMN -->
+    <div class="col">
+      <header class="col-head">
+        <span class="tag">domain · medicine</span>
+        <h2>Medicine</h2>
+        <div class="audience">Audience: med student / clinician — USMLE/AMBOSS pedagogy. Goal: pattern recognition + algorithmic clinical reasoning.</div>
+      </header>
+      <div class="body">
+
+        <div class="group">
+          <h3>Locked primary — clinical assessment formats</h3>
+          <div class="w locked"><span class="pip"></span>
+            <div><b>mcq-clinical-vignette</b><p>AMBOSS template: clinical stem + labs + leading question + 5 options + per-distractor explanation.</p>
+            <small>Primary assessment — never replaced</small></div>
+          </div>
+          <div class="w locked"><span class="pip"></span>
+            <div><b>agreement-matrix</b><p>Always / sometimes / never — clinical reasoning across multiple statements.</p></div>
+          </div>
+          <div class="w locked"><span class="pip"></span>
+            <div><b>assertion-reason</b><p>"Both true and reason explains" / "both true but reason doesn't" — classic clinical reasoning format.</p></div>
+          </div>
+          <div class="w locked"><span class="pip"></span>
+            <div><b>confidence-weighted</b><p>MCQ + ask the learner how confident they are. Calibration training.</p></div>
+          </div>
+          <div class="w locked"><span class="pip"></span>
+            <div><b>slider-estimation</b><p>Lab-value range estimation / dose calculation tolerance.</p></div>
+          </div>
+          <div class="w locked"><span class="pip"></span>
+            <div><b>boss</b><p>High-stakes culminating multi-step case at end of chapter.</p></div>
+          </div>
+          <div class="w locked"><span class="pip"></span>
+            <div><b>pathway-diagram</b><p>Signal cascade, metabolic pathway — biochemistry-aware diagram.</p></div>
+          </div>
+          <div class="w locked"><span class="pip"></span>
+            <div><b>chemical-reaction</b><p>mhchem rendering — drug metabolism, receptor binding.</p></div>
+          </div>
+          <div class="w locked"><span class="pip"></span>
+            <div><b>molecule-2d</b><p>2D molecular structure.</p></div>
+          </div>
+          <div class="w locked"><span class="pip"></span>
+            <div><b>forest-plot</b><p>Meta-analysis effect sizes — EBM literacy.</p></div>
+          </div>
+          <div class="w locked"><span class="pip"></span>
+            <div><b>reactive-math</b><p>Interactive equation manipulation.</p></div>
+          </div>
+          <div class="w locked"><span class="pip"></span>
+            <div><b>mathjax</b><p>Static rendered math.</p></div>
+          </div>
+        </div>
+
+        <div class="group">
+          <h3>Universal engagement (new — additive)</h3>
+          <div class="w universal"><span class="pip"></span>
+            <div><b>flow-animation</b><p><strong>Differential-diagnosis algorithm walks.</strong> "Post-chest soreness? → check vitals → next exam." Branches as actors, active branch highlighted.</p>
+            <small>Single highest-value addition for medicine</small></div>
+          </div>
+          <div class="w universal"><span class="pip"></span>
+            <div><b>group-chat-animation</b><p>Attending ↔ resident dialog, drug ↔ receptor "conversation," history-taking simulation.</p></div>
+          </div>
+          <div class="w universal"><span class="pip"></span>
+            <div><b>glossary-tooltips</b><p>Clinical terminology on first mention — pneumococcal, idiopathic, tachypnea, sequela.</p>
+            <small>Universally valuable — terminology IS the curriculum</small></div>
+          </div>
+          <div class="w universal"><span class="pip"></span>
+            <div><b>why-care-callout</b><p>Clinical relevance framing: "shows up on Step 2," "this distinguishes admit vs discharge."</p></div>
+          </div>
+          <div class="w universal"><span class="pip"></span>
+            <div><b>pattern-cards</b><p>Drug classes (e.g., 5 ACE-i + 2 ARBs), syndrome families, antibiotic spectra.</p></div>
+          </div>
+          <div class="w universal"><span class="pip"></span>
+            <div><b>step-cards</b><p>ACLS bundle, sepsis-6, BLS steps — protocol reference.</p></div>
+          </div>
+          <div class="w universal"><span class="pip"></span>
+            <div><b>file-tree</b><p>Anatomy hierarchy, taxonomic classification, body-system organization.</p></div>
+          </div>
+          <div class="w universal"><span class="pip"></span>
+            <div><b>permission-badge</b><p>OTC / Rx / controlled / contraindicated — atomic regulatory cue.</p></div>
+          </div>
+          <div class="w universal"><span class="pip"></span>
+            <div><b>layer-toggle</b><p>Acute vs chronic, primary vs differential, ambulatory vs inpatient.</p></div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- LANGUAGE COLUMN -->
+    <div class="col">
+      <header class="col-head">
+        <span class="tag">domain · language</span>
+        <h2>Language</h2>
+        <div class="audience">Audience: solo language learner (Italian for v1; German deferred). Goal: production + comprehension via spaced retrieval and native exposure.</div>
+      </header>
+      <div class="body">
+
+        <div class="group">
+          <h3>Locked primary — language practice formats</h3>
+          <div class="w locked"><span class="pip"></span>
+            <div><b>fill-blank</b><p>Single-token cloze with fuzzy-match (umlaut / accent normalization).</p></div>
+          </div>
+          <div class="w locked"><span class="pip"></span>
+            <div><b>cloze</b><p>Sentence-level cloze — Anki-compatible.</p></div>
+          </div>
+          <div class="w locked"><span class="pip"></span>
+            <div><b>matching-pair</b><p>Term ↔ definition / vocab ↔ translation pairing.</p></div>
+          </div>
+          <div class="w locked"><span class="pip"></span>
+            <div><b>audio-tts</b><p>Gemini-voiced native-speaker audio — pronunciation + listening comprehension.</p>
+            <small>Primary mechanism for native-pronunciation exposure</small></div>
+          </div>
+          <div class="w locked"><span class="pip"></span>
+            <div><b>match-madness</b><p>Multi-set retrieval-practice anchor — vocab / gender / prep / collocation / conjugation modes.</p>
+            <small>Canonical retrieval-practice anchor per PRD §4.10–4.12</small></div>
+          </div>
+          <div class="w locked"><span class="pip"></span>
+            <div><b>language-flashcard-deck</b><p>Vocab card decks with verb / noun / idiom entries — SR-card ready.</p></div>
+          </div>
+          <div class="w locked"><span class="pip"></span>
+            <div><b>conjugation</b> <small>(via match-madness mode)</small><p>Italian -are / -ere / -ire / -isco-ire families with ho/sono auxiliary.</p></div>
+          </div>
+        </div>
+
+        <div class="group">
+          <h3>Universal engagement (new — additive)</h3>
+          <div class="w universal"><span class="pip"></span>
+            <div><b>group-chat-animation</b><p><strong>Native ↔ learner roleplay.</strong> "Here's how a Roman would say this." Each native bubble can reference an <code>audio-tts</code> id.</p>
+            <small>Single highest-value addition for language</small></div>
+          </div>
+          <div class="w universal"><span class="pip"></span>
+            <div><b>flow-animation</b><p>Sentence construction order (SVO drift), verb conjugation reveal across pronouns, dependent-clause assembly.</p></div>
+          </div>
+          <div class="w universal"><span class="pip"></span>
+            <div><b>glossary-tooltips</b><p><strong>Every new vocabulary word on first mention.</strong> Tooltip = inline definition. This is the whole game.</p></div>
+          </div>
+          <div class="w universal"><span class="pip"></span>
+            <div><b>why-care-callout</b><p>"You'll need this at the coffee bar / asking directions / negotiating a contract."</p></div>
+          </div>
+          <div class="w universal"><span class="pip"></span>
+            <div><b>pattern-cards</b><p>Verb families (-are / -ere / -ire), irregular sets, preposition collocations, idiom clusters.</p></div>
+          </div>
+          <div class="w universal"><span class="pip"></span>
+            <div><b>step-cards</b><p>Grammar rule sequences — "to form the subjunctive: 1... 2... 3..."</p></div>
+          </div>
+          <div class="w universal"><span class="pip"></span>
+            <div><b>file-tree</b><p>Morphology trees, register hierarchies, dialect families.</p></div>
+          </div>
+          <div class="w universal"><span class="pip"></span>
+            <div><b>permission-badge</b><p>Formal / informal / vulgar / regional — register pills inline on vocab.</p></div>
+          </div>
+          <div class="w universal"><span class="pip"></span>
+            <div><b>layer-toggle</b><p>Formal (Lei) vs informal (tu), spoken vs written, present vs historical-present.</p></div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+
+  <!-- =============== SUMMARY =============== -->
+  <div class="summary">
+    <h3>Per-domain widget count — before v1 vs after</h3>
+    <table>
+      <thead><tr><th>Domain</th><th>Audience</th><th>Locked primary</th><th>Universal (new in v1)</th><th>Domain-new in v1</th><th>Total available</th></tr></thead>
+      <tbody>
+        <tr>
+          <td>code</td>
+          <td>vibe coder</td>
+          <td class="num">5</td>
+          <td class="num">+9</td>
+          <td class="num">+1</td>
+          <td class="num">15</td>
+        </tr>
+        <tr>
+          <td>medicine</td>
+          <td>USMLE / clinician</td>
+          <td class="num">12</td>
+          <td class="num">+9</td>
+          <td class="num">0</td>
+          <td class="num">21</td>
+        </tr>
+        <tr>
+          <td>language</td>
+          <td>solo learner (IT v1)</td>
+          <td class="num">7</td>
+          <td class="num">+9</td>
+          <td class="num">0</td>
+          <td class="num">16</td>
+        </tr>
+      </tbody>
+    </table>
+    <p style="margin-top:14px; margin-bottom:0; color:var(--chiron-fg-secondary); font-size:13px;">
+      <strong>What changed:</strong> all three domains gained the same 9 universal engagement widgets <em>without losing a single locked primary widget</em>. Medicine's mcq-clinical-vignette, language's audio-tts + match-madness, and code's spot-the-bug + code-runner all behave exactly as before. The new layer is purely additive — chapter writers now have a bigger toolbox, and the validator floor (code-strict, medicine/language-soft) catches under-engagement.
+    </p>
+  </div>
+
+  <footer class="colophon">
+    chiron · feat/universal-widgets-v1 · 2026-05-23 · companion to lessons/graphiti-implementation-2026-05-23-v1/
+  </footer>
+</main>
+
+<script>
+  (function(){
+    var p = new URLSearchParams(location.search).get('theme');
+    var s = localStorage.getItem('chiron-theme');
+    var t0 = p || s || 'midnight';
+    document.documentElement.setAttribute('data-theme', t0);
+    var sel = document.getElementById('theme');
+    if(sel){
+      sel.value = t0;
+      sel.addEventListener('change', function(){
+        document.documentElement.setAttribute('data-theme', sel.value);
+        localStorage.setItem('chiron-theme', sel.value);
+      });
+    }
+  })();
+</script>
+</body>
+</html>

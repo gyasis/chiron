@@ -85,6 +85,11 @@ When writing MCQ options, ensure:
   `data-tts-voice="native-it"` attribute.
 - **research-paper**: include figure callouts; reference paper sections by
   IMRaD heading.
+- **concepts** (NEW 2026-05-23): rigorous-learner content that isn't code,
+  medicine, language, or paper-shaped. Math primers, formal logic, signal
+  processing, statistics, law, finance, music theory, quant trading.
+  Audience: a learner who wants the derivation, the model, the case-law,
+  the proof — not a vibe-coder, not a clinician, not a language student.
 
 ## Universal engagement widgets (v1 — added 2026-05-23)
 
@@ -139,6 +144,31 @@ The widgets:
   "this question is the difference between admit and discharge").
 - DO NOT modify `agreement-matrix`, `pathway-diagram`, `chemical-reaction`,
   `mcq-clinical-vignette` outputs — they remain unchanged.
+
+**Concepts domain (audience: rigorous learner — wants derivations, models, proofs):**
+- The toolbox is biased toward universal widgets — this domain has no
+  unique locked primaries. The PRIMARY widgets here are usually
+  `mathjax` (formulae), `reactive-math` (when interactive), `mermaid`
+  (system / dependency diagrams), and `chart-xy` (when data + axes
+  matter — price series, distributions, error curves).
+- Every formula on first introduction SHOULD be paired with a
+  `step-cards` breakdown of its derivation OR a `code-english-translation`
+  if the formula has a working code form. This is the "hyper-pedagogy"
+  pattern — primary widget + companion explainer in the same view.
+- Definitions of jargon (any specialized term) SHOULD use
+  `glossary-tooltips`. Concepts domain content is dense; tooltipping
+  hard is the difference between accessible and walled-off.
+- Theorems / proofs SHOULD use `flow-animation` walking the premises
+  through the deduction OR `step-cards` enumerating the steps.
+- Patterns (estimator families, distribution families, doctrine cases,
+  proof techniques) SHOULD use `pattern-cards`.
+- `why-care-callout` SHOULD frame applied stakes ("this is what makes
+  the difference between a backtest that works and one that doesn't,"
+  "this is the case the court used to overturn X").
+- Two-way comparisons (frequentist vs Bayesian, common-law vs civil-law,
+  fixed vs random effects) SHOULD use `layer-toggle`.
+- NO domain-locked widgets here today — concepts is the abstract /
+  structural domain that leans hardest on the universal toolkit.
 
 **Language domain (audience: solo language learner — Italian for v1):**
 - Primary widgets (`fill-blank`, `cloze`, `matching-pair`, `audio-tts`,

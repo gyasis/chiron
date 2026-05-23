@@ -37,7 +37,20 @@ export const SourceTypeSchema = z.enum([
 
 export type SourceType = z.infer<typeof SourceTypeSchema>;
 
-export const DomainSchema = z.enum(['code', 'medicine', 'language-it', 'research-paper']);
+export const DomainSchema = z.enum([
+  'code',           // software — vibe-coder audience, code reading
+  'medicine',       // clinical — USMLE/AMBOSS pedagogy
+  'language-it',    // L2 Italian
+  'research-paper', // paper-shaped academic content (IMRaD)
+  // 2026-05-23 — 5th domain: rigorous-learner content that isn't code,
+  // medicine, language, or paper-shaped. Math primers, formal logic,
+  // signal processing, statistics, law, finance, music theory, quant
+  // trading. Audience: rigorous learner who wants the derivation, the
+  // model, the case-law, the proof — not a vibe-coder, not a clinician.
+  // Inherits all universal widgets; leans heavily on mathjax +
+  // reactive-math + step-cards + pattern-cards.
+  'concepts',
+]);
 export type Domain = z.infer<typeof DomainSchema>;
 
 export const ModeSchema = z.enum(['A', 'B']);

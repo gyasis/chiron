@@ -1,0 +1,474 @@
+<!doctype html>
+<html lang="en" data-theme="midnight">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Chiron — lesson generation flow + widget creation flow</title>
+<link rel="stylesheet" href="../skill/shell/themes/_tokens.css" />
+<link rel="stylesheet" href="../skill/shell/themes/midnight.css" />
+<link rel="stylesheet" href="../skill/shell/themes/warm-paper.css" />
+<link rel="stylesheet" href="../skill/shell/themes/clinical.css" />
+<link rel="stylesheet" href="../skill/shell/themes/linguistic.css" />
+<link rel="stylesheet" href="../skill/shell/themes/ocean.css" />
+<style>
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;background:var(--chiron-bg);color:var(--chiron-fg)}
+  body{
+    font-family:var(--chiron-font-body, Georgia, serif);
+    font-size:15px;
+    line-height:1.55;
+    padding:0 0 60px;
+  }
+  header.bar{
+    position:sticky; top:0; z-index:10;
+    display:flex; justify-content:space-between; align-items:center;
+    padding:10px 24px;
+    background:var(--chiron-surface);
+    border-bottom:1px solid var(--chiron-border);
+    font-family:'JetBrains Mono', ui-monospace, monospace;
+    font-size:11px; letter-spacing:.08em; text-transform:uppercase;
+  }
+  header.bar select{
+    background:var(--chiron-elevated); color:var(--chiron-fg);
+    border:1px solid var(--chiron-border);
+    padding:4px 8px; font-family:inherit; font-size:11px; border-radius:3px;
+  }
+  main.page{ max-width:1240px; margin:0 auto; padding:30px 28px; }
+
+  h1{
+    font-family:var(--chiron-font-heading);
+    font-size:36px; line-height:1.1; margin:0 0 8px;
+    color:var(--chiron-fg); letter-spacing:-0.01em;
+  }
+  .lede{ font-size:17px; color:var(--chiron-fg-secondary); margin:0 0 28px; max-width:68ch; font-style:italic; }
+
+  h2{
+    font-family:var(--chiron-font-heading);
+    font-size:26px; margin:48px 0 6px;
+    color:var(--chiron-fg);
+  }
+  .kicker{
+    font-family:'JetBrains Mono', ui-monospace, monospace;
+    font-size:11px; letter-spacing:.18em; text-transform:uppercase;
+    color:var(--chiron-fg-secondary);
+    margin-bottom:14px;
+  }
+
+  /* ── pipeline diagram ── */
+  .pipeline{
+    display:grid;
+    grid-template-columns: 220px 1fr 220px;
+    gap:24px;
+    align-items:start;
+  }
+  @media (max-width:1000px){ .pipeline{ grid-template-columns: 1fr; } }
+
+  .sources, .outputs{
+    border:1px solid var(--chiron-border);
+    border-radius:6px;
+    background:var(--chiron-surface);
+    padding:14px 16px;
+  }
+  .sources h3, .outputs h3{
+    font-family:'JetBrains Mono', ui-monospace, monospace;
+    font-size:10.5px; letter-spacing:.16em; text-transform:uppercase;
+    margin:0 0 10px;
+    color:var(--chiron-fg-secondary);
+  }
+  .src, .out{
+    display:flex; gap:8px; align-items:start;
+    padding:7px 0;
+    border-bottom:1px dashed var(--chiron-divider);
+    font-size:13px;
+  }
+  .src:last-child, .out:last-child{ border-bottom:none; }
+  .src .ico, .out .ico{ font-size:18px; line-height:1.2; }
+  .src b, .out b{
+    font-family:'JetBrains Mono', ui-monospace, monospace;
+    font-size:11.5px;
+    color:var(--chiron-fg);
+    font-weight:600;
+  }
+  .src p, .out p{ margin:1px 0 0; font-size:12px; color:var(--chiron-fg-secondary); line-height:1.4; }
+
+  .stages{
+    display:flex; flex-direction:column; gap:10px;
+    position:relative;
+  }
+  .stage{
+    display:grid;
+    grid-template-columns: 38px 1fr;
+    gap:14px;
+    align-items:start;
+    padding:14px 16px;
+    border:1px solid var(--chiron-border);
+    border-radius:6px;
+    background:var(--chiron-surface);
+    position:relative;
+  }
+  .stage .num{
+    width:32px; height:32px;
+    border-radius:99px;
+    background:var(--chiron-accent);
+    color:rgb(255,255,255);
+    display:flex; align-items:center; justify-content:center;
+    font-family:var(--chiron-font-heading);
+    font-weight:700; font-size:15px;
+  }
+  .stage h4{
+    margin:0 0 4px;
+    font-family:var(--chiron-font-heading);
+    font-size:17px;
+    color:var(--chiron-fg);
+  }
+  .stage h4 small{
+    font-family:'JetBrains Mono', ui-monospace, monospace;
+    font-size:10px; letter-spacing:.14em; text-transform:uppercase;
+    color:var(--chiron-fg-secondary);
+    margin-left:8px;
+  }
+  .stage p{ margin:0 0 6px; font-size:13.5px; line-height:1.5; color:var(--chiron-fg); }
+  .stage .files{
+    font-family:'JetBrains Mono', ui-monospace, monospace;
+    font-size:11px;
+    color:var(--chiron-fg-secondary);
+    margin-top:4px;
+  }
+  .stage .who{
+    margin-top:6px;
+    display:inline-block;
+    font-family:'JetBrains Mono', ui-monospace, monospace;
+    font-size:10px; letter-spacing:.08em; text-transform:uppercase;
+    padding:2px 7px; border:1px solid var(--chiron-border);
+    border-radius:99px;
+    color:var(--chiron-fg-secondary);
+  }
+  /* connector arrows between stages */
+  .stage::after{
+    content:"";
+    position:absolute;
+    left:33px; bottom:-12px;
+    width:2px; height:12px;
+    background:var(--chiron-border);
+  }
+  .stage:last-child::after{ display:none; }
+
+  /* who-does-what legend */
+  .who-llm{ background:var(--chiron-warm-accent); color:rgb(255,255,255); border-color:var(--chiron-warm-accent); }
+  .who-validate{ background:var(--chiron-info); color:rgb(255,255,255); border-color:var(--chiron-info); }
+  .who-determ{ background:var(--chiron-success); color:rgb(255,255,255); border-color:var(--chiron-success); }
+
+  /* ── widget creation flow (bottom half) ── */
+  .widget-flow{
+    display:grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap:12px;
+    margin-top:16px;
+  }
+  @media (max-width:900px){ .widget-flow{ grid-template-columns: 1fr; } }
+  .wf-step{
+    padding:14px 14px 12px;
+    border:1px solid var(--chiron-border);
+    border-radius:6px;
+    background:var(--chiron-surface);
+  }
+  .wf-step .wf-num{
+    font-family:var(--chiron-font-heading);
+    font-size:30px; line-height:1;
+    color:var(--chiron-accent);
+    margin-bottom:6px;
+  }
+  .wf-step h4{
+    margin:0 0 6px;
+    font-family:var(--chiron-font-heading);
+    font-size:16px;
+    color:var(--chiron-fg);
+  }
+  .wf-step p{ font-size:12.5px; line-height:1.5; margin:0 0 6px; color:var(--chiron-fg); }
+  .wf-step code{
+    font-family:'JetBrains Mono', ui-monospace, monospace;
+    font-size:11px;
+    color:var(--chiron-warm-accent);
+    display:block; padding:2px 0;
+  }
+  .wf-step .commit{
+    margin-top:8px; padding-top:6px;
+    border-top:1px dashed var(--chiron-divider);
+    font-size:11px; font-style:italic;
+    color:var(--chiron-fg-secondary);
+  }
+
+  /* chart-xy proposal panel */
+  .proposal{
+    margin-top:24px;
+    padding:18px 20px;
+    border:1px solid var(--chiron-warm-accent);
+    border-radius:6px;
+    background:var(--chiron-elevated);
+  }
+  .proposal h3{
+    margin:0 0 6px;
+    font-family:var(--chiron-font-heading);
+    font-size:20px;
+    color:var(--chiron-fg);
+  }
+  .proposal .ptag{
+    display:inline-block;
+    font-family:'JetBrains Mono', ui-monospace, monospace;
+    font-size:10px; letter-spacing:.14em; text-transform:uppercase;
+    color:var(--chiron-warm-accent);
+    margin-bottom:4px;
+  }
+  .proposal pre{
+    background:var(--chiron-bg);
+    border:1px solid var(--chiron-border);
+    padding:10px 12px; border-radius:4px;
+    font-family:'JetBrains Mono', ui-monospace, monospace;
+    font-size:12px; line-height:1.5;
+    overflow:auto;
+    color:var(--chiron-fg);
+  }
+
+  /* who-runs strip */
+  .who-strip{
+    display:flex; gap:18px; flex-wrap:wrap;
+    padding:12px 16px;
+    margin:16px 0 24px;
+    border:1px solid var(--chiron-border); border-radius:6px;
+    background:var(--chiron-surface);
+    font-size:13px;
+  }
+  .who-strip .l{ display:flex; gap:7px; align-items:center; }
+  .who-strip .pill{
+    font-family:'JetBrains Mono', ui-monospace, monospace;
+    font-size:10px; letter-spacing:.08em; text-transform:uppercase;
+    padding:2px 7px; border-radius:99px; color:rgb(255,255,255);
+  }
+
+  footer.colophon{
+    margin-top:46px; padding-top:14px;
+    border-top:1px solid var(--chiron-border);
+    color:var(--chiron-fg-secondary); font-size:12px;
+    font-family:'JetBrains Mono', ui-monospace, monospace; letter-spacing:.04em;
+  }
+  :root{ --chiron-paper: white; --chiron-ink: black; }
+</style>
+</head>
+<body>
+
+<header class="bar">
+  <div>Chiron · lesson flow + widget creation · 2026-05-23</div>
+  <div>
+    <label for="theme">Theme</label>
+    <select id="theme">
+      <option value="midnight">Midnight</option>
+      <option value="warm-paper">Warm paper</option>
+      <option value="clinical">Clinical</option>
+      <option value="linguistic">Linguistic</option>
+      <option value="ocean">Ocean</option>
+    </select>
+  </div>
+</header>
+
+<main class="page">
+
+  <h1>How a chiron lesson actually gets made</h1>
+  <p class="lede">Two flows. <strong>Top:</strong> source → 5-stage pipeline → <code>lesson.html</code> (the production path). <strong>Bottom:</strong> how a new widget kind (like <code>chart-xy</code>) gets added — the path we just walked for the 10 universal widgets.</p>
+
+  <div class="who-strip">
+    <div class="l"><span class="pill who-llm">LLM call</span><span>parent Claude Code agent (you, in this session) executes the prompt</span></div>
+    <div class="l"><span class="pill who-validate">validate</span><span>deterministic — Zod + DAG + rubric, NO LLM</span></div>
+    <div class="l"><span class="pill who-determ">deterministic</span><span>pure code — adapter, renderer, file I/O</span></div>
+  </div>
+
+  <!-- ========================= TOP HALF: LESSON GENERATION ========================= -->
+  <div class="kicker">Flow 1 of 2</div>
+  <h2>Lesson generation pipeline</h2>
+
+  <div class="pipeline">
+
+    <!-- LEFT — sources -->
+    <div class="sources">
+      <h3>Where content comes from</h3>
+      <div class="src"><span class="ico">📄</span><div><b>PDF</b><p>Textbook chapter, paper, manual — ingest-adapters/multi-pdf.ts. Vision via mcp__gemini-mcp__interpret_image for scanned PDFs.</p></div></div>
+      <div class="src"><span class="ico">📁</span><div><b>Code repo</b><p>Local folder or git URL — ingest-adapters/code-repo.ts.</p></div></div>
+      <div class="src"><span class="ico">📝</span><div><b>Markdown brief</b><p>Direct, hand-written spec. Bypasses ingest — feed Stage 1 directly.</p></div></div>
+      <div class="src"><span class="ico">🖼</span><div><b>Image folder</b><p>Slides, diagrams, scanned notes — ingest-adapters/image.ts. Vision-extracted via Gemini.</p></div></div>
+      <div class="src"><span class="ico">🌐</span><div><b>URL / live</b><p>Gemini grounding (mcp__gemini-mcp__gemini_research) or deep research (mcp__gemini-mcp__start_deep_research, opt-in, ≤1/lesson).</p></div></div>
+      <div class="src"><span class="ico">📦</span><div><b>Bundle</b><p>Multi-source — ingest-adapters/bundle.ts.</p></div></div>
+    </div>
+
+    <!-- MIDDLE — stages -->
+    <div class="stages">
+
+      <div class="stage">
+        <div class="num">1</div>
+        <div>
+          <h4>Ingest <small>deterministic</small></h4>
+          <p>Per-source adapter normalizes raw input to a Brief skeleton: <code>title</code>, <code>extractedText</code>, <code>sourceFiles[]</code>, hints. Vision extraction routes through Gemini.</p>
+          <div class="files">ingest-adapters/*.ts</div>
+          <span class="who who-determ">deterministic</span>
+        </div>
+      </div>
+
+      <div class="stage">
+        <div class="num">2</div>
+        <div>
+          <h4>Brief enrichment <small>LLM · Stage 1 prompt</small></h4>
+          <p>Enriches the skeleton with <code>domain</code>, <code>mode</code> (A vs B), audience, key-concept candidates, learning outcomes. Output is a validated <code>Brief</code> (Zod-checked).</p>
+          <div class="files">prompts/01-brief.md → brief.json</div>
+          <span class="who who-llm">LLM</span>
+        </div>
+      </div>
+
+      <div class="stage">
+        <div class="num">3</div>
+        <div>
+          <h4>Syllabus <small>LLM · Stage 2 prompt</small></h4>
+          <p>From the Brief, fills <code>ChapterSyllabus[]</code> — N chapter slots with narrative arc, <code>keyConcepts[]</code>, <code>widgets[]</code> (kinds + draft specs), <code>srCards[]</code>, <code>scienceAnnotations[]</code>.</p>
+          <div class="files">prompts/02-syllabus.md → syllabus.json</div>
+          <span class="who who-llm">LLM</span>
+        </div>
+      </div>
+
+      <div class="stage">
+        <div class="num">4</div>
+        <div>
+          <h4>Validate <small>deterministic · up to 3 retries</small></h4>
+          <p>Zod schema check + concept-DAG cycle/prereq check + rubric (≥3 scienceAnnotations, FR-021 variants, <strong>engagement floor by domain</strong>). Failures route through <code>03-validate-rubric.md</code> for LLM-driven repair.</p>
+          <div class="files">lib/validator.ts + prompts/03-validate-rubric.md</div>
+          <span class="who who-validate">validate</span>
+        </div>
+      </div>
+
+      <div class="stage">
+        <div class="num">5</div>
+        <div>
+          <h4>Chapter write <small>LLM · Stage 4 prompts × N</small></h4>
+          <p>One call per chapter. Stage-4a writes <code>narrativeHtml</code> + populated widget specs. Per-widget sub-prompts (04b mcq, 04c clinical-vignette, 04l peer-dialogue, etc.) fill the harder ones.</p>
+          <div class="files">prompts/04a-chapter-write.md + 04*.md</div>
+          <span class="who who-llm">LLM</span>
+        </div>
+      </div>
+
+      <div class="stage">
+        <div class="num">6</div>
+        <div>
+          <h4>Render + assemble <small>deterministic</small></h4>
+          <p>Each <code>WidgetSpec</code> → <code>renderWidget()</code> dispatches to the registered renderer → HTML string. Stage 5 inlines vendored libs (MathJax, Mermaid, etc.), wires SQLite + themes + main.js, writes <code>lesson.html</code> + sidecars.</p>
+          <div class="files">lib/widget-renderer.ts + lib/assemble.ts</div>
+          <span class="who who-determ">deterministic</span>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- RIGHT — outputs -->
+    <div class="outputs">
+      <h3>What lands in &lt;lesson-output-dir&gt;/</h3>
+      <div class="out"><span class="ico">📄</span><div><b>lesson.html</b><p>Single self-contained interactive site.</p></div></div>
+      <div class="out"><span class="ico">🗃</span><div><b>.chiron-state.db</b><p>SQLite — quiz attempts, mastery, SR cards, bookmarks (per learner).</p></div></div>
+      <div class="out"><span class="ico">🧾</span><div><b>brief.json</b><p>Stage-1 sidecar for reproducibility.</p></div></div>
+      <div class="out"><span class="ico">🧾</span><div><b>syllabus.json</b><p>Stage-2 sidecar.</p></div></div>
+      <div class="out"><span class="ico">📂</span><div><b>source/</b><p>Verbatim copy of PDF/code/etc. (FR-030).</p></div></div>
+      <div class="out"><span class="ico">🔊</span><div><b>audio/</b><p>TTS audio for language lessons.</p></div></div>
+      <div class="out"><span class="ico">🔬</span><div><b>research/</b><p>Deep-research markdown (only when opted in).</p></div></div>
+    </div>
+
+  </div>
+
+  <!-- ========================= BOTTOM HALF: WIDGET CREATION ========================= -->
+  <div class="kicker" style="margin-top:48px">Flow 2 of 2</div>
+  <h2>How a NEW widget kind gets added</h2>
+  <p style="font-style:italic; color:var(--chiron-fg-secondary); max-width:68ch;">The path we just walked for the 10 universal widgets. The SAME path would add a new <code>chart-xy</code> widget for the Quant Trading lesson (or any other gap).</p>
+
+  <div class="widget-flow">
+
+    <div class="wf-step">
+      <div class="wf-num">1</div>
+      <h4>Schema</h4>
+      <p>Add a Zod schema to <code>widget-spec.ts</code> describing the shape (fields, types, defaults, refinements). Register in the discriminated union + <code>WIDGET_KINDS</code> + the appropriate tier array.</p>
+      <code>lib/schemas/widget-spec.ts</code>
+      <div class="commit">commit 1 — schema only</div>
+    </div>
+
+    <div class="wf-step">
+      <div class="wf-num">2</div>
+      <h4>Renderer</h4>
+      <p>Write <code>renderXxx(spec)</code> that emits HTML matching the shell CSS classes. Register via <code>registerRenderer('xxx', …)</code> — overrides the Wave-2 throwing stub. Bake <code>.btn</code> classes into any control buttons.</p>
+      <code>lib/widget-renderer.ts</code>
+      <div class="commit">commit 2 — renderer + dispatch</div>
+    </div>
+
+    <div class="wf-step">
+      <div class="wf-num">3</div>
+      <h4>Prompt + validator</h4>
+      <p>Tell Stage-4 WHEN to emit it: edit <code>04a-chapter-write.md</code> with per-domain "use when" guidance. Add a validator floor in <code>validator.ts</code> if certain content categories MUST emit it. Wire the new issue code into <code>03-validate-rubric.md</code>.</p>
+      <code>prompts/04a, prompts/03, lib/validator.ts</code>
+      <div class="commit">commit 3 — prompts + validator</div>
+    </div>
+
+    <div class="wf-step">
+      <div class="wf-num">4</div>
+      <h4>Reproducibility test</h4>
+      <p>Add a case to <code>scripts/test-graphiti-pipeline-repro.mjs</code> (or a new repro script) — construct a spec, assert it parses, assert renderer output contains the expected CSS hooks. Run it; 100% pass before merge.</p>
+      <code>scripts/test-*-repro.mjs</code>
+      <div class="commit">commit 4 — test green</div>
+    </div>
+
+  </div>
+
+  <!-- chart-xy proposal -->
+  <div class="proposal">
+    <span class="ptag">Next gap — chart-xy</span>
+    <h3>What a chart-xy widget would need</h3>
+    <p style="margin:0 0 10px; font-size:13.5px;">For Quant Trading and the broader <code>concepts</code> domain, we need a line / scatter / candlestick chart. SVG-based for cheap render, optional hover tooltip, no heavy chart library. Schema sketch:</p>
+<pre>export const ChartXyWidgetSchema = z.object({
+  type: z.literal('chart-xy'),
+  id: z.string(),
+  title: z.string().optional(),
+  xLabel: z.string().optional(),
+  yLabel: z.string().optional(),
+  variant: z.enum(['line','scatter','bar','candlestick']),
+  series: z.array(z.object({
+    label: z.string(),
+    color: z.string().optional(),         // CSS var preferred — e.g., 'var(--chiron-accent)'
+    points: z.array(z.object({
+      x: z.number(),                       // or ISO date string for time-series
+      y: z.number(),
+      ohlc: z.object({                     // only for candlestick
+        open: z.number(), high: z.number(),
+        low:  z.number(), close: z.number(),
+      }).optional(),
+    })),
+  })).min(1),
+  annotations: z.array(z.object({         // text labels at (x, y) — moving averages, dividers
+    x: z.number(), y: z.number(), text: z.string(),
+  })).optional(),
+});</pre>
+    <p style="margin:10px 0 0; font-size:13px; color:var(--chiron-fg-secondary); font-style:italic;">Steps to land it: same 4-step flow above. ~half a day end-to-end. Once committed, the Quant Trading lesson can use <code>chart-xy</code> instances for price series, P&amp;L curves, distribution histograms, Sharpe-ratio rolling windows.</p>
+  </div>
+
+  <footer class="colophon">
+    chiron · feat/universal-widgets-v1 · 2026-05-23 · companion to lessons/graphiti-implementation-2026-05-23-v1/ + docs/domain-widget-matrix.html
+  </footer>
+</main>
+
+<script>
+  (function(){
+    var p = new URLSearchParams(location.search).get('theme');
+    var s = localStorage.getItem('chiron-theme');
+    var t0 = p || s || 'midnight';
+    document.documentElement.setAttribute('data-theme', t0);
+    var sel = document.getElementById('theme');
+    if(sel){
+      sel.value = t0;
+      sel.addEventListener('change', function(){
+        document.documentElement.setAttribute('data-theme', sel.value);
+        localStorage.setItem('chiron-theme', sel.value);
+      });
+    }
+  })();
+</script>
+</body>
+</html>

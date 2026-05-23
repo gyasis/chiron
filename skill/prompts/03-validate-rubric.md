@@ -24,6 +24,7 @@ You will receive a structured issue list and must produce a corrected
 | `rubric-engagement-floor-code` | Code-domain chapter missing required engagement widget | If chapter shows code in `narrativeHtml`: add a `code-english-translation` widget. If no quiz: add an `mcq` / `spot-the-bug` / `matching-pair`. If neither `glossary-tooltips` nor `why-care-callout`: add at least one. See `04a-chapter-write.md` § "Universal engagement widgets". |
 | `rubric-engagement-floor-medicine` | Medicine chapter looks algorithmic but has no flow-animation/pathway-diagram | Add a `flow-animation` (with branch actors) or a `pathway-diagram` for the ddx / protocol / workup the chapter discusses |
 | `rubric-engagement-floor-language` | Conversational language chapter has no chat/TTS | Add a `group-chat-animation` between learner + native-speaker, OR `audio-tts` exemplars for the dialog lines |
+| `rubric-engagement-floor-concepts` | Concepts chapter has formula/chart primary but no explainer companion | Pair the `mathjax` / `reactive-math` / `chart-xy` primary with a `step-cards` derivation OR a `flow-animation` walk OR (if there's a code form) a `code-english-translation` |
 
 ## Rules
 
