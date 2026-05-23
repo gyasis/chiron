@@ -220,12 +220,12 @@
      for these rows only, so contrast stays clean. */
   .translation-code .tl,
   .translation-english .tl{
-    color: #14111a !important;
+    color: rgb(20,17,26) !important;
     font-weight: 500;
   }
   /* Inline <code> + <strong> inside .tl also need the dark color */
   .translation-code .tl *,
-  .translation-english .tl *{ color: #14111a !important; }
+  .translation-english .tl *{ color: rgb(20,17,26) !important; }
   /* Strong left bar on English side so the row pairing is unambiguous on quick scan */
   .translation-english .tl{ border-left: 4px solid transparent; padding-left: 14px; }
   .translation-english .tl:nth-child(6n+1){ border-left-color: rgba(243,139,168,.90); }
@@ -291,7 +291,7 @@
   .quiz-block .quiz-feedback.show{ display:block; }
   .quiz-block .check-btn{
     padding:6px 14px; font-family:inherit; font-size:13px;
-    border:1px solid var(--chiron-accent); background:var(--chiron-accent); color:#fff;
+    border:1px solid var(--chiron-accent); background:var(--chiron-accent); color:rgb(255,255,255);
     border-radius:4px; cursor:pointer; margin-top:4px;
   }
 
@@ -351,7 +351,7 @@
     cursor:pointer;
   }
   .layer-toggle button.lt-btn.active{
-    background:var(--chiron-accent); color:#fff; border-color:var(--chiron-accent);
+    background:var(--chiron-accent); color:rgb(255,255,255); border-color:var(--chiron-accent);
   }
   /* Toggle behavior via [data-axis-show] on the layer-toggle root */
   .layer-toggle[data-axis-show="1"] .lt-axis-2,
@@ -478,7 +478,12 @@
 
 <header class="bar">
   <div class="title">Graphiti, your way <span class="pill">code · mode A · v1 gap-fix</span></div>
-  <div class="theme-pick">
+  <div class="theme-pick" style="display:flex; gap:12px; align-items:center;">
+    <label for="quizmode" style="opacity:.85;">Quizzes</label>
+    <select id="quizmode" aria-label="Quiz visibility">
+      <option value="on">On</option>
+      <option value="off">Off</option>
+    </select>
     <label for="theme">Theme</label>
     <select id="theme">
       <option value="midnight">Midnight</option>
@@ -554,6 +559,37 @@
     </div>
 
     <div class="pull"><em>Axis 1 is "which world." Axis 2 is "what shape."</em></div>
+
+    <!-- ── layer-toggle widget — universal — Ch1 ── -->
+    <div class="layer-toggle" data-axis-show="both">
+      <span class="lt-tag">Try it — toggle which axis to focus on</span>
+      <div class="lt-buttons">
+        <button class="lt-btn" data-show="1" type="button">Axis 1 only</button>
+        <button class="lt-btn" data-show="2" type="button">Axis 2 only</button>
+        <button class="lt-btn active" data-show="both" type="button">Both</button>
+      </div>
+      <div class="lt-axis-1"><b>group_ids</b> — the namespace. Asks "which world?" Today: a single value, <code>developer_gyasisutton</code>.</div>
+      <div class="lt-axis-2"><b>entity_types</b> — the domain shape. Asks "what shape of answer?" Today: five categories — Preference / Workflow / ToolPattern / Recipe / Finding.</div>
+    </div>
+
+    <!-- ── quiz — scenario/vignette style — Ch1 ── -->
+    <div class="quiz-block" id="quiz-ch1">
+      <span class="q-tag">Quick check · scenario</span>
+      <div class="quiz-question-block"
+           data-correct="B"
+           data-explain-right="Right — querying with no entity_types filter pulls all five categories. You'd see a Preference about coding style, a Finding about IDs, and one Workflow — three different shapes competing for relevance."
+           data-explain-wrong="Re-read Ch1. The filter that narrows by shape is entity_types; group_ids only narrows by namespace.">
+        <div class="quiz-question">You search <code>"shipping a Cube view"</code> against your Graphiti without any entity_types filter. You expected a workflow. What's the most likely failure mode?</div>
+        <div class="quiz-options">
+          <button class="quiz-option" data-value="A" onclick="selectQuizOption(this)">No results — the query is too vague to anchor anywhere.</button>
+          <button class="quiz-option" data-value="B" onclick="selectQuizOption(this)">Mixed results — a Preference, a Finding, and a Workflow all compete; ranking is unstable.</button>
+          <button class="quiz-option" data-value="C" onclick="selectQuizOption(this)">A 422 error because group_ids was empty.</button>
+          <button class="quiz-option" data-value="D" onclick="selectQuizOption(this)">All five categories return blank; entity_types filter is required.</button>
+        </div>
+        <div class="quiz-feedback"></div>
+      </div>
+      <button class="check-btn" onclick="checkQuiz('quiz-ch1')">Check answer</button>
+    </div>
   </section>
 
   <!-- CH 2 — code↔english translation gap-fix -->
@@ -678,6 +714,61 @@
     </div>
 
     <div class="pull"><em>group_ids partition the universe. entity_types shape the question.</em></div>
+
+    <!-- ── drag-and-drop matching — universal — Ch3 ── -->
+    <div class="dnd-block"
+         data-answer='{"chip1":"workflow","chip2":"preference","chip3":"recipe","chip4":"finding","chip5":"toolpattern"}'>
+      <h4>Drag each example to the right entity_type</h4>
+      <p class="dnd-instructions">Five real entries from your Graphiti. Drag each chip into the box where it belongs.</p>
+      <div class="dnd-chips">
+        <span class="dnd-chip" data-id="chip1" draggable="true">"CREATE VIEW → GRANT SELECT → appears in Databricks"</span>
+        <span class="dnd-chip" data-id="chip2" draggable="true">"ANSI SQL for Snowflake+Databricks"</span>
+        <span class="dnd-chip" data-id="chip3" draggable="true">"Superset params must be JSON string"</span>
+        <span class="dnd-chip" data-id="chip4" draggable="true">"Atlassian cloud ID is e29377f4-..."</span>
+        <span class="dnd-chip" data-id="chip5" draggable="true">"Superset auth → API call → verify"</span>
+      </div>
+      <div class="dnd-zones">
+        <div>
+          <div class="dnd-zone-label">Preference</div>
+          <div class="dnd-zone-target" data-zone-id="preference">drop here</div>
+        </div>
+        <div>
+          <div class="dnd-zone-label">Workflow</div>
+          <div class="dnd-zone-target" data-zone-id="workflow">drop here</div>
+        </div>
+        <div>
+          <div class="dnd-zone-label">ToolPattern</div>
+          <div class="dnd-zone-target" data-zone-id="toolpattern">drop here</div>
+        </div>
+        <div>
+          <div class="dnd-zone-label">Recipe</div>
+          <div class="dnd-zone-target" data-zone-id="recipe">drop here</div>
+        </div>
+        <div>
+          <div class="dnd-zone-label">Finding</div>
+          <div class="dnd-zone-target" data-zone-id="finding">drop here</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── quiz — application-style MCQ — Ch3 ── -->
+    <div class="quiz-block" id="quiz-ch3">
+      <span class="q-tag">Quick check · application</span>
+      <div class="quiz-question-block"
+           data-correct="C"
+           data-explain-right="Right. A multi-step process with concrete steps is a Workflow. Recipes are fix-patterns pointing at a file; ToolPatterns are command sequences without a fix narrative; Findings are atomic facts."
+           data-explain-wrong="Workflow = a reusable multi-step process. ToolPattern is just a chain (no fix narrative). Recipe points at a specific file fix. Finding is atomic.">
+        <div class="quiz-question">You want to save: "When BCBS submission fails, swap the SNOMED code for the ICD-10, re-run export, verify in /tmp/." Which entity_type fits best?</div>
+        <div class="quiz-options">
+          <button class="quiz-option" data-value="A" onclick="selectQuizOption(this)">Finding — it's a concrete fact about BCBS.</button>
+          <button class="quiz-option" data-value="B" onclick="selectQuizOption(this)">ToolPattern — it's a sequence of commands.</button>
+          <button class="quiz-option" data-value="C" onclick="selectQuizOption(this)">Workflow — multi-step, repeatable, has structure.</button>
+          <button class="quiz-option" data-value="D" onclick="selectQuizOption(this)">Preference — it's how you want errors handled.</button>
+        </div>
+        <div class="quiz-feedback"></div>
+      </div>
+      <button class="check-btn" onclick="checkQuiz('quiz-ch3')">Check answer</button>
+    </div>
   </section>
 
   <!-- CH 4 — flow-animation gap-fix: cascade search -->
@@ -702,19 +793,19 @@
       <div class="flow-actors">
         <div class="flow-actor" id="flow-agent">
           <div class="flow-actor-icon">🤖</div>
-          <span>Agent</span>
+          <span>Agent <span class="badge read">live</span></span>
         </div>
         <div class="flow-actor" id="flow-jsonl">
           <div class="flow-actor-icon">📀</div>
-          <span>JSONL (L1.5)</span>
+          <span>JSONL (L1.5) <span class="badge free">free</span></span>
         </div>
         <div class="flow-actor" id="flow-hybridrag">
           <div class="flow-actor-icon">📚</div>
-          <span>HybridRAG (L2)</span>
+          <span>HybridRAG (L2) <span class="badge paid">paid · write</span></span>
         </div>
         <div class="flow-actor" id="flow-graphiti">
           <div class="flow-actor-icon">🆔</div>
-          <span>Graphiti (L3)</span>
+          <span>Graphiti (L3) <span class="badge hot">paid · LLM</span></span>
         </div>
       </div>
       <div class="flow-packet"></div>
@@ -726,6 +817,15 @@
       </div>
     </div>
 
+    <!-- ── step-cards (static companion to the flow above) — universal — Ch4 ── -->
+    <h3>The same four steps, as cards (if you can't see the animation)</h3>
+    <div class="step-cards">
+      <div class="sc"><div class="sc-num">1</div><h5>Anchor</h5><p>session-search over JSONL. <span class="badge free">free</span> 189ms.</p></div>
+      <div class="sc"><div class="sc-num">2</div><h5>Expand</h5><p>Parallel: HybridRAG + Graphiti, primed by pivots from step 1. <span class="badge paid">paid</span></p></div>
+      <div class="sc"><div class="sc-num">3</div><h5>Synthesize</h5><p>Connect findings. &lt;2000 token budget.</p></div>
+      <div class="sc"><div class="sc-num">4</div><h5>Reflect</h5><p>Contradictions → <code>/memory-reconcile</code>. File memory wins.</p></div>
+    </div>
+
     <h3>Current state of your Graphiti (the L3 layer)</h3>
     <ul>
       <li><strong>1 group_id</strong> — <code>developer_gyasisutton</code>.</li>
@@ -734,6 +834,38 @@
       <li><strong>Admission test (BLOCKING):</strong> Universal? Low-churn? Behavioral? All three YES, else file memory only.</li>
       <li><strong>Conflict resolution:</strong> File memory always wins over Graphiti in the current session.</li>
     </ul>
+
+    <h3>Where the bytes actually live</h3>
+    <div class="filetree">
+      <div class="ft-line ft-l1"><span class="ft-icon">📁</span><span class="ft-name">~/</span></div>
+      <div class="ft-line ft-l2"><span class="ft-icon">📁</span><span class="ft-name">.claude/</span></div>
+      <div class="ft-line ft-l3 highlight"><span class="ft-icon">📁</span><span class="ft-name">projects/&lt;slug&gt;/memory/</span><span class="ft-tag">L1.5 file mem</span></div>
+      <div class="ft-line ft-l3"><span class="ft-icon">📄</span><span class="ft-name">recipes/INDEX.md</span><span class="ft-tag">recipes</span></div>
+      <div class="ft-line ft-l2"><span class="ft-icon">📁</span><span class="ft-name">.memory/</span><span class="ft-tag">in your cwd</span></div>
+      <div class="ft-line ft-l3 highlight"><span class="ft-icon">📄</span><span class="ft-name">session.json</span><span class="ft-tag">L1.5 session</span></div>
+      <div class="ft-line ft-l3"><span class="ft-icon">📄</span><span class="ft-name">.pre-compact-discoveries.json</span><span class="ft-tag">L1.5</span></div>
+      <div class="ft-line ft-l1"><span class="ft-icon">🌐</span><span class="ft-name">DeepLake (server)</span><span class="ft-tag">L2 hybridrag</span></div>
+      <div class="ft-line ft-l1"><span class="ft-icon">🌐</span><span class="ft-name">Neo4j (graph DB)</span><span class="ft-tag">L3 graphiti</span></div>
+    </div>
+
+    <!-- ── quiz — Ch4 ── -->
+    <div class="quiz-block" id="quiz-ch4">
+      <span class="q-tag">Quick check · ordering</span>
+      <div class="quiz-question-block"
+           data-correct="A"
+           data-explain-right="Right. L1.5 JSONL is free + 189ms. Always anchor there before paying for L2 or L3."
+           data-explain-wrong="L2 (HybridRAG) and L3 (Graphiti) both cost real money to write into. JSONL session-search is free and already on disk — always step 1.">
+        <div class="quiz-question">A new fact lands mid-conversation. Cheapest path to discover whether you've already saved it somewhere?</div>
+        <div class="quiz-options">
+          <button class="quiz-option" data-value="A" onclick="selectQuizOption(this)">session-search over JSONL (L1.5), then expand only if empty.</button>
+          <button class="quiz-option" data-value="B" onclick="selectQuizOption(this)">HybridRAG semantic search (L2) first — it's smarter.</button>
+          <button class="quiz-option" data-value="C" onclick="selectQuizOption(this)">Graphiti search_nodes (L3) — it has all the universal stuff.</button>
+          <button class="quiz-option" data-value="D" onclick="selectQuizOption(this)">All three in parallel and merge.</button>
+        </div>
+        <div class="quiz-feedback"></div>
+      </div>
+      <button class="check-btn" onclick="checkQuiz('quiz-ch4')">Check answer</button>
+    </div>
   </section>
 
   <!-- CH 5 -->
@@ -746,23 +878,64 @@
       You've been using one axis (entity_types) cleanly and ignoring the other (group_ids). Six moves below — pick the ones that match where you actually feel friction.
     </div>
 
-    <h3>Move 1 — Per-domain namespacing</h3>
-    <p>Spin up <code>hh_dev_team</code> as a second group_id. Migrate HH-only Workflows/Recipes/Findings there. Queries from inside HH work pass <code>group_ids=["developer_gyasisutton", "hh_dev_team"]</code>; queries from personal projects pass only the first. Personal projects no longer pick up "how to scaffold a Cube view" as relevant context.</p>
+    <!-- ── pattern cards — universal — Ch5 ── -->
+    <div class="pattern-cards">
+      <div class="pattern-card">
+        <span class="pc-num">Move 1</span>
+        <h4>Per-domain namespacing</h4>
+        <p class="pc-body">Spin up <code>hh_dev_team</code> as a second group_id. HH-only Workflows/Recipes/Findings move there. Personal queries pass only <code>developer_gyasisutton</code> — no Cube context bleeds in.</p>
+        <div class="pc-foot">Axis exercised: group_ids · cost: one extra query arg</div>
+      </div>
+      <div class="pattern-card">
+        <span class="pc-num">Move 2</span>
+        <h4>Multi-tenant simulation</h4>
+        <p class="pc-body">Use group_ids as <em>roles</em>: <code>role_pm</code>, <code>role_oncall</code>, <code>role_engineer</code>. Switch personas by switching the namespace. Same brain, different lens.</p>
+        <div class="pc-foot">Axis exercised: group_ids · cost: one extra group to maintain</div>
+      </div>
+      <div class="pattern-card">
+        <span class="pc-num">Move 3</span>
+        <h4>Single-type slash skills</h4>
+        <p class="pc-body">Bind one slash command to one entity_type. <code>/find-workflow</code> = Workflows only. <code>/find-recipe</code> = Recipes only. Lower noise, faster convergence.</p>
+        <div class="pc-foot">Axis exercised: entity_types · cost: zero</div>
+      </div>
+      <div class="pattern-card">
+        <span class="pc-num">Move 4</span>
+        <h4>Promotion pipeline</h4>
+        <p class="pc-body">Pair group_ids with the admission test. Patterns START in <code>sio_pipeline</code> (holding tank). They GRADUATE to <code>developer_gyasisutton</code> only after Universal + Low-churn + Behavioral.</p>
+        <div class="pc-foot">Axis exercised: both · cost: discipline</div>
+      </div>
+      <div class="pattern-card">
+        <span class="pc-num">Move 5</span>
+        <h4>Audit-by-axis</h4>
+        <p class="pc-body">Audit Workflows quarterly (decay fast). Findings annually (rarely change). Smallest group_id whenever you suspect partition rot. The two axes give two audit lenses.</p>
+        <div class="pc-foot">Axis exercised: entity_types + group_ids · cost: scheduled queries</div>
+      </div>
+      <div class="pattern-card">
+        <span class="pc-num">Move 6</span>
+        <h4>Share without leakage</h4>
+        <p class="pc-body">When shipping a capability to a teammate, export only the shared group_id. <code>developer_gyasisutton</code> stays private; <code>hh_dev_team</code> ships if they're on the HH stack.</p>
+        <div class="pc-foot">Axis exercised: group_ids · cost: one extra group · payoff: clean sharing boundary</div>
+      </div>
+    </div>
 
-    <h3>Move 2 — Multi-tenant simulation</h3>
-    <p>Use group_ids for <em>roles</em>: <code>role_pm</code>, <code>role_oncall</code>, <code>role_engineer</code>. Switch personas by switching the group_id. Same brain, different lens.</p>
-
-    <h3>Move 3 — Entity-type-only queries for routine work</h3>
-    <p>Build slash skills that bind to a single entity_type. <code>/find-workflow</code> only searches Workflows. <code>/find-recipe</code> only searches Recipes. Lower noise, faster convergence.</p>
-
-    <h3>Move 4 — Promotion pipelines</h3>
-    <p>Pair group_ids with the admission test to make promotion explicit. New patterns start in <code>sio_pipeline</code> (the holding tank), and only graduate to <code>developer_gyasisutton</code> when they pass Universal + Low-churn + Behavioral.</p>
-
-    <h3>Move 5 — Audit + reconcile by axis</h3>
-    <p>Audit just Workflows quarterly (they decay fastest), just Findings annually (they barely change), and just the smallest group_id whenever you suspect partition rot.</p>
-
-    <h3>Move 6 — Sharing without leakage</h3>
-    <p>If you ever ship a "Gyasi's setup" capability bundle to a teammate, you only export their relevant group_id. <code>developer_gyasisutton</code> stays private; <code>hh_dev_team</code> can ship if they're also on the HH stack.</p>
+    <!-- ── quiz — scenario/vignette · Ch5 ── -->
+    <div class="quiz-block" id="quiz-ch5">
+      <span class="q-tag">Quick check · scenario</span>
+      <div class="quiz-question-block"
+           data-correct="D"
+           data-explain-right="Right — Move 4. Promotion pipeline. The pattern is unproven for cross-project universality, so it stages in sio_pipeline. If it earns it, it graduates."
+           data-explain-wrong="The pattern hasn't been validated cross-project yet — admission to developer_gyasisutton would skip the gate. The promotion-pipeline pattern (Move 4) stages it first.">
+        <div class="quiz-question">SIO just mined a recurring fix you've used in 2 projects but never elsewhere. You're not sure it's universal. Which Move fits best?</div>
+        <div class="quiz-options">
+          <button class="quiz-option" data-value="A" onclick="selectQuizOption(this)">Move 1 — make it a new group_id.</button>
+          <button class="quiz-option" data-value="B" onclick="selectQuizOption(this)">Move 2 — make it a role.</button>
+          <button class="quiz-option" data-value="C" onclick="selectQuizOption(this)">Save it as a Recipe directly to <code>developer_gyasisutton</code>.</button>
+          <button class="quiz-option" data-value="D" onclick="selectQuizOption(this)">Move 4 — stage it in <code>sio_pipeline</code>, promote only after the 3-test passes.</button>
+        </div>
+        <div class="quiz-feedback"></div>
+      </div>
+      <button class="check-btn" onclick="checkQuiz('quiz-ch5')">Check answer</button>
+    </div>
   </section>
 
   <!-- CH 6 — group chat animation gap-fix + stories -->
@@ -885,22 +1058,112 @@
 </main>
 
 <script>
-  // Theme switcher
+  // Theme + quiz-mode switchers
   (function(){
-    var p = new URLSearchParams(location.search).get('theme');
-    var saved = localStorage.getItem('chiron-theme');
-    var initial = p || saved || 'midnight';
+    var params = new URLSearchParams(location.search);
     var html = document.documentElement;
-    html.setAttribute('data-theme', initial);
-    var sel = document.getElementById('theme');
-    if(sel){
-      sel.value = initial;
-      sel.addEventListener('change', function(){
-        html.setAttribute('data-theme', sel.value);
-        localStorage.setItem('chiron-theme', sel.value);
+
+    // ── theme ──
+    var tParam = params.get('theme');
+    var tSaved = localStorage.getItem('chiron-theme');
+    var t0 = tParam || tSaved || 'midnight';
+    html.setAttribute('data-theme', t0);
+    var tSel = document.getElementById('theme');
+    if(tSel){
+      tSel.value = t0;
+      tSel.addEventListener('change', function(){
+        html.setAttribute('data-theme', tSel.value);
+        localStorage.setItem('chiron-theme', tSel.value);
+      });
+    }
+
+    // ── quizmode (?quiz=off or stored) ──
+    var qParam = params.get('quiz');
+    var qSaved = localStorage.getItem('chiron-quiz');
+    var q0 = (qParam === 'off' || qSaved === 'off') ? 'off' : 'on';
+    html.setAttribute('data-quiz', q0);
+    var qSel = document.getElementById('quizmode');
+    if(qSel){
+      qSel.value = q0;
+      qSel.addEventListener('change', function(){
+        html.setAttribute('data-quiz', qSel.value);
+        localStorage.setItem('chiron-quiz', qSel.value);
       });
     }
   })();
+
+  // ── Quiz engine (inline — minimal, no chiron-shell dependency) ──
+  function selectQuizOption(btn){
+    var block = btn.closest('.quiz-question-block');
+    block.querySelectorAll('.quiz-option').forEach(function(o){ o.classList.remove('selected'); });
+    btn.classList.add('selected');
+  }
+  function checkQuiz(containerId){
+    var container = document.getElementById(containerId);
+    if(!container) return;
+    container.querySelectorAll('.quiz-question-block').forEach(function(q){
+      var sel = q.querySelector('.quiz-option.selected');
+      if(!sel) return;
+      var correct = q.dataset.correct;
+      var fb = q.querySelector('.quiz-feedback');
+      var isCorrect = sel.dataset.value === correct;
+      q.querySelectorAll('.quiz-option').forEach(function(o){
+        o.disabled = true;
+        if(o.dataset.value === correct) o.classList.add('correct');
+        else if(o === sel) o.classList.add('incorrect');
+      });
+      if(fb){
+        fb.classList.add('show');
+        fb.textContent = isCorrect ? (q.dataset.explainRight || 'Correct.') : (q.dataset.explainWrong || 'Not quite — review and try the next one.');
+      }
+    });
+  }
+
+  // ── Layer-toggle (Ch1) ──
+  document.querySelectorAll('.layer-toggle').forEach(function(lt){
+    lt.querySelectorAll('.lt-btn').forEach(function(btn){
+      btn.addEventListener('click', function(){
+        lt.querySelectorAll('.lt-btn').forEach(function(b){ b.classList.remove('active'); });
+        btn.classList.add('active');
+        lt.setAttribute('data-axis-show', btn.dataset.show);
+      });
+    });
+  });
+
+  // ── Drag-and-drop (Ch3) — minimal, mouse only ──
+  document.querySelectorAll('.dnd-block').forEach(function(block){
+    var answer = JSON.parse(block.dataset.answer || '{}');
+    block.querySelectorAll('.dnd-chip').forEach(function(chip){
+      chip.draggable = true;
+      chip.addEventListener('dragstart', function(e){
+        e.dataTransfer.setData('text/plain', chip.dataset.id);
+        chip.classList.add('dragging');
+      });
+      chip.addEventListener('dragend', function(){ chip.classList.remove('dragging'); });
+    });
+    block.querySelectorAll('.dnd-zone-target').forEach(function(zone){
+      zone.addEventListener('dragover', function(e){ e.preventDefault(); zone.classList.add('drag-over'); });
+      zone.addEventListener('dragleave', function(){ zone.classList.remove('drag-over'); });
+      zone.addEventListener('drop', function(e){
+        e.preventDefault();
+        zone.classList.remove('drag-over');
+        var chipId = e.dataTransfer.getData('text/plain');
+        var zoneId = zone.dataset.zoneId;
+        var correctZone = answer[chipId];
+        if(correctZone === zoneId){
+          var chip = block.querySelector('.dnd-chip[data-id="'+chipId+'"]');
+          if(chip){
+            chip.classList.add('placed');
+            zone.textContent = chip.textContent;
+            zone.classList.add('correct-placed');
+          }
+        } else {
+          zone.classList.add('incorrect-placed');
+          setTimeout(function(){ zone.classList.remove('incorrect-placed'); }, 700);
+        }
+      });
+    });
+  });
 </script>
 <script src="chiron-shell.js" defer></script>
 </body>
