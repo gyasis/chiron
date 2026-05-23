@@ -56,6 +56,28 @@ export type Domain = z.infer<typeof DomainSchema>;
 export const ModeSchema = z.enum(['A', 'B']);
 export type Mode = z.infer<typeof ModeSchema>;
 
+// ── Medicine-specific domain enums (2026-05-23) ───────────────
+// Specialty + level shape the AMBOSS-style chapter layout for medicine
+// lessons. Specialty axis drives which clinical-atlas units are in scope;
+// level axis drives which canonical sections get emphasised + which
+// widget mix the chapter-write prompt prefers.
+export const MedicalSpecialtySchema = z.enum([
+  'internal-med', 'family-med', 'peds', 'ob-gyn', 'surgery', 'psych',
+  'neurology', 'emergency-med', 'anesthesia', 'radiology', 'derm',
+  'ophthalmology', 'ent', 'urology', 'orthopedics', 'pathology',
+  'public-health',
+]);
+export type MedicalSpecialty = z.infer<typeof MedicalSpecialtySchema>;
+
+export const MedicalLevelSchema = z.enum([
+  'step-1', 'step-2-ck', 'step-2-cs', 'step-3',
+  'shelf-medicine', 'shelf-peds', 'shelf-surgery', 'shelf-ob-gyn',
+  'shelf-psych', 'shelf-family-med',
+  'attending-ce',          // continuing education for practicing physicians
+  'intern', 'resident', 'fellow',
+]);
+export type MedicalLevel = z.infer<typeof MedicalLevelSchema>;
+
 // Brief — Stage 1 output, persisted as <lesson-output-dir>/brief.json
 export const BriefSchema = z
   .object({
@@ -67,6 +89,22 @@ export const BriefSchema = z
     extractedText: z.string(),
     sourceManifest: z.array(SourceFileEntrySchema).optional(),
     agentSourceProvenance: z.string().nullable().optional(),
+    // ── 2026-05-23 universal: chapter-count override ───────────
+    // Soft target: Stage 2 plans within ±1 of this (existing behavior).
+    chapterCountTarget: z.number().int().min(1).max(50).optional(),
+    // Hard lock: Stage 2 MUST plan exactly this many — no ±1 latitude.
+    // Validator fails if syllabus.length !== chapterCountExact.
+    // When BOTH are set, chapterCountExact wins.
+    chapterCountExact: z.number().int().min(1).max(50).optional(),
+    // ── 2026-05-23 medicine-specific layout fields ─────────────
+    // When domain='medicine', these drive the canonical AMBOSS-style
+    // chapter structure (specialty + level + atlas of disease entities).
+    medicalSpecialty: MedicalSpecialtySchema.optional(),
+    medicalLevel: MedicalLevelSchema.optional(),
+    // List of disease-entity slugs this lesson covers. When set, lesson
+    // chapter count is bound to clinicalAtlasUnits.length (one chapter
+    // per entity). chapterCountTarget/Exact are ignored if this is set.
+    clinicalAtlasUnits: z.array(z.string().min(1)).optional(),
     metadata: z.record(z.unknown()),
     briefSchemaVersion: z.string(),
   })
