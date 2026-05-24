@@ -1,0 +1,184 @@
+{
+  "meta": {
+    "id": "medicine-cap-step2ck-2026-05-23",
+    "title": "Community-Acquired Pneumonia — Step 2 CK",
+    "domain": "medicine",
+    "subMode": "AMBOSS",
+    "generated": "2026-05-23",
+    "learner": "gyasisutton",
+    "sourceGrounding": "parent-LLM"
+  },
+  "chapters": [
+    {
+      "id": "ch1",
+      "number": 1,
+      "title": "Community-Acquired Pneumonia",
+      "objective": "Recognise CAP at the bedside, stratify severity with CURB-65 / PSI, and pick the right empiric antibiotic for outpatient, ward, and ICU settings.",
+      "blocks": [
+        { "type": "objective", "text": "Recognise CAP at the bedside, stratify severity with CURB-65 / PSI, and pick the right empiric antibiotic for outpatient, ward, and ICU settings." },
+
+        { "type": "paragraph", "html": "<strong>Community-acquired pneumonia (CAP)</strong> is an acute infection of the lung parenchyma that arises <em>outside</em> a hospital or long-term care facility and presents within 48 hours of admission. It is one of the highest-yield Step 2 CK topics — it appears across Internal Medicine, Pediatrics, and Emergency Medicine blocks, and the question stem almost always turns on a single decision: <strong>where do you treat this patient?</strong>" },
+
+        { "type": "highYield", "items": [
+          "<strong>Incidence:</strong> ~5–6 cases per 1,000 adults/year in the US; >1 million annual hospitalisations.",
+          "<strong>Most common typical pathogen:</strong> <em>Streptococcus pneumoniae</em>.",
+          "<strong>Severity score:</strong> CURB-65 — 0–1 outpatient, 2 admit ward, ≥3 consider ICU.",
+          "<strong>Empiric inpatient antibiotic:</strong> beta-lactam (ceftriaxone) + macrolide (azithromycin) — covers typical AND atypical.",
+          "<strong>Diagnosis confirmed by CXR</strong> showing infiltrate; do NOT defer antibiotics waiting for imaging in unstable patients."
+        ] },
+
+        { "type": "heading", "level": 2, "text": "Epidemiology" },
+
+        { "type": "paragraph", "html": "CAP causes more than a million hospital admissions per year in the United States and remains the leading infectious cause of death in adults. Mortality is bimodal: very low in healthy outpatients (<1%) and substantial in ICU patients (15–30%). The highest-risk groups are children under 2 and adults over 65, both because of immune-system architecture (immature in young, senescent in old) and because comorbidities concentrate at the age extremes." },
+
+        { "type": "list", "ordered": false, "items": [
+          "<strong>Smoking</strong> — impairs mucociliary clearance",
+          "<strong>COPD / asthma</strong> — structurally damaged airways colonise more easily",
+          "<strong>Immunosuppression</strong> — chemotherapy, HIV, transplant, chronic steroids",
+          "<strong>Recent viral URI</strong> — disrupts respiratory epithelium and predisposes to bacterial superinfection",
+          "<strong>Aspiration risk</strong> — stroke, dementia, alcoholism, poor dentition"
+        ] },
+
+        { "type": "heading", "level": 2, "text": "Etiology — typical vs atypical vs viral" },
+
+        { "type": "paragraph", "html": "Pathogen <em>family</em> shapes the empiric antibiotic choice more than any individual species. The board exam tests whether you can recognise patterns: lobar consolidation with rusty sputum → pneumococcus; subacute dry cough + headache in a college student → Mycoplasma; recent travel + diarrhea + hyponatremia → Legionella; post-influenza staphylococcal superinfection with cavitation → MRSA." },
+
+        { "type": "table",
+          "headers": ["Family", "Organisms", "Classic clue"],
+          "rows": [
+            ["<strong>Typical bacterial</strong>", "S. pneumoniae · H. influenzae · Moraxella catarrhalis", "Lobar consolidation, productive cough, high fever, rusty sputum (pneumococcus)"],
+            ["<strong>Atypical bacterial</strong>", "Mycoplasma · Chlamydophila · Legionella", "Subacute, dry cough, headache, extrapulmonary symptoms; Legionella adds diarrhea + ↓Na⁺"],
+            ["<strong>Viral</strong>", "Influenza A/B · SARS-CoV-2 · RSV · adenovirus", "Diffuse interstitial pattern; often precedes secondary bacterial superinfection"],
+            ["<strong>Post-influenza super-infection</strong>", "S. aureus (incl. MRSA)", "Cavitating necrotising pneumonia after flu illness"],
+            ["<strong>Aspiration</strong>", "Anaerobes + oral flora", "Right lower lobe (upright) or right upper/lower lobe (supine); foul-smelling sputum; lung abscess"]
+          ]
+        },
+
+        { "type": "mnemonic", "text": "<strong>\"SHAFT\"</strong> for typical pneumonia bugs you can't miss: <strong>S</strong>treptococcus pneumoniae · <strong>H</strong>aemophilus influenzae · <strong>A</strong>typicals (Mycoplasma/Chlamydophila/Legionella) · <strong>F</strong>lu (and post-flu Staph) · <strong>T</strong>uberculosis (always consider in chronic cough, weight loss, night sweats)." },
+
+        { "type": "heading", "level": 2, "text": "Pathophysiology" },
+
+        { "type": "paragraph", "html": "Inhaled organisms reach the alveoli, evade ciliary clearance and alveolar macrophages, and trigger an inflammatory cascade. Alveoli fill with neutrophil-rich exudate (consolidation), which impairs gas exchange via <strong>V/Q mismatch</strong> — alveoli are perfused but not ventilated. The result is hypoxemia despite normal-or-elevated minute ventilation. Systemic cytokine release drives fever, leukocytosis, and (in severe cases) sepsis." },
+
+        { "type": "heading", "level": 2, "text": "Clinical features" },
+
+        { "type": "paragraph", "html": "Classic typical-CAP presents acutely: high fever (>38.5°C), productive cough with purulent or rusty sputum, pleuritic chest pain, and dyspnea. On exam: tachypnea, tachycardia, and focal findings over the consolidated lobe — <em>crackles</em>, <em>egophony</em> (E→A change), <em>increased tactile fremitus</em>, and <em>dullness to percussion</em>. Atypical pneumonia is subacute (days to a week of malaise + dry cough + headache) with relatively benign lung exam — the so-called \"walking pneumonia.\"" },
+
+        { "type": "pearl", "text": "Any one of these is a red flag that pushes you toward admission, regardless of the rest of the picture: <strong>RR ≥30</strong>, <strong>SBP <90</strong>, <strong>SpO₂ <90% on room air</strong>, <strong>altered mental status</strong>, <strong>multilobar infiltrate</strong>, or <strong>BUN >19 mg/dL</strong>." },
+
+        { "type": "heading", "level": 2, "text": "Diagnostics" },
+
+        { "type": "paragraph", "html": "<strong>Chest X-ray</strong> is the diagnostic anchor and should not be skipped — the question stem will tell you about an infiltrate, lobar or interstitial, that confirms the diagnosis. For admitted patients add CBC (leukocytosis with left shift), basic metabolic panel, blood cultures × 2 before antibiotics, sputum gram stain + culture, and urinary antigens for Pneumococcus and Legionella. Procalcitonin can support bacterial etiology but is not used to <em>withhold</em> antibiotics in a clinically convincing case." },
+
+        { "type": "list", "ordered": true, "items": [
+          "<strong>Step 1.</strong> Focused history (fever, cough character, duration, sick contacts, recent travel, smoking, comorbidities).",
+          "<strong>Step 2.</strong> Vital signs + auscultation. Calculate respiratory rate and oxygen saturation explicitly.",
+          "<strong>Step 3.</strong> Order chest X-ray — PA + lateral if stable, portable if not.",
+          "<strong>Step 4.</strong> Labs: CBC, BMP. Add blood cultures + sputum + urinary antigens if admitting.",
+          "<strong>Step 5.</strong> Compute <strong>CURB-65</strong> (or full PSI) and decide disposition before writing the antibiotic order."
+        ] },
+
+        { "type": "table",
+          "headers": ["CURB-65 letter", "Criterion", "Notes"],
+          "rows": [
+            ["<strong>C</strong>", "<strong>C</strong>onfusion (new-onset)", "Often subtle in elderly — ask family"],
+            ["<strong>U</strong>", "<strong>U</strong>rea / BUN > 19 mg/dL (>7 mmol/L)", "Marker of dehydration AND severity"],
+            ["<strong>R</strong>", "<strong>R</strong>espiratory rate ≥ 30/min", "Count it for a full 30 seconds yourself; staff tend to round to 18-20"],
+            ["<strong>B</strong>", "<strong>B</strong>P: SBP <90 OR DBP ≤60", "Either is a point"],
+            ["<strong>65</strong>", "Age ≥ <strong>65</strong>", "Single biggest risk factor for mortality"]
+          ]
+        },
+
+        { "type": "mnemonic", "text": "<strong>CURB-65 → disposition:</strong> 0–1 = <strong>O</strong>utpatient · 2 = <strong>W</strong>ard · 3+ = consider <strong>I</strong>CU. Score 2 with comorbidity (COPD, CHF, CKD) → err on admission." },
+
+        { "type": "heading", "level": 2, "text": "Differential diagnosis" },
+
+        { "type": "table",
+          "headers": ["Mimicker", "Distinguishing feature"],
+          "rows": [
+            ["<strong>Pulmonary embolism</strong>", "Low-grade fever, normal/clear CXR, hypoxia disproportionate to exam, risk factors (immobility, OCPs, malignancy). D-dimer / CTPA if suspicious."],
+            ["<strong>Heart failure</strong>", "Bilateral findings, orthopnea, JVD, S₃ gallop, elevated BNP/NT-proBNP. Cardiomegaly + Kerley B lines on CXR."],
+            ["<strong>COPD / asthma exacerbation</strong>", "Wheezing, prolonged expiratory phase, minimal/no infiltrate. Known underlying disease."],
+            ["<strong>Acute bronchitis</strong>", "Cough but <em>no infiltrate</em> on CXR. Mostly viral. Antibiotics not routinely indicated."],
+            ["<strong>Lung cancer</strong>", "Smoker, weight loss, hemoptysis, recurrent post-obstructive pneumonia in the same location."],
+            ["<strong>Tuberculosis</strong>", "Chronic cough, night sweats, weight loss, exposure history, upper-lobe cavitary infiltrate."]
+          ]
+        },
+
+        { "type": "heading", "level": 2, "text": "Treatment — empiric antibiotics" },
+
+        { "type": "paragraph", "html": "Empiric coverage is the actual exam question. Memorise the four buckets. <strong>Always cover atypicals</strong> in the inpatient setting because Legionella mortality is high and the clinical picture overlaps." },
+
+        { "type": "table",
+          "headers": ["Setting", "First-line empiric", "Alternative"],
+          "rows": [
+            ["<strong>Outpatient, previously healthy</strong>", "Amoxicillin 1 g PO TID × 5 days", "Doxycycline OR azithromycin"],
+            ["<strong>Outpatient with comorbidity</strong> (COPD, CHF, CKD, DM, immunosuppression)", "Amoxicillin/clavulanate + azithromycin", "Respiratory fluoroquinolone monotherapy (levofloxacin or moxifloxacin)"],
+            ["<strong>Inpatient, non-ICU</strong>", "Ceftriaxone IV + azithromycin", "Respiratory fluoroquinolone monotherapy"],
+            ["<strong>Inpatient, ICU</strong>", "Ceftriaxone + azithromycin OR + fluoroquinolone", "If MRSA risk: add vancomycin or linezolid. If Pseudomonas risk: replace ceftriaxone with piperacillin/tazobactam or cefepime."]
+          ]
+        },
+
+        { "type": "pearl", "text": "<strong>MRSA risk factors</strong> = recent hospitalisation, IV drug use, post-influenza necrotising pneumonia, known colonisation. <strong>Pseudomonas risk factors</strong> = structural lung disease (bronchiectasis, severe COPD), recent broad-spectrum antibiotics, chronic steroid use. If neither, you do NOT need vancomycin + zosyn for routine inpatient CAP." },
+
+        { "type": "heading", "level": 2, "text": "Complications" },
+
+        { "type": "list", "ordered": false, "items": [
+          "<strong>Parapneumonic effusion → empyema</strong> — adjacent pleural fluid; if infected (empyema) requires thoracentesis + chest tube drainage in addition to antibiotics.",
+          "<strong>Lung abscess</strong> — cavity with air-fluid level; favoured by aspiration and anaerobic infection; extend coverage to anaerobes (clindamycin, amoxicillin-sulbactam).",
+          "<strong>Sepsis / septic shock</strong> — the most common cause of CAP mortality. Recognise early via qSOFA ≥ 2; treat per Surviving Sepsis bundle (cultures, antibiotics within 1 hour, fluids).",
+          "<strong>ARDS</strong> — bilateral infiltrates, PaO₂/FiO₂ < 300, requires mechanical ventilation with lung-protective settings (6 mL/kg ideal body weight, plateau pressure ≤ 30)."
+        ] },
+
+        { "type": "heading", "level": 2, "text": "Prognosis" },
+
+        { "type": "paragraph", "html": "Outpatient mortality is under 1%. In-hospital mortality on the ward runs 5–10%; ICU mortality 15–30%, climbing higher with shock or ARDS. <strong>Time to first appropriate antibiotic</strong> is the single biggest modifiable mortality factor — every hour of delay in septic patients carries measurable additional risk. Most patients improve clinically within 48–72 hours of starting effective therapy; cough can persist for 4 weeks and fatigue often longer. Reinfection risk is mildly elevated for 12 months." },
+
+        { "type": "heading", "level": 2, "text": "Deep clinical vignette" },
+
+        { "type": "deepVignette",
+          "badge": "USMLE STEP 2 CK STYLE",
+          "vignette": "A 68-year-old man with a 30 pack-year smoking history and COPD on tiotropium presents to the ED with 3 days of productive cough, fever to 38.9°C, and pleuritic right-sided chest pain. He has had two days of malaise and decreased appetite. He denies recent travel, sick contacts, or aspiration events.<br><br><strong>Vital signs:</strong> T 38.9°C, HR 110, RR 28, BP 102/64, SpO₂ 92% on room air.<br><br><strong>Exam:</strong> Alert and fully oriented. Crackles, egophony, and dullness to percussion in the right lower lung field. No JVD, no peripheral edema.<br><br><strong>Labs:</strong> WBC 16,400 with 84% neutrophils, BUN 22 mg/dL, creatinine 1.1, Na 136, lactate 1.8.<br><br><strong>Imaging:</strong> Chest X-ray shows right lower lobe consolidation. No effusion. No cavitation.<br><br><strong>Question:</strong> Which is the most appropriate next step?",
+          "quiz": {
+            "qid": "ch1q-vignette",
+            "qhead": "Vignette · Disposition + empiric coverage",
+            "qstem": "Which of the following is the most appropriate next step in management?",
+            "options": [
+              { "key": "a", "text": "Discharge home on amoxicillin 1 g PO TID with 48-hour follow-up." },
+              { "key": "b", "text": "Admit to the medical ward and start IV ceftriaxone + azithromycin." },
+              { "key": "c", "text": "Admit to the ICU and start broad-spectrum coverage including vancomycin and piperacillin/tazobactam." },
+              { "key": "d", "text": "Order CT pulmonary angiography to rule out pulmonary embolism before any antibiotics." },
+              { "key": "e", "text": "Discharge home on levofloxacin 750 mg PO daily with 48-hour follow-up." }
+            ],
+            "correct": "b",
+            "feedback": {
+              "headline": "Correct: B — Admit to ward + IV ceftriaxone + azithromycin",
+              "body": "Compute <strong>CURB-65</strong> explicitly: <strong>C</strong>onfusion 0 (alert) · <strong>U</strong>rea 1 (BUN 22 > 19) · <strong>R</strong>R 0 (28 < 30) · <strong>B</strong>P 0 (SBP > 90, DBP > 60) · <strong>65</strong> 1 (age 68). Total = <strong>2</strong>. CURB-65 of 2 supports admission. Combine with the COPD comorbidity and you have an inpatient non-ICU patient. Standard empiric coverage is <strong>beta-lactam + macrolide</strong> (ceftriaxone + azithromycin) — covers typical pneumococcus/H. flu AND atypicals. <strong>A</strong> and <strong>E</strong> are wrong on disposition (CURB-65 = 2 means admit, not outpatient) regardless of drug choice. <strong>C</strong> over-treats — there are no MRSA or Pseudomonas risk factors, no shock, no ICU-level severity. <strong>D</strong> chases an unlikely PE; the clinical picture (productive cough + fever + leukocytosis + lobar consolidation) is classic CAP and antibiotics should not be delayed."
+            }
+          }
+        },
+
+        { "type": "heading", "level": 2, "text": "References" },
+
+        { "type": "list", "ordered": false, "items": [
+          "IDSA/ATS 2019 Guidelines — Diagnosis and Treatment of Adults with Community-Acquired Pneumonia. <em>Am J Respir Crit Care Med</em>. 2019;200(7):e45-e67.",
+          "Mandell LA, Wunderink RG, Anzueto A, et al. Infectious Diseases Society of America/American Thoracic Society consensus guidelines on the management of community-acquired pneumonia in adults. <em>Clin Infect Dis.</em> 2007;44(Suppl 2):S27-S72.",
+          "Lim WS, van der Eerden MM, Laing R, et al. Defining community acquired pneumonia severity on presentation to hospital: an international derivation and validation study. <em>Thorax</em>. 2003;58(5):377-382. (Original CURB-65 derivation.)",
+          "UpToDate — Community-acquired pneumonia in adults: Treatment.",
+          "AMBOSS — Community-acquired pneumonia article."
+        ] }
+      ]
+    }
+  ],
+  "cards": [
+    { "front": "What is the empiric inpatient (non-ICU) regimen for CAP?", "back": "Ceftriaxone (beta-lactam) + azithromycin (macrolide). Covers typical + atypical.", "chapterId": "ch1" },
+    { "front": "CURB-65 — what does each letter mean?", "back": "<strong>C</strong>onfusion · <strong>U</strong>rea >19 mg/dL · <strong>R</strong>R ≥30 · <strong>B</strong>P (SBP<90 or DBP≤60) · age ≥<strong>65</strong>", "chapterId": "ch1" },
+    { "front": "CURB-65 disposition", "back": "0-1 outpatient · 2 ward admission · ≥3 consider ICU. Score of 2 + comorbidity → admit.", "chapterId": "ch1" },
+    { "front": "Most common typical CAP pathogen", "back": "Streptococcus pneumoniae (the bread-and-butter pneumonia bug across age groups).", "chapterId": "ch1" },
+    { "front": "Atypical CAP pathogens — three to remember", "back": "Mycoplasma · Chlamydophila · Legionella. Inpatient regimens MUST cover atypicals (Legionella mortality is high).", "chapterId": "ch1" },
+    { "front": "MRSA risk factors in CAP", "back": "Recent hospitalisation, IV drug use, post-influenza necrotising pneumonia, known MRSA colonisation. Add vancomycin or linezolid.", "chapterId": "ch1" },
+    { "front": "Pseudomonas risk factors in CAP", "back": "Structural lung disease (bronchiectasis, severe COPD), recent broad-spectrum antibiotics, chronic steroid use. Replace ceftriaxone with piperacillin/tazobactam or cefepime.", "chapterId": "ch1" },
+    { "front": "Single biggest modifiable mortality factor in severe CAP", "back": "Time to first appropriate antibiotic. Within 1 hour for septic patients (Surviving Sepsis bundle).", "chapterId": "ch1" },
+    { "front": "Pleural effusion in CAP — when to drain", "back": "Empyema (infected fluid) OR effusion >10 mm on lateral decubitus film with positive Gram stain / pH <7.2 / glucose <40. Thoracentesis + chest tube.", "chapterId": "ch1" }
+  ]
+}
