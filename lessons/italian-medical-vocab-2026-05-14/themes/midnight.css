@@ -1,0 +1,31 @@
+/* Midnight — ported from ClassBuild "midnight" theme */
+[data-theme="midnight"] {
+  --chiron-bg: #0f0f1a;
+  --chiron-surface: #1a1a2e;
+  --chiron-elevated: #252540;
+
+  --chiron-fg: #f1f5f9;
+  --chiron-fg-secondary: #94a3b8;
+  --chiron-muted: #64748b;
+
+  --chiron-accent: #8b5cf6;
+  --chiron-accent-light: #a78bfa;
+  --chiron-warm-accent: #f59e0b;
+
+  --chiron-success: #22c55e;
+  --chiron-warning: #f59e0b;
+  --chiron-error: #ef4444;
+  --chiron-info: #38bdf8;
+
+  --chiron-border: #2e2e4a;
+  --chiron-divider: #1f1f35;
+
+  --chiron-font-heading: system-ui, -apple-system, sans-serif;
+  --chiron-font-body: 'Georgia', 'Times New Roman', serif;
+
+  --chiron-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --chiron-shadow-md: 0 4px 6px rgba(0, 0, 0, 0.4);
+  --chiron-shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.5);
+
+  --chiron-is-dark: 1;
+}

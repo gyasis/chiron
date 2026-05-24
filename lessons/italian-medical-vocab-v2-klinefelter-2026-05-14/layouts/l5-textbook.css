@@ -1,0 +1,104 @@
+/* Layout L5 — Textbook with Tufte-style margin notes (big-screen optimized).
+   At ≥1200px: high-yield boxes, mnemonics, and pearls FLOAT to the right margin
+   so body content flows around them — not below them like a CSS Grid would.
+   Stacks cleanly into single-column on narrow viewports. */
+
+[data-layout="l5"] body {
+  grid-template-columns: 240px 1fr;
+}
+[data-layout="l5"] main {
+  scroll-snap-type: none;  /* free-flowing scroll, no snap */
+  overflow-y: auto;
+  height: 100vh;
+}
+
+/* Big screen ≥1200px: float margin notes to right of body content.
+   Container is wide (1500px) so floats land in genuine right margin space,
+   not crammed against body prose. */
+@media (min-width: 1200px) {
+  [data-layout="l5"] section.chapter {
+    max-width: 1500px;
+    margin: 0 auto;
+    padding: 3rem 3rem 5rem 3rem;
+    min-height: auto;
+    display: block;
+    background: var(--chiron-bg);
+  }
+
+  /* Body prose stays at comfortable measure */
+  [data-layout="l5"] section.chapter > h1,
+  [data-layout="l5"] section.chapter > h2,
+  [data-layout="l5"] section.chapter > h3,
+  [data-layout="l5"] section.chapter > p,
+  [data-layout="l5"] section.chapter > ul,
+  [data-layout="l5"] section.chapter > ol,
+  [data-layout="l5"] section.chapter > .objective,
+  [data-layout="l5"] section.chapter > .ch-num {
+    max-width: 75ch;
+    margin-right: 0;
+  }
+
+  /* Margin-rail items: float right, body flows around them */
+  [data-layout="l5"] section.chapter > .hy,
+  [data-layout="l5"] section.chapter > .mnemonic,
+  [data-layout="l5"] section.chapter > .pearl,
+  [data-layout="l5"] section.chapter > .dialogue {
+    float: right;
+    clear: right;
+    width: 280px;
+    margin: 0 0 1.5rem 2rem;
+    font-size: 0.86rem;
+    line-height: 1.45;
+  }
+
+  /* Tables, quizzes, decks, vignettes break out of the float context — full body width */
+  [data-layout="l5"] section.chapter > table,
+  [data-layout="l5"] section.chapter > .quiz,
+  [data-layout="l5"] section.chapter > .deck,
+  [data-layout="l5"] section.chapter > .deep-vignette {
+    clear: both;
+    max-width: 75ch;
+    margin-left: 0;
+    margin-right: 0;
+  }
+
+  /* Clear floats at end of chapter so next section starts cleanly */
+  [data-layout="l5"] section.chapter::after {
+    content: "";
+    display: block;
+    clear: both;
+  }
+}
+
+/* Mid-narrow viewport (tablet / small laptop): single-column flow */
+@media (min-width: 881px) and (max-width: 1199px) {
+  [data-layout="l5"] section.chapter {
+    max-width: 920px;
+    margin: 0 auto;
+    padding: 2.5rem 3rem 4rem 3rem;
+    min-height: auto;
+  }
+}
+
+/* Mobile: collapse fixed sidebar to top bar */
+@media (max-width: 880px) {
+  [data-layout="l5"] body {
+    grid-template-columns: 1fr;
+  }
+  [data-layout="l5"] nav.toc {
+    position: relative;
+    height: auto;
+    max-height: none;
+    border-right: none;
+    border-bottom: 1px solid var(--chiron-border);
+    padding: 0.8rem 1rem;
+  }
+  [data-layout="l5"] main {
+    height: auto;
+    scroll-snap-type: none;
+  }
+  [data-layout="l5"] section.chapter {
+    padding: 2rem 1.2rem;
+    min-height: auto;
+  }
+}

@@ -26,7 +26,7 @@ export interface IngestTranscriptOptions {
   sourcePath: string;
   lessonOutputDir: string;
   mode: 'A' | 'B';
-  domain: 'code' | 'medicine' | 'language-it' | 'research-paper';
+  domain: 'code' | 'medicine' | 'language-it' | 'research-paper' | 'concepts';
 }
 
 interface DetectionResult {

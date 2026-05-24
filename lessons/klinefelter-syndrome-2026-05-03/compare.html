@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Chiron — Layout & Theme Test-Drive Harness</title>
+<style>
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; height: 100%; background: #0a0a0a; color: #e8edf5;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+  header { padding: 0.6rem 1rem; background: #1a1a1a; border-bottom: 1px solid #2c2c2c;
+    display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; position: sticky; top: 0; z-index: 100; }
+  header h1 { font-size: 1rem; margin: 0; font-weight: 600; }
+  header .sub { color: #888; font-size: 0.85rem; }
+  header .controls { margin-left: auto; display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; }
+  header label { color: #888; font-size: 0.85rem; margin-right: 0.3rem; }
+  header button, header select {
+    background: #2a2a2a; color: #e8edf5; border: 1px solid #3a3a3a;
+    padding: 0.4rem 0.8rem; border-radius: 4px; font-size: 0.85rem; cursor: pointer;
+  }
+  header button:hover, header select:hover { background: #3a3a3a; }
+  header button.active { background: #3a5fa8; border-color: #4a7fb8; }
+  header .group { display: inline-flex; align-items: center; gap: 0.3rem;
+    background: #0f0f0f; border: 1px solid #2a2a2a; padding: 0.25rem 0.5rem; border-radius: 4px; }
+
+  .grid {
+    display: grid;
+    gap: 4px;
+    background: #2c2c2c;
+    height: calc(100vh - 50px);
+    transition: grid-template-columns 0.2s;
+  }
+  .grid.cols-3 { grid-template-columns: repeat(3, 1fr); grid-template-rows: 1fr; }
+  .grid.cols-2 { grid-template-columns: repeat(2, 1fr); grid-template-rows: 1fr; }
+  .grid.cols-1 { grid-template-columns: 1fr; grid-template-rows: 1fr; }
+
+  .pane {
+    background: #fff;
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+  .pane .label {
+    position: absolute; top: 0.5rem; left: 0.5rem; z-index: 10;
+    background: rgba(0,0,0,0.78); color: #fff; padding: 0.3rem 0.7rem;
+    border-radius: 3px; font-size: 0.75rem; font-weight: 600; letter-spacing: 0.04em;
+    pointer-events: none; max-width: calc(100% - 110px);
+  }
+  .pane .label .sub { display: block; font-size: 0.7rem; opacity: 0.75; font-weight: 400; margin-top: 2px; }
+  .pane .actions {
+    position: absolute; top: 0.5rem; right: 0.5rem; z-index: 10;
+    display: flex; gap: 0.3rem;
+  }
+  .pane .actions button {
+    background: rgba(0,0,0,0.78); color: #fff; border: none;
+    padding: 0.35rem 0.65rem; border-radius: 3px; cursor: pointer; font-size: 0.75rem;
+  }
+  .pane .actions button:hover { background: rgba(255,255,255,0.18); }
+  .pane iframe { width: 100%; height: 100%; border: none; flex: 1; }
+
+  /* Mobile preview frame size override */
+  .grid.viewport-mobile .pane iframe {
+    max-width: 414px;
+    margin: 0 auto;
+    box-shadow: 0 0 30px rgba(0,0,0,0.5);
+  }
+
+  /* Fullscreen modal */
+  .modal {
+    position: fixed; inset: 0; background: #000; z-index: 1000;
+    display: none; flex-direction: column;
+  }
+  .modal.show { display: flex; }
+  .modal header { background: #1a1a1a; }
+  .modal iframe { width: 100%; flex: 1; border: none; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Chiron — Klinefelter Syndrome</h1>
+  <span class="sub">layout × theme test-drive</span>
+  <div class="controls">
+    <span class="group">
+      <label>Theme</label>
+      <select id="theme-pick">
+        <option value="clinical" selected>clinical</option>
+        <option value="midnight">midnight</option>
+        <option value="warm-paper">warm-paper</option>
+        <option value="linguistic">linguistic</option>
+        <option value="ocean">ocean</option>
+      </select>
+    </span>
+    <span class="group">
+      <label>Viewport</label>
+      <button class="vp-btn active" data-vp="desktop">Desktop</button>
+      <button class="vp-btn" data-vp="mobile">Mobile-frame</button>
+    </span>
+    <span class="group">
+      <label>Cols</label>
+      <button class="col-btn" data-cols="cols-1">1</button>
+      <button class="col-btn" data-cols="cols-2">2</button>
+      <button class="col-btn active" data-cols="cols-3">3</button>
+    </span>
+    <button id="reload-all" title="Reload all panes">↻</button>
+    <button id="sync-scroll">⇕ Sync: OFF</button>
+  </div>
+</header>
+
+<div class="grid cols-3" id="grid">
+  <div class="pane" data-layout="l1">
+    <div class="label">L1 · LMS<span class="sub">narrow center, fixed TOC (current)</span></div>
+    <div class="actions">
+      <button class="open" title="Open in tab">↗</button>
+      <button class="full" title="Fullscreen">⛶</button>
+    </div>
+    <iframe loading="eager"></iframe>
+  </div>
+  <div class="pane" data-layout="l5">
+    <div class="label">L5 · Textbook<span class="sub">3-col, margin-rail for high-yield</span></div>
+    <div class="actions">
+      <button class="open" title="Open in tab">↗</button>
+      <button class="full" title="Fullscreen">⛶</button>
+    </div>
+    <iframe loading="eager"></iframe>
+  </div>
+  <div class="pane" data-layout="l2">
+    <div class="label">L2 · Editorial<span class="sub">single-column long-form, top-bar TOC</span></div>
+    <div class="actions">
+      <button class="open" title="Open in tab">↗</button>
+      <button class="full" title="Fullscreen">⛶</button>
+    </div>
+    <iframe loading="eager"></iframe>
+  </div>
+</div>
+
+<div class="modal" id="modal">
+  <header>
+    <h1 id="modal-title"></h1>
+    <div class="controls">
+      <button id="modal-close">✕ Close</button>
+    </div>
+  </header>
+  <iframe id="modal-frame" src=""></iframe>
+</div>
+
+<script>
+  const grid = document.getElementById('grid');
+  const themePick = document.getElementById('theme-pick');
+
+  function buildSrc(layout) {
+    return `lesson.html?layout=${layout}&theme=${themePick.value}`;
+  }
+
+  function reloadAll() {
+    document.querySelectorAll('.pane').forEach(pane => {
+      pane.querySelector('iframe').src = buildSrc(pane.dataset.layout);
+    });
+  }
+
+  // Initial load
+  reloadAll();
+
+  // Theme change → reload all panes
+  themePick.addEventListener('change', reloadAll);
+
+  // Column count
+  document.querySelectorAll('.col-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.col-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      grid.classList.remove('cols-1','cols-2','cols-3');
+      grid.classList.add(btn.dataset.cols);
+    });
+  });
+
+  // Viewport mode
+  document.querySelectorAll('.vp-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.vp-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      grid.classList.toggle('viewport-mobile', btn.dataset.vp === 'mobile');
+    });
+  });
+
+  // Reload
+  document.getElementById('reload-all').addEventListener('click', reloadAll);
+
+  // Per-pane open/full
+  document.querySelectorAll('.pane').forEach(pane => {
+    const layout = pane.dataset.layout;
+    pane.querySelector('.open').addEventListener('click', () => {
+      window.open(buildSrc(layout), '_blank');
+    });
+    pane.querySelector('.full').addEventListener('click', () => {
+      const modal = document.getElementById('modal');
+      const frame = document.getElementById('modal-frame');
+      const title = document.getElementById('modal-title');
+      title.textContent = `Klinefelter — Layout ${layout.toUpperCase()} · Theme ${themePick.value}`;
+      frame.src = buildSrc(layout);
+      modal.classList.add('show');
+    });
+  });
+  document.getElementById('modal-close').addEventListener('click', () => {
+    const modal = document.getElementById('modal');
+    document.getElementById('modal-frame').src = '';
+    modal.classList.remove('show');
+  });
+
+  // Sync scroll
+  let syncOn = false;
+  const syncBtn = document.getElementById('sync-scroll');
+  syncBtn.addEventListener('click', () => {
+    syncOn = !syncOn;
+    syncBtn.textContent = '⇕ Sync: ' + (syncOn ? 'ON' : 'OFF');
+    syncBtn.classList.toggle('active', syncOn);
+  });
+  document.querySelectorAll('.pane iframe').forEach(frame => {
+    frame.addEventListener('load', () => {
+      try {
+        const main = frame.contentDocument?.querySelector('main');
+        if (!main) return;
+        main.addEventListener('scroll', () => {
+          if (!syncOn) return;
+          const ratio = main.scrollTop / Math.max(1, main.scrollHeight - main.clientHeight);
+          document.querySelectorAll('.pane iframe').forEach(other => {
+            if (other === frame) return;
+            try {
+              const om = other.contentDocument?.querySelector('main');
+              if (om) om.scrollTop = ratio * (om.scrollHeight - om.clientHeight);
+            } catch (e) {}
+          });
+        });
+      } catch (e) {}
+    });
+  });
+</script>
+
+</body>
+</html>

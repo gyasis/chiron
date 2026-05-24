@@ -1,0 +1,2055 @@
+<!DOCTYPE html>
+<html lang="it" data-theme="linguistic" data-view="lesson" data-skeleton="language-lesson-skeleton-v1">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Chiron · I verbi delle pulizie</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,700;12..96,800&family=Source+Serif+4:ital,wght@0,400;0,600;1,400;1,600&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+
+  <!-- Theme tokens + variants (BLOCKING contract) -->
+  <link rel="stylesheet" href="themes/_tokens.css" />
+  <link rel="stylesheet" href="themes/midnight.css" />
+  <link rel="stylesheet" href="themes/warm-paper.css" />
+  <link rel="stylesheet" href="themes/clinical.css" />
+  <link rel="stylesheet" href="themes/linguistic.css" />
+  <link rel="stylesheet" href="themes/ocean.css" />
+
+  <script>
+    (function () {
+      const valid = ['linguistic','midnight','warm-paper','clinical','ocean'];
+      const params = new URLSearchParams(location.search);
+      const t = params.get('theme');
+      const stored = localStorage.getItem('chiron-theme');
+      const theme = valid.includes(t) ? t : (valid.includes(stored) ? stored : 'linguistic');
+      document.documentElement.setAttribute('data-theme', theme);
+      if (t) localStorage.setItem('chiron-theme', t);
+    })();
+  </script>
+
+  <style>
+    /* =========================================================================
+       LANGUAGE-LESSON-SKELETON v1 — component CSS
+       All colors consume var(--chiron-*). No hardcoded hex/rgb.
+       ========================================================================= */
+
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; }
+    body {
+      background: var(--chiron-bg);
+      color: var(--chiron-fg);
+      font-family: var(--chiron-font-body);
+      font-size: 17px;
+      line-height: 1.65;
+    }
+
+    /* ---- Layout shell ---- */
+    .lesson-shell { max-width: 920px; margin: 0 auto; padding: var(--chiron-space-8) var(--chiron-space-6); }
+
+    /* ---- Top bar ---- */
+    .top-bar {
+      position: sticky; top: 0; z-index: 100;
+      background: var(--chiron-bg);
+      border-bottom: 1px solid var(--chiron-divider);
+      padding: var(--chiron-space-3) var(--chiron-space-6);
+      display: flex; align-items: center; justify-content: space-between; gap: var(--chiron-space-4);
+      backdrop-filter: blur(8px);
+    }
+    .top-bar .brand { font-family: var(--chiron-font-heading); font-weight: 700; font-size: 15px; color: var(--chiron-accent); letter-spacing: -0.01em; }
+    .top-bar .brand .dot { color: var(--chiron-warm-accent); }
+    .theme-bar { display: flex; gap: var(--chiron-space-2); flex-wrap: wrap; }
+    .theme-bar button {
+      font: inherit; font-size: 12px; padding: 5px 10px;
+      background: var(--chiron-surface);
+      color: var(--chiron-fg-secondary);
+      border: 1px solid var(--chiron-border);
+      border-radius: var(--chiron-radius-sm);
+      cursor: pointer;
+    }
+    .theme-bar button:hover { background: var(--chiron-elevated); }
+    .theme-bar button[aria-pressed="true"] { background: var(--chiron-accent); color: var(--chiron-surface); border-color: var(--chiron-accent); }
+
+    /* ---- Progress dots (nav) ---- */
+    .nav-dots {
+      display: flex; justify-content: center; gap: 8px;
+      margin: var(--chiron-space-4) 0 var(--chiron-space-6);
+      padding: 0; list-style: none;
+    }
+    .nav-dot {
+      width: 9px; height: 9px; border-radius: 50%;
+      background: var(--chiron-border); border: none; padding: 0; cursor: pointer;
+      transition: transform 0.18s ease, background 0.18s ease;
+    }
+    .nav-dot:hover { transform: scale(1.4); background: var(--chiron-accent-light); }
+    .nav-dot[aria-current="true"] { background: var(--chiron-accent); transform: scale(1.3); }
+
+    /* ---- Header ---- */
+    .lesson-header { border-bottom: 1px solid var(--chiron-divider); padding-bottom: var(--chiron-space-6); margin-bottom: var(--chiron-space-8); }
+    .eyebrow { text-transform: uppercase; letter-spacing: 0.14em; font-size: 11px; color: var(--chiron-muted); font-family: var(--chiron-font-body); font-weight: 600; }
+    h1.lesson-title { font-family: var(--chiron-font-heading); font-size: 2.6rem; line-height: 1.1; margin: var(--chiron-space-2) 0 var(--chiron-space-3); color: var(--chiron-fg); }
+    .subtitle { color: var(--chiron-fg-secondary); font-size: 1.1rem; font-style: italic; }
+
+    /* ---- Sections ---- */
+    section.lesson-section { margin: var(--chiron-space-8) 0; scroll-margin-top: 80px; }
+    h2.section-h {
+      font-family: var(--chiron-font-heading);
+      font-size: 1.55rem;
+      color: var(--chiron-accent);
+      border-left: 4px solid var(--chiron-accent);
+      padding-left: var(--chiron-space-4);
+      margin: 0 0 var(--chiron-space-4);
+    }
+    h2.section-h .num { color: var(--chiron-muted); font-size: 0.7em; font-weight: 400; margin-right: var(--chiron-space-3); font-family: var(--chiron-font-mono, monospace); }
+    h3.subsection-h { font-family: var(--chiron-font-heading); color: var(--chiron-fg-secondary); margin-top: var(--chiron-space-6); font-size: 1.15rem; }
+
+    /* ---- Cold open ---- */
+    .cold-open {
+      background: var(--chiron-surface);
+      border-radius: var(--chiron-radius-lg);
+      padding: var(--chiron-space-6) var(--chiron-space-8);
+      box-shadow: var(--chiron-shadow-md);
+      border-left: 4px solid var(--chiron-warm-accent);
+      font-family: var(--chiron-font-heading);
+      font-size: 1.18rem;
+      line-height: 1.6;
+      color: var(--chiron-fg);
+      font-style: italic;
+    }
+    .cold-open .it { color: var(--chiron-fg); font-style: italic; }
+    .cold-open .gloss { color: var(--chiron-muted); font-size: 0.9em; display: block; margin-top: var(--chiron-space-2); font-style: normal; }
+
+    /* ---- Vocab arc ---- */
+    .vocab-arc { background: var(--chiron-surface); border-radius: var(--chiron-radius-lg); padding: var(--chiron-space-6); margin-bottom: var(--chiron-space-6); border: 1px solid var(--chiron-border); }
+    .mini-context { font-style: italic; color: var(--chiron-fg-secondary); border-left: 3px solid var(--chiron-accent-light); padding-left: var(--chiron-space-3); margin-bottom: var(--chiron-space-4); }
+
+    /* ---- Tables ---- */
+    .v-table { border-collapse: collapse; width: 100%; margin: var(--chiron-space-3) 0; }
+    .v-table th, .v-table td { padding: var(--chiron-space-3); text-align: left; border-bottom: 1px solid var(--chiron-divider); }
+    .v-table th { background: var(--chiron-elevated); font-family: var(--chiron-font-heading); font-weight: 600; font-size: 13px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--chiron-fg); }
+    .v-table td.it { font-weight: 600; color: var(--chiron-accent); font-family: var(--chiron-font-heading); }
+    .v-table td.ex { font-style: italic; color: var(--chiron-fg-secondary); font-size: 0.95em; }
+
+    /* ---- Speaker turns ---- */
+    .turn { display: grid; grid-template-columns: 90px 1fr; gap: var(--chiron-space-3); margin: var(--chiron-space-3) 0; align-items: start; }
+    .turn .speaker { font-family: var(--chiron-font-heading); font-weight: 700; font-size: 0.95em; padding: 2px 8px; border-radius: var(--chiron-radius-sm); text-align: center; }
+    .turn.alice .speaker { background: var(--chiron-warm-accent); color: var(--chiron-surface); }
+    .turn.marco .speaker { background: var(--chiron-accent); color: var(--chiron-surface); }
+    .turn.you .speaker { background: var(--chiron-elevated); color: var(--chiron-fg); border: 1px solid var(--chiron-border); }
+    .turn .what { line-height: 1.55; }
+    .turn .it { color: var(--chiron-fg); }
+    .turn .gloss { color: var(--chiron-muted); font-size: 0.88em; display: block; margin-top: 2px; font-style: italic; }
+
+    /* ---- Pedagogical callouts ---- */
+    .callout { padding: var(--chiron-space-3) var(--chiron-space-4); margin: var(--chiron-space-3) 0; border-radius: var(--chiron-radius-md); border-left: 3px solid var(--chiron-info); background: var(--chiron-elevated); font-size: 0.95em; }
+    .callout .tag { display: inline-block; font-family: var(--chiron-font-heading); font-weight: 700; font-size: 0.75em; text-transform: uppercase; letter-spacing: 0.08em; padding: 2px 8px; border-radius: var(--chiron-radius-sm); margin-right: var(--chiron-space-2); }
+    .callout.grammar-pearl { border-left-color: var(--chiron-accent); }
+    .callout.grammar-pearl .tag { background: var(--chiron-accent); color: var(--chiron-surface); }
+    .callout.false-friend { border-left-color: var(--chiron-error); }
+    .callout.false-friend .tag { background: var(--chiron-error); color: var(--chiron-surface); }
+    .callout.cultural-note { border-left-color: var(--chiron-warm-accent); }
+    .callout.cultural-note .tag { background: var(--chiron-warm-accent); color: var(--chiron-surface); }
+
+    /* ---- Inline cloze ---- */
+    .cloze-line { background: var(--chiron-bg); border: 1px dashed var(--chiron-border); padding: var(--chiron-space-3); margin: var(--chiron-space-3) 0; border-radius: var(--chiron-radius-sm); font-style: italic; }
+    .cloze-line input { font: inherit; padding: 3px 8px; width: 140px; border: 1px solid var(--chiron-border); border-radius: var(--chiron-radius-sm); background: var(--chiron-surface); color: var(--chiron-fg); font-style: normal; }
+    .cloze-line input.correct { border-color: var(--chiron-success); background: var(--chiron-elevated); }
+    .cloze-line input.incorrect { border-color: var(--chiron-error); }
+    .cloze-line .hint { color: var(--chiron-muted); font-size: 0.85em; margin-left: var(--chiron-space-2); font-style: normal; }
+
+    /* ---- Story block — two-column gloss ---- */
+    .story-block { background: var(--chiron-surface); border-radius: var(--chiron-radius-lg); padding: var(--chiron-space-6); margin: var(--chiron-space-4) 0; box-shadow: var(--chiron-shadow-sm); border: 1px solid var(--chiron-border); }
+    .story-block .meta { display: flex; gap: var(--chiron-space-3); align-items: center; margin-bottom: var(--chiron-space-3); flex-wrap: wrap; }
+    .story-block .level { display: inline-block; font-family: var(--chiron-font-heading); font-weight: 700; font-size: 0.78em; padding: 3px 9px; border-radius: var(--chiron-radius-sm); }
+    .story-block.level-a2 .level { background: var(--chiron-success); color: var(--chiron-surface); }
+    .story-block.level-b1 .level { background: var(--chiron-warm-accent); color: var(--chiron-surface); }
+    .story-block .tone { font-family: var(--chiron-font-heading); font-size: 0.85em; color: var(--chiron-muted); text-transform: uppercase; letter-spacing: 0.08em; }
+    .story-block h4 { font-family: var(--chiron-font-heading); margin: 0 0 var(--chiron-space-3); font-size: 1.25rem; color: var(--chiron-fg); }
+    .story-block .source { font-size: 0.82em; color: var(--chiron-muted); font-style: italic; margin-top: var(--chiron-space-3); }
+    .story-grid { display: grid; grid-template-columns: 1fr 220px; gap: var(--chiron-space-5); align-items: start; }
+    @media (max-width: 720px) { .story-grid { grid-template-columns: 1fr; } }
+    .story-grid .it-text { font-family: var(--chiron-font-heading); font-size: 1.04em; line-height: 1.7; color: var(--chiron-fg); }
+    .story-grid .it-text .g { border-bottom: 1px dotted var(--chiron-warm-accent); cursor: help; }
+    .story-grid .gloss-panel { background: var(--chiron-elevated); border-radius: var(--chiron-radius-md); padding: var(--chiron-space-3); font-size: 0.86em; line-height: 1.5; color: var(--chiron-fg-secondary); }
+    .story-grid .gloss-panel h5 { font-family: var(--chiron-font-heading); font-size: 0.78em; text-transform: uppercase; letter-spacing: 0.06em; color: var(--chiron-muted); margin: 0 0 var(--chiron-space-2); }
+    .story-grid .gloss-panel dl { margin: 0; }
+    .story-grid .gloss-panel dt { font-weight: 700; color: var(--chiron-accent); margin-top: var(--chiron-space-2); }
+    .story-grid .gloss-panel dd { margin: 0 0 0 var(--chiron-space-3); }
+
+    /* ---- Jokes sidebar ---- */
+    .jokes-sidebar { background: var(--chiron-surface); border-radius: var(--chiron-radius-lg); padding: var(--chiron-space-5); border-left: 4px solid var(--chiron-warm-accent); margin: var(--chiron-space-4) 0; }
+    .jokes-sidebar .joke { margin: var(--chiron-space-4) 0; }
+    .jokes-sidebar .joke-title { font-family: var(--chiron-font-heading); font-weight: 700; color: var(--chiron-warm-accent); font-size: 0.95em; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: var(--chiron-space-2); }
+
+    /* ---- Match Madness (multi-set) ---- */
+      /* ========================= Match Madness (multi-set) ========================= */
+      .mm-section { margin: var(--chiron-space-6) 0 var(--chiron-space-8); }
+      .mm-intro {
+        color: var(--chiron-fg-secondary);
+        font-size: 1rem;
+        line-height: 1.65;
+        margin: 0 0 var(--chiron-space-6);
+        max-width: 720px;
+      }
+    
+      .mm-sets-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+        gap: var(--chiron-space-5);
+      }
+    
+      .mm-set-card {
+        background: var(--chiron-surface);
+        border: 1px solid var(--chiron-border);
+        border-radius: var(--chiron-radius-md);
+        padding: var(--chiron-space-6);
+        display: flex; flex-direction: column; gap: var(--chiron-space-4);
+        transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+        min-height: 220px;
+      }
+      .mm-set-card:hover { transform: translateY(-2px); box-shadow: var(--chiron-shadow-md); border-color: var(--chiron-accent); }
+      .mm-set-card[data-mode="conjugation"] { border-left: 3px solid var(--chiron-warm-accent); }
+      .mm-set-card[data-mode="mixed"] { border-left: 3px solid var(--chiron-accent); background: linear-gradient(135deg, var(--chiron-surface), var(--chiron-elevated)); }
+    
+      .mm-set-card-header { display: flex; justify-content: space-between; align-items: center; font-size: 11px; gap: var(--chiron-space-2); }
+      .mm-set-num { font-family: var(--chiron-font-mono, monospace); color: var(--chiron-muted); letter-spacing: 0.1em; text-transform: uppercase; font-size: 11px; font-weight: 600; }
+      .mm-set-mode { font-family: var(--chiron-font-mono, monospace); color: var(--chiron-accent); font-size: 10px; padding: 3px 8px; background: var(--chiron-accent-light); border-radius: var(--chiron-radius-sm); letter-spacing: 0.04em; }
+      .mm-set-title { font-family: var(--chiron-font-heading); font-size: 1.2rem; line-height: 1.25; margin: 0; color: var(--chiron-fg); }
+      .mm-set-subtitle { color: var(--chiron-fg-secondary); font-size: 0.88rem; line-height: 1.5; margin: 0; font-style: italic; }
+      .mm-set-meta { display: flex; gap: var(--chiron-space-4); font-size: 0.85rem; color: var(--chiron-fg-secondary); padding-top: var(--chiron-space-1, 4px); }
+      .mm-set-meta strong { color: var(--chiron-fg); }
+      .mm-set-mastery { display: flex; flex-wrap: wrap; gap: var(--chiron-space-3); font-size: 0.78rem; color: var(--chiron-muted); padding: var(--chiron-space-3) 0 0; border-top: 1px dashed var(--chiron-divider); margin-top: auto; }
+      .mm-mastery-pct strong { color: var(--chiron-accent); }
+      .mm-mastery-weak strong { color: var(--chiron-warm-accent); }
+      .mm-set-play.primary {
+        background: var(--chiron-accent); color: var(--chiron-surface);
+        border: none; padding: var(--chiron-space-3) var(--chiron-space-5); border-radius: var(--chiron-radius-sm);
+        cursor: pointer; font-weight: 600; font-size: 0.92rem;
+        align-self: flex-start;
+        margin-top: var(--chiron-space-2);
+      }
+      .mm-set-play.primary:hover { background: var(--chiron-accent-hover, var(--chiron-accent)); transform: translateY(-1px); }
+    
+      /* Play surface = full-screen overlay. [hidden] MUST win over display:flex. */
+      .mm-play-surface[hidden] { display: none !important; }
+      .mm-result[hidden] { display: none !important; }
+      .mm-play-surface {
+        position: fixed; inset: 0; z-index: 1000;
+        background: var(--chiron-bg);
+        display: flex; align-items: center; justify-content: center;
+        padding: var(--chiron-space-6);
+        overflow: auto;
+      }
+      .mm-close {
+        position: absolute; top: var(--chiron-space-4); right: var(--chiron-space-4);
+        background: var(--chiron-surface); border: 1px solid var(--chiron-border);
+        width: 36px; height: 36px; border-radius: 50%;
+        font-size: 1.2rem; cursor: pointer; color: var(--chiron-fg);
+      }
+      .mm-close:hover { background: var(--chiron-elevated); }
+    
+      .mm-container {
+        --mm-pulse-ms: 2000ms;
+        --mm-pulse-strength: 0;
+        width: 100%; max-width: 720px;
+        background: var(--chiron-surface);
+        border: 1px solid var(--chiron-border);
+        border-radius: var(--chiron-radius-lg);
+        padding: var(--chiron-space-6);
+        box-shadow: var(--chiron-shadow-lg);
+        position: relative; overflow: hidden;
+      }
+      .mm-container::before {
+        content: ''; position: absolute; inset: 0; pointer-events: none;
+        background: var(--chiron-accent);
+        opacity: var(--mm-pulse-strength);
+        animation: mm-pulse var(--mm-pulse-ms) ease-in-out infinite;
+      }
+      @keyframes mm-pulse { 0%, 100% { opacity: var(--mm-pulse-strength); } 50% { opacity: calc(var(--mm-pulse-strength) * 1.8); } }
+    
+      .mm-header { display: flex; justify-content: space-between; align-items: center; gap: var(--chiron-space-4); margin-bottom: var(--chiron-space-4); }
+      .mm-set-label { font-size: 0.9rem; color: var(--chiron-fg-secondary); }
+      .mm-timer { font-family: var(--chiron-font-mono, monospace); font-size: 2rem; font-weight: 700; color: var(--chiron-accent); }
+      .mm-stats { display: flex; gap: var(--chiron-space-3); font-size: 0.85rem; }
+      .mm-stats .stat strong { display: block; font-size: 1.4rem; color: var(--chiron-fg); }
+      .mm-combo strong { color: var(--chiron-warm-accent); }
+      .mm-round-label { text-align: center; font-size: 0.85rem; color: var(--chiron-muted); margin-bottom: var(--chiron-space-3); }
+    
+      .mm-grid {
+        display: grid; grid-template-columns: 1fr 1fr;
+        gap: var(--chiron-space-3); margin: var(--chiron-space-4) 0;
+      }
+      .mm-tile {
+        background: var(--chiron-elevated);
+        color: var(--chiron-fg);
+        border: 2px solid var(--chiron-border);
+        border-radius: var(--chiron-radius-md);
+        padding: var(--chiron-space-4) var(--chiron-space-3);
+        font: inherit; font-size: 0.95rem; font-weight: 500;
+        cursor: pointer; min-height: 56px;
+        transition: transform 0.12s ease, border-color 0.12s ease, background 0.12s ease;
+      }
+      .mm-tile:hover:not([data-state="empty"]):not([data-state="correct"]) { border-color: var(--chiron-accent); transform: translateY(-1px); }
+      .mm-tile[data-state="selected"] { border-color: var(--chiron-accent); background: var(--chiron-accent-light); color: var(--chiron-fg); }
+      .mm-tile[data-state="correct"] { border-color: var(--chiron-success, var(--chiron-accent)); background: var(--chiron-success-bg, var(--chiron-accent-light)); opacity: 0.55; cursor: default; }
+      .mm-tile[data-state="wrong"] { border-color: var(--chiron-warm-accent); background: var(--chiron-warm-accent); color: var(--chiron-surface); animation: mm-shake 0.4s; }
+      .mm-tile[data-state="empty"] { background: transparent; border-style: dashed; cursor: default; }
+      @keyframes mm-shake { 0%,100% { transform: translateX(0);} 25%{transform:translateX(-4px);} 75%{transform:translateX(4px);} }
+    
+      .mm-keyboard-hint { font-size: 0.78rem; color: var(--chiron-muted); text-align: center; margin: var(--chiron-space-3) 0; }
+      .mm-keyboard-hint code { background: var(--chiron-elevated); padding: 2px 6px; border-radius: var(--chiron-radius-sm); font-family: var(--chiron-font-mono, monospace); }
+      .mm-controls { display: flex; gap: var(--chiron-space-2); justify-content: center; flex-wrap: wrap; }
+      .mm-controls button { font: inherit; padding: var(--chiron-space-2) var(--chiron-space-4); border-radius: var(--chiron-radius-sm); border: 1px solid var(--chiron-border); background: var(--chiron-surface); color: var(--chiron-fg); cursor: pointer; }
+      .mm-controls button.primary { background: var(--chiron-accent); color: var(--chiron-surface); border-color: var(--chiron-accent); }
+      .mm-controls button:hover { background: var(--chiron-elevated); }
+    
+      .mm-result { margin-top: var(--chiron-space-5); padding: var(--chiron-space-4); background: var(--chiron-elevated); border-radius: var(--chiron-radius-md); border-left: 3px solid var(--chiron-accent); }
+      .mm-result h4 { margin: 0 0 var(--chiron-space-2); color: var(--chiron-accent); font-family: var(--chiron-font-heading); }
+      .mm-result p { margin: var(--chiron-space-2) 0; color: var(--chiron-fg-secondary); }
+      .mm-result strong { color: var(--chiron-fg); }
+
+    /* ---- SR drawer ---- */
+    .sr-deck { display: grid; gap: var(--chiron-space-3); grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); margin-top: var(--chiron-space-4); }
+    .sr-card { background: var(--chiron-surface); border: 1px solid var(--chiron-border); border-radius: var(--chiron-radius-md); padding: var(--chiron-space-4); cursor: pointer; transition: transform 0.15s ease, box-shadow 0.15s ease; box-shadow: var(--chiron-shadow-sm); min-height: 100px; display: flex; align-items: center; justify-content: center; text-align: center; font-family: var(--chiron-font-heading); }
+    .sr-card:hover { transform: translateY(-2px); box-shadow: var(--chiron-shadow-md); }
+    .sr-card .front { font-size: 1.08em; color: var(--chiron-accent); font-weight: 600; }
+    .sr-card .back { font-size: 0.95em; color: var(--chiron-fg-secondary); display: none; }
+    .sr-card.flipped .front { display: none; }
+    .sr-card.flipped .back { display: block; }
+    
+      /* ---- SR cards (rich, multi-tense back) ---- */
+      .sr-card[data-card-type] {
+        min-height: 150px;
+        padding: var(--chiron-space-4);
+        display: flex; align-items: stretch; justify-content: center; text-align: center;
+        overflow: hidden;
+        position: relative;
+      }
+      .sr-card[data-card-type] .front {
+        display: flex; align-items: center; justify-content: center; width: 100%;
+        font-size: 1.15em; color: var(--chiron-accent); font-weight: 700;
+        line-height: 1.3;
+      }
+      .sr-card[data-card-type] .back {
+        text-align: left;
+        width: 100%;
+        display: none;
+        flex-direction: column;
+        gap: var(--chiron-space-2);
+      }
+      .sr-card.flipped[data-card-type] .front { display: none; }
+      .sr-card.flipped[data-card-type] .back { display: flex; }
+      .sr-card.flipped[data-card-type='verb'],
+      .sr-card.flipped[data-card-type='noun'] {
+        min-height: 260px;
+      }
+    
+      .sr-back-head {
+        display: flex; align-items: center; justify-content: space-between;
+        gap: var(--chiron-space-2);
+        padding-bottom: var(--chiron-space-2);
+        border-bottom: 1px dashed var(--chiron-divider);
+        margin-bottom: var(--chiron-space-2);
+      }
+      .sr-back-gloss { color: var(--chiron-fg); font-family: var(--chiron-font-heading); font-size: 0.92em; font-weight: 700; line-height: 1.3; }
+      .sr-back-tag {
+        font-family: var(--chiron-font-mono, monospace);
+        font-size: 0.65em; letter-spacing: 0.06em; text-transform: uppercase;
+        padding: 2px 6px; border-radius: var(--chiron-radius-sm);
+        background: var(--chiron-elevated); color: var(--chiron-muted);
+        flex-shrink: 0;
+      }
+      .sr-back-tag.sr-article {
+        background: var(--chiron-accent-light); color: var(--chiron-accent);
+        font-weight: 700; font-size: 0.78em; text-transform: none; letter-spacing: 0;
+      }
+      .sr-back-full { margin: 0; font-size: 0.86em; color: var(--chiron-fg-secondary); }
+      .sr-back-full .sr-it { color: var(--chiron-fg); font-style: italic; }
+      .sr-back-plural,
+      .sr-back-pair,
+      .sr-back-note,
+      .sr-back-literal { margin: 0; font-size: 0.78em; color: var(--chiron-fg-secondary); line-height: 1.45; }
+      .sr-back-pair em { color: var(--chiron-accent); font-style: italic; }
+      .sr-back-literal em { color: var(--chiron-fg); }
+    
+      .sr-conj-table {
+        width: 100%; border-collapse: collapse;
+        font-size: 0.78em;
+        font-family: var(--chiron-font-body);
+      }
+      .sr-conj-table thead th {
+        text-align: center; padding: var(--chiron-space-1) 0 var(--chiron-space-2);
+        color: var(--chiron-muted); font-weight: 600; font-family: var(--chiron-font-mono, monospace);
+        letter-spacing: 0.08em; text-transform: uppercase; font-size: 0.85em;
+        border-bottom: 1px solid var(--chiron-divider);
+      }
+      .sr-conj-table tbody th {
+        text-align: left; padding: var(--chiron-space-1) var(--chiron-space-2) var(--chiron-space-1) 0;
+        color: var(--chiron-muted); font-weight: 500;
+        font-size: 0.92em;
+        width: 45%;
+      }
+      .sr-conj-table tbody td {
+        text-align: right; padding: var(--chiron-space-1) 0;
+        color: var(--chiron-fg); font-family: var(--chiron-font-heading);
+        font-weight: 600;
+      }
+      .sr-conj-table tbody tr + tr th,
+      .sr-conj-table tbody tr + tr td { border-top: 1px dotted var(--chiron-divider); }
+
+    /* ---- Closing ---- */
+    .closing { background: var(--chiron-surface); border-radius: var(--chiron-radius-lg); padding: var(--chiron-space-6); border-left: 4px solid var(--chiron-warm-accent); }
+
+    footer.lesson-footer { margin-top: var(--chiron-space-8); padding-top: var(--chiron-space-4); border-top: 1px solid var(--chiron-divider); color: var(--chiron-muted); font-size: 0.85em; text-align: center; }
+  </style>
+</head>
+<body>
+
+  <!-- ========================= TOP BAR ========================= -->
+  <div class="top-bar">
+    <div class="brand">Chiron<span class="dot">·</span> language-it</div>
+    <nav class="theme-bar" aria-label="Theme">
+      <button data-set-theme="linguistic" aria-pressed="true">Linguistic</button>
+      <button data-set-theme="warm-paper">Warm Paper</button>
+      <button data-set-theme="clinical">Clinical</button>
+      <button data-set-theme="midnight">Midnight</button>
+      <button data-set-theme="ocean">Ocean</button>
+    </nav>
+  </div>
+
+  <div class="lesson-shell">
+
+    <!-- ========================= NAV DOTS ========================= -->
+    <div class="nav-dots" role="tablist" aria-label="Sections">
+      <button class="nav-dot" data-target="s0" role="tab" aria-label="Cold open"></button>
+      <button class="nav-dot" data-target="s1a" role="tab" aria-label="Verb cluster 1"></button>
+      <button class="nav-dot" data-target="s1b" role="tab" aria-label="Verb cluster 2"></button>
+      <button class="nav-dot" data-target="s1c" role="tab" aria-label="Verb cluster 3"></button>
+      <button class="nav-dot" data-target="s2" role="tab" aria-label="Conjugation"></button>
+      <button class="nav-dot" data-target="s3" role="tab" aria-label="Collocations"></button>
+      <button class="nav-dot" data-target="s4" role="tab" aria-label="Stories"></button>
+      <button class="nav-dot" data-target="s4-funny" role="tab" aria-label="Jokes"></button>
+      <button class="nav-dot" data-target="s5" role="tab" aria-label="Match Madness"></button>
+      <button class="nav-dot" data-target="s6" role="tab" aria-label="Extended dialogue"></button>
+      <button class="nav-dot" data-target="s7" role="tab" aria-label="SR drawer"></button>
+      <button class="nav-dot" data-target="s8" role="tab" aria-label="Closing"></button>
+    </div>
+
+    <!-- ========================= HEADER ========================= -->
+    <header class="lesson-header">
+      <div class="eyebrow">Chiron · Italian · A2-B1 · Mode A · skeleton v1</div>
+      <h1 class="lesson-title">I verbi delle pulizie</h1>
+      <p class="subtitle">Una lezione tessuta — vocabolario, racconti, e una mattinata con Alice e Marco.</p>
+    </header>
+
+    <!-- ========================= 0. COLD OPEN ========================= -->
+    <section class="lesson-section" id="s0">
+      <h2 class="section-h"><span class="num">0</span>Apertura</h2>
+      <div class="cold-open">
+        <span class="it">Sabato, ore otto. Casa silenziosa. Marco prende la scopa. Alice porta un secchio d'acqua. Tu apri le finestre — l'aria fresca entra. <em>Cominciamo.</em></span>
+        <span class="gloss">Saturday, eight o'clock. The house is quiet. Marco picks up the broom. Alice carries a bucket of water. You open the windows — fresh air comes in. Let's begin.</span>
+      </div>
+    </section>
+
+    <!-- ========================= 1a. VERB CLUSTER 1 ========================= -->
+    <section class="lesson-section" id="s1a">
+      <h2 class="section-h"><span class="num">1A</span>Cluster 1 — pulire la casa</h2>
+      <div class="vocab-arc">
+        <p class="mini-context">Marco entra in soggiorno. C'è polvere ovunque. "Prima cosa," dice, "spolveriamo. Poi spazziamo. Poi puliamo."</p>
+
+        <table class="v-table">
+          <thead><tr><th>Italian</th><th>English</th><th>io (I…)</th><th>Example</th></tr></thead>
+          <tbody>
+            <tr><td class="it">spazzare</td><td>to sweep</td><td>spazzo</td><td class="ex">Spazzo il pavimento.</td></tr>
+            <tr><td class="it">spolverare</td><td>to dust</td><td>spolvero</td><td class="ex">Spolvero i mobili.</td></tr>
+            <tr><td class="it">pulire (-isco)</td><td>to clean</td><td>pulisco</td><td class="ex">Pulisco il bagno.</td></tr>
+            <tr><td class="it">strofinare</td><td>to scrub</td><td>strofino</td><td class="ex">Strofino la pentola.</td></tr>
+          </tbody>
+        </table>
+
+        <div class="turn alice">
+          <span class="speaker">Alice</span>
+          <div class="what">
+            <span class="it">Marco, io <em>pulo</em> il bagno…?</span>
+            <span class="gloss">Marco, I "pulo" the bathroom…?</span>
+          </div>
+        </div>
+        <div class="turn marco">
+          <span class="speaker">Marco</span>
+          <div class="what">
+            <span class="it">No, Alice — <em>pulisco</em>. <em>Pulire</em> è un verbo speciale: aggiunge <strong>-isc-</strong> alla radice. Pulisco, pulisci, pulisce.</span>
+            <span class="gloss">No, Alice — <em>pulisco</em>. <em>Pulire</em> is a special verb: it adds <strong>-isc-</strong> to the stem. I clean, you clean, he/she cleans.</span>
+          </div>
+        </div>
+
+        <div class="callout grammar-pearl">
+          <span class="tag">Grammar pearl</span>
+          <strong>-isco verbs</strong> follow the pattern: <em>pulisco, pulisci, pulisce, puliamo, pulite, puliscono.</em> The <em>-isc-</em> appears in singular forms and 3rd-person plural — not in <em>noi/voi</em>. Same family: <em>finire, capire, preferire, dormire</em> (wait, no — <em>dormire</em> is regular!). Memorize the pattern by the rhythm, not the rule.
+        </div>
+
+        <div class="cloze-line" data-answer="spazzo">
+          Marco entra in cucina. "Adesso <input type="text" />," dice. <span class="hint">(io form of spazzare)</span>
+        </div>
+        <div class="cloze-line" data-answer="pulisce">
+          Alice dice: "Mia madre <input type="text" /> la casa ogni sabato." <span class="hint">(lui/lei form of pulire — careful, -isco!)</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================= 1b. VERB CLUSTER 2 ========================= -->
+    <section class="lesson-section" id="s1b">
+      <h2 class="section-h"><span class="num">1B</span>Cluster 2 — il bucato</h2>
+      <div class="vocab-arc">
+        <p class="mini-context">Mucchio di vestiti sul letto. Marco sospira. "Tocca al bucato," dice. "Prima laviamo, poi sciacquiamo, poi asciughiamo, poi stendiamo, poi pieghiamo."</p>
+
+        <table class="v-table">
+          <thead><tr><th>Italian</th><th>English</th><th>io (I…)</th><th>Example</th></tr></thead>
+          <tbody>
+            <tr><td class="it">lavare</td><td>to wash</td><td>lavo</td><td class="ex">Lavo i piatti.</td></tr>
+            <tr><td class="it">sciacquare</td><td>to rinse</td><td>sciacquo</td><td class="ex">Sciacquo il bicchiere.</td></tr>
+            <tr><td class="it">asciugare</td><td>to dry</td><td>asciugo</td><td class="ex">Asciugo le mani.</td></tr>
+            <tr><td class="it">stendere (-ere)</td><td>to hang out</td><td>stendo</td><td class="ex">Stendo il bucato.</td></tr>
+            <tr><td class="it">piegare</td><td>to fold</td><td>piego</td><td class="ex">Piego le magliette.</td></tr>
+          </tbody>
+        </table>
+
+        <div class="turn alice">
+          <span class="speaker">Alice</span>
+          <div class="what">
+            <span class="it">Marco, prima si <em>stende</em> o si <em>piega</em>?</span>
+            <span class="gloss">Marco, do we hang out or fold first?</span>
+          </div>
+        </div>
+        <div class="turn marco">
+          <span class="speaker">Marco</span>
+          <div class="what">
+            <span class="it">Prima <em>stendiamo</em>, perché il bucato è <strong>bagnato</strong>. Poi, quando è <strong>asciutto</strong>, <em>pieghiamo</em>.</span>
+            <span class="gloss">First we hang it, because the laundry is wet. Then, when it's dry, we fold.</span>
+          </div>
+        </div>
+
+        <div class="callout cultural-note">
+          <span class="tag">Cultural note</span>
+          In Italy, you almost always see laundry hanging on balconies — even in big cities. Indoor dryers (<em>asciugatrici</em>) are still rare. <em>Stendere il bucato sul balcone</em> is part of the visual texture of Italian streets.
+        </div>
+
+        <div class="cloze-line" data-answer="stendo">
+          Ogni mattina <input type="text" /> il bucato sul balcone. <span class="hint">(io form of stendere)</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================= 1c. VERB CLUSTER 3 ========================= -->
+    <section class="lesson-section" id="s1c">
+      <h2 class="section-h"><span class="num">1C</span>Cluster 3 — ordine e rifiuti</h2>
+      <div class="vocab-arc">
+        <p class="mini-context">"Ultima fase," dice Marco. "Riordiniamo, ammucchiamo quello che si butta, passiamo l'aspirapolvere, e poi… caffè."</p>
+
+        <table class="v-table">
+          <thead><tr><th>Italian</th><th>English</th><th>io (I…)</th><th>Example</th></tr></thead>
+          <tbody>
+            <tr><td class="it">ammucchiare</td><td>to pile up</td><td>ammucchio</td><td class="ex">Ammucchio i vestiti.</td></tr>
+            <tr><td class="it">mettere in pila</td><td>to stack</td><td>metto in pila</td><td class="ex">Metto in pila i libri.</td></tr>
+            <tr><td class="it">riordinare</td><td>to tidy up</td><td>riordino</td><td class="ex">Riordino la stanza.</td></tr>
+            <tr><td class="it">buttare</td><td>to throw out</td><td>butto</td><td class="ex">Butto la spazzatura.</td></tr>
+            <tr><td class="it">passare l'aspirapolvere</td><td>to vacuum</td><td>passo l'aspirapolvere</td><td class="ex">Passo l'aspirapolvere in salotto.</td></tr>
+          </tbody>
+        </table>
+
+        <div class="callout false-friend">
+          <span class="tag">False friend warning</span>
+          <strong>scopare</strong> = to sweep (from <em>scopa</em>, broom). BUT it is also vulgar slang for sex. When you want "to sweep" without ambiguity, prefer <em>spazzare</em>. Use <em>scopare</em> only when context makes the meaning impossible to mistake (e.g. <em>scopare il pavimento</em>).
+        </div>
+
+        <div class="callout cultural-note">
+          <span class="tag">Cultural note · la raccolta differenziata</span>
+          Trash in Italy is <strong>strictly separated</strong>: <em>carta, plastica, vetro, umido, indifferenziato.</em> Each has its own pickup day. <em>Buttare la spazzatura</em> isn't one act — it's a weekly schedule. (Calvino called it <em>un rito</em>, a ritual — see the B1 story below.)
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================= 2. CONJUGATION ========================= -->
+    <section class="lesson-section" id="s2">
+      <h2 class="section-h"><span class="num">2</span>Coniugazione — le tre famiglie</h2>
+      <p>Italian has three verb families based on the infinitive ending: <strong>-are, -ere, -ire</strong>. Most cleaning verbs are <strong>-are</strong> (regular). A few key exceptions need their own attention.</p>
+
+      <h3 class="subsection-h">lavare — regular -are</h3>
+      <table class="v-table">
+        <thead><tr><th>Pronoun</th><th>Form</th></tr></thead>
+        <tbody>
+          <tr><td>io</td><td class="it">lavo</td></tr>
+          <tr><td>tu</td><td class="it">lavi</td></tr>
+          <tr><td>lui / lei</td><td class="it">lava</td></tr>
+          <tr><td>noi</td><td class="it">laviamo</td></tr>
+          <tr><td>voi</td><td class="it">lavate</td></tr>
+          <tr><td>loro</td><td class="it">lavano</td></tr>
+        </tbody>
+      </table>
+
+      <h3 class="subsection-h">pulire — -isco pattern</h3>
+      <table class="v-table">
+        <thead><tr><th>Pronoun</th><th>Form</th></tr></thead>
+        <tbody>
+          <tr><td>io</td><td class="it">pulisco</td></tr>
+          <tr><td>tu</td><td class="it">pulisci</td></tr>
+          <tr><td>lui / lei</td><td class="it">pulisce</td></tr>
+          <tr><td>noi</td><td class="it">puliamo</td></tr>
+          <tr><td>voi</td><td class="it">pulite</td></tr>
+          <tr><td>loro</td><td class="it">puliscono</td></tr>
+        </tbody>
+      </table>
+
+      <h3 class="subsection-h">stendere — regular -ere</h3>
+      <table class="v-table">
+        <thead><tr><th>Pronoun</th><th>Form</th></tr></thead>
+        <tbody>
+          <tr><td>io</td><td class="it">stendo</td></tr>
+          <tr><td>tu</td><td class="it">stendi</td></tr>
+          <tr><td>lui / lei</td><td class="it">stende</td></tr>
+          <tr><td>noi</td><td class="it">stendiamo</td></tr>
+          <tr><td>voi</td><td class="it">stendete</td></tr>
+          <tr><td>loro</td><td class="it">stendono</td></tr>
+        </tbody>
+      </table>
+
+      <div class="callout grammar-pearl">
+        <span class="tag">Grammar pearl · negative imperative</span>
+        Telling someone "Don't pile up the clothes!" uses <strong>non + infinitive</strong>: <em>Non ammucchiare i vestiti!</em> Telling more than one person uses the regular voi-form: <em>Non ammucchiate i vestiti!</em>
+      </div>
+
+      <div class="turn alice">
+        <span class="speaker">Alice</span>
+        <div class="what"><span class="it">Marco, io <em>stendio</em> il bucato…?</span></div>
+      </div>
+      <div class="turn marco">
+        <span class="speaker">Marco</span>
+        <div class="what"><span class="it">No no — <em>stendo</em>. <em>Stendere</em> è regolare -ere: io stendo, tu stendi, lui stende. La <em>-i-</em> appartiene alla terminazione, non alla radice.</span></div>
+      </div>
+    </section>
+
+    <!-- ========================= 3. COLLOCATIONS ========================= -->
+    <section class="lesson-section" id="s3">
+      <h2 class="section-h"><span class="num">3</span>Collocazioni — verbo + oggetto</h2>
+      <p>Each tool wants its own verb. Italians don't say "use the broom" — they say <em>scopare/spazzare con la scopa</em>. Memorize the pairings.</p>
+
+      <table class="v-table">
+        <thead><tr><th>Oggetto</th><th>Inglese</th><th>Verbo principale</th></tr></thead>
+        <tbody>
+          <tr><td class="it">la scopa</td><td>broom</td><td>spazzare</td></tr>
+          <tr><td class="it">lo straccio</td><td>rag / mop cloth</td><td>strofinare / lavare per terra</td></tr>
+          <tr><td class="it">la spugna</td><td>sponge</td><td>lavare / strofinare</td></tr>
+          <tr><td class="it">il secchio</td><td>bucket</td><td>riempire / sciacquare</td></tr>
+          <tr><td class="it">il detersivo</td><td>detergent</td><td>lavare con</td></tr>
+          <tr><td class="it">la spazzatura</td><td>trash</td><td>buttare</td></tr>
+          <tr><td class="it">il bucato</td><td>laundry</td><td>lavare / stendere / piegare</td></tr>
+          <tr><td class="it">l'aspirapolvere</td><td>vacuum cleaner</td><td>passare</td></tr>
+        </tbody>
+      </table>
+
+      <p class="mini-context">Mattina di sabato: <em>Marco prende la scopa e <strong>spazza</strong> il pavimento. Alice riempie il secchio e <strong>strofina</strong> il tavolo con lo straccio. Tu apri la lavatrice, <strong>lavi</strong> il bucato col detersivo, e dopo lo <strong>stendi</strong> sul balcone. Alla fine, qualcuno <strong>passa l'aspirapolvere</strong>, e <strong>butti</strong> la spazzatura.</em></p>
+    </section>
+
+    <!-- ========================= 4. STORIES ========================= -->
+    <section class="lesson-section" id="s4">
+      <h2 class="section-h"><span class="num">4</span>Racconti — sei storie</h2>
+      <p>Sei racconti brevi su due livelli. <em>A2</em> usa solo il vocabolario di questa lezione. <em>B1</em> introduce parole nuove, spiegate nella colonna laterale. Inclusi: tre storie originali, e tre adattate da Ginzburg, Calvino e Saba.</p>
+
+      <!-- Story 1: Funny A2 -->
+      <article class="story-block level-a2">
+        <div class="meta">
+          <span class="level">A2</span><span class="tone">divertente · originale</span>
+          <h4 style="margin: 0;">Il gatto e la scopa</h4>
+        </div>
+        <div class="story-grid">
+          <div class="it-text">
+            <p>Il gatto si chiama Pepe, e Pepe ha un nemico: la scopa. Ogni sabato mattina, Marco prende la scopa dal balcone. Pepe lo guarda con due occhi gialli. Marco comincia a spazzare il corridoio. Pepe arriva, salta, attacca la scopa con le zampe. Marco ride. Spazza ancora. Pepe corre, salta di nuovo. Le sue zampe sono veloci, ma la scopa è più grande.</p>
+            <p>«Pepe, basta!» dice Marco. Il gatto si ferma un momento, guarda Marco con curiosità, e poi torna ad attaccare la scopa. Marco non riesce a spazzare il pavimento. La polvere rimane. I peli del gatto rimangono. «Va bene,» dice Marco. «Tu vinci. Io prendo l'aspirapolvere.» Quando Marco accende l'aspirapolvere, Pepe sente il rumore e scappa sotto il letto. Marco passa l'aspirapolvere in dieci minuti. La casa è pulita. Marco sorride: il gatto pensa di aver vinto. In realtà, ha perso.</p>
+          </div>
+          <aside class="gloss-panel">
+            <h5>note</h5>
+            <p>A2 — every cleaning verb from the lesson appears in context. <em>nemico, zampe, peli, polvere, rumore, vincere, perdere</em> are A2 expansion vocab — common enough to absorb in context.</p>
+          </aside>
+        </div>
+      </article>
+
+      <!-- Story 2: Funny B1 (Ginzburg-adapted) -->
+      <article class="story-block level-b1">
+        <div class="meta">
+          <span class="level">B1</span><span class="tone">divertente · da Ginzburg</span>
+          <h4 style="margin: 0;">Il padre e l'ordine</h4>
+        </div>
+        <div class="story-grid">
+          <div class="it-text">
+            <p>Mio padre stava sempre a leggere nella parte opposta della casa. Ogni tanto si affacciava nella stanza dove noi figli chiacchieravamo, e si lamentava con mia madre della nostra <span class="g">serva</span> Natalina, che gli aveva messo in <span class="g">disordine</span> i libri. «La tua cara Natalina,» diceva mio padre con <span class="g">sospetto</span>. «Una <span class="g">demente</span>!» Se a tavola <span class="g">inzuppavamo</span> il pane nella salsa, gridava: «Non leccate i piatti! Non fate <span class="g">sbrodeghezzi</span>!»</p>
+          </div>
+          <aside class="gloss-panel">
+            <h5>glosse</h5>
+            <dl>
+              <dt>serva</dt><dd>(historical) housemaid</dd>
+              <dt>disordine</dt><dd>disorder, mess</dd>
+              <dt>sospetto</dt><dd>suspicion</dd>
+              <dt>demente</dt><dd>lunatic, demented</dd>
+              <dt>inzuppare</dt><dd>to dip / soak (bread in sauce)</dd>
+              <dt>sbrodeghezzi</dt><dd>(family-lexicon dialect) messy spills, slop</dd>
+            </dl>
+          </aside>
+        </div>
+        <p class="source">Adattato da Natalia Ginzburg, <em>Lessico famigliare</em> (Einaudi, 1963). Ginzburg coniò il "lessico famigliare" per descrivere le parole che esistono solo dentro una famiglia.</p>
+      </article>
+
+      <!-- Story 3: Serious A2 -->
+      <article class="story-block level-a2">
+        <div class="meta">
+          <span class="level">A2</span><span class="tone">serio · originale</span>
+          <h4 style="margin: 0;">La domenica di mia nonna</h4>
+        </div>
+        <div class="story-grid">
+          <div class="it-text">
+            <p>Mia nonna pulisce la casa ogni sabato. Spazza il pavimento. Lava i piatti. Stende il bucato. Riordina i mobili. Dice: «Quando la casa è pulita, anche il cuore è pulito.» Io non capisco bene queste parole. Ma quando entro in casa di mia nonna — quando l'aria è fresca, il pavimento brilla, e c'è l'odore di limone — capisco un po'.</p>
+          </div>
+          <aside class="gloss-panel">
+            <h5>note</h5>
+            <p>A2 — <em>brilla, odore, cuore</em> are A2 essentials. The point is the reflective tone, not new vocabulary.</p>
+          </aside>
+        </div>
+      </article>
+
+      <!-- Story 4: Serious B1 (Saba-adapted) -->
+      <article class="story-block level-b1">
+        <div class="meta">
+          <span class="level">B1</span><span class="tone">serio · ispirato a Saba</span>
+          <h4 style="margin: 0;">La casa</h4>
+        </div>
+        <div class="story-grid">
+          <div class="it-text">
+            <p>La casa <span class="g">posa</span> <span class="g">tacita</span> sulla collina. Le finestre guardano il mare. Dentro, qualcuno spazza il pavimento, qualcuno apre le finestre. È un gesto piccolo, ma <span class="g">pensoso</span>. Pulire una casa è un modo di abitarla — di dire: «Io vivo qui. Questa è la mia <span class="g">soglia</span>.» Saba scriveva di una casa simile, la casa della sua <span class="g">nutrice</span>, che <span class="g">posava tacita</span> sulla collina, amica delle <span class="g">caprette</span>. Le pulizie sono, alla fine, una forma di <span class="g">memoria</span>.</p>
+          </div>
+          <aside class="gloss-panel">
+            <h5>glosse</h5>
+            <dl>
+              <dt>posa</dt><dd>rests, lies (poetic)</dd>
+              <dt>tacita</dt><dd>silent, tacit</dd>
+              <dt>pensoso</dt><dd>thoughtful</dd>
+              <dt>soglia</dt><dd>threshold</dd>
+              <dt>nutrice</dt><dd>wet-nurse</dd>
+              <dt>caprette</dt><dd>little goats</dd>
+              <dt>memoria</dt><dd>memory</dd>
+            </dl>
+          </aside>
+        </div>
+        <p class="source">Ispirato a Umberto Saba, <em>La casa della mia nutrice</em> (1901).</p>
+      </article>
+
+      <!-- Story 5: Immersion A2 -->
+      <article class="story-block level-a2">
+        <div class="meta">
+          <span class="level">A2</span><span class="tone">immersione · originale</span>
+          <h4 style="margin: 0;">Sabato mattina a Roma</h4>
+        </div>
+        <div class="story-grid">
+          <div class="it-text">
+            <p>Sabato, ore nove. Alice apre la finestra. L'aria di Roma entra: caffè, motorini, un cane che abbaia. «Cominciamo,» dice Marco. Lui spolvera i libri. Alice spazza il corridoio. Tu lavi i piatti della cena di ieri. Dopo un'ora, la casa è quasi pulita. Marco fa il caffè. Alice stende il bucato sul balcone. Tu butti la spazzatura. Sono le dieci e mezza. Adesso, finalmente — colazione.</p>
+          </div>
+          <aside class="gloss-panel">
+            <h5>note</h5>
+            <p>A2 — every verb is from this lesson. <em>motorini, abbaia, ieri, colazione</em> are common A1/A2.</p>
+          </aside>
+        </div>
+      </article>
+
+      <!-- Story 6: Immersion B1 (Calvino) -->
+      <article class="story-block level-b1">
+        <div class="meta">
+          <span class="level">B1</span><span class="tone">immersione · da Calvino</span>
+          <h4 style="margin: 0;">Il rito della pattumiera</h4>
+        </div>
+        <div class="story-grid">
+          <div class="it-text">
+            <p>Delle <span class="g">faccende domestiche</span>, l'unica che io <span class="g">disimpegno</span> con qualche competenza e soddisfazione è quella di buttare l'<span class="g">immondizia</span>. L'operazione si divide in varie fasi: <span class="g">prelievo</span> della <span class="g">pattumiera</span> di cucina, suo svuotamento nel recipiente più grande che sta nel garage, poi trasporto del detto recipiente sul <span class="g">marciapiede</span> fuori della porta di casa. Il portar fuori la spazzatura va dunque interpretato come un <span class="g">rito</span> — un piccolo gesto quotidiano che mi <span class="g">collega</span> alla città, alla strada, agli altri.</p>
+          </div>
+          <aside class="gloss-panel">
+            <h5>glosse</h5>
+            <dl>
+              <dt>faccende domestiche</dt><dd>housework, chores</dd>
+              <dt>disimpegnare</dt><dd>to discharge, perform</dd>
+              <dt>immondizia</dt><dd>trash (synonym: spazzatura)</dd>
+              <dt>prelievo</dt><dd>collection, pick-up</dd>
+              <dt>pattumiera</dt><dd>dustbin (kitchen)</dd>
+              <dt>marciapiede</dt><dd>sidewalk</dd>
+              <dt>rito</dt><dd>ritual</dd>
+              <dt>collegare</dt><dd>to connect, link</dd>
+            </dl>
+          </aside>
+        </div>
+        <p class="source">Adattato da Italo Calvino, <em>La poubelle agréée</em> (Einaudi, 1977). Calvino trasforma la routine in filosofia.</p>
+      </article>
+    </section>
+
+    <!-- ========================= 4-funny. JOKES SIDEBAR ========================= -->
+    <section class="lesson-section" id="s4-funny">
+      <h2 class="section-h"><span class="num">4·</span>Pausa umoristica — due barzellette</h2>
+      <div class="jokes-sidebar">
+
+        <div class="joke">
+          <div class="joke-title">Barzelletta 1 · il doppio senso</div>
+          <p><em>«Mamma, ho finito i compiti. Adesso posso andare a <strong>scopare</strong>?»</em></p>
+          <p>La mamma, scioccata: <em>«Ma cosa dici?! Con chi?!»</em></p>
+          <p>Il bambino: <em>«Ma come, con chi? Con la <strong>scopa</strong>! Devo pulire la mia camera!»</em></p>
+          <div class="callout false-friend" style="margin-top: var(--chiron-space-3);">
+            <span class="tag">Why it's funny</span>
+            <em>scopare</em> means "to sweep" but is also vulgar slang for sex. The child uses the literal meaning. The mother hears the slang.
+          </div>
+        </div>
+
+        <div class="joke">
+          <div class="joke-title">Barzelletta 2 · il marito pigro</div>
+          <p>Un uomo dice a un amico: <em>«Mia moglie è fissata con la pulizia. Lava, spolvera, riordina tutto il giorno. Ieri sono tornato a casa e non ho trovato neanche il telecomando!»</em></p>
+          <p>L'amico: <em>«Perché, l'aveva messo in ordine?»</em></p>
+          <p>L'uomo: <em>«No — l'aveva lavato in lavatrice insieme ai miei pantaloni!»</em></p>
+        </div>
+
+      </div>
+
+      <div class="callout cultural-note">
+        <span class="tag">Cultural note · "essere uno specchio"</span>
+        When an Italian house is shiningly clean, you say <em>«Questa casa è uno specchio!»</em> — "This house is a mirror!" Compliment to bring next time you visit.
+      </div>
+      <div class="callout cultural-note">
+        <span class="tag">Regional idioms</span>
+        <strong>Milanese:</strong> <em>«Dà una netada a la cà»</em> — give the house a cleaning. <strong>Napoletano:</strong> <em>«Fà 'o strascino»</em> — drag the wet rag (mop the floor). <strong>National:</strong> <em>«Fare piazza pulita»</em> = to clean house (figurative — get rid of everything/everyone).
+      </div>
+    </section>
+
+    <!-- ========================= 5. MATCH MADNESS ========================= -->
+    <section class="lesson-section" id="s5">
+      <h2 class="section-h"><span class="num">5</span>Match Madness — automatismo</h2>
+
+          <!-- ========================= Match Madness (multi-set) ========================= -->
+          <div class="mm-section" data-mm-lesson="italian-cleaning-verbs-2026-05-12">
+            <p class="mm-intro">Twelve sets of timed retrieval practice. Each set drills one slice — vocab, gender, prepositions, collocations, six tenses. The final SUPER-SET interleaves everything. Per-pair latency is logged in your browser; weak pairs come back next session.</p>
+
+            <div class="mm-sets-grid">
+              
+            <article class="mm-set-card" data-set-id="set-1-verbs" data-mode="vocab-pair">
+              <div class="mm-set-card-header">
+                <span class="mm-set-num">Set 1</span>
+                <span class="mm-set-mode">vocab-pair</span>
+              </div>
+              <h3 class="mm-set-title">Verbi ↔ English</h3>
+              <p class="mm-set-subtitle">Core 14 verbs of cleaning</p>
+              <div class="mm-set-meta">
+                <span><strong>3</strong> rounds</span>
+                <span><strong>14</strong> pairs</span>
+              </div>
+              <div class="mm-set-mastery" data-mastery-for="set-1-verbs">
+                <span class="mm-mastery-label">No history yet</span>
+              </div>
+              <button class="mm-set-play primary" data-play-set="set-1-verbs">Play set</button>
+            </article>
+
+            <article class="mm-set-card" data-set-id="set-2-nouns" data-mode="vocab-pair">
+              <div class="mm-set-card-header">
+                <span class="mm-set-num">Set 2</span>
+                <span class="mm-set-mode">vocab-pair</span>
+              </div>
+              <h3 class="mm-set-title">Nomi ↔ English</h3>
+              <p class="mm-set-subtitle">Household nouns</p>
+              <div class="mm-set-meta">
+                <span><strong>5</strong> rounds</span>
+                <span><strong>11</strong> pairs</span>
+              </div>
+              <div class="mm-set-mastery" data-mastery-for="set-2-nouns">
+                <span class="mm-mastery-label">No history yet</span>
+              </div>
+              <button class="mm-set-play primary" data-play-set="set-2-nouns">Play set</button>
+            </article>
+
+            <article class="mm-set-card" data-set-id="set-3-gender" data-mode="gender-pair">
+              <div class="mm-set-card-header">
+                <span class="mm-set-num">Set 3</span>
+                <span class="mm-set-mode">gender-pair</span>
+              </div>
+              <h3 class="mm-set-title">Genere — la / lo / il / l'</h3>
+              <p class="mm-set-subtitle">Match each noun with its correct article</p>
+              <div class="mm-set-meta">
+                <span><strong>5</strong> rounds</span>
+                <span><strong>11</strong> pairs</span>
+              </div>
+              <div class="mm-set-mastery" data-mastery-for="set-3-gender">
+                <span class="mm-mastery-label">No history yet</span>
+              </div>
+              <button class="mm-set-play primary" data-play-set="set-3-gender">Play set</button>
+            </article>
+
+            <article class="mm-set-card" data-set-id="set-4-preps" data-mode="prep-pair">
+              <div class="mm-set-card-header">
+                <span class="mm-set-num">Set 4</span>
+                <span class="mm-set-mode">prep-pair</span>
+              </div>
+              <h3 class="mm-set-title">Preposizioni in contesto</h3>
+              <p class="mm-set-subtitle">Cleaning-context preposition phrases</p>
+              <div class="mm-set-meta">
+                <span><strong>5</strong> rounds</span>
+                <span><strong>10</strong> pairs</span>
+              </div>
+              <div class="mm-set-mastery" data-mastery-for="set-4-preps">
+                <span class="mm-mastery-label">No history yet</span>
+              </div>
+              <button class="mm-set-play primary" data-play-set="set-4-preps">Play set</button>
+            </article>
+
+            <article class="mm-set-card" data-set-id="set-5-collocations" data-mode="collocation">
+              <div class="mm-set-card-header">
+                <span class="mm-set-num">Set 5</span>
+                <span class="mm-set-mode">collocation</span>
+              </div>
+              <h3 class="mm-set-title">Collocazioni — verbo + oggetto</h3>
+              <p class="mm-set-subtitle">Which object goes with which verb</p>
+              <div class="mm-set-meta">
+                <span><strong>5</strong> rounds</span>
+                <span><strong>10</strong> pairs</span>
+              </div>
+              <div class="mm-set-mastery" data-mastery-for="set-5-collocations">
+                <span class="mm-mastery-label">No history yet</span>
+              </div>
+              <button class="mm-set-play primary" data-play-set="set-5-collocations">Play set</button>
+            </article>
+
+            <article class="mm-set-card" data-set-id="set-6-presente" data-mode="conjugation">
+              <div class="mm-set-card-header">
+                <span class="mm-set-num">Set 6</span>
+                <span class="mm-set-mode">conjugation</span>
+              </div>
+              <h3 class="mm-set-title">Presente — io</h3>
+              <p class="mm-set-subtitle">Today, right now — io spazzo, io pulisco, io lavo</p>
+              <div class="mm-set-meta">
+                <span><strong>5</strong> rounds</span>
+                <span><strong>14</strong> pairs</span>
+              </div>
+              <div class="mm-set-mastery" data-mastery-for="set-6-presente">
+                <span class="mm-mastery-label">No history yet</span>
+              </div>
+              <button class="mm-set-play primary" data-play-set="set-6-presente">Play set</button>
+            </article>
+
+            <article class="mm-set-card" data-set-id="set-7-passato-prossimo" data-mode="conjugation">
+              <div class="mm-set-card-header">
+                <span class="mm-set-num">Set 7</span>
+                <span class="mm-set-mode">conjugation</span>
+              </div>
+              <h3 class="mm-set-title">Passato prossimo — io</h3>
+              <p class="mm-set-subtitle">Compound past — io ho spazzato, io ho pulito</p>
+              <div class="mm-set-meta">
+                <span><strong>5</strong> rounds</span>
+                <span><strong>14</strong> pairs</span>
+              </div>
+              <div class="mm-set-mastery" data-mastery-for="set-7-passato-prossimo">
+                <span class="mm-mastery-label">No history yet</span>
+              </div>
+              <button class="mm-set-play primary" data-play-set="set-7-passato-prossimo">Play set</button>
+            </article>
+
+            <article class="mm-set-card" data-set-id="set-8-imperfetto" data-mode="conjugation">
+              <div class="mm-set-card-header">
+                <span class="mm-set-num">Set 8</span>
+                <span class="mm-set-mode">conjugation</span>
+              </div>
+              <h3 class="mm-set-title">Imperfetto — io</h3>
+              <p class="mm-set-subtitle">Habitual / continuous past — io spazzavo, io pulivo</p>
+              <div class="mm-set-meta">
+                <span><strong>5</strong> rounds</span>
+                <span><strong>14</strong> pairs</span>
+              </div>
+              <div class="mm-set-mastery" data-mastery-for="set-8-imperfetto">
+                <span class="mm-mastery-label">No history yet</span>
+              </div>
+              <button class="mm-set-play primary" data-play-set="set-8-imperfetto">Play set</button>
+            </article>
+
+            <article class="mm-set-card" data-set-id="set-9-futuro-semplice" data-mode="conjugation">
+              <div class="mm-set-card-header">
+                <span class="mm-set-num">Set 9</span>
+                <span class="mm-set-mode">conjugation</span>
+              </div>
+              <h3 class="mm-set-title">Futuro semplice — io</h3>
+              <p class="mm-set-subtitle">Simple future — io spazzerò, io pulirò</p>
+              <div class="mm-set-meta">
+                <span><strong>5</strong> rounds</span>
+                <span><strong>14</strong> pairs</span>
+              </div>
+              <div class="mm-set-mastery" data-mastery-for="set-9-futuro-semplice">
+                <span class="mm-mastery-label">No history yet</span>
+              </div>
+              <button class="mm-set-play primary" data-play-set="set-9-futuro-semplice">Play set</button>
+            </article>
+
+            <article class="mm-set-card" data-set-id="set-10-congiuntivo-presente" data-mode="conjugation">
+              <div class="mm-set-card-header">
+                <span class="mm-set-num">Set 10</span>
+                <span class="mm-set-mode">conjugation</span>
+              </div>
+              <h3 class="mm-set-title">Congiuntivo presente — che io</h3>
+              <p class="mm-set-subtitle">Subjunctive — che io spazzi, che io pulisca</p>
+              <div class="mm-set-meta">
+                <span><strong>5</strong> rounds</span>
+                <span><strong>14</strong> pairs</span>
+              </div>
+              <div class="mm-set-mastery" data-mastery-for="set-10-congiuntivo-presente">
+                <span class="mm-mastery-label">No history yet</span>
+              </div>
+              <button class="mm-set-play primary" data-play-set="set-10-congiuntivo-presente">Play set</button>
+            </article>
+
+            <article class="mm-set-card" data-set-id="set-11-passato-remoto" data-mode="conjugation">
+              <div class="mm-set-card-header">
+                <span class="mm-set-num">Set 11</span>
+                <span class="mm-set-mode">conjugation</span>
+              </div>
+              <h3 class="mm-set-title">Passato remoto — io</h3>
+              <p class="mm-set-subtitle">Literary past — io spazzai (Calvino, Ginzburg)</p>
+              <div class="mm-set-meta">
+                <span><strong>5</strong> rounds</span>
+                <span><strong>14</strong> pairs</span>
+              </div>
+              <div class="mm-set-mastery" data-mastery-for="set-11-passato-remoto">
+                <span class="mm-mastery-label">No history yet</span>
+              </div>
+              <button class="mm-set-play primary" data-play-set="set-11-passato-remoto">Play set</button>
+            </article>
+
+            <article class="mm-set-card" data-set-id="set-super" data-mode="mixed">
+              <div class="mm-set-card-header">
+                <span class="mm-set-num">Set 12</span>
+                <span class="mm-set-mode">mixed</span>
+              </div>
+              <h3 class="mm-set-title">🔥 SUPER-SET — Tutto insieme</h3>
+              <p class="mm-set-subtitle">Up to 10 rounds, all content mixed. The retrieval anchor.</p>
+              <div class="mm-set-meta">
+                <span><strong>10</strong> rounds</span>
+                <span><strong>140</strong> pairs</span>
+              </div>
+              <div class="mm-set-mastery" data-mastery-for="set-super">
+                <span class="mm-mastery-label">No history yet</span>
+              </div>
+              <button class="mm-set-play primary" data-play-set="set-super">Play set</button>
+            </article>
+            </div>
+
+            <!-- The play surface is overlaid when a set is selected -->
+            <div class="mm-play-surface" id="mm-play-surface" hidden>
+              <button class="mm-close" id="mm-close" aria-label="Close Match Madness">×</button>
+              <div class="mm-container" id="mm-game" data-active="false">
+                <div class="mm-header">
+                  <div class="mm-set-label" id="mm-set-label">—</div>
+                  <div class="mm-timer" id="mm-timer">1:45</div>
+                  <div class="mm-stats">
+                    <span class="stat"><strong id="mm-correct">0</strong>correct</span>
+                    <span class="stat"><strong id="mm-wrong">0</strong>wrong</span>
+                    <span class="stat mm-combo" id="mm-combo">×0</span>
+                  </div>
+                </div>
+                <div class="mm-round-label" id="mm-round">Round — / —</div>
+                <div class="mm-grid" id="mm-grid"></div>
+                <div class="mm-keyboard-hint">Keyboard: <code>1–5</code> left · <code>Q W E R T</code> right · <code>Space</code> start/pause</div>
+                <div class="mm-controls">
+                  <button class="primary" id="mm-start">Start</button>
+                  <button id="mm-reset">Reset</button>
+                  <button id="mm-accessibility">Accessibility mode (timer off)</button>
+                </div>
+                <div class="mm-result" id="mm-result" hidden>
+                  <h4 id="mm-result-title">Round complete!</h4>
+                  <div id="mm-result-body"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+    </section>
+    <!-- ========================= 6. EXTENDED DIALOGUE ========================= -->
+    <section class="lesson-section" id="s6">
+      <h2 class="section-h"><span class="num">6</span>Dialogo lungo — sabato a casa di Marco</h2>
+      <p>Three voices, twelve turns. Comprehension questions at the end.</p>
+
+      <div class="vocab-arc">
+        <div class="turn marco"><span class="speaker">Marco</span><div class="what"><span class="it">Buongiorno! Allora, oggi puliamo. Alice, tu cosa vuoi fare?</span><span class="gloss">Good morning! So, today we clean. Alice, what do you want to do?</span></div></div>
+        <div class="turn alice"><span class="speaker">Alice</span><div class="what"><span class="it">Io preferisco lavare i piatti. Non mi piace spazzare.</span><span class="gloss">I prefer to wash the dishes. I don't like sweeping.</span></div></div>
+        <div class="turn you"><span class="speaker">Tu</span><div class="what"><span class="it">Allora io spazzo e Marco spolvera. Va bene?</span><span class="gloss">Then I'll sweep and Marco will dust. OK?</span></div></div>
+        <div class="turn marco"><span class="speaker">Marco</span><div class="what"><span class="it">Perfetto. Ma prima — apriamo le finestre. È importante cambiare l'aria.</span><span class="gloss">Perfect. But first — let's open the windows. It's important to change the air.</span></div></div>
+        <div class="turn alice"><span class="speaker">Alice</span><div class="what"><span class="it">Marco, il detersivo è finito! Cosa uso per i piatti?</span><span class="gloss">Marco, the detergent is finished! What do I use for the dishes?</span></div></div>
+        <div class="turn marco"><span class="speaker">Marco</span><div class="what"><span class="it">Sotto il lavandino c'è un'altra bottiglia. Lo sgrassatore va bene per i piatti grassi.</span><span class="gloss">Under the sink there's another bottle. Degreaser is good for greasy dishes.</span></div></div>
+        <div class="turn you"><span class="speaker">Tu</span><div class="what"><span class="it">Marco, dove butto la plastica?</span><span class="gloss">Marco, where do I throw the plastic?</span></div></div>
+        <div class="turn marco"><span class="speaker">Marco</span><div class="what"><span class="it">Il sacco giallo, sul balcone. La raccolta passa il martedì.</span><span class="gloss">The yellow bag, on the balcony. Collection comes on Tuesday.</span></div></div>
+        <div class="turn alice"><span class="speaker">Alice</span><div class="what"><span class="it">Ho finito i piatti! Adesso stendiamo il bucato?</span><span class="gloss">I've finished the dishes! Now shall we hang the laundry?</span></div></div>
+        <div class="turn you"><span class="speaker">Tu</span><div class="what"><span class="it">Sì — il bucato è ancora in lavatrice, lo prendo io.</span><span class="gloss">Yes — the laundry is still in the washer, I'll get it.</span></div></div>
+        <div class="turn marco"><span class="speaker">Marco</span><div class="what"><span class="it">Bravi tutti e due! Ora la casa è uno specchio. Caffè?</span><span class="gloss">Well done both of you! Now the house is a mirror. Coffee?</span></div></div>
+        <div class="turn alice"><span class="speaker">Alice</span><div class="what"><span class="it">Sì, grazie. Tanto zucchero!</span><span class="gloss">Yes, thanks. Lots of sugar!</span></div></div>
+      </div>
+
+      <h3 class="subsection-h">Domande di comprensione</h3>
+      <div class="cloze-line" data-answer="lavare i piatti">
+        1. Cosa preferisce fare Alice? <input type="text" /> <span class="hint">(2-3 parole)</span>
+      </div>
+      <div class="cloze-line" data-answer="lo sgrassatore">
+        2. Cosa usa Alice quando finisce il detersivo? <input type="text" /> <span class="hint">(con articolo)</span>
+      </div>
+      <div class="cloze-line" data-answer="martedì">
+        3. Che giorno passa la raccolta della plastica? <input type="text" />
+      </div>
+    </section>
+
+    <!-- ========================= 7. SR DRAWER ========================= -->
+    <section class="lesson-section" id="s7">
+      <h2 class="section-h"><span class="num">7</span>Carte SR — ripasso spaziato</h2>
+      <p>Tap to flip. In a full Chiron run, each flip schedules a re-show via SM-2 in <code>.chiron-state.db</code>. For today's test, flipping demonstrates the front/back contract.</p>
+      <div class="sr-deck">
+
+          <div class="sr-card" data-card-type="verb">
+            <div class="front">spazzare</div>
+            <div class="back">
+              <div class="sr-back-head">
+                <strong class="sr-back-gloss">to sweep</strong>
+                <span class="sr-back-tag">are</span>
+              </div>
+              <table class="sr-conj-table">
+                <tbody>
+                <tr>
+                  <th class="sr-tense-label"><span class="sr-tense-it">presente</span><span class="sr-tense-aspect">now</span></th>
+                  <td class="sr-form">spazzo</td>
+                  <td class="sr-tense-gloss">I sweep</td>
+                </tr>
+                <tr>
+                  <th class="sr-tense-label"><span class="sr-tense-it">pass. pross.</span><span class="sr-tense-aspect">did</span></th>
+                  <td class="sr-form">ho spazzato</td>
+                  <td class="sr-tense-gloss">I swept</td>
+                </tr>
+                <tr>
+                  <th class="sr-tense-label"><span class="sr-tense-it">imperfetto</span><span class="sr-tense-aspect">was -ing</span></th>
+                  <td class="sr-form">spazzavo</td>
+                  <td class="sr-tense-gloss">I was sweeping</td>
+                </tr>
+                <tr>
+                  <th class="sr-tense-label"><span class="sr-tense-it">futuro</span><span class="sr-tense-aspect">will</span></th>
+                  <td class="sr-form">spazzerò</td>
+                  <td class="sr-tense-gloss">I will sweep</td>
+                </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="sr-card" data-card-type="verb">
+            <div class="front">spolverare</div>
+            <div class="back">
+              <div class="sr-back-head">
+                <strong class="sr-back-gloss">to dust</strong>
+                <span class="sr-back-tag">are</span>
+              </div>
+              <table class="sr-conj-table">
+                <tbody>
+                <tr>
+                  <th class="sr-tense-label"><span class="sr-tense-it">presente</span><span class="sr-tense-aspect">now</span></th>
+                  <td class="sr-form">spolvero</td>
+                  <td class="sr-tense-gloss">I dust</td>
+                </tr>
+                <tr>
+                  <th class="sr-tense-label"><span class="sr-tense-it">pass. pross.</span><span class="sr-tense-aspect">did</span></th>
+                  <td class="sr-form">ho spolverato</td>
+                  <td class="sr-tense-gloss">I dusted</td>
+                </tr>
+                <tr>
+                  <th class="sr-tense-label"><span class="sr-tense-it">imperfetto</span><span class="sr-tense-aspect">was -ing</span></th>
+                  <td class="sr-form">spolveravo</td>
+                  <td class="sr-tense-gloss">I was dusting</td>
+                </tr>
+                <tr>
+                  <th class="sr-tense-label"><span class="sr-tense-it">futuro</span><span class="sr-tense-aspect">will</span></th>
+                  <td class="sr-form">spolvererò</td>
+                  <td class="sr-tense-gloss">I will dust</td>
+                </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="sr-card" data-card-type="verb">
+            <div class="front">pulire</div>
+            <div class="back">
+              <div class="sr-back-head">
+                <strong class="sr-back-gloss">to clean</strong>
+                <span class="sr-back-tag">isco-ire</span>
+              </div>
+              <table class="sr-conj-table">
+                <tbody>
+                <tr>
+                  <th class="sr-tense-label"><span class="sr-tense-it">presente</span><span class="sr-tense-aspect">now</span></th>
+                  <td class="sr-form">pulisco</td>
+                  <td class="sr-tense-gloss">I clean</td>
+                </tr>
+                <tr>
+                  <th class="sr-tense-label"><span class="sr-tense-it">pass. pross.</span><span class="sr-tense-aspect">did</span></th>
+                  <td class="sr-form">ho pulito</td>
+                  <td class="sr-tense-gloss">I cleaned</td>
+                </tr>
+                <tr>
+                  <th class="sr-tense-label"><span class="sr-tense-it">imperfetto</span><span class="sr-tense-aspect">was -ing</span></th>
+                  <td class="sr-form">pulivo</td>
+                  <td class="sr-tense-gloss">I was cleaning</td>
+                </tr>
+                <tr>
+                  <th class="sr-tense-label"><span class="sr-tense-it">futuro</span><span class="sr-tense-aspect">will</span></th>
+                  <td class="sr-form">pulirò</td>
+                  <td class="sr-tense-gloss">I will clean</td>
+                </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="sr-card" data-card-type="verb">
+            <div class="front">strofinare</div>
+            <div class="back">
+              <div class="sr-back-head">
+                <strong class="sr-back-gloss">to scrub</strong>
+                <span class="sr-back-tag">are</span>
+              </div>
+              <table class="sr-conj-table">
+                <tbody>
+                <tr>
+                  <th class="sr-tense-label"><span class="sr-tense-it">presente</span><span class="sr-tense-aspect">now</span></th>
+                  <td class="sr-form">strofino</td>
+                  <td class="sr-tense-gloss">I scrub</td>
+                </tr>
+                <tr>
+                  <th class="sr-tense-label"><span class="sr-tense-it">pass. pross.</span><span class="sr-tense-aspect">did</span></th>
+                  <td class="sr-form">ho strofinato</td>
+                  <td class="sr-tense-gloss">I scrubed</td>
+                </tr>
+                <tr>
+                  <th class="sr-tense-label"><span class="sr-tense-it">imperfetto</span><span class="sr-tense-aspect">was -ing</span></th>
+                  <td class="sr-form">strofinavo</td>
+                  <td class="sr-tense-gloss">I was scrubing</td>
+                </tr>
+                <tr>
+                  <th class="sr-tense-label"><span class="sr-tense-it">futuro</span><span class="sr-tense-aspect">will</span></th>
+                  <td class="sr-form">strofinerò</td>
+                  <td class="sr-tense-gloss">I will scrub</td>
+                </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="sr-card" data-card-type="verb">
+            <div class="front">lavare</div>
+            <div class="back">
+              <div class="sr-back-head">
+                <strong class="sr-back-gloss">to wash</strong>
+                <span class="sr-back-tag">are</span>
+              </div>
+              <table class="sr-conj-table">
+                <tbody>
+                <tr>
+                  <th class="sr-tense-label"><span class="sr-tense-it">presente</span><span class="sr-tense-aspect">now</span></th>
+                  <td class="sr-form">lavo</td>
+                  <td class="sr-tense-gloss">I wash</td>
+                </tr>
+                <tr>
+                  <th class="sr-tense-label"><span class="sr-tense-it">pass. pross.</span><span class="sr-tense-aspect">did</span></th>
+                  <td class="sr-form">ho lavato</td>
+                  <td class="sr-tense-gloss">I washed</td>
+                </tr>
+                <tr>
+                  <th class="sr-tense-label"><span class="sr-tense-it">imperfetto</span><span class="sr-tense-aspect">was -ing</span></th>
+                  <td class="sr-form">lavavo</td>
+                  <td class="sr-tense-gloss">I was washing</td>
+                </tr>
+                <tr>
+                  <th class="sr-tense-label"><span class="sr-tense-it">futuro</span><span class="sr-tense-aspect">will</span></th>
+                  <td class="sr-form">laverò</td>
+                  <td class="sr-tense-gloss">I will wash</td>
+                </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="sr-card" data-card-type="verb">
+            <div class="front">sciacquare</div>
+            <div class="back">
+              <div class="sr-back-head">
+                <strong class="sr-back-gloss">to rinse</strong>
+                <span class="sr-back-tag">are</span>
+              </div>
+              <table class="sr-conj-table">
+                <tbody>
+                <tr>
+                  <th class="sr-tense-label"><span class="sr-tense-it">presente</span><span class="sr-tense-aspect">now</span></th>
+                  <td class="sr-form">sciacquo</td>
+                  <td class="sr-tense-gloss">I rinse</td>
+                </tr>
+                <tr>
+                  <th class="sr-tense-label"><span class="sr-tense-it">pass. pross.</span><span class="sr-tense-aspect">did</span></th>
+                  <td class="sr-form">ho sciacquato</td>
+                  <td class="sr-tense-gloss">I rinsed</td>
+                </tr>
+                <tr>
+                  <th class="sr-tense-label"><span class="sr-tense-it">imperfetto</span><span class="sr-tense-aspect">was -ing</span></th>
+                  <td class="sr-form">sciacquavo</td>
+                  <td class="sr-tense-gloss">I was rinsing</td>
+                </tr>
+                <tr>
+                  <th class="sr-tense-label"><span class="sr-tense-it">futuro</span><span class="sr-tense-aspect">will</span></th>
+                  <td class="sr-form">sciacquerò</td>
+                  <td class="sr-tense-gloss">I will rinse</td>
+                </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="sr-card" data-card-type="verb">
+            <div class="front">asciugare</div>
+            <div class="back">
+              <div class="sr-back-head">
+                <strong class="sr-back-gloss">to dry</strong>
+                <span class="sr-back-tag">are</span>
+              </div>
+              <table class="sr-conj-table">
+                <tbody>
+                <tr>
+                  <th class="sr-tense-label"><span class="sr-tense-it">presente</span><span class="sr-tense-aspect">now</span></th>
+                  <td class="sr-form">asciugo</td>
+                  <td class="sr-tense-gloss">I dry</td>
+                </tr>
+                <tr>
+                  <th class="sr-tense-label"><span class="sr-tense-it">pass. pross.</span><span class="sr-tense-aspect">did</span></th>
+                  <td class="sr-form">ho asciugato</td>
+                  <td class="sr-tense-gloss">I dried</td>
+                </tr>
+                <tr>
+                  <th class="sr-tense-label"><span class="sr-tense-it">imperfetto</span><span class="sr-tense-aspect">was -ing</span></th>
+                  <td class="sr-form">asciugavo</td>
+                  <td class="sr-tense-gloss">I was drying</td>
+                </tr>
+                <tr>
+                  <th class="sr-tense-label"><span class="sr-tense-it">futuro</span><span class="sr-tense-aspect">will</span></th>
+                  <td class="sr-form">asciugherò</td>
+                  <td class="sr-tense-gloss">I will dry</td>
+                </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="sr-card" data-card-type="verb">
+            <div class="front">stendere</div>
+            <div class="back">
+              <div class="sr-back-head">
+                <strong class="sr-back-gloss">to hang out</strong>
+                <span class="sr-back-tag">ere</span>
+              </div>
+              <table class="sr-conj-table">
+                <tbody>
+                <tr>
+                  <th class="sr-tense-label"><span class="sr-tense-it">presente</span><span class="sr-tense-aspect">now</span></th>
+                  <td class="sr-form">stendo</td>
+                  <td class="sr-tense-gloss">I hang out</td>
+                </tr>
+                <tr>
+                  <th class="sr-tense-label"><span class="sr-tense-it">pass. pross.</span><span class="sr-tense-aspect">did</span></th>
+                  <td class="sr-form">ho steso</td>
+                  <td class="sr-tense-gloss">I hung out</td>
+                </tr>
+                <tr>
+                  <th class="sr-tense-label"><span class="sr-tense-it">imperfetto</span><span class="sr-tense-aspect">was -ing</span></th>
+                  <td class="sr-form">stendevo</td>
+                  <td class="sr-tense-gloss">I was hang outing</td>
+                </tr>
+                <tr>
+                  <th class="sr-tense-label"><span class="sr-tense-it">futuro</span><span class="sr-tense-aspect">will</span></th>
+                  <td class="sr-form">stenderò</td>
+                  <td class="sr-tense-gloss">I will hang out</td>
+                </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="sr-card" data-card-type="verb">
+            <div class="front">piegare</div>
+            <div class="back">
+              <div class="sr-back-head">
+                <strong class="sr-back-gloss">to fold</strong>
+                <span class="sr-back-tag">are</span>
+              </div>
+              <table class="sr-conj-table">
+                <tbody>
+                <tr>
+                  <th class="sr-tense-label"><span class="sr-tense-it">presente</span><span class="sr-tense-aspect">now</span></th>
+                  <td class="sr-form">piego</td>
+                  <td class="sr-tense-gloss">I fold</td>
+                </tr>
+                <tr>
+                  <th class="sr-tense-label"><span class="sr-tense-it">pass. pross.</span><span class="sr-tense-aspect">did</span></th>
+                  <td class="sr-form">ho piegato</td>
+                  <td class="sr-tense-gloss">I folded</td>
+                </tr>
+                <tr>
+                  <th class="sr-tense-label"><span class="sr-tense-it">imperfetto</span><span class="sr-tense-aspect">was -ing</span></th>
+                  <td class="sr-form">piegavo</td>
+                  <td class="sr-tense-gloss">I was folding</td>
+                </tr>
+                <tr>
+                  <th class="sr-tense-label"><span class="sr-tense-it">futuro</span><span class="sr-tense-aspect">will</span></th>
+                  <td class="sr-form">piegherò</td>
+                  <td class="sr-tense-gloss">I will fold</td>
+                </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="sr-card" data-card-type="verb">
+            <div class="front">ammucchiare</div>
+            <div class="back">
+              <div class="sr-back-head">
+                <strong class="sr-back-gloss">to pile up</strong>
+                <span class="sr-back-tag">are</span>
+              </div>
+              <table class="sr-conj-table">
+                <tbody>
+                <tr>
+                  <th class="sr-tense-label"><span class="sr-tense-it">presente</span><span class="sr-tense-aspect">now</span></th>
+                  <td class="sr-form">ammucchio</td>
+                  <td class="sr-tense-gloss">I pile up</td>
+                </tr>
+                <tr>
+                  <th class="sr-tense-label"><span class="sr-tense-it">pass. pross.</span><span class="sr-tense-aspect">did</span></th>
+                  <td class="sr-form">ho ammucchiato</td>
+                  <td class="sr-tense-gloss">I pile uped</td>
+                </tr>
+                <tr>
+                  <th class="sr-tense-label"><span class="sr-tense-it">imperfetto</span><span class="sr-tense-aspect">was -ing</span></th>
+                  <td class="sr-form">ammucchiavo</td>
+                  <td class="sr-tense-gloss">I was pile uping</td>
+                </tr>
+                <tr>
+                  <th class="sr-tense-label"><span class="sr-tense-it">futuro</span><span class="sr-tense-aspect">will</span></th>
+                  <td class="sr-form">ammucchierò</td>
+                  <td class="sr-tense-gloss">I will pile up</td>
+                </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="sr-card" data-card-type="verb">
+            <div class="front">riordinare</div>
+            <div class="back">
+              <div class="sr-back-head">
+                <strong class="sr-back-gloss">to tidy</strong>
+                <span class="sr-back-tag">are</span>
+              </div>
+              <table class="sr-conj-table">
+                <tbody>
+                <tr>
+                  <th class="sr-tense-label"><span class="sr-tense-it">presente</span><span class="sr-tense-aspect">now</span></th>
+                  <td class="sr-form">riordino</td>
+                  <td class="sr-tense-gloss">I tidy</td>
+                </tr>
+                <tr>
+                  <th class="sr-tense-label"><span class="sr-tense-it">pass. pross.</span><span class="sr-tense-aspect">did</span></th>
+                  <td class="sr-form">ho riordinato</td>
+                  <td class="sr-tense-gloss">I tidied</td>
+                </tr>
+                <tr>
+                  <th class="sr-tense-label"><span class="sr-tense-it">imperfetto</span><span class="sr-tense-aspect">was -ing</span></th>
+                  <td class="sr-form">riordinavo</td>
+                  <td class="sr-tense-gloss">I was tidying</td>
+                </tr>
+                <tr>
+                  <th class="sr-tense-label"><span class="sr-tense-it">futuro</span><span class="sr-tense-aspect">will</span></th>
+                  <td class="sr-form">riordinerò</td>
+                  <td class="sr-tense-gloss">I will tidy</td>
+                </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="sr-card" data-card-type="verb">
+            <div class="front">buttare</div>
+            <div class="back">
+              <div class="sr-back-head">
+                <strong class="sr-back-gloss">to throw out</strong>
+                <span class="sr-back-tag">are</span>
+              </div>
+              <table class="sr-conj-table">
+                <tbody>
+                <tr>
+                  <th class="sr-tense-label"><span class="sr-tense-it">presente</span><span class="sr-tense-aspect">now</span></th>
+                  <td class="sr-form">butto</td>
+                  <td class="sr-tense-gloss">I throw out</td>
+                </tr>
+                <tr>
+                  <th class="sr-tense-label"><span class="sr-tense-it">pass. pross.</span><span class="sr-tense-aspect">did</span></th>
+                  <td class="sr-form">ho buttato</td>
+                  <td class="sr-tense-gloss">I threw out</td>
+                </tr>
+                <tr>
+                  <th class="sr-tense-label"><span class="sr-tense-it">imperfetto</span><span class="sr-tense-aspect">was -ing</span></th>
+                  <td class="sr-form">buttavo</td>
+                  <td class="sr-tense-gloss">I was throw outing</td>
+                </tr>
+                <tr>
+                  <th class="sr-tense-label"><span class="sr-tense-it">futuro</span><span class="sr-tense-aspect">will</span></th>
+                  <td class="sr-form">butterò</td>
+                  <td class="sr-tense-gloss">I will throw out</td>
+                </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="sr-card" data-card-type="verb">
+            <div class="front">mettere</div>
+            <div class="back">
+              <div class="sr-back-head">
+                <strong class="sr-back-gloss">to put</strong>
+                <span class="sr-back-tag">ere</span>
+              </div>
+              <table class="sr-conj-table">
+                <tbody>
+                <tr>
+                  <th class="sr-tense-label"><span class="sr-tense-it">presente</span><span class="sr-tense-aspect">now</span></th>
+                  <td class="sr-form">metto</td>
+                  <td class="sr-tense-gloss">I put</td>
+                </tr>
+                <tr>
+                  <th class="sr-tense-label"><span class="sr-tense-it">pass. pross.</span><span class="sr-tense-aspect">did</span></th>
+                  <td class="sr-form">ho messo</td>
+                  <td class="sr-tense-gloss">I put</td>
+                </tr>
+                <tr>
+                  <th class="sr-tense-label"><span class="sr-tense-it">imperfetto</span><span class="sr-tense-aspect">was -ing</span></th>
+                  <td class="sr-form">mettevo</td>
+                  <td class="sr-tense-gloss">I was puting</td>
+                </tr>
+                <tr>
+                  <th class="sr-tense-label"><span class="sr-tense-it">futuro</span><span class="sr-tense-aspect">will</span></th>
+                  <td class="sr-form">metterò</td>
+                  <td class="sr-tense-gloss">I will put</td>
+                </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="sr-card" data-card-type="verb">
+            <div class="front">passare</div>
+            <div class="back">
+              <div class="sr-back-head">
+                <strong class="sr-back-gloss">to vacuum</strong>
+                <span class="sr-back-tag">are</span>
+              </div>
+              <table class="sr-conj-table">
+                <tbody>
+                <tr>
+                  <th class="sr-tense-label"><span class="sr-tense-it">presente</span><span class="sr-tense-aspect">now</span></th>
+                  <td class="sr-form">passo</td>
+                  <td class="sr-tense-gloss">I vacuum</td>
+                </tr>
+                <tr>
+                  <th class="sr-tense-label"><span class="sr-tense-it">pass. pross.</span><span class="sr-tense-aspect">did</span></th>
+                  <td class="sr-form">ho passato</td>
+                  <td class="sr-tense-gloss">I vacuumed</td>
+                </tr>
+                <tr>
+                  <th class="sr-tense-label"><span class="sr-tense-it">imperfetto</span><span class="sr-tense-aspect">was -ing</span></th>
+                  <td class="sr-form">passavo</td>
+                  <td class="sr-tense-gloss">I was vacuuming</td>
+                </tr>
+                <tr>
+                  <th class="sr-tense-label"><span class="sr-tense-it">futuro</span><span class="sr-tense-aspect">will</span></th>
+                  <td class="sr-form">passerò</td>
+                  <td class="sr-tense-gloss">I will vacuum</td>
+                </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="sr-card" data-card-type="noun">
+            <div class="front">la scopa</div>
+            <div class="back">
+              <div class="sr-back-head">
+                <strong class="sr-back-gloss">broom</strong>
+                <span class="sr-back-tag sr-article">la</span>
+              </div>
+              <p class="sr-back-full"><em class="sr-it">la scopa</em></p>
+              
+              <p class="sr-back-pair">pairs with <em>spazzare</em></p>
+              
+            </div>
+          </div>
+
+          <div class="sr-card" data-card-type="noun">
+            <div class="front">lo straccio</div>
+            <div class="back">
+              <div class="sr-back-head">
+                <strong class="sr-back-gloss">rag / mop cloth</strong>
+                <span class="sr-back-tag sr-article">lo</span>
+              </div>
+              <p class="sr-back-full"><em class="sr-it">lo straccio</em></p>
+              
+              <p class="sr-back-pair">pairs with <em>strofinare</em></p>
+              
+            </div>
+          </div>
+
+          <div class="sr-card" data-card-type="noun">
+            <div class="front">il bucato</div>
+            <div class="back">
+              <div class="sr-back-head">
+                <strong class="sr-back-gloss">laundry</strong>
+                <span class="sr-back-tag sr-article">il</span>
+              </div>
+              <p class="sr-back-full"><em class="sr-it">il bucato</em></p>
+              
+              <p class="sr-back-pair">pairs with <em>lavare / stendere / piegare</em></p>
+              
+            </div>
+          </div>
+
+          <div class="sr-card" data-card-type="noun">
+            <div class="front">la pattumiera</div>
+            <div class="back">
+              <div class="sr-back-head">
+                <strong class="sr-back-gloss">dustbin</strong>
+                <span class="sr-back-tag sr-article">la</span>
+              </div>
+              <p class="sr-back-full"><em class="sr-it">la pattumiera</em></p>
+              
+              
+              <p class="sr-back-note">Calvino — "il rito della pattumiera"</p>
+            </div>
+          </div>
+
+          <div class="sr-card" data-card-type="noun">
+            <div class="front">la candeggina</div>
+            <div class="back">
+              <div class="sr-back-head">
+                <strong class="sr-back-gloss">bleach</strong>
+                <span class="sr-back-tag sr-article">la</span>
+              </div>
+              <p class="sr-back-full"><em class="sr-it">la candeggina</em></p>
+              
+              
+              <p class="sr-back-note">essential Italian household</p>
+            </div>
+          </div>
+
+          <div class="sr-card" data-card-type="noun">
+            <div class="front">lo sgrassatore</div>
+            <div class="back">
+              <div class="sr-back-head">
+                <strong class="sr-back-gloss">degreaser</strong>
+                <span class="sr-back-tag sr-article">lo</span>
+              </div>
+              <p class="sr-back-full"><em class="sr-it">lo sgrassatore</em></p>
+              
+              
+              <p class="sr-back-note">kitchen "holy grail"</p>
+            </div>
+          </div>
+
+          <div class="sr-card" data-card-type="idiom">
+            <div class="front">essere uno specchio</div>
+            <div class="back">
+              <div class="sr-back-head">
+                <strong class="sr-back-gloss">a shiningly clean house</strong>
+                <span class="sr-back-tag">idiom</span>
+              </div>
+              <p class="sr-back-literal">lit. <em>to be a mirror</em></p>
+            </div>
+          </div>
+
+          <div class="sr-card" data-card-type="idiom">
+            <div class="front">fare piazza pulita</div>
+            <div class="back">
+              <div class="sr-back-head">
+                <strong class="sr-back-gloss">to make a clean sweep (figurative)</strong>
+                <span class="sr-back-tag">idiom</span>
+              </div>
+              <p class="sr-back-literal">lit. <em>to make a clean square</em></p>
+            </div>
+          </div>
+      </div>
+    </section>
+
+    <!-- ========================= 8. CLOSING ========================= -->
+    <section class="lesson-section" id="s8">
+      <h2 class="section-h"><span class="num">8</span>Chiusura</h2>
+      <div class="closing">
+        <div class="turn marco">
+          <span class="speaker">Marco</span>
+          <div class="what">
+            <span class="it">Hai imparato i verbi delle pulizie. Hai letto Ginzburg, Calvino, Saba. Hai riso con due barzellette. La prossima lezione: <strong>i verbi della cucina</strong> — tagliare, mescolare, friggere, bollire. <em>A presto!</em></span>
+            <span class="gloss">You learned the cleaning verbs. You read Ginzburg, Calvino, Saba. You laughed at two jokes. Next lesson: the kitchen verbs — to cut, mix, fry, boil. See you soon!</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <footer class="lesson-footer">
+      Chiron · language-lesson-skeleton v1 · 2026-05-12 · linguistic theme by default ·
+      try <code>?theme=midnight</code>, <code>?theme=warm-paper</code>, <code>?theme=clinical</code>, <code>?theme=ocean</code> in the URL
+    </footer>
+
+  </div>
+
+  <!-- ========================= JS ========================= -->
+  <script>
+    /* ===== Theme switcher ===== */
+    document.querySelectorAll('[data-set-theme]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const t = btn.getAttribute('data-set-theme');
+        document.documentElement.setAttribute('data-theme', t);
+        localStorage.setItem('chiron-theme', t);
+        document.querySelectorAll('[data-set-theme]').forEach(b => b.setAttribute('aria-pressed', b === btn ? 'true' : 'false'));
+      });
+    });
+    {
+      const current = document.documentElement.getAttribute('data-theme');
+      document.querySelectorAll('[data-set-theme]').forEach(b => b.setAttribute('aria-pressed', b.getAttribute('data-set-theme') === current ? 'true' : 'false'));
+    }
+
+    /* ===== Nav dot scrollspy + click ===== */
+    const dots = document.querySelectorAll('.nav-dot');
+    dots.forEach(d => d.addEventListener('click', () => {
+      const target = document.getElementById(d.getAttribute('data-target'));
+      if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }));
+    const sections = Array.from(document.querySelectorAll('section.lesson-section'));
+    const io = new IntersectionObserver(entries => {
+      entries.forEach(e => {
+        if (e.isIntersecting) {
+          const id = e.target.id;
+          dots.forEach(d => d.setAttribute('aria-current', d.getAttribute('data-target') === id ? 'true' : 'false'));
+        }
+      });
+    }, { rootMargin: '-40% 0px -55% 0px' });
+    sections.forEach(s => io.observe(s));
+
+    /* ===== Cloze grading ===== */
+    document.querySelectorAll('.cloze-line').forEach(line => {
+      const input = line.querySelector('input');
+      const answer = line.getAttribute('data-answer').toLowerCase().trim();
+      const check = () => {
+        const val = (input.value || '').toLowerCase().trim();
+        if (!val) return;
+        if (val === answer) input.classList.add('correct'), input.classList.remove('incorrect');
+        else input.classList.add('incorrect'), input.classList.remove('correct');
+      };
+      input.addEventListener('blur', check);
+      input.addEventListener('keydown', e => { if (e.key === 'Enter') check(); });
+    });
+
+    /* ===== Flashcard flip ===== */
+    document.querySelectorAll('.sr-card').forEach(card => {
+      card.addEventListener('click', () => card.classList.toggle('flipped'));
+    });
+
+    /* ===== Match Madness (multi-set) ===== */
+  /* ========================= Match Madness (multi-set) ========================= */
+  (function() {
+    const CONFIG = {"lessonId":"italian-cleaning-verbs-2026-05-12","defaults":{"timerSec":105,"wrongLockMs":1500,"accessibilityModeAllowed":true,"keyboardShortcuts":true,"visualSpeedUp":{"pulseFromMs":2000,"pulseToMs":600,"strengthFromOpacity":0.04,"strengthToOpacity":0.18,"refillFromMs":200,"refillToMs":100}},"sets":[{"id":"set-1-verbs","index":1,"title":"Verbi ↔ English","subtitle":"Core 14 verbs of cleaning","mode":"vocab-pair","rounds":3,"pairs":[{"id":"verb:spazzare","left":"to sweep","right":"spazzare"},{"id":"verb:spolverare","left":"to dust","right":"spolverare"},{"id":"verb:pulire","left":"to clean","right":"pulire"},{"id":"verb:strofinare","left":"to scrub","right":"strofinare"},{"id":"verb:lavare","left":"to wash","right":"lavare"},{"id":"verb:sciacquare","left":"to rinse","right":"sciacquare"},{"id":"verb:asciugare","left":"to dry","right":"asciugare"},{"id":"verb:stendere","left":"to hang out","right":"stendere"},{"id":"verb:piegare","left":"to fold","right":"piegare"},{"id":"verb:ammucchiare","left":"to pile up","right":"ammucchiare"},{"id":"verb:riordinare","left":"to tidy","right":"riordinare"},{"id":"verb:buttare","left":"to throw out","right":"buttare"},{"id":"verb:mettere","left":"to put","right":"mettere"},{"id":"verb:passare","left":"to vacuum","right":"passare"}]},{"id":"set-2-nouns","index":2,"title":"Nomi ↔ English","subtitle":"Household nouns","mode":"vocab-pair","rounds":5,"pairs":[{"id":"noun:scopa","left":"broom","right":"la scopa"},{"id":"noun:straccio","left":"rag","right":"lo straccio"},{"id":"noun:bucato","left":"laundry","right":"il bucato"},{"id":"noun:pattumiera","left":"dustbin","right":"la pattumiera"},{"id":"noun:candeggina","left":"bleach","right":"la candeggina"},{"id":"noun:sgrassatore","left":"degreaser","right":"lo sgrassatore"},{"id":"noun:spugna","left":"sponge","right":"la spugna"},{"id":"noun:secchio","left":"bucket","right":"il secchio"},{"id":"noun:aspirapolvere","left":"vacuum cleaner","right":"l'aspirapolvere"},{"id":"noun:spazzatura","left":"trash","right":"la spazzatura"},{"id":"noun:detersivo","left":"detergent","right":"il detersivo"}]},{"id":"set-3-gender","index":3,"title":"Genere — la / lo / il / l'","subtitle":"Match each noun with its correct article","mode":"gender-pair","rounds":5,"pairs":[{"id":"gender:scopa","left":"scopa","right":"la","hint":"broom"},{"id":"gender:straccio","left":"straccio","right":"lo","hint":"rag"},{"id":"gender:bucato","left":"bucato","right":"il","hint":"laundry"},{"id":"gender:pattumiera","left":"pattumiera","right":"la","hint":"dustbin"},{"id":"gender:candeggina","left":"candeggina","right":"la","hint":"bleach"},{"id":"gender:sgrassatore","left":"sgrassatore","right":"lo","hint":"degreaser"},{"id":"gender:spugna","left":"spugna","right":"la","hint":"sponge"},{"id":"gender:secchio","left":"secchio","right":"il","hint":"bucket"},{"id":"gender:aspirapolvere","left":"aspirapolvere","right":"l'","hint":"vacuum cleaner"},{"id":"gender:spazzatura","left":"spazzatura","right":"la","hint":"trash"},{"id":"gender:detersivo","left":"detersivo","right":"il","hint":"detergent"}]},{"id":"set-4-preps","index":4,"title":"Preposizioni in contesto","subtitle":"Cleaning-context preposition phrases","mode":"prep-pair","rounds":5,"pairs":[{"id":"prep:0","left":"under the sink","right":"sotto il lavandino"},{"id":"prep:1","left":"on the balcony","right":"sul balcone"},{"id":"prep:2","left":"from the balcony","right":"dal balcone"},{"id":"prep:3","left":"in the washing machine","right":"in lavatrice"},{"id":"prep:4","left":"into the dustbin","right":"nella pattumiera"},{"id":"prep:5","left":"above the table","right":"sopra il tavolo"},{"id":"prep:6","left":"with the degreaser","right":"con lo sgrassatore"},{"id":"prep:7","left":"without bleach","right":"senza candeggina"},{"id":"prep:8","left":"during the cleaning","right":"durante le pulizie"},{"id":"prep:9","left":"after dinner","right":"dopo la cena"}]},{"id":"set-5-collocations","index":5,"title":"Collocazioni — verbo + oggetto","subtitle":"Which object goes with which verb","mode":"collocation","rounds":5,"pairs":[{"id":"coll:0","left":"spazzare","right":"la scopa"},{"id":"coll:1","left":"lavare","right":"i piatti"},{"id":"coll:2","left":"stendere","right":"il bucato"},{"id":"coll:3","left":"passare","right":"l'aspirapolvere"},{"id":"coll:4","left":"pulire","right":"con lo sgrassatore"},{"id":"coll:5","left":"buttare","right":"la spazzatura"},{"id":"coll:6","left":"piegare","right":"la maglietta"},{"id":"coll:7","left":"riordinare","right":"la stanza"},{"id":"coll:8","left":"spolverare","right":"i mobili"},{"id":"coll:9","left":"sciacquare","right":"le posate"}]},{"id":"set-6-presente","index":6,"title":"Presente — io","subtitle":"Today, right now — io spazzo, io pulisco, io lavo","mode":"conjugation","rounds":5,"pairs":[{"id":"presente:io:spazzare","left":"I sweep","right":"spazzo","hint":"spazzare"},{"id":"presente:io:spolverare","left":"I dust","right":"spolvero","hint":"spolverare"},{"id":"presente:io:pulire","left":"I clean","right":"pulisco","hint":"pulire"},{"id":"presente:io:strofinare","left":"I scrub","right":"strofino","hint":"strofinare"},{"id":"presente:io:lavare","left":"I wash","right":"lavo","hint":"lavare"},{"id":"presente:io:sciacquare","left":"I rinse","right":"sciacquo","hint":"sciacquare"},{"id":"presente:io:asciugare","left":"I dry","right":"asciugo","hint":"asciugare"},{"id":"presente:io:stendere","left":"I hang out","right":"stendo","hint":"stendere"},{"id":"presente:io:piegare","left":"I fold","right":"piego","hint":"piegare"},{"id":"presente:io:ammucchiare","left":"I pile up","right":"ammucchio","hint":"ammucchiare"},{"id":"presente:io:riordinare","left":"I tidy","right":"riordino","hint":"riordinare"},{"id":"presente:io:buttare","left":"I throw out","right":"butto","hint":"buttare"},{"id":"presente:io:mettere","left":"I put","right":"metto","hint":"mettere"},{"id":"presente:io:passare","left":"I vacuum","right":"passo","hint":"passare"}]},{"id":"set-7-passato-prossimo","index":7,"title":"Passato prossimo — io","subtitle":"Compound past — io ho spazzato, io ho pulito","mode":"conjugation","rounds":5,"pairs":[{"id":"passato-prossimo:io:spazzare","left":"I sweeped","right":"ho spazzato","hint":"spazzare"},{"id":"passato-prossimo:io:spolverare","left":"I dusted","right":"ho spolverato","hint":"spolverare"},{"id":"passato-prossimo:io:pulire","left":"I cleaned","right":"ho pulito","hint":"pulire"},{"id":"passato-prossimo:io:strofinare","left":"I scrubed","right":"ho strofinato","hint":"strofinare"},{"id":"passato-prossimo:io:lavare","left":"I washed","right":"ho lavato","hint":"lavare"},{"id":"passato-prossimo:io:sciacquare","left":"I rinseed","right":"ho sciacquato","hint":"sciacquare"},{"id":"passato-prossimo:io:asciugare","left":"I dryed","right":"ho asciugato","hint":"asciugare"},{"id":"passato-prossimo:io:stendere","left":"I hang outed","right":"ho steso","hint":"stendere"},{"id":"passato-prossimo:io:piegare","left":"I folded","right":"ho piegato","hint":"piegare"},{"id":"passato-prossimo:io:ammucchiare","left":"I pile uped","right":"ho ammucchiato","hint":"ammucchiare"},{"id":"passato-prossimo:io:riordinare","left":"I tidyed","right":"ho riordinato","hint":"riordinare"},{"id":"passato-prossimo:io:buttare","left":"I throw outed","right":"ho buttato","hint":"buttare"},{"id":"passato-prossimo:io:mettere","left":"I puted","right":"ho messo","hint":"mettere"},{"id":"passato-prossimo:io:passare","left":"I vacuumed","right":"ho passato","hint":"passare"}]},{"id":"set-8-imperfetto","index":8,"title":"Imperfetto — io","subtitle":"Habitual / continuous past — io spazzavo, io pulivo","mode":"conjugation","rounds":5,"pairs":[{"id":"imperfetto:io:spazzare","left":"I used to sweep","right":"spazzavo","hint":"spazzare"},{"id":"imperfetto:io:spolverare","left":"I used to dust","right":"spolveravo","hint":"spolverare"},{"id":"imperfetto:io:pulire","left":"I used to clean","right":"pulivo","hint":"pulire"},{"id":"imperfetto:io:strofinare","left":"I used to scrub","right":"strofinavo","hint":"strofinare"},{"id":"imperfetto:io:lavare","left":"I used to wash","right":"lavavo","hint":"lavare"},{"id":"imperfetto:io:sciacquare","left":"I used to rinse","right":"sciacquavo","hint":"sciacquare"},{"id":"imperfetto:io:asciugare","left":"I used to dry","right":"asciugavo","hint":"asciugare"},{"id":"imperfetto:io:stendere","left":"I used to hang out","right":"stendevo","hint":"stendere"},{"id":"imperfetto:io:piegare","left":"I used to fold","right":"piegavo","hint":"piegare"},{"id":"imperfetto:io:ammucchiare","left":"I used to pile up","right":"ammucchiavo","hint":"ammucchiare"},{"id":"imperfetto:io:riordinare","left":"I used to tidy","right":"riordinavo","hint":"riordinare"},{"id":"imperfetto:io:buttare","left":"I used to throw out","right":"buttavo","hint":"buttare"},{"id":"imperfetto:io:mettere","left":"I used to put","right":"mettevo","hint":"mettere"},{"id":"imperfetto:io:passare","left":"I used to vacuum","right":"passavo","hint":"passare"}]},{"id":"set-9-futuro-semplice","index":9,"title":"Futuro semplice — io","subtitle":"Simple future — io spazzerò, io pulirò","mode":"conjugation","rounds":5,"pairs":[{"id":"futuro-semplice:io:spazzare","left":"I will sweep","right":"spazzerò","hint":"spazzare"},{"id":"futuro-semplice:io:spolverare","left":"I will dust","right":"spolvererò","hint":"spolverare"},{"id":"futuro-semplice:io:pulire","left":"I will clean","right":"pulirò","hint":"pulire"},{"id":"futuro-semplice:io:strofinare","left":"I will scrub","right":"strofinerò","hint":"strofinare"},{"id":"futuro-semplice:io:lavare","left":"I will wash","right":"laverò","hint":"lavare"},{"id":"futuro-semplice:io:sciacquare","left":"I will rinse","right":"sciacquerò","hint":"sciacquare"},{"id":"futuro-semplice:io:asciugare","left":"I will dry","right":"asciugherò","hint":"asciugare"},{"id":"futuro-semplice:io:stendere","left":"I will hang out","right":"stenderò","hint":"stendere"},{"id":"futuro-semplice:io:piegare","left":"I will fold","right":"piegherò","hint":"piegare"},{"id":"futuro-semplice:io:ammucchiare","left":"I will pile up","right":"ammucchierò","hint":"ammucchiare"},{"id":"futuro-semplice:io:riordinare","left":"I will tidy","right":"riordinerò","hint":"riordinare"},{"id":"futuro-semplice:io:buttare","left":"I will throw out","right":"butterò","hint":"buttare"},{"id":"futuro-semplice:io:mettere","left":"I will put","right":"metterò","hint":"mettere"},{"id":"futuro-semplice:io:passare","left":"I will vacuum","right":"passerò","hint":"passare"}]},{"id":"set-10-congiuntivo-presente","index":10,"title":"Congiuntivo presente — che io","subtitle":"Subjunctive — che io spazzi, che io pulisca","mode":"conjugation","rounds":5,"pairs":[{"id":"congiuntivo-presente:io:spazzare","left":"(that) I sweep","right":"spazzi","hint":"spazzare"},{"id":"congiuntivo-presente:io:spolverare","left":"(that) I dust","right":"spolveri","hint":"spolverare"},{"id":"congiuntivo-presente:io:pulire","left":"(that) I clean","right":"pulisca","hint":"pulire"},{"id":"congiuntivo-presente:io:strofinare","left":"(that) I scrub","right":"strofini","hint":"strofinare"},{"id":"congiuntivo-presente:io:lavare","left":"(that) I wash","right":"lavi","hint":"lavare"},{"id":"congiuntivo-presente:io:sciacquare","left":"(that) I rinse","right":"sciacqui","hint":"sciacquare"},{"id":"congiuntivo-presente:io:asciugare","left":"(that) I dry","right":"asciughi","hint":"asciugare"},{"id":"congiuntivo-presente:io:stendere","left":"(that) I hang out","right":"stenda","hint":"stendere"},{"id":"congiuntivo-presente:io:piegare","left":"(that) I fold","right":"pieghi","hint":"piegare"},{"id":"congiuntivo-presente:io:ammucchiare","left":"(that) I pile up","right":"ammucchii","hint":"ammucchiare"},{"id":"congiuntivo-presente:io:riordinare","left":"(that) I tidy","right":"riordini","hint":"riordinare"},{"id":"congiuntivo-presente:io:buttare","left":"(that) I throw out","right":"butti","hint":"buttare"},{"id":"congiuntivo-presente:io:mettere","left":"(that) I put","right":"metta","hint":"mettere"},{"id":"congiuntivo-presente:io:passare","left":"(that) I vacuum","right":"passi","hint":"passare"}]},{"id":"set-11-passato-remoto","index":11,"title":"Passato remoto — io","subtitle":"Literary past — io spazzai (Calvino, Ginzburg)","mode":"conjugation","rounds":5,"pairs":[{"id":"passato-remoto:io:spazzare","left":"I sweeped (lit.)","right":"spazzai","hint":"spazzare"},{"id":"passato-remoto:io:spolverare","left":"I dusted (lit.)","right":"spolverai","hint":"spolverare"},{"id":"passato-remoto:io:pulire","left":"I cleaned (lit.)","right":"pulii","hint":"pulire"},{"id":"passato-remoto:io:strofinare","left":"I scrubed (lit.)","right":"strofinai","hint":"strofinare"},{"id":"passato-remoto:io:lavare","left":"I washed (lit.)","right":"lavai","hint":"lavare"},{"id":"passato-remoto:io:sciacquare","left":"I rinseed (lit.)","right":"sciacquai","hint":"sciacquare"},{"id":"passato-remoto:io:asciugare","left":"I dryed (lit.)","right":"asciugai","hint":"asciugare"},{"id":"passato-remoto:io:stendere","left":"I hang outed (lit.)","right":"stesi","hint":"stendere"},{"id":"passato-remoto:io:piegare","left":"I folded (lit.)","right":"piegai","hint":"piegare"},{"id":"passato-remoto:io:ammucchiare","left":"I pile uped (lit.)","right":"ammucchiai","hint":"ammucchiare"},{"id":"passato-remoto:io:riordinare","left":"I tidyed (lit.)","right":"riordinai","hint":"riordinare"},{"id":"passato-remoto:io:buttare","left":"I throw outed (lit.)","right":"buttai","hint":"buttare"},{"id":"passato-remoto:io:mettere","left":"I puted (lit.)","right":"misi","hint":"mettere"},{"id":"passato-remoto:io:passare","left":"I vacuumed (lit.)","right":"passai","hint":"passare"}]},{"id":"set-super","index":12,"title":"🔥 SUPER-SET — Tutto insieme","subtitle":"Up to 10 rounds, all content mixed. The retrieval anchor.","mode":"mixed","rounds":10,"pairs":[{"id":"verb:spazzare","left":"to sweep","right":"spazzare"},{"id":"verb:spolverare","left":"to dust","right":"spolverare"},{"id":"verb:pulire","left":"to clean","right":"pulire"},{"id":"verb:strofinare","left":"to scrub","right":"strofinare"},{"id":"verb:lavare","left":"to wash","right":"lavare"},{"id":"verb:sciacquare","left":"to rinse","right":"sciacquare"},{"id":"verb:asciugare","left":"to dry","right":"asciugare"},{"id":"verb:stendere","left":"to hang out","right":"stendere"},{"id":"verb:piegare","left":"to fold","right":"piegare"},{"id":"verb:ammucchiare","left":"to pile up","right":"ammucchiare"},{"id":"verb:riordinare","left":"to tidy","right":"riordinare"},{"id":"verb:buttare","left":"to throw out","right":"buttare"},{"id":"verb:mettere","left":"to put","right":"mettere"},{"id":"verb:passare","left":"to vacuum","right":"passare"},{"id":"noun:scopa","left":"broom","right":"la scopa"},{"id":"noun:straccio","left":"rag","right":"lo straccio"},{"id":"noun:bucato","left":"laundry","right":"il bucato"},{"id":"noun:pattumiera","left":"dustbin","right":"la pattumiera"},{"id":"noun:candeggina","left":"bleach","right":"la candeggina"},{"id":"noun:sgrassatore","left":"degreaser","right":"lo sgrassatore"},{"id":"noun:spugna","left":"sponge","right":"la spugna"},{"id":"noun:secchio","left":"bucket","right":"il secchio"},{"id":"noun:aspirapolvere","left":"vacuum cleaner","right":"l'aspirapolvere"},{"id":"noun:spazzatura","left":"trash","right":"la spazzatura"},{"id":"noun:detersivo","left":"detergent","right":"il detersivo"},{"id":"gender:scopa","left":"scopa","right":"la","hint":"broom"},{"id":"gender:straccio","left":"straccio","right":"lo","hint":"rag"},{"id":"gender:bucato","left":"bucato","right":"il","hint":"laundry"},{"id":"gender:pattumiera","left":"pattumiera","right":"la","hint":"dustbin"},{"id":"gender:candeggina","left":"candeggina","right":"la","hint":"bleach"},{"id":"gender:sgrassatore","left":"sgrassatore","right":"lo","hint":"degreaser"},{"id":"gender:spugna","left":"spugna","right":"la","hint":"sponge"},{"id":"gender:secchio","left":"secchio","right":"il","hint":"bucket"},{"id":"gender:aspirapolvere","left":"aspirapolvere","right":"l'","hint":"vacuum cleaner"},{"id":"gender:spazzatura","left":"spazzatura","right":"la","hint":"trash"},{"id":"gender:detersivo","left":"detersivo","right":"il","hint":"detergent"},{"id":"prep:0","left":"under the sink","right":"sotto il lavandino"},{"id":"prep:1","left":"on the balcony","right":"sul balcone"},{"id":"prep:2","left":"from the balcony","right":"dal balcone"},{"id":"prep:3","left":"in the washing machine","right":"in lavatrice"},{"id":"prep:4","left":"into the dustbin","right":"nella pattumiera"},{"id":"prep:5","left":"above the table","right":"sopra il tavolo"},{"id":"prep:6","left":"with the degreaser","right":"con lo sgrassatore"},{"id":"prep:7","left":"without bleach","right":"senza candeggina"},{"id":"prep:8","left":"during the cleaning","right":"durante le pulizie"},{"id":"prep:9","left":"after dinner","right":"dopo la cena"},{"id":"coll:0","left":"spazzare","right":"la scopa"},{"id":"coll:1","left":"lavare","right":"i piatti"},{"id":"coll:2","left":"stendere","right":"il bucato"},{"id":"coll:3","left":"passare","right":"l'aspirapolvere"},{"id":"coll:4","left":"pulire","right":"con lo sgrassatore"},{"id":"coll:5","left":"buttare","right":"la spazzatura"},{"id":"coll:6","left":"piegare","right":"la maglietta"},{"id":"coll:7","left":"riordinare","right":"la stanza"},{"id":"coll:8","left":"spolverare","right":"i mobili"},{"id":"coll:9","left":"sciacquare","right":"le posate"},{"id":"presente:io:spazzare","left":"I sweep","right":"spazzo","hint":"spazzare"},{"id":"presente:io:spolverare","left":"I dust","right":"spolvero","hint":"spolverare"},{"id":"presente:io:pulire","left":"I clean","right":"pulisco","hint":"pulire"},{"id":"presente:io:strofinare","left":"I scrub","right":"strofino","hint":"strofinare"},{"id":"presente:io:lavare","left":"I wash","right":"lavo","hint":"lavare"},{"id":"presente:io:sciacquare","left":"I rinse","right":"sciacquo","hint":"sciacquare"},{"id":"presente:io:asciugare","left":"I dry","right":"asciugo","hint":"asciugare"},{"id":"presente:io:stendere","left":"I hang out","right":"stendo","hint":"stendere"},{"id":"presente:io:piegare","left":"I fold","right":"piego","hint":"piegare"},{"id":"presente:io:ammucchiare","left":"I pile up","right":"ammucchio","hint":"ammucchiare"},{"id":"presente:io:riordinare","left":"I tidy","right":"riordino","hint":"riordinare"},{"id":"presente:io:buttare","left":"I throw out","right":"butto","hint":"buttare"},{"id":"presente:io:mettere","left":"I put","right":"metto","hint":"mettere"},{"id":"presente:io:passare","left":"I vacuum","right":"passo","hint":"passare"},{"id":"passato-prossimo:io:spazzare","left":"I sweeped","right":"ho spazzato","hint":"spazzare"},{"id":"passato-prossimo:io:spolverare","left":"I dusted","right":"ho spolverato","hint":"spolverare"},{"id":"passato-prossimo:io:pulire","left":"I cleaned","right":"ho pulito","hint":"pulire"},{"id":"passato-prossimo:io:strofinare","left":"I scrubed","right":"ho strofinato","hint":"strofinare"},{"id":"passato-prossimo:io:lavare","left":"I washed","right":"ho lavato","hint":"lavare"},{"id":"passato-prossimo:io:sciacquare","left":"I rinseed","right":"ho sciacquato","hint":"sciacquare"},{"id":"passato-prossimo:io:asciugare","left":"I dryed","right":"ho asciugato","hint":"asciugare"},{"id":"passato-prossimo:io:stendere","left":"I hang outed","right":"ho steso","hint":"stendere"},{"id":"passato-prossimo:io:piegare","left":"I folded","right":"ho piegato","hint":"piegare"},{"id":"passato-prossimo:io:ammucchiare","left":"I pile uped","right":"ho ammucchiato","hint":"ammucchiare"},{"id":"passato-prossimo:io:riordinare","left":"I tidyed","right":"ho riordinato","hint":"riordinare"},{"id":"passato-prossimo:io:buttare","left":"I throw outed","right":"ho buttato","hint":"buttare"},{"id":"passato-prossimo:io:mettere","left":"I puted","right":"ho messo","hint":"mettere"},{"id":"passato-prossimo:io:passare","left":"I vacuumed","right":"ho passato","hint":"passare"},{"id":"imperfetto:io:spazzare","left":"I used to sweep","right":"spazzavo","hint":"spazzare"},{"id":"imperfetto:io:spolverare","left":"I used to dust","right":"spolveravo","hint":"spolverare"},{"id":"imperfetto:io:pulire","left":"I used to clean","right":"pulivo","hint":"pulire"},{"id":"imperfetto:io:strofinare","left":"I used to scrub","right":"strofinavo","hint":"strofinare"},{"id":"imperfetto:io:lavare","left":"I used to wash","right":"lavavo","hint":"lavare"},{"id":"imperfetto:io:sciacquare","left":"I used to rinse","right":"sciacquavo","hint":"sciacquare"},{"id":"imperfetto:io:asciugare","left":"I used to dry","right":"asciugavo","hint":"asciugare"},{"id":"imperfetto:io:stendere","left":"I used to hang out","right":"stendevo","hint":"stendere"},{"id":"imperfetto:io:piegare","left":"I used to fold","right":"piegavo","hint":"piegare"},{"id":"imperfetto:io:ammucchiare","left":"I used to pile up","right":"ammucchiavo","hint":"ammucchiare"},{"id":"imperfetto:io:riordinare","left":"I used to tidy","right":"riordinavo","hint":"riordinare"},{"id":"imperfetto:io:buttare","left":"I used to throw out","right":"buttavo","hint":"buttare"},{"id":"imperfetto:io:mettere","left":"I used to put","right":"mettevo","hint":"mettere"},{"id":"imperfetto:io:passare","left":"I used to vacuum","right":"passavo","hint":"passare"},{"id":"futuro-semplice:io:spazzare","left":"I will sweep","right":"spazzerò","hint":"spazzare"},{"id":"futuro-semplice:io:spolverare","left":"I will dust","right":"spolvererò","hint":"spolverare"},{"id":"futuro-semplice:io:pulire","left":"I will clean","right":"pulirò","hint":"pulire"},{"id":"futuro-semplice:io:strofinare","left":"I will scrub","right":"strofinerò","hint":"strofinare"},{"id":"futuro-semplice:io:lavare","left":"I will wash","right":"laverò","hint":"lavare"},{"id":"futuro-semplice:io:sciacquare","left":"I will rinse","right":"sciacquerò","hint":"sciacquare"},{"id":"futuro-semplice:io:asciugare","left":"I will dry","right":"asciugherò","hint":"asciugare"},{"id":"futuro-semplice:io:stendere","left":"I will hang out","right":"stenderò","hint":"stendere"},{"id":"futuro-semplice:io:piegare","left":"I will fold","right":"piegherò","hint":"piegare"},{"id":"futuro-semplice:io:ammucchiare","left":"I will pile up","right":"ammucchierò","hint":"ammucchiare"},{"id":"futuro-semplice:io:riordinare","left":"I will tidy","right":"riordinerò","hint":"riordinare"},{"id":"futuro-semplice:io:buttare","left":"I will throw out","right":"butterò","hint":"buttare"},{"id":"futuro-semplice:io:mettere","left":"I will put","right":"metterò","hint":"mettere"},{"id":"futuro-semplice:io:passare","left":"I will vacuum","right":"passerò","hint":"passare"},{"id":"congiuntivo-presente:io:spazzare","left":"(that) I sweep","right":"spazzi","hint":"spazzare"},{"id":"congiuntivo-presente:io:spolverare","left":"(that) I dust","right":"spolveri","hint":"spolverare"},{"id":"congiuntivo-presente:io:pulire","left":"(that) I clean","right":"pulisca","hint":"pulire"},{"id":"congiuntivo-presente:io:strofinare","left":"(that) I scrub","right":"strofini","hint":"strofinare"},{"id":"congiuntivo-presente:io:lavare","left":"(that) I wash","right":"lavi","hint":"lavare"},{"id":"congiuntivo-presente:io:sciacquare","left":"(that) I rinse","right":"sciacqui","hint":"sciacquare"},{"id":"congiuntivo-presente:io:asciugare","left":"(that) I dry","right":"asciughi","hint":"asciugare"},{"id":"congiuntivo-presente:io:stendere","left":"(that) I hang out","right":"stenda","hint":"stendere"},{"id":"congiuntivo-presente:io:piegare","left":"(that) I fold","right":"pieghi","hint":"piegare"},{"id":"congiuntivo-presente:io:ammucchiare","left":"(that) I pile up","right":"ammucchii","hint":"ammucchiare"},{"id":"congiuntivo-presente:io:riordinare","left":"(that) I tidy","right":"riordini","hint":"riordinare"},{"id":"congiuntivo-presente:io:buttare","left":"(that) I throw out","right":"butti","hint":"buttare"},{"id":"congiuntivo-presente:io:mettere","left":"(that) I put","right":"metta","hint":"mettere"},{"id":"congiuntivo-presente:io:passare","left":"(that) I vacuum","right":"passi","hint":"passare"},{"id":"passato-remoto:io:spazzare","left":"I sweeped (lit.)","right":"spazzai","hint":"spazzare"},{"id":"passato-remoto:io:spolverare","left":"I dusted (lit.)","right":"spolverai","hint":"spolverare"},{"id":"passato-remoto:io:pulire","left":"I cleaned (lit.)","right":"pulii","hint":"pulire"},{"id":"passato-remoto:io:strofinare","left":"I scrubed (lit.)","right":"strofinai","hint":"strofinare"},{"id":"passato-remoto:io:lavare","left":"I washed (lit.)","right":"lavai","hint":"lavare"},{"id":"passato-remoto:io:sciacquare","left":"I rinseed (lit.)","right":"sciacquai","hint":"sciacquare"},{"id":"passato-remoto:io:asciugare","left":"I dryed (lit.)","right":"asciugai","hint":"asciugare"},{"id":"passato-remoto:io:stendere","left":"I hang outed (lit.)","right":"stesi","hint":"stendere"},{"id":"passato-remoto:io:piegare","left":"I folded (lit.)","right":"piegai","hint":"piegare"},{"id":"passato-remoto:io:ammucchiare","left":"I pile uped (lit.)","right":"ammucchiai","hint":"ammucchiare"},{"id":"passato-remoto:io:riordinare","left":"I tidyed (lit.)","right":"riordinai","hint":"riordinare"},{"id":"passato-remoto:io:buttare","left":"I throw outed (lit.)","right":"buttai","hint":"buttare"},{"id":"passato-remoto:io:mettere","left":"I puted (lit.)","right":"misi","hint":"mettere"},{"id":"passato-remoto:io:passare","left":"I vacuumed (lit.)","right":"passai","hint":"passare"}],"drawsFromSetIds":["set-1-verbs","set-2-nouns","set-3-gender","set-4-preps","set-5-collocations","set-6-presente","set-7-passato-prossimo","set-8-imperfetto","set-9-futuro-semplice","set-10-congiuntivo-presente","set-11-passato-remoto"]}],"unlockAccuracyThreshold":0.6,"superSetUnlockAfterNSetsCompleted":3};
+    const STORE_KEY = 'chiron-mm::' + CONFIG.lessonId;
+
+    function loadState() {
+      try {
+        const raw = localStorage.getItem(STORE_KEY);
+        return raw ? JSON.parse(raw) : { sets: {}, sessions: [], pairLog: [] };
+      } catch (_) { return { sets: {}, sessions: [], pairLog: [] }; }
+    }
+    function saveState(st) {
+      try { localStorage.setItem(STORE_KEY, JSON.stringify(st)); } catch (_) {}
+    }
+
+    const STATE = loadState();
+
+    // ----- Render mastery on each set card -----
+    function renderMasteryAll() {
+      document.querySelectorAll('[data-mastery-for]').forEach(node => {
+        const id = node.getAttribute('data-mastery-for');
+        const s = STATE.sets[id];
+        if (!s || !s.attempts) {
+          node.innerHTML = '<span class="mm-mastery-label">No history yet</span>';
+          return;
+        }
+        const mastery = Math.round((s.bestAccuracy || 0) * 100);
+        const last = s.lastPlayedIso ? new Date(s.lastPlayedIso) : null;
+        const ago = last ? timeAgo(last) : '';
+        const weak = (s.weakPairs || []).length;
+        node.innerHTML =
+          '<span class="mm-mastery-pct" data-mastery="' + mastery + '"><strong>' + mastery + '%</strong> mastery</span>' +
+          '<span class="mm-mastery-when">last ' + ago + '</span>' +
+          (weak > 0 ? '<span class="mm-mastery-weak"><strong>' + weak + '</strong> weak pairs</span>' : '');
+      });
+    }
+
+    function timeAgo(d) {
+      const diff = (Date.now() - d.getTime()) / 1000;
+      if (diff < 60) return 'just now';
+      if (diff < 3600) return Math.floor(diff/60) + 'm ago';
+      if (diff < 86400) return Math.floor(diff/3600) + 'h ago';
+      return Math.floor(diff/86400) + 'd ago';
+    }
+
+    // ----- Play loop -----
+    const G = {
+      activeSet: null,
+      pool: [],
+      onGrid: [],
+      selected: null,
+      roundIdx: 0,
+      correct: 0, wrong: 0, streak: 0, bestStreak: 0,
+      remainingSec: 0,
+      running: false, paused: false, accessibility: false,
+      lockUntil: 0, tickHandle: 0, sessionStart: 0,
+      tileShownAt: {},
+      pairLog: []
+    };
+
+    function $(id) { return document.getElementById(id); }
+    function shuffle(a) { const r = a.slice(); for (let i=r.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [r[i],r[j]]=[r[j],r[i]];} return r; }
+
+    function openSet(setId) {
+      const set = CONFIG.sets.find(s => s.id === setId);
+      if (!set) return;
+      G.activeSet = set;
+      $('mm-set-label').textContent = 'Set ' + set.index + ' · ' + set.title;
+      $('mm-play-surface').hidden = false;
+      G.roundIdx = 0; G.correct = 0; G.wrong = 0; G.streak = 0; G.bestStreak = 0;
+      G.pool = shuffle(set.pairs.slice());
+      G.remainingSec = set.timerSec || CONFIG.defaults.timerSec;
+      G.running = false; G.paused = false; G.accessibility = false;
+      G.tileShownAt = {}; G.pairLog = []; G.sessionStart = Date.now();
+      seedGrid(); renderGrid(); updateHud();
+      $('mm-result').hidden = true;
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeSet() {
+      G.running = false;
+      clearInterval(G.tickHandle);
+      $('mm-play-surface').hidden = true;
+      document.body.style.overflow = '';
+      renderMasteryAll();
+    }
+
+    function seedGrid() {
+      const seed = [];
+      for (let i = 0; i < 5; i++) seed.push(G.pool.length ? G.pool.shift() : null);
+      G.onGrid = seed;
+    }
+
+    function renderGrid() {
+      const grid = $('mm-grid'); grid.innerHTML = '';
+      const leftL1 = G.onGrid.map(p => p ? { l1: p.left, right: p.right, id: p.id } : null);
+      const rightL2 = shuffle(G.onGrid.filter(Boolean).map(p => ({ left: p.left, right: p.right, id: p.id })));
+      while (rightL2.length < 5) rightL2.push(null);
+      for (let i = 0; i < 5; i++) {
+        const lp = leftL1[i], rp = rightL2[i];
+        const lt = document.createElement('button');
+        lt.className = 'mm-tile'; lt.setAttribute('data-side','L'); lt.setAttribute('data-row', String(i));
+        if (lp) { lt.textContent = lp.l1; lt.setAttribute('data-pair-id', lp.id); }
+        else lt.setAttribute('data-state','empty');
+        grid.appendChild(lt);
+        const rt = document.createElement('button');
+        rt.className = 'mm-tile'; rt.setAttribute('data-side','R'); rt.setAttribute('data-row', String(i));
+        if (rp) { rt.textContent = rp.right; rt.setAttribute('data-pair-id', rp.id); }
+        else rt.setAttribute('data-state','empty');
+        grid.appendChild(rt);
+      }
+      const now = performance.now();
+      G.onGrid.forEach(p => { if (p) G.tileShownAt[p.id] = now; });
+      grid.querySelectorAll('.mm-tile').forEach(t => t.addEventListener('click', () => onTile(t)));
+    }
+
+    function onTile(tile) {
+      if (!G.running || G.paused) return;
+      if (performance.now() < G.lockUntil) return;
+      if (tile.getAttribute('data-state') === 'empty') return;
+      if (tile.getAttribute('data-state') === 'correct') return;
+      if (!G.selected) { tile.setAttribute('data-state','selected'); G.selected = tile; return; }
+      // Second pick
+      const a = G.selected, b = tile;
+      if (a === b) { a.removeAttribute('data-state'); G.selected = null; return; }
+      const aSide = a.getAttribute('data-side'), bSide = b.getAttribute('data-side');
+      if (aSide === bSide) { a.removeAttribute('data-state'); b.setAttribute('data-state','selected'); G.selected = b; return; }
+      const aId = a.getAttribute('data-pair-id'), bId = b.getAttribute('data-pair-id');
+      if (aId === bId) {
+        a.setAttribute('data-state','correct'); b.setAttribute('data-state','correct');
+        G.selected = null; G.correct++; G.streak++; if (G.streak > G.bestStreak) G.bestStreak = G.streak;
+        const lat = performance.now() - (G.tileShownAt[aId] || performance.now());
+        G.pairLog.push({ id: aId, latency_ms: Math.round(lat), was_wrong_first: false });
+        // Refill this slot with a new pair
+        setTimeout(() => refillSlot(a, b), refillDelay());
+        updateHud(); updateVisualSpeedUp();
+      } else {
+        a.setAttribute('data-state','wrong'); b.setAttribute('data-state','wrong');
+        G.wrong++; G.streak = 0;
+        G.pairLog.push({ id: aId, latency_ms: 0, was_wrong_first: true });
+        G.lockUntil = performance.now() + (G.activeSet.wrongLockMs || CONFIG.defaults.wrongLockMs);
+        setTimeout(() => { a.removeAttribute('data-state'); b.removeAttribute('data-state'); }, CONFIG.defaults.wrongLockMs);
+        G.selected = null;
+        updateHud();
+      }
+    }
+
+    function refillSlot(aTile, bTile) {
+      // Replace whichever side has data-pair-id with a fresh pair from pool
+      const next = G.pool.shift();
+      const replaceTile = (t) => {
+        if (next) {
+          t.removeAttribute('data-state');
+          const side = t.getAttribute('data-side');
+          t.textContent = side === 'L' ? next.left : next.right;
+          t.setAttribute('data-pair-id', next.id);
+          G.tileShownAt[next.id] = performance.now();
+        } else {
+          t.setAttribute('data-state','empty'); t.textContent = '';
+        }
+      };
+      // Pair the same next on both sides (L=left, R=right)
+      replaceTile(aTile); replaceTile(bTile);
+      checkRoundEnd();
+    }
+
+    function refillDelay() {
+      const vs = CONFIG.defaults.visualSpeedUp;
+      // Scale by streak — more streak = shorter delay
+      const t = Math.min(1, G.streak / 10);
+      return Math.round(vs.refillFromMs + (vs.refillToMs - vs.refillFromMs) * t);
+    }
+
+    function updateVisualSpeedUp() {
+      const vs = CONFIG.defaults.visualSpeedUp;
+      const t = Math.min(1, G.streak / 10);
+      const pulseMs = vs.pulseFromMs + (vs.pulseToMs - vs.pulseFromMs) * t;
+      const strength = vs.strengthFromOpacity + (vs.strengthToOpacity - vs.strengthFromOpacity) * t;
+      const root = document.getElementById('mm-game');
+      if (root && !G.accessibility) {
+        root.style.setProperty('--mm-pulse-ms', pulseMs + 'ms');
+        root.style.setProperty('--mm-pulse-strength', String(strength));
+      }
+    }
+
+    function checkRoundEnd() {
+      const tilesLeft = G.onGrid.filter(Boolean).length;
+      const poolLeft = G.pool.length;
+      // Round ends when grid is empty AND pool is empty
+      if (tilesLeft === 0 && poolLeft === 0) endRound();
+    }
+
+    function endRound() {
+      G.roundIdx++;
+      const totalRounds = G.activeSet.rounds;
+      if (G.roundIdx >= totalRounds) endSession(true);
+      else {
+        // Start next round: reshuffle a fresh pool from full pairs
+        G.pool = shuffle(G.activeSet.pairs.slice());
+        seedGrid(); renderGrid(); updateHud();
+      }
+    }
+
+    function endSession(completed) {
+      G.running = false;
+      clearInterval(G.tickHandle);
+      const total = G.correct + G.wrong;
+      const accuracy = total > 0 ? G.correct / total : 0;
+      // Persist
+      const setId = G.activeSet.id;
+      STATE.sets[setId] = STATE.sets[setId] || { attempts: 0, bestAccuracy: 0, weakPairs: [] };
+      STATE.sets[setId].attempts++;
+      if (accuracy > STATE.sets[setId].bestAccuracy) STATE.sets[setId].bestAccuracy = accuracy;
+      STATE.sets[setId].lastPlayedIso = new Date().toISOString();
+      // Weak pairs = those that had a wrong_first event
+      const weak = {};
+      G.pairLog.forEach(p => { if (p.was_wrong_first) weak[p.id] = (weak[p.id]||0) + 1; });
+      STATE.sets[setId].weakPairs = Object.entries(weak).map(([id,n]) => ({ id, misses: n }));
+      STATE.sessions.push({ setId, startedAt: G.sessionStart, endedAt: Date.now(), correct: G.correct, wrong: G.wrong, accuracy, completed });
+      saveState(STATE);
+      // Show result
+      $('mm-result-title').textContent = completed ? 'Set complete!' : 'Time up!';
+      $('mm-result-body').innerHTML =
+        '<p><strong>' + G.correct + '</strong> correct · <strong>' + G.wrong + '</strong> wrong · <strong>' + Math.round(accuracy*100) + '%</strong> accuracy</p>' +
+        '<p>Best streak: <strong>' + G.bestStreak + '</strong></p>' +
+        (Object.keys(weak).length > 0 ? '<p>Weak pairs flagged: <strong>' + Object.keys(weak).length + '</strong> — they\'ll come back in spaced review.</p>' : '<p>No weak pairs — nice.</p>');
+      $('mm-result').hidden = false;
+    }
+
+    function updateHud() {
+      $('mm-correct').textContent = String(G.correct);
+      $('mm-wrong').textContent = String(G.wrong);
+      $('mm-combo').textContent = '×' + G.streak;
+      $('mm-round').textContent = 'Round ' + (G.roundIdx + 1) + ' / ' + (G.activeSet ? G.activeSet.rounds : '—');
+      const m = Math.floor(G.remainingSec / 60), s = G.remainingSec % 60;
+      $('mm-timer').textContent = m + ':' + (s < 10 ? '0' + s : s);
+    }
+
+    function start() {
+      if (!G.activeSet) return;
+      G.running = true; G.paused = false;
+      G.tickHandle = setInterval(() => {
+        if (!G.running || G.paused || G.accessibility) return;
+        G.remainingSec--;
+        if (G.remainingSec <= 0) { G.remainingSec = 0; updateHud(); endSession(false); }
+        else updateHud();
+      }, 1000);
+    }
+
+    function reset() {
+      if (G.activeSet) openSet(G.activeSet.id);
+    }
+
+    function toggleAccessibility() {
+      G.accessibility = !G.accessibility;
+      const btn = $('mm-accessibility');
+      btn.setAttribute('aria-pressed', String(G.accessibility));
+      btn.textContent = G.accessibility ? 'Accessibility ON (no timer)' : 'Accessibility mode (timer off)';
+      if (G.accessibility) {
+        const root = $('mm-game');
+        root.style.setProperty('--mm-pulse-strength','0');
+      }
+    }
+
+    // ----- Wire-up -----
+    document.querySelectorAll('[data-play-set]').forEach(btn => {
+      btn.addEventListener('click', () => openSet(btn.getAttribute('data-play-set')));
+    });
+    $('mm-close')?.addEventListener('click', closeSet);
+    $('mm-start')?.addEventListener('click', start);
+    $('mm-reset')?.addEventListener('click', reset);
+    $('mm-accessibility')?.addEventListener('click', toggleAccessibility);
+
+    document.addEventListener('keydown', (e) => {
+      if ($('mm-play-surface').hidden) return;
+      if (e.key === 'Escape') closeSet();
+      if (e.key === ' ' && !e.repeat) { e.preventDefault(); if (!G.running) start(); else G.paused = !G.paused; }
+      if (G.running && !G.paused) {
+        const leftKeys = ['1','2','3','4','5'];
+        const rightKeys = ['q','w','e','r','t'];
+        const k = e.key.toLowerCase();
+        const li = leftKeys.indexOf(k); const ri = rightKeys.indexOf(k);
+        if (li >= 0) { const tiles = document.querySelectorAll('.mm-tile[data-side="L"]'); tiles[li] && onTile(tiles[li]); }
+        if (ri >= 0) { const tiles = document.querySelectorAll('.mm-tile[data-side="R"]'); tiles[ri] && onTile(tiles[ri]); }
+      }
+    });
+
+    renderMasteryAll();
+  })();
+  </script>
+</body>
+</html>

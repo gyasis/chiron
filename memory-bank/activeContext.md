@@ -2,7 +2,28 @@
 
 **Where we are right now in the design process.**
 
-**Last updated:** 2026-04-28
+**Last updated:** 2026-05-23
+
+---
+
+## 2026-05-23 — Concepts domain + per-domain build scripts (Option B)
+
+**Major additions this session:**
+
+- ✅ **5th domain added: `concepts`** (math primers, formal logic, signal processing, statistics, law, finance, music theory, quant trading). Schema enum updated in `lib/schemas/brief.ts`. Inherits all universal widgets; leans on mathjax + reactive-math + step-cards + pattern-cards.
+- ✅ **Per-domain hand-rolled build scripts (Option B chosen):** each domain has its own build script that emits Svelte-styled HTML appropriate to that domain's pedagogy. AMBOSS layout ≠ FHE layout ≠ concepts layout — fragmentation is intentional. No shared renderer.
+- ✅ **Packt-shape concepts template:** `skill/scripts/build-concepts-lesson.mjs` (canonical). Hands-on workshop pedagogy: learning objectives + Packt admonitions (Note/Tip/Warning/Best-Practice/Hands-on) + tree-view sidebar TOC + IntersectionObserver-based scroll-spy + real SVG box-and-arrow flowcharts (NOT ASCII) + comparison cards.
+- ✅ **AMBOSS canonical 11-section medicine template:** per-level required-section table in `prompts/04a-chapter-write.md`. Validator enforces. Medical specialty + level + clinicalAtlasUnits schema fields drive chapter-count + section emphasis.
+- ✅ **chapterCountTarget (soft ±1)** + **chapterCountExact (hard lock)** added to BriefSchema for universal use; clinicalAtlasUnits overrides both for medicine.
+- ✅ **10 universal widgets + chart-xy** added to `lib/schemas/widget-spec.ts` + `lib/widget-renderer.ts`. NOTE: emit standalone HTML, not Svelte components — NOT consumed by canonical `runtime/scripts/build-lesson.mjs` Svelte path. Used directly by per-domain build scripts.
+- ✅ **3 new lessons built this session:**
+  - `lessons/medicine-cap-step2ck-2026-05-23/` — CAP (Community-Acquired Pneumonia) via Svelte runtime, AMBOSS canonical structure
+  - `lessons/quant-trading-2026-05-23/` — first concepts lesson (math/finance), Packt-shape
+  - `lessons/bill-becomes-law-2026-05-23/` — second concepts lesson (civics/law), proves the concepts template is portable to zero-math content
+
+**Cross-references:**
+- Memory: `~/.claude/projects/-home-gyasisutton-dev/memory/project_chiron_per_domain_build_scripts.md`
+- Memory: `~/.claude/projects/-home-gyasisutton-dev/memory/project_chiron_concepts_domain_packt_shape.md`
 
 ---
 

@@ -1,0 +1,110 @@
+/* Layout L2 — Editorial long-form.
+   Single-column reading experience, no scroll-snap, no fixed sidebar.
+   TOC collapses into a top header bar with a dot-nav rail on the right.
+   Comfortable reading measure (~70ch) centered on the page.
+   Mobile-first: identical structure scales without extra breakpoints. */
+
+[data-layout="l2"] body {
+  grid-template-columns: 1fr;  /* No sidebar */
+}
+
+/* Hide the fixed left TOC; nav lives in a top bar instead */
+[data-layout="l2"] nav.toc {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  height: auto;
+  width: 100%;
+  background: var(--chiron-surface);
+  border-right: none;
+  border-bottom: 1px solid var(--chiron-border);
+  padding: 0.6rem 1.5rem;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  overflow-x: auto;
+  white-space: nowrap;
+}
+[data-layout="l2"] nav.toc h2 {
+  margin: 0 1.5rem 0 0;
+  font-size: 0.85rem;
+  flex-shrink: 0;
+}
+[data-layout="l2"] nav.toc a {
+  display: inline-block;
+  padding: 0.35rem 0.7rem;
+  margin: 0;
+  font-size: 0.82rem;
+  border-radius: 3px;
+  border-left: none;
+  flex-shrink: 0;
+}
+[data-layout="l2"] nav.toc a.active {
+  border-left: none;
+  background: var(--chiron-accent);
+  color: var(--chiron-bg);
+}
+[data-layout="l2"] nav.toc .progress {
+  margin: 0 0 0 auto;
+  padding: 0;
+  border: none;
+  font-size: 0.75rem;
+  flex-shrink: 0;
+}
+
+/* Main becomes a free-flowing reading column */
+[data-layout="l2"] main {
+  scroll-snap-type: none;
+  height: auto;
+  padding-top: 60px;  /* clearance for fixed top bar */
+}
+
+[data-layout="l2"] section.chapter {
+  scroll-snap-align: none;
+  min-height: auto;
+  max-width: 72ch;
+  margin: 0 auto;
+  padding: 4rem 1.5rem 5rem 1.5rem;
+  border-bottom: 1px solid var(--chiron-divider);
+}
+
+/* Drop the chapter number → use a typographic separator instead */
+[data-layout="l2"] section.chapter .ch-num {
+  font-size: 0.75rem;
+  letter-spacing: 0.15em;
+  margin-bottom: 1rem;
+  opacity: 0.7;
+}
+
+/* Tighten heading rhythm for editorial feel */
+[data-layout="l2"] section.chapter h1 {
+  font-size: 2.4rem;
+  line-height: 1.15;
+  margin-bottom: 1.5rem;
+  font-weight: 700;
+  font-family: var(--chiron-font-heading);
+}
+[data-layout="l2"] section.chapter h2 {
+  font-size: 1.4rem;
+  margin-top: 3rem;
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+/* On wide screens, stretch the column to ~80ch and add side rule */
+@media (min-width: 1200px) {
+  [data-layout="l2"] section.chapter {
+    max-width: 75ch;
+    padding: 5rem 2rem 6rem 2rem;
+  }
+}
+
+/* Mobile (already single-column): just tighten padding */
+@media (max-width: 600px) {
+  [data-layout="l2"] section.chapter {
+    padding: 2.5rem 1.2rem 3.5rem 1.2rem;
+  }
+  [data-layout="l2"] section.chapter h1 {
+    font-size: 1.8rem;
+  }
+}

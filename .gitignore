@@ -25,3 +25,9 @@ deep_research.db-journal
 *.chiron-state.db
 *.chiron-state.db-journal
 
+# Per-user memory-bank (private notes, may include unshared context)
+memory-bank/private/
+
+# SpecStory conversation history — local only, may contain secrets
+.specstory/
+

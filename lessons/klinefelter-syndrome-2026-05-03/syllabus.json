@@ -1,0 +1,56 @@
+{
+  "lesson_id": "klinefelter-syndrome-2026-05-03",
+  "chapters": [
+    {
+      "id": "ch1",
+      "title": "Definition & Epidemiology",
+      "objective": "Define Klinefelter syndrome and place it epidemiologically among sex chromosome aneuploidies",
+      "high_yield": ["Most common sex chromosome aneuploidy in males", "1:500–1:1000 live male births", "~75% never diagnosed in lifetime"],
+      "assessment": "MCQ x 2"
+    },
+    {
+      "id": "ch2",
+      "title": "Genetics & Pathophysiology",
+      "objective": "Trace 47,XXY from meiotic nondisjunction to seminiferous tubule failure",
+      "high_yield": ["Maternal meiosis I error (~50%)", "Skewed X-inactivation", "Tubular hyalinization → azoospermia", "Leydig cell dysfunction → low T"],
+      "assessment": "MCQ x 2 + concept-map flashcards"
+    },
+    {
+      "id": "ch3",
+      "title": "Clinical Presentation",
+      "objective": "Recognize the age-stratified phenotype from infancy through adulthood",
+      "high_yield": ["Tall stature with eunuchoid body proportions", "Small firm testes (<6 mL, classic <4 mL)", "Gynecomastia in ~50%", "Infertility most common presenting complaint", "Verbal IQ < performance IQ; expressive language delay"],
+      "assessment": "MCQ x 3 + spot-the-finding"
+    },
+    {
+      "id": "ch4",
+      "title": "Diagnosis",
+      "objective": "Order and interpret the workup; karyotype is the confirmatory test",
+      "high_yield": ["FSH ↑↑, LH ↑, total T ↓ or low-normal", "Estradiol normal-to-↑", "SHBG ↑", "Karyotype on peripheral blood = gold standard", "Sperm analysis: azoospermia (>90%)"],
+      "assessment": "MCQ x 3 + lab-interpretation drag-drop"
+    },
+    {
+      "id": "ch5",
+      "title": "Management",
+      "objective": "Apply guideline-directed care across endocrine, fertility, and psychosocial axes",
+      "high_yield": ["Testosterone replacement at pubertal onset (do NOT delay if hypogonadal)", "Fertility: TESE + ICSI before age 35 ideal", "DEXA at diagnosis + q2y", "Annual breast exam, metabolic screen", "Speech/language and academic support"],
+      "assessment": "MCQ x 2 + management-priority sort"
+    },
+    {
+      "id": "ch6",
+      "title": "Complications & Comorbidities",
+      "objective": "Anticipate and screen for the long-tail of associated diseases",
+      "high_yield": ["Breast cancer 20–50x male baseline (still rare)", "Mediastinal germ cell tumors (extragonadal)", "Osteoporosis", "T2DM, metabolic syndrome", "Venous thromboembolism", "Autoimmune disease (SLE, RA)", "Mitral valve prolapse"],
+      "assessment": "MCQ x 2 + risk-table flashcards"
+    },
+    {
+      "id": "ch7",
+      "title": "Final Vignette — Deep USMLE-Style Case",
+      "objective": "Integrate ch1–ch6 into a multi-step clinical reasoning challenge",
+      "high_yield": ["Vignette → labs → karyotype → next step in management"],
+      "assessment": "Single deep MCQ with 5-option AMBOSS-style distractor analysis"
+    }
+  ],
+  "estimated_minutes": 45,
+  "spaced_repetition_cards": 22
+}

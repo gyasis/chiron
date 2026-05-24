@@ -36,6 +36,10 @@
   --color-error-light:    #FDE8E8;
   --color-info:           #2A7B9B;
   --color-info-light:     #E4F2F7;
+  /* 2026-05-23 — added; chart-xy series 3 + any callout/badge using
+     var(--color-warning) was previously falling back to currentColor (text). */
+  --color-warning:        #B45309;
+  --color-warning-light:  #FEF1E0;
 
   /* ACTOR COLORS */
   --color-actor-1:        #D94F30;
@@ -1192,4 +1196,60 @@ p:last-child { margin-bottom: 0; }
   20%  { opacity: 1; }
   80%  { opacity: 1; }
   to   { left: var(--packet-to-x);   top: var(--packet-to-y);   opacity: 0; }
+}
+
+/* ── CHART-XY (v1 — 2026-05-23) ──────────────────────────────────
+   SVG-based line/scatter/bar/candlestick chart. All colors via tokens or
+   --chart-color CSS variable injected by the renderer per-series. */
+.chart-xy {
+  margin: var(--space-8) 0;
+  padding: var(--space-6);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--radius-md);
+}
+.chart-xy .chart-title {
+  margin: 0 0 var(--space-3);
+  font-family: var(--font-display);
+  font-size: var(--text-lg);
+  color: var(--color-text);
+  font-weight: 600;
+}
+.chart-xy svg { display: block; width: 100%; height: auto; max-height: 360px; }
+.chart-xy .chart-plot-bg { fill: var(--color-surface-warm); stroke: none; }
+.chart-xy .chart-axis { stroke: var(--color-border); stroke-width: 1; }
+.chart-xy .chart-grid { stroke: var(--color-border-light); stroke-width: 1; stroke-dasharray: 2 3; opacity: 0.55; }
+.chart-xy .chart-tick { fill: var(--color-text-secondary); font-family: var(--font-mono); font-size: 10px; }
+.chart-xy .chart-axis-label { fill: var(--color-text); font-family: var(--font-mono); font-size: 11px; letter-spacing: .06em; text-transform: uppercase; }
+.chart-xy .chart-annot { fill: var(--color-text); font-family: var(--font-mono); font-size: 10px; font-style: italic; }
+
+/* Series — token-driven default; override via inline --chart-color. */
+.chart-xy .chart-series-0 { --chart-color: var(--color-accent); }
+.chart-xy .chart-series-1 { --chart-color: var(--color-info, #1e6fbf); }
+.chart-xy .chart-series-2 { --chart-color: var(--color-success, #166534); }
+.chart-xy .chart-series-3 { --chart-color: var(--color-warning, #b45309); }
+.chart-xy .chart-line  { fill: none; stroke: var(--chart-color); stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+.chart-xy .chart-dot   { fill: var(--chart-color); }
+.chart-xy .chart-bar   { fill: var(--chart-color); opacity: 0.85; }
+.chart-xy .chart-bar:hover { opacity: 1; }
+
+/* Candlestick — green (up) / red (down) — both via tokens, override via theme if needed. */
+.chart-xy .chart-up   { stroke: var(--color-success, #166534); fill:   var(--color-success, #166534); }
+.chart-xy .chart-down { stroke: var(--color-error,   #b91c1c); fill:   var(--color-error,   #b91c1c); }
+.chart-xy .chart-wick { stroke-width: 1.4; }
+.chart-xy .chart-candle { opacity: 0.92; }
+
+/* Legend */
+.chart-xy .chart-legend {
+  display: flex; flex-wrap: wrap; gap: var(--space-4);
+  margin-top: var(--space-3);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--color-text-secondary);
+}
+.chart-xy .chart-legend-item { display: inline-flex; align-items: center; gap: 5px; }
+.chart-xy .chart-legend-swatch {
+  width: 11px; height: 11px; border-radius: 2px;
+  background: var(--chart-color);
+  display: inline-block;
 }

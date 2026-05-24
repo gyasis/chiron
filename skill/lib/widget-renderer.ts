@@ -797,6 +797,68 @@ registerRenderer('matching-pair', (widget) =>
 
 registerRenderer('cloze', (widget) => renderCloze(widget as ClozeWidget));
 
+// ---------------------------------------------------------------------------
+// Multi-set Match Madness (PRD canonical_shell_and_match_madness §4.10–4.12,
+// 2026-05-14). Universal retrieval-practice anchor — vocab / gender / prep /
+// collocation / conjugation / mixed modes. The widget itself is domain-
+// agnostic; per-language helpers (Italian conjugator) live in widgets/.
+// ---------------------------------------------------------------------------
+import { emitMatchMadness } from './widgets/match-madness.js';
+import { emitSrDeck, emitSrCardCss } from './widgets/sr-card.js';
+
+type MatchMadnessWidget = Extract<WidgetSpec, { type: 'match-madness' }>;
+type LanguageFlashcardDeckWidget = Extract<WidgetSpec, { type: 'language-flashcard-deck' }>;
+
+/** Match Madness — emit HTML + scoped <style> + IIFE <script>. */
+export function renderMatchMadness(spec: MatchMadnessWidget): string {
+  const emitted = emitMatchMadness({
+    lessonId: spec.lessonId,
+    domain: spec.domain,
+    title: spec.title,
+    description: spec.description,
+    defaults: spec.defaults,
+    sets: spec.sets,
+    unlockAccuracyThreshold: spec.unlockAccuracyThreshold,
+    superSetUnlockAfterNSetsCompleted: spec.superSetUnlockAfterNSetsCompleted,
+  });
+  return [
+    `<section class="chiron-widget match-madness-widget" data-widget-type="match-madness">`,
+    `<style>${emitted.css}</style>`,
+    emitted.html,
+    `<script>${emitted.js}</script>`,
+    `</section>`,
+  ].join('\n');
+}
+
+registerRenderer('match-madness', (widget) =>
+  renderMatchMadness(widget as MatchMadnessWidget),
+);
+
+/** Rich language flashcard deck — verb conjugation tables + nouns + idioms. */
+export function renderLanguageFlashcardDeck(spec: LanguageFlashcardDeckWidget): string {
+  // The flip-on-click JS is shared by every deck on the page; emit once per widget
+  // instance (duplicate `forEach` listeners on the same DOM are idempotent enough).
+  const flipJs = `
+    (function () {
+      document.querySelectorAll('[data-widget-type="language-flashcard-deck"] .sr-card').forEach(function (card) {
+        card.addEventListener('click', function () { card.classList.toggle('flipped'); });
+      });
+    })();`;
+  return [
+    `<section class="chiron-widget language-flashcard-deck" data-widget-type="language-flashcard-deck" data-language="${spec.language}">`,
+    `<style>${emitSrCardCss()}</style>`,
+    `<div class="sr-deck">`,
+    emitSrDeck({ verbs: spec.verbs, nouns: spec.nouns, idioms: spec.idioms }),
+    `</div>`,
+    `<script>${flipJs}</script>`,
+    `</section>`,
+  ].join('\n');
+}
+
+registerRenderer('language-flashcard-deck', (widget) =>
+  renderLanguageFlashcardDeck(widget as LanguageFlashcardDeckWidget),
+);
+
 /**
  * Renderer for `audio-tts` widgets (T058, US2 — Italian native-speaker persona).
  *
@@ -2035,8 +2097,13 @@ export function renderTrueFalse(spec: TrueFalseWidget): string {
 export function renderMathjax(spec: MathjaxWidget): string {
   const id = nextWidgetId('mjx');
   const source = spec.source ?? '';
+  // 2026-05-23 fix — wrap source in \[ \] display delimiters so MathJax
+  // actually typesets it. Prior version emitted raw LaTeX → MathJax saw
+  // it as plain text and rendered nothing. Source is escaped only OUTSIDE
+  // the delimiters; LaTeX must remain unescaped INSIDE for MathJax to parse.
+  const safeSource = source.replace(/</g, '&lt;').replace(/>/g, '&gt;');
   return [
-    `<div class="mathjax" id="${id}" data-widget="mathjax">${escapeHtml(source)}</div>`,
+    `<div class="mathjax" id="${id}" data-widget="mathjax">\\[ ${safeSource} \\]</div>`,
     `<script>`,
     `(function(){`,
     `  function typeset(){`,
@@ -2325,4 +2392,442 @@ registerRenderer('reactive-math', (widget) =>
 );
 registerRenderer('true-false', (widget) =>
   renderTrueFalse(widget as TrueFalseWidget),
+);
+
+// ===========================================================================
+// Universal engagement primitives (v1 — added 2026-05-23).
+// Each renderer emits chiron-shell-compatible markup. Control buttons receive
+// both their widget-JS hook class AND the `.btn` / `.btn-primary` style class
+// (close the undocumented chiron-shell contract that bit us in v1 sandbox).
+// ===========================================================================
+
+type GroupChatAnimationWidget = Extract<WidgetSpec, { type: 'group-chat-animation' }>;
+type FlowAnimationWidget = Extract<WidgetSpec, { type: 'flow-animation' }>;
+type GlossaryTooltipsWidget = Extract<WidgetSpec, { type: 'glossary-tooltips' }>;
+type PatternCardsWidget = Extract<WidgetSpec, { type: 'pattern-cards' }>;
+type StepCardsWidget = Extract<WidgetSpec, { type: 'step-cards' }>;
+type FileTreeWidget = Extract<WidgetSpec, { type: 'file-tree' }>;
+type PermissionBadgeWidget = Extract<WidgetSpec, { type: 'permission-badge' }>;
+type LayerToggleWidget = Extract<WidgetSpec, { type: 'layer-toggle' }>;
+type WhyCareCalloutWidget = Extract<WidgetSpec, { type: 'why-care-callout' }>;
+type CodeEnglishTranslationWidget = Extract<WidgetSpec, { type: 'code-english-translation' }>;
+type ChartXyWidget = Extract<WidgetSpec, { type: 'chart-xy' }>;
+
+/** Default avatar color cycle (CSS variable references) — used when a chat
+ *  message doesn't override avatarColorVar. Order: accent → info → warm. */
+const AVATAR_COLOR_VARS = ['--chiron-accent', '--chiron-info', '--chiron-warm-accent', '--chiron-success'];
+
+/** group-chat-animation. Chiron-shell engine drives Next / Skip / Reset. */
+export function renderGroupChatAnimation(spec: GroupChatAnimationWidget): string {
+  const id = spec.id || nextWidgetId('chat');
+  const senderColors = new Map<string, string>();
+  spec.messages.forEach((m) => {
+    if (!senderColors.has(m.sender)) {
+      const fallback = AVATAR_COLOR_VARS[senderColors.size % AVATAR_COLOR_VARS.length];
+      senderColors.set(m.sender, m.avatarColorVar || fallback);
+    }
+  });
+  const msgsHtml = spec.messages
+    .map((m) => {
+      const colorVar = m.avatarColorVar || senderColors.get(m.sender)!;
+      return (
+        `<div class="chat-message" data-sender="${escapeHtml(m.sender)}" style="display:none">` +
+        `<div class="chat-avatar" style="background:var(${escapeHtml(colorVar)})">${escapeHtml(m.avatarChar)}</div>` +
+        `<div class="chat-bubble">` +
+        `<div class="chat-sender">${escapeHtml(m.senderLabel)}</div>` +
+        `<p>${m.body}</p>` +
+        `</div></div>`
+      );
+    })
+    .join('');
+  return (
+    (spec.title ? `<h4>${escapeHtml(spec.title)}</h4>` : '') +
+    (spec.framing ? `<p>${escapeHtml(spec.framing)}</p>` : '') +
+    `<div class="chat-window" id="${id}">` +
+    `<div class="chat-messages">${msgsHtml}</div>` +
+    `<div class="chat-typing" style="display:none">` +
+      `<div class="chat-avatar"></div>` +
+      `<div class="chat-typing-dots"><span></span><span></span><span></span></div>` +
+    `</div>` +
+    `<div class="chat-controls">` +
+      `<button class="btn btn-primary chat-next-btn">Next →</button>` +
+      `<button class="btn chat-all-btn">Skip to end</button>` +
+      `<button class="btn chat-reset-btn">Reset</button>` +
+      `<span class="chat-progress">0 / ${spec.messages.length} messages</span>` +
+    `</div></div>`
+  );
+}
+
+/** flow-animation. Chiron-shell engine consumes the data-steps JSON. */
+export function renderFlowAnimation(spec: FlowAnimationWidget): string {
+  const id = spec.id || nextWidgetId('flow');
+  const actorsHtml = spec.actors
+    .map(
+      (a) =>
+        `<div class="flow-actor" id="flow-${escapeHtml(a.id)}">` +
+        `<div class="flow-actor-icon">${escapeHtml(a.icon ?? '●')}</div>` +
+        `<span>${escapeHtml(a.label)}</span>` +
+        `</div>`,
+    )
+    .join('');
+  const stepsJson = JSON.stringify(
+    spec.steps.map((s) => ({
+      label: s.label,
+      ...(s.highlight ? { highlight: s.highlight } : {}),
+      ...(s.packet ? { packet: true } : {}),
+      ...(s.from ? { from: s.from } : {}),
+      ...(s.to ? { to: s.to } : {}),
+    })),
+  ).replace(/"/g, '&quot;');
+  return (
+    (spec.title ? `<h4>${escapeHtml(spec.title)}</h4>` : '') +
+    (spec.intro ? `<p>${escapeHtml(spec.intro)}</p>` : '') +
+    `<div class="flow-animation" id="${id}" data-steps="${stepsJson}">` +
+    `<div class="flow-actors">${actorsHtml}</div>` +
+    `<div class="flow-packet"></div>` +
+    `<div class="flow-step-label">Press Next to start.</div>` +
+    `<div class="flow-controls">` +
+      `<button class="btn btn-primary flow-next-btn">Next →</button>` +
+      `<button class="btn flow-reset-btn">Reset</button>` +
+      `<span class="flow-progress">Step 0 / ${spec.steps.length}</span>` +
+    `</div></div>`
+  );
+}
+
+/** glossary-tooltips. Emits a small index block + relies on shell's inline
+ *  .term / .term-tooltip pattern. Stage 4 prose can use class="term"
+ *  data-definition="..." inline; this widget provides the catalog. */
+export function renderGlossaryTooltips(spec: GlossaryTooltipsWidget): string {
+  const id = spec.id || nextWidgetId('gloss');
+  const rows = spec.entries
+    .map(
+      (e) =>
+        `<dt><span class="term" data-definition="${escapeHtml(e.definition)}">${escapeHtml(e.term)}</span></dt>` +
+        `<dd>${escapeHtml(e.definition)}</dd>`,
+    )
+    .join('');
+  return (
+    `<aside class="glossary-block" id="${id}">` +
+    `<h4>Glossary</h4>` +
+    `<dl>${rows}</dl>` +
+    `</aside>`
+  );
+}
+
+/** pattern-cards. */
+export function renderPatternCards(spec: PatternCardsWidget): string {
+  const id = spec.id || nextWidgetId('pcards');
+  const cards = spec.cards
+    .map(
+      (c) =>
+        `<div class="pattern-card">` +
+        (c.num ? `<span class="pc-num">${escapeHtml(c.num)}</span>` : '') +
+        `<h4>${escapeHtml(c.title)}</h4>` +
+        `<p class="pc-body">${escapeHtml(c.body)}</p>` +
+        (c.foot ? `<div class="pc-foot">${escapeHtml(c.foot)}</div>` : '') +
+        `</div>`,
+    )
+    .join('');
+  return (
+    (spec.title ? `<h3>${escapeHtml(spec.title)}</h3>` : '') +
+    `<div class="pattern-cards" id="${id}">${cards}</div>`
+  );
+}
+
+/** step-cards. */
+export function renderStepCards(spec: StepCardsWidget): string {
+  const id = spec.id || nextWidgetId('scards');
+  const cards = spec.steps
+    .map(
+      (s) =>
+        `<div class="sc">` +
+        `<div class="sc-num">${s.n}</div>` +
+        `<h5>${escapeHtml(s.label)}</h5>` +
+        `<p>${escapeHtml(s.body)}</p>` +
+        `</div>`,
+    )
+    .join('');
+  return (
+    (spec.title ? `<h3>${escapeHtml(spec.title)}</h3>` : '') +
+    `<div class="step-cards" id="${id}">${cards}</div>`
+  );
+}
+
+/** file-tree. */
+export function renderFileTree(spec: FileTreeWidget): string {
+  const id = spec.id || nextWidgetId('ftree');
+  const lines = spec.lines
+    .map((ln) => {
+      const cls = `ft-line ft-l${ln.depth}${ln.highlight ? ' highlight' : ''}`;
+      return (
+        `<div class="${cls}">` +
+        `<span class="ft-icon">${escapeHtml(ln.icon ?? '📁')}</span>` +
+        `<span class="ft-name">${escapeHtml(ln.name)}</span>` +
+        (ln.tag ? `<span class="ft-tag">${escapeHtml(ln.tag)}</span>` : '') +
+        `</div>`
+      );
+    })
+    .join('');
+  return (
+    (spec.title ? `<h4>${escapeHtml(spec.title)}</h4>` : '') +
+    `<div class="filetree" id="${id}">${lines}</div>`
+  );
+}
+
+/** permission-badge — atomic. */
+export function renderPermissionBadge(spec: PermissionBadgeWidget): string {
+  return `<span class="badge ${escapeHtml(spec.variant)}" id="${escapeHtml(spec.id || nextWidgetId('badge'))}">${escapeHtml(spec.label)}</span>`;
+}
+
+/** layer-toggle. Inline JS-free; relies on chiron-shell's binding on
+ *  .lt-btn → setAttribute('data-axis-show', btn.dataset.show). */
+export function renderLayerToggle(spec: LayerToggleWidget): string {
+  const id = spec.id || nextWidgetId('lt');
+  const buttons = spec.axes
+    .map(
+      (a) =>
+        `<button class="btn lt-btn${a.key === spec.defaultShow ? ' active' : ''}" data-show="${escapeHtml(a.key)}" type="button">${escapeHtml(a.label)}</button>`,
+    )
+    .join('');
+  const panels = spec.axes
+    .map(
+      (a) =>
+        `<div class="lt-axis-${escapeHtml(a.key)}">` +
+        `<b>${escapeHtml(a.title)}</b> — ${escapeHtml(a.body)}` +
+        `</div>`,
+    )
+    .join('');
+  // also add a "both" button
+  const bothBtn = `<button class="btn lt-btn${spec.defaultShow === 'both' ? ' active' : ''}" data-show="both" type="button">Both</button>`;
+  return (
+    `<div class="layer-toggle" id="${id}" data-axis-show="${escapeHtml(spec.defaultShow)}">` +
+    (spec.caption ? `<span class="lt-tag">${escapeHtml(spec.caption)}</span>` : '') +
+    `<div class="lt-buttons">${buttons}${bothBtn}</div>` +
+    panels +
+    `</div>`
+  );
+}
+
+/** why-care-callout. */
+export function renderWhyCareCallout(spec: WhyCareCalloutWidget): string {
+  return (
+    `<div class="why-care" id="${escapeHtml(spec.id || nextWidgetId('whycare'))}">` +
+    `<b>Why you care</b>` +
+    `${escapeHtml(spec.body)}` +
+    `</div>`
+  );
+}
+
+/** code-english-translation. CODE-ONLY. Row-tinted pairing baked in via
+ *  chiron-shell.css :nth-child(6n+N) selectors — no inline color logic. */
+export function renderCodeEnglishTranslation(spec: CodeEnglishTranslationWidget): string {
+  const id = spec.id || nextWidgetId('cet');
+  // Coalesce Zod defaults defensively — callers may pass partial specs
+  // (e.g., test harnesses bypassing schema parse). Matches schema defaults.
+  const language     = spec.language     ?? 'python';
+  const codeLabel    = spec.codeLabel    ?? 'CODE';
+  const englishLabel = spec.englishLabel ?? 'PLAIN ENGLISH';
+  const codeLines = spec.pairs
+    .map((p) => `<div class="tl">${escapeHtml(p.code)}</div>`)
+    .join('');
+  const englishLines = spec.pairs
+    .map((p) => `<div class="tl">${escapeHtml(p.english)}</div>`)
+    .join('');
+  return (
+    `<div class="translation-block" id="${id}" data-language="${escapeHtml(language)}">` +
+    `<div class="translation-code">` +
+      `<span class="translation-label">${escapeHtml(codeLabel)}</span>` +
+      `<div class="translation-lines">${codeLines}</div>` +
+    `</div>` +
+    `<div class="translation-english">` +
+      `<span class="translation-label">${escapeHtml(englishLabel)}</span>` +
+      `<div class="translation-lines">${englishLines}</div>` +
+    `</div>` +
+    `</div>`
+  );
+}
+
+/** chart-xy — SVG line/scatter/bar/candlestick. Universal. No JS dep.
+ *  Auto-scales the data range; pads 5% on each axis; emits axis labels +
+ *  per-series legend. CSS classes (.chart-xy, .chart-axis, .chart-series-N)
+ *  carry theming via chiron-shell.css; renderer never hardcodes colors. */
+export function renderChartXy(spec: ChartXyWidget): string {
+  const id = spec.id || nextWidgetId('chart');
+  // Compute extents across all series
+  let xMin = Infinity, xMax = -Infinity, yMin = Infinity, yMax = -Infinity;
+  for (const s of spec.series) {
+    for (const p of s.points) {
+      if (p.x < xMin) xMin = p.x;
+      if (p.x > xMax) xMax = p.x;
+      const ys = p.ohlc ? [p.ohlc.high, p.ohlc.low] : [p.y];
+      for (const y of ys) {
+        if (y < yMin) yMin = y;
+        if (y > yMax) yMax = y;
+      }
+    }
+  }
+  if (!isFinite(xMin)) { xMin = 0; xMax = 1; yMin = 0; yMax = 1; }
+  if (xMin === xMax) { xMin -= 0.5; xMax += 0.5; }
+  if (yMin === yMax) { yMin -= 0.5; yMax += 0.5; }
+  const xPad = (xMax - xMin) * 0.05;
+  const yPad = (yMax - yMin) * 0.05;
+  xMin -= xPad; xMax += xPad; yMin -= yPad; yMax += yPad;
+
+  // SVG canvas
+  const W = 640, H = 320;
+  const ML = 56, MR = 16, MT = 32, MB = 44;
+  const PW = W - ML - MR, PH = H - MT - MB;
+  const sx = (x: number) => ML + ((x - xMin) / (xMax - xMin)) * PW;
+  const sy = (y: number) => MT + PH - ((y - yMin) / (yMax - yMin)) * PH;
+
+  // axis gridlines (5 each)
+  const gridX: string[] = [];
+  const gridY: string[] = [];
+  for (let i = 0; i <= 4; i++) {
+    const gx = xMin + (i / 4) * (xMax - xMin);
+    const gy = yMin + (i / 4) * (yMax - yMin);
+    gridX.push(`<line class="chart-grid" x1="${sx(gx).toFixed(1)}" y1="${MT}" x2="${sx(gx).toFixed(1)}" y2="${MT + PH}"/>`);
+    gridY.push(`<line class="chart-grid" x1="${ML}" y1="${sy(gy).toFixed(1)}" x2="${ML + PW}" y2="${sy(gy).toFixed(1)}"/>`);
+    // X tick labels go BELOW the plot. Y tick labels go to the LEFT of ML
+    // (in the left margin) — text-anchor=end with x=ML-6 keeps them
+    // outside the plot area so bars never paint over them.
+    gridX.push(`<text class="chart-tick" x="${sx(gx).toFixed(1)}" y="${MT + PH + 14}" text-anchor="middle">${formatNumber(gx)}</text>`);
+    gridY.push(`<text class="chart-tick" x="${ML - 6}" y="${(sy(gy) + 4).toFixed(1)}" text-anchor="end">${formatNumber(gy)}</text>`);
+  }
+
+  // series rendering
+  const seriesEls: string[] = [];
+  const legendItems: string[] = [];
+  spec.series.forEach((s, si) => {
+    const colorAttr = s.color ? `style="--chart-color:${escapeHtml(s.color)}"` : '';
+    legendItems.push(
+      `<span class="chart-legend-item chart-series-${si}" ${colorAttr}>` +
+      `<span class="chart-legend-swatch"></span>${escapeHtml(s.label)}` +
+      `</span>`
+    );
+    if (spec.variant === 'line') {
+      const path = s.points
+        .map((p, i) => `${i === 0 ? 'M' : 'L'}${sx(p.x).toFixed(1)},${sy(p.y).toFixed(1)}`)
+        .join(' ');
+      seriesEls.push(`<path class="chart-line chart-series-${si}" d="${path}" ${colorAttr}/>`);
+      seriesEls.push(
+        s.points
+          .map(p => `<circle class="chart-dot chart-series-${si}" cx="${sx(p.x).toFixed(1)}" cy="${sy(p.y).toFixed(1)}" r="2.5" ${colorAttr}><title>(${p.x}, ${p.y})</title></circle>`)
+          .join('')
+      );
+    } else if (spec.variant === 'scatter') {
+      seriesEls.push(
+        s.points
+          .map(p => `<circle class="chart-dot chart-series-${si}" cx="${sx(p.x).toFixed(1)}" cy="${sy(p.y).toFixed(1)}" r="3.5" ${colorAttr}><title>(${p.x}, ${p.y})</title></circle>`)
+          .join('')
+      );
+    } else if (spec.variant === 'bar') {
+      // Bars baseline is the plot-area FLOOR (MT+PH), not sy(yMin) which is
+      // padded slightly above. This keeps bars inside the plot frame.
+      // Also clamp height to non-negative for negative values.
+      const baseY = MT + PH;
+      const barW = Math.max(2, (PW / s.points.length) * 0.65);
+      seriesEls.push(
+        s.points
+          .map(p => {
+            const yTop = Math.max(MT, Math.min(baseY, sy(p.y)));
+            const h = Math.max(0, baseY - yTop);
+            return `<rect class="chart-bar chart-series-${si}" x="${(sx(p.x) - barW / 2).toFixed(1)}" y="${yTop.toFixed(1)}" width="${barW.toFixed(1)}" height="${h.toFixed(1)}" ${colorAttr}><title>(${p.x}, ${p.y})</title></rect>`;
+          })
+          .join('')
+      );
+    } else if (spec.variant === 'candlestick') {
+      seriesEls.push(
+        s.points
+          .map((p) => {
+            const ohlc = p.ohlc;
+            if (!ohlc) return '';
+            const cx = sx(p.x);
+            const bw = Math.max(3, PW / Math.max(s.points.length, 1) * 0.6);
+            const top = Math.min(sy(ohlc.open), sy(ohlc.close));
+            const bot = Math.max(sy(ohlc.open), sy(ohlc.close));
+            const dir = ohlc.close >= ohlc.open ? 'up' : 'down';
+            return (
+              `<line class="chart-wick chart-${dir}" x1="${cx.toFixed(1)}" y1="${sy(ohlc.high).toFixed(1)}" x2="${cx.toFixed(1)}" y2="${sy(ohlc.low).toFixed(1)}"/>` +
+              `<rect class="chart-candle chart-${dir}" x="${(cx - bw / 2).toFixed(1)}" y="${top.toFixed(1)}" width="${bw.toFixed(1)}" height="${Math.max(1, bot - top).toFixed(1)}"><title>O:${ohlc.open} H:${ohlc.high} L:${ohlc.low} C:${ohlc.close}</title></rect>`
+            );
+          })
+          .join('')
+      );
+    }
+  });
+
+  // annotations (text labels)
+  const annot = (spec.annotations ?? [])
+    .map(a => `<text class="chart-annot" x="${sx(a.x).toFixed(1)}" y="${sy(a.y).toFixed(1)}">${escapeHtml(a.text)}</text>`)
+    .join('');
+
+  const xLabel = spec.xLabel ? `<text class="chart-axis-label" x="${ML + PW / 2}" y="${H - 6}" text-anchor="middle">${escapeHtml(spec.xLabel)}</text>` : '';
+  const yLabel = spec.yLabel ? `<text class="chart-axis-label" x="${14}" y="${MT + PH / 2}" text-anchor="middle" transform="rotate(-90 14 ${MT + PH / 2})">${escapeHtml(spec.yLabel)}</text>` : '';
+
+  // 2026-05-23 — clip series content to the plot area so bars/lines/dots
+  // can't overshoot into margins (where tick labels live). The wide bars
+  // bug at line ~2698 was a real regression visible in the quant-trading
+  // Sharpe chart. Series and annotations both go inside the clip group.
+  const clipId = `${id}-clip`;
+  return (
+    `<figure class="chart-xy" id="${id}" data-variant="${escapeHtml(spec.variant)}">` +
+    (spec.title ? `<figcaption class="chart-title">${escapeHtml(spec.title)}</figcaption>` : '') +
+    `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid meet" role="img" aria-label="${escapeHtml(spec.title ?? spec.variant + ' chart')}">` +
+      // Plot area background + border + clipPath
+      `<defs><clipPath id="${clipId}"><rect x="${ML}" y="${MT}" width="${PW}" height="${PH}"/></clipPath></defs>` +
+      `<rect class="chart-plot-bg" x="${ML}" y="${MT}" width="${PW}" height="${PH}"/>` +
+      gridX.join('') + gridY.join('') +
+      // Clipped group — bars/lines/dots/candles/annotations all confined here
+      `<g clip-path="url(#${clipId})">` +
+        seriesEls.join('') +
+        annot +
+      `</g>` +
+      `<line class="chart-axis" x1="${ML}" y1="${MT + PH}" x2="${ML + PW}" y2="${MT + PH}"/>` +
+      `<line class="chart-axis" x1="${ML}" y1="${MT}" x2="${ML}" y2="${MT + PH}"/>` +
+      xLabel + yLabel +
+    `</svg>` +
+    `<div class="chart-legend">${legendItems.join('')}</div>` +
+    `</figure>`
+  );
+}
+
+function formatNumber(n: number): string {
+  if (Math.abs(n) >= 1000 || (Math.abs(n) < 0.01 && n !== 0)) return n.toExponential(1);
+  return Number.isInteger(n) ? n.toFixed(0) : n.toFixed(2);
+}
+
+// Register all 10 new renderers (overrides Wave-2 throwing stubs)
+registerRenderer('group-chat-animation', (w) =>
+  renderGroupChatAnimation(w as GroupChatAnimationWidget),
+);
+registerRenderer('flow-animation', (w) =>
+  renderFlowAnimation(w as FlowAnimationWidget),
+);
+registerRenderer('glossary-tooltips', (w) =>
+  renderGlossaryTooltips(w as GlossaryTooltipsWidget),
+);
+registerRenderer('pattern-cards', (w) =>
+  renderPatternCards(w as PatternCardsWidget),
+);
+registerRenderer('step-cards', (w) =>
+  renderStepCards(w as StepCardsWidget),
+);
+registerRenderer('file-tree', (w) =>
+  renderFileTree(w as FileTreeWidget),
+);
+registerRenderer('permission-badge', (w) =>
+  renderPermissionBadge(w as PermissionBadgeWidget),
+);
+registerRenderer('layer-toggle', (w) =>
+  renderLayerToggle(w as LayerToggleWidget),
+);
+registerRenderer('why-care-callout', (w) =>
+  renderWhyCareCallout(w as WhyCareCalloutWidget),
+);
+registerRenderer('code-english-translation', (w) =>
+  renderCodeEnglishTranslation(w as CodeEnglishTranslationWidget),
+);
+registerRenderer('chart-xy', (w) =>
+  renderChartXy(w as ChartXyWidget),
 );

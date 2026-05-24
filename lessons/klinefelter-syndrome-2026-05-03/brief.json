@@ -1,0 +1,26 @@
+{
+  "lesson_id": "klinefelter-syndrome-2026-05-03",
+  "domain": "medicine",
+  "sub_mode": "amboss",
+  "mode": "A",
+  "topic": "Klinefelter syndrome",
+  "source": null,
+  "grounding": "parent-LLM-training",
+  "deep_research": false,
+  "generated": "2026-05-03",
+  "learner": "gyasisutton",
+  "objectives": [
+    "Recognize 47,XXY karyotype as the most common sex chromosome aneuploidy in males",
+    "Identify classic clinical pentad: tall stature, gynecomastia, small firm testes, infertility, learning/behavioral issues",
+    "Order and interpret the diagnostic workup: karyotype, FSH/LH (high), total testosterone (low), estradiol",
+    "Manage with testosterone replacement timed to puberty, fertility counseling (TESE+ICSI), and surveillance for comorbidities",
+    "Differentiate from Kallmann syndrome, androgen insensitivity, primary testicular failure of other etiologies"
+  ],
+  "high_yield_facts": [
+    "Most common sex chromosome aneuploidy in males (~1:600 live male births)",
+    "Hypergonadotropic hypogonadism (primary testicular failure)",
+    "Diagnosis confirmed by karyotype, NOT by hormone levels alone",
+    "Increased risk: breast cancer (20-50x baseline male), mediastinal germ cell tumors, osteoporosis, T2DM, venous thromboembolism",
+    "Most cases due to maternal meiotic nondisjunction; advanced maternal age is a risk factor"
+  ]
+}

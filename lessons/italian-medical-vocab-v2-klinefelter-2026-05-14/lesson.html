@@ -1,0 +1,1708 @@
+<!DOCTYPE html>
+<html lang="it" data-theme="clinical" data-layout="l5" data-view="lesson">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Chiron · Italiano in ospedale (v2 · Klinefelter style)</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,700;12..96,800&family=Source+Serif+4:ital,wght@0,400;0,600&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+
+  <link rel="stylesheet" href="themes/_tokens.css" />
+  <link rel="stylesheet" href="themes/midnight.css" />
+  <link rel="stylesheet" href="themes/warm-paper.css" />
+  <link rel="stylesheet" href="themes/clinical.css" />
+  <link rel="stylesheet" href="themes/linguistic.css" />
+  <link rel="stylesheet" href="themes/ocean.css" />
+
+  <link rel="stylesheet" href="layouts/l1-lms.css" />
+  <link rel="stylesheet" href="layouts/l2-editorial.css" />
+  <link rel="stylesheet" href="layouts/l5-textbook.css" />
+
+  <script>
+    (function () {
+      const validT = ['linguistic','midnight','warm-paper','clinical','ocean'];
+      const validL = ['l1','l2','l5'];
+      const p = new URLSearchParams(location.search);
+      const t = p.get('theme'); const l = p.get('layout');
+      const storedT = localStorage.getItem('chiron-theme');
+      const storedL = localStorage.getItem('chiron-layout');
+      const theme = validT.includes(t) ? t : (validT.includes(storedT) ? storedT : 'clinical');
+      const layout = validL.includes(l) ? l : (validL.includes(storedL) ? storedL : 'l5');
+      document.documentElement.setAttribute('data-theme', theme);
+      document.documentElement.setAttribute('data-layout', layout);
+      if (t) localStorage.setItem('chiron-theme', t);
+      if (l) localStorage.setItem('chiron-layout', l);
+    })();
+  </script>
+
+  <style>
+    /* === Shell — 240px sidebar + main, per L5 Klinefelter contract === */
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; }
+    body {
+      display: grid; grid-template-columns: 240px 1fr; min-height: 100vh;
+      background: var(--chiron-bg); color: var(--chiron-fg);
+      font-family: var(--chiron-font-body); font-size: 16px; line-height: 1.65;
+    }
+    aside.side {
+      background: var(--chiron-surface); border-right: 1px solid var(--chiron-border);
+      padding: var(--chiron-space-6) var(--chiron-space-5);
+      overflow-y: auto; height: 100vh; position: sticky; top: 0;
+    }
+    .side .brand { font-family: var(--chiron-font-heading); font-weight: 700; font-size: 1.05rem; color: var(--chiron-accent); margin-bottom: var(--chiron-space-2); }
+    .side .brand .dot { color: var(--chiron-warm-accent); }
+    .side .sub { font-size: 0.78rem; color: var(--chiron-muted); margin-bottom: var(--chiron-space-6); line-height: 1.4; }
+    .side .toc-header { font-family: var(--chiron-font-mono, monospace); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--chiron-muted); margin: var(--chiron-space-6) 0 var(--chiron-space-3); }
+    .side .toc-link { display: flex; gap: var(--chiron-space-2); padding: var(--chiron-space-2) var(--chiron-space-3); border-radius: var(--chiron-radius-sm); color: var(--chiron-fg-secondary); text-decoration: none; font-size: 0.85rem; line-height: 1.35; margin-bottom: 2px; }
+    .side .toc-link:hover { background: var(--chiron-elevated); color: var(--chiron-fg); }
+    .side .toc-link.active { background: var(--chiron-accent-light); color: var(--chiron-accent); border-left: 3px solid var(--chiron-accent); padding-left: calc(var(--chiron-space-3) - 3px); }
+    .side .toc-num { font-family: var(--chiron-font-mono, monospace); color: var(--chiron-muted); flex-shrink: 0; font-size: 0.8rem; }
+    .side .view-picker { display: flex; gap: 4px; flex-wrap: wrap; margin-top: var(--chiron-space-3); }
+    .side .view-picker button { font: inherit; font-size: 11px; padding: 5px 9px; border-radius: var(--chiron-radius-sm); background: var(--chiron-elevated); color: var(--chiron-fg-secondary); border: 1px solid var(--chiron-border); cursor: pointer; }
+    .side .view-picker button[aria-pressed="true"] { background: var(--chiron-accent); color: var(--chiron-surface); border-color: var(--chiron-accent); }
+    .side .theme-picker, .side .layout-picker { display: flex; gap: 4px; flex-wrap: wrap; margin-top: var(--chiron-space-2); }
+    .side .theme-picker button, .side .layout-picker button { font: inherit; font-size: 10px; padding: 3px 7px; border-radius: var(--chiron-radius-sm); background: var(--chiron-elevated); color: var(--chiron-fg-secondary); border: 1px solid var(--chiron-border); cursor: pointer; }
+    .side .theme-picker button[aria-pressed="true"], .side .layout-picker button[aria-pressed="true"] { background: var(--chiron-accent); color: var(--chiron-surface); border-color: var(--chiron-accent); }
+
+    main.main { overflow-y: auto; height: 100vh; }
+
+    /* === Chapter typography === */
+    section.chapter { max-width: 1500px; margin: 0 auto; padding: 3rem 3rem 5rem; min-height: auto; }
+    section.chapter > .ch-num { font-family: var(--chiron-font-mono, monospace); text-transform: uppercase; letter-spacing: 0.1em; color: var(--chiron-muted); font-size: 0.75rem; }
+    section.chapter > h1 { font-family: var(--chiron-font-heading); font-size: 2.1rem; line-height: 1.2; margin: var(--chiron-space-2) 0 var(--chiron-space-4); color: var(--chiron-fg); max-width: 75ch; }
+    section.chapter > .objective { font-style: italic; color: var(--chiron-fg-secondary); border-left: 3px solid var(--chiron-accent); padding-left: var(--chiron-space-4); margin-bottom: var(--chiron-space-6); max-width: 75ch; }
+    section.chapter > p { max-width: 75ch; margin: var(--chiron-space-4) 0; }
+    section.chapter > p code { background: var(--chiron-elevated); padding: 2px 6px; border-radius: var(--chiron-radius-sm); font-family: var(--chiron-font-mono, monospace); font-size: 0.88em; }
+    section.chapter > table { width: 100%; max-width: 75ch; border-collapse: collapse; margin: var(--chiron-space-5) 0; clear: both; }
+    section.chapter > table td { padding: var(--chiron-space-2) var(--chiron-space-3); border-bottom: 1px dashed var(--chiron-divider); font-size: 0.92rem; }
+    section.chapter > table td:first-child { color: var(--chiron-accent); font-family: var(--chiron-font-heading); font-weight: 600; font-style: italic; }
+    section.chapter > table td:last-child { color: var(--chiron-fg-secondary); font-family: var(--chiron-font-mono, monospace); font-size: 0.78rem; text-align: right; }
+    section.chapter > table td:nth-child(2) { color: var(--chiron-fg); }
+
+    /* Tufte-style margin notes — float right at ≥1200px */
+    @media (min-width: 1200px) {
+      section.chapter > .hy,
+      section.chapter > .pearl,
+      section.chapter > .mnemonic {
+        float: right; clear: right; width: 280px;
+        margin: 0 0 var(--chiron-space-4) var(--chiron-space-6);
+        font-size: 0.86rem; line-height: 1.5;
+      }
+    }
+    .hy, .pearl, .mnemonic {
+      background: var(--chiron-elevated);
+      border-left: 3px solid var(--chiron-accent);
+      border-radius: var(--chiron-radius-sm);
+      padding: var(--chiron-space-4);
+      margin: var(--chiron-space-4) 0;
+    }
+    .pearl { border-left-color: var(--chiron-warm-accent); }
+    .mnemonic { border-left-color: var(--chiron-accent); background: var(--chiron-surface); }
+    .hy-title, .pearl-title, .mnemonic-title {
+      font-family: var(--chiron-font-mono, monospace); font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.08em;
+      color: var(--chiron-muted); margin-bottom: var(--chiron-space-2);
+    }
+    .hy ul { margin: 0; padding-left: var(--chiron-space-5); }
+    .hy li { margin: var(--chiron-space-2) 0; }
+
+    /* Mermaid wrap */
+    .mermaid-wrap { background: var(--chiron-surface); border: 1px solid var(--chiron-border); border-radius: var(--chiron-radius-md); padding: var(--chiron-space-5); margin: var(--chiron-space-5) 0; max-width: 75ch; clear: both; overflow-x: auto; }
+    .mermaid { font-family: var(--chiron-font-mono, monospace); font-size: 0.85rem; color: var(--chiron-fg-secondary); white-space: pre; }
+
+    /* Deck cleanup — widget surface */
+    .deck { clear: both; }
+
+    /* View switching — hide non-active views */
+    body[data-view="quizzes"] section.chapter:not(#ch6) { display: none; }
+    body[data-view="flashcards"] section.chapter:not(#ch7) { display: none; }
+
+    /* footer */
+    footer.lesson-footer { padding: var(--chiron-space-5) 3rem; color: var(--chiron-muted); font-size: 0.78rem; border-top: 1px solid var(--chiron-divider); max-width: 1500px; margin: 0 auto; }
+    footer code { background: var(--chiron-elevated); padding: 2px 5px; border-radius: 3px; font-size: 0.85em; font-family: var(--chiron-font-mono, monospace); }
+
+    /* Mobile: sidebar collapses to top strip */
+    @media (max-width: 880px) {
+      body { grid-template-columns: 1fr; }
+      aside.side { position: relative; height: auto; border-right: none; border-bottom: 1px solid var(--chiron-border); padding: var(--chiron-space-4) var(--chiron-space-5); }
+      .side .brand { display: inline-block; margin-right: var(--chiron-space-4); margin-bottom: 0; }
+      section.chapter { padding: 2rem 1.25rem 4rem; }
+    }
+
+
+      /* ---- SR cards (rich, multi-tense back) ---- */
+      .sr-card[data-card-type] {
+        min-height: 150px;
+        padding: var(--chiron-space-4);
+        display: flex; align-items: stretch; justify-content: center; text-align: center;
+        overflow: hidden;
+        position: relative;
+      }
+      .sr-card[data-card-type] .front {
+        display: flex; align-items: center; justify-content: center; width: 100%;
+        font-size: 1.15em; color: var(--chiron-accent); font-weight: 700;
+        line-height: 1.3;
+      }
+      .sr-card[data-card-type] .back {
+        text-align: left;
+        width: 100%;
+        display: none;
+        flex-direction: column;
+        gap: var(--chiron-space-2);
+      }
+      .sr-card.flipped[data-card-type] .front { display: none; }
+      .sr-card.flipped[data-card-type] .back { display: flex; }
+      .sr-card.flipped[data-card-type='verb'],
+      .sr-card.flipped[data-card-type='noun'] {
+        min-height: 260px;
+      }
+    
+      .sr-back-head {
+        display: flex; align-items: center; justify-content: space-between;
+        gap: var(--chiron-space-2);
+        padding-bottom: var(--chiron-space-2);
+        border-bottom: 1px dashed var(--chiron-divider);
+        margin-bottom: var(--chiron-space-2);
+      }
+      .sr-back-gloss { color: var(--chiron-fg); font-family: var(--chiron-font-heading); font-size: 0.92em; font-weight: 700; line-height: 1.3; }
+      .sr-back-tag {
+        font-family: var(--chiron-font-mono, monospace);
+        font-size: 0.65em; letter-spacing: 0.06em; text-transform: uppercase;
+        padding: 2px 6px; border-radius: var(--chiron-radius-sm);
+        background: var(--chiron-elevated); color: var(--chiron-muted);
+        flex-shrink: 0;
+      }
+      .sr-back-tag.sr-article {
+        background: var(--chiron-accent-light); color: var(--chiron-accent);
+        font-weight: 700; font-size: 0.78em; text-transform: none; letter-spacing: 0;
+      }
+      .sr-back-full { margin: 0; font-size: 0.86em; color: var(--chiron-fg-secondary); }
+      .sr-back-full .sr-it { color: var(--chiron-fg); font-style: italic; }
+      .sr-back-plural,
+      .sr-back-pair,
+      .sr-back-note,
+      .sr-back-literal { margin: 0; font-size: 0.78em; color: var(--chiron-fg-secondary); line-height: 1.45; }
+      .sr-back-pair em { color: var(--chiron-accent); font-style: italic; }
+      .sr-back-literal em { color: var(--chiron-fg); }
+    
+      .sr-conj-table {
+        width: 100%; border-collapse: collapse;
+        font-size: 0.78em;
+        font-family: var(--chiron-font-body);
+      }
+      .sr-conj-table .sr-tense-label {
+        text-align: left; padding: var(--chiron-space-1) var(--chiron-space-2) var(--chiron-space-1) 0;
+        display: flex; flex-direction: column; gap: 1px;
+        white-space: nowrap;
+        vertical-align: top;
+      }
+      .sr-conj-table .sr-tense-it {
+        color: var(--chiron-accent); font-weight: 600;
+        font-family: var(--chiron-font-heading);
+        font-size: 0.95em; letter-spacing: 0.01em;
+      }
+      .sr-conj-table .sr-tense-aspect {
+        color: var(--chiron-muted); font-weight: 400;
+        font-family: var(--chiron-font-mono, monospace);
+        font-size: 0.7em; text-transform: lowercase; letter-spacing: 0.06em;
+      }
+      .sr-conj-table .sr-form {
+        text-align: left; padding: var(--chiron-space-1) var(--chiron-space-2);
+        color: var(--chiron-fg); font-family: var(--chiron-font-heading);
+        font-weight: 700;
+      }
+      .sr-conj-table .sr-tense-gloss {
+        text-align: right; padding: var(--chiron-space-1) 0;
+        color: var(--chiron-fg-secondary); font-style: italic;
+        font-size: 0.95em;
+      }
+      .sr-conj-table tbody tr + tr th,
+      .sr-conj-table tbody tr + tr td { border-top: 1px dotted var(--chiron-divider); }
+
+      /* ========================= Match Madness (multi-set) ========================= */
+      .mm-section { margin: var(--chiron-space-6) 0 var(--chiron-space-8); }
+      .mm-intro {
+        color: var(--chiron-fg-secondary);
+        font-size: 1rem;
+        line-height: 1.65;
+        margin: 0 0 var(--chiron-space-6);
+        max-width: 720px;
+      }
+    
+      .mm-sets-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+        gap: var(--chiron-space-5);
+      }
+    
+      .mm-set-card {
+        background: var(--chiron-surface);
+        border: 1px solid var(--chiron-border);
+        border-radius: var(--chiron-radius-md);
+        padding: var(--chiron-space-6);
+        display: flex; flex-direction: column; gap: var(--chiron-space-4);
+        transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+        min-height: 220px;
+      }
+      .mm-set-card:hover { transform: translateY(-2px); box-shadow: var(--chiron-shadow-md); border-color: var(--chiron-accent); }
+      .mm-set-card[data-mode="conjugation"] { border-left: 3px solid var(--chiron-warm-accent); }
+      .mm-set-card[data-mode="mixed"] { border-left: 3px solid var(--chiron-accent); background: linear-gradient(135deg, var(--chiron-surface), var(--chiron-elevated)); }
+    
+      .mm-set-card-header { display: flex; justify-content: space-between; align-items: center; font-size: 11px; gap: var(--chiron-space-2); }
+      .mm-set-num { font-family: var(--chiron-font-mono, monospace); color: var(--chiron-muted); letter-spacing: 0.1em; text-transform: uppercase; font-size: 11px; font-weight: 600; }
+      .mm-set-mode { font-family: var(--chiron-font-mono, monospace); color: var(--chiron-accent); font-size: 10px; padding: 3px 8px; background: var(--chiron-accent-light); border-radius: var(--chiron-radius-sm); letter-spacing: 0.04em; }
+      .mm-set-title { font-family: var(--chiron-font-heading); font-size: 1.2rem; line-height: 1.25; margin: 0; color: var(--chiron-fg); }
+      .mm-set-subtitle { color: var(--chiron-fg-secondary); font-size: 0.88rem; line-height: 1.5; margin: 0; font-style: italic; }
+      .mm-set-meta { display: flex; gap: var(--chiron-space-4); font-size: 0.85rem; color: var(--chiron-fg-secondary); padding-top: var(--chiron-space-1, 4px); }
+      .mm-set-meta strong { color: var(--chiron-fg); }
+      .mm-set-mastery { display: flex; flex-wrap: wrap; gap: var(--chiron-space-3); font-size: 0.78rem; color: var(--chiron-muted); padding: var(--chiron-space-3) 0 0; border-top: 1px dashed var(--chiron-divider); margin-top: auto; }
+      .mm-mastery-pct strong { color: var(--chiron-accent); }
+      .mm-mastery-weak strong { color: var(--chiron-warm-accent); }
+      .mm-set-play.primary {
+        background: var(--chiron-accent); color: var(--chiron-surface);
+        border: none; padding: var(--chiron-space-3) var(--chiron-space-5); border-radius: var(--chiron-radius-sm);
+        cursor: pointer; font-weight: 600; font-size: 0.92rem;
+        align-self: flex-start;
+        margin-top: var(--chiron-space-2);
+      }
+      .mm-set-play.primary:hover { background: var(--chiron-accent-hover, var(--chiron-accent)); transform: translateY(-1px); }
+    
+      /* Play surface = full-screen overlay. [hidden] MUST win over display:flex. */
+      .mm-play-surface[hidden] { display: none !important; }
+      .mm-result[hidden] { display: none !important; }
+      .mm-play-surface {
+        position: fixed; inset: 0; z-index: 1000;
+        background: var(--chiron-bg);
+        display: flex; align-items: center; justify-content: center;
+        padding: var(--chiron-space-6);
+        overflow: auto;
+      }
+      .mm-close {
+        position: absolute; top: var(--chiron-space-4); right: var(--chiron-space-4);
+        background: var(--chiron-surface); border: 1px solid var(--chiron-border);
+        width: 36px; height: 36px; border-radius: 50%;
+        font-size: 1.2rem; cursor: pointer; color: var(--chiron-fg);
+      }
+      .mm-close:hover { background: var(--chiron-elevated); }
+    
+      .mm-container {
+        --mm-pulse-ms: 2000ms;
+        --mm-pulse-strength: 0;
+        width: 100%; max-width: 720px;
+        background: var(--chiron-surface);
+        border: 1px solid var(--chiron-border);
+        border-radius: var(--chiron-radius-lg);
+        padding: var(--chiron-space-6);
+        box-shadow: var(--chiron-shadow-lg);
+        position: relative; overflow: hidden;
+      }
+      .mm-container::before {
+        content: ''; position: absolute; inset: 0; pointer-events: none;
+        background: var(--chiron-accent);
+        opacity: var(--mm-pulse-strength);
+        animation: mm-pulse var(--mm-pulse-ms) ease-in-out infinite;
+      }
+      @keyframes mm-pulse { 0%, 100% { opacity: var(--mm-pulse-strength); } 50% { opacity: calc(var(--mm-pulse-strength) * 1.8); } }
+    
+      .mm-header { display: flex; justify-content: space-between; align-items: center; gap: var(--chiron-space-4); margin-bottom: var(--chiron-space-4); }
+      .mm-set-label { font-size: 0.9rem; color: var(--chiron-fg-secondary); }
+      .mm-timer { font-family: var(--chiron-font-mono, monospace); font-size: 2rem; font-weight: 700; color: var(--chiron-accent); }
+      .mm-stats { display: flex; gap: var(--chiron-space-3); font-size: 0.85rem; }
+      .mm-stats .stat strong { display: block; font-size: 1.4rem; color: var(--chiron-fg); }
+      .mm-combo strong { color: var(--chiron-warm-accent); }
+      .mm-round-label { text-align: center; font-size: 0.85rem; color: var(--chiron-muted); margin-bottom: var(--chiron-space-3); }
+    
+      .mm-grid {
+        display: grid; grid-template-columns: 1fr 1fr;
+        gap: var(--chiron-space-3); margin: var(--chiron-space-4) 0;
+      }
+      .mm-tile {
+        background: var(--chiron-elevated);
+        color: var(--chiron-fg);
+        border: 2px solid var(--chiron-border);
+        border-radius: var(--chiron-radius-md);
+        padding: var(--chiron-space-4) var(--chiron-space-3);
+        font: inherit; font-size: 0.95rem; font-weight: 500;
+        cursor: pointer; min-height: 56px;
+        transition: transform 0.12s ease, border-color 0.12s ease, background 0.12s ease;
+      }
+      .mm-tile:hover:not([data-state="empty"]):not([data-state="correct"]) { border-color: var(--chiron-accent); transform: translateY(-1px); }
+      .mm-tile[data-state="selected"] { border-color: var(--chiron-accent); background: var(--chiron-accent-light); color: var(--chiron-fg); }
+      .mm-tile[data-state="correct"] { border-color: var(--chiron-success, var(--chiron-accent)); background: var(--chiron-success-bg, var(--chiron-accent-light)); opacity: 0.55; cursor: default; }
+      .mm-tile[data-state="wrong"] { border-color: var(--chiron-warm-accent); background: var(--chiron-warm-accent); color: var(--chiron-surface); animation: mm-shake 0.4s; }
+      .mm-tile[data-state="empty"] { background: transparent; border-style: dashed; cursor: default; }
+      @keyframes mm-shake { 0%,100% { transform: translateX(0);} 25%{transform:translateX(-4px);} 75%{transform:translateX(4px);} }
+    
+      .mm-keyboard-hint { font-size: 0.78rem; color: var(--chiron-muted); text-align: center; margin: var(--chiron-space-3) 0; }
+      .mm-keyboard-hint code { background: var(--chiron-elevated); padding: 2px 6px; border-radius: var(--chiron-radius-sm); font-family: var(--chiron-font-mono, monospace); }
+      .mm-controls { display: flex; gap: var(--chiron-space-2); justify-content: center; flex-wrap: wrap; }
+      .mm-controls button { font: inherit; padding: var(--chiron-space-2) var(--chiron-space-4); border-radius: var(--chiron-radius-sm); border: 1px solid var(--chiron-border); background: var(--chiron-surface); color: var(--chiron-fg); cursor: pointer; }
+      .mm-controls button.primary { background: var(--chiron-accent); color: var(--chiron-surface); border-color: var(--chiron-accent); }
+      .mm-controls button:hover { background: var(--chiron-elevated); }
+    
+      .mm-result { margin-top: var(--chiron-space-5); padding: var(--chiron-space-4); background: var(--chiron-elevated); border-radius: var(--chiron-radius-md); border-left: 3px solid var(--chiron-accent); }
+      .mm-result h4 { margin: 0 0 var(--chiron-space-2); color: var(--chiron-accent); font-family: var(--chiron-font-heading); }
+      .mm-result p { margin: var(--chiron-space-2) 0; color: var(--chiron-fg-secondary); }
+      .mm-result strong { color: var(--chiron-fg); }
+  </style>
+</head>
+<body>
+  <aside class="side">
+    <div class="brand">Chiron<span class="dot">·</span></div>
+    <div class="sub">Italiano in ospedale<br>v2 · Klinefelter test-drive</div>
+
+    <div class="toc-header">View</div>
+    <div class="view-picker" role="group" aria-label="View">
+      <button data-set-view="lesson">Lesson</button>
+      <button data-set-view="quizzes">Quizzes</button>
+      <button data-set-view="flashcards">Flashcards</button>
+    </div>
+
+    <div class="toc-header">Chapters</div>
+<a class="toc-link" href="#ch1" data-chapter-target="ch1"><span class="toc-num">1.</span><span class="toc-title">Inquadramento</span></a>
+<a class="toc-link" href="#ch2" data-chapter-target="ch2"><span class="toc-num">2.</span><span class="toc-title">Parti del corpo</span></a>
+<a class="toc-link" href="#ch3" data-chapter-target="ch3"><span class="toc-num">3.</span><span class="toc-title">I verbi del medico</span></a>
+<a class="toc-link" href="#ch4" data-chapter-target="ch4"><span class="toc-num">4.</span><span class="toc-title">Anamnesi</span></a>
+<a class="toc-link" href="#ch5" data-chapter-target="ch5"><span class="toc-num">5.</span><span class="toc-title">Frasi salvavita</span></a>
+<a class="toc-link" href="#ch6" data-chapter-target="ch6"><span class="toc-num">6.</span><span class="toc-title">Match Madness</span></a>
+<a class="toc-link" href="#ch7" data-chapter-target="ch7"><span class="toc-num">7.</span><span class="toc-title">Carte SR</span></a>
+<a class="toc-link" href="#ch8" data-chapter-target="ch8"><span class="toc-num">8.</span><span class="toc-title">Chiusura</span></a>
+
+    <div class="toc-header">Theme</div>
+    <div class="theme-picker">
+      <button data-set-theme="clinical">clinical</button>
+      <button data-set-theme="linguistic">linguistic</button>
+      <button data-set-theme="warm-paper">warm</button>
+      <button data-set-theme="midnight">midnight</button>
+      <button data-set-theme="ocean">ocean</button>
+    </div>
+
+    <div class="toc-header">Layout</div>
+    <div class="layout-picker">
+      <button data-set-layout="l1">l1 · LMS</button>
+      <button data-set-layout="l2">l2 · editorial</button>
+      <button data-set-layout="l5">l5 · textbook</button>
+    </div>
+  </aside>
+
+  <main class="main">
+
+    <section class="chapter" id="ch1" data-chapter="1">
+      <div class="ch-num">Chapter 1</div>
+      <h1>Inquadramento — Italian in the Italian ward</h1>
+      <div class="objective"><strong>Objective.</strong> Understand the register (formal Lei) and the role you will play (foreign clinician taking histories in Italian).</div>
+<p><strong>You are a foreign-trained doctor on your first ward shift in Bologna.</strong> A patient walks in: <em>«Dottore, non mi sento bene»</em>. The clinical workflow you already know — history, exam, plan, discharge — has to happen in Italian, in the formal register, with a vocabulary you may have only studied in textbooks. This lesson focuses on the words and structures you will use every shift.</p>
+<p>The lesson is built around <strong>active retrieval</strong>, not vocabulary lists. After reading each block, the matching Match Madness set and SR flashcard deck will drill the same items under time pressure. Per-pair latency is logged in your browser — words you fumble come back next session.</p>
+<aside class="hy"><div class="hy-title">High yield</div><ul><li>Always use <strong>Lei</strong> with patients, never <em>tu</em>. Even with the parents of pediatric patients.</li><li>Italian conjugates the verb to the subject; you almost never say the subject pronoun out loud (<em>(io) prescrivo</em>, <em>(lei) si distenda</em>).</li><li>14 clinician verbs + 21 body parts + 10 phrases will carry you through 80% of routine encounters.</li></ul></aside>
+    </section>
+
+    <section class="chapter" id="ch2" data-chapter="2">
+      <div class="ch-num">Chapter 2</div>
+      <h1>Parti del corpo — 21 anatomical landmarks</h1>
+      <div class="objective"><strong>Objective.</strong> Master 21 body-part nouns with correct articles (la / lo / il / l').</div>
+<p>The 21 nouns split into three clusters: <strong>head + face</strong> (8), <strong>torso + organs</strong> (7), <strong>limbs</strong> (6). Article (<em>la / lo / il / l'</em>) is part of the noun and must be memorized with it — say it out loud every time.</p>
+<table><tbody><tr><td>la testa</td><td>head</td><td>la</td></tr><tr><td>il viso</td><td>face</td><td>il</td></tr><tr><td>l'occhio</td><td>eye</td><td>l'</td></tr><tr><td>l'orecchio</td><td>ear</td><td>l'</td></tr><tr><td>la bocca</td><td>mouth</td><td>la</td></tr><tr><td>il naso</td><td>nose</td><td>il</td></tr><tr><td>la gola</td><td>throat</td><td>la</td></tr><tr><td>i denti</td><td>teeth</td><td>i</td></tr><tr><td>il petto</td><td>chest</td><td>il</td></tr><tr><td>la pancia</td><td>belly</td><td>la</td></tr><tr><td>lo stomaco</td><td>stomach</td><td>lo</td></tr><tr><td>il cuore</td><td>heart</td><td>il</td></tr><tr><td>il polmone</td><td>lung</td><td>il</td></tr><tr><td>la schiena</td><td>back</td><td>la</td></tr><tr><td>il sangue</td><td>blood</td><td>il</td></tr><tr><td>il braccio</td><td>arm</td><td>il</td></tr><tr><td>la mano</td><td>hand</td><td>la</td></tr><tr><td>la gamba</td><td>leg</td><td>la</td></tr><tr><td>il piede</td><td>foot</td><td>il</td></tr><tr><td>il ginocchio</td><td>knee</td><td>il</td></tr><tr><td>la spalla</td><td>shoulder</td><td>la</td></tr></tbody></table>
+<aside class="pearl"><div class="pearl-title">Pearl · l' vs lo</div><p><em>l'</em> is the elided form of <em>lo</em> (masculine) or <em>la</em> (feminine) before a vowel. <em>l'occhio</em> = "the eye" (m). <em>l'orecchio</em> = "the ear" (m). Both keep masculine agreement.</p></aside>
+    </section>
+
+    <section class="chapter" id="ch3" data-chapter="3">
+      <div class="ch-num">Chapter 3</div>
+      <h1>I verbi del medico — 14 clinical actions</h1>
+      <div class="objective"><strong>Objective.</strong> Conjugate 14 clinician verbs in the 4 daily-use tenses.</div>
+<p>You will use these verbs every shift, mostly in present and present-perfect. The Match Madness set 4-7 drills all 4 tenses; the SR cards in this lesson show the full paradigm per verb on the back of each card.</p>
+<table><tbody><tr><td>visitare</td><td>to examine</td><td>are</td></tr><tr><td>ascoltare</td><td>to listen-to</td><td>are</td></tr><tr><td>palpare</td><td>to palpate</td><td>are</td></tr><tr><td>misurare</td><td>to measure</td><td>are</td></tr><tr><td>controllare</td><td>to check</td><td>are</td></tr><tr><td>prescrivere</td><td>to prescribe</td><td>ere</td></tr><tr><td>somministrare</td><td>to administer</td><td>are</td></tr><tr><td>spiegare</td><td>to explain</td><td>are</td></tr><tr><td>chiedere</td><td>to ask</td><td>ere</td></tr><tr><td>rassicurare</td><td>to reassure</td><td>are</td></tr><tr><td>monitorare</td><td>to monitor</td><td>are</td></tr><tr><td>aiutare</td><td>to help</td><td>are</td></tr><tr><td>curare</td><td>to treat</td><td>are</td></tr><tr><td>dimettere</td><td>to discharge</td><td>ere</td></tr></tbody></table>
+<aside class="mnemonic"><div class="mnemonic-title">Mnemonic · -ere irregulars</div><p>The four <em>-ere</em> verbs (<em>prescrivere</em>, <em>chiedere</em>, <em>dimettere</em>, <em>mettere</em>) have <strong>irregular past participles</strong> ending in <em>-tto</em> or <em>-sto</em>: <em>prescritto, chiesto, dimesso, messo</em>. Worth memorizing as a block.</p></aside>
+    </section>
+
+    <section class="chapter" id="ch4" data-chapter="4">
+      <div class="ch-num">Chapter 4</div>
+      <h1>Anamnesi — sequence diagram of a first encounter</h1>
+      <div class="objective"><strong>Objective.</strong> Walk through a complete history-taking dialogue with Sig.ra Russo.</div>
+<p>Below is a <strong>sequence diagram</strong> (code2tutorial-style) of the canonical first-encounter flow. Each arrow is a turn; the labels show what each speaker contributes.</p>
+<div class="mermaid-wrap"><pre class="mermaid">sequenceDiagram
+    participant Tu as Tu (medico straniero)
+    participant P as Sig.ra Russo (paziente)
+    Tu->>P: Saluto + chi sono
+    P->>Tu: Sintomo principale
+    Tu->>P: Cronologia (da quanto?)
+    P->>Tu: Dettagli temporali + altri sintomi
+    Tu->>P: Allergie + farmaci in corso
+    P->>Tu: Lista allergie
+    Tu->>P: Esame obiettivo (respiri / apra la bocca)
+    Tu->>P: Diagnosi + piano terapeutico
+    P->>Tu: Domande sul dosaggio
+    Tu->>P: Istruzioni + follow-up
+    P->>Tu: Ringraziamento</pre></div>
+<aside class="hy"><div class="hy-title">High yield</div><ul><li><strong>5 mandatory beats:</strong> saluto · sintomo · cronologia · allergie · esame.</li><li>Open every encounter with <em>«Come si sente oggi?»</em> — sets register and invites narrative.</li><li>Close every encounter with explicit follow-up: <em>«La controlliamo tra X giorni»</em>.</li></ul></aside>
+    </section>
+
+    <section class="chapter" id="ch5" data-chapter="5">
+      <div class="ch-num">Chapter 5</div>
+      <h1>Frasi salvavita — 10 phrases that pay rent</h1>
+      <div class="objective"><strong>Objective.</strong> Memorize 10 sentence-frames that cover ~80% of routine clinician utterances.</div>
+<p>These 10 frames give you imperative (commands), polite questions, and reassurance — the three speech acts you perform constantly. All in <strong>Lei form</strong>.</p>
+<table><tbody><tr><td>Come si sente oggi?</td><td>How are you feeling today?</td></tr><tr><td>Da quanto tempo ha questi sintomi?</td><td>How long have you had these symptoms?</td></tr><tr><td>Mi indichi dove fa male.</td><td>Show me where it hurts.</td></tr><tr><td>Apra la bocca, per favore.</td><td>Open your mouth, please.</td></tr><tr><td>Respiri profondamente.</td><td>Breathe deeply.</td></tr><tr><td>È allergico/a a qualche medicina?</td><td>Are you allergic to any medication?</td></tr><tr><td>Le prescrivo un antibiotico.</td><td>I'll prescribe an antibiotic.</td></tr><tr><td>Lo prenda due volte al giorno dopo i pasti.</td><td>Take it twice a day after meals.</td></tr><tr><td>Stia tranquillo/a, non è grave.</td><td>Don't worry, it's not serious.</td></tr><tr><td>La dimettiamo domani mattina.</td><td>We'll discharge you tomorrow morning.</td></tr></tbody></table>
+<aside class="pearl"><div class="pearl-title">Pearl · Lei-imperative shape</div><p>Polite commands use the <strong>congiuntivo presente</strong> form: <em>apr<u>a</u></em> (open), <em>respir<u>i</u></em> (breathe), <em>prend<u>a</u></em> (take), <em>stia tranquill<u>o/a</u></em> (be calm). This is why MM Set 10 in v1 drilled congiuntivo specifically.</p></aside>
+    </section>
+
+    <section class="chapter" id="ch6" data-chapter="6">
+      <div class="ch-num">Chapter 6</div>
+      <h1>Match Madness — automatismo medico</h1>
+      <div class="objective"><strong>Objective.</strong> Drill all content from the prior 5 chapters under time pressure. Returns each session.</div>
+<p>Click any set card below to enter the play surface. Keyboard: <code>1–5</code> left column, <code>Q W E R T</code> right column, <code>Space</code> start/pause. Per-pair latency feeds the SR scheduler — words you fumble come back tomorrow.</p>
+
+    <!-- ========================= Match Madness (multi-set) ========================= -->
+    <div class="mm-section" data-mm-lesson="italian-medical-vocab-v2-klinefelter-2026-05-14">
+      <p class="mm-intro">8 sets · vocab + body parts + gender + 4 tenses + SUPER. Per-pair latency logged in your browser.</p>
+
+      <div class="mm-sets-grid">
+        
+      <article class="mm-set-card" data-set-id="set-1-verbs" data-mode="vocab-pair">
+        <div class="mm-set-card-header">
+          <span class="mm-set-num">Set 1</span>
+          <span class="mm-set-mode">vocab-pair</span>
+        </div>
+        <h3 class="mm-set-title">Verbi medici ↔ EN</h3>
+        <p class="mm-set-subtitle">14 clinician verbs</p>
+        <div class="mm-set-meta">
+          <span><strong>3</strong> rounds</span>
+          <span><strong>14</strong> pairs</span>
+        </div>
+        <div class="mm-set-mastery" data-mastery-for="set-1-verbs">
+          <span class="mm-mastery-label">No history yet</span>
+        </div>
+        <button class="mm-set-play primary" data-play-set="set-1-verbs">Play set</button>
+      </article>
+
+      <article class="mm-set-card" data-set-id="set-2-body" data-mode="vocab-pair">
+        <div class="mm-set-card-header">
+          <span class="mm-set-num">Set 2</span>
+          <span class="mm-set-mode">vocab-pair</span>
+        </div>
+        <h3 class="mm-set-title">Parti del corpo ↔ EN</h3>
+        <p class="mm-set-subtitle">21 body parts</p>
+        <div class="mm-set-meta">
+          <span><strong>5</strong> rounds</span>
+          <span><strong>21</strong> pairs</span>
+        </div>
+        <div class="mm-set-mastery" data-mastery-for="set-2-body">
+          <span class="mm-mastery-label">No history yet</span>
+        </div>
+        <button class="mm-set-play primary" data-play-set="set-2-body">Play set</button>
+      </article>
+
+      <article class="mm-set-card" data-set-id="set-3-gender" data-mode="gender-pair">
+        <div class="mm-set-card-header">
+          <span class="mm-set-num">Set 3</span>
+          <span class="mm-set-mode">gender-pair</span>
+        </div>
+        <h3 class="mm-set-title">Genere — la/lo/il/l'</h3>
+        <p class="mm-set-subtitle">Article match</p>
+        <div class="mm-set-meta">
+          <span><strong>5</strong> rounds</span>
+          <span><strong>16</strong> pairs</span>
+        </div>
+        <div class="mm-set-mastery" data-mastery-for="set-3-gender">
+          <span class="mm-mastery-label">No history yet</span>
+        </div>
+        <button class="mm-set-play primary" data-play-set="set-3-gender">Play set</button>
+      </article>
+
+      <article class="mm-set-card" data-set-id="set-4-presente" data-mode="conjugation">
+        <div class="mm-set-card-header">
+          <span class="mm-set-num">Set 4</span>
+          <span class="mm-set-mode">conjugation</span>
+        </div>
+        <h3 class="mm-set-title">Presente — io</h3>
+        <p class="mm-set-subtitle">io visito, io ascolto, io prescrivo</p>
+        <div class="mm-set-meta">
+          <span><strong>5</strong> rounds</span>
+          <span><strong>14</strong> pairs</span>
+        </div>
+        <div class="mm-set-mastery" data-mastery-for="set-4-presente">
+          <span class="mm-mastery-label">No history yet</span>
+        </div>
+        <button class="mm-set-play primary" data-play-set="set-4-presente">Play set</button>
+      </article>
+
+      <article class="mm-set-card" data-set-id="set-5-passato-prossimo" data-mode="conjugation">
+        <div class="mm-set-card-header">
+          <span class="mm-set-num">Set 5</span>
+          <span class="mm-set-mode">conjugation</span>
+        </div>
+        <h3 class="mm-set-title">Passato prossimo — io</h3>
+        <p class="mm-set-subtitle">io ho visitato, io ho prescritto</p>
+        <div class="mm-set-meta">
+          <span><strong>5</strong> rounds</span>
+          <span><strong>14</strong> pairs</span>
+        </div>
+        <div class="mm-set-mastery" data-mastery-for="set-5-passato-prossimo">
+          <span class="mm-mastery-label">No history yet</span>
+        </div>
+        <button class="mm-set-play primary" data-play-set="set-5-passato-prossimo">Play set</button>
+      </article>
+
+      <article class="mm-set-card" data-set-id="set-6-imperfetto" data-mode="conjugation">
+        <div class="mm-set-card-header">
+          <span class="mm-set-num">Set 6</span>
+          <span class="mm-set-mode">conjugation</span>
+        </div>
+        <h3 class="mm-set-title">Imperfetto — io</h3>
+        <p class="mm-set-subtitle">Habitual past</p>
+        <div class="mm-set-meta">
+          <span><strong>5</strong> rounds</span>
+          <span><strong>14</strong> pairs</span>
+        </div>
+        <div class="mm-set-mastery" data-mastery-for="set-6-imperfetto">
+          <span class="mm-mastery-label">No history yet</span>
+        </div>
+        <button class="mm-set-play primary" data-play-set="set-6-imperfetto">Play set</button>
+      </article>
+
+      <article class="mm-set-card" data-set-id="set-7-futuro-semplice" data-mode="conjugation">
+        <div class="mm-set-card-header">
+          <span class="mm-set-num">Set 7</span>
+          <span class="mm-set-mode">conjugation</span>
+        </div>
+        <h3 class="mm-set-title">Futuro — io</h3>
+        <p class="mm-set-subtitle">io visiterò, io prescriverò</p>
+        <div class="mm-set-meta">
+          <span><strong>5</strong> rounds</span>
+          <span><strong>14</strong> pairs</span>
+        </div>
+        <div class="mm-set-mastery" data-mastery-for="set-7-futuro-semplice">
+          <span class="mm-mastery-label">No history yet</span>
+        </div>
+        <button class="mm-set-play primary" data-play-set="set-7-futuro-semplice">Play set</button>
+      </article>
+
+      <article class="mm-set-card" data-set-id="set-super" data-mode="mixed">
+        <div class="mm-set-card-header">
+          <span class="mm-set-num">Set 8</span>
+          <span class="mm-set-mode">mixed</span>
+        </div>
+        <h3 class="mm-set-title">🔥 SUPER-SET</h3>
+        <p class="mm-set-subtitle">All content mixed</p>
+        <div class="mm-set-meta">
+          <span><strong>8</strong> rounds</span>
+          <span><strong>107</strong> pairs</span>
+        </div>
+        <div class="mm-set-mastery" data-mastery-for="set-super">
+          <span class="mm-mastery-label">No history yet</span>
+        </div>
+        <button class="mm-set-play primary" data-play-set="set-super">Play set</button>
+      </article>
+      </div>
+
+      <!-- The play surface is overlaid when a set is selected -->
+      <div class="mm-play-surface" id="mm-play-surface" hidden>
+        <button class="mm-close" id="mm-close" aria-label="Close Match Madness">×</button>
+        <div class="mm-container" id="mm-game" data-active="false">
+          <div class="mm-header">
+            <div class="mm-set-label" id="mm-set-label">—</div>
+            <div class="mm-timer" id="mm-timer">1:45</div>
+            <div class="mm-stats">
+              <span class="stat"><strong id="mm-correct">0</strong>correct</span>
+              <span class="stat"><strong id="mm-wrong">0</strong>wrong</span>
+              <span class="stat mm-combo" id="mm-combo">×0</span>
+            </div>
+          </div>
+          <div class="mm-round-label" id="mm-round">Round — / —</div>
+          <div class="mm-grid" id="mm-grid"></div>
+          <div class="mm-keyboard-hint">Keyboard: <code>1–5</code> left · <code>Q W E R T</code> right · <code>Space</code> start/pause</div>
+          <div class="mm-controls">
+            <button class="primary" id="mm-start">Start</button>
+            <button id="mm-reset">Reset</button>
+            <button id="mm-accessibility">Accessibility mode (timer off)</button>
+          </div>
+          <div class="mm-result" id="mm-result" hidden>
+            <h4 id="mm-result-title">Round complete!</h4>
+            <div id="mm-result-body"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    </section>
+
+    <section class="chapter" id="ch7" data-chapter="7">
+      <div class="ch-num">Chapter 7</div>
+      <h1>Carte SR — full paradigms on the back</h1>
+      <div class="objective"><strong>Objective.</strong> Review verbs and nouns. Verb cards show the full 4-tense paradigm on flip.</div>
+<p>Click any card to flip. Verbs show all 4 daily-use tenses with English aspect hint underneath each Italian label.</p>
+<div class="deck"><div class="sr-deck">
+  <div class="sr-card" data-card-type="verb">
+    <div class="front">visitare</div>
+    <div class="back">
+      <div class="sr-back-head">
+        <strong class="sr-back-gloss">to examine</strong>
+        <span class="sr-back-tag">are</span>
+      </div>
+      <table class="sr-conj-table">
+        <tbody>
+        <tr>
+          <th class="sr-tense-label"><span class="sr-tense-it">presente</span><span class="sr-tense-aspect">now</span></th>
+          <td class="sr-form">visito</td>
+          <td class="sr-tense-gloss">I examine</td>
+        </tr>
+        <tr>
+          <th class="sr-tense-label"><span class="sr-tense-it">pass. pross.</span><span class="sr-tense-aspect">did</span></th>
+          <td class="sr-form">ho visitato</td>
+          <td class="sr-tense-gloss">I examined</td>
+        </tr>
+        <tr>
+          <th class="sr-tense-label"><span class="sr-tense-it">imperfetto</span><span class="sr-tense-aspect">was -ing</span></th>
+          <td class="sr-form">visitavo</td>
+          <td class="sr-tense-gloss">I was examining</td>
+        </tr>
+        <tr>
+          <th class="sr-tense-label"><span class="sr-tense-it">futuro</span><span class="sr-tense-aspect">will</span></th>
+          <td class="sr-form">visiterò</td>
+          <td class="sr-tense-gloss">I will examine</td>
+        </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="sr-card" data-card-type="verb">
+    <div class="front">ascoltare</div>
+    <div class="back">
+      <div class="sr-back-head">
+        <strong class="sr-back-gloss">to listen-to</strong>
+        <span class="sr-back-tag">are</span>
+      </div>
+      <table class="sr-conj-table">
+        <tbody>
+        <tr>
+          <th class="sr-tense-label"><span class="sr-tense-it">presente</span><span class="sr-tense-aspect">now</span></th>
+          <td class="sr-form">ascolto</td>
+          <td class="sr-tense-gloss">I listen-to</td>
+        </tr>
+        <tr>
+          <th class="sr-tense-label"><span class="sr-tense-it">pass. pross.</span><span class="sr-tense-aspect">did</span></th>
+          <td class="sr-form">ho ascoltato</td>
+          <td class="sr-tense-gloss">I listen-toed</td>
+        </tr>
+        <tr>
+          <th class="sr-tense-label"><span class="sr-tense-it">imperfetto</span><span class="sr-tense-aspect">was -ing</span></th>
+          <td class="sr-form">ascoltavo</td>
+          <td class="sr-tense-gloss">I was listen-toing</td>
+        </tr>
+        <tr>
+          <th class="sr-tense-label"><span class="sr-tense-it">futuro</span><span class="sr-tense-aspect">will</span></th>
+          <td class="sr-form">ascolterò</td>
+          <td class="sr-tense-gloss">I will listen-to</td>
+        </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="sr-card" data-card-type="verb">
+    <div class="front">palpare</div>
+    <div class="back">
+      <div class="sr-back-head">
+        <strong class="sr-back-gloss">to palpate</strong>
+        <span class="sr-back-tag">are</span>
+      </div>
+      <table class="sr-conj-table">
+        <tbody>
+        <tr>
+          <th class="sr-tense-label"><span class="sr-tense-it">presente</span><span class="sr-tense-aspect">now</span></th>
+          <td class="sr-form">palpo</td>
+          <td class="sr-tense-gloss">I palpate</td>
+        </tr>
+        <tr>
+          <th class="sr-tense-label"><span class="sr-tense-it">pass. pross.</span><span class="sr-tense-aspect">did</span></th>
+          <td class="sr-form">ho palpato</td>
+          <td class="sr-tense-gloss">I palpated</td>
+        </tr>
+        <tr>
+          <th class="sr-tense-label"><span class="sr-tense-it">imperfetto</span><span class="sr-tense-aspect">was -ing</span></th>
+          <td class="sr-form">palpavo</td>
+          <td class="sr-tense-gloss">I was palpating</td>
+        </tr>
+        <tr>
+          <th class="sr-tense-label"><span class="sr-tense-it">futuro</span><span class="sr-tense-aspect">will</span></th>
+          <td class="sr-form">palperò</td>
+          <td class="sr-tense-gloss">I will palpate</td>
+        </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="sr-card" data-card-type="verb">
+    <div class="front">misurare</div>
+    <div class="back">
+      <div class="sr-back-head">
+        <strong class="sr-back-gloss">to measure</strong>
+        <span class="sr-back-tag">are</span>
+      </div>
+      <table class="sr-conj-table">
+        <tbody>
+        <tr>
+          <th class="sr-tense-label"><span class="sr-tense-it">presente</span><span class="sr-tense-aspect">now</span></th>
+          <td class="sr-form">misuro</td>
+          <td class="sr-tense-gloss">I measure</td>
+        </tr>
+        <tr>
+          <th class="sr-tense-label"><span class="sr-tense-it">pass. pross.</span><span class="sr-tense-aspect">did</span></th>
+          <td class="sr-form">ho misurato</td>
+          <td class="sr-tense-gloss">I measured</td>
+        </tr>
+        <tr>
+          <th class="sr-tense-label"><span class="sr-tense-it">imperfetto</span><span class="sr-tense-aspect">was -ing</span></th>
+          <td class="sr-form">misuravo</td>
+          <td class="sr-tense-gloss">I was measuring</td>
+        </tr>
+        <tr>
+          <th class="sr-tense-label"><span class="sr-tense-it">futuro</span><span class="sr-tense-aspect">will</span></th>
+          <td class="sr-form">misurerò</td>
+          <td class="sr-tense-gloss">I will measure</td>
+        </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="sr-card" data-card-type="verb">
+    <div class="front">controllare</div>
+    <div class="back">
+      <div class="sr-back-head">
+        <strong class="sr-back-gloss">to check</strong>
+        <span class="sr-back-tag">are</span>
+      </div>
+      <table class="sr-conj-table">
+        <tbody>
+        <tr>
+          <th class="sr-tense-label"><span class="sr-tense-it">presente</span><span class="sr-tense-aspect">now</span></th>
+          <td class="sr-form">controllo</td>
+          <td class="sr-tense-gloss">I check</td>
+        </tr>
+        <tr>
+          <th class="sr-tense-label"><span class="sr-tense-it">pass. pross.</span><span class="sr-tense-aspect">did</span></th>
+          <td class="sr-form">ho controllato</td>
+          <td class="sr-tense-gloss">I checked</td>
+        </tr>
+        <tr>
+          <th class="sr-tense-label"><span class="sr-tense-it">imperfetto</span><span class="sr-tense-aspect">was -ing</span></th>
+          <td class="sr-form">controllavo</td>
+          <td class="sr-tense-gloss">I was checking</td>
+        </tr>
+        <tr>
+          <th class="sr-tense-label"><span class="sr-tense-it">futuro</span><span class="sr-tense-aspect">will</span></th>
+          <td class="sr-form">controllerò</td>
+          <td class="sr-tense-gloss">I will check</td>
+        </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="sr-card" data-card-type="verb">
+    <div class="front">prescrivere</div>
+    <div class="back">
+      <div class="sr-back-head">
+        <strong class="sr-back-gloss">to prescribe</strong>
+        <span class="sr-back-tag">ere</span>
+      </div>
+      <table class="sr-conj-table">
+        <tbody>
+        <tr>
+          <th class="sr-tense-label"><span class="sr-tense-it">presente</span><span class="sr-tense-aspect">now</span></th>
+          <td class="sr-form">prescrivo</td>
+          <td class="sr-tense-gloss">I prescribe</td>
+        </tr>
+        <tr>
+          <th class="sr-tense-label"><span class="sr-tense-it">pass. pross.</span><span class="sr-tense-aspect">did</span></th>
+          <td class="sr-form">ho prescritto</td>
+          <td class="sr-tense-gloss">I prescribed</td>
+        </tr>
+        <tr>
+          <th class="sr-tense-label"><span class="sr-tense-it">imperfetto</span><span class="sr-tense-aspect">was -ing</span></th>
+          <td class="sr-form">prescrivevo</td>
+          <td class="sr-tense-gloss">I was prescribing</td>
+        </tr>
+        <tr>
+          <th class="sr-tense-label"><span class="sr-tense-it">futuro</span><span class="sr-tense-aspect">will</span></th>
+          <td class="sr-form">prescriverò</td>
+          <td class="sr-tense-gloss">I will prescribe</td>
+        </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="sr-card" data-card-type="verb">
+    <div class="front">somministrare</div>
+    <div class="back">
+      <div class="sr-back-head">
+        <strong class="sr-back-gloss">to administer</strong>
+        <span class="sr-back-tag">are</span>
+      </div>
+      <table class="sr-conj-table">
+        <tbody>
+        <tr>
+          <th class="sr-tense-label"><span class="sr-tense-it">presente</span><span class="sr-tense-aspect">now</span></th>
+          <td class="sr-form">somministro</td>
+          <td class="sr-tense-gloss">I administer</td>
+        </tr>
+        <tr>
+          <th class="sr-tense-label"><span class="sr-tense-it">pass. pross.</span><span class="sr-tense-aspect">did</span></th>
+          <td class="sr-form">ho somministrato</td>
+          <td class="sr-tense-gloss">I administered</td>
+        </tr>
+        <tr>
+          <th class="sr-tense-label"><span class="sr-tense-it">imperfetto</span><span class="sr-tense-aspect">was -ing</span></th>
+          <td class="sr-form">somministravo</td>
+          <td class="sr-tense-gloss">I was administering</td>
+        </tr>
+        <tr>
+          <th class="sr-tense-label"><span class="sr-tense-it">futuro</span><span class="sr-tense-aspect">will</span></th>
+          <td class="sr-form">somministrerò</td>
+          <td class="sr-tense-gloss">I will administer</td>
+        </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="sr-card" data-card-type="verb">
+    <div class="front">spiegare</div>
+    <div class="back">
+      <div class="sr-back-head">
+        <strong class="sr-back-gloss">to explain</strong>
+        <span class="sr-back-tag">are</span>
+      </div>
+      <table class="sr-conj-table">
+        <tbody>
+        <tr>
+          <th class="sr-tense-label"><span class="sr-tense-it">presente</span><span class="sr-tense-aspect">now</span></th>
+          <td class="sr-form">spiego</td>
+          <td class="sr-tense-gloss">I explain</td>
+        </tr>
+        <tr>
+          <th class="sr-tense-label"><span class="sr-tense-it">pass. pross.</span><span class="sr-tense-aspect">did</span></th>
+          <td class="sr-form">ho spiegato</td>
+          <td class="sr-tense-gloss">I explained</td>
+        </tr>
+        <tr>
+          <th class="sr-tense-label"><span class="sr-tense-it">imperfetto</span><span class="sr-tense-aspect">was -ing</span></th>
+          <td class="sr-form">spiegavo</td>
+          <td class="sr-tense-gloss">I was explaining</td>
+        </tr>
+        <tr>
+          <th class="sr-tense-label"><span class="sr-tense-it">futuro</span><span class="sr-tense-aspect">will</span></th>
+          <td class="sr-form">spiegherò</td>
+          <td class="sr-tense-gloss">I will explain</td>
+        </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="sr-card" data-card-type="verb">
+    <div class="front">chiedere</div>
+    <div class="back">
+      <div class="sr-back-head">
+        <strong class="sr-back-gloss">to ask</strong>
+        <span class="sr-back-tag">ere</span>
+      </div>
+      <table class="sr-conj-table">
+        <tbody>
+        <tr>
+          <th class="sr-tense-label"><span class="sr-tense-it">presente</span><span class="sr-tense-aspect">now</span></th>
+          <td class="sr-form">chiedo</td>
+          <td class="sr-tense-gloss">I ask</td>
+        </tr>
+        <tr>
+          <th class="sr-tense-label"><span class="sr-tense-it">pass. pross.</span><span class="sr-tense-aspect">did</span></th>
+          <td class="sr-form">ho chiesto</td>
+          <td class="sr-tense-gloss">I asked</td>
+        </tr>
+        <tr>
+          <th class="sr-tense-label"><span class="sr-tense-it">imperfetto</span><span class="sr-tense-aspect">was -ing</span></th>
+          <td class="sr-form">chiedevo</td>
+          <td class="sr-tense-gloss">I was asking</td>
+        </tr>
+        <tr>
+          <th class="sr-tense-label"><span class="sr-tense-it">futuro</span><span class="sr-tense-aspect">will</span></th>
+          <td class="sr-form">chiederò</td>
+          <td class="sr-tense-gloss">I will ask</td>
+        </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="sr-card" data-card-type="verb">
+    <div class="front">rassicurare</div>
+    <div class="back">
+      <div class="sr-back-head">
+        <strong class="sr-back-gloss">to reassure</strong>
+        <span class="sr-back-tag">are</span>
+      </div>
+      <table class="sr-conj-table">
+        <tbody>
+        <tr>
+          <th class="sr-tense-label"><span class="sr-tense-it">presente</span><span class="sr-tense-aspect">now</span></th>
+          <td class="sr-form">rassicuro</td>
+          <td class="sr-tense-gloss">I reassure</td>
+        </tr>
+        <tr>
+          <th class="sr-tense-label"><span class="sr-tense-it">pass. pross.</span><span class="sr-tense-aspect">did</span></th>
+          <td class="sr-form">ho rassicurato</td>
+          <td class="sr-tense-gloss">I reassured</td>
+        </tr>
+        <tr>
+          <th class="sr-tense-label"><span class="sr-tense-it">imperfetto</span><span class="sr-tense-aspect">was -ing</span></th>
+          <td class="sr-form">rassicuravo</td>
+          <td class="sr-tense-gloss">I was reassuring</td>
+        </tr>
+        <tr>
+          <th class="sr-tense-label"><span class="sr-tense-it">futuro</span><span class="sr-tense-aspect">will</span></th>
+          <td class="sr-form">rassicurerò</td>
+          <td class="sr-tense-gloss">I will reassure</td>
+        </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="sr-card" data-card-type="verb">
+    <div class="front">monitorare</div>
+    <div class="back">
+      <div class="sr-back-head">
+        <strong class="sr-back-gloss">to monitor</strong>
+        <span class="sr-back-tag">are</span>
+      </div>
+      <table class="sr-conj-table">
+        <tbody>
+        <tr>
+          <th class="sr-tense-label"><span class="sr-tense-it">presente</span><span class="sr-tense-aspect">now</span></th>
+          <td class="sr-form">monitoro</td>
+          <td class="sr-tense-gloss">I monitor</td>
+        </tr>
+        <tr>
+          <th class="sr-tense-label"><span class="sr-tense-it">pass. pross.</span><span class="sr-tense-aspect">did</span></th>
+          <td class="sr-form">ho monitorato</td>
+          <td class="sr-tense-gloss">I monitored</td>
+        </tr>
+        <tr>
+          <th class="sr-tense-label"><span class="sr-tense-it">imperfetto</span><span class="sr-tense-aspect">was -ing</span></th>
+          <td class="sr-form">monitoravo</td>
+          <td class="sr-tense-gloss">I was monitoring</td>
+        </tr>
+        <tr>
+          <th class="sr-tense-label"><span class="sr-tense-it">futuro</span><span class="sr-tense-aspect">will</span></th>
+          <td class="sr-form">monitorerò</td>
+          <td class="sr-tense-gloss">I will monitor</td>
+        </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="sr-card" data-card-type="verb">
+    <div class="front">aiutare</div>
+    <div class="back">
+      <div class="sr-back-head">
+        <strong class="sr-back-gloss">to help</strong>
+        <span class="sr-back-tag">are</span>
+      </div>
+      <table class="sr-conj-table">
+        <tbody>
+        <tr>
+          <th class="sr-tense-label"><span class="sr-tense-it">presente</span><span class="sr-tense-aspect">now</span></th>
+          <td class="sr-form">aiuto</td>
+          <td class="sr-tense-gloss">I help</td>
+        </tr>
+        <tr>
+          <th class="sr-tense-label"><span class="sr-tense-it">pass. pross.</span><span class="sr-tense-aspect">did</span></th>
+          <td class="sr-form">ho aiutato</td>
+          <td class="sr-tense-gloss">I helped</td>
+        </tr>
+        <tr>
+          <th class="sr-tense-label"><span class="sr-tense-it">imperfetto</span><span class="sr-tense-aspect">was -ing</span></th>
+          <td class="sr-form">aiutavo</td>
+          <td class="sr-tense-gloss">I was helping</td>
+        </tr>
+        <tr>
+          <th class="sr-tense-label"><span class="sr-tense-it">futuro</span><span class="sr-tense-aspect">will</span></th>
+          <td class="sr-form">aiuterò</td>
+          <td class="sr-tense-gloss">I will help</td>
+        </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="sr-card" data-card-type="verb">
+    <div class="front">curare</div>
+    <div class="back">
+      <div class="sr-back-head">
+        <strong class="sr-back-gloss">to treat</strong>
+        <span class="sr-back-tag">are</span>
+      </div>
+      <table class="sr-conj-table">
+        <tbody>
+        <tr>
+          <th class="sr-tense-label"><span class="sr-tense-it">presente</span><span class="sr-tense-aspect">now</span></th>
+          <td class="sr-form">curo</td>
+          <td class="sr-tense-gloss">I treat</td>
+        </tr>
+        <tr>
+          <th class="sr-tense-label"><span class="sr-tense-it">pass. pross.</span><span class="sr-tense-aspect">did</span></th>
+          <td class="sr-form">ho curato</td>
+          <td class="sr-tense-gloss">I treated</td>
+        </tr>
+        <tr>
+          <th class="sr-tense-label"><span class="sr-tense-it">imperfetto</span><span class="sr-tense-aspect">was -ing</span></th>
+          <td class="sr-form">curavo</td>
+          <td class="sr-tense-gloss">I was treating</td>
+        </tr>
+        <tr>
+          <th class="sr-tense-label"><span class="sr-tense-it">futuro</span><span class="sr-tense-aspect">will</span></th>
+          <td class="sr-form">curerò</td>
+          <td class="sr-tense-gloss">I will treat</td>
+        </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="sr-card" data-card-type="verb">
+    <div class="front">dimettere</div>
+    <div class="back">
+      <div class="sr-back-head">
+        <strong class="sr-back-gloss">to discharge</strong>
+        <span class="sr-back-tag">ere</span>
+      </div>
+      <table class="sr-conj-table">
+        <tbody>
+        <tr>
+          <th class="sr-tense-label"><span class="sr-tense-it">presente</span><span class="sr-tense-aspect">now</span></th>
+          <td class="sr-form">dimetto</td>
+          <td class="sr-tense-gloss">I discharge</td>
+        </tr>
+        <tr>
+          <th class="sr-tense-label"><span class="sr-tense-it">pass. pross.</span><span class="sr-tense-aspect">did</span></th>
+          <td class="sr-form">ho dimesso</td>
+          <td class="sr-tense-gloss">I discharged</td>
+        </tr>
+        <tr>
+          <th class="sr-tense-label"><span class="sr-tense-it">imperfetto</span><span class="sr-tense-aspect">was -ing</span></th>
+          <td class="sr-form">dimettevo</td>
+          <td class="sr-tense-gloss">I was discharging</td>
+        </tr>
+        <tr>
+          <th class="sr-tense-label"><span class="sr-tense-it">futuro</span><span class="sr-tense-aspect">will</span></th>
+          <td class="sr-form">dimetterò</td>
+          <td class="sr-tense-gloss">I will discharge</td>
+        </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="sr-card" data-card-type="noun">
+    <div class="front">testa</div>
+    <div class="back">
+      <div class="sr-back-head">
+        <strong class="sr-back-gloss">head</strong>
+        <span class="sr-back-tag sr-article">la</span>
+      </div>
+      <p class="sr-back-full"><em class="sr-it">la testa</em></p>
+      
+      
+      
+    </div>
+  </div>
+
+  <div class="sr-card" data-card-type="noun">
+    <div class="front">viso</div>
+    <div class="back">
+      <div class="sr-back-head">
+        <strong class="sr-back-gloss">face</strong>
+        <span class="sr-back-tag sr-article">il</span>
+      </div>
+      <p class="sr-back-full"><em class="sr-it">il viso</em></p>
+      
+      
+      
+    </div>
+  </div>
+
+  <div class="sr-card" data-card-type="noun">
+    <div class="front">occhio</div>
+    <div class="back">
+      <div class="sr-back-head">
+        <strong class="sr-back-gloss">eye</strong>
+        <span class="sr-back-tag sr-article">l'</span>
+      </div>
+      <p class="sr-back-full"><em class="sr-it">l'occhio</em></p>
+      
+      
+      
+    </div>
+  </div>
+
+  <div class="sr-card" data-card-type="noun">
+    <div class="front">orecchio</div>
+    <div class="back">
+      <div class="sr-back-head">
+        <strong class="sr-back-gloss">ear</strong>
+        <span class="sr-back-tag sr-article">l'</span>
+      </div>
+      <p class="sr-back-full"><em class="sr-it">l'orecchio</em></p>
+      
+      
+      
+    </div>
+  </div>
+
+  <div class="sr-card" data-card-type="noun">
+    <div class="front">bocca</div>
+    <div class="back">
+      <div class="sr-back-head">
+        <strong class="sr-back-gloss">mouth</strong>
+        <span class="sr-back-tag sr-article">la</span>
+      </div>
+      <p class="sr-back-full"><em class="sr-it">la bocca</em></p>
+      
+      
+      
+    </div>
+  </div>
+
+  <div class="sr-card" data-card-type="noun">
+    <div class="front">naso</div>
+    <div class="back">
+      <div class="sr-back-head">
+        <strong class="sr-back-gloss">nose</strong>
+        <span class="sr-back-tag sr-article">il</span>
+      </div>
+      <p class="sr-back-full"><em class="sr-it">il naso</em></p>
+      
+      
+      
+    </div>
+  </div>
+
+  <div class="sr-card" data-card-type="noun">
+    <div class="front">gola</div>
+    <div class="back">
+      <div class="sr-back-head">
+        <strong class="sr-back-gloss">throat</strong>
+        <span class="sr-back-tag sr-article">la</span>
+      </div>
+      <p class="sr-back-full"><em class="sr-it">la gola</em></p>
+      
+      
+      
+    </div>
+  </div>
+
+  <div class="sr-card" data-card-type="noun">
+    <div class="front">denti</div>
+    <div class="back">
+      <div class="sr-back-head">
+        <strong class="sr-back-gloss">teeth</strong>
+        <span class="sr-back-tag sr-article">i</span>
+      </div>
+      <p class="sr-back-full"><em class="sr-it">i denti</em></p>
+      
+      
+      
+    </div>
+  </div>
+
+  <div class="sr-card" data-card-type="noun">
+    <div class="front">petto</div>
+    <div class="back">
+      <div class="sr-back-head">
+        <strong class="sr-back-gloss">chest</strong>
+        <span class="sr-back-tag sr-article">il</span>
+      </div>
+      <p class="sr-back-full"><em class="sr-it">il petto</em></p>
+      
+      
+      
+    </div>
+  </div>
+
+  <div class="sr-card" data-card-type="noun">
+    <div class="front">pancia</div>
+    <div class="back">
+      <div class="sr-back-head">
+        <strong class="sr-back-gloss">belly</strong>
+        <span class="sr-back-tag sr-article">la</span>
+      </div>
+      <p class="sr-back-full"><em class="sr-it">la pancia</em></p>
+      
+      
+      
+    </div>
+  </div>
+
+  <div class="sr-card" data-card-type="noun">
+    <div class="front">stomaco</div>
+    <div class="back">
+      <div class="sr-back-head">
+        <strong class="sr-back-gloss">stomach</strong>
+        <span class="sr-back-tag sr-article">lo</span>
+      </div>
+      <p class="sr-back-full"><em class="sr-it">lo stomaco</em></p>
+      
+      
+      
+    </div>
+  </div>
+
+  <div class="sr-card" data-card-type="noun">
+    <div class="front">cuore</div>
+    <div class="back">
+      <div class="sr-back-head">
+        <strong class="sr-back-gloss">heart</strong>
+        <span class="sr-back-tag sr-article">il</span>
+      </div>
+      <p class="sr-back-full"><em class="sr-it">il cuore</em></p>
+      
+      
+      
+    </div>
+  </div>
+
+  <div class="sr-card" data-card-type="noun">
+    <div class="front">polmone</div>
+    <div class="back">
+      <div class="sr-back-head">
+        <strong class="sr-back-gloss">lung</strong>
+        <span class="sr-back-tag sr-article">il</span>
+      </div>
+      <p class="sr-back-full"><em class="sr-it">il polmone</em></p>
+      
+      
+      
+    </div>
+  </div>
+
+  <div class="sr-card" data-card-type="noun">
+    <div class="front">schiena</div>
+    <div class="back">
+      <div class="sr-back-head">
+        <strong class="sr-back-gloss">back</strong>
+        <span class="sr-back-tag sr-article">la</span>
+      </div>
+      <p class="sr-back-full"><em class="sr-it">la schiena</em></p>
+      
+      
+      
+    </div>
+  </div>
+
+  <div class="sr-card" data-card-type="noun">
+    <div class="front">sangue</div>
+    <div class="back">
+      <div class="sr-back-head">
+        <strong class="sr-back-gloss">blood</strong>
+        <span class="sr-back-tag sr-article">il</span>
+      </div>
+      <p class="sr-back-full"><em class="sr-it">il sangue</em></p>
+      
+      
+      
+    </div>
+  </div>
+
+  <div class="sr-card" data-card-type="idiom">
+    <div class="front">fare un'anamnesi</div>
+    <div class="back">
+      <div class="sr-back-head">
+        <strong class="sr-back-gloss">to take a patient history</strong>
+        <span class="sr-back-tag">idiom</span>
+      </div>
+      <p class="sr-back-literal">lit. <em>to do a history</em></p>
+    </div>
+  </div>
+
+  <div class="sr-card" data-card-type="idiom">
+    <div class="front">in osservazione</div>
+    <div class="back">
+      <div class="sr-back-head">
+        <strong class="sr-back-gloss">admitted for observation</strong>
+        <span class="sr-back-tag">idiom</span>
+      </div>
+      <p class="sr-back-literal">lit. <em>in observation</em></p>
+    </div>
+  </div>
+
+  <div class="sr-card" data-card-type="idiom">
+    <div class="front">in bocca al lupo</div>
+    <div class="back">
+      <div class="sr-back-head">
+        <strong class="sr-back-gloss">good luck (between colleagues)</strong>
+        <span class="sr-back-tag">idiom</span>
+      </div>
+      <p class="sr-back-literal">lit. <em>in the wolf's mouth</em></p>
+    </div>
+  </div></div></div>
+    </section>
+
+    <section class="chapter" id="ch8" data-chapter="8">
+      <div class="ch-num">Chapter 8</div>
+      <h1>Chiusura — your first shift, in Italian</h1>
+      <div class="objective"><strong>Objective.</strong> Recap and next steps.</div>
+<p><strong>You can now</strong> take a history, examine, prescribe, and discharge — all in Italian and in the formal Lei register. 14 verbs, 21 body parts, 10 phrases, 4 tenses, a complete first-encounter flow.</p>
+<p><strong>Next:</strong> <em>«Italiano in ospedale 2»</em> will cover specialist contexts (pronto soccorso triage, sala operatoria handover, dimissione complex). For now: <em>«In bocca al lupo per il tuo prossimo turno!»</em></p>
+    </section>
+
+    <footer class="lesson-footer">
+      Chiron · v2 Klinefelter-style test-drive · L5 textbook layout · clinical theme · 2026-05-14<br>
+      Companion to <code>italian-medical-vocab-2026-05-14</code> (v1 · language-skeleton). Same content, different shell.
+    </footer>
+  </main>
+
+  <!-- Mermaid CDN — graceful no-op if offline -->
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <script>
+    if (window.mermaid) mermaid.initialize({ startOnLoad: true, theme: 'dark', securityLevel: 'loose' });
+
+    // Theme + layout + view switching
+    function wirePicker(attr, storageKey, htmlAttr) {
+      document.querySelectorAll('[data-set-' + attr + ']').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const v = btn.getAttribute('data-set-' + attr);
+          document.documentElement.setAttribute(htmlAttr, v);
+          if (storageKey) localStorage.setItem(storageKey, v);
+          if (attr === 'view') document.body.setAttribute('data-view', v);
+          document.querySelectorAll('[data-set-' + attr + ']').forEach(b =>
+            b.setAttribute('aria-pressed', b === btn ? 'true' : 'false'));
+        });
+      });
+      const curr = (htmlAttr === 'data-view' ? document.body : document.documentElement).getAttribute(htmlAttr);
+      document.querySelectorAll('[data-set-' + attr + ']').forEach(b =>
+        b.setAttribute('aria-pressed', b.getAttribute('data-set-' + attr) === curr ? 'true' : 'false'));
+    }
+    document.body.setAttribute('data-view', 'lesson');
+    wirePicker('theme', 'chiron-theme', 'data-theme');
+    wirePicker('layout', 'chiron-layout', 'data-layout');
+    wirePicker('view', null, 'data-view');
+
+    // Sidebar TOC scrollspy
+    const tocLinks = document.querySelectorAll('.toc-link');
+    tocLinks.forEach(a => a.addEventListener('click', (e) => {
+      e.preventDefault();
+      const target = document.querySelector(a.getAttribute('href'));
+      if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }));
+    const chapters = Array.from(document.querySelectorAll('section.chapter'));
+    const io = new IntersectionObserver(entries => {
+      entries.forEach(e => {
+        if (e.isIntersecting) {
+          const id = e.target.id;
+          tocLinks.forEach(a => a.classList.toggle('active', a.getAttribute('data-chapter-target') === id));
+        }
+      });
+    }, { rootMargin: '-30% 0px -55% 0px' });
+    chapters.forEach(c => io.observe(c));
+
+    // Flashcard flip
+    document.querySelectorAll('.sr-card').forEach(card =>
+      card.addEventListener('click', () => card.classList.toggle('flipped')));
+
+    
+  /* ========================= Match Madness (multi-set) ========================= */
+  (function() {
+    const CONFIG = {"lessonId":"italian-medical-vocab-v2-klinefelter-2026-05-14","defaults":{"timerSec":105,"wrongLockMs":1500,"accessibilityModeAllowed":true,"keyboardShortcuts":true,"visualSpeedUp":{"pulseFromMs":2000,"pulseToMs":600,"strengthFromOpacity":0.04,"strengthToOpacity":0.18,"refillFromMs":200,"refillToMs":100}},"sets":[{"id":"set-1-verbs","index":1,"title":"Verbi medici ↔ EN","subtitle":"14 clinician verbs","mode":"vocab-pair","rounds":3,"pairs":[{"id":"verb:visitare","left":"to examine","right":"visitare"},{"id":"verb:ascoltare","left":"to listen-to","right":"ascoltare"},{"id":"verb:palpare","left":"to palpate","right":"palpare"},{"id":"verb:misurare","left":"to measure","right":"misurare"},{"id":"verb:controllare","left":"to check","right":"controllare"},{"id":"verb:prescrivere","left":"to prescribe","right":"prescrivere"},{"id":"verb:somministrare","left":"to administer","right":"somministrare"},{"id":"verb:spiegare","left":"to explain","right":"spiegare"},{"id":"verb:chiedere","left":"to ask","right":"chiedere"},{"id":"verb:rassicurare","left":"to reassure","right":"rassicurare"},{"id":"verb:monitorare","left":"to monitor","right":"monitorare"},{"id":"verb:aiutare","left":"to help","right":"aiutare"},{"id":"verb:curare","left":"to treat","right":"curare"},{"id":"verb:dimettere","left":"to discharge","right":"dimettere"}]},{"id":"set-2-body","index":2,"title":"Parti del corpo ↔ EN","subtitle":"21 body parts","mode":"vocab-pair","rounds":5,"pairs":[{"id":"noun:la testa","left":"head","right":"la testa"},{"id":"noun:il viso","left":"face","right":"il viso"},{"id":"noun:l'occhio","left":"eye","right":"l'occhio"},{"id":"noun:l'orecchio","left":"ear","right":"l'orecchio"},{"id":"noun:la bocca","left":"mouth","right":"la bocca"},{"id":"noun:il naso","left":"nose","right":"il naso"},{"id":"noun:la gola","left":"throat","right":"la gola"},{"id":"noun:i denti","left":"teeth","right":"i denti"},{"id":"noun:il petto","left":"chest","right":"il petto"},{"id":"noun:la pancia","left":"belly","right":"la pancia"},{"id":"noun:lo stomaco","left":"stomach","right":"lo stomaco"},{"id":"noun:il cuore","left":"heart","right":"il cuore"},{"id":"noun:il polmone","left":"lung","right":"il polmone"},{"id":"noun:la schiena","left":"back","right":"la schiena"},{"id":"noun:il sangue","left":"blood","right":"il sangue"},{"id":"noun:il braccio","left":"arm","right":"il braccio"},{"id":"noun:la mano","left":"hand","right":"la mano"},{"id":"noun:la gamba","left":"leg","right":"la gamba"},{"id":"noun:il piede","left":"foot","right":"il piede"},{"id":"noun:il ginocchio","left":"knee","right":"il ginocchio"},{"id":"noun:la spalla","left":"shoulder","right":"la spalla"}]},{"id":"set-3-gender","index":3,"title":"Genere — la/lo/il/l'","subtitle":"Article match","mode":"gender-pair","rounds":5,"pairs":[{"id":"gender:la testa","left":"testa","right":"la","hint":"head"},{"id":"gender:il viso","left":"viso","right":"il","hint":"face"},{"id":"gender:l'occhio","left":"occhio","right":"l'","hint":"eye"},{"id":"gender:l'orecchio","left":"orecchio","right":"l'","hint":"ear"},{"id":"gender:la bocca","left":"bocca","right":"la","hint":"mouth"},{"id":"gender:il naso","left":"naso","right":"il","hint":"nose"},{"id":"gender:la gola","left":"gola","right":"la","hint":"throat"},{"id":"gender:i denti","left":"denti","right":"i","hint":"teeth"},{"id":"gender:il petto","left":"petto","right":"il","hint":"chest"},{"id":"gender:la pancia","left":"pancia","right":"la","hint":"belly"},{"id":"gender:lo stomaco","left":"stomaco","right":"lo","hint":"stomach"},{"id":"gender:il cuore","left":"cuore","right":"il","hint":"heart"},{"id":"gender:il polmone","left":"polmone","right":"il","hint":"lung"},{"id":"gender:la schiena","left":"schiena","right":"la","hint":"back"},{"id":"gender:il sangue","left":"sangue","right":"il","hint":"blood"},{"id":"gender:il braccio","left":"braccio","right":"il","hint":"arm"}]},{"id":"set-4-presente","index":4,"title":"Presente — io","subtitle":"io visito, io ascolto, io prescrivo","mode":"conjugation","rounds":5,"pairs":[{"id":"presente:io:visitare","left":"I examine","right":"visito","hint":"visitare"},{"id":"presente:io:ascoltare","left":"I listen-to","right":"ascolto","hint":"ascoltare"},{"id":"presente:io:palpare","left":"I palpate","right":"palpo","hint":"palpare"},{"id":"presente:io:misurare","left":"I measure","right":"misuro","hint":"misurare"},{"id":"presente:io:controllare","left":"I check","right":"controllo","hint":"controllare"},{"id":"presente:io:prescrivere","left":"I prescribe","right":"prescrivo","hint":"prescrivere"},{"id":"presente:io:somministrare","left":"I administer","right":"somministro","hint":"somministrare"},{"id":"presente:io:spiegare","left":"I explain","right":"spiego","hint":"spiegare"},{"id":"presente:io:chiedere","left":"I ask","right":"chiedo","hint":"chiedere"},{"id":"presente:io:rassicurare","left":"I reassure","right":"rassicuro","hint":"rassicurare"},{"id":"presente:io:monitorare","left":"I monitor","right":"monitoro","hint":"monitorare"},{"id":"presente:io:aiutare","left":"I help","right":"aiuto","hint":"aiutare"},{"id":"presente:io:curare","left":"I treat","right":"curo","hint":"curare"},{"id":"presente:io:dimettere","left":"I discharge","right":"dimetto","hint":"dimettere"}]},{"id":"set-5-passato-prossimo","index":5,"title":"Passato prossimo — io","subtitle":"io ho visitato, io ho prescritto","mode":"conjugation","rounds":5,"pairs":[{"id":"passato-prossimo:io:visitare","left":"I examineed","right":"ho visitato","hint":"visitare"},{"id":"passato-prossimo:io:ascoltare","left":"I listen-toed","right":"ho ascoltato","hint":"ascoltare"},{"id":"passato-prossimo:io:palpare","left":"I palpateed","right":"ho palpato","hint":"palpare"},{"id":"passato-prossimo:io:misurare","left":"I measureed","right":"ho misurato","hint":"misurare"},{"id":"passato-prossimo:io:controllare","left":"I checked","right":"ho controllato","hint":"controllare"},{"id":"passato-prossimo:io:prescrivere","left":"I prescribeed","right":"ho prescritto","hint":"prescrivere"},{"id":"passato-prossimo:io:somministrare","left":"I administered","right":"ho somministrato","hint":"somministrare"},{"id":"passato-prossimo:io:spiegare","left":"I explained","right":"ho spiegato","hint":"spiegare"},{"id":"passato-prossimo:io:chiedere","left":"I asked","right":"ho chiesto","hint":"chiedere"},{"id":"passato-prossimo:io:rassicurare","left":"I reassureed","right":"ho rassicurato","hint":"rassicurare"},{"id":"passato-prossimo:io:monitorare","left":"I monitored","right":"ho monitorato","hint":"monitorare"},{"id":"passato-prossimo:io:aiutare","left":"I helped","right":"ho aiutato","hint":"aiutare"},{"id":"passato-prossimo:io:curare","left":"I treated","right":"ho curato","hint":"curare"},{"id":"passato-prossimo:io:dimettere","left":"I dischargeed","right":"ho dimesso","hint":"dimettere"}]},{"id":"set-6-imperfetto","index":6,"title":"Imperfetto — io","subtitle":"Habitual past","mode":"conjugation","rounds":5,"pairs":[{"id":"imperfetto:io:visitare","left":"I used to examine","right":"visitavo","hint":"visitare"},{"id":"imperfetto:io:ascoltare","left":"I used to listen-to","right":"ascoltavo","hint":"ascoltare"},{"id":"imperfetto:io:palpare","left":"I used to palpate","right":"palpavo","hint":"palpare"},{"id":"imperfetto:io:misurare","left":"I used to measure","right":"misuravo","hint":"misurare"},{"id":"imperfetto:io:controllare","left":"I used to check","right":"controllavo","hint":"controllare"},{"id":"imperfetto:io:prescrivere","left":"I used to prescribe","right":"prescrivevo","hint":"prescrivere"},{"id":"imperfetto:io:somministrare","left":"I used to administer","right":"somministravo","hint":"somministrare"},{"id":"imperfetto:io:spiegare","left":"I used to explain","right":"spiegavo","hint":"spiegare"},{"id":"imperfetto:io:chiedere","left":"I used to ask","right":"chiedevo","hint":"chiedere"},{"id":"imperfetto:io:rassicurare","left":"I used to reassure","right":"rassicuravo","hint":"rassicurare"},{"id":"imperfetto:io:monitorare","left":"I used to monitor","right":"monitoravo","hint":"monitorare"},{"id":"imperfetto:io:aiutare","left":"I used to help","right":"aiutavo","hint":"aiutare"},{"id":"imperfetto:io:curare","left":"I used to treat","right":"curavo","hint":"curare"},{"id":"imperfetto:io:dimettere","left":"I used to discharge","right":"dimettevo","hint":"dimettere"}]},{"id":"set-7-futuro-semplice","index":7,"title":"Futuro — io","subtitle":"io visiterò, io prescriverò","mode":"conjugation","rounds":5,"pairs":[{"id":"futuro-semplice:io:visitare","left":"I will examine","right":"visiterò","hint":"visitare"},{"id":"futuro-semplice:io:ascoltare","left":"I will listen-to","right":"ascolterò","hint":"ascoltare"},{"id":"futuro-semplice:io:palpare","left":"I will palpate","right":"palperò","hint":"palpare"},{"id":"futuro-semplice:io:misurare","left":"I will measure","right":"misurerò","hint":"misurare"},{"id":"futuro-semplice:io:controllare","left":"I will check","right":"controllerò","hint":"controllare"},{"id":"futuro-semplice:io:prescrivere","left":"I will prescribe","right":"prescriverò","hint":"prescrivere"},{"id":"futuro-semplice:io:somministrare","left":"I will administer","right":"somministrerò","hint":"somministrare"},{"id":"futuro-semplice:io:spiegare","left":"I will explain","right":"spiegherò","hint":"spiegare"},{"id":"futuro-semplice:io:chiedere","left":"I will ask","right":"chiederò","hint":"chiedere"},{"id":"futuro-semplice:io:rassicurare","left":"I will reassure","right":"rassicurerò","hint":"rassicurare"},{"id":"futuro-semplice:io:monitorare","left":"I will monitor","right":"monitorerò","hint":"monitorare"},{"id":"futuro-semplice:io:aiutare","left":"I will help","right":"aiuterò","hint":"aiutare"},{"id":"futuro-semplice:io:curare","left":"I will treat","right":"curerò","hint":"curare"},{"id":"futuro-semplice:io:dimettere","left":"I will discharge","right":"dimetterò","hint":"dimettere"}]},{"id":"set-super","index":8,"title":"🔥 SUPER-SET","subtitle":"All content mixed","mode":"mixed","rounds":8,"pairs":[{"id":"verb:visitare","left":"to examine","right":"visitare"},{"id":"verb:ascoltare","left":"to listen-to","right":"ascoltare"},{"id":"verb:palpare","left":"to palpate","right":"palpare"},{"id":"verb:misurare","left":"to measure","right":"misurare"},{"id":"verb:controllare","left":"to check","right":"controllare"},{"id":"verb:prescrivere","left":"to prescribe","right":"prescrivere"},{"id":"verb:somministrare","left":"to administer","right":"somministrare"},{"id":"verb:spiegare","left":"to explain","right":"spiegare"},{"id":"verb:chiedere","left":"to ask","right":"chiedere"},{"id":"verb:rassicurare","left":"to reassure","right":"rassicurare"},{"id":"verb:monitorare","left":"to monitor","right":"monitorare"},{"id":"verb:aiutare","left":"to help","right":"aiutare"},{"id":"verb:curare","left":"to treat","right":"curare"},{"id":"verb:dimettere","left":"to discharge","right":"dimettere"},{"id":"noun:la testa","left":"head","right":"la testa"},{"id":"noun:il viso","left":"face","right":"il viso"},{"id":"noun:l'occhio","left":"eye","right":"l'occhio"},{"id":"noun:l'orecchio","left":"ear","right":"l'orecchio"},{"id":"noun:la bocca","left":"mouth","right":"la bocca"},{"id":"noun:il naso","left":"nose","right":"il naso"},{"id":"noun:la gola","left":"throat","right":"la gola"},{"id":"noun:i denti","left":"teeth","right":"i denti"},{"id":"noun:il petto","left":"chest","right":"il petto"},{"id":"noun:la pancia","left":"belly","right":"la pancia"},{"id":"noun:lo stomaco","left":"stomach","right":"lo stomaco"},{"id":"noun:il cuore","left":"heart","right":"il cuore"},{"id":"noun:il polmone","left":"lung","right":"il polmone"},{"id":"noun:la schiena","left":"back","right":"la schiena"},{"id":"noun:il sangue","left":"blood","right":"il sangue"},{"id":"noun:il braccio","left":"arm","right":"il braccio"},{"id":"noun:la mano","left":"hand","right":"la mano"},{"id":"noun:la gamba","left":"leg","right":"la gamba"},{"id":"noun:il piede","left":"foot","right":"il piede"},{"id":"noun:il ginocchio","left":"knee","right":"il ginocchio"},{"id":"noun:la spalla","left":"shoulder","right":"la spalla"},{"id":"gender:la testa","left":"testa","right":"la","hint":"head"},{"id":"gender:il viso","left":"viso","right":"il","hint":"face"},{"id":"gender:l'occhio","left":"occhio","right":"l'","hint":"eye"},{"id":"gender:l'orecchio","left":"orecchio","right":"l'","hint":"ear"},{"id":"gender:la bocca","left":"bocca","right":"la","hint":"mouth"},{"id":"gender:il naso","left":"naso","right":"il","hint":"nose"},{"id":"gender:la gola","left":"gola","right":"la","hint":"throat"},{"id":"gender:i denti","left":"denti","right":"i","hint":"teeth"},{"id":"gender:il petto","left":"petto","right":"il","hint":"chest"},{"id":"gender:la pancia","left":"pancia","right":"la","hint":"belly"},{"id":"gender:lo stomaco","left":"stomaco","right":"lo","hint":"stomach"},{"id":"gender:il cuore","left":"cuore","right":"il","hint":"heart"},{"id":"gender:il polmone","left":"polmone","right":"il","hint":"lung"},{"id":"gender:la schiena","left":"schiena","right":"la","hint":"back"},{"id":"gender:il sangue","left":"sangue","right":"il","hint":"blood"},{"id":"gender:il braccio","left":"braccio","right":"il","hint":"arm"},{"id":"presente:io:visitare","left":"I examine","right":"visito","hint":"visitare"},{"id":"presente:io:ascoltare","left":"I listen-to","right":"ascolto","hint":"ascoltare"},{"id":"presente:io:palpare","left":"I palpate","right":"palpo","hint":"palpare"},{"id":"presente:io:misurare","left":"I measure","right":"misuro","hint":"misurare"},{"id":"presente:io:controllare","left":"I check","right":"controllo","hint":"controllare"},{"id":"presente:io:prescrivere","left":"I prescribe","right":"prescrivo","hint":"prescrivere"},{"id":"presente:io:somministrare","left":"I administer","right":"somministro","hint":"somministrare"},{"id":"presente:io:spiegare","left":"I explain","right":"spiego","hint":"spiegare"},{"id":"presente:io:chiedere","left":"I ask","right":"chiedo","hint":"chiedere"},{"id":"presente:io:rassicurare","left":"I reassure","right":"rassicuro","hint":"rassicurare"},{"id":"presente:io:monitorare","left":"I monitor","right":"monitoro","hint":"monitorare"},{"id":"presente:io:aiutare","left":"I help","right":"aiuto","hint":"aiutare"},{"id":"presente:io:curare","left":"I treat","right":"curo","hint":"curare"},{"id":"presente:io:dimettere","left":"I discharge","right":"dimetto","hint":"dimettere"},{"id":"passato-prossimo:io:visitare","left":"I examineed","right":"ho visitato","hint":"visitare"},{"id":"passato-prossimo:io:ascoltare","left":"I listen-toed","right":"ho ascoltato","hint":"ascoltare"},{"id":"passato-prossimo:io:palpare","left":"I palpateed","right":"ho palpato","hint":"palpare"},{"id":"passato-prossimo:io:misurare","left":"I measureed","right":"ho misurato","hint":"misurare"},{"id":"passato-prossimo:io:controllare","left":"I checked","right":"ho controllato","hint":"controllare"},{"id":"passato-prossimo:io:prescrivere","left":"I prescribeed","right":"ho prescritto","hint":"prescrivere"},{"id":"passato-prossimo:io:somministrare","left":"I administered","right":"ho somministrato","hint":"somministrare"},{"id":"passato-prossimo:io:spiegare","left":"I explained","right":"ho spiegato","hint":"spiegare"},{"id":"passato-prossimo:io:chiedere","left":"I asked","right":"ho chiesto","hint":"chiedere"},{"id":"passato-prossimo:io:rassicurare","left":"I reassureed","right":"ho rassicurato","hint":"rassicurare"},{"id":"passato-prossimo:io:monitorare","left":"I monitored","right":"ho monitorato","hint":"monitorare"},{"id":"passato-prossimo:io:aiutare","left":"I helped","right":"ho aiutato","hint":"aiutare"},{"id":"passato-prossimo:io:curare","left":"I treated","right":"ho curato","hint":"curare"},{"id":"passato-prossimo:io:dimettere","left":"I dischargeed","right":"ho dimesso","hint":"dimettere"},{"id":"imperfetto:io:visitare","left":"I used to examine","right":"visitavo","hint":"visitare"},{"id":"imperfetto:io:ascoltare","left":"I used to listen-to","right":"ascoltavo","hint":"ascoltare"},{"id":"imperfetto:io:palpare","left":"I used to palpate","right":"palpavo","hint":"palpare"},{"id":"imperfetto:io:misurare","left":"I used to measure","right":"misuravo","hint":"misurare"},{"id":"imperfetto:io:controllare","left":"I used to check","right":"controllavo","hint":"controllare"},{"id":"imperfetto:io:prescrivere","left":"I used to prescribe","right":"prescrivevo","hint":"prescrivere"},{"id":"imperfetto:io:somministrare","left":"I used to administer","right":"somministravo","hint":"somministrare"},{"id":"imperfetto:io:spiegare","left":"I used to explain","right":"spiegavo","hint":"spiegare"},{"id":"imperfetto:io:chiedere","left":"I used to ask","right":"chiedevo","hint":"chiedere"},{"id":"imperfetto:io:rassicurare","left":"I used to reassure","right":"rassicuravo","hint":"rassicurare"},{"id":"imperfetto:io:monitorare","left":"I used to monitor","right":"monitoravo","hint":"monitorare"},{"id":"imperfetto:io:aiutare","left":"I used to help","right":"aiutavo","hint":"aiutare"},{"id":"imperfetto:io:curare","left":"I used to treat","right":"curavo","hint":"curare"},{"id":"imperfetto:io:dimettere","left":"I used to discharge","right":"dimettevo","hint":"dimettere"},{"id":"futuro-semplice:io:visitare","left":"I will examine","right":"visiterò","hint":"visitare"},{"id":"futuro-semplice:io:ascoltare","left":"I will listen-to","right":"ascolterò","hint":"ascoltare"},{"id":"futuro-semplice:io:palpare","left":"I will palpate","right":"palperò","hint":"palpare"},{"id":"futuro-semplice:io:misurare","left":"I will measure","right":"misurerò","hint":"misurare"},{"id":"futuro-semplice:io:controllare","left":"I will check","right":"controllerò","hint":"controllare"},{"id":"futuro-semplice:io:prescrivere","left":"I will prescribe","right":"prescriverò","hint":"prescrivere"},{"id":"futuro-semplice:io:somministrare","left":"I will administer","right":"somministrerò","hint":"somministrare"},{"id":"futuro-semplice:io:spiegare","left":"I will explain","right":"spiegherò","hint":"spiegare"},{"id":"futuro-semplice:io:chiedere","left":"I will ask","right":"chiederò","hint":"chiedere"},{"id":"futuro-semplice:io:rassicurare","left":"I will reassure","right":"rassicurerò","hint":"rassicurare"},{"id":"futuro-semplice:io:monitorare","left":"I will monitor","right":"monitorerò","hint":"monitorare"},{"id":"futuro-semplice:io:aiutare","left":"I will help","right":"aiuterò","hint":"aiutare"},{"id":"futuro-semplice:io:curare","left":"I will treat","right":"curerò","hint":"curare"},{"id":"futuro-semplice:io:dimettere","left":"I will discharge","right":"dimetterò","hint":"dimettere"}],"drawsFromSetIds":["set-1-verbs","set-2-body","set-3-gender","set-4-presente","set-5-passato-prossimo","set-6-imperfetto","set-7-futuro-semplice"]}],"unlockAccuracyThreshold":0.6,"superSetUnlockAfterNSetsCompleted":3};
+    const STORE_KEY = 'chiron-mm::' + CONFIG.lessonId;
+
+    function loadState() {
+      try {
+        const raw = localStorage.getItem(STORE_KEY);
+        return raw ? JSON.parse(raw) : { sets: {}, sessions: [], pairLog: [] };
+      } catch (_) { return { sets: {}, sessions: [], pairLog: [] }; }
+    }
+    function saveState(st) {
+      try { localStorage.setItem(STORE_KEY, JSON.stringify(st)); } catch (_) {}
+    }
+
+    const STATE = loadState();
+
+    // ----- Render mastery on each set card -----
+    function renderMasteryAll() {
+      document.querySelectorAll('[data-mastery-for]').forEach(node => {
+        const id = node.getAttribute('data-mastery-for');
+        const s = STATE.sets[id];
+        if (!s || !s.attempts) {
+          node.innerHTML = '<span class="mm-mastery-label">No history yet</span>';
+          return;
+        }
+        const mastery = Math.round((s.bestAccuracy || 0) * 100);
+        const last = s.lastPlayedIso ? new Date(s.lastPlayedIso) : null;
+        const ago = last ? timeAgo(last) : '';
+        const weak = (s.weakPairs || []).length;
+        node.innerHTML =
+          '<span class="mm-mastery-pct" data-mastery="' + mastery + '"><strong>' + mastery + '%</strong> mastery</span>' +
+          '<span class="mm-mastery-when">last ' + ago + '</span>' +
+          (weak > 0 ? '<span class="mm-mastery-weak"><strong>' + weak + '</strong> weak pairs</span>' : '');
+      });
+    }
+
+    function timeAgo(d) {
+      const diff = (Date.now() - d.getTime()) / 1000;
+      if (diff < 60) return 'just now';
+      if (diff < 3600) return Math.floor(diff/60) + 'm ago';
+      if (diff < 86400) return Math.floor(diff/3600) + 'h ago';
+      return Math.floor(diff/86400) + 'd ago';
+    }
+
+    // ----- Play loop -----
+    const G = {
+      activeSet: null,
+      pool: [],
+      onGrid: [],
+      selected: null,
+      roundIdx: 0,
+      correct: 0, wrong: 0, streak: 0, bestStreak: 0,
+      remainingSec: 0,
+      running: false, paused: false, accessibility: false,
+      lockUntil: 0, tickHandle: 0, sessionStart: 0,
+      tileShownAt: {},
+      pairLog: []
+    };
+
+    function $(id) { return document.getElementById(id); }
+    function shuffle(a) { const r = a.slice(); for (let i=r.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [r[i],r[j]]=[r[j],r[i]];} return r; }
+
+    function openSet(setId) {
+      const set = CONFIG.sets.find(s => s.id === setId);
+      if (!set) return;
+      G.activeSet = set;
+      $('mm-set-label').textContent = 'Set ' + set.index + ' · ' + set.title;
+      $('mm-play-surface').hidden = false;
+      G.roundIdx = 0; G.correct = 0; G.wrong = 0; G.streak = 0; G.bestStreak = 0;
+      G.pool = shuffle(set.pairs.slice());
+      G.remainingSec = set.timerSec || CONFIG.defaults.timerSec;
+      G.running = false; G.paused = false; G.accessibility = false;
+      G.tileShownAt = {}; G.pairLog = []; G.sessionStart = Date.now();
+      seedGrid(); renderGrid(); updateHud();
+      $('mm-result').hidden = true;
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeSet() {
+      G.running = false;
+      clearInterval(G.tickHandle);
+      $('mm-play-surface').hidden = true;
+      document.body.style.overflow = '';
+      renderMasteryAll();
+    }
+
+    function seedGrid() {
+      const seed = [];
+      for (let i = 0; i < 5; i++) seed.push(G.pool.length ? G.pool.shift() : null);
+      G.onGrid = seed;
+    }
+
+    function renderGrid() {
+      const grid = $('mm-grid'); grid.innerHTML = '';
+      const leftL1 = G.onGrid.map(p => p ? { l1: p.left, right: p.right, id: p.id } : null);
+      const rightL2 = shuffle(G.onGrid.filter(Boolean).map(p => ({ left: p.left, right: p.right, id: p.id })));
+      while (rightL2.length < 5) rightL2.push(null);
+      for (let i = 0; i < 5; i++) {
+        const lp = leftL1[i], rp = rightL2[i];
+        const lt = document.createElement('button');
+        lt.className = 'mm-tile'; lt.setAttribute('data-side','L'); lt.setAttribute('data-row', String(i));
+        if (lp) { lt.textContent = lp.l1; lt.setAttribute('data-pair-id', lp.id); }
+        else lt.setAttribute('data-state','empty');
+        grid.appendChild(lt);
+        const rt = document.createElement('button');
+        rt.className = 'mm-tile'; rt.setAttribute('data-side','R'); rt.setAttribute('data-row', String(i));
+        if (rp) { rt.textContent = rp.right; rt.setAttribute('data-pair-id', rp.id); }
+        else rt.setAttribute('data-state','empty');
+        grid.appendChild(rt);
+      }
+      const now = performance.now();
+      G.onGrid.forEach(p => { if (p) G.tileShownAt[p.id] = now; });
+      grid.querySelectorAll('.mm-tile').forEach(t => t.addEventListener('click', () => onTile(t)));
+    }
+
+    function onTile(tile) {
+      if (!G.running || G.paused) return;
+      if (performance.now() < G.lockUntil) return;
+      if (tile.getAttribute('data-state') === 'empty') return;
+      if (tile.getAttribute('data-state') === 'correct') return;
+      if (!G.selected) { tile.setAttribute('data-state','selected'); G.selected = tile; return; }
+      // Second pick
+      const a = G.selected, b = tile;
+      if (a === b) { a.removeAttribute('data-state'); G.selected = null; return; }
+      const aSide = a.getAttribute('data-side'), bSide = b.getAttribute('data-side');
+      if (aSide === bSide) { a.removeAttribute('data-state'); b.setAttribute('data-state','selected'); G.selected = b; return; }
+      const aId = a.getAttribute('data-pair-id'), bId = b.getAttribute('data-pair-id');
+      if (aId === bId) {
+        a.setAttribute('data-state','correct'); b.setAttribute('data-state','correct');
+        G.selected = null; G.correct++; G.streak++; if (G.streak > G.bestStreak) G.bestStreak = G.streak;
+        const lat = performance.now() - (G.tileShownAt[aId] || performance.now());
+        G.pairLog.push({ id: aId, latency_ms: Math.round(lat), was_wrong_first: false });
+        // Refill this slot with a new pair
+        setTimeout(() => refillSlot(a, b), refillDelay());
+        updateHud(); updateVisualSpeedUp();
+      } else {
+        a.setAttribute('data-state','wrong'); b.setAttribute('data-state','wrong');
+        G.wrong++; G.streak = 0;
+        G.pairLog.push({ id: aId, latency_ms: 0, was_wrong_first: true });
+        G.lockUntil = performance.now() + (G.activeSet.wrongLockMs || CONFIG.defaults.wrongLockMs);
+        setTimeout(() => { a.removeAttribute('data-state'); b.removeAttribute('data-state'); }, CONFIG.defaults.wrongLockMs);
+        G.selected = null;
+        updateHud();
+      }
+    }
+
+    function refillSlot(aTile, bTile) {
+      // Replace whichever side has data-pair-id with a fresh pair from pool
+      const next = G.pool.shift();
+      const replaceTile = (t) => {
+        if (next) {
+          t.removeAttribute('data-state');
+          const side = t.getAttribute('data-side');
+          t.textContent = side === 'L' ? next.left : next.right;
+          t.setAttribute('data-pair-id', next.id);
+          G.tileShownAt[next.id] = performance.now();
+        } else {
+          t.setAttribute('data-state','empty'); t.textContent = '';
+        }
+      };
+      // Pair the same next on both sides (L=left, R=right)
+      replaceTile(aTile); replaceTile(bTile);
+      checkRoundEnd();
+    }
+
+    function refillDelay() {
+      const vs = CONFIG.defaults.visualSpeedUp;
+      // Scale by streak — more streak = shorter delay
+      const t = Math.min(1, G.streak / 10);
+      return Math.round(vs.refillFromMs + (vs.refillToMs - vs.refillFromMs) * t);
+    }
+
+    function updateVisualSpeedUp() {
+      const vs = CONFIG.defaults.visualSpeedUp;
+      const t = Math.min(1, G.streak / 10);
+      const pulseMs = vs.pulseFromMs + (vs.pulseToMs - vs.pulseFromMs) * t;
+      const strength = vs.strengthFromOpacity + (vs.strengthToOpacity - vs.strengthFromOpacity) * t;
+      const root = document.getElementById('mm-game');
+      if (root && !G.accessibility) {
+        root.style.setProperty('--mm-pulse-ms', pulseMs + 'ms');
+        root.style.setProperty('--mm-pulse-strength', String(strength));
+      }
+    }
+
+    function checkRoundEnd() {
+      const tilesLeft = G.onGrid.filter(Boolean).length;
+      const poolLeft = G.pool.length;
+      // Round ends when grid is empty AND pool is empty
+      if (tilesLeft === 0 && poolLeft === 0) endRound();
+    }
+
+    function endRound() {
+      G.roundIdx++;
+      const totalRounds = G.activeSet.rounds;
+      if (G.roundIdx >= totalRounds) endSession(true);
+      else {
+        // Start next round: reshuffle a fresh pool from full pairs
+        G.pool = shuffle(G.activeSet.pairs.slice());
+        seedGrid(); renderGrid(); updateHud();
+      }
+    }
+
+    function endSession(completed) {
+      G.running = false;
+      clearInterval(G.tickHandle);
+      const total = G.correct + G.wrong;
+      const accuracy = total > 0 ? G.correct / total : 0;
+      // Persist
+      const setId = G.activeSet.id;
+      STATE.sets[setId] = STATE.sets[setId] || { attempts: 0, bestAccuracy: 0, weakPairs: [] };
+      STATE.sets[setId].attempts++;
+      if (accuracy > STATE.sets[setId].bestAccuracy) STATE.sets[setId].bestAccuracy = accuracy;
+      STATE.sets[setId].lastPlayedIso = new Date().toISOString();
+      // Weak pairs = those that had a wrong_first event
+      const weak = {};
+      G.pairLog.forEach(p => { if (p.was_wrong_first) weak[p.id] = (weak[p.id]||0) + 1; });
+      STATE.sets[setId].weakPairs = Object.entries(weak).map(([id,n]) => ({ id, misses: n }));
+      STATE.sessions.push({ setId, startedAt: G.sessionStart, endedAt: Date.now(), correct: G.correct, wrong: G.wrong, accuracy, completed });
+      saveState(STATE);
+      // Show result
+      $('mm-result-title').textContent = completed ? 'Set complete!' : 'Time up!';
+      $('mm-result-body').innerHTML =
+        '<p><strong>' + G.correct + '</strong> correct · <strong>' + G.wrong + '</strong> wrong · <strong>' + Math.round(accuracy*100) + '%</strong> accuracy</p>' +
+        '<p>Best streak: <strong>' + G.bestStreak + '</strong></p>' +
+        (Object.keys(weak).length > 0 ? '<p>Weak pairs flagged: <strong>' + Object.keys(weak).length + '</strong> — they\'ll come back in spaced review.</p>' : '<p>No weak pairs — nice.</p>');
+      $('mm-result').hidden = false;
+    }
+
+    function updateHud() {
+      $('mm-correct').textContent = String(G.correct);
+      $('mm-wrong').textContent = String(G.wrong);
+      $('mm-combo').textContent = '×' + G.streak;
+      $('mm-round').textContent = 'Round ' + (G.roundIdx + 1) + ' / ' + (G.activeSet ? G.activeSet.rounds : '—');
+      const m = Math.floor(G.remainingSec / 60), s = G.remainingSec % 60;
+      $('mm-timer').textContent = m + ':' + (s < 10 ? '0' + s : s);
+    }
+
+    function start() {
+      if (!G.activeSet) return;
+      G.running = true; G.paused = false;
+      G.tickHandle = setInterval(() => {
+        if (!G.running || G.paused || G.accessibility) return;
+        G.remainingSec--;
+        if (G.remainingSec <= 0) { G.remainingSec = 0; updateHud(); endSession(false); }
+        else updateHud();
+      }, 1000);
+    }
+
+    function reset() {
+      if (G.activeSet) openSet(G.activeSet.id);
+    }
+
+    function toggleAccessibility() {
+      G.accessibility = !G.accessibility;
+      const btn = $('mm-accessibility');
+      btn.setAttribute('aria-pressed', String(G.accessibility));
+      btn.textContent = G.accessibility ? 'Accessibility ON (no timer)' : 'Accessibility mode (timer off)';
+      if (G.accessibility) {
+        const root = $('mm-game');
+        root.style.setProperty('--mm-pulse-strength','0');
+      }
+    }
+
+    // ----- Wire-up -----
+    document.querySelectorAll('[data-play-set]').forEach(btn => {
+      btn.addEventListener('click', () => openSet(btn.getAttribute('data-play-set')));
+    });
+    $('mm-close')?.addEventListener('click', closeSet);
+    $('mm-start')?.addEventListener('click', start);
+    $('mm-reset')?.addEventListener('click', reset);
+    $('mm-accessibility')?.addEventListener('click', toggleAccessibility);
+
+    document.addEventListener('keydown', (e) => {
+      if ($('mm-play-surface').hidden) return;
+      if (e.key === 'Escape') closeSet();
+      if (e.key === ' ' && !e.repeat) { e.preventDefault(); if (!G.running) start(); else G.paused = !G.paused; }
+      if (G.running && !G.paused) {
+        const leftKeys = ['1','2','3','4','5'];
+        const rightKeys = ['q','w','e','r','t'];
+        const k = e.key.toLowerCase();
+        const li = leftKeys.indexOf(k); const ri = rightKeys.indexOf(k);
+        if (li >= 0) { const tiles = document.querySelectorAll('.mm-tile[data-side="L"]'); tiles[li] && onTile(tiles[li]); }
+        if (ri >= 0) { const tiles = document.querySelectorAll('.mm-tile[data-side="R"]'); tiles[ri] && onTile(tiles[ri]); }
+      }
+    });
+
+    renderMasteryAll();
+  })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,147 @@
+{
+  "skeleton": "code-lesson-skeleton-v1",
+  "sections": [
+    {
+      "id": "s0",
+      "title": "Cold open — why FHE matters",
+      "type": "cold-open"
+    },
+    {
+      "id": "s1",
+      "title": "Historical evolution (1978 → 2024)",
+      "type": "narrative",
+      "keyConcepts": [
+        "PHE",
+        "SHE",
+        "LFHE",
+        "FHE",
+        "bootstrapping"
+      ]
+    },
+    {
+      "id": "s2",
+      "title": "Mathematical foundations — LWE / RLWE / noise",
+      "type": "narrative",
+      "keyConcepts": [
+        "LWE",
+        "RLWE",
+        "noise",
+        "bootstrapping",
+        "keyswitching",
+        "modulus-switching"
+      ]
+    },
+    {
+      "id": "s3",
+      "title": "Four schemes — BGV / BFV / CKKS / TFHE",
+      "type": "comparative",
+      "keyConcepts": [
+        "BGV",
+        "BFV",
+        "CKKS",
+        "TFHE",
+        "SIMD-batching",
+        "word-vs-bit"
+      ]
+    },
+    {
+      "id": "s4",
+      "title": "Libraries — SEAL, OpenFHE, HElib, Lattigo, TFHE-rs",
+      "type": "narrative",
+      "keyConcepts": [
+        "SEAL",
+        "OpenFHE",
+        "HElib",
+        "Lattigo",
+        "TFHE-rs",
+        "TFHEpp"
+      ]
+    },
+    {
+      "id": "s5",
+      "title": "Performance + bootstrapping cost",
+      "type": "narrative",
+      "keyConcepts": [
+        "performance",
+        "GPU-acceleration",
+        "FPGA",
+        "bootstrapping-cost"
+      ]
+    },
+    {
+      "id": "s6",
+      "title": "Code examples — Python (SEAL), C++ (OpenFHE), Rust (TFHE-rs)",
+      "type": "walkthrough",
+      "keyConcepts": [
+        "BFV-encrypt",
+        "CKKS-encode",
+        "TFHE-boolean-gates"
+      ]
+    },
+    {
+      "id": "s7",
+      "title": "Applications — where FHE is actually used",
+      "type": "narrative",
+      "keyConcepts": [
+        "PPML",
+        "healthcare",
+        "finance",
+        "federated-learning",
+        "cloud"
+      ]
+    },
+    {
+      "id": "s8",
+      "title": "Closing + scheme-selection cheat sheet",
+      "type": "closing"
+    }
+  ],
+  "concept_dag": [
+    {
+      "from": "s0",
+      "to": "s1"
+    },
+    {
+      "from": "s1",
+      "to": "s2"
+    },
+    {
+      "from": "s2",
+      "to": "s3"
+    },
+    {
+      "from": "s3",
+      "to": "s4"
+    },
+    {
+      "from": "s4",
+      "to": "s5"
+    },
+    {
+      "from": "s5",
+      "to": "s6"
+    },
+    {
+      "from": "s6",
+      "to": "s7"
+    },
+    {
+      "from": "s7",
+      "to": "s8"
+    }
+  ],
+  "science_annotations": [
+    {
+      "principle": "examples",
+      "description": "Real SEAL/OpenFHE/TFHE-rs snippets in s6"
+    },
+    {
+      "principle": "retrieval",
+      "description": "Match Madness s7 drills scheme↔use-case + library↔language pairs"
+    },
+    {
+      "principle": "dual-coding",
+      "description": "ASCII diagrams + prose for timeline (s1) and scheme comparison (s3)"
+    }
+  ]
+}

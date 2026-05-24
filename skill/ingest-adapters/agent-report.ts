@@ -24,7 +24,7 @@ export interface IngestAgentReportOptions {
   sourcePath: string;
   lessonOutputDir: string;
   mode: 'A' | 'B';
-  domain: 'code' | 'medicine' | 'language-it' | 'research-paper';
+  domain: 'code' | 'medicine' | 'language-it' | 'research-paper' | 'concepts';
   /**
    * When true, this agent-report is one of several sources in a bundle
    * (FR-032 l) — the medicine SOLE-source guard is relaxed because the

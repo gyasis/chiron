@@ -1,0 +1,295 @@
+[
+  {
+    "chapterId": "why-quant-and-time-series",
+    "chapterNumber": 1,
+    "title": "Why quant — and the four parts of every price chart",
+    "narrative": "Markets are statistically hostile. Without quantitative discipline, every trade becomes a narrative — and narratives generate positions that survive past their statistical justification. This chapter introduces the mathematical guardrails and then immediately puts them to work: every price series decomposes into trend, seasonality, cycle, and noise. Spotting which one you're trading is the difference between an edge and a story.",
+    "keyConcepts": ["alpha", "beta", "sharpe-ratio", "trend", "seasonality", "cycle", "noise"],
+    "scienceAnnotations": [
+      { "principle": "examples",   "description": "Concrete SPY chart + 20-day MA grounds the abstract decomposition." },
+      { "principle": "dual-coding","description": "Verbal definitions paired with chart visualisation reinforce concept retention." },
+      { "principle": "retrieval",  "description": "Closing why-care callout primes the recall trigger for chapter 2's mean-reversion content." }
+    ],
+    "priorChapterStruggleSummary": null,
+    "widgets": [
+      {
+        "type": "why-care-callout",
+        "id": "ch1-whycare",
+        "body": "Quant trading lives at the intersection of probability, optimisation, and discipline. The math is the safety net — once you can read it, you stop trusting screenshots and start trusting backtests."
+      },
+      {
+        "type": "glossary-tooltips",
+        "id": "ch1-glossary",
+        "entries": [
+          { "term": "alpha", "definition": "Excess return above a benchmark — the portion of return NOT explained by market exposure." },
+          { "term": "beta",  "definition": "Sensitivity of a position to the market — beta=1 moves with the market 1:1." },
+          { "term": "sharpe","definition": "Risk-adjusted return: (return - risk-free rate) / standard deviation. >1 is professional, >2 is rare." },
+          { "term": "mean reversion", "definition": "The tendency of a series to drift back toward its mean. Strategies bet on snap-back after extreme moves." }
+        ]
+      },
+      {
+        "type": "chart-xy",
+        "id": "spy-line",
+        "variant": "line",
+        "title": "SPY · 60 trading days · price + 20-day MA",
+        "xLabel": "day", "yLabel": "USD",
+        "series": [
+          { "label": "price",     "color": "var(--color-accent)", "points": "__SYNTH_SPY_PRICE__" },
+          { "label": "20-day MA", "color": "var(--color-info)",   "points": "__SYNTH_SPY_MA20__" }
+        ],
+        "annotations": [
+          { "x": 30, "y": 0, "text": "mid-window" }
+        ]
+      },
+      {
+        "type": "step-cards",
+        "id": "ts-anatomy",
+        "title": "Anatomy of a time series",
+        "steps": [
+          { "n": 1, "label": "Trend",       "body": "Long-run direction. Up, down, sideways. Linear regression of price vs time gives slope." },
+          { "n": 2, "label": "Seasonality", "body": "Periodic component — day-of-week, intraday hour. Removed with first differencing or detrending." },
+          { "n": 3, "label": "Cycle",       "body": "Multi-month wave that isn't calendrical. Hard to model — usually treated as residual." },
+          { "n": 4, "label": "Noise",       "body": "Everything left. Ideally i.i.d.; rarely is. Heavy tails, autocorrelation, vol clustering." }
+        ]
+      }
+    ]
+  },
+
+  {
+    "chapterId": "mean-reversion-pairs",
+    "chapterNumber": 2,
+    "title": "Mean reversion — the pairs trade",
+    "narrative": "When two co-moving assets diverge, the spread between them often snaps back. This chapter walks the cointegrate → z-normalise → enter → exit protocol with a worked example. Then it shows the four ways the strategy actually dies in production: regime change, crowded trade, liquidity gap, funding shock.",
+    "keyConcepts": ["cointegration", "z-score", "spread", "regime-change"],
+    "scienceAnnotations": [
+      { "principle": "examples",      "description": "Concrete z-score chart with entry/exit thresholds annotated grounds the strategy." },
+      { "principle": "interleaving",  "description": "Pattern-cards juxtapose four distinct failure modes to build discriminative pattern-matching." },
+      { "principle": "retrieval",     "description": "Step-cards force the learner to articulate the protocol sequence before moving on." }
+    ],
+    "priorChapterStruggleSummary": [
+      "Distinguishing trend from cycle in a noisy series",
+      "Knowing when first differencing is required vs optional",
+      "Translating 'edge' from a feeling to a measurable quantity"
+    ],
+    "widgets": [
+      {
+        "type": "chart-xy",
+        "id": "spread-line",
+        "variant": "line",
+        "title": "Pairs-trade spread (AAPL − MSFT, z-score)",
+        "xLabel": "day", "yLabel": "z-score",
+        "series": [
+          { "label": "spread", "color": "var(--color-accent)", "points": "__SYNTH_SPREAD__" }
+        ],
+        "annotations": [
+          { "x": 30, "y":  2, "text": "short the spread above +2σ" },
+          { "x": 30, "y": -2, "text": "long below −2σ" }
+        ]
+      },
+      {
+        "type": "mathjax",
+        "source": "z_t = \\frac{S_t - \\mu}{\\sigma}, \\quad \\text{where } S_t = \\log(P^A_t / P^B_t)"
+      },
+      {
+        "type": "step-cards",
+        "id": "mr-protocol",
+        "title": "Mean-reversion trade lifecycle",
+        "steps": [
+          { "n": 1, "label": "Cointegrate",  "body": "Test that the pair's spread is stationary. Engle-Granger or Johansen." },
+          { "n": 2, "label": "Z-normalise",  "body": "Standardise the spread to a z-score (rolling-window μ, σ)." },
+          { "n": 3, "label": "Enter",        "body": "Short the spread when z > +2; long when z < −2." },
+          { "n": 4, "label": "Exit",         "body": "Close at z = 0 (target) or stop at |z| > 3.5 (regime break)." }
+        ]
+      },
+      {
+        "type": "pattern-cards",
+        "id": "mr-failures",
+        "title": "How mean reversion dies",
+        "cards": [
+          { "num": "#1", "title": "Regime change", "body": "Pair stops cointegrating. The spread takes off and never returns.", "foot": "Symptom: stop-out at |z|>3.5 every entry" },
+          { "num": "#2", "title": "Crowded trade", "body": "Everyone reads the same paper. Edge disappears as alpha gets arbitraged.", "foot": "Symptom: declining Sharpe over rolling 6mo" },
+          { "num": "#3", "title": "Liquidity gap", "body": "Half-cycle into the trade, one leg can't be exited at marketable size.", "foot": "Symptom: slippage > expected by 3x" },
+          { "num": "#4", "title": "Funding shock", "body": "Margin requirement spikes. Forced to close at maximum drawdown.",  "foot": "Symptom: max DD coincides with vol spike" }
+        ]
+      }
+    ]
+  },
+
+  {
+    "chapterId": "sharpe-ratio",
+    "chapterNumber": 3,
+    "title": "Risk-adjusted return — the Sharpe ratio",
+    "narrative": "Returns alone don't measure skill. The Sharpe ratio normalises return by volatility, so a 30% return at 50% vol becomes comparable to a 6% return at 10% vol. This chapter derives Sharpe in four steps, shows it rolling over a live strategy, and compares four backtested approaches by their Sharpe alone.",
+    "keyConcepts": ["sharpe-ratio", "annualisation", "volatility", "risk-free-rate"],
+    "scienceAnnotations": [
+      { "principle": "examples",     "description": "Rolling-Sharpe line chart shows the metric in motion, not just as a formula." },
+      { "principle": "interleaving", "description": "Bar chart compares four strategies on a single axis — forces direct comparison." },
+      { "principle": "dual-coding",  "description": "Formula (mathjax) + verbal derivation (step-cards) reinforce each other." }
+    ],
+    "priorChapterStruggleSummary": [
+      "Reading the difference between z-score levels and actual price moves",
+      "Knowing when to TRUST cointegration vs question it",
+      "Internalising that a stopped-out trade is not failure — it's risk management working"
+    ],
+    "widgets": [
+      {
+        "type": "why-care-callout",
+        "id": "ch3-whycare",
+        "body": "Sharpe is the only number that survives across timeframes. A 30% return with 50% vol is the same Sharpe as a 6% return with 10% vol — but one will scare you out of the trade and the other won't."
+      },
+      {
+        "type": "mathjax",
+        "source": "SR = \\frac{E[R_p] - R_f}{\\sigma_p} \\quad \\text{annualised: } SR_{ann} = SR_{daily}\\,\\sqrt{252}"
+      },
+      {
+        "type": "step-cards",
+        "id": "sharpe-derivation",
+        "title": "Deriving the Sharpe ratio",
+        "steps": [
+          { "n": 1, "label": "Excess return", "body": "Subtract the risk-free rate from your strategy's return." },
+          { "n": 2, "label": "Standardise",   "body": "Divide by the standard deviation of returns. Same return at half the vol = double the Sharpe." },
+          { "n": 3, "label": "Annualise",     "body": "Multiply daily Sharpe by √252 (252 trading days/year)." },
+          { "n": 4, "label": "Compare",       "body": "Sharpe >1 is professional; >2 is rare; >3 is suspicious." }
+        ]
+      },
+      {
+        "type": "chart-xy",
+        "id": "rolling-sharpe",
+        "variant": "line",
+        "title": "Rolling 30-day Sharpe — strategy under live capital",
+        "xLabel": "day", "yLabel": "Sharpe",
+        "series": [
+          { "label": "rolling SR", "color": "var(--color-success)", "points": "__SYNTH_ROLLING_SR__" }
+        ],
+        "annotations": [
+          { "x": 30, "y": 1.0, "text": "institutional threshold" }
+        ]
+      },
+      {
+        "type": "chart-xy",
+        "id": "strategy-sharpe",
+        "variant": "bar",
+        "title": "Backtested Sharpe by strategy (2014-2024)",
+        "xLabel": "strategy #", "yLabel": "Sharpe",
+        "series": [
+          { "label": "Sharpe", "color": "var(--color-warning)", "points": "__SYNTH_STRAT_SHARPE__" }
+        ]
+      }
+    ]
+  },
+
+  {
+    "chapterId": "position-sizing-kelly",
+    "chapterNumber": 4,
+    "title": "Position sizing — Kelly and the half-Kelly heuristic",
+    "narrative": "How much to risk per trade is the second-biggest decision in trading. The Kelly criterion gives a closed-form answer — but full Kelly is dangerous in practice because it assumes your edge estimate is perfect. This chapter walks the math, then explains why every professional shrinks Kelly to half or quarter.",
+    "keyConcepts": ["kelly-criterion", "fractional-kelly", "edge-estimation"],
+    "scienceAnnotations": [
+      { "principle": "retrieval",    "description": "Closing MCQ forces the learner to apply Kelly under uncertainty — application not memory." },
+      { "principle": "examples",     "description": "Worked p=0.55, b=1.2 example makes the abstract formula concrete." },
+      { "principle": "interleaving", "description": "Layer-toggle juxtaposes full Kelly with half Kelly side-by-side." }
+    ],
+    "priorChapterStruggleSummary": [
+      "Reading a Sharpe ratio without flinching at the number",
+      "Distinguishing daily vs annualised Sharpe in source material",
+      "Trusting Sharpe over headline returns"
+    ],
+    "widgets": [
+      {
+        "type": "mathjax",
+        "source": "f^* = \\frac{p \\cdot b - q}{b} = \\frac{p(b+1) - 1}{b}"
+      },
+      {
+        "type": "step-cards",
+        "id": "sizing-protocol",
+        "title": "Position sizing protocol",
+        "steps": [
+          { "n": 1, "label": "Estimate edge", "body": "Win rate p, payoff ratio b. Use BACKTEST data, not a guess." },
+          { "n": 2, "label": "Apply Kelly",   "body": "f* = (p·b − q) / b. Compute your ideal fraction of capital." },
+          { "n": 3, "label": "Discount",      "body": "Multiply by 0.5 (half Kelly) or 0.25 (quarter Kelly) for safety." },
+          { "n": 4, "label": "Cap",           "body": "Hard cap at 25% of capital per position regardless. Tail risk." }
+        ]
+      },
+      {
+        "type": "layer-toggle",
+        "id": "kelly-toggle",
+        "caption": "Full Kelly vs fractional Kelly",
+        "axes": [
+          { "key": "1", "label": "Full Kelly",  "title": "Full Kelly",            "body": "Mathematically growth-optimal but VOLATILE. Drawdowns of 40-60% are not edge cases. Assumes your edge estimate is perfect." },
+          { "key": "2", "label": "Half Kelly",  "title": "Fractional Kelly (½)",  "body": "Sacrifices ~25% of growth for half the drawdown. Industry standard — accounts for parameter uncertainty." }
+        ],
+        "defaultShow": "both"
+      },
+      {
+        "type": "mcq",
+        "stem": "Your backtest shows p=0.55, b=1.2 (you risk $1 to win $1.20). Full Kelly says f* ≈ 0.17. Why would a professional NOT size at 17%?",
+        "options": [
+          { "label": "A", "text": "Full Kelly assumes p and b are known exactly; in production they shrink, and you over-size into ruin.", "correct": true,  "explanation": "Right — parameter uncertainty is the killer. Half-Kelly trades 25% growth for 50% drawdown reduction." },
+          { "label": "B", "text": "Full Kelly is too conservative for institutional capital.",                                                "correct": false, "explanation": "Backwards — Full Kelly is aggressive, not conservative. Institutions size BELOW it." },
+          { "label": "C", "text": "Kelly doesn't work for trading; it's only for gambling.",                                                  "correct": false, "explanation": "Kelly works for any edge-with-known-payoff. Trading just adds noise to the parameter estimates." },
+          { "label": "D", "text": "Kelly requires unlimited capital.",                                                                        "correct": false, "explanation": "No — Kelly is a fraction of available capital. The math works at any wealth level." }
+        ],
+        "variants": [
+          { "scenario": "crypto with p=0.51" },
+          { "scenario": "options with p=0.32, b=3.5" }
+        ]
+      }
+    ]
+  },
+
+  {
+    "chapterId": "risk-management-stops",
+    "chapterNumber": 5,
+    "title": "Risk management — stops, trailing, and drawdown budgets",
+    "narrative": "Position sizing answers 'how much,' but the stop-loss protocol answers 'when to exit when wrong.' The exit is where amateurs lose money. This final chapter walks the stop-protocol flow live, with a BTC candlestick chart showing the kind of volatility the protocol exists to survive.",
+    "keyConcepts": ["drawdown", "stop-loss", "trailing-stop", "risk-budget"],
+    "scienceAnnotations": [
+      { "principle": "examples",     "description": "Live BTC candles ground the abstract drawdown concept in observable price action." },
+      { "principle": "retrieval",    "description": "Stop-protocol flow-animation forces step-by-step recall of the exit rules." },
+      { "principle": "dual-coding",  "description": "Verbal glossary on drawdown/vol/risk-budget paired with visual candle chart." }
+    ],
+    "priorChapterStruggleSummary": [
+      "Resisting the urge to size at full Kelly when the math looks attractive",
+      "Distinguishing parameter uncertainty from estimation precision",
+      "Internalising that the safer fraction usually wins long-run"
+    ],
+    "widgets": [
+      {
+        "type": "glossary-tooltips",
+        "id": "ch5-glossary",
+        "entries": [
+          { "term": "drawdown",    "definition": "Peak-to-trough decline of a portfolio. Max drawdown is the deepest such decline over a period." },
+          { "term": "volatility",  "definition": "Standard deviation of returns, usually annualised. Higher vol = wider range of outcomes = more position-sizing discipline required." },
+          { "term": "risk budget", "definition": "How much you're willing to lose per position before exiting. Set BEFORE entry, never adjusted in-trade." }
+        ]
+      },
+      {
+        "type": "chart-xy",
+        "id": "btc-candles",
+        "variant": "candlestick",
+        "title": "BTC · 20-session candles",
+        "xLabel": "session", "yLabel": "USD",
+        "series": [
+          { "label": "BTC", "points": "__SYNTH_BTC_CANDLES__" }
+        ]
+      },
+      {
+        "type": "flow-animation",
+        "id": "stop-protocol",
+        "title": "Stop-loss protocol (live trade)",
+        "actors": [
+          { "id": "entry",   "label": "Entry",   "icon": "🎯" },
+          { "id": "monitor", "label": "Monitor", "icon": "👁" },
+          { "id": "stop",    "label": "Stop",    "icon": "⛔" },
+          { "id": "target",  "label": "Target",  "icon": "✅" }
+        ],
+        "steps": [
+          { "label": "Open position at entry signal. Mark stop and target levels in the order book.", "highlight": "entry" },
+          { "label": "Monitor — never widen the stop. Trail the stop UP only.",                       "highlight": "monitor", "packet": true, "from": "entry",   "to": "monitor" },
+          { "label": "Price hits stop → close immediately, no second-guessing.",                       "highlight": "stop",    "packet": true, "from": "monitor", "to": "stop"    },
+          { "label": "OR price hits target → close, book profit, do not chase the next leg.",          "highlight": "target",  "packet": true, "from": "monitor", "to": "target"  }
+        ]
+      }
+    ]
+  }
+]

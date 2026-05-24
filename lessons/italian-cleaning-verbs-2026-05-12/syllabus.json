@@ -1,0 +1,29 @@
+{
+  "skeleton": "language-lesson-skeleton-v1",
+  "sections": [
+    { "id": "s0", "title": "Cold open — Sabato mattina", "type": "cold-open" },
+    { "id": "s1a", "title": "Verb cluster 1 — pulire la casa", "type": "vocab-arc", "verbs": ["spazzare","spolverare","pulire","strofinare"] },
+    { "id": "s1b", "title": "Verb cluster 2 — il bucato", "type": "vocab-arc", "verbs": ["lavare","sciacquare","asciugare","stendere","piegare"] },
+    { "id": "s1c", "title": "Verb cluster 3 — ordine e rifiuti", "type": "vocab-arc", "verbs": ["ammucchiare","mettere in pila","riordinare","buttare","passare l'aspirapolvere"] },
+    { "id": "s2", "title": "Coniugazione — le tre famiglie", "type": "conjugation-deep-dive" },
+    { "id": "s3", "title": "Collocazioni — verbo + oggetto", "type": "collocations" },
+    { "id": "s4", "title": "Racconti — sei storie", "type": "stories", "count": 6 },
+    { "id": "s4-funny", "title": "Pausa umoristica — due barzellette", "type": "jokes-sidebar" },
+    { "id": "s5", "title": "Match Madness — automatismo", "type": "match-madness", "pair_count": 22, "rounds": 3, "timer_seconds": 105 },
+    { "id": "s6", "title": "Dialogo lungo — Alice, Marco, tu", "type": "extended-dialogue" },
+    { "id": "s7", "title": "Carte SR — ripasso spaziato", "type": "sr-drawer" },
+    { "id": "s8", "title": "Chiusura — Marco saluta", "type": "closing" }
+  ],
+  "concept_dag": [
+    { "from": "s0", "to": "s1a" },
+    { "from": "s1a", "to": "s1b" },
+    { "from": "s1b", "to": "s1c" },
+    { "from": "s1c", "to": "s2" },
+    { "from": "s2", "to": "s3" },
+    { "from": "s3", "to": "s4" },
+    { "from": "s4", "to": "s5" },
+    { "from": "s5", "to": "s6" },
+    { "from": "s6", "to": "s7" },
+    { "from": "s7", "to": "s8" }
+  ]
+}

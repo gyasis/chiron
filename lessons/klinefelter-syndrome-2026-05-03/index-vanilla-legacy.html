@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Chiron — Klinefelter Lesson · Layout & Theme Launcher</title>
+<style>
+  * { box-sizing: border-box; }
+  :root {
+    --bg: #0f1419;
+    --panel: #1a1f2e;
+    --panel-2: #232a3d;
+    --ink: #e8edf5;
+    --muted: #8b95a8;
+    --accent: #6db3f2;
+    --border: #2c3447;
+  }
+  html, body {
+    margin: 0; padding: 0;
+    background: var(--bg); color: var(--ink); min-height: 100vh;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    line-height: 1.5;
+  }
+  .wrap { max-width: 1100px; margin: 0 auto; padding: 3rem 2rem 5rem; }
+  h1 { font-size: 1.6rem; margin: 0 0 0.3rem 0; font-weight: 600; }
+  .lead { color: var(--muted); margin: 0 0 2.5rem 0; font-size: 0.95rem; }
+  h2 { font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.1em;
+    color: var(--muted); margin: 2.5rem 0 1rem 0; border-bottom: 1px solid var(--border); padding-bottom: 0.5rem; }
+
+  .matrix { display: grid; grid-template-columns: 100px repeat(5, 1fr); gap: 4px;
+    background: var(--border); border: 1px solid var(--border); border-radius: 6px; overflow: hidden; }
+  .matrix .cell { background: var(--panel); padding: 0.7rem 0.8rem; font-size: 0.85rem; }
+  .matrix .head { background: var(--panel-2); font-weight: 600; color: var(--accent); text-align: center;
+    font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.05em; padding: 0.6rem 0.4rem; }
+  .matrix .row-label { background: var(--panel-2); font-weight: 600; display: flex; align-items: center;
+    justify-content: center; font-size: 0.85rem; color: var(--accent); }
+  .matrix .cell a { display: block; color: var(--ink); text-decoration: none;
+    padding: 0.4rem 0.5rem; border-radius: 3px; font-size: 0.78rem;
+    border: 1px solid transparent; transition: all 0.15s; text-align: center; }
+  .matrix .cell a:hover { background: var(--panel-2); border-color: var(--accent); color: var(--accent); }
+  .matrix .cell .row-tip { display: block; font-size: 0.7rem; color: var(--muted); margin-top: 2px; }
+
+  .quick { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 0.8rem; }
+  .quick .card { background: var(--panel); border: 1px solid var(--border); border-radius: 6px; padding: 1rem 1.2rem; }
+  .quick .card h3 { margin: 0 0 0.3rem 0; font-size: 1rem; color: var(--accent); }
+  .quick .card p { margin: 0 0 0.8rem 0; font-size: 0.85rem; color: var(--muted); line-height: 1.4; }
+  .quick .card a { display: inline-block; color: var(--ink); text-decoration: none;
+    background: var(--panel-2); padding: 0.4rem 0.8rem; border-radius: 3px; font-size: 0.82rem;
+    border: 1px solid var(--border); }
+  .quick .card a:hover { border-color: var(--accent); color: var(--accent); }
+
+  .footer { margin-top: 3rem; padding-top: 1.5rem; border-top: 1px solid var(--border);
+    color: var(--muted); font-size: 0.82rem; }
+  .footer code { background: var(--panel-2); padding: 0.15rem 0.4rem; border-radius: 3px; }
+  .footer a { color: var(--accent); }
+
+  .recommended { display: inline-block; background: rgba(109,179,242,0.15);
+    color: var(--accent); padding: 0.1rem 0.5rem; border-radius: 3px;
+    font-size: 0.7rem; letter-spacing: 0.05em; margin-left: 0.5rem; vertical-align: middle; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <h1>Klinefelter Syndrome — Layout & Theme Launcher</h1>
+  <p class="lead">Open any combination full-screen. The layouts (especially L5 textbook) are designed for 1920px+ and need the full viewport to evaluate fairly.</p>
+
+  <h2>Recommended starting points</h2>
+  <div class="quick">
+    <div class="card">
+      <h3>L5 · Textbook<span class="recommended">RECOMMENDED</span></h3>
+      <p>3-column with margin-rail. High-yield boxes, mnemonics, and pearls float to the right margin (Tufte-style). Best use of big-screen real estate. Stacks cleanly on narrow viewports.</p>
+      <a href="lesson.html?layout=l5&theme=clinical" target="_blank">Open · clinical theme →</a>
+    </div>
+    <div class="card">
+      <h3>L1 · LMS</h3>
+      <p>Original Coursera-style. Fixed left TOC, narrow centered scroll-snap chapters. Familiar but wastes ~35% of horizontal space on a 1920px monitor.</p>
+      <a href="lesson.html?layout=l1&theme=clinical" target="_blank">Open · clinical theme →</a>
+    </div>
+    <div class="card">
+      <h3>L2 · Editorial</h3>
+      <p>Single-column long-form, top-bar TOC. Magazine-feel. Wins on mobile (only layout that adapts cleanly). Wastes screen space on 1920px.</p>
+      <a href="lesson.html?layout=l2&theme=clinical" target="_blank">Open · clinical theme →</a>
+    </div>
+  </div>
+
+  <h2>Full matrix — 3 layouts × 5 themes</h2>
+  <div class="matrix">
+    <div class="head"></div>
+    <div class="head">clinical</div>
+    <div class="head">midnight</div>
+    <div class="head">warm-paper</div>
+    <div class="head">linguistic</div>
+    <div class="head">ocean</div>
+
+    <div class="row-label">L1<br><small style="font-weight:400;font-size:0.7rem;color:var(--muted)">LMS</small></div>
+    <div class="cell"><a href="lesson.html?layout=l1&theme=clinical" target="_blank">Open ↗</a></div>
+    <div class="cell"><a href="lesson.html?layout=l1&theme=midnight" target="_blank">Open ↗</a></div>
+    <div class="cell"><a href="lesson.html?layout=l1&theme=warm-paper" target="_blank">Open ↗</a></div>
+    <div class="cell"><a href="lesson.html?layout=l1&theme=linguistic" target="_blank">Open ↗</a></div>
+    <div class="cell"><a href="lesson.html?layout=l1&theme=ocean" target="_blank">Open ↗</a></div>
+
+    <div class="row-label">L5<br><small style="font-weight:400;font-size:0.7rem;color:var(--muted)">Textbook</small></div>
+    <div class="cell"><a href="lesson.html?layout=l5&theme=clinical" target="_blank">Open ↗</a></div>
+    <div class="cell"><a href="lesson.html?layout=l5&theme=midnight" target="_blank">Open ↗</a></div>
+    <div class="cell"><a href="lesson.html?layout=l5&theme=warm-paper" target="_blank">Open ↗</a></div>
+    <div class="cell"><a href="lesson.html?layout=l5&theme=linguistic" target="_blank">Open ↗</a></div>
+    <div class="cell"><a href="lesson.html?layout=l5&theme=ocean" target="_blank">Open ↗</a></div>
+
+    <div class="row-label">L2<br><small style="font-weight:400;font-size:0.7rem;color:var(--muted)">Editorial</small></div>
+    <div class="cell"><a href="lesson.html?layout=l2&theme=clinical" target="_blank">Open ↗</a></div>
+    <div class="cell"><a href="lesson.html?layout=l2&theme=midnight" target="_blank">Open ↗</a></div>
+    <div class="cell"><a href="lesson.html?layout=l2&theme=warm-paper" target="_blank">Open ↗</a></div>
+    <div class="cell"><a href="lesson.html?layout=l2&theme=linguistic" target="_blank">Open ↗</a></div>
+    <div class="cell"><a href="lesson.html?layout=l2&theme=ocean" target="_blank">Open ↗</a></div>
+  </div>
+
+  <h2>Filter views — same lesson, different lens</h2>
+  <div class="quick">
+    <div class="card">
+      <h3>📖 Lesson (default)</h3>
+      <p>Full scrollable book with all chapters, prose, quizzes, flashcards, and the final vignette.</p>
+      <a href="lesson.html?view=lesson&layout=l5&theme=clinical" target="_blank">Open ↗</a>
+    </div>
+    <div class="card">
+      <h3>✓ Quizzes only</h3>
+      <p>Strips all prose. Shows just the 17 MCQs grouped by chapter. Score persists from full-lesson sessions.</p>
+      <a href="lesson.html?view=quizzes&layout=l5&theme=clinical" target="_blank">Open ↗</a>
+    </div>
+    <div class="card">
+      <h3>🃏 Flashcard drill</h3>
+      <p>SR-style drill mode. One card at a time with Show Answer → Again/Hard/Good/Easy ratings. Stats persist per card.</p>
+      <a href="lesson.html?view=flashcards&theme=clinical" target="_blank">Open ↗</a>
+    </div>
+    <div class="card">
+      <h3>⚡ USMLE Vignette only</h3>
+      <p>The deep clinical case alone (Chapter 7). For when you want focused vignette practice without surrounding chapters.</p>
+      <a href="lesson.html?view=vignette&layout=l5&theme=clinical" target="_blank">Open ↗</a>
+    </div>
+  </div>
+
+  <h2>For Gemini critique (pre-rendered screenshots)</h2>
+  <div class="quick">
+    <div class="card">
+      <h3>Big screen 1920×1080</h3>
+      <p>Each layout rendered at full big-screen viewport. Drop these into Gemini for honest critique without the iframe-cramming distortion.</p>
+      <a href="screenshots/layout-l1-1920.jpeg" target="_blank">L1 ↗</a>
+      <a href="screenshots/layout-l5-1920.jpeg" target="_blank">L5 ↗</a>
+      <a href="screenshots/layout-l2-1920.jpeg" target="_blank">L2 ↗</a>
+    </div>
+    <div class="card">
+      <h3>Mobile 414×896</h3>
+      <p>Same layouts at iPhone viewport. L2 wins here; L1 and L5 have a known sidebar-collapse bug.</p>
+      <a href="screenshots/layout-l1-mobile.jpeg" target="_blank">L1 ↗</a>
+      <a href="screenshots/layout-l5-mobile.jpeg" target="_blank">L5 ↗</a>
+      <a href="screenshots/layout-l2-mobile.jpeg" target="_blank">L2 ↗</a>
+    </div>
+  </div>
+
+  <h2>Side-by-side iframe harness (legacy)</h2>
+  <div class="quick">
+    <div class="card">
+      <h3>compare.html</h3>
+      <p>Original iframe grid. Useful for quick A/B but cramps the layouts. Prefer the full-screen launchers above for fair evaluation.</p>
+      <a href="compare.html" target="_blank">Open harness ↗</a>
+    </div>
+  </div>
+
+  <div class="footer">
+    Lesson dir: <code>~/dev/projects/chiron/lessons/klinefelter-syndrome-2026-05-03/</code><br>
+    Theme files: <code>themes/{_tokens, clinical, midnight, warm-paper, linguistic, ocean}.css</code><br>
+    Layout files: <code>layouts/{l1-lms, l5-textbook, l2-editorial}.css</code><br>
+    State DB: <code>.chiron-state.db</code> · Sidecars: <code>brief.json</code>, <code>syllabus.json</code>
+  </div>
+
+</div>
+</body>
+</html>

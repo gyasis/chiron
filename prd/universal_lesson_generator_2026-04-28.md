@@ -81,3 +81,19 @@ Three audits are complete: `codebase-to-course` (the HTML rendering shell — ke
 | Version | Date | Change |
 |---|---|---|
 | 0.1 | 2026-04-28 | Initial draft |
+| 0.2 | 2026-05-12 | Added §8 PRD inventory pointing to design v1 + 3 new child PRDs (server CMS, generator enhancements umbrella, lesson expander) |
+
+---
+
+## 8. PRD Inventory (this is the project's tracking PRD — keep this list current)
+
+The Chiron project's design now spans 4 PRDs in this folder. This tracker is the index.
+
+| PRD | Status | Concern | Speckit-ready? |
+|---|---|---|---|
+| [`chiron_design_v1_2026-04-28.md`](./chiron_design_v1_2026-04-28.md) | DRAFT (design complete) | Parent design — the Claude Code skill / generator core, locked 12 architectural decisions, 5-stage pipeline, WidgetSpec, SQLite schema, 10-phase buildout | No (design-level, not feature-level) |
+| [`chiron_server_cms_2026-05-12.md`](./chiron_server_cms_2026-05-12.md) | DRAFT (design complete) | Server CMS — Hono+Bun, laptop→Pi→AWS, library + cross-lesson SR + phone review | Yes (FR/NFR/user-stories in §16.5-§16.8) |
+| [`chiron_generator_cureiq_synthesis_2026-05-12.md`](./chiron_generator_cureiq_synthesis_2026-05-12.md) | DRAFT (umbrella roadmap) | Generator enhancements — image source, RAG source, multi-hop integration. Synthesizes prior art from `gyasis/CureIQ`. | Per sub-feature (one Speckit invocation per G1/G2/G4) |
+| [`chiron_lesson_expander_2026-05-12.md`](./chiron_lesson_expander_2026-05-12.md) | DRAFT (focused feature) | First sub-feature of generator enhancements (Phase GP1). Append N more vignettes/MCQs to an existing lesson. CLI + CMS-driven modes. | Yes (sized for single `/speckit-specify` invocation) |
+
+**Recommended speckit invocation order** (after TTS fix lands): server CMS P0.5 → lesson expander → image adapter (G1) → RAG adapter (G2) → multi-hop integration (G4).

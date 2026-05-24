@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="clinical" data-layout="l5" data-view="lesson">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Chiron — Lesson</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Source+Sans+3:wght@400;500;600&display=swap" rel="stylesheet" />
+  <script>
+    // Theme + Layout + View pickers via ?theme=&layout=&view= or persisted localStorage.
+    // Set early to avoid flash-of-wrong-style.
+    (function () {
+      const validThemes = ['clinical','midnight','warm-paper','linguistic','ocean'];
+      const validLayouts = ['l1','l2','l5'];
+      const validViews = ['lesson','quizzes','flashcards','vignette'];
+      const params = new URLSearchParams(location.search);
+      const tUrl = params.get('theme'), lUrl = params.get('layout'), vUrl = params.get('view');
+      const tStored = localStorage.getItem('chiron-theme');
+      const lStored = localStorage.getItem('chiron-layout');
+      const theme = validThemes.includes(tUrl) ? tUrl : (validThemes.includes(tStored) ? tStored : 'clinical');
+      const layout = validLayouts.includes(lUrl) ? lUrl : (validLayouts.includes(lStored) ? lStored : 'l5');
+      const view = validViews.includes(vUrl) ? vUrl : 'lesson';
+      const root = document.documentElement;
+      root.setAttribute('data-theme', theme);
+      root.setAttribute('data-layout', layout);
+      root.setAttribute('data-view', view);
+      if (tUrl) localStorage.setItem('chiron-theme', tUrl);
+      if (lUrl) localStorage.setItem('chiron-layout', lUrl);
+    })();
+  </script>
+</head>
+<body>
+  <div id="lesson-root"></div>
+  <script type="module" src="/src/lesson.ts"></script>
+</body>
+</html>
