@@ -1,4 +1,4 @@
-import { BriefSchema, type Brief } from './schemas/brief.js';
+import { BriefSchema } from './schemas/brief.js';
 import {
   ChapterSyllabusSchema,
   CANONICAL_MEDICINE_SECTIONS,
