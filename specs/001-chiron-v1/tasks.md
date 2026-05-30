@@ -164,7 +164,7 @@ description: "Task list for Chiron v1 — Universal Lesson Generator"
 - [x] T055 [P] [US2] Extend `skill/lib/widget-renderer.ts` to render `fill-blank` widgets with FR-020 fuzzy accent matching: `caffe ≡ caffè`, `e ≡ è`, `niño ≡ nino` (Spanish-style accents tolerated for cross-language consistency)
 - [x] T056 [P] [US2] Extend `skill/lib/widget-renderer.ts` to render `matching-pair` widgets — `1to1` and `NtoN` drag-drop modes per `contracts/widget-spec.ts`
 - [x] T057 [P] [US2] Extend `skill/lib/widget-renderer.ts` to render `cloze` widgets with `ankiCompatible: true` (so the optional `.apkg` export later can pick them up unchanged)
-- [ ] T058 [P] [US2] Extend `skill/lib/widget-renderer.ts` to render `audio-tts` widgets — **TABLED to TTS PRD** (`~/dev/prd/scratch/chiron_tts_provider_selection_2026-04-29.md`); provisional renderer authored 2026-04-29 but task remains incomplete until provider selection lands
+- [ ] T058 [P] [US2] Extend `skill/lib/widget-renderer.ts` to render `audio-tts` widgets — **TABLED to TTS PRD** (`~/dev/prd/scratch/chiron_tts_provider_selection_2026-04-29.md`); provisional renderer authored 2026-04-29 but task remains incomplete until provider selection lands. **Tracked in GitHub issue #2** (gyasis/chiron#2, 2026-05-30).
 
 ### TTS via Gemini MCP
 
@@ -405,10 +405,10 @@ description: "Task list for Chiron v1 — Universal Lesson Generator"
 
 ### Browser-side safety (Wave R8)
 
-- [ ] T162 Fix `widget-renderer.ts` `eval(code)` in code-runner: sandbox in iframe with `sandbox="allow-scripts"`. Prevents LLM-prompt-injected JS from reading all localStorage.
-- [ ] T163 Fix `main.js` `feedback.innerHTML = '...' + LLM-explanation`: use `textContent` or DOMPurify. Prevents XSS via prompt-injected explanations.
-- [ ] T164 Add SRI hash to Pyodide CDN load in `chalkai-loader.ts` and code-runner. Currently no `integrity=` attribute.
-- [ ] T165 Fix `chemistry-renderer.ts` `container.innerHTML = svg` — strip `<script>` and `on*` attributes from RDKit SVG output before injection.
+- [x] T162 Fix `widget-renderer.ts` `eval(code)` in code-runner: sandbox in iframe with `sandbox="allow-scripts"`. Prevents LLM-prompt-injected JS from reading all localStorage. **Done 2026-05-30** — replaced in-page `(0,eval)(code)` with a sandboxed `<iframe sandbox="allow-scripts">` (opaque origin → no parent localStorage/cookie/DOM access); code + output cross only via `postMessage`, plus a 5s timeout guard.
+- [x] T163 Fix `main.js` `feedback.innerHTML = '...' + LLM-explanation`: use `textContent` or DOMPurify. Prevents XSS via prompt-injected explanations. **Done 2026-05-30** — added `setFeedback()` helper; the 4 quiz/bug-feedback sites now render the bold label as a `<strong>` element and the untrusted explanation/hint as a text node.
+- [x] T164 Add SRI hash to Pyodide CDN load in `chalkai-loader.ts` and code-runner. Currently no `integrity=` attribute. **Done 2026-05-30** — added `integrity="sha384-Jbsp01bfi5QMUu9TQeO+5kXvBTqk5CQkcSgbSP9rSEDuQnaamwBF7YDKrSsBmfXw"` + `crossOrigin="anonymous"` on the Pyodide loader in `widget-renderer.ts` (the only CDN load; `chalkai-loader.ts` does no CDN fetch).
+- [x] T165 Fix `chemistry-renderer.ts` `container.innerHTML = svg` — strip `<script>` and `on*` attributes from RDKit SVG output before injection. **Done 2026-05-30** — added `sanitizeSvg()` (DOMParser parse → remove `<script>`, `on*` handlers, `javascript:` hrefs → re-serialize; escapes as fallback). Also added `DOM`/`DOM.Iterable` to `tsconfig.json` `lib` (cleared 14 pre-existing DOM-type tsc errors).
 
 ### Verifier hardening (Wave R9)
 

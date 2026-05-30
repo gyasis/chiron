@@ -24,6 +24,23 @@
   function $(sel, ctx) { return (ctx || document).querySelector(sel); }
   function $$(sel, ctx) { return Array.from((ctx || document).querySelectorAll(sel)); }
 
+  /* ── T163: XSS-safe feedback writer ────────────────────────────
+   * LLM-authored explanations/hints are prompt-injectable, so they must
+   * NEVER reach innerHTML. Render an optional bold label as a real <strong>
+   * element, then append the untrusted body as a text node (textContent
+   * semantics) so any markup in it is shown literally, not executed. */
+  function setFeedback(el, label, body) {
+    if (!el) return;
+    el.textContent = '';
+    if (label) {
+      const strong = document.createElement('strong');
+      strong.textContent = label;
+      el.appendChild(strong);
+      if (body) el.appendChild(document.createTextNode(' '));
+    }
+    if (body) el.appendChild(document.createTextNode(body));
+  }
+
   /* ── T180: localStorage quota-aware setter ─────────────────── */
   function getLessonId() {
     const meta = document.querySelector('meta[name="chiron-lesson-id"]');
@@ -729,13 +746,13 @@
 
       if (selected.dataset.value === correct) {
         selected.classList.add('correct');
-        feedback.innerHTML = '<strong>Exactly!</strong> ' + rightExp;
+        setFeedback(feedback, 'Exactly!', rightExp);
         feedback.className = 'quiz-feedback show success';
       } else {
         selected.classList.add('incorrect');
         const correctBtn = $(`.quiz-option[data-value="${correct}"]`, q);
         if (correctBtn) correctBtn.classList.add('correct');
-        feedback.innerHTML = '<strong>Not quite.</strong> ' + wrongExp;
+        setFeedback(feedback, 'Not quite.', wrongExp);
         feedback.className = 'quiz-feedback show error';
       }
     });
@@ -1009,12 +1026,12 @@
     const feedback  = $('.bug-feedback', challenge);
     if (isCorrect) {
       el.classList.add('correct');
-      feedback.innerHTML  = '<strong>Found it!</strong> ' + (el.dataset.explanation || '');
+      setFeedback(feedback, 'Found it!', el.dataset.explanation || '');
       feedback.className  = 'bug-feedback show success';
       $$('.bug-line', challenge).forEach(l => l.style.pointerEvents = 'none');
     } else {
       el.classList.add('incorrect');
-      feedback.innerHTML  = (el.dataset.hint || 'Not this line — keep looking...');
+      setFeedback(feedback, '', el.dataset.hint || 'Not this line — keep looking...');
       feedback.className  = 'bug-feedback show error';
       setTimeout(() => {
         el.classList.remove('incorrect');

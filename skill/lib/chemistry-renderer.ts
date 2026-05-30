@@ -60,6 +60,42 @@ export function renderChemicalReaction(equation: string, container: HTMLElement)
   }
 }
 
+/**
+ * T165 — Strip active content from RDKit-produced SVG before DOM injection.
+ *
+ * RDKit's `get_svg` output is normally inert, but the SMILES that produced it is
+ * learner/LLM-supplied, so we defend in depth: parse the SVG and remove
+ * `<script>` elements, any `on*` event-handler attributes, and `javascript:`
+ * URLs on `href`/`xlink:href`. If a DOM parser is unavailable (non-browser) or
+ * the SVG fails to parse, fall back to HTML-escaping so nothing can execute.
+ */
+function sanitizeSvg(svg: string): string {
+  const escape = (s: string): string =>
+    s.replace(/[<>&]/g, (c) => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;' })[c]!);
+
+  if (typeof DOMParser === 'undefined' || typeof XMLSerializer === 'undefined') {
+    return escape(svg);
+  }
+
+  const parsed = new DOMParser().parseFromString(svg, 'image/svg+xml');
+  if (parsed.querySelector('parsererror')) return escape(svg);
+
+  const root = parsed.documentElement;
+  for (const el of Array.from(root.querySelectorAll('script'))) el.remove();
+  const elements = [root, ...Array.from(root.querySelectorAll('*'))];
+  for (const el of elements) {
+    for (const attr of Array.from(el.attributes)) {
+      const name = attr.name.toLowerCase();
+      if (name.startsWith('on')) {
+        el.removeAttribute(attr.name);
+      } else if (name.endsWith('href') && /^\s*javascript:/i.test(attr.value)) {
+        el.removeAttribute(attr.name);
+      }
+    }
+  }
+  return new XMLSerializer().serializeToString(root);
+}
+
 // v1 default: RDKit-JS chosen over Kekule.js — smaller minified bundle (~3MB vs ~5MB), cleaner SMILES API (get_mol/get_svg).
 class RdkitMoleculeRenderer implements MoleculeRenderer {
   readonly impl = 'rdkit-js' as const;
@@ -142,7 +178,7 @@ class RdkitMoleculeRenderer implements MoleculeRenderer {
     }
     try {
       const svg = mol.get_svg(options?.width ?? 300, options?.height ?? 200);
-      container.innerHTML = svg; // (T165 will sanitize this later; out of scope here)
+      container.innerHTML = sanitizeSvg(svg); // T165: strip <script>/on*/javascript: before injection
     } finally {
       mol.delete?.();
     }
