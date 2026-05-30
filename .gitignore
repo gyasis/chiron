@@ -31,3 +31,10 @@ memory-bank/private/
 # SpecStory conversation history — local only, may contain secrets
 .specstory/
 
+# Agent-state memory (PRD registry / session state — local, secret leak surface)
+.memory/
+
+# Key / cert material — never commit
+*.key
+*.pem
+
