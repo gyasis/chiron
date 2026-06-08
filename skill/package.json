@@ -10,7 +10,9 @@
     "build": "tsc",
     "watch": "tsc --watch",
     "clean": "rm -rf dist *.tsbuildinfo",
-    "test": "node --test dist/tests/**/*.test.js"
+    "test": "node --test dist/tests/**/*.test.js",
+    "doctor": "bash scripts/doctor.sh",
+    "setup": "bash scripts/install.sh"
   },
   "dependencies": {
     "zod": "^3.23.0",

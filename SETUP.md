@@ -8,7 +8,14 @@ git clone, or another contributor's environment.
 ```bash
 git clone https://github.com/gyasis/chiron.git && cd chiron
 bash skill/scripts/install.sh    # one-shot: symlink + npm install + build + test
+bash skill/scripts/doctor.sh     # verify the install landed + is usable (traffic-light report)
 ```
+
+Or from `skill/`: `npm run setup` then `npm run doctor`.
+
+**Agent-assisted install:** to have a Claude Code session on the new machine
+drive the whole thing, point it at `skill/scripts/AGENT_INSTALL.md` (it reads
+the doctor's ✓/⚠/✗ output, fixes FAILs, and confirms the skill is usable).
 
 `install.sh` is idempotent and does ALL of:
 1. Verifies Node ≥ 20 + npm
