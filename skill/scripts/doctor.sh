@@ -117,11 +117,25 @@ fi
 # ─── 4. TypeScript build ─────────────────────────────────────────────────────────
 section "TypeScript build"
 
-if [ -d "$SKILL_DIR/dist" ] && ls "$SKILL_DIR/dist"/*.js >/dev/null 2>&1; then
-  ok "dist/ compiled (tsc ran)"
+if [ -d "$SKILL_DIR/dist" ] && [ -n "$(find "$SKILL_DIR/dist" -name '*.js' -print -quit 2>/dev/null)" ]; then
+  ok "dist/ present ($(find "$SKILL_DIR/dist" -name '*.js' | wc -l | tr -d ' ') compiled modules)"
 else
   fail "dist/ missing or empty — TypeScript not built"
   hint "Run: cd $SKILL_DIR && npm run build"
+fi
+# A stale dist/ can mask a broken build — verify the source actually compiles clean.
+# (strict mode noUnusedLocals: a single dead import fails the build on a fresh machine.)
+if [ -d "$SKILL_DIR/node_modules/typescript" ]; then
+  if ( cd "$SKILL_DIR" && npx tsc --noEmit >/tmp/chiron-tsc.$$ 2>&1 ); then
+    ok "tsc --noEmit clean (source compiles from scratch)"
+  else
+    fail "tsc --noEmit FAILED — build is broken (stale dist/ may be masking it)"
+    sed 's/^/        /' /tmp/chiron-tsc.$$ | head -8
+    hint "Fix the errors above, then: cd $SKILL_DIR && npm run build"
+  fi
+  rm -f /tmp/chiron-tsc.$$
+else
+  warn "typescript not installed — cannot verify a clean compile (run npm install)"
 fi
 
 # ─── 5. Test harness ─────────────────────────────────────────────────────────────

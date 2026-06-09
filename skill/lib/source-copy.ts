@@ -12,7 +12,7 @@
  */
 
 import { copyFile, mkdir, readFile } from 'node:fs/promises';
-import { basename, join, resolve } from 'node:path';
+import { basename, resolve } from 'node:path';
 import { createHash } from 'node:crypto';
 import { safeJoin, PathTraversalError } from './path-safety.js';
 

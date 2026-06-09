@@ -17,8 +17,8 @@
 // This file MUST NOT call any LLM/MCP — it only structures handoffs.
 
 import * as fs from 'node:fs';
-import { existsSync, statSync, readFileSync, writeFileSync, mkdirSync } from 'node:fs';
-import { resolve, basename, join } from 'node:path';
+import { existsSync, statSync, readFileSync, mkdirSync } from 'node:fs';
+import { resolve, join } from 'node:path';
 
 import type { Brief, Domain, SourceType } from '../lib/schemas/brief.js';
 import { copySources } from '../lib/source-copy.js';

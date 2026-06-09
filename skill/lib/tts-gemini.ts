@@ -1,8 +1,8 @@
 // Gemini TTS handoff per FR-036 / R-01; Q8 architecture — parent agent invokes MCP, this module structures and persists.
 import { mkdirSync, existsSync, statSync, writeFileSync } from 'node:fs';
-import { dirname, join } from 'node:path';
+import { dirname } from 'node:path';
 import { progress } from './progress.js';
-import { safeJoin, sanitizeComponent, PathTraversalError } from './path-safety.js';
+import { safeJoin, sanitizeComponent } from './path-safety.js';
 
 /**
  * Handoff describing a TTS synthesis call for the parent Claude Code agent to invoke.
