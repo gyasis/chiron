@@ -199,7 +199,7 @@ for (const el of pearlElements) {
   pearlArtifacts.push({
     kind: 'grammar-pearl',
     sectionId: el.id,
-    segments: [{ lang: 'it', text }],
+    segments: [{ lang: 'it', text, gapAfter: 'sentence' }],
   });
 }
 
@@ -217,7 +217,7 @@ if (!skipStories) {
     storyArtifacts.push({
       kind: 'story-verbatim',
       sectionId: el.id,
-      segments: sentences.map(s => ({ lang: 'it', text: s })),
+      segments: sentences.map(s => ({ lang: 'it', text: s, gapAfter: 'sentence' })),
     });
   }
 
@@ -449,15 +449,16 @@ process.stdout.write('───────────────────�
 process.stdout.write(`${'kind'.padEnd(20)} ${'sectionId'.padEnd(30)} ${'status'}\n`);
 process.stdout.write('──────────────────────────────────────────────────────────\n');
 
-let done = 0, failed = 0;
+let done = 0, reused = 0, failed = 0;
 for (const r of results) {
   const sid = r.sectionId ?? '(none)';
   process.stdout.write(`${r.artifact.padEnd(20)} ${sid.padEnd(30)} ${r.status}\n`);
   if (r.status === 'done') done++;
+  else if (r.status === 'reused') reused++;   // reused = already baked, not a failure
   else failed++;
 }
 process.stdout.write('──────────────────────────────────────────────────────────\n');
-process.stdout.write(`Total: ${results.length}  done: ${done}  failed: ${failed}\n`);
+process.stdout.write(`Total: ${results.length}  baked: ${done}  reused: ${reused}  failed: ${failed}\n`);
 
 if (dialogueArtifacts.length > 0) {
   process.stdout.write(`\nDialogue turns: voiced=${totalVoiced}  skipped(learner)=${totalSkipped}\n`);

@@ -92,7 +92,9 @@ export function resolveLecture(script: LectureScript, domain: LectureDomain): Le
         lang: seg.lang,
         text: seg.text,
         voice: voiceFor(seg.lang, domain),
-        gapAfterMs: i === art.segments.length - 1 ? 0 : GAP_MS[seg.gapAfter],
+        // default-safe: a segment built without an explicit gapAfter (callers that
+        // skip Zod parsing) must never yield undefined → tts-splice float error.
+        gapAfterMs: i === art.segments.length - 1 ? 0 : (GAP_MS[seg.gapAfter] ?? GAP_MS.sentence),
       };
       if (seg.refAnchor) out.refAnchor = seg.refAnchor;
       return out;
