@@ -1,0 +1,949 @@
+<!DOCTYPE html>
+<html lang="{{LANG_CODE}}" data-theme="linguistic" data-view="lesson" data-skeleton="language-lesson-skeleton-v1">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <!-- meta name="chiron-lesson-id" content="{{LESSON_ID}}" -->
+  <title>Chiron · <!-- {{COURSE_TITLE}} --></title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,700;12..96,800&family=Source+Serif+4:ital,wght@0,400;0,600;1,400;1,600&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+
+  <!-- Theme tokens + variants (BLOCKING contract) -->
+  <link rel="stylesheet" href="themes/_tokens.css" />
+  <link rel="stylesheet" href="themes/midnight.css" />
+  <link rel="stylesheet" href="themes/warm-paper.css" />
+  <link rel="stylesheet" href="themes/clinical.css" />
+  <link rel="stylesheet" href="themes/linguistic.css" />
+  <link rel="stylesheet" href="themes/ocean.css" />
+
+  <!-- Early theme apply: reads ?theme= or localStorage, falls back to 'linguistic' -->
+  <script>
+    (function () {
+      var valid = ['linguistic','midnight','warm-paper','clinical','ocean'];
+      var params = new URLSearchParams(location.search);
+      var t = params.get('theme');
+      var stored = localStorage.getItem('chiron-theme');
+      var theme = valid.includes(t) ? t : (valid.includes(stored) ? stored : 'linguistic');
+      document.documentElement.setAttribute('data-theme', theme);
+      if (t) localStorage.setItem('chiron-theme', t);
+    })();
+  </script>
+
+  <!-- audio/manifest.js sets window.__chironAudioManifest; no-op if absent -->
+  <script src="audio/manifest.js" defer></script>
+
+  <style>
+    /* =========================================================================
+       LANGUAGE-LESSON-SKELETON v1 — component CSS
+       All colors consume var(--chiron-*). No hardcoded hex/rgb in component CSS.
+       Exception: the .chiron-listen* / .chiron-play-inline blocks below carry
+       their own fallback values (rgba(0,0,0,.16) etc.) for environments where
+       themes/_tokens.css may not be loaded — those are token fallbacks, not
+       design decisions.
+       ========================================================================= */
+
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; }
+    body {
+      display: grid; grid-template-columns: 240px 1fr; min-height: 100vh;
+      background: var(--chiron-bg);
+      color: var(--chiron-fg);
+      font-family: var(--chiron-font-body);
+      font-size: 17px;
+      line-height: 1.65;
+    }
+
+    /* ---- Sidebar ---- */
+    aside.side {
+      background: var(--chiron-bg);
+      border-right: 1px solid var(--chiron-divider);
+      padding: 1.75rem 1.25rem 1.25rem;
+      overflow-y: auto;
+      height: 100vh;
+      position: sticky;
+      top: 0;
+      display: flex;
+      flex-direction: column;
+    }
+    .side .brand { font-family: var(--chiron-font-heading); font-weight: 800; font-size: 1.15rem; letter-spacing: -0.01em; color: var(--chiron-fg); }
+    .side .brand .dot { color: var(--chiron-accent); }
+    .side .sub { font-size: 0.72rem; color: var(--chiron-muted); margin-top: 3px; line-height: 1.45; padding-bottom: 1.25rem; border-bottom: 1px solid var(--chiron-divider); }
+    .side .toc-header { font-size: 0.62rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.16em; color: var(--chiron-muted); margin: 1.25rem 0 0.5rem; }
+    .side nav.toc-nav { display: flex; flex-direction: column; gap: 1px; }
+    .side .toc-link {
+      display: flex; align-items: baseline; gap: 10px;
+      padding: 7px 10px 7px 12px;
+      border-left: 2px solid transparent;
+      border-radius: 0 6px 6px 0;
+      color: var(--chiron-fg-secondary); text-decoration: none;
+      font-size: 0.9rem; line-height: 1.3;
+      transition: color .12s ease, background .12s ease, border-color .12s ease;
+    }
+    .side .toc-link:hover { background: var(--chiron-elevated); color: var(--chiron-fg); }
+    .side .toc-link.active, .side .toc-link[aria-current="true"] {
+      color: var(--chiron-accent); border-left-color: var(--chiron-accent); font-weight: 600;
+      background: color-mix(in srgb, var(--chiron-accent) 20%, transparent);
+    }
+    .side .toc-num { font-variant-numeric: tabular-nums; color: var(--chiron-muted); font-size: 0.7rem; flex-shrink: 0; opacity: 0.65; }
+    .side .toc-link.active .toc-num { color: var(--chiron-accent); opacity: 1; }
+    .side .toc-title { flex: 1; }
+    .side .theme-section { margin-top: auto; }
+    .side .toc-header.theme-section { padding-top: 1.25rem; border-top: 1px solid var(--chiron-divider); margin-top: auto; }
+
+    /* ---- Theme bar (lives in sidebar, pinned to bottom via margin-top:auto) ---- */
+    .theme-bar { display: flex; gap: 5px; flex-wrap: wrap; margin-top: 0.5rem; }
+    .theme-bar button {
+      font: inherit; font-size: 10px; padding: 4px 9px;
+      background: transparent;
+      color: var(--chiron-muted);
+      border: 1px solid var(--chiron-border);
+      border-radius: 100px;
+      cursor: pointer; transition: all .12s ease;
+    }
+    .theme-bar button:hover { background: var(--chiron-elevated); color: var(--chiron-fg); }
+    .theme-bar button[aria-pressed="true"] { background: var(--chiron-accent); color: #fff; border-color: var(--chiron-accent); }
+
+    /* ---- Main content column ---- */
+    main.main { overflow-y: auto; height: 100vh; }
+
+    /* ---- Layout shell (content max-width) ---- */
+    .lesson-shell { max-width: 920px; margin: 0 auto; padding: var(--chiron-space-8) var(--chiron-space-6); }
+
+    /* ---- Header ---- */
+    .lesson-header { border-bottom: 1px solid var(--chiron-divider); padding-bottom: var(--chiron-space-6); margin-bottom: var(--chiron-space-8); }
+    .eyebrow { text-transform: uppercase; letter-spacing: 0.14em; font-size: 11px; color: var(--chiron-muted); font-family: var(--chiron-font-body); font-weight: 600; }
+    h1.lesson-title { font-family: var(--chiron-font-heading); font-size: 2.6rem; line-height: 1.1; margin: var(--chiron-space-2) 0 var(--chiron-space-3); color: var(--chiron-fg); }
+    .subtitle { color: var(--chiron-fg-secondary); font-size: 1.1rem; font-style: italic; }
+
+    /* ---- Sections ---- */
+    section.lesson-section { margin: var(--chiron-space-8) 0; scroll-margin-top: var(--chiron-space-6); }
+    h2.section-h {
+      font-family: var(--chiron-font-heading);
+      font-size: 1.55rem;
+      color: var(--chiron-accent);
+      border-left: 4px solid var(--chiron-accent);
+      padding-left: var(--chiron-space-4);
+      margin: 0 0 var(--chiron-space-4);
+    }
+    h2.section-h .num { color: var(--chiron-muted); font-size: 0.7em; font-weight: 400; margin-right: var(--chiron-space-3); font-family: var(--chiron-font-mono, monospace); }
+    h3.subsection-h { font-family: var(--chiron-font-heading); color: var(--chiron-fg-secondary); margin-top: var(--chiron-space-6); font-size: 1.15rem; }
+
+    /* ---- Cold open ---- */
+    .cold-open {
+      background: var(--chiron-surface);
+      border-radius: var(--chiron-radius-lg);
+      padding: var(--chiron-space-6) var(--chiron-space-8);
+      box-shadow: var(--chiron-shadow-md);
+      border-left: 4px solid var(--chiron-warm-accent);
+      font-family: var(--chiron-font-heading);
+      font-size: 1.18rem;
+      line-height: 1.6;
+      color: var(--chiron-fg);
+      font-style: italic;
+    }
+    .cold-open .it { color: var(--chiron-fg); font-style: italic; }
+    .cold-open .gloss { color: var(--chiron-muted); font-size: 0.9em; display: block; margin-top: var(--chiron-space-2); font-style: normal; }
+
+    /* ---- Vocab arc ---- */
+    .vocab-arc { background: var(--chiron-surface); border-radius: var(--chiron-radius-lg); padding: var(--chiron-space-6); margin-bottom: var(--chiron-space-6); border: 1px solid var(--chiron-border); }
+    .mini-context { font-style: italic; color: var(--chiron-fg-secondary); border-left: 3px solid var(--chiron-accent-light); padding-left: var(--chiron-space-3); margin-bottom: var(--chiron-space-4); }
+
+    /* ---- Tables ---- */
+    .v-table { border-collapse: collapse; width: 100%; margin: var(--chiron-space-3) 0; }
+    .v-table th, .v-table td { padding: var(--chiron-space-3); text-align: left; border-bottom: 1px solid var(--chiron-divider); }
+    .v-table th { background: var(--chiron-elevated); font-family: var(--chiron-font-heading); font-weight: 600; font-size: 13px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--chiron-fg); }
+    .v-table td.it { font-weight: 600; color: var(--chiron-accent); font-family: var(--chiron-font-heading); }
+    .v-table td.ex { font-style: italic; color: var(--chiron-fg-secondary); font-size: 0.95em; }
+
+    /* ---- Speaker turns ---- */
+    .turn { display: grid; grid-template-columns: 100px 1fr; gap: var(--chiron-space-3); margin: var(--chiron-space-3) 0; align-items: start; }
+    .turn .speaker { font-family: var(--chiron-font-heading); font-weight: 700; font-size: 0.95em; padding: 2px 8px; border-radius: var(--chiron-radius-sm); text-align: center; }
+    /* Speaker role colours — add more .turn.<role> blocks as needed for your personas */
+    .turn.narrator .speaker { background: var(--chiron-elevated); color: var(--chiron-fg); border: 1px solid var(--chiron-border); }
+    .turn.persona-a .speaker { background: var(--chiron-warm-accent); color: var(--chiron-surface); }
+    .turn.persona-b .speaker { background: var(--chiron-accent); color: var(--chiron-surface); }
+    .turn.learner .speaker { background: var(--chiron-elevated); color: var(--chiron-fg); border: 1px solid var(--chiron-border); }
+    .turn .what { line-height: 1.55; }
+    .turn .it { color: var(--chiron-fg); }
+    .turn .gloss { color: var(--chiron-muted); font-size: 0.88em; display: block; margin-top: 2px; font-style: italic; }
+
+    /* ---- Pedagogical callouts ---- */
+    .callout { padding: var(--chiron-space-3) var(--chiron-space-4); margin: var(--chiron-space-3) 0; border-radius: var(--chiron-radius-md); border-left: 3px solid var(--chiron-info); background: var(--chiron-elevated); font-size: 0.95em; }
+    .callout .tag { display: inline-block; font-family: var(--chiron-font-heading); font-weight: 700; font-size: 0.75em; text-transform: uppercase; letter-spacing: 0.08em; padding: 2px 8px; border-radius: var(--chiron-radius-sm); margin-right: var(--chiron-space-2); }
+    .callout.grammar-pearl { border-left-color: var(--chiron-accent); }
+    .callout.grammar-pearl .tag { background: var(--chiron-accent); color: var(--chiron-surface); }
+    .callout.cultural-note { border-left-color: var(--chiron-warm-accent); }
+    .callout.cultural-note .tag { background: var(--chiron-warm-accent); color: var(--chiron-surface); }
+    .callout.tip { border-left-color: var(--chiron-info); }
+    .callout.tip .tag { background: var(--chiron-info); color: var(--chiron-surface); }
+
+    /* ---- Inline cloze ---- */
+    .cloze-wrap { margin: var(--chiron-space-5) 0; }
+    .cloze-line { background: var(--chiron-bg); border: 1px dashed var(--chiron-border); padding: var(--chiron-space-3); margin: var(--chiron-space-3) 0; border-radius: var(--chiron-radius-sm); font-style: italic; }
+    .cloze-line input[type="text"] { font: inherit; padding: 3px 8px; width: 160px; border: 1px solid var(--chiron-border); border-radius: var(--chiron-radius-sm); background: var(--chiron-surface); color: var(--chiron-fg); font-style: normal; }
+    .cloze-line input.correct { border-color: var(--chiron-success); background: var(--chiron-elevated); }
+    .cloze-line input.incorrect { border-color: var(--chiron-error); }
+    .cloze-line .hint { color: var(--chiron-muted); font-size: 0.85em; margin-left: var(--chiron-space-2); font-style: normal; }
+    .cloze-reveal-btn { font: inherit; font-size: 0.82em; padding: 4px 10px; margin-left: var(--chiron-space-2); border: 1px solid var(--chiron-border); border-radius: var(--chiron-radius-sm); background: var(--chiron-surface); color: var(--chiron-fg-secondary); cursor: pointer; }
+    .cloze-reveal-btn:hover { background: var(--chiron-elevated); }
+    .cloze-answer { display: none; color: var(--chiron-accent); font-style: normal; font-weight: 600; margin-left: var(--chiron-space-2); }
+    .cloze-answer.shown { display: inline; }
+
+    /* ---- SR deck ---- */
+    .sr-deck { display: grid; gap: var(--chiron-space-3); grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); margin-top: var(--chiron-space-4); }
+    .sr-card { background: var(--chiron-surface); border: 1px solid var(--chiron-border); border-radius: var(--chiron-radius-md); padding: var(--chiron-space-4); cursor: pointer; transition: transform 0.15s ease, box-shadow 0.15s ease; box-shadow: var(--chiron-shadow-sm); min-height: 100px; display: flex; align-items: center; justify-content: center; text-align: center; font-family: var(--chiron-font-heading); }
+    .sr-card:hover { transform: translateY(-2px); box-shadow: var(--chiron-shadow-md); }
+    .sr-card .front { font-size: 1.08em; color: var(--chiron-accent); font-weight: 600; }
+    .sr-card .back { font-size: 0.95em; color: var(--chiron-fg-secondary); display: none; }
+    .sr-card.flipped .front { display: none; }
+    .sr-card.flipped .back { display: block; }
+
+    /* Rich SR card (data-card-type) */
+    .sr-card[data-card-type] {
+      min-height: 150px;
+      padding: var(--chiron-space-4);
+      display: flex; align-items: stretch; justify-content: center; text-align: center;
+      overflow: hidden; position: relative;
+    }
+    .sr-card[data-card-type] .front {
+      display: flex; align-items: center; justify-content: center; width: 100%;
+      font-size: 1.15em; color: var(--chiron-accent); font-weight: 700; line-height: 1.3;
+    }
+    .sr-card[data-card-type] .back {
+      text-align: left; width: 100%; display: none; flex-direction: column; gap: var(--chiron-space-2);
+    }
+    .sr-card.flipped[data-card-type] .front { display: none; }
+    .sr-card.flipped[data-card-type] .back { display: flex; }
+    .sr-card.flipped[data-card-type='phrase'] { min-height: 200px; }
+
+    .sr-back-head { display: flex; align-items: center; justify-content: space-between; gap: var(--chiron-space-2); padding-bottom: var(--chiron-space-2); border-bottom: 1px dashed var(--chiron-divider); margin-bottom: var(--chiron-space-2); }
+    .sr-back-gloss { color: var(--chiron-fg); font-family: var(--chiron-font-heading); font-size: 0.92em; font-weight: 700; line-height: 1.3; }
+    .sr-back-tag { font-family: var(--chiron-font-mono, monospace); font-size: 0.65em; letter-spacing: 0.06em; text-transform: uppercase; padding: 2px 6px; border-radius: var(--chiron-radius-sm); background: var(--chiron-elevated); color: var(--chiron-muted); flex-shrink: 0; }
+    .sr-back-tag.sr-article { background: var(--chiron-accent-light); color: var(--chiron-accent); font-weight: 700; font-size: 0.78em; text-transform: none; letter-spacing: 0; }
+    .sr-back-full { margin: 0; font-size: 0.86em; color: var(--chiron-fg-secondary); }
+    .sr-back-full .sr-it { color: var(--chiron-fg); font-style: italic; }
+    .sr-back-note { margin: 0; font-size: 0.78em; color: var(--chiron-fg-secondary); line-height: 1.45; }
+    .sr-back-example { margin: 0; font-size: 0.82em; color: var(--chiron-fg-secondary); font-style: italic; }
+
+    .sr-conj-table { width: 100%; border-collapse: collapse; font-size: 0.78em; font-family: var(--chiron-font-body); }
+    .sr-conj-table thead th { text-align: center; padding: var(--chiron-space-1) 0 var(--chiron-space-2); color: var(--chiron-muted); font-weight: 600; font-family: var(--chiron-font-mono, monospace); letter-spacing: 0.08em; text-transform: uppercase; font-size: 0.85em; border-bottom: 1px solid var(--chiron-divider); }
+    .sr-conj-table tbody th { text-align: left; padding: var(--chiron-space-1) var(--chiron-space-2) var(--chiron-space-1) 0; color: var(--chiron-muted); font-weight: 500; font-size: 0.92em; width: 45%; }
+    .sr-conj-table tbody td { text-align: right; padding: var(--chiron-space-1) 0; color: var(--chiron-fg); font-family: var(--chiron-font-heading); font-weight: 600; }
+    .sr-conj-table tbody tr + tr th, .sr-conj-table tbody tr + tr td { border-top: 1px dotted var(--chiron-divider); }
+    .sr-tense-label { display: flex; flex-direction: column; gap: 1px; }
+    .sr-tense-it { font-size: 0.92em; color: var(--chiron-muted); }
+    .sr-tense-aspect { font-size: 0.75em; color: var(--chiron-muted); font-style: italic; }
+
+    /* ---- Closing / summary block ---- */
+    .closing { background: var(--chiron-surface); border-radius: var(--chiron-radius-lg); padding: var(--chiron-space-6); border-left: 4px solid var(--chiron-warm-accent); }
+
+    footer.lesson-footer { margin-top: var(--chiron-space-8); padding-top: var(--chiron-space-4); border-top: 1px solid var(--chiron-divider); color: var(--chiron-muted); font-size: 0.85em; text-align: center; }
+
+    /* ---- Chiron Listen mode — copied verbatim from styles.css ---- */
+    .chiron-listen {
+      position: fixed; right: 18px; bottom: 18px; z-index: 9999;
+      width: 230px; max-width: calc(100vw - 36px);
+      background: var(--color-surface, #fff);
+      border: 1px solid var(--color-border, #e2e2e2);
+      border-radius: 14px; box-shadow: 0 8px 30px rgba(0,0,0,.16);
+      font-family: 'DM Sans', system-ui, sans-serif; overflow: hidden;
+    }
+    .chiron-listen-head {
+      display: flex; align-items: center; gap: 7px;
+      font-weight: 700; font-size: 13px;
+      padding: 11px 14px; border-bottom: 1px solid var(--color-border-light, #eee);
+      color: var(--color-text, #1a1a1a);
+    }
+    .chiron-listen-list { display: flex; flex-direction: column; padding: 6px; gap: 2px; max-height: 46vh; overflow-y: auto; }
+    .chiron-listen-btn {
+      display: flex; align-items: center; gap: 9px; text-align: left;
+      background: transparent; border: 0; border-radius: 9px; padding: 9px 11px;
+      cursor: pointer; font: inherit; font-size: 13px; line-height: 1.25;
+      color: var(--color-text, #1a1a1a); transition: background .12s ease;
+    }
+    .chiron-listen-btn:hover { background: var(--color-accent-light, #f3f3f3); }
+    .chiron-listen-btn .ico {
+      flex: none; width: 18px; height: 18px; display: grid; place-items: center;
+      font-size: 10px; color: var(--color-accent, #D94F30);
+    }
+    .chiron-listen-btn.playing { background: var(--color-accent-light, #f3f3f3); font-weight: 600; }
+    .chiron-listen-btn.err .lbl { color: var(--color-error, #c0392b); }
+    .chiron-listen-kind { font-size: 11px; color: var(--color-text-muted, #888); font-weight: 400; }
+    .chiron-listen-group { padding: 6px; }
+    .chiron-listen-group + .chiron-listen-group { border-top: 1px solid var(--chiron-divider, #eee); }
+    .chiron-listen-grouptitle { font-size: 10px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--chiron-muted, #999); padding: 4px 11px 5px; }
+    .chiron-play-inline { display: inline-grid; place-items: center; width: 22px; height: 22px; margin-right: 8px; vertical-align: middle; flex: none; background: var(--chiron-accent, #2A7B9B); color: #fff; border: 1.5px solid #fff; box-shadow: 0 1px 3px rgba(0,0,0,.28); border-radius: 50%; cursor: pointer; font: inherit; line-height: 1; transition: transform .1s ease, box-shadow .12s ease; }
+    .chiron-play-inline .ico { font-size: 10px; margin-left: 1px; }   /* optical-center the ▶ */
+    .chiron-play-inline:hover { transform: scale(1.12); box-shadow: 0 2px 7px rgba(0,0,0,.34); }
+    .chiron-play-inline.playing { background: var(--chiron-accent-hover, #1F6280); }
+    .chiron-play-inline.err { background: var(--chiron-error, #c0392b); }
+    .chiron-has-audio { scroll-margin-top: 84px; }
+    /* whole-lesson + section audio, hosted in the left sidebar */
+    .chiron-listen-side { margin-top: var(--chiron-space-5, 1.25rem); padding-top: var(--chiron-space-4, 1rem); border-top: 1px solid var(--chiron-divider, #eee); }
+    .chiron-side-head { display: flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--chiron-muted, #888); margin-bottom: 4px; }
+    .chiron-side-grouptitle { font-size: 10px; font-weight: 600; color: var(--chiron-muted, #999); margin: 8px 0 2px; }
+    .chiron-side-btn { display: flex; align-items: center; gap: 8px; width: 100%; text-align: left; background: transparent; border: 0; border-radius: 7px; padding: 6px 8px; cursor: pointer; font: inherit; font-size: 13px; color: var(--chiron-fg, #1a1a1a); }
+    .chiron-side-btn:hover { background: var(--chiron-elevated, #eee); }
+    .chiron-side-btn.playing { background: var(--chiron-accent-light, #eee); font-weight: 600; }
+    .chiron-side-btn .ico { flex: none; width: 18px; height: 18px; display: grid; place-items: center; font-size: 9px; color: #fff; background: var(--chiron-accent, #b3522e); border: 1px solid #fff; border-radius: 50%; }
+    .chiron-side-btn.err .ico { background: var(--chiron-error, #a93423); }
+    .chiron-listening {
+      border-radius: 10px; scroll-margin-top: 84px;
+      animation: chiron-listening-glow 1.7s ease-in-out infinite;
+    }
+    @keyframes chiron-listening-glow {
+      0%, 100% { box-shadow: 0 0 0 0 var(--color-accent-muted, rgba(217,79,48,.28)); }
+      50%      { box-shadow: 0 0 0 7px var(--color-accent-muted, rgba(217,79,48,.16)); }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .chiron-listening { animation: none; outline: 2px solid var(--color-accent, #D94F30); }
+    }
+
+    /* ---- Responsive: collapse sidebar to top strip on narrow screens ---- */
+    @media (max-width: 880px) {
+      body { grid-template-columns: 1fr; }
+      aside.side {
+        position: relative; height: auto;
+        border-right: none; border-bottom: 1px solid var(--chiron-border);
+        padding: var(--chiron-space-3) var(--chiron-space-4);
+        display: flex; flex-wrap: nowrap; align-items: center; gap: var(--chiron-space-4);
+        overflow-x: auto; overflow-y: hidden;
+      }
+      .side .brand { white-space: nowrap; flex-shrink: 0; }
+      .side .sub { display: none; }
+      .side .toc-header { display: none; }
+      .side nav.toc-nav {
+        display: flex; flex-direction: row; gap: 2px;
+        flex-wrap: nowrap; overflow-x: auto;
+        flex: 1;
+      }
+      .side .toc-link {
+        white-space: nowrap; flex-shrink: 0;
+        padding: var(--chiron-space-2) var(--chiron-space-2);
+      }
+      .side .toc-num { display: none; }
+      .side .theme-section { display: none; }
+      main.main { height: auto; overflow-y: visible; }
+      .lesson-shell { padding: var(--chiron-space-5) var(--chiron-space-4); }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ========================= SIDEBAR TOC ========================= -->
+  <aside class="side" aria-label="Table of contents">
+    <div class="brand">Chiron<span class="dot">·</span></div>
+    <!-- {{LANG_NAME}} · {{CEFR_LEVEL}} · {{LESSON_SHORT_TITLE}} -->
+    <div class="sub"><!-- {{LANG_NAME}} --> · <!-- {{CEFR_LEVEL}} --><br><!-- {{LESSON_SHORT_TITLE}} --></div>
+
+    <div class="toc-header"><!-- {{TOC_HEADER_LABEL e.g. "Sezioni" / "Chapters" / "Sections"}} --></div>
+    <nav class="toc-nav" aria-label="Lesson sections">
+      <!-- TOC: one <a> per chapter/section.
+           - href="#<section-id>" and data-toc-target="<section-id>" must match the id on <section class="lesson-section">
+           - <span class="toc-num"> holds the ordinal (0., 1., 2. … or ✦ for special sections)
+           - <span class="toc-title"> holds the human-readable label
+           The scroll-spy JS below will auto-add/remove class="active" as the user scrolls.
+
+           EXAMPLE (replace with real chapter ids + titles):
+      -->
+      <a class="toc-link" href="#overview" data-toc-target="overview"><span class="toc-num">0.</span><span class="toc-title"><!-- {{INTRO_TITLE}} --></span></a>
+      <a class="toc-link" href="#chapter-1" data-toc-target="chapter-1"><span class="toc-num">1.</span><span class="toc-title"><!-- {{CHAPTER_1_TITLE}} --></span></a>
+      <a class="toc-link" href="#chapter-2" data-toc-target="chapter-2"><span class="toc-num">2.</span><span class="toc-title"><!-- {{CHAPTER_2_TITLE}} --></span></a>
+      <!-- Add more <a class="toc-link"> entries here — one per chapter/section -->
+      <a class="toc-link" href="#sr-drawer" data-toc-target="sr-drawer"><span class="toc-num">✦</span><span class="toc-title"><!-- {{SR_TITLE e.g. "Flashcards"}} --></span></a>
+      <a class="toc-link" href="#match-madness" data-toc-target="match-madness"><span class="toc-num">✦</span><span class="toc-title">Match Madness</span></a>
+      <a class="toc-link" href="#closing" data-toc-target="closing"><span class="toc-num">✦</span><span class="toc-title"><!-- {{CLOSING_TITLE e.g. "Summary"}} --></span></a>
+    </nav>
+
+    <!-- Theme switcher — pinned to sidebar bottom via margin-top:auto on .theme-section -->
+    <div class="toc-header theme-section"><!-- {{THEME_LABEL e.g. "Theme" / "Tema"}} --></div>
+    <nav class="theme-bar theme-section" aria-label="Theme">
+      <button data-set-theme="linguistic" aria-pressed="true">linguistic</button>
+      <button data-set-theme="warm-paper">warm</button>
+      <button data-set-theme="clinical">clinical</button>
+      <button data-set-theme="midnight">midnight</button>
+      <button data-set-theme="ocean">ocean</button>
+    </nav>
+  </aside>
+
+  <!-- ========================= MAIN CONTENT ========================= -->
+  <main class="main" id="main-content">
+  <div class="lesson-shell">
+
+    <!-- ========================= HEADER ========================= -->
+    <header class="lesson-header">
+      <div class="eyebrow">Chiron · <!-- {{LANG_NAME}} --> · <!-- {{CEFR_LEVEL}} --> · <!-- {{MODE e.g. "Mode A"}} --> · skeleton v1</div>
+      <h1 class="lesson-title"><!-- {{COURSE_TITLE}} --></h1>
+      <p class="subtitle"><!-- {{SUBTITLE — one evocative sentence setting the scene}} --></p>
+    </header>
+
+    <!-- ========================= 0. OVERVIEW / COLD OPEN ========================= -->
+    <!-- CHAPTER: <section class="lesson-section" id="overview"> is the intro section.
+         It typically contains:
+           - a .cold-open block (atmospheric scene-setter — .it for target-lang text, .gloss for translation)
+           - a brief orientation paragraph
+           - optionally a .callout.tip for a cultural or learning tip
+    -->
+    <section class="lesson-section" id="overview">
+      <h2 class="section-h"><span class="num">0</span><!-- {{OVERVIEW_TITLE}} --></h2>
+      <div class="cold-open">
+        <span class="it"><!-- {{ATMOSPHERIC_SENTENCE_IN_TARGET_LANG}} --></span>
+        <span class="gloss"><!-- {{ENGLISH_GLOSS}} --></span>
+      </div>
+      <p style="margin-top: var(--chiron-space-5); color: var(--chiron-fg-secondary);">
+        <!-- {{BRIEF_ORIENTATION — what the lesson covers, who the guide persona is, mention 🎧 if audio available}} -->
+      </p>
+      <div class="callout tip">
+        <span class="tag">Tip</span>
+        <!-- {{OPENING_TIP — cultural or linguistic warm-up fact}} -->
+      </div>
+    </section>
+
+    <!-- ========================= CHAPTER 1 ========================= -->
+    <!-- CHAPTER: one <section class="lesson-section" id="<section-id>"> per major topic/chapter.
+         Typical anatomy:
+           1. .vocab-arc  — vocab table + optional .mini-context intro quote from the guide persona
+              Vocab rows: <td id="vocab-<slug>" class="it">phrase</td>  ← id wires the inline ▶ audio button
+           2. <div id="dlg-<section-id>" class="vocab-arc"> — the dialogue
+              Each turn: <div class="turn <role>">  (role = persona-a / persona-b / learner / narrator)
+              Audio anchor for the whole dialogue lives on the wrapping div's id.
+           3. .callout.grammar-pearl id="pearl-<slug>"  ← id wires inline ▶
+           4. .vocab-arc story block:
+              <p class="it" id="story-<section-id>">...</p>  ← inline ▶ wired here
+              <p class="gloss" id="storydesc-<section-id>">...</p>  ← section-description ▶ wired here
+           5. .callout.cultural-note
+           6. .cloze-wrap — fill-in-the-blank exercises
+
+         AUDIO ID CONVENTIONS (Stage-6 bakeAudio reads these):
+           vocab-<slug>      → individual vocab phrase clip  (inline kind: phrase)
+           dlg-<section-id>  → full dialogue clip             (inline kind: dialogue)
+           pearl-<slug>      → grammar pearl clip             (inline kind: grammar-pearl)
+           story-<section-id>   → story narration (target lang)  (inline kind: story-verbatim)
+           storydesc-<section-id> → story English description    (inline kind: story-description)
+           <section-id>      → per-section summary clip        (panel kind: section)
+    -->
+    <section class="lesson-section" id="chapter-1">
+      <h2 class="section-h"><span class="num">1</span><!-- {{CHAPTER_1_TITLE}} --></h2>
+
+      <div class="vocab-arc">
+        <p class="mini-context"><!-- {{GUIDE_PERSONA_INTRO_QUOTE}} --></p>
+        <table class="v-table">
+          <thead><tr><th><!-- {{TARGET_LANG}} --></th><th>English</th><th>Notes</th></tr></thead>
+          <tbody>
+            <!-- VOCAB ROWS — id="vocab-<slug>" on the .it cell wires the inline ▶ audio button.
+                 Example: -->
+            <tr><td id="vocab-example-phrase" class="it">example phrase</td><td>English gloss</td><td class="ex">Usage note or example sentence.</td></tr>
+            <tr><td id="vocab-another-phrase" class="it">another phrase</td><td>English gloss</td><td class="ex">Usage note.</td></tr>
+            <!-- Add more rows as needed -->
+          </tbody>
+        </table>
+      </div>
+
+      <h3 class="subsection-h"><!-- {{DIALOGUE_SECTION_TITLE}} --></h3>
+      <!-- DIALOGUE: id="dlg-<section-id>" on this div wires the inline ▶ for the whole dialogue. -->
+      <div id="dlg-chapter-1" class="vocab-arc">
+        <!-- TURN: class="turn <role>" — replace <role> with persona-a / persona-b / learner / narrator
+             Add more .turn blocks for each exchange line. -->
+        <div class="turn persona-a">
+          <span class="speaker"><!-- {{SPEAKER_A_NAME}} --></span>
+          <div class="what">
+            <span class="it"><!-- {{TARGET_LANG_LINE}} --></span>
+            <span class="gloss"><!-- {{ENGLISH_GLOSS}} --></span>
+          </div>
+        </div>
+        <div class="turn persona-b">
+          <span class="speaker"><!-- {{SPEAKER_B_NAME}} --></span>
+          <div class="what">
+            <span class="it"><!-- {{TARGET_LANG_LINE}} --></span>
+            <span class="gloss"><!-- {{ENGLISH_GLOSS}} --></span>
+          </div>
+        </div>
+        <!-- Continue adding .turn blocks for the full dialogue… -->
+      </div>
+
+      <!-- GRAMMAR PEARL: id="pearl-<slug>" wires the inline ▶ audio button. -->
+      <div class="callout grammar-pearl" id="pearl-example-grammar">
+        <span class="tag">Grammar pearl</span>
+        <!-- {{GRAMMAR_EXPLANATION — concise, with bold key term, usage comparison}} -->
+      </div>
+
+      <!-- STORY BLOCK: id="story-<section-id>" and id="storydesc-<section-id>" wire inline ▶ buttons. -->
+      <div class="vocab-arc" style="border-left: 3px solid var(--chiron-warm-accent); margin-top: var(--chiron-space-5);">
+        <h3 class="subsection-h" style="margin-top: 0;"><!-- {{STORY_HEADING e.g. "📖 A little story"}} --></h3>
+        <p class="it" id="story-chapter-1"><!-- {{STORY_IN_TARGET_LANG — 3-5 sentences, uses vocab from this chapter}} --></p>
+        <p class="gloss" id="storydesc-chapter-1"><!-- {{ENGLISH_STORY_DESCRIPTION — 1-2 sentences summarising the narrative}} --></p>
+      </div>
+
+      <!-- CULTURAL NOTE (optional) -->
+      <div class="callout cultural-note">
+        <span class="tag"><!-- {{CULTURAL_NOTE_LABEL}} --></span>
+        <!-- {{CULTURAL_CONTEXT — real-world background that makes the language make sense}} -->
+      </div>
+
+      <!-- CLOZE EXERCISES -->
+      <h3 class="subsection-h"><!-- {{EXERCISES_HEADING}} --></h3>
+      <div class="cloze-wrap">
+        <!-- One .cloze-line per exercise. data-answer must match the expected text exactly (lowercase). -->
+        <div class="cloze-line" data-answer="{{ANSWER_1}}">
+          <!-- {{SENTENCE_WITH_GAP}} <input type="text" placeholder="?" /> -->
+          <span class="hint">(<!-- {{HINT_TEXT}} -->)</span>
+          <button class="cloze-reveal-btn"><!-- {{REVEAL_BTN_LABEL e.g. "Show"}} --></button>
+          <span class="cloze-answer"><!-- {{ANSWER_1}} --></span>
+        </div>
+        <!-- Add more .cloze-line blocks as needed -->
+      </div>
+    </section>
+
+    <!-- ========================= ADDITIONAL CHAPTERS ========================= -->
+    <!-- CHAPTER: repeat the <section class="lesson-section" id="chapter-N"> pattern above
+         for each additional chapter. Keep the same anatomy:
+           .vocab-arc (vocab table) →
+           dialogue (id="dlg-<section-id>") →
+           .callout.grammar-pearl (id="pearl-<slug>") →
+           story block (id="story-<section-id>" + id="storydesc-<section-id>") →
+           .callout.cultural-note →
+           .cloze-wrap
+    -->
+
+    <!-- ========================= SR DRAWER ========================= -->
+    <!-- CHAPTER: <section class="lesson-section" id="sr-drawer"> holds all flashcard decks.
+         Organise cards into subsections matching the chapters above.
+         Each .sr-card can be simple (front/back text) or rich (data-card-type="phrase"
+         with .sr-back-head / .sr-back-note / .sr-back-example / .sr-conj-table etc.).
+         The SR card flip JS below handles the click/keyboard events.
+    -->
+    <section class="lesson-section" id="sr-drawer">
+      <h2 class="section-h"><span class="num"><!-- {{SR_NUM}} --></span><!-- {{SR_TITLE}} --></h2>
+      <p><!-- {{SR_INTRO_TEXT e.g. "Tap / click to flip. Each card shows the target-language phrase on the front."}} --></p>
+
+      <h3 class="subsection-h"><!-- {{CHAPTER_1_TITLE}} --></h3>
+      <div class="sr-deck">
+        <!-- EXAMPLE rich card — duplicate and fill in as needed: -->
+        <div class="sr-card" data-card-type="phrase">
+          <div class="front"><!-- {{TARGET_PHRASE}} --></div>
+          <div class="back">
+            <div class="sr-back-head">
+              <strong class="sr-back-gloss"><!-- {{ENGLISH_GLOSS}} --></strong>
+              <span class="sr-back-tag"><!-- {{TAG e.g. "ordering"}} --></span>
+            </div>
+            <p class="sr-back-note"><!-- {{USAGE_NOTE}} --></p>
+            <p class="sr-back-example"><em><!-- {{EXAMPLE_SENTENCE}} --></em></p>
+          </div>
+        </div>
+        <!-- Add more .sr-card blocks here -->
+      </div>
+
+      <!-- Add more <h3 class="subsection-h"> + .sr-deck blocks for subsequent chapters -->
+    </section>
+
+    <!-- ========================= MATCH MADNESS ========================= -->
+    <!-- CHAPTER: <section class="lesson-section" id="match-madness"> holds the matching mini-game.
+         Edit the PAIRS array in the inline <script> below to match your lesson vocab.
+         The game JS is self-contained — shuffle, select, validate, score, reset.
+         CSS for the game is also inlined here (all var(--chiron-*) tokens).
+    -->
+    <section class="lesson-section" id="match-madness">
+      <h2 class="section-h"><span class="num">✦</span>Match Madness — <!-- {{MATCH_MADNESS_SUBTITLE}} --></h2>
+      <p style="color: var(--chiron-fg-secondary); margin-bottom: var(--chiron-space-4);"><!-- {{MATCH_MADNESS_INSTRUCTIONS}} --></p>
+
+      <style>
+        .mm-grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--chiron-space-3); margin-bottom: var(--chiron-space-4); }
+        .mm-col { display: flex; flex-direction: column; gap: var(--chiron-space-2); }
+        .mm-col-label { font-family: var(--chiron-font-heading); font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--chiron-muted); padding-bottom: var(--chiron-space-2); border-bottom: 1px solid var(--chiron-divider); margin-bottom: var(--chiron-space-1); }
+        .mm-tile { font-family: var(--chiron-font-heading); font-size: 0.95em; font-weight: 600; padding: var(--chiron-space-3) var(--chiron-space-4); border: 1.5px solid var(--chiron-border); border-radius: var(--chiron-radius-md); background: var(--chiron-surface); color: var(--chiron-fg); cursor: pointer; transition: background 0.15s ease, border-color 0.15s ease, transform 0.1s ease; text-align: left; line-height: 1.3; }
+        .mm-tile:hover:not([disabled]) { background: var(--chiron-elevated); border-color: var(--chiron-accent-light); transform: translateY(-1px); }
+        .mm-tile.mm-selected { border-color: var(--chiron-accent); background: var(--chiron-elevated); box-shadow: 0 0 0 2px var(--chiron-accent); }
+        .mm-tile.mm-matched { border-color: var(--chiron-success); background: var(--chiron-elevated); color: var(--chiron-success); opacity: 0.7; cursor: default; }
+        .mm-tile.mm-wrong { border-color: var(--chiron-error); background: var(--chiron-elevated); animation: mm-shake 0.35s ease; }
+        @keyframes mm-shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-4px); } 75% { transform: translateX(4px); } }
+        .mm-score { font-family: var(--chiron-font-heading); font-size: 1.1em; font-weight: 700; color: var(--chiron-fg-secondary); text-align: center; margin-bottom: var(--chiron-space-4); }
+        .mm-score .mm-n { color: var(--chiron-accent); }
+        .mm-reset { display: block; margin: 0 auto; font: inherit; font-size: 0.9em; font-weight: 600; padding: var(--chiron-space-2) var(--chiron-space-5); background: var(--chiron-surface); color: var(--chiron-fg-secondary); border: 1.5px solid var(--chiron-border); border-radius: var(--chiron-radius-sm); cursor: pointer; }
+        .mm-reset:hover { background: var(--chiron-elevated); color: var(--chiron-fg); }
+        .mm-complete { text-align: center; font-family: var(--chiron-font-heading); font-size: 1.05em; font-weight: 700; color: var(--chiron-accent); padding: var(--chiron-space-3); background: var(--chiron-surface); border-radius: var(--chiron-radius-md); border: 1px solid var(--chiron-border); margin-bottom: var(--chiron-space-4); display: none; }
+        .mm-complete.visible { display: block; }
+      </style>
+
+      <div id="mm-root">
+        <div class="mm-score"><!-- {{MATCHED_LABEL e.g. "Matched:"}} --> <span class="mm-n" id="mm-count">0</span> / <span id="mm-total">8</span></div>
+        <div class="mm-complete" id="mm-complete"><!-- {{COMPLETE_MSG e.g. "🎉 Perfetto! All matched!"}} --></div>
+        <div class="mm-grid">
+          <div class="mm-col">
+            <div class="mm-col-label"><!-- {{TARGET_LANG_LABEL}} --></div>
+            <div id="mm-it-col"></div>
+          </div>
+          <div class="mm-col">
+            <div class="mm-col-label">English</div>
+            <div id="mm-en-col"></div>
+          </div>
+        </div>
+        <button class="mm-reset" id="mm-reset"><!-- {{RESET_BTN_LABEL e.g. "↺ Play again"}} --></button>
+      </div>
+
+      <script>
+      (function () {
+        /* EDIT THIS PAIRS ARRAY — 6-10 pairs recommended.
+           id must be unique per pair; it is internal to the game only. */
+        var PAIRS = [
+          { id: 'p1', it: '{{TARGET_PHRASE_1}}', en: '{{ENGLISH_GLOSS_1}}' },
+          { id: 'p2', it: '{{TARGET_PHRASE_2}}', en: '{{ENGLISH_GLOSS_2}}' },
+          { id: 'p3', it: '{{TARGET_PHRASE_3}}', en: '{{ENGLISH_GLOSS_3}}' },
+          { id: 'p4', it: '{{TARGET_PHRASE_4}}', en: '{{ENGLISH_GLOSS_4}}' },
+          { id: 'p5', it: '{{TARGET_PHRASE_5}}', en: '{{ENGLISH_GLOSS_5}}' },
+          { id: 'p6', it: '{{TARGET_PHRASE_6}}', en: '{{ENGLISH_GLOSS_6}}' },
+          { id: 'p7', it: '{{TARGET_PHRASE_7}}', en: '{{ENGLISH_GLOSS_7}}' },
+          { id: 'p8', it: '{{TARGET_PHRASE_8}}', en: '{{ENGLISH_GLOSS_8}}' }
+        ];
+
+        var matched = 0;
+        var selectedIt = null;
+        var selectedEn = null;
+
+        function shuffle(arr) {
+          var a = arr.slice();
+          for (var i = a.length - 1; i > 0; i--) {
+            var j = Math.floor(Math.random() * (i + 1));
+            var t = a[i]; a[i] = a[j]; a[j] = t;
+          }
+          return a;
+        }
+
+        function buildTile(text, side, pairId) {
+          var btn = document.createElement('button');
+          btn.type = 'button';
+          btn.className = 'mm-tile';
+          btn.textContent = text;
+          btn.dataset.pairId = pairId;
+          btn.dataset.side = side;
+          btn.addEventListener('click', function () { onTileClick(btn); });
+          return btn;
+        }
+
+        function render() {
+          matched = 0;
+          selectedIt = null;
+          selectedEn = null;
+          document.getElementById('mm-count').textContent = '0';
+          document.getElementById('mm-total').textContent = PAIRS.length;
+          document.getElementById('mm-complete').classList.remove('visible');
+
+          var itCol = document.getElementById('mm-it-col');
+          var enCol = document.getElementById('mm-en-col');
+          itCol.innerHTML = '';
+          enCol.innerHTML = '';
+
+          var itOrder = shuffle(PAIRS);
+          var enOrder = shuffle(PAIRS);
+
+          itOrder.forEach(function (p) { itCol.appendChild(buildTile(p.it, 'it', p.id)); });
+          enOrder.forEach(function (p) { enCol.appendChild(buildTile(p.en, 'en', p.id)); });
+        }
+
+        function clearSelection(tile) {
+          if (tile) { tile.classList.remove('mm-selected'); }
+        }
+
+        function onTileClick(tile) {
+          if (tile.classList.contains('mm-matched') || tile.disabled) return;
+          var side = tile.dataset.side;
+
+          if (side === 'it' && selectedIt === tile) { clearSelection(tile); selectedIt = null; return; }
+          if (side === 'en' && selectedEn === tile) { clearSelection(tile); selectedEn = null; return; }
+
+          if (side === 'it') { clearSelection(selectedIt); selectedIt = tile; }
+          else               { clearSelection(selectedEn); selectedEn = tile; }
+          tile.classList.add('mm-selected');
+
+          if (selectedIt && selectedEn) {
+            var itId = selectedIt.dataset.pairId;
+            var enId = selectedEn.dataset.pairId;
+            if (itId === enId) {
+              [selectedIt, selectedEn].forEach(function (t) {
+                t.classList.remove('mm-selected');
+                t.classList.add('mm-matched');
+                t.disabled = true;
+              });
+              matched++;
+              document.getElementById('mm-count').textContent = matched;
+              selectedIt = null; selectedEn = null;
+              if (matched === PAIRS.length) {
+                document.getElementById('mm-complete').classList.add('visible');
+              }
+            } else {
+              var badIt = selectedIt, badEn = selectedEn;
+              [badIt, badEn].forEach(function (t) { t.classList.add('mm-wrong'); });
+              selectedIt = null; selectedEn = null;
+              setTimeout(function () {
+                [badIt, badEn].forEach(function (t) { t.classList.remove('mm-wrong', 'mm-selected'); });
+              }, 600);
+            }
+          }
+        }
+
+        document.getElementById('mm-reset').addEventListener('click', render);
+        render();
+      })();
+      </script>
+    </section>
+
+    <!-- ========================= CLOSING / SUMMARY ========================= -->
+    <!-- CHAPTER: <section class="lesson-section" id="closing"> is the wrap-up.
+         Typically: guide persona sign-off quote + bulleted recap of what was learned
+         + teaser for the next lesson.
+    -->
+    <section class="lesson-section" id="closing">
+      <h2 class="section-h"><span class="num"><!-- {{CLOSING_NUM}} --></span><!-- {{CLOSING_TITLE}} --></h2>
+      <div class="closing">
+        <p style="margin-bottom: var(--chiron-space-4);"><em><!-- {{GUIDE_PERSONA_NAME}} --></em>: «<!-- {{PERSONA_SIGNOFF_QUOTE}} --»</p>
+        <p>In this lesson you learned:</p>
+        <ul style="padding-left: var(--chiron-space-5); margin: var(--chiron-space-3) 0; color: var(--chiron-fg-secondary);">
+          <!-- Add one <li> per key takeaway -->
+          <li><!-- {{TAKEAWAY_1}} --></li>
+          <li><!-- {{TAKEAWAY_2}} --></li>
+          <li><!-- {{TAKEAWAY_3}} --></li>
+        </ul>
+        <p style="margin-top: var(--chiron-space-4); font-style: italic; color: var(--chiron-fg-secondary);"><!-- {{NEXT_LESSON_TEASER}} --></p>
+      </div>
+    </section>
+
+    <footer class="lesson-footer">
+      Chiron · <!-- {{LANG_NAME}} --> <!-- {{CEFR_LEVEL}} --> · <!-- {{COURSE_TITLE}} --> ·
+      <!-- {{GUIDE_PERSONA_NAME}} --> · Lesson generated <!-- {{GENERATION_DATE}} -->
+    </footer>
+
+  </div><!-- /.lesson-shell -->
+  </main><!-- /.main -->
+
+  <!-- ========================= INLINE SCRIPTS ========================= -->
+
+  <!-- Theme switcher -->
+  <script>
+    (function () {
+      var valid = ['linguistic','midnight','warm-paper','clinical','ocean'];
+      document.querySelectorAll('.theme-bar button').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          var t = btn.getAttribute('data-set-theme');
+          if (!valid.includes(t)) return;
+          document.documentElement.setAttribute('data-theme', t);
+          localStorage.setItem('chiron-theme', t);
+          document.querySelectorAll('.theme-bar button').forEach(function (b) {
+            b.setAttribute('aria-pressed', b.getAttribute('data-set-theme') === t ? 'true' : 'false');
+          });
+        });
+      });
+      var cur = document.documentElement.getAttribute('data-theme');
+      document.querySelectorAll('.theme-bar button').forEach(function (b) {
+        b.setAttribute('aria-pressed', b.getAttribute('data-set-theme') === cur ? 'true' : 'false');
+      });
+    })();
+  </script>
+
+  <!-- TOC sidebar scroll-spy + smooth scroll
+       The ids array MUST be kept in sync with the actual section ids used above.
+       Update this list whenever chapters are added or removed. -->
+  <script>
+    (function () {
+      var tocLinks = Array.from(document.querySelectorAll('.toc-link[data-toc-target]'));
+      /* UPDATE THIS ARRAY to match the id values on your <section class="lesson-section"> elements: */
+      var ids = ['overview', 'chapter-1', 'chapter-2', 'sr-drawer', 'match-madness', 'closing'];
+      var mainEl = document.getElementById('main-content');
+
+      tocLinks.forEach(function (link) {
+        link.addEventListener('click', function (e) {
+          e.preventDefault();
+          var target = document.getElementById(link.getAttribute('data-toc-target'));
+          if (!target) return;
+          target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        });
+      });
+
+      function updateToc() {
+        var scrollTop = (mainEl && mainEl.scrollHeight > mainEl.clientHeight)
+          ? mainEl.scrollTop
+          : window.scrollY;
+        var viewH = (mainEl && mainEl.scrollHeight > mainEl.clientHeight)
+          ? mainEl.clientHeight
+          : window.innerHeight;
+        var mid = scrollTop + viewH * 0.35;
+        var activeId = null;
+        ids.forEach(function (id) {
+          var el = document.getElementById(id);
+          if (!el) return;
+          var top = el.offsetTop;
+          if (top <= mid + 1) activeId = id;
+        });
+        tocLinks.forEach(function (link) {
+          var isActive = link.getAttribute('data-toc-target') === activeId;
+          link.classList.toggle('active', isActive);
+          link.setAttribute('aria-current', isActive ? 'true' : 'false');
+        });
+      }
+
+      if (mainEl) mainEl.addEventListener('scroll', updateToc, { passive: true });
+      window.addEventListener('scroll', updateToc, { passive: true });
+      updateToc();
+    })();
+  </script>
+
+  <!-- SR card flip -->
+  <script>
+    (function () {
+      document.querySelectorAll('.sr-card').forEach(function (card) {
+        card.addEventListener('click', function () {
+          card.classList.toggle('flipped');
+        });
+        card.setAttribute('role', 'button');
+        card.setAttribute('tabindex', '0');
+        card.addEventListener('keydown', function (e) {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            card.classList.toggle('flipped');
+          }
+        });
+      });
+    })();
+  </script>
+
+  <!-- Cloze fill-blank: check on Enter + Reveal button -->
+  <script>
+    (function () {
+      document.querySelectorAll('.cloze-line input[type="text"]').forEach(function (inp) {
+        inp.addEventListener('keydown', function (e) {
+          if (e.key !== 'Enter') return;
+          var line = inp.closest('.cloze-line');
+          var answer = (line.getAttribute('data-answer') || '').trim().toLowerCase();
+          var val = inp.value.trim().toLowerCase();
+          inp.classList.remove('correct', 'incorrect');
+          if (val === answer) {
+            inp.classList.add('correct');
+          } else if (val.length > 0) {
+            inp.classList.add('incorrect');
+          }
+        });
+      });
+
+      document.querySelectorAll('.cloze-reveal-btn').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          var line = btn.closest('.cloze-line');
+          var answerSpan = line.querySelector('.cloze-answer');
+          if (answerSpan) {
+            answerSpan.classList.toggle('shown');
+            btn.textContent = answerSpan.classList.contains('shown') ? 'Hide' : 'Show';
+          }
+        });
+      });
+    })();
+  </script>
+
+  <!-- Chiron Listen mode — audio lecture player + section voice-follow
+       Copied VERBATIM from skill/shell/main.js (the last top-level IIFE).
+       The player reads window.__chironAudioManifest (set by audio/manifest.js)
+       or fetches audio/manifest.json directly. If neither is present it is a
+       silent no-op — the lesson works fine without audio. -->
+  <script>
+(function () {
+  'use strict';
+  var PANEL_KIND = { summary: 0, shortened: 1, section: 2 };
+  var INLINE_KIND = { dialogue: 1, phrase: 1, 'grammar-pearl': 1, 'story-verbatim': 1, 'story-description': 1 };
+
+  var audio = new Audio();
+  var active = null; // { btn, glowEl, idle }
+  function setIco(btn, ch) { var i = btn.querySelector('.ico'); if (i) i.textContent = ch; }
+  function clearActive() {
+    if (!active) return;
+    if (active.glowEl) active.glowEl.classList.remove('chiron-listening');
+    if (active.btn) { active.btn.classList.remove('playing'); setIco(active.btn, active.idle); }
+    active = null;
+  }
+  audio.addEventListener('ended', clearActive);
+
+  function play(clip, btn, glowEl, idleIco) {
+    if (active && active.btn === btn) { audio.pause(); audio.currentTime = 0; clearActive(); return; }
+    clearActive();
+    audio.src = clip.audioPath;
+    audio.play().then(function () {
+      active = { btn: btn, glowEl: glowEl || null, idle: idleIco };
+      btn.classList.add('playing'); setIco(btn, '⏸');
+      if (glowEl) { glowEl.classList.add('chiron-listening'); glowEl.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
+    }).catch(function () { btn.classList.add('err'); setTimeout(function () { btn.classList.remove('err'); }, 1600); });
+  }
+
+  function panelLabel(c) {
+    if (c.artifact === 'summary') return 'Summary';
+    if (c.artifact === 'shortened') return 'Full lecture';
+    if (c.sectionId) {
+      var el = document.getElementById(c.sectionId);
+      var h = el && el.querySelector('h1,h2,h3,[data-section-title]');
+      if (h && h.textContent.trim()) return h.textContent.trim().replace(/^\s*\d+[\.\)]?\s*/, '');
+    }
+    return c.sectionId || 'Section';
+  }
+
+  function buildPanel(clips) {
+    var panel = document.createElement('div');
+    panel.className = 'chiron-listen';
+    panel.innerHTML = '<div class="chiron-listen-head"><span>🎧</span><span>Listen</span></div>';
+    function group(title, list) {
+      if (!list.length) return;
+      var g = document.createElement('div'); g.className = 'chiron-listen-group';
+      var t = document.createElement('div'); t.className = 'chiron-listen-grouptitle'; t.textContent = title;
+      g.appendChild(t);
+      list.forEach(function (c) {
+        var btn = document.createElement('button'); btn.type = 'button'; btn.className = 'chiron-listen-btn';
+        var ico = document.createElement('span'); ico.className = 'ico'; ico.textContent = '▶';
+        var lbl = document.createElement('span'); lbl.className = 'lbl'; lbl.textContent = panelLabel(c);
+        btn.appendChild(ico); btn.appendChild(lbl);
+        btn.addEventListener('click', function () {
+          var glow = (c.artifact === 'section' && c.sectionId) ? document.getElementById(c.sectionId) : null;
+          play(c, btn, glow, '▶');
+        });
+        g.appendChild(btn);
+      });
+      panel.appendChild(g);
+    }
+    group('Full lesson', clips.filter(function (c) { return c.artifact === 'summary' || c.artifact === 'shortened'; }));
+    group('By section', clips.filter(function (c) { return c.artifact === 'section'; }));
+    document.body.appendChild(panel);
+  }
+
+  function wireInline(clips) {
+    clips.forEach(function (c) {
+      if (!c.sectionId) return;
+      var el = document.getElementById(c.sectionId);
+      if (!el) return;
+      var btn = document.createElement('button');
+      btn.type = 'button'; btn.className = 'chiron-play-inline'; btn.title = 'Listen'; btn.setAttribute('aria-label', 'Play audio');
+      var ico = document.createElement('span'); ico.className = 'ico'; ico.textContent = '▶'; btn.appendChild(ico);
+      btn.addEventListener('click', function (e) { e.preventDefault(); e.stopPropagation(); play(c, btn, null, '▶'); });
+      el.classList.add('chiron-has-audio');
+      el.insertBefore(btn, el.firstChild);
+    });
+  }
+
+  function useManifest(m) {
+    if (!m || !m.clips) return;
+    var ready = m.clips.filter(function (c) { return c.status === 'done' && c.audioPath; });
+    if (!ready.length) return;
+    var panelClips = ready.filter(function (c) { return PANEL_KIND[c.artifact] != null; });
+    var inlineClips = ready.filter(function (c) { return INLINE_KIND[c.artifact]; });
+    if (panelClips.length) buildPanel(panelClips);
+    if (inlineClips.length) wireInline(inlineClips);
+  }
+
+  function init() {
+    if (window.__chironAudioManifest) { useManifest(window.__chironAudioManifest); return; }
+    fetch('audio/manifest.json', { cache: 'no-store' })
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(useManifest)
+      .catch(function () { /* no audio baked — silent no-op */ });
+  }
+
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
+  else init();
+})();
+  </script>
+
+</body>
+</html>
