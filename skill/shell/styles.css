@@ -1253,3 +1253,67 @@ p:last-child { margin-bottom: 0; }
   background: var(--chart-color);
   display: inline-block;
 }
+
+/* ── Chiron Listen mode — audio lecture player + section voice-follow ───────── */
+.chiron-listen {
+  position: fixed; right: 18px; bottom: 18px; z-index: 9999;
+  width: 230px; max-width: calc(100vw - 36px);
+  background: var(--color-surface, #fff);
+  border: 1px solid var(--color-border, #e2e2e2);
+  border-radius: 14px; box-shadow: 0 8px 30px rgba(0,0,0,.16);
+  font-family: 'DM Sans', system-ui, sans-serif; overflow: hidden;
+}
+.chiron-listen-head {
+  display: flex; align-items: center; gap: 7px;
+  font-weight: 700; font-size: 13px;
+  padding: 11px 14px; border-bottom: 1px solid var(--color-border-light, #eee);
+  color: var(--color-text, #1a1a1a);
+}
+.chiron-listen-list { display: flex; flex-direction: column; padding: 6px; gap: 2px; max-height: 46vh; overflow-y: auto; }
+.chiron-listen-btn {
+  display: flex; align-items: center; gap: 9px; text-align: left;
+  background: transparent; border: 0; border-radius: 9px; padding: 9px 11px;
+  cursor: pointer; font: inherit; font-size: 13px; line-height: 1.25;
+  color: var(--color-text, #1a1a1a); transition: background .12s ease;
+}
+.chiron-listen-btn:hover { background: var(--color-accent-light, #f3f3f3); }
+.chiron-listen-btn .ico {
+  flex: none; width: 18px; height: 18px; display: grid; place-items: center;
+  font-size: 10px; color: var(--color-accent, #D94F30);
+}
+.chiron-listen-btn.playing { background: var(--color-accent-light, #f3f3f3); font-weight: 600; }
+.chiron-listen-btn.err .lbl { color: var(--color-error, #c0392b); }
+.chiron-listen-kind { font-size: 11px; color: var(--color-text-muted, #888); font-weight: 400; }
+/* section being lectured — soft pulsing glow (the lone acolyte-derived gesture) */
+.chiron-listening {
+  border-radius: 10px; scroll-margin-top: 84px;
+  animation: chiron-listening-glow 1.7s ease-in-out infinite;
+}
+@keyframes chiron-listening-glow {
+  0%, 100% { box-shadow: 0 0 0 0 var(--color-accent-muted, rgba(217,79,48,.28)); }
+  50%      { box-shadow: 0 0 0 7px var(--color-accent-muted, rgba(217,79,48,.16)); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .chiron-listening { animation: none; outline: 2px solid var(--color-accent, #D94F30); }
+}
+/* grouped panel (Whole lesson vs By section) */
+.chiron-listen-group { padding: 6px; }
+.chiron-listen-group + .chiron-listen-group { border-top: 1px solid var(--color-border-light, #eee); }
+.chiron-listen-grouptitle {
+  font-size: 10px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase;
+  color: var(--color-text-muted, #999); padding: 4px 11px 5px;
+}
+/* inline ▶ — injected next to a vocab phrase / dialogue line / story / grammar pearl */
+.chiron-play-inline {
+  display: inline-grid; place-items: center; width: 22px; height: 22px;
+  margin-right: 8px; vertical-align: middle; flex: none;
+  background: var(--color-accent, #D94F30); color: #fff;
+  border: 1.5px solid #fff; box-shadow: 0 1px 3px rgba(0,0,0,.28);
+  border-radius: 50%; cursor: pointer; font: inherit; line-height: 1;
+  transition: transform .1s ease, box-shadow .12s ease;
+}
+.chiron-play-inline .ico { font-size: 10px; margin-left: 1px; }   /* optical-center the ▶ */
+.chiron-play-inline:hover { transform: scale(1.12); box-shadow: 0 2px 7px rgba(0,0,0,.34); }
+.chiron-play-inline.playing { background: var(--color-accent-hover, #C4432A); }
+.chiron-play-inline.err { background: var(--color-error, #c0392b); }
+.chiron-has-audio { scroll-margin-top: 84px; }

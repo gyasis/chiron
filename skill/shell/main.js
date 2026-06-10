@@ -1052,3 +1052,112 @@
   };
 
 })();
+
+/* ── Chiron Listen mode — audio lecture player + inline ▶ + section voice-follow
+   Self-builds from audio/manifest.json (written by the audio bake). Two surfaces:
+     • floating 🎧 panel — grouped "Whole lesson" (summary/full lecture) vs
+       "By section" (section lectures glow their #sectionId while playing).
+     • inline ▶ — anchored kinds (dialogue/phrase/grammar-pearl/story-*) get a
+       small play button injected at their #anchor element (tap any phrase/line).
+   One shared audio element → only one clip plays at a time. No-op without audio. */
+(function () {
+  'use strict';
+  var PANEL_KIND = { summary: 0, shortened: 1, section: 2 };
+  var INLINE_KIND = { dialogue: 1, phrase: 1, 'grammar-pearl': 1, 'story-verbatim': 1, 'story-description': 1 };
+
+  var audio = new Audio();
+  var active = null; // { btn, glowEl, idle }
+  function setIco(btn, ch) { var i = btn.querySelector('.ico'); if (i) i.textContent = ch; }
+  function clearActive() {
+    if (!active) return;
+    if (active.glowEl) active.glowEl.classList.remove('chiron-listening');
+    if (active.btn) { active.btn.classList.remove('playing'); setIco(active.btn, active.idle); }
+    active = null;
+  }
+  audio.addEventListener('ended', clearActive);
+
+  function play(clip, btn, glowEl, idleIco) {
+    if (active && active.btn === btn) { audio.pause(); audio.currentTime = 0; clearActive(); return; }
+    clearActive();
+    audio.src = clip.audioPath;
+    audio.play().then(function () {
+      active = { btn: btn, glowEl: glowEl || null, idle: idleIco };
+      btn.classList.add('playing'); setIco(btn, '⏸');
+      if (glowEl) { glowEl.classList.add('chiron-listening'); glowEl.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
+    }).catch(function () { btn.classList.add('err'); setTimeout(function () { btn.classList.remove('err'); }, 1600); });
+  }
+
+  function panelLabel(c) {
+    if (c.artifact === 'summary') return 'Summary';
+    if (c.artifact === 'shortened') return 'Full lecture';
+    if (c.sectionId) {
+      var el = document.getElementById(c.sectionId);
+      var h = el && el.querySelector('h1,h2,h3,[data-section-title]');
+      if (h && h.textContent.trim()) return h.textContent.trim().replace(/^\s*\d+[\.\)]?\s*/, '');
+    }
+    return c.sectionId || 'Section';
+  }
+
+  function buildPanel(clips) {
+    var panel = document.createElement('div');
+    panel.className = 'chiron-listen';
+    panel.innerHTML = '<div class="chiron-listen-head"><span>🎧</span><span>Listen</span></div>';
+    function group(title, list) {
+      if (!list.length) return;
+      var g = document.createElement('div'); g.className = 'chiron-listen-group';
+      var t = document.createElement('div'); t.className = 'chiron-listen-grouptitle'; t.textContent = title;
+      g.appendChild(t);
+      list.forEach(function (c) {
+        var btn = document.createElement('button'); btn.type = 'button'; btn.className = 'chiron-listen-btn';
+        var ico = document.createElement('span'); ico.className = 'ico'; ico.textContent = '▶';
+        var lbl = document.createElement('span'); lbl.className = 'lbl'; lbl.textContent = panelLabel(c);
+        btn.appendChild(ico); btn.appendChild(lbl);
+        btn.addEventListener('click', function () {
+          var glow = (c.artifact === 'section' && c.sectionId) ? document.getElementById(c.sectionId) : null;
+          play(c, btn, glow, '▶');
+        });
+        g.appendChild(btn);
+      });
+      panel.appendChild(g);
+    }
+    group('Whole lesson', clips.filter(function (c) { return c.artifact === 'summary' || c.artifact === 'shortened'; }));
+    group('By section', clips.filter(function (c) { return c.artifact === 'section'; }));
+    document.body.appendChild(panel);
+  }
+
+  function wireInline(clips) {
+    clips.forEach(function (c) {
+      if (!c.sectionId) return;
+      var el = document.getElementById(c.sectionId);
+      if (!el) return;
+      var btn = document.createElement('button');
+      btn.type = 'button'; btn.className = 'chiron-play-inline'; btn.title = 'Ascolta'; btn.setAttribute('aria-label', 'Play audio');
+      var ico = document.createElement('span'); ico.className = 'ico'; ico.textContent = '▶'; btn.appendChild(ico);
+      btn.addEventListener('click', function (e) { e.preventDefault(); e.stopPropagation(); play(c, btn, null, '▶'); });
+      el.classList.add('chiron-has-audio');
+      el.insertBefore(btn, el.firstChild);
+    });
+  }
+
+  function useManifest(m) {
+    if (!m || !m.clips) return;
+    var ready = m.clips.filter(function (c) { return c.status === 'done' && c.audioPath; });
+    if (!ready.length) return;
+    var panelClips = ready.filter(function (c) { return PANEL_KIND[c.artifact] != null; });
+    var inlineClips = ready.filter(function (c) { return INLINE_KIND[c.artifact]; });
+    if (panelClips.length) buildPanel(panelClips);
+    if (inlineClips.length) wireInline(inlineClips);
+  }
+
+  function init() {
+    // file:// lessons load audio/manifest.js (sets a global); HTTP lessons fetch manifest.json.
+    if (window.__chironAudioManifest) { useManifest(window.__chironAudioManifest); return; }
+    fetch('audio/manifest.json', { cache: 'no-store' })
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(useManifest)
+      .catch(function () { /* no audio baked — silent no-op */ });
+  }
+
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
+  else init();
+})();

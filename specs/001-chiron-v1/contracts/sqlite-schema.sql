@@ -124,3 +124,35 @@ CREATE TABLE IF NOT EXISTS bookmarks (
 
 CREATE INDEX IF NOT EXISTS idx_bookmarks_course_chapter
     ON bookmarks(course_id, chapter_id);
+
+-- ----------------------------------------------------------------------------
+-- Audio lecture clips — "Listen mode" bake manifest + audit log (additive, v1.1)
+-- Written by lib/audio-bake.ts AFTER Stage 5 assemble. Deterministic bake — no
+-- LLM, no SDK (Q8-safe; the lecture *script* is authored upstream by Gemini).
+-- `script_hash` keys reuse: an unchanged lecture script re-uses its existing
+-- mp3 instead of re-synthesizing (economy-first). `status`/`error` make the
+-- async bake observable + pollable (PRD §7).
+-- ----------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS audio_clips (
+    id            INTEGER PRIMARY KEY,
+    course_id     TEXT NOT NULL,
+    artifact      TEXT NOT NULL,                  -- 'summary' | 'shortened' | 'section'
+    section_id    TEXT NOT NULL DEFAULT '',       -- DOM anchor for 'section'; '' for whole-lesson artifacts
+    voice         TEXT NOT NULL,                  -- 'pauls_tutor' | 'lucrezia_english' | 'lucrezia_italian' | 'mixed'
+    lang          TEXT,                           -- 'en' | 'it' | 'mixed'
+    script_hash   TEXT NOT NULL,                  -- sha256 of the segment script → reuse key
+    segments_json TEXT,                           -- language-tagged segment list (transcript + re-bake source)
+    audio_path    TEXT,                           -- relative: audio/<artifact>[/section/<section_id>].mp3
+    duration_s    REAL,
+    bytes         INTEGER,
+    lufs          REAL,                           -- measured integrated loudness (target -30)
+    status        TEXT NOT NULL DEFAULT 'pending',-- 'pending' | 'baking' | 'done' | 'failed'
+    error         TEXT,                           -- actionable message when status='failed'
+    reuse_count   INTEGER NOT NULL DEFAULT 0,
+    generated_at  INTEGER,                        -- unix ms
+    UNIQUE(course_id, artifact, section_id)
+);
+
+-- Hot path: "what's pending / done / failed?" poll while the async bake runs
+CREATE INDEX IF NOT EXISTS idx_audio_clips_status
+    ON audio_clips(course_id, status);

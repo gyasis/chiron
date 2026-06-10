@@ -11,6 +11,7 @@ import * as path from 'node:path';
 import * as progress from './progress.js';
 import { validateBrief, validateSyllabus, type ConceptDag } from './validator.js';
 import { assembleLesson } from './assemble.js';
+import { bakeAudio, type AudioClipResult, type LectureArtifact, type VoiceRef } from './audio-bake.js';
 import type { Brief } from './schemas/brief.js';
 import type { ChapterSyllabus } from './schemas/chapter-syllabus.js';
 import type { TriggerContext } from './trigger-context.js';
@@ -426,6 +427,51 @@ export function stage5Assemble(
     lessonOutputDir: ctx.lessonOutputDir,
     skillRoot,
     chapter1SrCards: opts?.chapter1SrCards ?? [],
+  });
+}
+
+/** Stage-6 (post-assemble) "Listen mode" audio-bake options. */
+export interface Stage6AudioOpts {
+  /** Lecture artifacts authored by the Stage-04s Gemini handoff. Omit to skip audio (opt-in). */
+  artifacts?: LectureArtifact[];
+  /** Registered voice name → its OmniVoice ref (from the Atelier registry). Required when artifacts present. */
+  voices?: Record<string, VoiceRef>;
+  /** Override OmniVoice base URL (default: the Atelier sidecar). */
+  omnivoiceUrl?: string;
+  /** Override playback loudness target in LUFS (default −30). */
+  playbackTarget?: number;
+}
+
+/**
+ * Stage 6 — bake the "Listen mode" lecture audio. NON-BLOCKING for the user:
+ * Stage 5 has already built + opened `lesson.html`, so this fills in the
+ * `audio/` sidecar + `audio_clips` manifest while the user reads. Opt-in per
+ * lesson — a no-op when no lecture artifacts are supplied.
+ *
+ * Never throws on synthesis failure (per-clip status is recorded in
+ * `audio_clips`); if Atelier OmniVoice is unreachable, clips are marked
+ * `pending` and the lesson still works.
+ */
+export async function stage6BakeAudio(
+  ctx: PipelineContext,
+  opts: Stage6AudioOpts = {},
+): Promise<AudioClipResult[]> {
+  const artifacts = opts.artifacts ?? [];
+  if (artifacts.length === 0) {
+    progress.stage(6, 6, 'audio: no lecture script supplied — skipping bake (opt-in)');
+    return [];
+  }
+  if (!opts.voices || Object.keys(opts.voices).length === 0) {
+    throw new Error('stage6BakeAudio: lecture artifacts supplied but no `voices` registry given');
+  }
+  progress.stage(6, 6, `audio: baking ${artifacts.length} lecture artifact(s) async — lesson already open`);
+  return bakeAudio({
+    lessonOutputDir: ctx.lessonOutputDir,
+    courseId: path.basename(ctx.lessonOutputDir),
+    artifacts,
+    voices: opts.voices,
+    omnivoiceUrl: opts.omnivoiceUrl,
+    playbackTarget: opts.playbackTarget,
   });
 }
 

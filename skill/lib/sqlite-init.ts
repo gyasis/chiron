@@ -16,16 +16,26 @@
  */
 
 import Database from 'better-sqlite3';
-import { readFileSync, mkdirSync } from 'node:fs';
+import { readFileSync, mkdirSync, existsSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-/** Resolve the repo-root path to the canonical schema file. */
+/**
+ * Resolve the canonical schema at `<repo>/specs/001-chiron-v1/contracts/sqlite-schema.sql`.
+ *
+ * Source lives at `<repo>/skill/lib/`, but at runtime this is the COMPILED file
+ * at `<repo>/skill/dist/lib/` — a different depth. So walk UP from wherever we
+ * are until the schema file is found (robust for both src-via-tsx and dist).
+ */
 function resolveSchemaPath(): string {
-  // This file lives at <repo>/skill/lib/sqlite-init.ts.
-  // Schema lives at <repo>/specs/001-chiron-v1/contracts/sqlite-schema.sql.
-  const here = dirname(fileURLToPath(import.meta.url));
-  return resolve(here, '..', '..', 'specs', '001-chiron-v1', 'contracts', 'sqlite-schema.sql');
+  const rel = join('specs', '001-chiron-v1', 'contracts', 'sqlite-schema.sql');
+  let dir = dirname(fileURLToPath(import.meta.url));
+  for (let i = 0; i < 6; i++) {
+    const candidate = resolve(dir, rel);
+    if (existsSync(candidate)) return candidate;
+    dir = dirname(dir);
+  }
+  throw new Error(`sqlite-init: could not locate ${rel} above ${dirname(fileURLToPath(import.meta.url))}`);
 }
 
 /**
