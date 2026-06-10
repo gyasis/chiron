@@ -463,10 +463,15 @@
         <!-- Continue adding .turn blocks for the full dialogue… -->
       </div>
 
-      <!-- GRAMMAR PEARL: id="pearl-<slug>" wires the inline ▶ audio button. -->
-      <div class="callout grammar-pearl" id="pearl-example-grammar">
-        <span class="tag">Grammar pearl</span>
-        <!-- {{GRAMMAR_EXPLANATION — concise, with bold key term, usage comparison}} -->
+      <!-- GRAMMAR PEARL: id="pearl-<slug>" wires the inline ▶ audio button.
+           Write the pearl body in ITALIAN; put its plain-English explanation in
+           data-en="..." — a "🇬🇧 English" reveal toggle is auto-added (see the
+           reveal-English script near </body>). Same pattern works on any
+           Italian-only callout (cultural notes, etc.): just add data-en. -->
+      <div class="callout grammar-pearl" id="pearl-example-grammar"
+           data-en="{{GRAMMAR_EXPLANATION_EN — the same rule, in plain English}}">
+        <span class="tag">Perla di grammatica</span>
+        <!-- {{GRAMMAR_EXPLANATION_IT — concise, ITALIAN, bold key term, usage comparison}} -->
       </div>
 
       <!-- STORY BLOCK: id="story-<section-id>" and id="storydesc-<section-id>" wire inline ▶ buttons. -->
@@ -943,6 +948,32 @@
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
   else init();
 })();
+  </script>
+
+  <style>
+    /* Reveal-English toggle for Italian-only blocks (grammar pearls, cultural notes). */
+    .chiron-reveal-en { display:inline-flex; align-items:center; gap:5px; margin-top:11px; padding:3px 11px; border:1px solid var(--chiron-border); border-radius:100px; background:transparent; color:var(--chiron-muted); font:inherit; font-size:11px; cursor:pointer; transition:all .12s ease; }
+    .chiron-reveal-en:hover { background:var(--chiron-elevated); color:var(--chiron-fg); }
+    .show-en .chiron-reveal-en { color:var(--chiron-accent); border-color:var(--chiron-accent); }
+    .chiron-en-block { display:none; margin-top:10px; padding-top:9px; border-top:1px dashed var(--chiron-divider); color:var(--chiron-fg-secondary); font-size:0.92em; line-height:1.55; }
+    .show-en .chiron-en-block { display:block; }
+  </style>
+  <script>
+  // Reveal-English: any element with data-en gets a small "🇬🇧 English" toggle that
+  // reveals a hidden English explanation. Lets the learner try the Italian first.
+  (function () {
+    document.querySelectorAll('[data-en]').forEach(function (el) {
+      var en = el.getAttribute('data-en'); if (!en) return;
+      var btn = document.createElement('button'); btn.type = 'button'; btn.className = 'chiron-reveal-en';
+      btn.innerHTML = '<span aria-hidden="true">🇬🇧</span><span class="lbl">English</span>';
+      var block = document.createElement('div'); block.className = 'chiron-en-block'; block.textContent = en;
+      el.appendChild(btn); el.appendChild(block);
+      btn.addEventListener('click', function () {
+        var on = el.classList.toggle('show-en');
+        btn.querySelector('.lbl').textContent = on ? 'Nascondi inglese' : 'English';
+      });
+    });
+  })();
   </script>
 
 </body>

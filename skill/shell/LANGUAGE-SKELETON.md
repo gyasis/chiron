@@ -31,6 +31,11 @@ each lesson re-invented its own shell.
 - **Component library** — SR cards (simple + rich `data-card-type`), vocab tables
   (`.v-table`), speaker turns (`.turn`), pedagogical callouts (grammar-pearl /
   cultural-note / tip), cloze exercises, cold-open block, Match Madness game.
+- **Reveal-English toggle** — any element with a `data-en="<plain-English explanation>"`
+  attribute auto-gets a small "🇬🇧 English" button that reveals a hidden English block
+  (a `<script>` near `</body>` wires it). **Write grammar pearls (and any Italian-only
+  callout) in ITALIAN, and put the English explanation in `data-en`** — the learner
+  tries the Italian first and reveals English on demand. Pure CSS/JS, no audio.
 
 ---
 
