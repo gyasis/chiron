@@ -38,3 +38,4 @@ memory-bank/private/
 *.key
 *.pem
 
+skill/_*.mjs
