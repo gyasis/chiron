@@ -87,7 +87,7 @@ export interface AudioClipResult {
 
 const STAGE = 'audio-bake';
 const DEFAULT_OV = 'http://192.168.0.159:8770';
-const DEFAULT_TARGET = -30;
+const DEFAULT_TARGET = -20; // playback LUFS — Gyasi's preference (raised from -30; -30 was too quiet, 2026-06-10)
 /** Bake order: shortest/most-useful first so it's playable while the rest run. */
 const ORDER: ArtifactKind[] = [
   'summary', 'shortened', 'section',
@@ -131,6 +131,9 @@ async function synthSegment(url: string, seg: LectureSegment, ref: VoiceRef, out
     num_step: ref.numStep ?? 48,
     guidance_scale: 2.0,
     class_temperature: 0.3,
+    // Per-segment pitch shift (semitones) — lets a dialogue give a second speaker
+    // a distinct voice from the same clone (e.g. the learner's turns pitched down).
+    pitch_semitones: (seg as { pitchSemitones?: number }).pitchSemitones ?? 0,
   });
   const r = await fetch(`${url}/tts`, {
     method: 'POST',
