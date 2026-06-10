@@ -58,6 +58,20 @@ to wire where. Use exactly these patterns:
 the corresponding `<a class="toc-link" data-toc-target="…">` in the sidebar, and the
 `ids` array in the scroll-spy `<script>`.
 
+### Dialogue voicing rule (DOMAIN-level, persona-independent — BLOCKING)
+
+A practice dialogue is between the **learner** (Gyasi / "you") and **another speaker**
+(the tutor, a patient, a colleague, a character). **The learner's own turns are NEVER
+voiced or audio-baked** — those are HIS lines to say in person; the dialogue is practice.
+Voice ONLY the non-learner speaker's turns.
+
+- Mark turns in the HTML: the OTHER speaker = `class="turn persona-a"`; the **learner =
+  `class="turn persona-b" data-learner="true"`**.
+- When baking a `dlg-*` clip, include ONLY the `persona-a` (non-learner) turns; skip every
+  `data-learner` turn. Both still render IT + English gloss on the page.
+- This is a **language-domain** rule (true for any tutor) — it lives here, NOT in a persona
+  pack, so swapping the persona never loses it. (Origin 2026-06-10.)
+
 ---
 
 ## How the parent agent fills the skeleton
