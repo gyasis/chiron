@@ -976,5 +976,42 @@
   })();
   </script>
 
+<style>
+  .chiron-qc-info { display:inline-flex; align-items:center; justify-content:center; width:15px; height:15px; margin-left:6px; border-radius:50%; background:var(--chiron-warning,#b45309); color:#fff; font-size:10px; font-weight:700; cursor:pointer; flex:none; font-style:normal; line-height:1; }
+  .chiron-qc-pop { position:fixed; max-width:290px; background:var(--chiron-surface,#fff); color:var(--chiron-fg,#222); border:1px solid var(--chiron-border,#ccc); border-left:3px solid var(--chiron-warning,#b45309); border-radius:8px; padding:10px 12px; font-size:12px; line-height:1.45; box-shadow:0 8px 24px rgba(0,0,0,.18); z-index:9999; }
+  .chiron-qc-pop h4 { margin:0 0 5px; font-size:11px; text-transform:uppercase; letter-spacing:.05em; color:var(--chiron-warning,#b45309); }
+  .chiron-qc-pop .t { font-family:monospace; color:var(--chiron-accent,#b3522e); font-weight:700; }
+</style>
+<script>
+// Audio-QC info-icon: reads audio/qc-report.json (written by the 2-loop Gemini QC)
+// and decorates any audio control that still has a flagged defect with an ℹ️.
+(function(){
+  fetch('audio/qc-report.json').then(function(r){return r.ok?r.json():null;}).then(function(qc){
+    if(!qc) return;
+    var tries=0, iv=setInterval(function(){
+      var btns=document.querySelectorAll('.chiron-listen-btn'); tries++;
+      if(btns.length){ clearInterval(iv);
+        btns.forEach(function(btn){
+          var lbl=btn.querySelector('.lbl'); if(!lbl) return;
+          var rep=qc[lbl.textContent.trim()]; if(!rep||!rep.defects||!rep.defects.length) return;
+          var info=document.createElement('span'); info.className='chiron-qc-info'; info.textContent='i';
+          info.title='Audio QC: '+rep.status+' — click for details';
+          info.addEventListener('click',function(e){ e.stopPropagation();
+            document.querySelectorAll('.chiron-qc-pop').forEach(function(p){p.remove();});
+            var pop=document.createElement('div'); pop.className='chiron-qc-pop';
+            pop.innerHTML='<h4>Audio QC — '+rep.status+'</h4>'+rep.defects.map(function(d){return '<div><span class="t">'+d.time+'</span> · '+(d.type||'')+' — '+d.detail+'</div>';}).join('');
+            document.body.appendChild(pop);
+            var rc=info.getBoundingClientRect(); pop.style.left=Math.max(8,Math.min(rc.left,window.innerWidth-300))+'px'; pop.style.top=(rc.bottom+6)+'px';
+            setTimeout(function(){document.addEventListener('click',function h(){pop.remove();document.removeEventListener('click',h);});},0);
+          });
+          btn.appendChild(info);
+        });
+      }
+      if(tries>40) clearInterval(iv);
+    },150);
+  }).catch(function(){});
+})();
+</script>
+
 </body>
 </html>

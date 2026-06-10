@@ -99,6 +99,37 @@ When the lesson is opened in a browser, the audio player IIFE auto-wires.
 
 ---
 
+## Audio QC info-icon
+
+The skeleton includes a `<style>` + `<script>` block (near `</body>`) that
+auto-renders an ℹ️ badge on any audio control whose clip has a surviving defect.
+
+**`audio/qc-report.json` contract** — keyed by the audio control's label text
+(the `.lbl` element inside `.chiron-listen-btn`), e.g. `"Full lecture"`:
+
+```json
+{
+  "Full lecture": {
+    "status": "needs-review",
+    "defects": [
+      { "time": "0:04", "type": "truncation", "detail": "word «avere» cut off" }
+    ]
+  }
+}
+```
+
+- `status` — short string, shown in the popup header (e.g. `"needs-review"`, `"glitch"`).
+- `defects` — array of `{ "time": "M:SS", "type": "<category>", "detail": "<description>" }`.
+
+If `audio/qc-report.json` is absent or unreachable (i.e. all clips passed QC),
+the script silently exits — no badges appear. Only clips with a non-empty
+`defects` array get the ℹ️ badge. Clicking the badge opens a fixed popup listing
+each defect with its timestamp; clicking anywhere else dismisses it.
+
+See `skill/docs/AUDIO-QC.md` for the full 2-loop QC procedure.
+
+---
+
 ## Relationship to other files
 
 - **Pairs with** `prd/canonical_shell_and_match_madness_2026-05-12.md` — the PRD
