@@ -21,12 +21,13 @@
 
 import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
-import { existsSync, mkdirSync, rmSync, statSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import Database from 'better-sqlite3';
 
 import { progress } from './progress.js';
+import { qcAudioClip, qcAvailable } from './audio-qc.js';
 
 export type SegLang = 'en' | 'it';
 
@@ -73,6 +74,13 @@ export interface AudioBakeOptions {
   omnivoiceUrl?: string;
   /** target playback LUFS, default −30. */
   playbackTarget?: number;
+  /**
+   * Enable Gemini audio QC after each clip is written.
+   * Default: true when GEMINI_API_KEY or GOOGLE_API_KEY is set AND
+   *          CHIRON_AUDIO_QC env var is not "0".
+   * Pass false to force-disable regardless of env.
+   */
+  qc?: boolean;
 }
 
 export type ClipStatus = 'done' | 'reused' | 'failed' | 'pending';
@@ -83,6 +91,8 @@ export interface AudioClipResult {
   status: ClipStatus;
   audioPath?: string;
   error?: string;
+  /** Defects reported by Gemini QC after the final take (only set when defects remain). */
+  qcDefects?: string[];
 }
 
 const STAGE = 'audio-bake';
@@ -93,6 +103,65 @@ const ORDER: ArtifactKind[] = [
   'summary', 'shortened', 'section',
   'dialogue', 'story-verbatim', 'story-description', 'grammar-pearl', 'phrase',
 ];
+
+/**
+ * Returns the audio-control label used as the key in qc-report.json.
+ * Matches the label text shown in the player (.lbl element inside .chiron-listen-btn).
+ * Floating-panel kinds: summary→"Summary", shortened→"Full lecture".
+ * Anchored kinds (section, dialogue, phrase, etc.): use the sectionId.
+ */
+function panelLabel(kind: ArtifactKind, sectionId: string): string {
+  if (kind === 'summary') return 'Summary';
+  if (kind === 'shortened') return 'Full lecture';
+  if (kind === 'section') return sectionId || kind;
+  return sectionId || kind;
+}
+
+/** Parse a leading "m:ss" timestamp from a defect string, best-effort. */
+function parseDefectTime(defect: string): string {
+  const m = /^(\d+:\d{2})\b/.exec(defect);
+  return m ? m[1]! : '';
+}
+
+/** Infer a defect type from keywords in the string. */
+function inferDefectType(defect: string): string {
+  const d = defect.toLowerCase();
+  if (d.includes('cut') || d.includes('truncat')) return 'truncation';
+  if (d.includes('static') || d.includes('noise') || d.includes('glitch')) return 'static';
+  if (d.includes('garbl') || d.includes('muffled') || d.includes('unclear')) return 'garbled';
+  if (d.includes('missing') || d.includes('skip')) return 'missing-word';
+  return 'defect';
+}
+
+interface QcDefectEntry { time: string; type: string; detail: string; }
+interface QcReportEntry { status: string; defects: QcDefectEntry[]; }
+
+/**
+ * Write (or merge) audio/qc-report.json with only artifacts that have
+ * surviving defects after the final take. If no defects remain at all,
+ * any existing qc-report.json is left as-is (callers decide whether to
+ * remove it; typically we just don't write a new one).
+ */
+function mergeQcReport(
+  lessonDir: string,
+  entries: Map<string, QcDefectEntry[]>,
+): void {
+  if (entries.size === 0) return;
+
+  const reportPath = join(lessonDir, 'audio', 'qc-report.json');
+  let existing: Record<string, QcReportEntry> = {};
+  try {
+    existing = JSON.parse(readFileSync(reportPath, 'utf-8')) as Record<string, QcReportEntry>;
+  } catch { /* no prior report */ }
+
+  for (const [label, defects] of entries) {
+    existing[label] = {
+      status: 'needs-review',
+      defects,
+    };
+  }
+  writeFileSync(reportPath, JSON.stringify(existing, null, 2));
+}
 
 type ClipRow = Record<string, string | number | null>;
 
@@ -237,8 +306,14 @@ export async function bakeAudio(opts: AudioBakeOptions): Promise<AudioClipResult
   const lessonDir = resolve(opts.lessonOutputDir);
   const url = opts.omnivoiceUrl ?? DEFAULT_OV;
   const target = opts.playbackTarget ?? DEFAULT_TARGET;
+  // QC is on by default when a key exists and CHIRON_AUDIO_QC is not "0".
+  const qcEnabled = opts.qc !== undefined
+    ? opts.qc
+    : qcAvailable() && process.env['CHIRON_AUDIO_QC'] !== '0';
   const db = new Database(join(lessonDir, '.chiron-state.db'));
   const results: AudioClipResult[] = [];
+  // Accumulate QC defects for the final report (only surviving defects after re-bake).
+  const qcReportEntries = new Map<string, QcDefectEntry[]>();
 
   const upsertSql = `
     INSERT INTO audio_clips
@@ -331,7 +406,65 @@ export async function bakeAudio(opts: AudioBakeOptions): Promise<AudioClipResult
 
         const absPath = join(lessonDir, relPath);
         mkdirSync(dirname(absPath), { recursive: true });
+
+        /** Inner helper: synth all segments + splice + normalize + encode to mp3. */
+        const synthAndEncode = async (): Promise<void> => {
+          mkdirSync(work, { recursive: true });
+          const mLines: string[] = [];
+          for (let i = 0; i < art.segments.length; i++) {
+            const seg = art.segments[i]!;
+            const ref2 = opts.voices[seg.voice];
+            if (!ref2) throw new Error(`no voice ref registered for '${seg.voice}'`);
+            const rawWav2 = join(work, `raw${i}.wav`);
+            const segWav2 = join(work, `seg${i}.wav`);
+            await synthWithRetry(url, seg, ref2, rawWav2);
+            execFileSync('tts-normalize', [rawWav2, segWav2, String(target)], { stdio: 'pipe' });
+            const gap2 = i < art.segments.length - 1 ? seg.gapAfterMs : 0;
+            mLines.push(`${segWav2}|${gap2}${seg.gainDb != null ? `|${seg.gainDb}` : ''}`);
+          }
+          const mPath = join(work, 'manifest.txt');
+          writeFileSync(mPath, `${mLines.join('\n')}\n`);
+          const spliced2 = join(work, 'spliced.wav');
+          execFileSync('tts-splice', [spliced2, '--manifest', mPath], { stdio: 'pipe' });
+          const final2 = join(work, 'final.wav');
+          execFileSync('tts-normalize', [spliced2, final2, String(target)], { stdio: 'pipe' });
+          mkdirSync(dirname(absPath), { recursive: true });
+          execFileSync('ffmpeg', ['-y', '-loglevel', 'error', '-i', final2, '-codec:a', 'libmp3lame', '-q:a', '4', absPath], { stdio: 'pipe' });
+        };
+
         execFileSync('ffmpeg', ['-y', '-loglevel', 'error', '-i', finalWav, '-codec:a', 'libmp3lame', '-q:a', '4', absPath], { stdio: 'pipe' });
+
+        // QC pass — best-effort; never blocks.
+        let finalQcDefects: string[] = [];
+        if (qcEnabled) {
+          const expectedText = art.segments.map((s) => s.text).join(' ');
+          progress(STAGE, `QC ${label} — checking with Gemini…`);
+          const take1 = await qcAudioClip(absPath, expectedText);
+          if (!take1.clean && take1.defects.length > 0) {
+            progress(STAGE, `QC ${label}: defects on take 1 (${take1.defects.length}) — re-baking…`);
+            try {
+              await synthAndEncode();
+              const take2 = await qcAudioClip(absPath, expectedText);
+              finalQcDefects = (!take2.clean && take2.defects.length > 0) ? take2.defects : [];
+            } catch (rebakeErr) {
+              // Re-bake failed — keep take 1 result and carry on.
+              const msg2 = rebakeErr instanceof Error ? rebakeErr.message : String(rebakeErr);
+              progress(STAGE, `QC re-bake failed for ${label}: ${msg2} — keeping take 1`);
+              finalQcDefects = take1.defects;
+            }
+          }
+          if (finalQcDefects.length > 0) {
+            const lbl = panelLabel(art.kind, sid);
+            qcReportEntries.set(lbl, finalQcDefects.map((d) => ({
+              time: parseDefectTime(d),
+              type: inferDefectType(d),
+              detail: d,
+            })));
+            progress(STAGE, `QC ${label}: ${finalQcDefects.length} defect(s) surviving — logged to qc-report.json`);
+          } else {
+            progress(STAGE, `QC ${label}: clean`);
+          }
+        }
 
         const dur = probeDuration(absPath);
         upsert.run(buildRow(opts.courseId, art, sid, hash, 'done', {
@@ -341,7 +474,9 @@ export async function bakeAudio(opts: AudioBakeOptions): Promise<AudioClipResult
           lufs: target,
           reuse_count: existing ? existing.reuseCount : 0,
         }));
-        results.push({ artifact: art.kind, sectionId: sid, status: 'done', audioPath: relPath });
+        const clipResult: AudioClipResult = { artifact: art.kind, sectionId: sid, status: 'done', audioPath: relPath };
+        if (finalQcDefects.length > 0) clipResult.qcDefects = finalQcDefects;
+        results.push(clipResult);
         baked++;
         progress(STAGE, `baked ${label} → ${relPath}${dur ? ` (${dur.toFixed(1)}s)` : ''}`);
       } catch (err) {
@@ -356,7 +491,13 @@ export async function bakeAudio(opts: AudioBakeOptions): Promise<AudioClipResult
     }
 
     writeManifest(db, lessonDir, opts.courseId);
-    progress(STAGE, `done — ${baked} baked, ${reused} reused, ${failed} failed of ${ordered.length}`);
+    if (qcEnabled && qcReportEntries.size > 0) {
+      mergeQcReport(lessonDir, qcReportEntries);
+    }
+    const qcSummary = qcEnabled
+      ? `, qc: ${baked} checked, ${qcReportEntries.size} with surviving defects${qcReportEntries.size > 0 ? ' (qc-report.json written)' : ''}`
+      : '';
+    progress(STAGE, `done — ${baked} baked, ${reused} reused, ${failed} failed of ${ordered.length}${qcSummary}`);
     return results;
   } finally {
     db.close();

@@ -13,6 +13,7 @@
  *   --persona <id>     Override active persona (default: activePersonaFor('language-it'))
  *   --no-stories       Skip story-verbatim and story-description artifacts
  *   --no-dialogues     Skip dialogue artifacts
+ *   --no-qc            Disable Gemini audio QC (default: on when GEMINI_API_KEY/GOOGLE_API_KEY set)
  *   --dry-run          Parse + print the artifact plan; do NOT call bakeAudio
  */
 
@@ -49,11 +50,13 @@ let personaIdArg = null;
 let skipStories = false;
 let skipDialogues = false;
 let dryRun = false;
+let noQc = false;
 
 for (let i = 1; i < argv.length; i++) {
   if (argv[i] === '--persona' && argv[i + 1]) { personaIdArg = argv[++i]; continue; }
   if (argv[i] === '--no-stories') { skipStories = true; continue; }
   if (argv[i] === '--no-dialogues') { skipDialogues = true; continue; }
+  if (argv[i] === '--no-qc') { noQc = true; continue; }
   if (argv[i] === '--dry-run') { dryRun = true; continue; }
 }
 
@@ -439,6 +442,7 @@ const results = await bakeAudio({
   courseId,
   artifacts: allArtifacts,
   voices,
+  ...(noQc ? { qc: false } : {}),
 });
 
 // ---------------------------------------------------------------------------
@@ -462,4 +466,16 @@ process.stdout.write(`Total: ${results.length}  baked: ${done}  reused: ${reused
 
 if (dialogueArtifacts.length > 0) {
   process.stdout.write(`\nDialogue turns: voiced=${totalVoiced}  skipped(learner)=${totalSkipped}\n`);
+}
+
+// QC summary
+const qcChecked = results.filter(r => r.status === 'done').length;
+const qcWithDefects = results.filter(r => r.qcDefects && r.qcDefects.length > 0).length;
+const qcReportWritten = qcWithDefects > 0;
+if (!noQc) {
+  process.stdout.write(
+    `\nQC: ${qcChecked} clip(s) checked  ${qcWithDefects} with surviving defects` +
+    `  re-baked: ${qcWithDefects > 0 ? qcWithDefects : 0}` +
+    `  qc-report.json: ${qcReportWritten ? 'written' : 'not written (all clean)'}\n`
+  );
 }
