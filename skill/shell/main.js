@@ -1382,10 +1382,16 @@
 
 /* ── MOBILE RESPONSIVE LAYER ──────────────────────────────────────
    Feature A — Hamburger TOC drawer (mobile ≤768px only)
-   Feature B — Bottom-bar mini-player (mobile ≤768px only)
-   All logic is width-guarded: initialises only if window.innerWidth ≤ 768px
-   (checked once at DOMContentLoaded and on each orientationchange/resize via
-   a single MQL listener). Above 768px: nothing is injected, no side-effects.
+   Feature B — Bottom-bar mini-player + full-screen now-playing (mobile ≤768px only)
+
+   BUG FIXES (2026-06-11):
+     1. Bar is injected on init, visible immediately — NOT deferred until scroll.
+     2. Sheet opens on tap regardless of play state.
+     3. Full transport: prev/next chapter, touch scrubber, auto-advance.
+     4. Double-tap mini-bar OR explicit ⛶ expand → full-screen now-playing.
+
+   All logic is width-guarded: initialises only if matchMedia ≤768px.
+   Above 768px: nothing injected, no side-effects.
    ─────────────────────────────────────────────────────────────────── */
 (function () {
   'use strict';
@@ -1393,25 +1399,40 @@
   var MQL = window.matchMedia && window.matchMedia('(max-width: 768px)');
 
   /* ── STATE ──────────────────────────────────────────────────────── */
-  var hamburger = null;       // <button class="chiron-hamburger">
-  var backdrop  = null;       // <div class="chiron-drawer-backdrop">
-  var sidebar   = null;       // <aside class="side">
-  var bottomBar = null;       // <div class="chiron-bottom-bar">
+  var hamburger    = null;
+  var backdrop     = null;
+  var sidebar      = null;
+  var bottomBar    = null;   // <div class="chiron-bottom-bar">
   var barPlayBtn   = null;
+  var barPrevBtn   = null;
+  var barNextBtn   = null;
   var barClipName  = null;
   var barCountdown = null;
   var barProgress  = null;
   var barSheet     = null;
-  var barExpandBtn = null;
+  var barExpandBtn = null;   // ▲/▼ chevron
+  var barFsBtn     = null;   // ⛶ full-screen button
 
-  var mobileAudio  = null;    // shared Audio element for mobile (mirrors desktop engine state)
-  var activeClip   = null;    // { clip, playing: bool }
-  var mobileClips  = [];      // filled from manifest
+  var fsOverlay    = null;   // full-screen now-playing overlay
+  var fsTitle      = null;
+  var fsElapsed    = null;
+  var fsRemaining  = null;
+  var fsScrubTrack = null;
+  var fsScrubThumb = null;
+  var fsPlayBtn    = null;
+  var fsPrevBtn    = null;
+  var fsNextBtn    = null;
+  var fsClipList   = null;
+  var fsOpen       = false;
+
+  var mobileAudio  = null;   // shared Audio element
+  var activeClip   = null;   // { clip, idx }
+  var mobileClips  = [];     // ordered (summary first, then sections)
   var barTimer     = null;
   var sheetOpen    = false;
   var drawerOpen_  = false;
 
-  /* ─── Feature A helpers ────────────────────────────────────────── */
+  /* ─── Feature A helpers ─────────────────────────────────────────── */
   function openDrawer() {
     if (!sidebar) return;
     drawerOpen_ = true;
@@ -1421,7 +1442,6 @@
     hamburger.setAttribute('aria-expanded', 'true');
     hamburger.textContent = '✕';
   }
-
   function closeDrawer() {
     if (!sidebar) return;
     drawerOpen_ = false;
@@ -1431,25 +1451,17 @@
     hamburger.setAttribute('aria-expanded', 'false');
     hamburger.textContent = '☰';
   }
+  function toggleDrawer() { drawerOpen_ ? closeDrawer() : openDrawer(); }
 
-  function toggleDrawer() {
-    drawerOpen_ ? closeDrawer() : openDrawer();
-  }
-
-  /* ─── Feature A — inject hamburger + backdrop ──────────────────── */
   function injectHamburger() {
-    if (hamburger) return; // idempotent
+    if (hamburger) return;
     sidebar = document.querySelector('aside.side');
     if (!sidebar) return;
-
-    // Backdrop
     backdrop = document.createElement('div');
     backdrop.className = 'chiron-drawer-backdrop';
     backdrop.setAttribute('aria-hidden', 'true');
     document.body.appendChild(backdrop);
     backdrop.addEventListener('click', closeDrawer);
-
-    // Hamburger button
     hamburger = document.createElement('button');
     hamburger.type = 'button';
     hamburger.className = 'chiron-hamburger';
@@ -1459,24 +1471,17 @@
     hamburger.setAttribute('aria-controls', 'side-drawer');
     hamburger.addEventListener('click', toggleDrawer);
     document.body.appendChild(hamburger);
-
-    // Label the sidebar for a11y
     sidebar.setAttribute('id', 'side-drawer');
     sidebar.setAttribute('role', 'dialog');
     sidebar.setAttribute('aria-label', 'Chapter list');
-
-    // Close drawer when a TOC link is tapped
-    var links = sidebar.querySelectorAll('a');
-    links.forEach(function (a) {
-      a.addEventListener('click', function () {
-        if (drawerOpen_) closeDrawer();
-      });
+    sidebar.querySelectorAll('a').forEach(function (a) {
+      a.addEventListener('click', function () { if (drawerOpen_) closeDrawer(); });
     });
   }
 
-  /* ─── Feature B helpers ────────────────────────────────────────── */
+  /* ─── Feature B helpers ─────────────────────────────────────────── */
   function fmtTime(secs) {
-    if (!isFinite(secs) || secs < 0) return '';
+    if (!isFinite(secs) || secs < 0) return '0:00';
     var s = Math.ceil(secs);
     var m = Math.floor(s / 60);
     var ss = s % 60;
@@ -1488,61 +1493,111 @@
     barProgress.style.width = (Math.min(1, Math.max(0, fraction)) * 100) + '%';
   }
 
-  function updateBarDisplay() {
+  function updateFsScrubber(fraction) {
+    if (!fsScrubTrack) return;
+    var pct = Math.min(1, Math.max(0, fraction)) * 100;
+    fsScrubTrack.style.setProperty('--fs-progress', pct + '%');
+    if (fsScrubThumb) fsScrubThumb.style.left = pct + '%';
+  }
+
+  function updateAllDisplays() {
     if (!mobileAudio || !activeClip) return;
     var dur = mobileAudio.duration;
-    if (isFinite(dur) && dur > 0) {
-      setBarProgress(mobileAudio.currentTime / dur);
-    }
-    if (barCountdown) {
-      barCountdown.textContent = isFinite(dur) ? fmtTime(dur - mobileAudio.currentTime) : '';
-    }
-    // Sync playing state on sheet buttons
+    var ct  = mobileAudio.currentTime;
+    var frac = (isFinite(dur) && dur > 0) ? ct / dur : 0;
+
+    // Mini bar
+    setBarProgress(frac);
+    if (barCountdown) barCountdown.textContent = (isFinite(dur) && dur > 0) ? fmtTime(dur - ct) : '';
+
+    // Full-screen scrubber + times
+    updateFsScrubber(frac);
+    if (fsElapsed)   fsElapsed.textContent   = fmtTime(ct);
+    if (fsRemaining) fsRemaining.textContent = (isFinite(dur) && dur > 0) ? '-' + fmtTime(dur - ct) : '';
+
+    // Sheet button states
     mobileClips.forEach(function (c, i) {
-      var btn = barSheet && barSheet.querySelector('[data-clip-index="' + i + '"]');
+      var btn = barSheet && barSheet.querySelector('[data-clip-idx="' + i + '"]');
       if (!btn) return;
-      var isPlaying = activeClip && activeClip.clip === c && !mobileAudio.paused;
-      btn.classList.toggle('playing', isPlaying);
+      var playing = activeClip && activeClip.idx === i && !mobileAudio.paused;
+      btn.classList.toggle('playing', playing);
       var ico = btn.querySelector('.ico');
-      if (ico) ico.textContent = isPlaying ? '⏸' : '▶';
+      if (ico) ico.textContent = playing ? '⏸' : '▶';
     });
+
+    // Full-screen clip list states
+    if (fsClipList) {
+      fsClipList.querySelectorAll('[data-clip-idx]').forEach(function (btn) {
+        var i = parseInt(btn.getAttribute('data-clip-idx'), 10);
+        var playing = activeClip && activeClip.idx === i && !mobileAudio.paused;
+        btn.classList.toggle('playing', playing);
+        var ico = btn.querySelector('.ico');
+        if (ico) ico.textContent = playing ? '⏸' : '▶';
+      });
+    }
+
+    // Prev/next button states
+    var idx = activeClip ? activeClip.idx : -1;
+    if (barPrevBtn) barPrevBtn.disabled = idx <= 0;
+    if (barNextBtn) barNextBtn.disabled = idx < 0 || idx >= mobileClips.length - 1;
+    if (fsPrevBtn)  fsPrevBtn.disabled  = idx <= 0;
+    if (fsNextBtn)  fsNextBtn.disabled  = idx < 0 || idx >= mobileClips.length - 1;
   }
 
   function startBarTimer() {
     if (barTimer) clearInterval(barTimer);
-    barTimer = setInterval(updateBarDisplay, 200);
+    barTimer = setInterval(updateAllDisplays, 200);
   }
-
   function stopBarTimer() {
     if (barTimer) { clearInterval(barTimer); barTimer = null; }
   }
 
-  function playBarClip(clip) {
+  /* Core play function — plays clip at ordered index idx */
+  function playClipAt(idx) {
     if (!mobileAudio) return;
-    if (activeClip && activeClip.clip === clip) {
-      // Toggle play/pause
+    if (idx < 0 || idx >= mobileClips.length) return;
+    var clip = mobileClips[idx];
+
+    // If same clip, toggle play/pause
+    if (activeClip && activeClip.idx === idx) {
       if (mobileAudio.paused) {
         mobileAudio.play().catch(function () {});
       } else {
         mobileAudio.pause();
-        stopBarTimer();
-        barPlayBtn.textContent = '▶';
       }
       return;
     }
+
     // New clip
-    activeClip = { clip: clip };
+    activeClip = { clip: clip, idx: idx };
     mobileAudio.src = clip.audioPath;
     mobileAudio.play().then(function () {
-      barPlayBtn.textContent = '⏸';
-      barPlayBtn.classList.remove('idle');
+      syncBarToActive();
+    }).catch(function () {
+      activeClip = null;
+    });
+  }
+
+  function syncBarToActive() {
+    if (!activeClip) return;
+    var clip = activeClip.clip;
+    // Mini bar name
+    if (barClipName) {
       barClipName.textContent = clip._label || 'Playing';
       barClipName.classList.remove('idle');
-      startBarTimer();
-      updateBarDisplay();
-    }).catch(function () {
-      barPlayBtn.textContent = '▶';
-    });
+    }
+    // Full-screen title
+    if (fsTitle) fsTitle.textContent = clip._label || 'Playing';
+    // Play button states
+    if (barPlayBtn) { barPlayBtn.textContent = '⏸'; barPlayBtn.classList.remove('idle'); }
+    if (fsPlayBtn)  { fsPlayBtn.textContent = '⏸'; }
+    updateAllDisplays();
+  }
+
+  function playBarClip(clip) {
+    var idx = mobileClips.indexOf(clip);
+    if (idx < 0) return;
+    playClipAt(idx);
   }
 
   function stopBarAudio() {
@@ -1551,22 +1606,25 @@
     mobileAudio.currentTime = 0;
     stopBarTimer();
     activeClip = null;
-    barPlayBtn.textContent = '▶';
-    barPlayBtn.classList.add('idle');
-    barClipName.textContent = 'Tap ▲ to choose a clip';
-    barClipName.classList.add('idle');
-    setBarProgress(0);
+    if (barPlayBtn)  { barPlayBtn.textContent = '▶'; barPlayBtn.classList.add('idle'); }
+    if (barClipName) { barClipName.textContent = 'Tap to browse · double-tap to zoom'; barClipName.classList.add('idle'); }
     if (barCountdown) barCountdown.textContent = '';
-    updateBarDisplay();
+    setBarProgress(0);
+    updateFsScrubber(0);
+    if (fsElapsed)   fsElapsed.textContent   = '0:00';
+    if (fsRemaining) fsRemaining.textContent = '';
+    if (fsPlayBtn)   fsPlayBtn.textContent   = '▶';
+    if (fsTitle)     fsTitle.textContent     = 'Choose a clip below';
+    updateAllDisplays();
   }
 
+  /* Sheet (clip list under bar) */
   function openSheet() {
     if (!bottomBar || !barSheet) return;
     sheetOpen = true;
     bottomBar.classList.add('sheet-open');
     if (barExpandBtn) barExpandBtn.textContent = '▼';
   }
-
   function closeSheet() {
     if (!bottomBar) return;
     sheetOpen = false;
@@ -1574,103 +1632,37 @@
     if (barExpandBtn) barExpandBtn.textContent = '▲';
   }
 
-  function buildSheetList(clips) {
-    if (!barSheet) return;
-    barSheet.innerHTML = '';
-    var title = document.createElement('div');
-    title.className = 'chiron-bar-sheet-title';
-    title.textContent = 'Choose a clip';
-    barSheet.appendChild(title);
-
-    // Group: Whole lesson first, then by section
-    var wholeLessonClips = clips.filter(function (c) { return c.artifact === 'summary' || c.artifact === 'shortened'; });
-    var sectionClips = clips.filter(function (c) { return c.artifact === 'section'; });
-    var ordered = wholeLessonClips.concat(sectionClips);
-
-    ordered.forEach(function (c, i) {
-      // Map back to original index for data-clip-index
-      var origIdx = clips.indexOf(c);
-      var btn = document.createElement('button');
-      btn.type = 'button';
-      btn.className = 'chiron-bar-clip-btn';
-      btn.setAttribute('data-clip-index', origIdx);
-      var ico = document.createElement('span');
-      ico.className = 'ico';
-      ico.textContent = '▶';
-      var lbl = document.createElement('span');
-      lbl.textContent = c._label || c.sectionId || 'Clip';
-      btn.appendChild(ico);
-      btn.appendChild(lbl);
-      btn.addEventListener('click', function () {
-        playBarClip(c);
-        closeSheet();
-      });
-      barSheet.appendChild(btn);
-    });
+  /* Full-screen now-playing overlay */
+  function openFullScreen() {
+    if (!fsOverlay) return;
+    fsOpen = true;
+    fsOverlay.classList.add('open');
+    document.body.classList.add('chiron-fs-lock');
+    // Sync state to overlay
+    if (activeClip) {
+      if (fsTitle) fsTitle.textContent = activeClip.clip._label || 'Playing';
+    } else {
+      if (fsTitle) fsTitle.textContent = 'Choose a clip below';
+    }
+    updateAllDisplays();
+  }
+  function closeFullScreen() {
+    fsOpen = false;
+    if (fsOverlay) fsOverlay.classList.remove('open');
+    document.body.classList.remove('chiron-fs-lock');
   }
 
-  /* ─── Feature B — seek on bar via pointer drag ─────────────────── */
-  function wireBarSeek() {
-    if (!barProgress || !bottomBar) return;
-    var barRow = bottomBar.querySelector('.chiron-bar-row');
-    if (!barRow) return;
-    var dragging = false;
-
-    function fractionFromEvent(e) {
-      var rect = barRow.getBoundingClientRect();
-      if (rect.width <= 0) return 0;
-      return Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
-    }
-
-    function seekTo(fraction) {
-      if (!mobileAudio || !activeClip) return;
-      var dur = mobileAudio.duration;
-      if (!isFinite(dur) || dur <= 0) return;
-      mobileAudio.currentTime = fraction * dur;
-      setBarProgress(fraction);
-      if (barCountdown) barCountdown.textContent = fmtTime(dur - mobileAudio.currentTime);
-    }
-
-    barRow.addEventListener('pointerdown', function (e) {
-      if (!activeClip || mobileAudio.paused) return;
-      // Don't interfere with play/pause button
-      if (e.target.closest && e.target.closest('.chiron-bar-play-btn')) return;
-      if (e.target.closest && e.target.closest('.chiron-bar-expand-btn')) return;
-      dragging = true;
-      barRow.setPointerCapture(e.pointerId);
-      barRow.classList.add('seeking');
-      seekTo(fractionFromEvent(e));
-      e.preventDefault();
-    });
-
-    barRow.addEventListener('pointermove', function (e) {
-      if (!dragging) return;
-      seekTo(fractionFromEvent(e));
-      e.preventDefault();
-    });
-
-    barRow.addEventListener('pointerup', function (e) {
-      if (!dragging) return;
-      dragging = false;
-      barRow.classList.remove('seeking');
-      seekTo(fractionFromEvent(e));
-      barRow.releasePointerCapture(e.pointerId);
-    });
-
-    barRow.addEventListener('pointercancel', function () {
-      dragging = false;
-      barRow.classList.remove('seeking');
-    });
+  /* Build the ordered clip list (summary → sections) */
+  function buildOrderedClips(rawClips) {
+    var whole = rawClips.filter(function (c) { return c.artifact === 'summary' || c.artifact === 'shortened'; });
+    var sects = rawClips.filter(function (c) { return c.artifact === 'section'; });
+    return whole.concat(sects);
   }
 
-  /* ─── Feature B — inject bottom bar ───────────────────────────── */
-  function injectBottomBar(clips) {
-    if (bottomBar) return; // idempotent
-    mobileAudio = new Audio();
-
-    // Label clips (reuse panelLabel logic)
+  /* Label clips for display */
+  function labelClips(clips) {
     clips.forEach(function (c) {
-      if (c.artifact === 'summary') { c._label = 'Summary'; return; }
+      if (c.artifact === 'summary')   { c._label = 'Summary'; return; }
       if (c.artifact === 'shortened') { c._label = 'Full lecture'; return; }
       if (c.sectionId) {
         var el = document.getElementById(c.sectionId);
@@ -1682,16 +1674,188 @@
       }
       c._label = 'Clip';
     });
+  }
 
-    mobileClips = clips;
+  /* Build clip list rows (shared by sheet and full-screen list) */
+  function buildClipRows(container, clips, onPick) {
+    container.innerHTML = '';
+    clips.forEach(function (c, i) {
+      var btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'chiron-bar-clip-btn';
+      btn.setAttribute('data-clip-idx', i);
+      var ico = document.createElement('span'); ico.className = 'ico'; ico.textContent = '▶';
+      var lbl = document.createElement('span'); lbl.textContent = c._label || c.sectionId || 'Clip';
+      btn.appendChild(ico); btn.appendChild(lbl);
+      btn.addEventListener('click', function () { onPick(c, i); });
+      container.appendChild(btn);
+    });
+  }
 
-    // Build DOM
+  /* ─── Feature B — seek wiring helpers ──────────────────────────── */
+  function seekAudioTo(fraction) {
+    if (!mobileAudio || !activeClip) return;
+    var dur = mobileAudio.duration;
+    if (!isFinite(dur) || dur <= 0) return;
+    mobileAudio.currentTime = Math.max(0, Math.min(1, fraction)) * dur;
+    updateAllDisplays();
+  }
+
+  function wireSeekOn(el, fractionFn) {
+    var dragging = false;
+    el.addEventListener('pointerdown', function (e) {
+      if (!activeClip) return;
+      dragging = true;
+      el.setPointerCapture(e.pointerId);
+      seekAudioTo(fractionFn(e, el));
+      e.preventDefault();
+    });
+    el.addEventListener('pointermove', function (e) {
+      if (!dragging) return;
+      seekAudioTo(fractionFn(e, el));
+      e.preventDefault();
+    });
+    function onUp(e) {
+      if (!dragging) return;
+      dragging = false;
+      seekAudioTo(fractionFn(e, el));
+      el.releasePointerCapture(e.pointerId);
+    }
+    el.addEventListener('pointerup', onUp);
+    el.addEventListener('pointercancel', function () { dragging = false; });
+  }
+
+  function fractionFromHoriz(e, el) {
+    var rect = el.getBoundingClientRect();
+    if (rect.width <= 0) return 0;
+    return Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+  }
+
+  /* ─── Build full-screen now-playing overlay ─────────────────────── */
+  function buildFsOverlay() {
+    if (fsOverlay) return;
+    fsOverlay = document.createElement('div');
+    fsOverlay.className = 'chiron-fs-overlay';
+    fsOverlay.setAttribute('role', 'dialog');
+    fsOverlay.setAttribute('aria-modal', 'true');
+    fsOverlay.setAttribute('aria-label', 'Now playing');
+
+    /* ── Header row: close chevron ── */
+    var hdr = document.createElement('div');
+    hdr.className = 'chiron-fs-header';
+    var closeBtn = document.createElement('button');
+    closeBtn.type = 'button'; closeBtn.className = 'chiron-fs-close';
+    closeBtn.setAttribute('aria-label', 'Collapse');
+    closeBtn.innerHTML = '&#8964;'; // ⌄ chevron-down
+    closeBtn.addEventListener('click', closeFullScreen);
+    hdr.appendChild(closeBtn);
+    fsOverlay.appendChild(hdr);
+
+    /* ── Chapter title ── */
+    fsTitle = document.createElement('div');
+    fsTitle.className = 'chiron-fs-title';
+    fsTitle.textContent = 'Choose a clip below';
+    fsOverlay.appendChild(fsTitle);
+
+    /* ── Scrubber + time row ── */
+    var scrubWrap = document.createElement('div');
+    scrubWrap.className = 'chiron-fs-scrub-wrap';
+
+    fsElapsed = document.createElement('span');
+    fsElapsed.className = 'chiron-fs-time chiron-fs-elapsed';
+    fsElapsed.textContent = '0:00';
+
+    fsScrubTrack = document.createElement('div');
+    fsScrubTrack.className = 'chiron-fs-scrub-track';
+    fsScrubTrack.setAttribute('role', 'slider');
+    fsScrubTrack.setAttribute('aria-valuemin', '0');
+    fsScrubTrack.setAttribute('aria-valuemax', '100');
+    fsScrubTrack.setAttribute('aria-valuenow', '0');
+    fsScrubTrack.setAttribute('tabindex', '0');
+    fsScrubThumb = document.createElement('div');
+    fsScrubThumb.className = 'chiron-fs-scrub-thumb';
+    fsScrubTrack.appendChild(fsScrubThumb);
+    wireSeekOn(fsScrubTrack, fractionFromHoriz);
+
+    fsRemaining = document.createElement('span');
+    fsRemaining.className = 'chiron-fs-time chiron-fs-remaining';
+    fsRemaining.textContent = '';
+
+    scrubWrap.appendChild(fsElapsed);
+    scrubWrap.appendChild(fsScrubTrack);
+    scrubWrap.appendChild(fsRemaining);
+    fsOverlay.appendChild(scrubWrap);
+
+    /* ── Transport row ── */
+    var transport = document.createElement('div');
+    transport.className = 'chiron-fs-transport';
+
+    fsPrevBtn = document.createElement('button');
+    fsPrevBtn.type = 'button'; fsPrevBtn.className = 'chiron-fs-prev';
+    fsPrevBtn.setAttribute('aria-label', 'Previous chapter');
+    fsPrevBtn.textContent = '⏮';
+    fsPrevBtn.addEventListener('click', function () {
+      if (activeClip && activeClip.idx > 0) playClipAt(activeClip.idx - 1);
+    });
+
+    fsPlayBtn = document.createElement('button');
+    fsPlayBtn.type = 'button'; fsPlayBtn.className = 'chiron-fs-play';
+    fsPlayBtn.setAttribute('aria-label', 'Play/Pause');
+    fsPlayBtn.textContent = '▶';
+    fsPlayBtn.addEventListener('click', function () {
+      if (!activeClip) return;
+      if (mobileAudio.paused) { mobileAudio.play().catch(function () {}); }
+      else { mobileAudio.pause(); }
+    });
+
+    fsNextBtn = document.createElement('button');
+    fsNextBtn.type = 'button'; fsNextBtn.className = 'chiron-fs-next';
+    fsNextBtn.setAttribute('aria-label', 'Next chapter');
+    fsNextBtn.textContent = '⏭';
+    fsNextBtn.addEventListener('click', function () {
+      if (activeClip && activeClip.idx < mobileClips.length - 1) playClipAt(activeClip.idx + 1);
+    });
+
+    transport.appendChild(fsPrevBtn);
+    transport.appendChild(fsPlayBtn);
+    transport.appendChild(fsNextBtn);
+    fsOverlay.appendChild(transport);
+
+    /* ── Clip list ── */
+    var listHdr = document.createElement('div');
+    listHdr.className = 'chiron-fs-list-hdr';
+    listHdr.textContent = 'Chapters';
+    fsOverlay.appendChild(listHdr);
+
+    fsClipList = document.createElement('div');
+    fsClipList.className = 'chiron-fs-clip-list';
+    fsOverlay.appendChild(fsClipList);
+
+    document.body.appendChild(fsOverlay);
+  }
+
+  /* Populate the full-screen clip list (called after clips are loaded) */
+  function populateFsClipList() {
+    if (!fsClipList) return;
+    buildClipRows(fsClipList, mobileClips, function (c, i) {
+      playClipAt(i);
+      // keep overlay open
+    });
+  }
+
+  /* ─── Build bar DOM — injected immediately on mobile init ────────
+     The bar is visible on page load even before the manifest loads.
+     Clips are populated later via loadClips(). ─────────────────── */
+  function injectBottomBar() {
+    if (bottomBar) return;
+    mobileAudio = new Audio();
+
     bottomBar = document.createElement('div');
     bottomBar.className = 'chiron-bottom-bar';
     bottomBar.setAttribute('role', 'region');
     bottomBar.setAttribute('aria-label', 'Audio player');
 
-    // Progress line
+    /* Progress line */
     barProgress = document.createElement('div');
     barProgress.className = 'chiron-bar-progress-line';
     barProgress.setAttribute('role', 'progressbar');
@@ -1699,43 +1863,58 @@
     barProgress.setAttribute('aria-valuemax', '100');
     barProgress.setAttribute('aria-valuenow', '0');
 
-    // Main row
+    /* Main row */
     var row = document.createElement('div');
     row.className = 'chiron-bar-row';
 
+    /* ── Prev chapter ── */
+    barPrevBtn = document.createElement('button');
+    barPrevBtn.type = 'button'; barPrevBtn.className = 'chiron-bar-prev-btn';
+    barPrevBtn.setAttribute('aria-label', 'Previous chapter');
+    barPrevBtn.textContent = '⏮';
+    barPrevBtn.disabled = true;
+    barPrevBtn.addEventListener('click', function (e) {
+      e.stopPropagation();
+      if (activeClip && activeClip.idx > 0) playClipAt(activeClip.idx - 1);
+    });
+
+    /* ── Play/Pause ── */
     barPlayBtn = document.createElement('button');
-    barPlayBtn.type = 'button';
-    barPlayBtn.className = 'chiron-bar-play-btn idle';
+    barPlayBtn.type = 'button'; barPlayBtn.className = 'chiron-bar-play-btn idle';
     barPlayBtn.textContent = '▶';
     barPlayBtn.setAttribute('aria-label', 'Play/Pause');
     barPlayBtn.addEventListener('click', function (e) {
       e.stopPropagation();
-      if (!activeClip) {
-        // Open sheet if nothing is playing yet
-        openSheet();
-        return;
-      }
-      if (mobileAudio.paused) {
-        mobileAudio.play().catch(function () {});
-        barPlayBtn.textContent = '⏸';
-        startBarTimer();
-      } else {
-        mobileAudio.pause();
-        stopBarTimer();
-        barPlayBtn.textContent = '▶';
-      }
+      if (!activeClip) { openSheet(); return; }
+      if (mobileAudio.paused) { mobileAudio.play().catch(function () {}); }
+      else { mobileAudio.pause(); }
     });
 
+    /* ── Clip name ── */
     barClipName = document.createElement('div');
     barClipName.className = 'chiron-bar-clip-name idle';
-    barClipName.textContent = 'Tap ▲ to choose a clip';
+    barClipName.textContent = 'Tap to browse · double-tap to zoom';
 
+    /* ── Countdown ── */
     barCountdown = document.createElement('div');
     barCountdown.className = 'chiron-bar-countdown';
 
+    /* ── Next chapter ── */
+    barNextBtn = document.createElement('button');
+    barNextBtn.type = 'button'; barNextBtn.className = 'chiron-bar-next-btn';
+    barNextBtn.setAttribute('aria-label', 'Next chapter');
+    barNextBtn.textContent = '⏭';
+    barNextBtn.disabled = true;
+    barNextBtn.addEventListener('click', function (e) {
+      e.stopPropagation();
+      if (activeClip && activeClip.idx < mobileClips.length - 1) playClipAt(activeClip.idx + 1);
+    });
+
+    /* (No full-screen icon — gestures handle it: tap = sheet, double-tap = zoom.) */
+
+    /* ── Chevron expand/collapse sheet ── */
     barExpandBtn = document.createElement('button');
-    barExpandBtn.type = 'button';
-    barExpandBtn.className = 'chiron-bar-expand-btn';
+    barExpandBtn.type = 'button'; barExpandBtn.className = 'chiron-bar-expand-btn';
     barExpandBtn.textContent = '▲';
     barExpandBtn.setAttribute('aria-label', 'Show clip list');
     barExpandBtn.addEventListener('click', function (e) {
@@ -1743,64 +1922,130 @@
       sheetOpen ? closeSheet() : openSheet();
     });
 
+    row.appendChild(barPrevBtn);
     row.appendChild(barPlayBtn);
     row.appendChild(barClipName);
     row.appendChild(barCountdown);
+    row.appendChild(barNextBtn);
     row.appendChild(barExpandBtn);
 
-    // Sheet (clip list)
+    /* Sheet (clip list) */
     barSheet = document.createElement('div');
     barSheet.className = 'chiron-bar-sheet';
     barSheet.setAttribute('aria-label', 'Clip list');
+    var sheetTitle = document.createElement('div');
+    sheetTitle.className = 'chiron-bar-sheet-title';
+    sheetTitle.textContent = 'Choose a clip';
+    barSheet.appendChild(sheetTitle);
 
     bottomBar.appendChild(barProgress);
     bottomBar.appendChild(row);
     bottomBar.appendChild(barSheet);
     document.body.appendChild(bottomBar);
 
-    // Build sheet clip list
-    buildSheetList(clips);
+    /* Tap the bar → bring up the clip sheet; double-tap → zoom to full-screen.
+       Prev/play/next/chevron buttons stopPropagation, so taps on them never
+       reach here. A single tap waits ~280ms in case a second tap (zoom) lands. */
+    var _tapTimer = null;
+    row.addEventListener('click', function (e) {
+      if (e.target.closest && e.target.closest('button')) return;
+      if (_tapTimer) {                       // 2nd tap within window → zoom
+        clearTimeout(_tapTimer); _tapTimer = null;
+        if (sheetOpen) closeSheet();
+        openFullScreen();
+      } else {                                // 1st tap → open sheet after a beat
+        _tapTimer = setTimeout(function () {
+          _tapTimer = null;
+          sheetOpen ? closeSheet() : openSheet();
+        }, 280);
+      }
+    });
 
-    // Wire bar-level seek
-    wireBarSeek();
+    /* Sheet tapping outside → close sheet */
+    document.addEventListener('click', function (e) {
+      if (!sheetOpen || !bottomBar) return;
+      if (!bottomBar.contains(e.target)) closeSheet();
+    });
 
-    // Audio event handlers
+    /* Audio event handlers */
     mobileAudio.addEventListener('ended', function () {
       stopBarTimer();
-      barPlayBtn.textContent = '▶';
-      activeClip = null;
-      barClipName.textContent = 'Tap ▲ to choose a clip';
-      barClipName.classList.add('idle');
-      barPlayBtn.classList.add('idle');
-      setBarProgress(0);
-      if (barCountdown) barCountdown.textContent = '';
-      updateBarDisplay();
+      // Auto-advance to next clip
+      if (activeClip && activeClip.idx < mobileClips.length - 1) {
+        var nextIdx = activeClip.idx + 1;
+        activeClip = null; // clear before playClipAt so it triggers new-clip path
+        playClipAt(nextIdx);
+        // Scroll to the chapter section of the new clip
+        var nextClip = mobileClips[nextIdx];
+        if (nextClip && nextClip.sectionId) {
+          var el = document.getElementById(nextClip.sectionId);
+          if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      } else {
+        // Last clip ended — stop gracefully, keep controls live
+        stopBarAudio();
+        // Allow replay: leave barPlayBtn available
+        if (barClipName) barClipName.textContent = 'Finished — tap to replay';
+      }
     });
 
     mobileAudio.addEventListener('pause', function () {
       stopBarTimer();
       if (barPlayBtn) barPlayBtn.textContent = '▶';
-      updateBarDisplay();
+      if (fsPlayBtn)  fsPlayBtn.textContent  = '▶';
+      updateAllDisplays();
     });
 
     mobileAudio.addEventListener('play', function () {
       if (barPlayBtn) { barPlayBtn.textContent = '⏸'; barPlayBtn.classList.remove('idle'); }
+      if (fsPlayBtn)  fsPlayBtn.textContent  = '⏸';
       startBarTimer();
+      syncBarToActive();
     });
+
+    /* Build the full-screen overlay (hidden initially) */
+    buildFsOverlay();
+  }
+
+  /* Called once clips are available (manifest loaded) */
+  function loadClips(rawClips) {
+    var ordered = buildOrderedClips(rawClips);
+    labelClips(ordered);
+    mobileClips = ordered;
+
+    /* Populate sheet list */
+    if (barSheet) {
+      /* preserve title node */
+      var titleNode = barSheet.querySelector('.chiron-bar-sheet-title');
+      barSheet.innerHTML = '';
+      if (titleNode) barSheet.appendChild(titleNode);
+      buildClipRows(barSheet, ordered, function (c) {
+        playBarClip(c);
+        closeSheet();
+      });
+    }
+
+    /* Populate full-screen list */
+    populateFsClipList();
+
+    /* Update prev/next disabled states */
+    updateAllDisplays();
   }
 
   /* ─── Main init: wires everything ─────────────────────────────── */
   function initMobile() {
-    // Feature A — always inject hamburger on mobile
     injectHamburger();
 
-    // Feature B — fetch manifest and inject bottom bar if clips exist
-    // Use the same manifest path as the desktop player
+    /* BUG FIX 1: inject bar immediately (not after manifest fetch) so it's
+       visible on page load. Clips are populated once manifest arrives. */
+    injectBottomBar();
+
+    /* Fetch manifest and populate clips */
     if (window.__chironAudioManifest) {
       var ready = (window.__chironAudioManifest.clips || []).filter(function (c) {
         return c.status === 'done' && c.audioPath;
       });
-      if (ready.length) injectBottomBar(ready);
+      if (ready.length) loadClips(ready);
       return;
     }
     fetch('audio/manifest.json', { cache: 'no-store' })
@@ -1808,48 +2053,37 @@
       .then(function (m) {
         if (!m || !m.clips) return;
         var ready = m.clips.filter(function (c) { return c.status === 'done' && c.audioPath; });
-        if (ready.length) injectBottomBar(ready);
+        if (ready.length) loadClips(ready);
       })
-      .catch(function () { /* no audio — no bottom bar, no-op */ });
+      .catch(function () { /* no audio — bar stays as placeholder */ });
   }
 
-  /* ─── Close sheet when tapping outside it ──────────────────────── */
-  document.addEventListener('click', function (e) {
-    if (!sheetOpen || !bottomBar) return;
-    if (!bottomBar.contains(e.target)) closeSheet();
-  });
-
-  /* ─── MQL — guard: only run on mobile; tear down on resize above 768px ─ */
+  /* ─── MQL guard ─────────────────────────────────────────────────── */
   function onMqlChange(mq) {
     if (mq.matches) {
-      // Entered mobile range — init if not already done
       if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', initMobile);
       } else {
         initMobile();
       }
     } else {
-      // Exited mobile range — hide injected elements (desktop layout takes over)
+      // Exited mobile range — hide injected elements
       if (hamburger) hamburger.style.display = 'none';
       if (backdrop)  backdrop.style.display  = 'none';
       if (bottomBar) bottomBar.style.display = 'none';
-      // Ensure sidebar shows normally
+      if (fsOverlay) { fsOverlay.classList.remove('open'); }
       if (sidebar) {
         sidebar.classList.remove('drawer-open');
         sidebar.style.removeProperty('display');
       }
-      document.body.classList.remove('drawer-scroll-lock');
+      document.body.classList.remove('drawer-scroll-lock', 'chiron-fs-lock');
       drawerOpen_ = false;
     }
   }
 
   if (MQL) {
-    if (MQL.addEventListener) {
-      MQL.addEventListener('change', onMqlChange);
-    } else if (MQL.addListener) {
-      MQL.addListener(onMqlChange); // Safari <14 fallback
-    }
-    // Run immediately
+    if (MQL.addEventListener) MQL.addEventListener('change', onMqlChange);
+    else if (MQL.addListener) MQL.addListener(onMqlChange);
     onMqlChange(MQL);
   }
 })();

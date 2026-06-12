@@ -1363,12 +1363,17 @@ p:last-child { margin-bottom: 0; }
 
 /* ── TOC Drawer backdrop — hidden on desktop ──────────────────── */
 .chiron-drawer-backdrop {
-  display: none; /* hidden on desktop */
+  display: none;
 }
 
 /* ── Bottom-bar mini-player — hidden on desktop ──────────────── */
 .chiron-bottom-bar {
-  display: none; /* hidden on desktop */
+  display: none;
+}
+
+/* ── Full-screen now-playing overlay — hidden on desktop ─────── */
+.chiron-fs-overlay {
+  display: none;
 }
 
 @media (max-width: 768px) {
@@ -1392,7 +1397,6 @@ p:last-child { margin-bottom: 0; }
     font-size: 1.25rem;
     color: var(--color-text);
     transition: background var(--duration-fast);
-    /* ensure no default button styles interfere */
     padding: 0;
     font-family: inherit;
   }
@@ -1415,9 +1419,6 @@ p:last-child { margin-bottom: 0; }
   }
 
   /* ── Feature A — Sidebar TOC as slide-in drawer ──────────────── */
-  /* The <aside class="side"> is repurposed as the drawer on mobile.
-     On desktop it remains sticky/positioned normally — the @media guard
-     ensures these rules never apply above 768px. */
   aside.side {
     position: fixed !important;
     top: 0;
@@ -1431,17 +1432,13 @@ p:last-child { margin-bottom: 0; }
     border-right: 1px solid var(--color-border) !important;
     border-bottom: none !important;
     overflow-y: auto;
-    /* Override any grid/block display */
     display: block !important;
   }
   aside.side.drawer-open {
     transform: translateX(0);
   }
 
-  /* ── Feature A — main area — use full width on mobile ──────────
-     The build script sets body to grid-template-columns: 260px 1fr,
-     but on mobile we collapse it to a single column and offset for
-     the hamburger. */
+  /* ── Feature A — main area full width on mobile ─────────────── */
   body {
     display: block !important;
     padding-top: 0;
@@ -1449,25 +1446,24 @@ p:last-child { margin-bottom: 0; }
   main.main {
     height: auto !important;
     overflow-y: visible !important;
-    /* Give breathing room so hamburger doesn't cover first heading */
     padding-top: 56px;
   }
 
-  /* ── Feature A — body scroll-lock while drawer is open ─────────
-     Applied via JS: document.body.classList.add('drawer-scroll-lock') */
-  body.drawer-scroll-lock {
+  /* ── Feature A — body scroll-lock ──────────────────────────────
+     Also used by full-screen overlay as chiron-fs-lock */
+  body.drawer-scroll-lock,
+  body.chiron-fs-lock {
     overflow: hidden !important;
-    /* Prevent layout shift from scrollbar disappearing */
     padding-right: 0;
   }
 
-  /* ── Feature B — hide desktop float player on mobile ───────────
-     The .chiron-listen popup is replaced by the bottom bar. */
+  /* ── Feature B — hide desktop float player on mobile ────────── */
   .chiron-listen {
     display: none !important;
   }
 
   /* ── Feature B — Bottom-bar mini-player ─────────────────────── */
+  /* BUG FIX 1: always display:flex, not hidden — bar is visible immediately. */
   .chiron-bottom-bar {
     display: flex;
     flex-direction: column;
@@ -1479,16 +1475,15 @@ p:last-child { margin-bottom: 0; }
     background: var(--color-surface);
     border-top: 1px solid var(--color-border);
     box-shadow: 0 -4px 20px rgba(0,0,0,0.12);
-    /* When sheet is collapsed, just the bar is visible */
-    max-height: 72px;
+    max-height: 70px;
     transition: max-height var(--duration-normal) var(--ease-out);
     overflow: hidden;
   }
   .chiron-bottom-bar.sheet-open {
-    max-height: min(70vh, 520px);
+    max-height: min(70vh, 540px);
   }
 
-  /* Progress fill line — thin bar across the top of the bottom-bar */
+  /* Progress fill line */
   .chiron-bar-progress-line {
     height: 3px;
     width: 0%;
@@ -1497,24 +1492,48 @@ p:last-child { margin-bottom: 0; }
     flex-shrink: 0;
   }
 
-  /* Main row: play/pause + clip name + countdown */
+  /* Main row */
   .chiron-bar-row {
     display: flex;
     align-items: center;
-    gap: var(--space-3);
-    padding: 0 var(--space-4);
-    height: 62px;
+    gap: var(--space-2);
+    padding: 0 var(--space-3);
+    height: 64px;
     flex-shrink: 0;
-    /* Seek surface cursor while playing */
     cursor: default;
     touch-action: none;
-    /* clip name takes remaining space */
     overflow: hidden;
   }
-  .chiron-bar-row.seeking {
-    cursor: ew-resize;
-  }
 
+  /* Shared icon-button base for all bar buttons */
+  .chiron-bar-prev-btn,
+  .chiron-bar-next-btn,
+  .chiron-bar-expand-btn,
+  .chiron-bar-fs-btn {
+    flex-shrink: 0;
+    width: 36px;
+    height: 36px;
+    border: none;
+    background: transparent;
+    color: var(--color-text-secondary);
+    font-size: 1rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--radius-sm);
+    -webkit-tap-highlight-color: transparent;
+    font-family: inherit;
+    transition: color var(--duration-fast), background var(--duration-fast);
+  }
+  .chiron-bar-prev-btn:hover,
+  .chiron-bar-next-btn:hover,
+  .chiron-bar-expand-btn:hover,
+  .chiron-bar-fs-btn:hover { background: var(--color-bg-warm); color: var(--color-text); }
+  .chiron-bar-prev-btn:disabled,
+  .chiron-bar-next-btn:disabled { opacity: 0.3; pointer-events: none; }
+
+  /* Main play/pause circle */
   .chiron-bar-play-btn {
     flex-shrink: 0;
     width: 44px;
@@ -1530,7 +1549,6 @@ p:last-child { margin-bottom: 0; }
     cursor: pointer;
     transition: background var(--duration-fast), transform var(--duration-fast);
     font-family: inherit;
-    /* prevent tap highlight on iOS */
     -webkit-tap-highlight-color: transparent;
   }
   .chiron-bar-play-btn:active { transform: scale(0.92); }
@@ -1547,6 +1565,7 @@ p:last-child { margin-bottom: 0; }
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    min-width: 0;
   }
   .chiron-bar-clip-name.idle {
     color: var(--color-text-muted);
@@ -1558,29 +1577,11 @@ p:last-child { margin-bottom: 0; }
     font-family: var(--font-mono);
     font-size: var(--text-xs);
     color: var(--color-text-muted);
-    min-width: 36px;
+    min-width: 32px;
     text-align: right;
   }
 
-  /* Expand/collapse chevron */
-  .chiron-bar-expand-btn {
-    flex-shrink: 0;
-    width: 32px;
-    height: 32px;
-    border: none;
-    background: transparent;
-    color: var(--color-text-muted);
-    font-size: 1rem;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: var(--radius-sm);
-    -webkit-tap-highlight-color: transparent;
-    font-family: inherit;
-  }
-
-  /* Sheet body (clip list) — shown when sheet is expanded */
+  /* Sheet (clip list under bar) */
   .chiron-bar-sheet {
     overflow-y: auto;
     flex: 1;
@@ -1595,6 +1596,8 @@ p:last-child { margin-bottom: 0; }
     color: var(--color-text-muted);
     padding: var(--space-2) var(--space-2) var(--space-3);
   }
+
+  /* Shared clip-button style (used in sheet AND full-screen list) */
   .chiron-bar-clip-btn {
     display: flex;
     align-items: center;
@@ -1629,10 +1632,182 @@ p:last-child { margin-bottom: 0; }
     font-size: 10px;
     color: var(--color-accent);
   }
-  .chiron-bar-clip-btn.playing .ico { color: var(--color-accent); }
 
-  /* Ensure main content doesn't get hidden behind the bottom bar */
+  /* Main content bottom padding so it clears the bar */
   main.main {
     padding-bottom: 80px;
   }
+
+  /* ── Feature B — Full-screen now-playing overlay ─────────────── */
+  .chiron-fs-overlay {
+    display: flex;
+    flex-direction: column;
+    position: fixed;
+    inset: 0;
+    z-index: 10200;
+    background: var(--color-surface);
+    transform: translateY(100%);
+    transition: transform var(--duration-normal) var(--ease-out);
+    overflow: hidden;
+  }
+  .chiron-fs-overlay.open {
+    transform: translateY(0);
+  }
+
+  /* Header: down-chevron close */
+  .chiron-fs-header {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: var(--space-3) var(--space-4);
+    flex-shrink: 0;
+    border-bottom: 1px solid var(--color-border-light);
+  }
+  .chiron-fs-close {
+    width: 44px;
+    height: 44px;
+    border: none;
+    background: transparent;
+    color: var(--color-text-muted);
+    font-size: 1.5rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--radius-full);
+    -webkit-tap-highlight-color: transparent;
+    font-family: inherit;
+  }
+  .chiron-fs-close:hover { background: var(--color-bg-warm); }
+
+  /* Chapter title */
+  .chiron-fs-title {
+    font-family: var(--font-display);
+    font-size: var(--text-xl);
+    font-weight: 700;
+    color: var(--color-text);
+    padding: var(--space-6) var(--space-6) var(--space-4);
+    text-align: center;
+    flex-shrink: 0;
+    line-height: var(--leading-snug);
+  }
+
+  /* Scrubber + elapsed/remaining row */
+  .chiron-fs-scrub-wrap {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    padding: 0 var(--space-5) var(--space-4);
+    flex-shrink: 0;
+  }
+  .chiron-fs-time {
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    color: var(--color-text-muted);
+    min-width: 38px;
+    flex-shrink: 0;
+  }
+  .chiron-fs-remaining { text-align: right; }
+
+  /* Draggable scrub track */
+  .chiron-fs-scrub-track {
+    flex: 1;
+    height: 6px;
+    background: var(--color-border);
+    border-radius: var(--radius-full);
+    position: relative;
+    cursor: pointer;
+    touch-action: none;
+    /* Filled portion via CSS custom property set by JS */
+    background: linear-gradient(
+      to right,
+      var(--color-accent) 0%,
+      var(--color-accent) var(--fs-progress, 0%),
+      var(--color-border) var(--fs-progress, 0%),
+      var(--color-border) 100%
+    );
+  }
+  .chiron-fs-scrub-thumb {
+    position: absolute;
+    top: 50%;
+    left: 0%;
+    transform: translate(-50%, -50%);
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: var(--color-accent);
+    box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+    pointer-events: none;
+  }
+
+  /* Transport row */
+  .chiron-fs-transport {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-8);
+    padding: var(--space-4) var(--space-6) var(--space-6);
+    flex-shrink: 0;
+  }
+  .chiron-fs-prev,
+  .chiron-fs-next {
+    width: 52px;
+    height: 52px;
+    border: none;
+    background: var(--color-bg-warm);
+    color: var(--color-text);
+    font-size: 1.25rem;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    -webkit-tap-highlight-color: transparent;
+    font-family: inherit;
+    transition: background var(--duration-fast), transform var(--duration-fast);
+  }
+  .chiron-fs-prev:hover,
+  .chiron-fs-next:hover { background: var(--color-border); }
+  .chiron-fs-prev:active,
+  .chiron-fs-next:active { transform: scale(0.92); }
+  .chiron-fs-prev:disabled,
+  .chiron-fs-next:disabled { opacity: 0.3; pointer-events: none; }
+
+  .chiron-fs-play {
+    width: 68px;
+    height: 68px;
+    border: none;
+    background: var(--color-accent);
+    color: white;
+    font-size: 1.5rem;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 16px rgba(217,79,48,0.35);
+    -webkit-tap-highlight-color: transparent;
+    font-family: inherit;
+    transition: background var(--duration-fast), transform var(--duration-fast);
+  }
+  .chiron-fs-play:hover { background: var(--color-accent-hover); }
+  .chiron-fs-play:active { transform: scale(0.94); }
+
+  /* Clip list in full-screen */
+  .chiron-fs-list-hdr {
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--color-text-muted);
+    padding: var(--space-2) var(--space-5) var(--space-2);
+    flex-shrink: 0;
+    border-top: 1px solid var(--color-border-light);
+  }
+  .chiron-fs-clip-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 0 var(--space-4) var(--space-6);
+  }
+
 } /* end @media (max-width: 768px) */

@@ -76,6 +76,18 @@
   line-height: 1.4;
 }
 
+/* Mobile: a single long chip can't fit a narrow screen on one line —
+   let chip text wrap instead of overflowing. Desktop keeps nowrap. */
+@media (max-width: 768px) {
+  .key-info-chips .chip,
+  .vignette-block .chip,
+  .chip {
+    white-space: normal;
+    max-width: 100%;
+    overflow-wrap: anywhere;
+  }
+}
+
 .leading-question {
   font-family: var(--chiron-font-heading);
   font-weight: 700;
