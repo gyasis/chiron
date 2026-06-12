@@ -1,0 +1,1320 @@
+/*
+ * clinical-widgets.css — Canonical medicine widget design language for Chiron.
+ *
+ * Target aesthetic: calm, clean, USMLE/AMBOSS vignette feel.
+ * White background, blue accents, teal secondary. Generous whitespace,
+ * professional typography. Styles every widget class the renderers emit.
+ *
+ * Contract: ALL colors via var(--chiron-*) tokens. Zero hardcoded hex.
+ * Typography: body sans-serif for clinical prose; monospace ONLY for
+ * truly code-like tokens (not for chips, not for clinical prose).
+ *
+ * Load order in assembled HTML:
+ *   _tokens.css → styles.css → clinical-widgets.css → sr-card css
+ */
+
+/* ── Shared widget typography + spacing baseline ─────────────────────── */
+
+.widget-slot {
+  margin: var(--chiron-space-8) 0;
+}
+
+/* ── MCQ Clinical Vignette ────────────────────────────────────────────── */
+
+.mcq-clinical-vignette {
+  background: var(--chiron-surface);
+  border: 1px solid var(--chiron-border);
+  border-radius: var(--chiron-radius-lg);
+  padding: var(--chiron-space-6);
+  margin: var(--chiron-space-6) 0;
+  box-shadow: var(--chiron-shadow-sm);
+}
+
+.vignette-block {
+  background: var(--chiron-surface);
+  border-left: 4px solid var(--chiron-accent);
+  border-radius: 0 var(--chiron-radius-md) var(--chiron-radius-md) 0;
+  /* top: space-6 (1.5rem), sides: space-6 (1.5rem), bottom: space-4 (1rem) */
+  padding: var(--chiron-space-6) var(--chiron-space-6) var(--chiron-space-4);
+  margin-bottom: var(--chiron-space-3);
+  font-size: 0.95rem;
+  line-height: 1.7;
+  color: var(--chiron-fg);
+  white-space: pre-wrap;
+  box-shadow: var(--chiron-shadow-sm);
+}
+
+.vignette-text {
+  margin-bottom: var(--chiron-space-3);
+}
+
+/* Key-info chips — clue highlights, NOT code badges */
+.key-info-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--chiron-space-2);
+  /* Remove excess bottom margin that was creating the vignette gap */
+  margin-top: var(--chiron-space-3);
+  margin-bottom: 0;
+  padding-bottom: 0;
+}
+
+/* Use high-specificity selector to beat any parent mono inheritance */
+.key-info-chips .chip,
+.vignette-block .chip,
+.chip {
+  /* Soft tinted highlight chip — NOT monospace, NOT dark-blue box */
+  background: color-mix(in srgb, var(--chiron-accent) 12%, white);
+  color: var(--chiron-accent);
+  font-family: var(--chiron-font-body) !important;
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 20px;
+  border: 1px solid color-mix(in srgb, var(--chiron-accent) 25%, transparent);
+  white-space: nowrap;
+  line-height: 1.4;
+}
+
+.leading-question {
+  font-family: var(--chiron-font-heading);
+  font-weight: 700;
+  font-size: 1.05rem;
+  color: var(--chiron-fg);
+  margin: var(--chiron-space-5) 0 var(--chiron-space-4);
+  line-height: 1.45;
+}
+
+/* ── MCQ Options (shared by mcq-clinical-vignette, mcq, confidence-weighted) */
+
+.options {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 var(--chiron-space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--chiron-space-2);
+}
+
+.option {
+  border: 1.5px solid var(--chiron-border);
+  border-radius: var(--chiron-radius-md);
+  /* Increase vertical padding so text doesn't crowd the borders */
+  padding: var(--chiron-space-4) var(--chiron-space-4);
+  transition: background 0.1s, border-color 0.15s;
+  background: var(--chiron-surface);
+}
+
+.option:hover {
+  background: color-mix(in srgb, var(--chiron-accent) 5%, var(--chiron-surface));
+  border-color: color-mix(in srgb, var(--chiron-accent) 40%, var(--chiron-border));
+}
+
+.option.correct {
+  background: color-mix(in srgb, var(--chiron-success) 10%, white);
+  border-color: var(--chiron-success);
+}
+
+.option.incorrect,
+.option.selected-wrong {
+  background: color-mix(in srgb, var(--chiron-error) 8%, white);
+  border-color: var(--chiron-error);
+}
+
+.option.selected {
+  outline: 2px solid var(--chiron-accent);
+  outline-offset: -2px;
+}
+
+.option.selected-correct {
+  background: color-mix(in srgb, var(--chiron-success) 10%, white);
+  border-color: var(--chiron-success);
+  outline: none;
+}
+
+.option-label {
+  display: flex;
+  gap: var(--chiron-space-3);
+  align-items: center;
+  cursor: pointer;
+}
+
+.option-letter {
+  font-family: var(--chiron-font-mono, monospace);
+  font-weight: 700;
+  font-size: 0.88rem;
+  color: var(--chiron-accent);
+  flex-shrink: 0;
+  padding-top: 2px;
+  min-width: 1.5em;
+}
+
+.option-text {
+  font-size: 0.94rem;
+  line-height: 1.6;
+  color: var(--chiron-fg);
+}
+
+/* Per-option explanation revealed on Check */
+.option .explanation,
+.option-explanation {
+  margin-top: var(--chiron-space-3);
+  padding: var(--chiron-space-3) var(--chiron-space-4);
+  background: color-mix(in srgb, var(--chiron-elevated) 80%, white);
+  border-left: 3px solid var(--chiron-muted);
+  border-radius: 0 var(--chiron-radius-sm) var(--chiron-radius-sm) 0;
+  font-size: 0.88rem;
+  color: var(--chiron-fg-secondary);
+  line-height: 1.6;
+}
+
+.option.correct .explanation {
+  border-left-color: var(--chiron-success);
+  background: color-mix(in srgb, var(--chiron-success) 6%, white);
+}
+
+.option.incorrect .explanation,
+.option.selected-wrong .explanation {
+  border-left-color: var(--chiron-error);
+  background: color-mix(in srgb, var(--chiron-error) 5%, white);
+}
+
+/* Hammer difficulty chip */
+.hammer-chip {
+  font-family: var(--chiron-font-mono, monospace);
+  font-size: 0.75rem;
+  color: var(--chiron-muted);
+  margin-top: var(--chiron-space-3);
+  letter-spacing: 0.03em;
+}
+
+/* Attending Tip callout */
+.attending-tip {
+  background: color-mix(in srgb, var(--chiron-warm-accent) 8%, var(--chiron-surface));
+  border: 1px solid color-mix(in srgb, var(--chiron-warm-accent) 30%, var(--chiron-border));
+  border-left: 4px solid var(--chiron-warm-accent);
+  border-radius: 0 var(--chiron-radius-md) var(--chiron-radius-md) 0;
+  padding: var(--chiron-space-4) var(--chiron-space-5);
+  margin-top: var(--chiron-space-5);
+  font-size: 0.9rem;
+  line-height: 1.65;
+  color: var(--chiron-fg);
+}
+
+.attending-tip strong {
+  color: var(--chiron-warm-accent);
+  display: block;
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  margin-bottom: var(--chiron-space-2);
+}
+
+.attending-tip p {
+  margin: 0;
+  color: var(--chiron-fg);
+}
+
+/* ── MCQ controls + feedback (shared by all MCQ-family widgets) ────────── */
+
+.mcv-controls,
+.mcq-controls,
+.cw-controls,
+.ar-controls,
+.am-controls,
+.fb-controls,
+.mp-controls,
+.cloze-controls,
+.stb-controls,
+.code-controls,
+.tf-controls {
+  display: flex;
+  align-items: center;
+  gap: var(--chiron-space-4);
+  margin: var(--chiron-space-4) 0 var(--chiron-space-2);
+}
+
+.check-button,
+.btn,
+.btn-primary {
+  background: var(--chiron-accent);
+  color: white;
+  font-family: var(--chiron-font-body);
+  font-size: 0.88rem;
+  font-weight: 600;
+  padding: 9px 22px;
+  border: none;
+  border-radius: var(--chiron-radius-md);
+  cursor: pointer;
+  transition: background 0.12s, transform 0.1s;
+  letter-spacing: 0.01em;
+}
+
+.check-button:hover,
+.btn:hover,
+.btn-primary:hover {
+  background: var(--chiron-accent-light);
+  transform: translateY(-1px);
+}
+
+.check-button:disabled,
+.btn:disabled {
+  opacity: 0.45;
+  cursor: default;
+  transform: none;
+}
+
+.reset-button {
+  background: var(--chiron-surface);
+  color: var(--chiron-fg-secondary);
+  font-family: var(--chiron-font-body);
+  font-size: 0.88rem;
+  font-weight: 500;
+  padding: 9px 18px;
+  border: 1.5px solid var(--chiron-border);
+  border-radius: var(--chiron-radius-md);
+  cursor: pointer;
+  transition: border-color 0.12s;
+}
+
+.reset-button:hover {
+  border-color: var(--chiron-accent);
+  color: var(--chiron-accent);
+}
+
+/* Feedback text spans */
+.mcv-feedback,
+.mcq-feedback,
+.cw-feedback,
+.ar-feedback,
+.am-feedback,
+.tf-feedback,
+.mp-feedback,
+.stb-feedback {
+  font-size: 0.88rem;
+  font-weight: 600;
+}
+
+.mcv-feedback.correct,
+.mcq-feedback.correct,
+.cw-feedback.correct,
+.ar-feedback.correct,
+.am-feedback.correct,
+.tf-feedback.correct,
+.mp-feedback.correct,
+.stb-feedback.correct {
+  color: var(--chiron-success);
+}
+
+.mcv-feedback.incorrect,
+.mcq-feedback.incorrect,
+.cw-feedback.incorrect,
+.ar-feedback.incorrect,
+.am-feedback.incorrect,
+.tf-feedback.incorrect,
+.mp-feedback.incorrect,
+.stb-feedback.incorrect {
+  color: var(--chiron-error);
+}
+
+/* ── Plain MCQ ────────────────────────────────────────────────────────── */
+
+.mcq {
+  background: var(--chiron-surface);
+  border: 1px solid var(--chiron-border);
+  border-radius: var(--chiron-radius-lg);
+  padding: var(--chiron-space-6);
+  margin: var(--chiron-space-6) 0;
+  box-shadow: var(--chiron-shadow-sm);
+}
+
+.stem {
+  font-family: var(--chiron-font-heading);
+  font-weight: 600;
+  font-size: 1rem;
+  margin-bottom: var(--chiron-space-4);
+  color: var(--chiron-fg);
+  line-height: 1.5;
+}
+
+/* ── Agreement Matrix ─────────────────────────────────────────────────── */
+
+.agreement-matrix {
+  background: var(--chiron-surface);
+  border: 1px solid var(--chiron-border);
+  border-radius: var(--chiron-radius-lg);
+  padding: var(--chiron-space-6);
+  margin: var(--chiron-space-6) 0;
+  overflow-x: auto;
+  box-shadow: var(--chiron-shadow-sm);
+}
+
+.prompt-text {
+  font-weight: 600;
+  font-size: 0.95rem;
+  margin-bottom: var(--chiron-space-5);
+  color: var(--chiron-fg);
+  line-height: 1.5;
+}
+
+.matrix {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.matrix th,
+.matrix td {
+  padding: var(--chiron-space-3) var(--chiron-space-4);
+  border-bottom: 1px solid var(--chiron-divider);
+  text-align: center;
+  vertical-align: middle;
+}
+
+/* Statement column is wider and left-aligned */
+.matrix th:first-child,
+.matrix td.statement {
+  text-align: left;
+  min-width: 220px;
+}
+
+.matrix thead th {
+  font-family: var(--chiron-font-body);
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--chiron-muted);
+  border-bottom: 2px solid var(--chiron-border);
+  background: color-mix(in srgb, var(--chiron-elevated) 60%, white);
+}
+
+.matrix td.statement {
+  font-size: 0.9rem;
+  line-height: 1.55;
+  color: var(--chiron-fg);
+}
+
+/* Row states after Check */
+.matrix tbody tr.correct td {
+  background: color-mix(in srgb, var(--chiron-success) 8%, white);
+}
+
+.matrix tbody tr.correct {
+  outline: 1px solid var(--chiron-success);
+}
+
+.matrix tbody tr.incorrect td {
+  background: color-mix(in srgb, var(--chiron-error) 6%, white);
+}
+
+.matrix tbody tr.incorrect {
+  outline: 1px solid var(--chiron-error);
+}
+
+.matrix tbody tr.unanswered td {
+  background: var(--chiron-elevated);
+  opacity: 0.7;
+}
+
+/* Rationale revealed after Check */
+.rationale {
+  margin-top: var(--chiron-space-5);
+  padding: var(--chiron-space-4) var(--chiron-space-5);
+  background: color-mix(in srgb, var(--chiron-elevated) 70%, white);
+  border-left: 4px solid var(--chiron-accent);
+  border-radius: 0 var(--chiron-radius-md) var(--chiron-radius-md) 0;
+}
+
+.rationale ol {
+  list-style: decimal;
+  padding-left: var(--chiron-space-6);
+  margin: 0;
+}
+
+.rationale-row {
+  font-size: 0.88rem;
+  line-height: 1.65;
+  color: var(--chiron-fg-secondary);
+  margin: var(--chiron-space-3) 0;
+}
+
+/* ── Assertion-Reason ─────────────────────────────────────────────────── */
+
+.assertion-reason {
+  background: var(--chiron-surface);
+  border: 1px solid var(--chiron-border);
+  border-radius: var(--chiron-radius-lg);
+  padding: var(--chiron-space-6);
+  margin: var(--chiron-space-6) 0;
+  box-shadow: var(--chiron-shadow-sm);
+}
+
+.assertion,
+.reason {
+  padding: var(--chiron-space-4) var(--chiron-space-5);
+  background: color-mix(in srgb, var(--chiron-elevated) 70%, white);
+  border-radius: var(--chiron-radius-md);
+  margin-bottom: var(--chiron-space-3);
+  font-size: 0.95rem;
+  line-height: 1.6;
+  color: var(--chiron-fg);
+}
+
+.assertion strong,
+.reason strong {
+  color: var(--chiron-accent);
+}
+
+.connector {
+  text-align: center;
+  font-family: var(--chiron-font-mono, monospace);
+  font-weight: 700;
+  color: var(--chiron-muted);
+  margin: var(--chiron-space-2) 0;
+  font-size: 0.78rem;
+  letter-spacing: 0.12em;
+}
+
+.relationship-options {
+  list-style: none;
+  padding: 0;
+  margin: var(--chiron-space-4) 0;
+}
+
+.relationship-options .option {
+  margin-bottom: var(--chiron-space-2);
+}
+
+/* Shared .explanation outside .option context (assertion-reason, true-false) */
+.assertion-reason .explanation,
+.true-false .explanation {
+  font-size: 0.88rem;
+  color: var(--chiron-fg-secondary);
+  line-height: 1.6;
+  padding: var(--chiron-space-4) var(--chiron-space-5);
+  background: color-mix(in srgb, var(--chiron-elevated) 70%, white);
+  border-radius: var(--chiron-radius-md);
+  margin-top: var(--chiron-space-3);
+}
+
+/* ── Why-Care Callout ─────────────────────────────────────────────────── */
+
+.why-care {
+  background: color-mix(in srgb, var(--chiron-warm-accent) 7%, var(--chiron-surface));
+  border-left: 4px solid var(--chiron-warm-accent);
+  border-radius: 0 var(--chiron-radius-md) var(--chiron-radius-md) 0;
+  /* Use space-4 top/bottom (1rem), space-6 right (1.5rem), space-8 left (2rem) to clear the bar */
+  padding: var(--chiron-space-4) var(--chiron-space-6) var(--chiron-space-4) var(--chiron-space-8);
+  margin: var(--chiron-space-6) 0;
+  font-size: 0.95rem;
+  line-height: 1.7;
+  color: var(--chiron-fg);
+  box-shadow: var(--chiron-shadow-sm);
+}
+
+.why-care b {
+  color: var(--chiron-warm-accent);
+  font-weight: 700;
+  display: block;
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  margin-bottom: var(--chiron-space-2);
+}
+
+/* ── Step Cards ────────────────────────────────────────────────────────── */
+
+.step-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: var(--chiron-space-4);
+  margin: var(--chiron-space-6) 0;
+}
+
+.sc {
+  background: var(--chiron-surface);
+  border: 1px solid var(--chiron-border);
+  border-radius: var(--chiron-radius-md);
+  padding: var(--chiron-space-5);
+  box-shadow: var(--chiron-shadow-sm);
+  transition: box-shadow 0.15s;
+}
+
+.sc:hover {
+  box-shadow: var(--chiron-shadow-md);
+}
+
+.sc-num {
+  font-family: var(--chiron-font-mono, monospace);
+  font-weight: 700;
+  font-size: 0.8rem;
+  color: var(--chiron-accent);
+  margin-bottom: var(--chiron-space-2);
+  letter-spacing: 0.04em;
+}
+
+.sc h5 {
+  font-family: var(--chiron-font-heading);
+  font-weight: 600;
+  font-size: 0.92rem;
+  margin: 0 0 var(--chiron-space-2);
+  color: var(--chiron-fg);
+  line-height: 1.4;
+}
+
+.sc p {
+  font-size: 0.86rem;
+  color: var(--chiron-fg-secondary);
+  line-height: 1.6;
+  margin: 0;
+}
+
+/* ── Pattern Cards ─────────────────────────────────────────────────────── */
+
+.pattern-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: var(--chiron-space-4);
+  margin: var(--chiron-space-6) 0;
+}
+
+.pattern-card {
+  background: var(--chiron-surface);
+  border: 1px solid var(--chiron-border);
+  border-top: 3px solid var(--chiron-accent);
+  border-radius: var(--chiron-radius-md);
+  /* Use only defined tokens: space-6=1.5rem top/bottom, space-4=1rem left/right */
+  padding: var(--chiron-space-6) var(--chiron-space-4);
+  box-shadow: var(--chiron-shadow-sm);
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+
+.pattern-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--chiron-shadow-md);
+}
+
+.pc-num {
+  /* Kicker label — small-caps-style sans, NOT monospace */
+  font-family: var(--chiron-font-body) !important;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.10em;
+  color: var(--chiron-accent);
+  display: block;
+  margin-bottom: var(--chiron-space-2);
+}
+
+.pattern-card h4 {
+  font-family: var(--chiron-font-heading);
+  font-weight: 600;
+  font-size: 0.95rem;
+  margin: 0 0 var(--chiron-space-2);
+  color: var(--chiron-fg);
+  line-height: 1.4;
+}
+
+.pc-body {
+  font-size: 0.88rem;
+  color: var(--chiron-fg-secondary);
+  line-height: 1.6;
+  margin: 0;
+}
+
+.pc-foot {
+  /* Tagline — muted sans italic, NOT monospace */
+  margin-top: var(--chiron-space-3);
+  font-family: var(--chiron-font-body) !important;
+  font-size: 0.78rem;
+  font-style: italic;
+  color: var(--chiron-fg-secondary);
+  letter-spacing: 0;
+}
+
+/* ── Boss Widget ───────────────────────────────────────────────────────── */
+
+.boss {
+  background: var(--chiron-surface);
+  border: 2px solid var(--chiron-accent);
+  border-radius: var(--chiron-radius-lg);
+  padding: var(--chiron-space-6);
+  margin: var(--chiron-space-6) 0;
+  box-shadow: var(--chiron-shadow-md);
+}
+
+.boss-banner {
+  font-family: var(--chiron-font-mono, monospace);
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--chiron-accent);
+  font-weight: 700;
+  margin-bottom: var(--chiron-space-3);
+}
+
+.boss-question {
+  font-family: var(--chiron-font-heading);
+  font-weight: 600;
+  font-size: 1rem;
+  color: var(--chiron-fg);
+  margin-bottom: var(--chiron-space-4);
+  line-height: 1.5;
+}
+
+.boss-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--chiron-space-2);
+  margin-top: var(--chiron-space-2);
+}
+
+.boss-concept-chip {
+  /* Concept labels — subtle elevated background, NOT monospace */
+  font-family: var(--chiron-font-body);
+  font-size: 0.78rem;
+  font-weight: 500;
+  padding: 4px 10px;
+  border-radius: 20px;
+  background: var(--chiron-elevated);
+  color: var(--chiron-fg-secondary);
+  border: 1px solid var(--chiron-border);
+}
+
+.boss-required-concepts {
+  margin-top: var(--chiron-space-3);
+  font-size: 0.88rem;
+  color: var(--chiron-fg-secondary);
+}
+
+.boss-required-concepts strong {
+  color: var(--chiron-fg);
+  display: block;
+  margin-bottom: var(--chiron-space-2);
+  font-size: 0.82rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.boss-rubric {
+  margin-top: var(--chiron-space-4);
+  font-size: 0.88rem;
+  color: var(--chiron-fg-secondary);
+  line-height: 1.6;
+}
+
+.boss-rubric summary {
+  cursor: pointer;
+  font-weight: 600;
+  color: var(--chiron-accent);
+  font-size: 0.85rem;
+  user-select: none;
+}
+
+.boss-rubric p {
+  margin-top: var(--chiron-space-3);
+  padding: var(--chiron-space-3) var(--chiron-space-4);
+  background: var(--chiron-elevated);
+  border-radius: var(--chiron-radius-md);
+}
+
+.boss-pending-note {
+  font-style: italic;
+  color: var(--chiron-muted);
+  font-size: 0.85rem;
+  margin-top: var(--chiron-space-3);
+}
+
+/* ── Glossary Block ───────────────────────────────────────────────────── */
+
+.glossary-block {
+  background: var(--chiron-surface);
+  border: 1px solid var(--chiron-border);
+  border-radius: var(--chiron-radius-lg);
+  padding: var(--chiron-space-6);
+  margin: var(--chiron-space-6) 0;
+  box-shadow: var(--chiron-shadow-sm);
+}
+
+.glossary-block h4 {
+  font-family: var(--chiron-font-heading);
+  font-weight: 700;
+  font-size: 1rem;
+  color: var(--chiron-fg);
+  margin: 0 0 var(--chiron-space-4);
+  padding-bottom: var(--chiron-space-3);
+  border-bottom: 1px solid var(--chiron-divider);
+}
+
+.glossary-block dl {
+  margin: 0;
+}
+
+.glossary-block dt {
+  font-weight: 700;
+  color: var(--chiron-accent);
+  margin-top: var(--chiron-space-4);
+  font-size: 0.92rem;
+}
+
+.glossary-block dt:first-child {
+  margin-top: 0;
+}
+
+.glossary-block dd {
+  margin-left: var(--chiron-space-5);
+  font-size: 0.88rem;
+  color: var(--chiron-fg-secondary);
+  line-height: 1.6;
+  margin-top: var(--chiron-space-1);
+}
+
+/* ── Matching Pair ────────────────────────────────────────────────────── */
+
+.matching-pair {
+  background: var(--chiron-surface);
+  border: 1px solid var(--chiron-border);
+  border-radius: var(--chiron-radius-lg);
+  padding: var(--chiron-space-6);
+  margin: var(--chiron-space-6) 0;
+  box-shadow: var(--chiron-shadow-sm);
+}
+
+.mp-columns {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--chiron-space-5);
+  margin-bottom: var(--chiron-space-4);
+}
+
+.prompts,
+.matches {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--chiron-space-2);
+}
+
+.prompt-item,
+.match-item {
+  padding: var(--chiron-space-3) var(--chiron-space-4);
+  border: 1.5px solid var(--chiron-border);
+  border-radius: var(--chiron-radius-md);
+  cursor: pointer;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  color: var(--chiron-fg);
+  background: var(--chiron-surface);
+  transition: border-color 0.12s, background 0.12s;
+  user-select: none;
+}
+
+.prompt-item:hover,
+.match-item:hover {
+  background: color-mix(in srgb, var(--chiron-accent) 5%, var(--chiron-surface));
+  border-color: color-mix(in srgb, var(--chiron-accent) 40%, var(--chiron-border));
+}
+
+.prompt-item.selected,
+.match-item.selected {
+  outline: 2px solid var(--chiron-accent);
+  outline-offset: -2px;
+  background: color-mix(in srgb, var(--chiron-accent) 8%, var(--chiron-surface));
+}
+
+.prompt-item.paired,
+.match-item.paired {
+  border-color: var(--chiron-accent);
+  background: color-mix(in srgb, var(--chiron-accent) 8%, white);
+}
+
+.prompt-item.correct,
+.match-item.correct {
+  border-color: var(--chiron-success);
+  background: color-mix(in srgb, var(--chiron-success) 8%, white);
+}
+
+.prompt-item.incorrect,
+.match-item.incorrect {
+  border-color: var(--chiron-error);
+  background: color-mix(in srgb, var(--chiron-error) 6%, white);
+}
+
+.mp-reveal {
+  font-size: 0.86rem;
+  margin-top: var(--chiron-space-4);
+  padding: var(--chiron-space-4) var(--chiron-space-5);
+  background: var(--chiron-elevated);
+  border-radius: var(--chiron-radius-md);
+  color: var(--chiron-fg-secondary);
+  line-height: 1.6;
+}
+
+.mp-reveal ul {
+  margin: var(--chiron-space-2) 0 0;
+  padding-left: var(--chiron-space-5);
+}
+
+.mp-reveal li {
+  margin: var(--chiron-space-1) 0;
+}
+
+/* ── Layer Toggle ─────────────────────────────────────────────────────── */
+
+.layer-toggle {
+  background: var(--chiron-surface);
+  border: 1px solid var(--chiron-border);
+  border-radius: var(--chiron-radius-lg);
+  padding: var(--chiron-space-5) var(--chiron-space-6);
+  margin: var(--chiron-space-6) 0;
+  box-shadow: var(--chiron-shadow-sm);
+}
+
+.lt-tag {
+  font-family: var(--chiron-font-mono, monospace);
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--chiron-muted);
+  display: block;
+  margin-bottom: var(--chiron-space-3);
+}
+
+.lt-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--chiron-space-2);
+  margin-bottom: var(--chiron-space-4);
+}
+
+.lt-btn {
+  background: var(--chiron-surface);
+  border: 1.5px solid var(--chiron-border);
+  border-radius: var(--chiron-radius-md);
+  padding: 7px 16px;
+  font-family: var(--chiron-font-body);
+  font-size: 0.86rem;
+  font-weight: 500;
+  cursor: pointer;
+  color: var(--chiron-fg-secondary);
+  transition: border-color 0.12s, background 0.12s, color 0.12s;
+}
+
+.lt-btn:hover {
+  border-color: var(--chiron-accent);
+  color: var(--chiron-accent);
+}
+
+.lt-btn.active {
+  background: var(--chiron-accent);
+  color: white;
+  border-color: var(--chiron-accent);
+}
+
+/* Hide inactive axis panels */
+[data-axis-show="axis1"] .lt-axis-axis2 { display: none; }
+[data-axis-show="axis2"] .lt-axis-axis1 { display: none; }
+
+/* ── Flow Animation ───────────────────────────────────────────────────── */
+
+.flow-animation {
+  background: var(--chiron-surface);
+  border: 1px solid var(--chiron-border);
+  border-radius: var(--chiron-radius-lg);
+  padding: var(--chiron-space-6);
+  margin: var(--chiron-space-6) 0;
+  box-shadow: var(--chiron-shadow-sm);
+}
+
+.flow-actors {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-around;
+  gap: var(--chiron-space-4);
+  margin-bottom: var(--chiron-space-5);
+}
+
+.flow-actor {
+  text-align: center;
+  font-size: 0.82rem;
+  color: var(--chiron-fg-secondary);
+  min-width: 80px;
+  transition: transform 0.2s, color 0.2s;
+}
+
+.flow-actor.highlight {
+  color: var(--chiron-accent);
+  transform: scale(1.07);
+}
+
+.flow-actor-icon {
+  font-size: 2rem;
+  margin-bottom: var(--chiron-space-1);
+  display: block;
+}
+
+.flow-actor span {
+  font-size: 0.78rem;
+  color: var(--chiron-fg-secondary);
+}
+
+.flow-packet {
+  width: 18px;
+  height: 18px;
+  background: var(--chiron-accent);
+  border-radius: 50%;
+  margin: var(--chiron-space-3) auto;
+  display: none;
+}
+
+.flow-packet.visible {
+  display: block;
+}
+
+.flow-step-label {
+  font-size: 0.9rem;
+  color: var(--chiron-fg);
+  margin: var(--chiron-space-3) 0;
+  min-height: 1.8em;
+  padding: var(--chiron-space-3) var(--chiron-space-4);
+  background: var(--chiron-elevated);
+  border-radius: var(--chiron-radius-md);
+  line-height: 1.6;
+  text-align: center;
+}
+
+.flow-controls {
+  display: flex;
+  align-items: center;
+  gap: var(--chiron-space-3);
+  margin-top: var(--chiron-space-4);
+}
+
+.flow-progress {
+  margin-left: auto;
+  font-size: 0.8rem;
+  color: var(--chiron-muted);
+  font-family: var(--chiron-font-mono, monospace);
+}
+
+/* ── Group Chat Animation (tumor board) ──────────────────────────────── */
+
+.chat-window {
+  background: var(--chiron-surface);
+  border: 1px solid var(--chiron-border);
+  border-radius: var(--chiron-radius-lg);
+  overflow: hidden;
+  margin: var(--chiron-space-6) 0;
+  box-shadow: var(--chiron-shadow-sm);
+}
+
+.chat-messages {
+  padding: var(--chiron-space-5) var(--chiron-space-6);
+  display: flex;
+  flex-direction: column;
+  gap: var(--chiron-space-4);
+  min-height: 160px;
+}
+
+.chat-message {
+  display: flex;
+  gap: var(--chiron-space-3);
+  align-items: flex-start;
+}
+
+.chat-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--chiron-font-heading);
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: white;
+  flex-shrink: 0;
+}
+
+.chat-bubble {
+  max-width: 78%;
+  background: color-mix(in srgb, var(--chiron-elevated) 80%, white);
+  border-radius: var(--chiron-radius-md) var(--chiron-radius-md) var(--chiron-radius-md) 4px;
+  padding: var(--chiron-space-3) var(--chiron-space-4);
+  box-shadow: var(--chiron-shadow-sm);
+}
+
+.chat-sender {
+  display: block;
+  font-size: 0.72rem;
+  font-weight: 700;
+  margin-bottom: var(--chiron-space-1);
+  font-family: var(--chiron-font-body);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--chiron-muted);
+}
+
+.chat-bubble p {
+  font-size: 0.9rem;
+  margin: 0;
+  line-height: 1.6;
+  color: var(--chiron-fg);
+}
+
+/* Typing indicator */
+.chat-typing {
+  display: flex;
+  align-items: center;
+  gap: var(--chiron-space-3);
+  padding: 0 var(--chiron-space-6) var(--chiron-space-3);
+}
+
+.chat-typing-dots {
+  display: flex;
+  gap: var(--chiron-space-1);
+  background: var(--chiron-elevated);
+  padding: var(--chiron-space-2) var(--chiron-space-3);
+  border-radius: var(--chiron-radius-md);
+}
+
+.chat-typing-dots span {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--chiron-muted);
+  animation: chiron-typing-bounce 0.9s infinite;
+}
+
+.chat-typing-dots span:nth-child(2) { animation-delay: 0.15s; }
+.chat-typing-dots span:nth-child(3) { animation-delay: 0.3s; }
+
+@keyframes chiron-typing-bounce {
+  0%, 80%, 100% { transform: translateY(0); }
+  40%           { transform: translateY(-5px); }
+}
+
+/* Chat controls bar */
+.chat-controls {
+  display: flex;
+  align-items: center;
+  gap: var(--chiron-space-3);
+  padding: var(--chiron-space-3) var(--chiron-space-5);
+  border-top: 1px solid var(--chiron-border);
+  background: color-mix(in srgb, var(--chiron-elevated) 60%, white);
+}
+
+.chat-progress {
+  margin-left: auto;
+  font-size: 0.78rem;
+  color: var(--chiron-muted);
+  font-family: var(--chiron-font-mono, monospace);
+}
+
+/* ── Slider Estimation ────────────────────────────────────────────────── */
+
+.slider-estimation {
+  background: var(--chiron-surface);
+  border: 1px solid var(--chiron-border);
+  border-radius: var(--chiron-radius-lg);
+  padding: var(--chiron-space-6);
+  margin: var(--chiron-space-6) 0;
+  box-shadow: var(--chiron-shadow-sm);
+}
+
+.slider-estimation .question {
+  font-weight: 600;
+  font-size: 0.95rem;
+  margin-bottom: var(--chiron-space-4);
+  color: var(--chiron-fg);
+  line-height: 1.5;
+}
+
+.slider-controls {
+  display: flex;
+  align-items: center;
+  gap: var(--chiron-space-4);
+  margin-bottom: var(--chiron-space-4);
+}
+
+.value-slider {
+  flex: 1;
+  accent-color: var(--chiron-accent);
+}
+
+.slider-output {
+  font-family: var(--chiron-font-mono, monospace);
+  font-weight: 700;
+  font-size: 0.92rem;
+  color: var(--chiron-accent);
+  min-width: 6ch;
+  text-align: right;
+}
+
+.slider-estimation .feedback {
+  margin-top: var(--chiron-space-3);
+  padding: var(--chiron-space-4) var(--chiron-space-5);
+  background: var(--chiron-elevated);
+  border-radius: var(--chiron-radius-md);
+  font-size: 0.88rem;
+  line-height: 1.6;
+}
+
+.slider-estimation .result.correct  { color: var(--chiron-success); font-weight: 600; }
+.slider-estimation .result.incorrect { color: var(--chiron-error);   font-weight: 600; }
+
+.slider-estimation .actual,
+.slider-estimation .acceptable-range {
+  color: var(--chiron-fg-secondary);
+  margin-top: var(--chiron-space-2);
+}
+
+.slider-estimation .explanation {
+  margin-top: var(--chiron-space-3);
+  padding: var(--chiron-space-3) var(--chiron-space-4);
+  background: color-mix(in srgb, var(--chiron-elevated) 70%, white);
+  border-left: 3px solid var(--chiron-muted);
+  border-radius: 0 var(--chiron-radius-sm) var(--chiron-radius-sm) 0;
+  font-size: 0.88rem;
+  color: var(--chiron-fg-secondary);
+  line-height: 1.6;
+}
+
+/* ── Confidence-Weighted MCQ ──────────────────────────────────────────── */
+
+.confidence-weighted {
+  background: var(--chiron-surface);
+  border: 1px solid var(--chiron-border);
+  border-radius: var(--chiron-radius-lg);
+  padding: var(--chiron-space-6);
+  margin: var(--chiron-space-6) 0;
+  box-shadow: var(--chiron-shadow-sm);
+}
+
+.confidence-row {
+  display: flex;
+  align-items: center;
+  gap: var(--chiron-space-4);
+  margin: var(--chiron-space-4) 0;
+  font-size: 0.9rem;
+  color: var(--chiron-fg-secondary);
+}
+
+.confidence-slider {
+  flex: 1;
+  accent-color: var(--chiron-accent);
+}
+
+.confidence-value {
+  font-family: var(--chiron-font-mono, monospace);
+  font-weight: 700;
+  color: var(--chiron-accent);
+}
+
+.cw-score {
+  font-family: var(--chiron-font-mono, monospace);
+  font-size: 0.88rem;
+  color: var(--chiron-accent);
+  font-weight: 600;
+}
+
+/* ── True-False ───────────────────────────────────────────────────────── */
+
+.true-false {
+  background: var(--chiron-surface);
+  border: 1px solid var(--chiron-border);
+  border-radius: var(--chiron-radius-lg);
+  padding: var(--chiron-space-6);
+  margin: var(--chiron-space-6) 0;
+  box-shadow: var(--chiron-shadow-sm);
+}
+
+.true-false .statement {
+  font-size: 0.95rem;
+  line-height: 1.6;
+  color: var(--chiron-fg);
+  margin-bottom: var(--chiron-space-4);
+  font-weight: 500;
+}
+
+.tf-options {
+  display: flex;
+  gap: var(--chiron-space-5);
+  margin-bottom: var(--chiron-space-4);
+  font-size: 0.92rem;
+  color: var(--chiron-fg);
+}
+
+.tf-options label {
+  display: flex;
+  align-items: center;
+  gap: var(--chiron-space-2);
+  cursor: pointer;
+}
+
+/* ── SR Deck ──────────────────────────────────────────────────────────── */
+
+.sr-deck-section {
+  background: var(--chiron-surface);
+  border: 1px solid var(--chiron-border);
+  border-radius: var(--chiron-radius-lg);
+  padding: var(--chiron-space-6);
+  margin: var(--chiron-space-8) 0;
+  box-shadow: var(--chiron-shadow-sm);
+}
+
+.sr-deck-section h2 {
+  font-family: var(--chiron-font-heading);
+  font-weight: 700;
+  font-size: 1.3rem;
+  color: var(--chiron-fg);
+  margin: 0 0 var(--chiron-space-2);
+}
+
+.sr-deck-section .sr-deck-help {
+  font-size: 0.82rem;
+  color: var(--chiron-muted);
+  margin-bottom: var(--chiron-space-5);
+  font-style: italic;
+}
+
+.sr-deck-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: var(--chiron-space-4);
+}
+
+.sr-deck-grid .sr-card {
+  background: var(--chiron-surface);
+  border: 1px solid var(--chiron-border);
+  border-radius: var(--chiron-radius-md);
+  cursor: pointer;
+  box-shadow: var(--chiron-shadow-sm);
+  transition: box-shadow 0.15s, transform 0.12s;
+}
+
+.sr-deck-grid .sr-card:hover {
+  box-shadow: var(--chiron-shadow-md);
+  transform: translateY(-1px);
+}
+
+/* ── Widget render error (diagnostic) ─────────────────────────────────── */
+
+.widget-render-error {
+  background: var(--chiron-surface);
+  border: 2px dashed var(--chiron-error);
+  border-radius: var(--chiron-radius-md);
+  padding: var(--chiron-space-4);
+  font-size: 0.85rem;
+  color: var(--chiron-error);
+}
+
+.widget-render-error .err-detail {
+  font-family: var(--chiron-font-mono, monospace);
+  font-size: 0.78rem;
+  color: var(--chiron-muted);
+  margin: var(--chiron-space-2) 0 0;
+}

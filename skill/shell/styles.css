@@ -1281,8 +1281,40 @@ p:last-child { margin-bottom: 0; }
   flex: none; width: 18px; height: 18px; display: grid; place-items: center;
   font-size: 10px; color: var(--color-accent, #D94F30);
 }
-.chiron-listen-btn.playing { background: var(--color-accent-light, #f3f3f3); font-weight: 600; }
+.chiron-listen-btn.playing {
+  background: linear-gradient(
+    to right,
+    color-mix(in srgb, var(--color-accent, #D94F30) 18%, transparent) calc(var(--clip-progress, 0) * 100%),
+    var(--color-accent-light, #f3f3f3) calc(var(--clip-progress, 0) * 100%)
+  );
+  font-weight: 600;
+  position: relative;
+}
 .chiron-listen-btn.err .lbl { color: var(--color-error, #c0392b); }
+
+/* ── Feature A — button-body scrubber cursor (playing state) ──────────────────
+   The gradient fill on the playing button IS the scrubber — no separate track.
+   Show ew-resize on the body; the .ico keeps its default pointer cursor so the
+   play/pause zone is visually distinct from the seek zone.                    */
+.chiron-listen-btn.playing {
+  cursor: ew-resize;
+  touch-action: none; /* allow pointer capture for drag-to-seek */
+}
+.chiron-listen-btn.playing .ico {
+  cursor: pointer;    /* play/pause icon stays a normal clickable cursor */
+}
+
+/* Countdown timer — right edge of playing button */
+.chiron-clip-timer {
+  margin-left: auto;
+  padding-left: 8px;
+  font-size: 11px;
+  font-family: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
+  color: var(--color-text-muted, #9E9790);
+  white-space: nowrap;
+  flex-shrink: 0;
+  letter-spacing: 0.03em;
+}
 .chiron-listen-kind { font-size: 11px; color: var(--color-text-muted, #888); font-weight: 400; }
 /* section being lectured — soft pulsing glow (the lone acolyte-derived gesture) */
 .chiron-listening {
@@ -1317,3 +1349,290 @@ p:last-child { margin-bottom: 0; }
 .chiron-play-inline.playing { background: var(--color-accent-hover, #C4432A); }
 .chiron-play-inline.err { background: var(--color-error, #c0392b); }
 .chiron-has-audio { scroll-margin-top: 84px; }
+
+/* ── MOBILE RESPONSIVE LAYER (max-width: 768px) ─────────────────
+   Feature A — Hamburger TOC drawer
+   Feature B — Bottom-bar mini-player
+   DESKTOP (>768px): hamburger hidden, sidebar normal, desktop player normal.
+   ──────────────────────────────────────────────────────────────── */
+
+/* ── Hamburger button — hidden above 768px ──────────────────────── */
+.chiron-hamburger {
+  display: none; /* hidden on desktop */
+}
+
+/* ── TOC Drawer backdrop — hidden on desktop ──────────────────── */
+.chiron-drawer-backdrop {
+  display: none; /* hidden on desktop */
+}
+
+/* ── Bottom-bar mini-player — hidden on desktop ──────────────── */
+.chiron-bottom-bar {
+  display: none; /* hidden on desktop */
+}
+
+@media (max-width: 768px) {
+
+  /* ── Feature A — Hamburger button ────────────────────────────── */
+  .chiron-hamburger {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: fixed;
+    top: var(--space-3);
+    left: var(--space-3);
+    z-index: 10100;
+    width: 44px;
+    height: 44px;
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    box-shadow: var(--shadow-md);
+    cursor: pointer;
+    font-size: 1.25rem;
+    color: var(--color-text);
+    transition: background var(--duration-fast);
+    /* ensure no default button styles interfere */
+    padding: 0;
+    font-family: inherit;
+  }
+  .chiron-hamburger:hover { background: var(--color-bg-warm); }
+
+  /* ── Feature A — TOC Drawer backdrop ─────────────────────────── */
+  .chiron-drawer-backdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 10050;
+    background: rgba(0,0,0,0.4);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity var(--duration-normal) var(--ease-out);
+  }
+  .chiron-drawer-backdrop.open {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  /* ── Feature A — Sidebar TOC as slide-in drawer ──────────────── */
+  /* The <aside class="side"> is repurposed as the drawer on mobile.
+     On desktop it remains sticky/positioned normally — the @media guard
+     ensures these rules never apply above 768px. */
+  aside.side {
+    position: fixed !important;
+    top: 0;
+    left: 0;
+    height: 100dvh !important;
+    height: 100vh !important;
+    width: min(280px, 85vw) !important;
+    z-index: 10060;
+    transform: translateX(-110%);
+    transition: transform var(--duration-normal) var(--ease-out);
+    border-right: 1px solid var(--color-border) !important;
+    border-bottom: none !important;
+    overflow-y: auto;
+    /* Override any grid/block display */
+    display: block !important;
+  }
+  aside.side.drawer-open {
+    transform: translateX(0);
+  }
+
+  /* ── Feature A — main area — use full width on mobile ──────────
+     The build script sets body to grid-template-columns: 260px 1fr,
+     but on mobile we collapse it to a single column and offset for
+     the hamburger. */
+  body {
+    display: block !important;
+    padding-top: 0;
+  }
+  main.main {
+    height: auto !important;
+    overflow-y: visible !important;
+    /* Give breathing room so hamburger doesn't cover first heading */
+    padding-top: 56px;
+  }
+
+  /* ── Feature A — body scroll-lock while drawer is open ─────────
+     Applied via JS: document.body.classList.add('drawer-scroll-lock') */
+  body.drawer-scroll-lock {
+    overflow: hidden !important;
+    /* Prevent layout shift from scrollbar disappearing */
+    padding-right: 0;
+  }
+
+  /* ── Feature B — hide desktop float player on mobile ───────────
+     The .chiron-listen popup is replaced by the bottom bar. */
+  .chiron-listen {
+    display: none !important;
+  }
+
+  /* ── Feature B — Bottom-bar mini-player ─────────────────────── */
+  .chiron-bottom-bar {
+    display: flex;
+    flex-direction: column;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 9998;
+    background: var(--color-surface);
+    border-top: 1px solid var(--color-border);
+    box-shadow: 0 -4px 20px rgba(0,0,0,0.12);
+    /* When sheet is collapsed, just the bar is visible */
+    max-height: 72px;
+    transition: max-height var(--duration-normal) var(--ease-out);
+    overflow: hidden;
+  }
+  .chiron-bottom-bar.sheet-open {
+    max-height: min(70vh, 520px);
+  }
+
+  /* Progress fill line — thin bar across the top of the bottom-bar */
+  .chiron-bar-progress-line {
+    height: 3px;
+    width: 0%;
+    background: var(--color-accent);
+    transition: width 200ms linear;
+    flex-shrink: 0;
+  }
+
+  /* Main row: play/pause + clip name + countdown */
+  .chiron-bar-row {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    padding: 0 var(--space-4);
+    height: 62px;
+    flex-shrink: 0;
+    /* Seek surface cursor while playing */
+    cursor: default;
+    touch-action: none;
+    /* clip name takes remaining space */
+    overflow: hidden;
+  }
+  .chiron-bar-row.seeking {
+    cursor: ew-resize;
+  }
+
+  .chiron-bar-play-btn {
+    flex-shrink: 0;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: var(--color-accent);
+    color: white;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+    cursor: pointer;
+    transition: background var(--duration-fast), transform var(--duration-fast);
+    font-family: inherit;
+    /* prevent tap highlight on iOS */
+    -webkit-tap-highlight-color: transparent;
+  }
+  .chiron-bar-play-btn:active { transform: scale(0.92); }
+  .chiron-bar-play-btn.idle {
+    background: var(--color-border);
+    color: var(--color-text-secondary);
+  }
+
+  .chiron-bar-clip-name {
+    flex: 1;
+    font-size: var(--text-sm);
+    font-weight: 600;
+    color: var(--color-text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .chiron-bar-clip-name.idle {
+    color: var(--color-text-muted);
+    font-weight: 400;
+  }
+
+  .chiron-bar-countdown {
+    flex-shrink: 0;
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    color: var(--color-text-muted);
+    min-width: 36px;
+    text-align: right;
+  }
+
+  /* Expand/collapse chevron */
+  .chiron-bar-expand-btn {
+    flex-shrink: 0;
+    width: 32px;
+    height: 32px;
+    border: none;
+    background: transparent;
+    color: var(--color-text-muted);
+    font-size: 1rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--radius-sm);
+    -webkit-tap-highlight-color: transparent;
+    font-family: inherit;
+  }
+
+  /* Sheet body (clip list) — shown when sheet is expanded */
+  .chiron-bar-sheet {
+    overflow-y: auto;
+    flex: 1;
+    padding: var(--space-2) var(--space-3) var(--space-4);
+    border-top: 1px solid var(--color-border-light);
+  }
+  .chiron-bar-sheet-title {
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--color-text-muted);
+    padding: var(--space-2) var(--space-2) var(--space-3);
+  }
+  .chiron-bar-clip-btn {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    width: 100%;
+    text-align: left;
+    background: transparent;
+    border: 0;
+    border-radius: var(--radius-sm);
+    padding: var(--space-3) var(--space-2);
+    font: inherit;
+    font-size: var(--text-sm);
+    color: var(--color-text);
+    cursor: pointer;
+    min-height: 44px;
+    -webkit-tap-highlight-color: transparent;
+    transition: background var(--duration-fast);
+  }
+  .chiron-bar-clip-btn:hover,
+  .chiron-bar-clip-btn:active { background: var(--color-bg-warm); }
+  .chiron-bar-clip-btn.playing {
+    background: var(--color-accent-light);
+    color: var(--color-accent);
+    font-weight: 600;
+  }
+  .chiron-bar-clip-btn .ico {
+    flex-shrink: 0;
+    width: 20px;
+    height: 20px;
+    display: grid;
+    place-items: center;
+    font-size: 10px;
+    color: var(--color-accent);
+  }
+  .chiron-bar-clip-btn.playing .ico { color: var(--color-accent); }
+
+  /* Ensure main content doesn't get hidden behind the bottom bar */
+  main.main {
+    padding-bottom: 80px;
+  }
+} /* end @media (max-width: 768px) */

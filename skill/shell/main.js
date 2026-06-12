@@ -1059,31 +1059,237 @@
        "By section" (section lectures glow their #sectionId while playing).
      • inline ▶ — anchored kinds (dialogue/phrase/grammar-pearl/story-*) get a
        small play button injected at their #anchor element (tap any phrase/line).
-   One shared audio element → only one clip plays at a time. No-op without audio. */
+   One shared audio element → only one clip plays at a time. No-op without audio.
+   ─────────────────────────────────────────────────────────────────────────────
+   FEATURE A — Scrubbable seek on the playing button body (2026-06-11)
+     The gradient fill on the playing button body IS the scrubber. Drag across
+     the label area to seek; the --clip-progress fill and countdown update live.
+     The .ico (▶/⏸) is the sole play/pause toggle and is NOT a seek surface.
+     setPointerCapture ensures the drag survives leaving the button.
+   FEATURE B — Audio-synced auto-scroll + manual-release (2026-06-11)
+     While a clip plays, `timeupdate` proportionally scrolls the page
+     (currentTime/duration → scrollY). Wheel, touchstart, or nav-key events
+     immediately set userTookOver=true, stopping auto-scroll for that playback.
+     prefers-reduced-motion: skip smooth-scroll easing. */
 (function () {
   'use strict';
   var PANEL_KIND = { summary: 0, shortened: 1, section: 2 };
   var INLINE_KIND = { dialogue: 1, phrase: 1, 'grammar-pearl': 1, 'story-verbatim': 1, 'story-description': 1 };
 
   var audio = new Audio();
-  var active = null; // { btn, glowEl, idle }
+  var active = null; // { btn, glowEl, idle, timerEl, scrubEl, sectionId }
+
+  /* ── Feature B state ───────────────────────────────────────── */
+  var userTookOver = false;      // set on manual scroll; cleared on fresh play
+  var isAutoScrolling = false;   // bracketed around our own scrollTo calls
+  var _prefersReducedMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  /* Detect manual-scroll intent. All three signals reliably indicate the user
+     is intentionally scrolling — not our programmatic scrollTo. */
+  window.addEventListener('wheel', function () {
+    if (!isAutoScrolling) userTookOver = true;
+  }, { passive: true });
+  window.addEventListener('touchstart', function () {
+    if (!isAutoScrolling) userTookOver = true;
+  }, { passive: true });
+  /* Arrow/Page/Space keys that move the viewport */
+  window.addEventListener('keydown', function (e) {
+    if (isAutoScrolling) return;
+    var scrollKeys = ['ArrowDown', 'ArrowUp', 'PageDown', 'PageUp', ' '];
+    if (scrollKeys.indexOf(e.key) !== -1) userTookOver = true;
+  });
+
+  /* ── Feature B — timeupdate handler ───────────────────────── */
+  /* Chapter-aware auto-scroll (Approach A, 2026-06-11):
+     - Section clips (those with a sectionId matching a chapter anchor) scroll
+       proportionally WITHIN that chapter's section bounds:
+         target = sectionTop + ratio * max(0, sectionHeight - innerHeight)
+       clamped to [sectionTop, sectionTop + max(0, sectionHeight - innerHeight)].
+     - Summary / non-anchored clips keep the old whole-page proportional scroll.
+     The sectionId is stored in active.sectionId (set by play() for section clips). */
+  audio.addEventListener('timeupdate', function () {
+    if (userTookOver) return;
+    if (!active) return;
+    var dur = audio.duration;
+    if (!isFinite(dur) || dur <= 0) return;
+    var ratio = audio.currentTime / dur;
+    var targetTop;
+    var sectionEl = active.sectionId ? document.getElementById(active.sectionId) : null;
+    if (sectionEl) {
+      // Section clip: scroll within this chapter's section.
+      // getBoundingClientRect() returns viewport-relative — convert to document-absolute.
+      var rect = sectionEl.getBoundingClientRect();
+      var sectionTop = rect.top + window.scrollY;
+      var sectionHeight = sectionEl.offsetHeight;
+      var overflow = Math.max(0, sectionHeight - window.innerHeight);
+      targetTop = Math.round(sectionTop + ratio * overflow);
+    } else {
+      // Summary / whole-lesson clip: whole-page proportional.
+      var maxScroll = document.documentElement.scrollHeight - window.innerHeight;
+      if (maxScroll <= 0) return;
+      targetTop = Math.round(ratio * maxScroll);
+    }
+    isAutoScrolling = true;
+    window.scrollTo({ top: targetTop, behavior: _prefersReducedMotion ? 'auto' : 'smooth' });
+    // Clear the flag after a short tick — enough for the browser to register it
+    // as programmatic before any scroll event fires back to our wheel listener.
+    setTimeout(function () { isAutoScrolling = false; }, 80);
+  });
+
+  /* ── Progress fill + countdown helpers ────────────────────── */
+  var _progressTimer = null;
+
+  function _clearProgress() {
+    if (_progressTimer) { clearInterval(_progressTimer); _progressTimer = null; }
+    if (active && active.btn) {
+      active.btn.style.removeProperty('--clip-progress');
+      if (active.timerEl) { active.timerEl.textContent = ''; }
+    }
+  }
+
+  function _fmtRemaining(secs) {
+    if (!isFinite(secs) || secs < 0) return '';
+    var s = Math.ceil(secs);
+    var m = Math.floor(s / 60);
+    var ss = s % 60;
+    return m + ':' + (ss < 10 ? '0' : '') + ss;
+  }
+
+  /* Update fill + countdown. Called by the interval tick AND during scrub drags. */
+  function _applyProgress(progress) {
+    if (!active) return;
+    active.btn.style.setProperty('--clip-progress', progress);
+    if (active.timerEl) {
+      var dur = audio.duration;
+      active.timerEl.textContent = isFinite(dur) ? _fmtRemaining(dur - audio.currentTime) : '';
+    }
+  }
+
+  function _startProgress() {
+    if (_progressTimer) clearInterval(_progressTimer);
+    function tick() {
+      var dur = audio.duration;
+      if (!isFinite(dur) || dur <= 0) { return; } // wait for loadedmetadata
+      _applyProgress(audio.currentTime / dur);
+    }
+    _progressTimer = setInterval(tick, 200);
+    tick(); // immediate first update
+  }
+
+  /* ── Feature A — button-body seek wiring ──────────────────── */
+  /* Seek to a fraction [0,1] of the current clip's duration.
+     Guards: duration not-yet-loaded → no-op (avoids NaN seek). */
+  function _seekTo(fraction) {
+    var dur = audio.duration;
+    if (!isFinite(dur) || dur <= 0) return;
+    fraction = Math.max(0, Math.min(1, fraction));
+    audio.currentTime = fraction * dur;
+    _applyProgress(fraction);
+  }
+
+  /* Compute seek fraction from a pointer event over the button element. */
+  function _fractionFromBtn(e, btn) {
+    var rect = btn.getBoundingClientRect();
+    if (rect.width <= 0) return 0;
+    return (e.clientX - rect.left) / rect.width;
+  }
+
+  /* Wire seek drag onto the button body (excluding the .ico). Called once per
+     panel button so listeners are attached only once, not repeatedly.
+     A pointerdown that starts inside .ico is ignored (play/pause zone).
+     A pointerdown anywhere else on the button body seeks only if the button
+     is currently playing; otherwise falls through to the click handler. */
+  function _wireBodyScrubber(btn) {
+    if (btn._scrubWired) return;
+    btn._scrubWired = true;
+
+    var dragging = false;
+    var didSeek = false;   // set true when a drag moves enough to be a real seek
+
+    btn.addEventListener('pointerdown', function (e) {
+      // Only engage scrub if this button IS the currently playing one.
+      if (!active || active.btn !== btn) return;
+      // Ignore clicks that originate inside the play/pause icon.
+      if (e.target.closest && e.target.closest('.ico')) return;
+      // Don't start drag on the timer label (right edge).
+      if (e.target.classList && e.target.classList.contains('chiron-clip-timer')) return;
+      dragging = true;
+      didSeek = false;
+      btn.setPointerCapture(e.pointerId);
+      // Seek immediately on tap (no drag needed for point-seek).
+      _seekTo(_fractionFromBtn(e, btn));
+      didSeek = true;
+      e.preventDefault(); // prevent text selection while dragging
+    });
+
+    btn.addEventListener('pointermove', function (e) {
+      if (!dragging) return;
+      if (!active || active.btn !== btn) { dragging = false; return; }
+      e.preventDefault();
+      _seekTo(_fractionFromBtn(e, btn));
+      didSeek = true;
+    });
+
+    function onUp(e) {
+      if (!dragging) return;
+      dragging = false;
+      if (active && active.btn === btn) {
+        _seekTo(_fractionFromBtn(e, btn));
+      }
+      btn.releasePointerCapture(e.pointerId);
+      /* If the user dragged (didSeek), suppress the subsequent click so it
+         doesn't toggle play/pause. We use a one-shot capture on the btn. */
+      if (didSeek) {
+        btn._suppressNextClick = true;
+      }
+      didSeek = false;
+    }
+
+    btn.addEventListener('pointerup', onUp);
+    btn.addEventListener('pointercancel', function () { dragging = false; didSeek = false; });
+  }
+
   function setIco(btn, ch) { var i = btn.querySelector('.ico'); if (i) i.textContent = ch; }
+
   function clearActive() {
+    _clearProgress();
     if (!active) return;
     if (active.glowEl) active.glowEl.classList.remove('chiron-listening');
-    if (active.btn) { active.btn.classList.remove('playing'); setIco(active.btn, active.idle); }
+    if (active.btn) { active.btn.classList.remove('playing'); setIco(active.btn, active.idle); active.btn.style.removeProperty('--clip-progress'); }
+    if (active.timerEl) { active.timerEl.textContent = ''; }
     active = null;
+    userTookOver = false; // reset for next play
   }
   audio.addEventListener('ended', clearActive);
+  audio.addEventListener('pause', function () {
+    // On pause (not ended), freeze progress but keep it visible; clear interval.
+    if (_progressTimer) { clearInterval(_progressTimer); _progressTimer = null; }
+  });
 
   function play(clip, btn, glowEl, idleIco) {
     if (active && active.btn === btn) { audio.pause(); audio.currentTime = 0; clearActive(); return; }
     clearActive();
+    userTookOver = false; // fresh play: re-enable auto-scroll
     audio.src = clip.audioPath;
     audio.play().then(function () {
-      active = { btn: btn, glowEl: glowEl || null, idle: idleIco };
+      // Find or create the countdown timer element for this button
+      var timerEl = btn.querySelector('.chiron-clip-timer');
+      if (!timerEl) {
+        timerEl = document.createElement('span');
+        timerEl.className = 'chiron-clip-timer';
+        btn.appendChild(timerEl);
+      }
+      // Wire body-seek on panel buttons (only once; no-op on repeat calls)
+      if (btn.classList.contains('chiron-listen-btn')) {
+        _wireBodyScrubber(btn);
+      }
+      // sectionId drives chapter-aware scroll (Approach A): set for 'section' artifact clips,
+      // null/undefined for summary/shortened (whole-page scroll).
+      var sid = (clip.artifact === 'section' && clip.sectionId) ? clip.sectionId : null;
+      active = { btn: btn, glowEl: glowEl || null, idle: idleIco, timerEl: timerEl, sectionId: sid };
       btn.classList.add('playing'); setIco(btn, '⏸');
       if (glowEl) { glowEl.classList.add('chiron-listening'); glowEl.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
+      _startProgress();
     }).catch(function () { btn.classList.add('err'); setTimeout(function () { btn.classList.remove('err'); }, 1600); });
   }
 
@@ -1112,7 +1318,19 @@
         var ico = document.createElement('span'); ico.className = 'ico'; ico.textContent = '▶';
         var lbl = document.createElement('span'); lbl.className = 'lbl'; lbl.textContent = panelLabel(c);
         btn.appendChild(ico); btn.appendChild(lbl);
-        btn.addEventListener('click', function () {
+        /* Play/pause fires on click anywhere on the button UNLESS:
+           - A seek drag just completed (_suppressNextClick flag), OR
+           - The click originated outside the .ico while this btn is playing
+             (body clicks during play are seek-taps, handled by pointerdown). */
+        btn.addEventListener('click', function (e) {
+          // Suppress click fired after a seek drag
+          if (btn._suppressNextClick) { btn._suppressNextClick = false; return; }
+          // If the button is currently playing and the click is NOT on the .ico,
+          // it was handled as a seek-tap in pointerdown — don't also toggle play/pause.
+          if (active && active.btn === btn) {
+            var icoEl = btn.querySelector('.ico');
+            if (icoEl && !icoEl.contains(e.target)) return;
+          }
           var glow = (c.artifact === 'section' && c.sectionId) ? document.getElementById(c.sectionId) : null;
           play(c, btn, glow, '▶');
         });
@@ -1160,4 +1378,478 @@
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
   else init();
+})();
+
+/* ── MOBILE RESPONSIVE LAYER ──────────────────────────────────────
+   Feature A — Hamburger TOC drawer (mobile ≤768px only)
+   Feature B — Bottom-bar mini-player (mobile ≤768px only)
+   All logic is width-guarded: initialises only if window.innerWidth ≤ 768px
+   (checked once at DOMContentLoaded and on each orientationchange/resize via
+   a single MQL listener). Above 768px: nothing is injected, no side-effects.
+   ─────────────────────────────────────────────────────────────────── */
+(function () {
+  'use strict';
+
+  var MQL = window.matchMedia && window.matchMedia('(max-width: 768px)');
+
+  /* ── STATE ──────────────────────────────────────────────────────── */
+  var hamburger = null;       // <button class="chiron-hamburger">
+  var backdrop  = null;       // <div class="chiron-drawer-backdrop">
+  var sidebar   = null;       // <aside class="side">
+  var bottomBar = null;       // <div class="chiron-bottom-bar">
+  var barPlayBtn   = null;
+  var barClipName  = null;
+  var barCountdown = null;
+  var barProgress  = null;
+  var barSheet     = null;
+  var barExpandBtn = null;
+
+  var mobileAudio  = null;    // shared Audio element for mobile (mirrors desktop engine state)
+  var activeClip   = null;    // { clip, playing: bool }
+  var mobileClips  = [];      // filled from manifest
+  var barTimer     = null;
+  var sheetOpen    = false;
+  var drawerOpen_  = false;
+
+  /* ─── Feature A helpers ────────────────────────────────────────── */
+  function openDrawer() {
+    if (!sidebar) return;
+    drawerOpen_ = true;
+    sidebar.classList.add('drawer-open');
+    backdrop.classList.add('open');
+    document.body.classList.add('drawer-scroll-lock');
+    hamburger.setAttribute('aria-expanded', 'true');
+    hamburger.textContent = '✕';
+  }
+
+  function closeDrawer() {
+    if (!sidebar) return;
+    drawerOpen_ = false;
+    sidebar.classList.remove('drawer-open');
+    backdrop.classList.remove('open');
+    document.body.classList.remove('drawer-scroll-lock');
+    hamburger.setAttribute('aria-expanded', 'false');
+    hamburger.textContent = '☰';
+  }
+
+  function toggleDrawer() {
+    drawerOpen_ ? closeDrawer() : openDrawer();
+  }
+
+  /* ─── Feature A — inject hamburger + backdrop ──────────────────── */
+  function injectHamburger() {
+    if (hamburger) return; // idempotent
+    sidebar = document.querySelector('aside.side');
+    if (!sidebar) return;
+
+    // Backdrop
+    backdrop = document.createElement('div');
+    backdrop.className = 'chiron-drawer-backdrop';
+    backdrop.setAttribute('aria-hidden', 'true');
+    document.body.appendChild(backdrop);
+    backdrop.addEventListener('click', closeDrawer);
+
+    // Hamburger button
+    hamburger = document.createElement('button');
+    hamburger.type = 'button';
+    hamburger.className = 'chiron-hamburger';
+    hamburger.textContent = '☰';
+    hamburger.setAttribute('aria-label', 'Open chapter list');
+    hamburger.setAttribute('aria-expanded', 'false');
+    hamburger.setAttribute('aria-controls', 'side-drawer');
+    hamburger.addEventListener('click', toggleDrawer);
+    document.body.appendChild(hamburger);
+
+    // Label the sidebar for a11y
+    sidebar.setAttribute('id', 'side-drawer');
+    sidebar.setAttribute('role', 'dialog');
+    sidebar.setAttribute('aria-label', 'Chapter list');
+
+    // Close drawer when a TOC link is tapped
+    var links = sidebar.querySelectorAll('a');
+    links.forEach(function (a) {
+      a.addEventListener('click', function () {
+        if (drawerOpen_) closeDrawer();
+      });
+    });
+  }
+
+  /* ─── Feature B helpers ────────────────────────────────────────── */
+  function fmtTime(secs) {
+    if (!isFinite(secs) || secs < 0) return '';
+    var s = Math.ceil(secs);
+    var m = Math.floor(s / 60);
+    var ss = s % 60;
+    return m + ':' + (ss < 10 ? '0' : '') + ss;
+  }
+
+  function setBarProgress(fraction) {
+    if (!barProgress) return;
+    barProgress.style.width = (Math.min(1, Math.max(0, fraction)) * 100) + '%';
+  }
+
+  function updateBarDisplay() {
+    if (!mobileAudio || !activeClip) return;
+    var dur = mobileAudio.duration;
+    if (isFinite(dur) && dur > 0) {
+      setBarProgress(mobileAudio.currentTime / dur);
+    }
+    if (barCountdown) {
+      barCountdown.textContent = isFinite(dur) ? fmtTime(dur - mobileAudio.currentTime) : '';
+    }
+    // Sync playing state on sheet buttons
+    mobileClips.forEach(function (c, i) {
+      var btn = barSheet && barSheet.querySelector('[data-clip-index="' + i + '"]');
+      if (!btn) return;
+      var isPlaying = activeClip && activeClip.clip === c && !mobileAudio.paused;
+      btn.classList.toggle('playing', isPlaying);
+      var ico = btn.querySelector('.ico');
+      if (ico) ico.textContent = isPlaying ? '⏸' : '▶';
+    });
+  }
+
+  function startBarTimer() {
+    if (barTimer) clearInterval(barTimer);
+    barTimer = setInterval(updateBarDisplay, 200);
+  }
+
+  function stopBarTimer() {
+    if (barTimer) { clearInterval(barTimer); barTimer = null; }
+  }
+
+  function playBarClip(clip) {
+    if (!mobileAudio) return;
+    if (activeClip && activeClip.clip === clip) {
+      // Toggle play/pause
+      if (mobileAudio.paused) {
+        mobileAudio.play().catch(function () {});
+      } else {
+        mobileAudio.pause();
+        stopBarTimer();
+        barPlayBtn.textContent = '▶';
+      }
+      return;
+    }
+    // New clip
+    activeClip = { clip: clip };
+    mobileAudio.src = clip.audioPath;
+    mobileAudio.play().then(function () {
+      barPlayBtn.textContent = '⏸';
+      barPlayBtn.classList.remove('idle');
+      barClipName.textContent = clip._label || 'Playing';
+      barClipName.classList.remove('idle');
+      startBarTimer();
+      updateBarDisplay();
+    }).catch(function () {
+      barPlayBtn.textContent = '▶';
+    });
+  }
+
+  function stopBarAudio() {
+    if (!mobileAudio) return;
+    mobileAudio.pause();
+    mobileAudio.currentTime = 0;
+    stopBarTimer();
+    activeClip = null;
+    barPlayBtn.textContent = '▶';
+    barPlayBtn.classList.add('idle');
+    barClipName.textContent = 'Tap ▲ to choose a clip';
+    barClipName.classList.add('idle');
+    setBarProgress(0);
+    if (barCountdown) barCountdown.textContent = '';
+    updateBarDisplay();
+  }
+
+  function openSheet() {
+    if (!bottomBar || !barSheet) return;
+    sheetOpen = true;
+    bottomBar.classList.add('sheet-open');
+    if (barExpandBtn) barExpandBtn.textContent = '▼';
+  }
+
+  function closeSheet() {
+    if (!bottomBar) return;
+    sheetOpen = false;
+    bottomBar.classList.remove('sheet-open');
+    if (barExpandBtn) barExpandBtn.textContent = '▲';
+  }
+
+  function buildSheetList(clips) {
+    if (!barSheet) return;
+    barSheet.innerHTML = '';
+    var title = document.createElement('div');
+    title.className = 'chiron-bar-sheet-title';
+    title.textContent = 'Choose a clip';
+    barSheet.appendChild(title);
+
+    // Group: Whole lesson first, then by section
+    var wholeLessonClips = clips.filter(function (c) { return c.artifact === 'summary' || c.artifact === 'shortened'; });
+    var sectionClips = clips.filter(function (c) { return c.artifact === 'section'; });
+    var ordered = wholeLessonClips.concat(sectionClips);
+
+    ordered.forEach(function (c, i) {
+      // Map back to original index for data-clip-index
+      var origIdx = clips.indexOf(c);
+      var btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'chiron-bar-clip-btn';
+      btn.setAttribute('data-clip-index', origIdx);
+      var ico = document.createElement('span');
+      ico.className = 'ico';
+      ico.textContent = '▶';
+      var lbl = document.createElement('span');
+      lbl.textContent = c._label || c.sectionId || 'Clip';
+      btn.appendChild(ico);
+      btn.appendChild(lbl);
+      btn.addEventListener('click', function () {
+        playBarClip(c);
+        closeSheet();
+      });
+      barSheet.appendChild(btn);
+    });
+  }
+
+  /* ─── Feature B — seek on bar via pointer drag ─────────────────── */
+  function wireBarSeek() {
+    if (!barProgress || !bottomBar) return;
+    var barRow = bottomBar.querySelector('.chiron-bar-row');
+    if (!barRow) return;
+    var dragging = false;
+
+    function fractionFromEvent(e) {
+      var rect = barRow.getBoundingClientRect();
+      if (rect.width <= 0) return 0;
+      return Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+    }
+
+    function seekTo(fraction) {
+      if (!mobileAudio || !activeClip) return;
+      var dur = mobileAudio.duration;
+      if (!isFinite(dur) || dur <= 0) return;
+      mobileAudio.currentTime = fraction * dur;
+      setBarProgress(fraction);
+      if (barCountdown) barCountdown.textContent = fmtTime(dur - mobileAudio.currentTime);
+    }
+
+    barRow.addEventListener('pointerdown', function (e) {
+      if (!activeClip || mobileAudio.paused) return;
+      // Don't interfere with play/pause button
+      if (e.target.closest && e.target.closest('.chiron-bar-play-btn')) return;
+      if (e.target.closest && e.target.closest('.chiron-bar-expand-btn')) return;
+      dragging = true;
+      barRow.setPointerCapture(e.pointerId);
+      barRow.classList.add('seeking');
+      seekTo(fractionFromEvent(e));
+      e.preventDefault();
+    });
+
+    barRow.addEventListener('pointermove', function (e) {
+      if (!dragging) return;
+      seekTo(fractionFromEvent(e));
+      e.preventDefault();
+    });
+
+    barRow.addEventListener('pointerup', function (e) {
+      if (!dragging) return;
+      dragging = false;
+      barRow.classList.remove('seeking');
+      seekTo(fractionFromEvent(e));
+      barRow.releasePointerCapture(e.pointerId);
+    });
+
+    barRow.addEventListener('pointercancel', function () {
+      dragging = false;
+      barRow.classList.remove('seeking');
+    });
+  }
+
+  /* ─── Feature B — inject bottom bar ───────────────────────────── */
+  function injectBottomBar(clips) {
+    if (bottomBar) return; // idempotent
+    mobileAudio = new Audio();
+
+    // Label clips (reuse panelLabel logic)
+    clips.forEach(function (c) {
+      if (c.artifact === 'summary') { c._label = 'Summary'; return; }
+      if (c.artifact === 'shortened') { c._label = 'Full lecture'; return; }
+      if (c.sectionId) {
+        var el = document.getElementById(c.sectionId);
+        var h = el && el.querySelector('h1,h2,h3,[data-section-title]');
+        c._label = h && h.textContent.trim()
+          ? h.textContent.trim().replace(/^\s*\d+[\.\)]?\s*/, '')
+          : (c.sectionId || 'Section');
+        return;
+      }
+      c._label = 'Clip';
+    });
+
+    mobileClips = clips;
+
+    // Build DOM
+    bottomBar = document.createElement('div');
+    bottomBar.className = 'chiron-bottom-bar';
+    bottomBar.setAttribute('role', 'region');
+    bottomBar.setAttribute('aria-label', 'Audio player');
+
+    // Progress line
+    barProgress = document.createElement('div');
+    barProgress.className = 'chiron-bar-progress-line';
+    barProgress.setAttribute('role', 'progressbar');
+    barProgress.setAttribute('aria-valuemin', '0');
+    barProgress.setAttribute('aria-valuemax', '100');
+    barProgress.setAttribute('aria-valuenow', '0');
+
+    // Main row
+    var row = document.createElement('div');
+    row.className = 'chiron-bar-row';
+
+    barPlayBtn = document.createElement('button');
+    barPlayBtn.type = 'button';
+    barPlayBtn.className = 'chiron-bar-play-btn idle';
+    barPlayBtn.textContent = '▶';
+    barPlayBtn.setAttribute('aria-label', 'Play/Pause');
+    barPlayBtn.addEventListener('click', function (e) {
+      e.stopPropagation();
+      if (!activeClip) {
+        // Open sheet if nothing is playing yet
+        openSheet();
+        return;
+      }
+      if (mobileAudio.paused) {
+        mobileAudio.play().catch(function () {});
+        barPlayBtn.textContent = '⏸';
+        startBarTimer();
+      } else {
+        mobileAudio.pause();
+        stopBarTimer();
+        barPlayBtn.textContent = '▶';
+      }
+    });
+
+    barClipName = document.createElement('div');
+    barClipName.className = 'chiron-bar-clip-name idle';
+    barClipName.textContent = 'Tap ▲ to choose a clip';
+
+    barCountdown = document.createElement('div');
+    barCountdown.className = 'chiron-bar-countdown';
+
+    barExpandBtn = document.createElement('button');
+    barExpandBtn.type = 'button';
+    barExpandBtn.className = 'chiron-bar-expand-btn';
+    barExpandBtn.textContent = '▲';
+    barExpandBtn.setAttribute('aria-label', 'Show clip list');
+    barExpandBtn.addEventListener('click', function (e) {
+      e.stopPropagation();
+      sheetOpen ? closeSheet() : openSheet();
+    });
+
+    row.appendChild(barPlayBtn);
+    row.appendChild(barClipName);
+    row.appendChild(barCountdown);
+    row.appendChild(barExpandBtn);
+
+    // Sheet (clip list)
+    barSheet = document.createElement('div');
+    barSheet.className = 'chiron-bar-sheet';
+    barSheet.setAttribute('aria-label', 'Clip list');
+
+    bottomBar.appendChild(barProgress);
+    bottomBar.appendChild(row);
+    bottomBar.appendChild(barSheet);
+    document.body.appendChild(bottomBar);
+
+    // Build sheet clip list
+    buildSheetList(clips);
+
+    // Wire bar-level seek
+    wireBarSeek();
+
+    // Audio event handlers
+    mobileAudio.addEventListener('ended', function () {
+      stopBarTimer();
+      barPlayBtn.textContent = '▶';
+      activeClip = null;
+      barClipName.textContent = 'Tap ▲ to choose a clip';
+      barClipName.classList.add('idle');
+      barPlayBtn.classList.add('idle');
+      setBarProgress(0);
+      if (barCountdown) barCountdown.textContent = '';
+      updateBarDisplay();
+    });
+
+    mobileAudio.addEventListener('pause', function () {
+      stopBarTimer();
+      if (barPlayBtn) barPlayBtn.textContent = '▶';
+      updateBarDisplay();
+    });
+
+    mobileAudio.addEventListener('play', function () {
+      if (barPlayBtn) { barPlayBtn.textContent = '⏸'; barPlayBtn.classList.remove('idle'); }
+      startBarTimer();
+    });
+  }
+
+  /* ─── Main init: wires everything ─────────────────────────────── */
+  function initMobile() {
+    // Feature A — always inject hamburger on mobile
+    injectHamburger();
+
+    // Feature B — fetch manifest and inject bottom bar if clips exist
+    // Use the same manifest path as the desktop player
+    if (window.__chironAudioManifest) {
+      var ready = (window.__chironAudioManifest.clips || []).filter(function (c) {
+        return c.status === 'done' && c.audioPath;
+      });
+      if (ready.length) injectBottomBar(ready);
+      return;
+    }
+    fetch('audio/manifest.json', { cache: 'no-store' })
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (m) {
+        if (!m || !m.clips) return;
+        var ready = m.clips.filter(function (c) { return c.status === 'done' && c.audioPath; });
+        if (ready.length) injectBottomBar(ready);
+      })
+      .catch(function () { /* no audio — no bottom bar, no-op */ });
+  }
+
+  /* ─── Close sheet when tapping outside it ──────────────────────── */
+  document.addEventListener('click', function (e) {
+    if (!sheetOpen || !bottomBar) return;
+    if (!bottomBar.contains(e.target)) closeSheet();
+  });
+
+  /* ─── MQL — guard: only run on mobile; tear down on resize above 768px ─ */
+  function onMqlChange(mq) {
+    if (mq.matches) {
+      // Entered mobile range — init if not already done
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initMobile);
+      } else {
+        initMobile();
+      }
+    } else {
+      // Exited mobile range — hide injected elements (desktop layout takes over)
+      if (hamburger) hamburger.style.display = 'none';
+      if (backdrop)  backdrop.style.display  = 'none';
+      if (bottomBar) bottomBar.style.display = 'none';
+      // Ensure sidebar shows normally
+      if (sidebar) {
+        sidebar.classList.remove('drawer-open');
+        sidebar.style.removeProperty('display');
+      }
+      document.body.classList.remove('drawer-scroll-lock');
+      drawerOpen_ = false;
+    }
+  }
+
+  if (MQL) {
+    if (MQL.addEventListener) {
+      MQL.addEventListener('change', onMqlChange);
+    } else if (MQL.addListener) {
+      MQL.addListener(onMqlChange); // Safari <14 fallback
+    }
+    // Run immediately
+    onMqlChange(MQL);
+  }
 })();

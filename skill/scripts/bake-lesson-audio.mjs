@@ -11,6 +11,8 @@
  *
  * Options:
  *   --persona <id>     Override active persona (default: activePersonaFor('language-it'))
+ *   --domain <domain>  Lesson domain for voice routing: language-it | medicine | code |
+ *                      concepts | research-paper (default: 'language-it')
  *   --no-stories       Skip story-verbatim and story-description artifacts
  *   --no-dialogues     Skip dialogue artifacts
  *   --no-qc            Disable Gemini audio QC (default: on when GEMINI_API_KEY/GOOGLE_API_KEY set)
@@ -47,6 +49,7 @@ if (argv.length === 0 || argv[0] === '--help') {
 
 const lessonDir = path.resolve(argv[0]);
 let personaIdArg = null;
+let domainArg = null;
 let skipStories = false;
 let skipDialogues = false;
 let dryRun = false;
@@ -54,6 +57,7 @@ let noQc = false;
 
 for (let i = 1; i < argv.length; i++) {
   if (argv[i] === '--persona' && argv[i + 1]) { personaIdArg = argv[++i]; continue; }
+  if (argv[i] === '--domain' && argv[i + 1]) { domainArg = argv[++i]; continue; }
   if (argv[i] === '--no-stories') { skipStories = true; continue; }
   if (argv[i] === '--no-dialogues') { skipDialogues = true; continue; }
   if (argv[i] === '--no-qc') { noQc = true; continue; }
@@ -82,7 +86,9 @@ if (!fs.existsSync(VOICES_REGISTRY)) {
 }
 const voiceRegistry = JSON.parse(fs.readFileSync(VOICES_REGISTRY, 'utf8'));
 
-const personaId = personaIdArg ?? activePersonaFor('language-it') ?? 'lucrezia';
+/** domain drives both activePersonaFor lookup and resolveLecture voice routing */
+const domain = domainArg ?? 'language-it';
+const personaId = personaIdArg ?? activePersonaFor(domain) ?? 'lucrezia';
 const persona = loadPersona(personaId);
 if (!persona) {
   process.stderr.write(`bake-lesson-audio: could not load persona '${personaId}'\n`);
@@ -100,7 +106,7 @@ for (const voiceId of Object.values(persona.voices)) {
   voices[voiceId] = voiceRegistry[voiceId];
 }
 
-process.stderr.write(`[bake-lesson-audio] persona=${personaId}  voices=${Object.keys(voices).join(', ')}\n`);
+process.stderr.write(`[bake-lesson-audio] persona=${personaId}  domain=${domain}  voices=${Object.keys(voices).join(', ')}\n`);
 
 // ---------------------------------------------------------------------------
 // Step 2 — Parse lesson.html
@@ -379,7 +385,7 @@ const toResolve = [
 
 let resolvedArtifacts = [];
 if (toResolve.length > 0) {
-  resolvedArtifacts = resolveLecture({ artifacts: toResolve }, 'language-it');
+  resolvedArtifacts = resolveLecture({ artifacts: toResolve }, domain);
 }
 
 // Dialogue artifacts are pre-resolved — strip the private bookkeeping fields before passing to bakeAudio
@@ -394,7 +400,7 @@ if (dryRun) {
   process.stdout.write('\n=== bake-lesson-audio DRY RUN ===\n');
   process.stdout.write(`lesson-dir : ${lessonDir}\n`);
   process.stdout.write(`course-id  : ${courseId}\n`);
-  process.stdout.write(`persona    : ${personaId}  voices: ${Object.keys(voices).join(', ')}\n\n`);
+  process.stdout.write(`persona    : ${personaId}  domain: ${domain}  voices: ${Object.keys(voices).join(', ')}\n\n`);
 
   process.stdout.write('Artifacts to bake:\n');
   process.stdout.write('──────────────────────────────────────────────────────────\n');

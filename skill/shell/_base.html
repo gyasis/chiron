@@ -30,6 +30,12 @@
     }
   </style>
 
+  <!-- audio/manifest.js sets window.__chironAudioManifest; no-op if absent.
+       Required for file:// lessons (e.g. opened on a phone from an extracted
+       .chiron.zip): fetch('audio/manifest.json') is blocked on file://, so the
+       player falls back to this global. -->
+  <script src="audio/manifest.js" defer></script>
+
   <script src="main.js" defer></script>
 </head>
 <body>
