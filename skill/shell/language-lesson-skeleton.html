@@ -302,7 +302,7 @@
     }
 
     /* ---- Responsive: collapse sidebar to top strip on narrow screens ---- */
-    @media (max-width: 880px) {
+    @media (min-width: 769px) and (max-width: 880px) {
       body { grid-template-columns: 1fr; }
       aside.side {
         position: relative; height: auto;
@@ -1430,7 +1430,21 @@
   .chiron-qc-pop { position:fixed; max-width:290px; background:var(--chiron-surface,#fff); color:var(--chiron-fg,#222); border:1px solid var(--chiron-border,#ccc); border-left:3px solid var(--chiron-warning,#b45309); border-radius:8px; padding:10px 12px; font-size:12px; line-height:1.45; box-shadow:0 8px 24px rgba(0,0,0,.18); z-index:9999; }
   .chiron-qc-pop h4 { margin:0 0 5px; font-size:11px; text-transform:uppercase; letter-spacing:.05em; color:var(--chiron-warning,#b45309); }
   .chiron-qc-pop .t { font-family:monospace; color:var(--chiron-accent,#b3522e); font-weight:700; }
-</style>
+
+    /* RESPONSIVE-CONTENT-FIX (2026-06-12): true mobile responsiveness — tables and wide
+       content must never exceed the viewport (was: .v-table forced 473px wide,
+       pushing the page to 498px on a 390px screen). */
+    @media (max-width: 768px) {
+      .v-table, .sr-conj-table { table-layout: fixed; }
+      .v-table th, .v-table td,
+      .sr-conj-table th, .sr-conj-table td { word-break: break-word; overflow-wrap: anywhere; }
+      .lesson-shell, .lesson-section, .vocab-arc, .turn { max-width: 100%; overflow-wrap: anywhere; }
+      img, pre, code, table, video, iframe { max-width: 100% !important; }
+      /* belt-and-suspenders: clip any last stray px so nothing spills off-screen */
+      html, body { overflow-x: hidden; }
+    }
+
+  </style>
 <script>
 // Audio-QC info-icon: reads audio/qc-report.json (written by the 2-loop Gemini QC)
 // and decorates any audio control that still has a flagged defect with an ℹ️.
