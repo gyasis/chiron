@@ -1478,6 +1478,39 @@
       .chiron-table-scroll > .sr-conj-table { min-width: 22rem; }
     }
 
+  
+    /* RESPONSIVE-TABLE-CARDS (2026-06-12): vocab/sentence tables (.v-table) become STACKED
+       CARDS on mobile — no horizontal scrolling. Each row is a card; Italian
+       leads, English + note stack under it. Supersedes the swipe box for
+       .v-table (later block wins); .sr-conj-table keeps the swipe box. */
+    @media (max-width: 768px) {
+      /* neutralise the swipe wrapper when it holds a vocab table */
+      .chiron-table-scroll:has(> .v-table) {
+        overflow: visible; background: none;
+      }
+      .v-table { display: block; min-width: 0 !important; width: 100%; }
+      .v-table thead { display: none; }
+      .v-table tbody { display: block; }
+      .v-table tr {
+        display: block;
+        border: 1px solid var(--chiron-border);
+        border-radius: var(--chiron-radius-sm);
+        background: var(--chiron-surface);
+        padding: var(--chiron-space-3) var(--chiron-space-4);
+        margin-bottom: var(--chiron-space-3);
+      }
+      .v-table td {
+        display: block;
+        width: 100%;
+        border: none !important;
+        padding: 1px 0 !important;
+        white-space: normal !important;
+      }
+      .v-table td.it { font-size: 1.05rem; line-height: 1.4; }
+      .v-table td:not(.it):not(.ex) { color: var(--chiron-fg-secondary); margin-top: 2px; }
+      .v-table td.ex { margin-top: 4px; }
+    }
+
   </style>
 <script>
 // Audio-QC info-icon: reads audio/qc-report.json (written by the 2-loop Gemini QC)
