@@ -137,16 +137,20 @@ interface QcDefectEntry { time: string; type: string; detail: string; }
 interface QcReportEntry { status: string; defects: QcDefectEntry[]; }
 
 /**
- * Write (or merge) audio/qc-report.json with only artifacts that have
- * surviving defects after the final take. If no defects remain at all,
- * any existing qc-report.json is left as-is (callers decide whether to
- * remove it; typically we just don't write a new one).
+ * Write (or merge) audio/qc-report.json so it always reflects the CURRENT
+ * bake run. For every label in `checked`:
+ *   - if it has surviving defects → upsert the entry (status: needs-review).
+ *   - if it came back clean      → delete any stale entry for that label.
+ * Labels not touched this bake run are left unchanged (they may be from a
+ * separate run that produced a different artifact set).
+ * The report file is removed entirely once all entries are gone.
  */
 function mergeQcReport(
   lessonDir: string,
   entries: Map<string, QcDefectEntry[]>,
+  checked: Set<string>,
 ): void {
-  if (entries.size === 0) return;
+  if (checked.size === 0) return;
 
   const reportPath = join(lessonDir, 'audio', 'qc-report.json');
   let existing: Record<string, QcReportEntry> = {};
@@ -154,11 +158,18 @@ function mergeQcReport(
     existing = JSON.parse(readFileSync(reportPath, 'utf-8')) as Record<string, QcReportEntry>;
   } catch { /* no prior report */ }
 
-  for (const [label, defects] of entries) {
-    existing[label] = {
-      status: 'needs-review',
-      defects,
-    };
+  for (const label of checked) {
+    const defects = entries.get(label);
+    if (defects && defects.length > 0) {
+      existing[label] = { status: 'needs-review', defects };
+    } else {
+      delete existing[label];
+    }
+  }
+
+  if (Object.keys(existing).length === 0) {
+    try { rmSync(reportPath); } catch { /* already gone */ }
+    return;
   }
   writeFileSync(reportPath, JSON.stringify(existing, null, 2));
 }
@@ -312,8 +323,10 @@ export async function bakeAudio(opts: AudioBakeOptions): Promise<AudioClipResult
     : qcAvailable() && process.env['CHIRON_AUDIO_QC'] !== '0';
   const db = new Database(join(lessonDir, '.chiron-state.db'));
   const results: AudioClipResult[] = [];
-  // Accumulate QC defects for the final report (only surviving defects after re-bake).
+  // Accumulate QC results for the final report.
+  // qcReportEntries: labels with SURVIVING defects; qcCheckedLabels: every label QC'd this run.
   const qcReportEntries = new Map<string, QcDefectEntry[]>();
+  const qcCheckedLabels = new Set<string>();
 
   const upsertSql = `
     INSERT INTO audio_clips
@@ -453,8 +466,9 @@ export async function bakeAudio(opts: AudioBakeOptions): Promise<AudioClipResult
               finalQcDefects = take1.defects;
             }
           }
+          const lbl = panelLabel(art.kind, sid);
+          qcCheckedLabels.add(lbl);
           if (finalQcDefects.length > 0) {
-            const lbl = panelLabel(art.kind, sid);
             qcReportEntries.set(lbl, finalQcDefects.map((d) => ({
               time: parseDefectTime(d),
               type: inferDefectType(d),
@@ -491,8 +505,8 @@ export async function bakeAudio(opts: AudioBakeOptions): Promise<AudioClipResult
     }
 
     writeManifest(db, lessonDir, opts.courseId);
-    if (qcEnabled && qcReportEntries.size > 0) {
-      mergeQcReport(lessonDir, qcReportEntries);
+    if (qcEnabled && qcCheckedLabels.size > 0) {
+      mergeQcReport(lessonDir, qcReportEntries, qcCheckedLabels);
     }
     const qcSummary = qcEnabled
       ? `, qc: ${baked} checked, ${qcReportEntries.size} with surviving defects${qcReportEntries.size > 0 ? ' (qc-report.json written)' : ''}`
