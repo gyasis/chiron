@@ -20,6 +20,7 @@ each lesson re-invented its own shell.
   component CSS (the only hex values appear inside `.chiron-listen*` /
   `.chiron-play-inline` as `var(…, #fallback)` fallbacks for tokenless
   environments).
+- **Mobile player** — hamburger TOC drawer + bottom-bar mini-player + full-screen now-playing overlay (2026-06-12). Width-gated to ≤768px via `matchMedia`. CSS tokens remapped from `--color-*`/`--radius-*`/`--space-*` to `--chiron-*`. Coherent with the ≤880px grid-collapse rule: on ≤768px the sidebar goes off-canvas (fixed, slide-in) instead of stacking inline. Future lessons built from this skeleton automatically inherit the mobile layer.
 - **Audio player** — the floating 🎧 panel IIFE, verbatim from `skill/shell/main.js`.
   Grouped into "Full lesson" (summary/shortened artifacts) and "By section"
   (section artifacts). Inline ▶ buttons wired to anchored elements (vocab

@@ -328,6 +328,455 @@
       main.main { height: auto; overflow-y: visible; }
       .lesson-shell { padding: var(--chiron-space-5) var(--chiron-space-4); }
     }
+
+    /* ── MOBILE LAYER — copied from skill/shell/main.js MOBILE RESPONSIVE LAYER
+       + styles.css @media≤768px, tokens remapped to --chiron-* (2026-06-12)
+       Token map used:
+         --color-surface       → var(--chiron-surface)
+         --color-border        → var(--chiron-border)
+         --color-border-light  → var(--chiron-divider)
+         --color-accent        → var(--chiron-accent)
+         --color-accent-hover  → var(--chiron-accent-light)
+         --color-accent-light  → color-mix(in srgb, var(--chiron-accent) 15%, transparent)
+         --color-text          → var(--chiron-fg)
+         --color-text-secondary→ var(--chiron-fg-secondary)
+         --color-text-muted    → var(--chiron-muted)
+         --color-bg-warm       → var(--chiron-elevated)
+         --radius-sm           → var(--chiron-radius-sm)
+         --radius-full         → 100px
+         --duration-fast       → 0.15s
+         --duration-normal     → 0.25s
+         --ease-out            → ease-out
+         --shadow-md           → var(--chiron-shadow-md)
+         --space-N             → var(--chiron-space-N)
+         --font-mono           → var(--chiron-font-mono)
+         --font-display        → var(--chiron-font-heading)
+         --text-sm             → 0.875rem
+         --text-xs             → 0.75rem
+         --text-xl             → 1.25rem
+         --leading-snug        → 1.35
+    ────────────────────────────────────────────────────────────────────────── */
+
+    /* ── Hamburger button — hidden above 768px ──────────────────────── */
+    .chiron-hamburger { display: none; }
+    /* ── TOC Drawer backdrop — hidden on desktop ──────────────────── */
+    .chiron-drawer-backdrop { display: none; }
+    /* ── Bottom-bar mini-player — hidden on desktop ──────────────── */
+    .chiron-bottom-bar { display: none; }
+    /* ── Full-screen now-playing overlay — hidden on desktop ─────── */
+    .chiron-fs-overlay { display: none; }
+
+    @media (max-width: 768px) {
+
+      /* ── Feature A — Hamburger button ────────────────────────────── */
+      .chiron-hamburger {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: fixed;
+        top: var(--chiron-space-3);
+        left: var(--chiron-space-3);
+        z-index: 10100;
+        width: 44px;
+        height: 44px;
+        background: var(--chiron-surface);
+        border: 1px solid var(--chiron-border);
+        border-radius: var(--chiron-radius-sm);
+        box-shadow: var(--chiron-shadow-md);
+        cursor: pointer;
+        font-size: 1.25rem;
+        color: var(--chiron-fg);
+        transition: background 0.15s;
+        padding: 0;
+        font-family: inherit;
+      }
+      .chiron-hamburger:hover { background: var(--chiron-elevated); }
+
+      /* ── Feature A — TOC Drawer backdrop ─────────────────────────── */
+      .chiron-drawer-backdrop {
+        display: block;
+        position: fixed;
+        inset: 0;
+        z-index: 10050;
+        background: rgba(0,0,0,0.4);
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.25s ease-out;
+      }
+      .chiron-drawer-backdrop.open { opacity: 1; pointer-events: auto; }
+
+      /* ── Feature A — Override the 880px top-strip rule: sidebar goes off-canvas ── */
+      /* On ≤768px the 880px rule fires first (grid collapses) and puts the sidebar
+         inline. We override to make it a fixed off-canvas drawer instead. */
+      body { display: block !important; padding-top: 0; }
+      aside.side {
+        position: fixed !important;
+        top: 0;
+        left: 0;
+        height: 100dvh !important;
+        height: 100vh !important;
+        width: min(280px, 85vw) !important;
+        z-index: 10060;
+        transform: translateX(-110%);
+        transition: transform 0.25s ease-out;
+        border-right: 1px solid var(--chiron-border) !important;
+        border-bottom: none !important;
+        overflow-y: auto;
+        display: block !important;
+        padding: 1.75rem 1.25rem 1.25rem !important;
+        /* Re-enable flex-direction column (overrides the 880px row layout) */
+        flex-direction: column;
+      }
+      aside.side.drawer-open { transform: translateX(0); }
+
+      /* ── Feature A — main area full-width on mobile ────────────── */
+      main.main {
+        height: auto !important;
+        overflow-y: visible !important;
+        padding-top: 56px;
+      }
+
+      /* ── Feature A — body scroll-lock (also used by full-screen overlay) ── */
+      body.drawer-scroll-lock,
+      body.chiron-fs-lock {
+        overflow: hidden !important;
+        padding-right: 0;
+      }
+
+      /* ── Feature B — hide desktop float player on mobile ────────── */
+      .chiron-listen { display: none !important; }
+
+      /* ── Feature B — Bottom-bar mini-player ─────────────────────── */
+      .chiron-bottom-bar {
+        display: flex;
+        flex-direction: column;
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        z-index: 9998;
+        background: var(--chiron-surface);
+        border-top: 1px solid var(--chiron-border);
+        box-shadow: 0 -4px 20px rgba(0,0,0,0.12);
+        max-height: 70px;
+        transition: max-height 0.25s ease-out;
+        overflow: hidden;
+      }
+      .chiron-bottom-bar.sheet-open { max-height: min(70vh, 540px); }
+
+      /* Progress fill line */
+      .chiron-bar-progress-line {
+        height: 3px;
+        width: 0%;
+        background: var(--chiron-accent);
+        transition: width 200ms linear;
+        flex-shrink: 0;
+      }
+
+      /* Main row */
+      .chiron-bar-row {
+        display: flex;
+        align-items: center;
+        gap: var(--chiron-space-2);
+        padding: 0 var(--chiron-space-3);
+        height: 64px;
+        flex-shrink: 0;
+        cursor: default;
+        touch-action: none;
+        overflow: hidden;
+      }
+
+      /* Shared icon-button base */
+      .chiron-bar-prev-btn,
+      .chiron-bar-next-btn,
+      .chiron-bar-expand-btn,
+      .chiron-bar-fs-btn {
+        flex-shrink: 0;
+        width: 36px;
+        height: 36px;
+        border: none;
+        background: transparent;
+        color: var(--chiron-fg-secondary);
+        font-size: 1rem;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: var(--chiron-radius-sm);
+        -webkit-tap-highlight-color: transparent;
+        font-family: inherit;
+        transition: color 0.15s, background 0.15s;
+      }
+      .chiron-bar-prev-btn:hover,
+      .chiron-bar-next-btn:hover,
+      .chiron-bar-expand-btn:hover,
+      .chiron-bar-fs-btn:hover { background: var(--chiron-elevated); color: var(--chiron-fg); }
+      .chiron-bar-prev-btn:disabled,
+      .chiron-bar-next-btn:disabled { opacity: 0.3; pointer-events: none; }
+
+      /* Main play/pause circle */
+      .chiron-bar-play-btn {
+        flex-shrink: 0;
+        width: 44px;
+        height: 44px;
+        border-radius: 50%;
+        background: var(--chiron-accent);
+        color: white;
+        border: none;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.1rem;
+        cursor: pointer;
+        transition: background 0.15s, transform 0.15s;
+        font-family: inherit;
+        -webkit-tap-highlight-color: transparent;
+      }
+      .chiron-bar-play-btn:active { transform: scale(0.92); }
+      .chiron-bar-play-btn.idle {
+        background: var(--chiron-border);
+        color: var(--chiron-fg-secondary);
+      }
+
+      .chiron-bar-clip-name {
+        flex: 1;
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: var(--chiron-fg);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        min-width: 0;
+      }
+      .chiron-bar-clip-name.idle { color: var(--chiron-muted); font-weight: 400; }
+
+      .chiron-bar-countdown {
+        flex-shrink: 0;
+        font-family: var(--chiron-font-mono);
+        font-size: 0.75rem;
+        color: var(--chiron-muted);
+        min-width: 32px;
+        text-align: right;
+      }
+
+      /* Sheet (clip list under bar) */
+      .chiron-bar-sheet {
+        overflow-y: auto;
+        flex: 1;
+        padding: var(--chiron-space-2) var(--chiron-space-3) var(--chiron-space-4);
+        border-top: 1px solid var(--chiron-divider);
+      }
+      .chiron-bar-sheet-title {
+        font-family: var(--chiron-font-mono);
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: var(--chiron-muted);
+        padding: var(--chiron-space-2) var(--chiron-space-2) var(--chiron-space-3);
+      }
+
+      /* Shared clip-button style */
+      .chiron-bar-clip-btn {
+        display: flex;
+        align-items: center;
+        gap: var(--chiron-space-3);
+        width: 100%;
+        text-align: left;
+        background: transparent;
+        border: 0;
+        border-radius: var(--chiron-radius-sm);
+        padding: var(--chiron-space-3) var(--chiron-space-2);
+        font: inherit;
+        font-size: 0.875rem;
+        color: var(--chiron-fg);
+        cursor: pointer;
+        min-height: 44px;
+        -webkit-tap-highlight-color: transparent;
+        transition: background 0.15s;
+      }
+      .chiron-bar-clip-btn:hover,
+      .chiron-bar-clip-btn:active { background: var(--chiron-elevated); }
+      .chiron-bar-clip-btn.playing {
+        background: color-mix(in srgb, var(--chiron-accent) 15%, transparent);
+        color: var(--chiron-accent);
+        font-weight: 600;
+      }
+      .chiron-bar-clip-btn .ico {
+        flex-shrink: 0;
+        width: 20px;
+        height: 20px;
+        display: grid;
+        place-items: center;
+        font-size: 10px;
+        color: var(--chiron-accent);
+      }
+
+      /* Main content bottom padding so it clears the bar */
+      main.main { padding-bottom: 80px; }
+
+      /* ── Feature B — Full-screen now-playing overlay ─────────────── */
+      .chiron-fs-overlay {
+        display: flex;
+        flex-direction: column;
+        position: fixed;
+        inset: 0;
+        z-index: 10200;
+        background: var(--chiron-surface);
+        transform: translateY(100%);
+        transition: transform 0.25s ease-out;
+        overflow: hidden;
+      }
+      .chiron-fs-overlay.open { transform: translateY(0); }
+
+      .chiron-fs-header {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: var(--chiron-space-3) var(--chiron-space-4);
+        flex-shrink: 0;
+        border-bottom: 1px solid var(--chiron-divider);
+      }
+      .chiron-fs-close {
+        width: 44px;
+        height: 44px;
+        border: none;
+        background: transparent;
+        color: var(--chiron-muted);
+        font-size: 1.5rem;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 100px;
+        -webkit-tap-highlight-color: transparent;
+        font-family: inherit;
+      }
+      .chiron-fs-close:hover { background: var(--chiron-elevated); }
+
+      .chiron-fs-title {
+        font-family: var(--chiron-font-heading);
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: var(--chiron-fg);
+        padding: var(--chiron-space-6) var(--chiron-space-6) var(--chiron-space-4);
+        text-align: center;
+        flex-shrink: 0;
+        line-height: 1.35;
+      }
+
+      .chiron-fs-scrub-wrap {
+        display: flex;
+        align-items: center;
+        gap: var(--chiron-space-3);
+        padding: 0 var(--chiron-space-5) var(--chiron-space-4);
+        flex-shrink: 0;
+      }
+      .chiron-fs-time {
+        font-family: var(--chiron-font-mono);
+        font-size: 0.75rem;
+        color: var(--chiron-muted);
+        min-width: 38px;
+        flex-shrink: 0;
+      }
+      .chiron-fs-remaining { text-align: right; }
+
+      .chiron-fs-scrub-track {
+        flex: 1;
+        height: 6px;
+        border-radius: 100px;
+        position: relative;
+        cursor: pointer;
+        touch-action: none;
+        background: linear-gradient(
+          to right,
+          var(--chiron-accent) 0%,
+          var(--chiron-accent) var(--fs-progress, 0%),
+          var(--chiron-border) var(--fs-progress, 0%),
+          var(--chiron-border) 100%
+        );
+      }
+      .chiron-fs-scrub-thumb {
+        position: absolute;
+        top: 50%;
+        left: 0%;
+        transform: translate(-50%, -50%);
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        background: var(--chiron-accent);
+        box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+        pointer-events: none;
+      }
+
+      .chiron-fs-transport {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: var(--chiron-space-8);
+        padding: var(--chiron-space-4) var(--chiron-space-6) var(--chiron-space-6);
+        flex-shrink: 0;
+      }
+      .chiron-fs-prev,
+      .chiron-fs-next {
+        width: 52px;
+        height: 52px;
+        border: none;
+        background: var(--chiron-elevated);
+        color: var(--chiron-fg);
+        font-size: 1.25rem;
+        border-radius: 50%;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        -webkit-tap-highlight-color: transparent;
+        font-family: inherit;
+        transition: background 0.15s, transform 0.15s;
+      }
+      .chiron-fs-prev:hover,
+      .chiron-fs-next:hover { background: var(--chiron-border); }
+      .chiron-fs-prev:active,
+      .chiron-fs-next:active { transform: scale(0.92); }
+      .chiron-fs-prev:disabled,
+      .chiron-fs-next:disabled { opacity: 0.3; pointer-events: none; }
+
+      .chiron-fs-play {
+        width: 68px;
+        height: 68px;
+        border: none;
+        background: var(--chiron-accent);
+        color: white;
+        font-size: 1.5rem;
+        border-radius: 50%;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 4px 16px rgba(0,0,0,0.25);
+        -webkit-tap-highlight-color: transparent;
+        font-family: inherit;
+        transition: background 0.15s, transform 0.15s;
+      }
+      .chiron-fs-play:hover { background: var(--chiron-accent-light); }
+      .chiron-fs-play:active { transform: scale(0.94); }
+
+      .chiron-fs-list-hdr {
+        font-family: var(--chiron-font-mono);
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: var(--chiron-muted);
+        padding: var(--chiron-space-2) var(--chiron-space-5) var(--chiron-space-2);
+        flex-shrink: 0;
+        border-top: 1px solid var(--chiron-divider);
+      }
+      .chiron-fs-clip-list {
+        flex: 1;
+        overflow-y: auto;
+        padding: 0 var(--chiron-space-4) var(--chiron-space-6);
+      }
+    }
+    /* ── END MOBILE LAYER ─────────────────────────────────────────────── */
   </style>
 </head>
 <body>
@@ -1012,6 +1461,600 @@
   }).catch(function(){});
 })();
 </script>
+
+  <!-- MOBILE LAYER — copied from skill/shell/main.js MOBILE RESPONSIVE LAYER
+       + styles.css @media≤768px, tokens remapped to --chiron-* (2026-06-12) -->
+  <script>
+(function () {
+  'use strict';
+
+  var MQL = window.matchMedia && window.matchMedia('(max-width: 768px)');
+
+  /* ── STATE ──────────────────────────────────────────────────────── */
+  var hamburger    = null;
+  var backdrop     = null;
+  var sidebar      = null;
+  var bottomBar    = null;
+  var barPlayBtn   = null;
+  var barPrevBtn   = null;
+  var barNextBtn   = null;
+  var barClipName  = null;
+  var barCountdown = null;
+  var barProgress  = null;
+  var barSheet     = null;
+  var barExpandBtn = null;
+  var barFsBtn     = null;
+
+  var fsOverlay    = null;
+  var fsTitle      = null;
+  var fsElapsed    = null;
+  var fsRemaining  = null;
+  var fsScrubTrack = null;
+  var fsScrubThumb = null;
+  var fsPlayBtn    = null;
+  var fsPrevBtn    = null;
+  var fsNextBtn    = null;
+  var fsClipList   = null;
+  var fsOpen       = false;
+
+  var mobileAudio  = null;
+  var activeClip   = null;
+  var mobileClips  = [];
+  var barTimer     = null;
+  var sheetOpen    = false;
+  var drawerOpen_  = false;
+
+  /* ─── Feature A helpers ─────────────────────────────────────────── */
+  function openDrawer() {
+    if (!sidebar) return;
+    drawerOpen_ = true;
+    sidebar.classList.add('drawer-open');
+    backdrop.classList.add('open');
+    document.body.classList.add('drawer-scroll-lock');
+    hamburger.setAttribute('aria-expanded', 'true');
+    hamburger.textContent = '✕';
+  }
+  function closeDrawer() {
+    if (!sidebar) return;
+    drawerOpen_ = false;
+    sidebar.classList.remove('drawer-open');
+    backdrop.classList.remove('open');
+    document.body.classList.remove('drawer-scroll-lock');
+    hamburger.setAttribute('aria-expanded', 'false');
+    hamburger.textContent = '☰';
+  }
+  function toggleDrawer() { drawerOpen_ ? closeDrawer() : openDrawer(); }
+
+  function injectHamburger() {
+    if (hamburger) return;
+    sidebar = document.querySelector('aside.side');
+    if (!sidebar) return;
+    backdrop = document.createElement('div');
+    backdrop.className = 'chiron-drawer-backdrop';
+    backdrop.setAttribute('aria-hidden', 'true');
+    document.body.appendChild(backdrop);
+    backdrop.addEventListener('click', closeDrawer);
+    hamburger = document.createElement('button');
+    hamburger.type = 'button';
+    hamburger.className = 'chiron-hamburger';
+    hamburger.textContent = '☰';
+    hamburger.setAttribute('aria-label', 'Open chapter list');
+    hamburger.setAttribute('aria-expanded', 'false');
+    hamburger.setAttribute('aria-controls', 'side-drawer');
+    hamburger.addEventListener('click', toggleDrawer);
+    document.body.appendChild(hamburger);
+    sidebar.setAttribute('id', 'side-drawer');
+    sidebar.setAttribute('role', 'dialog');
+    sidebar.setAttribute('aria-label', 'Chapter list');
+    sidebar.querySelectorAll('a').forEach(function (a) {
+      a.addEventListener('click', function () { if (drawerOpen_) closeDrawer(); });
+    });
+  }
+
+  /* ─── Feature B helpers ─────────────────────────────────────────── */
+  function fmtTime(secs) {
+    if (!isFinite(secs) || secs < 0) return '0:00';
+    var s = Math.ceil(secs);
+    var m = Math.floor(s / 60);
+    var ss = s % 60;
+    return m + ':' + (ss < 10 ? '0' : '') + ss;
+  }
+
+  function setBarProgress(fraction) {
+    if (!barProgress) return;
+    barProgress.style.width = (Math.min(1, Math.max(0, fraction)) * 100) + '%';
+  }
+
+  function updateFsScrubber(fraction) {
+    if (!fsScrubTrack) return;
+    var pct = Math.min(1, Math.max(0, fraction)) * 100;
+    fsScrubTrack.style.setProperty('--fs-progress', pct + '%');
+    if (fsScrubThumb) fsScrubThumb.style.left = pct + '%';
+  }
+
+  function updateAllDisplays() {
+    if (!mobileAudio || !activeClip) return;
+    var dur = mobileAudio.duration;
+    var ct  = mobileAudio.currentTime;
+    var frac = (isFinite(dur) && dur > 0) ? ct / dur : 0;
+
+    setBarProgress(frac);
+    if (barCountdown) barCountdown.textContent = (isFinite(dur) && dur > 0) ? fmtTime(dur - ct) : '';
+
+    updateFsScrubber(frac);
+    if (fsElapsed)   fsElapsed.textContent   = fmtTime(ct);
+    if (fsRemaining) fsRemaining.textContent = (isFinite(dur) && dur > 0) ? '-' + fmtTime(dur - ct) : '';
+
+    mobileClips.forEach(function (c, i) {
+      var btn = barSheet && barSheet.querySelector('[data-clip-idx="' + i + '"]');
+      if (!btn) return;
+      var playing = activeClip && activeClip.idx === i && !mobileAudio.paused;
+      btn.classList.toggle('playing', playing);
+      var ico = btn.querySelector('.ico');
+      if (ico) ico.textContent = playing ? '⏸' : '▶';
+    });
+
+    if (fsClipList) {
+      fsClipList.querySelectorAll('[data-clip-idx]').forEach(function (btn) {
+        var i = parseInt(btn.getAttribute('data-clip-idx'), 10);
+        var playing = activeClip && activeClip.idx === i && !mobileAudio.paused;
+        btn.classList.toggle('playing', playing);
+        var ico = btn.querySelector('.ico');
+        if (ico) ico.textContent = playing ? '⏸' : '▶';
+      });
+    }
+
+    var idx = activeClip ? activeClip.idx : -1;
+    if (barPrevBtn) barPrevBtn.disabled = idx <= 0;
+    if (barNextBtn) barNextBtn.disabled = idx < 0 || idx >= mobileClips.length - 1;
+    if (fsPrevBtn)  fsPrevBtn.disabled  = idx <= 0;
+    if (fsNextBtn)  fsNextBtn.disabled  = idx < 0 || idx >= mobileClips.length - 1;
+  }
+
+  function startBarTimer() {
+    if (barTimer) clearInterval(barTimer);
+    barTimer = setInterval(updateAllDisplays, 200);
+  }
+  function stopBarTimer() {
+    if (barTimer) { clearInterval(barTimer); barTimer = null; }
+  }
+
+  function playClipAt(idx) {
+    if (!mobileAudio) return;
+    if (idx < 0 || idx >= mobileClips.length) return;
+    var clip = mobileClips[idx];
+    if (activeClip && activeClip.idx === idx) {
+      if (mobileAudio.paused) { mobileAudio.play().catch(function () {}); }
+      else { mobileAudio.pause(); }
+      return;
+    }
+    activeClip = { clip: clip, idx: idx };
+    mobileAudio.src = clip.audioPath;
+    mobileAudio.play().then(function () { syncBarToActive(); }).catch(function () { activeClip = null; });
+  }
+
+  function syncBarToActive() {
+    if (!activeClip) return;
+    var clip = activeClip.clip;
+    if (barClipName) { barClipName.textContent = clip._label || 'Playing'; barClipName.classList.remove('idle'); }
+    if (fsTitle) fsTitle.textContent = clip._label || 'Playing';
+    if (barPlayBtn) { barPlayBtn.textContent = '⏸'; barPlayBtn.classList.remove('idle'); }
+    if (fsPlayBtn)  { fsPlayBtn.textContent = '⏸'; }
+    updateAllDisplays();
+  }
+
+  function playBarClip(clip) {
+    var idx = mobileClips.indexOf(clip);
+    if (idx < 0) return;
+    playClipAt(idx);
+  }
+
+  function stopBarAudio() {
+    if (!mobileAudio) return;
+    mobileAudio.pause();
+    mobileAudio.currentTime = 0;
+    stopBarTimer();
+    activeClip = null;
+    if (barPlayBtn)  { barPlayBtn.textContent = '▶'; barPlayBtn.classList.add('idle'); }
+    if (barClipName) { barClipName.textContent = 'Tap to browse · double-tap to zoom'; barClipName.classList.add('idle'); }
+    if (barCountdown) barCountdown.textContent = '';
+    setBarProgress(0);
+    updateFsScrubber(0);
+    if (fsElapsed)   fsElapsed.textContent   = '0:00';
+    if (fsRemaining) fsRemaining.textContent = '';
+    if (fsPlayBtn)   fsPlayBtn.textContent   = '▶';
+    if (fsTitle)     fsTitle.textContent     = 'Choose a clip below';
+    updateAllDisplays();
+  }
+
+  function openSheet() {
+    if (!bottomBar || !barSheet) return;
+    sheetOpen = true;
+    bottomBar.classList.add('sheet-open');
+    if (barExpandBtn) barExpandBtn.textContent = '▼';
+  }
+  function closeSheet() {
+    if (!bottomBar) return;
+    sheetOpen = false;
+    bottomBar.classList.remove('sheet-open');
+    if (barExpandBtn) barExpandBtn.textContent = '▲';
+  }
+
+  function openFullScreen() {
+    if (!fsOverlay) return;
+    fsOpen = true;
+    fsOverlay.classList.add('open');
+    document.body.classList.add('chiron-fs-lock');
+    if (activeClip) { if (fsTitle) fsTitle.textContent = activeClip.clip._label || 'Playing'; }
+    else { if (fsTitle) fsTitle.textContent = 'Choose a clip below'; }
+    updateAllDisplays();
+  }
+  function closeFullScreen() {
+    fsOpen = false;
+    if (fsOverlay) fsOverlay.classList.remove('open');
+    document.body.classList.remove('chiron-fs-lock');
+  }
+
+  function buildOrderedClips(rawClips) {
+    var whole = rawClips.filter(function (c) { return c.artifact === 'summary' || c.artifact === 'shortened'; });
+    var sects = rawClips.filter(function (c) { return c.artifact === 'section'; });
+    return whole.concat(sects);
+  }
+
+  function labelClips(clips) {
+    clips.forEach(function (c) {
+      if (c.artifact === 'summary')   { c._label = 'Summary'; return; }
+      if (c.artifact === 'shortened') { c._label = 'Full lecture'; return; }
+      if (c.sectionId) {
+        var el = document.getElementById(c.sectionId);
+        var h = el && el.querySelector('h1,h2,h3,[data-section-title]');
+        c._label = h && h.textContent.trim()
+          ? h.textContent.trim().replace(/^\s*\d+[\.\)]?\s*/, '')
+          : (c.sectionId || 'Section');
+        return;
+      }
+      c._label = 'Clip';
+    });
+  }
+
+  function buildClipRows(container, clips, onPick) {
+    container.innerHTML = '';
+    clips.forEach(function (c, i) {
+      var btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'chiron-bar-clip-btn';
+      btn.setAttribute('data-clip-idx', i);
+      var ico = document.createElement('span'); ico.className = 'ico'; ico.textContent = '▶';
+      var lbl = document.createElement('span'); lbl.textContent = c._label || c.sectionId || 'Clip';
+      btn.appendChild(ico); btn.appendChild(lbl);
+      btn.addEventListener('click', function () { onPick(c, i); });
+      container.appendChild(btn);
+    });
+  }
+
+  function seekAudioTo(fraction) {
+    if (!mobileAudio || !activeClip) return;
+    var dur = mobileAudio.duration;
+    if (!isFinite(dur) || dur <= 0) return;
+    mobileAudio.currentTime = Math.max(0, Math.min(1, fraction)) * dur;
+    updateAllDisplays();
+  }
+
+  function wireSeekOn(el, fractionFn) {
+    var dragging = false;
+    el.addEventListener('pointerdown', function (e) {
+      if (!activeClip) return;
+      dragging = true;
+      el.setPointerCapture(e.pointerId);
+      seekAudioTo(fractionFn(e, el));
+      e.preventDefault();
+    });
+    el.addEventListener('pointermove', function (e) {
+      if (!dragging) return;
+      seekAudioTo(fractionFn(e, el));
+      e.preventDefault();
+    });
+    function onUp(e) {
+      if (!dragging) return;
+      dragging = false;
+      seekAudioTo(fractionFn(e, el));
+      el.releasePointerCapture(e.pointerId);
+    }
+    el.addEventListener('pointerup', onUp);
+    el.addEventListener('pointercancel', function () { dragging = false; });
+  }
+
+  function fractionFromHoriz(e, el) {
+    var rect = el.getBoundingClientRect();
+    if (rect.width <= 0) return 0;
+    return Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+  }
+
+  function buildFsOverlay() {
+    if (fsOverlay) return;
+    fsOverlay = document.createElement('div');
+    fsOverlay.className = 'chiron-fs-overlay';
+    fsOverlay.setAttribute('role', 'dialog');
+    fsOverlay.setAttribute('aria-modal', 'true');
+    fsOverlay.setAttribute('aria-label', 'Now playing');
+
+    var hdr = document.createElement('div');
+    hdr.className = 'chiron-fs-header';
+    var closeBtn = document.createElement('button');
+    closeBtn.type = 'button'; closeBtn.className = 'chiron-fs-close';
+    closeBtn.setAttribute('aria-label', 'Collapse');
+    closeBtn.innerHTML = '&#8964;';
+    closeBtn.addEventListener('click', closeFullScreen);
+    hdr.appendChild(closeBtn);
+    fsOverlay.appendChild(hdr);
+
+    fsTitle = document.createElement('div');
+    fsTitle.className = 'chiron-fs-title';
+    fsTitle.textContent = 'Choose a clip below';
+    fsOverlay.appendChild(fsTitle);
+
+    var scrubWrap = document.createElement('div');
+    scrubWrap.className = 'chiron-fs-scrub-wrap';
+    fsElapsed = document.createElement('span');
+    fsElapsed.className = 'chiron-fs-time chiron-fs-elapsed';
+    fsElapsed.textContent = '0:00';
+    fsScrubTrack = document.createElement('div');
+    fsScrubTrack.className = 'chiron-fs-scrub-track';
+    fsScrubTrack.setAttribute('role', 'slider');
+    fsScrubTrack.setAttribute('aria-valuemin', '0');
+    fsScrubTrack.setAttribute('aria-valuemax', '100');
+    fsScrubTrack.setAttribute('aria-valuenow', '0');
+    fsScrubTrack.setAttribute('tabindex', '0');
+    fsScrubThumb = document.createElement('div');
+    fsScrubThumb.className = 'chiron-fs-scrub-thumb';
+    fsScrubTrack.appendChild(fsScrubThumb);
+    wireSeekOn(fsScrubTrack, fractionFromHoriz);
+    fsRemaining = document.createElement('span');
+    fsRemaining.className = 'chiron-fs-time chiron-fs-remaining';
+    fsRemaining.textContent = '';
+    scrubWrap.appendChild(fsElapsed);
+    scrubWrap.appendChild(fsScrubTrack);
+    scrubWrap.appendChild(fsRemaining);
+    fsOverlay.appendChild(scrubWrap);
+
+    var transport = document.createElement('div');
+    transport.className = 'chiron-fs-transport';
+    fsPrevBtn = document.createElement('button');
+    fsPrevBtn.type = 'button'; fsPrevBtn.className = 'chiron-fs-prev';
+    fsPrevBtn.setAttribute('aria-label', 'Previous chapter');
+    fsPrevBtn.textContent = '⏮';
+    fsPrevBtn.addEventListener('click', function () { if (activeClip && activeClip.idx > 0) playClipAt(activeClip.idx - 1); });
+    fsPlayBtn = document.createElement('button');
+    fsPlayBtn.type = 'button'; fsPlayBtn.className = 'chiron-fs-play';
+    fsPlayBtn.setAttribute('aria-label', 'Play/Pause');
+    fsPlayBtn.textContent = '▶';
+    fsPlayBtn.addEventListener('click', function () {
+      if (!activeClip) return;
+      if (mobileAudio.paused) { mobileAudio.play().catch(function () {}); }
+      else { mobileAudio.pause(); }
+    });
+    fsNextBtn = document.createElement('button');
+    fsNextBtn.type = 'button'; fsNextBtn.className = 'chiron-fs-next';
+    fsNextBtn.setAttribute('aria-label', 'Next chapter');
+    fsNextBtn.textContent = '⏭';
+    fsNextBtn.addEventListener('click', function () { if (activeClip && activeClip.idx < mobileClips.length - 1) playClipAt(activeClip.idx + 1); });
+    transport.appendChild(fsPrevBtn);
+    transport.appendChild(fsPlayBtn);
+    transport.appendChild(fsNextBtn);
+    fsOverlay.appendChild(transport);
+
+    var listHdr = document.createElement('div');
+    listHdr.className = 'chiron-fs-list-hdr';
+    listHdr.textContent = 'Chapters';
+    fsOverlay.appendChild(listHdr);
+    fsClipList = document.createElement('div');
+    fsClipList.className = 'chiron-fs-clip-list';
+    fsOverlay.appendChild(fsClipList);
+    document.body.appendChild(fsOverlay);
+  }
+
+  function populateFsClipList() {
+    if (!fsClipList) return;
+    buildClipRows(fsClipList, mobileClips, function (c, i) { playClipAt(i); });
+  }
+
+  function injectBottomBar() {
+    if (bottomBar) return;
+    mobileAudio = new Audio();
+
+    bottomBar = document.createElement('div');
+    bottomBar.className = 'chiron-bottom-bar';
+    bottomBar.setAttribute('role', 'region');
+    bottomBar.setAttribute('aria-label', 'Audio player');
+
+    barProgress = document.createElement('div');
+    barProgress.className = 'chiron-bar-progress-line';
+    barProgress.setAttribute('role', 'progressbar');
+    barProgress.setAttribute('aria-valuemin', '0');
+    barProgress.setAttribute('aria-valuemax', '100');
+    barProgress.setAttribute('aria-valuenow', '0');
+
+    var row = document.createElement('div');
+    row.className = 'chiron-bar-row';
+
+    barPrevBtn = document.createElement('button');
+    barPrevBtn.type = 'button'; barPrevBtn.className = 'chiron-bar-prev-btn';
+    barPrevBtn.setAttribute('aria-label', 'Previous chapter');
+    barPrevBtn.textContent = '⏮';
+    barPrevBtn.disabled = true;
+    barPrevBtn.addEventListener('click', function (e) {
+      e.stopPropagation();
+      if (activeClip && activeClip.idx > 0) playClipAt(activeClip.idx - 1);
+    });
+
+    barPlayBtn = document.createElement('button');
+    barPlayBtn.type = 'button'; barPlayBtn.className = 'chiron-bar-play-btn idle';
+    barPlayBtn.textContent = '▶';
+    barPlayBtn.setAttribute('aria-label', 'Play/Pause');
+    barPlayBtn.addEventListener('click', function (e) {
+      e.stopPropagation();
+      if (!activeClip) { openSheet(); return; }
+      if (mobileAudio.paused) { mobileAudio.play().catch(function () {}); }
+      else { mobileAudio.pause(); }
+    });
+
+    barClipName = document.createElement('div');
+    barClipName.className = 'chiron-bar-clip-name idle';
+    barClipName.textContent = 'Tap to browse · double-tap to zoom';
+
+    barCountdown = document.createElement('div');
+    barCountdown.className = 'chiron-bar-countdown';
+
+    barNextBtn = document.createElement('button');
+    barNextBtn.type = 'button'; barNextBtn.className = 'chiron-bar-next-btn';
+    barNextBtn.setAttribute('aria-label', 'Next chapter');
+    barNextBtn.textContent = '⏭';
+    barNextBtn.disabled = true;
+    barNextBtn.addEventListener('click', function (e) {
+      e.stopPropagation();
+      if (activeClip && activeClip.idx < mobileClips.length - 1) playClipAt(activeClip.idx + 1);
+    });
+
+    barExpandBtn = document.createElement('button');
+    barExpandBtn.type = 'button'; barExpandBtn.className = 'chiron-bar-expand-btn';
+    barExpandBtn.textContent = '▲';
+    barExpandBtn.setAttribute('aria-label', 'Show clip list');
+    barExpandBtn.addEventListener('click', function (e) {
+      e.stopPropagation();
+      sheetOpen ? closeSheet() : openSheet();
+    });
+
+    row.appendChild(barPrevBtn);
+    row.appendChild(barPlayBtn);
+    row.appendChild(barClipName);
+    row.appendChild(barCountdown);
+    row.appendChild(barNextBtn);
+    row.appendChild(barExpandBtn);
+
+    barSheet = document.createElement('div');
+    barSheet.className = 'chiron-bar-sheet';
+    barSheet.setAttribute('aria-label', 'Clip list');
+    var sheetTitle = document.createElement('div');
+    sheetTitle.className = 'chiron-bar-sheet-title';
+    sheetTitle.textContent = 'Choose a clip';
+    barSheet.appendChild(sheetTitle);
+
+    bottomBar.appendChild(barProgress);
+    bottomBar.appendChild(row);
+    bottomBar.appendChild(barSheet);
+    document.body.appendChild(bottomBar);
+
+    var _tapTimer = null;
+    row.addEventListener('click', function (e) {
+      if (e.target.closest && e.target.closest('button')) return;
+      if (_tapTimer) {
+        clearTimeout(_tapTimer); _tapTimer = null;
+        if (sheetOpen) closeSheet();
+        openFullScreen();
+      } else {
+        _tapTimer = setTimeout(function () {
+          _tapTimer = null;
+          sheetOpen ? closeSheet() : openSheet();
+        }, 280);
+      }
+    });
+
+    document.addEventListener('click', function (e) {
+      if (!sheetOpen || !bottomBar) return;
+      if (!bottomBar.contains(e.target)) closeSheet();
+    });
+
+    mobileAudio.addEventListener('ended', function () {
+      stopBarTimer();
+      if (activeClip && activeClip.idx < mobileClips.length - 1) {
+        var nextIdx = activeClip.idx + 1;
+        activeClip = null;
+        playClipAt(nextIdx);
+        var nextClip = mobileClips[nextIdx];
+        if (nextClip && nextClip.sectionId) {
+          var el = document.getElementById(nextClip.sectionId);
+          if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      } else {
+        stopBarAudio();
+        if (barClipName) barClipName.textContent = 'Finished — tap to replay';
+      }
+    });
+
+    mobileAudio.addEventListener('pause', function () {
+      stopBarTimer();
+      if (barPlayBtn) barPlayBtn.textContent = '▶';
+      if (fsPlayBtn)  fsPlayBtn.textContent  = '▶';
+      updateAllDisplays();
+    });
+
+    mobileAudio.addEventListener('play', function () {
+      if (barPlayBtn) { barPlayBtn.textContent = '⏸'; barPlayBtn.classList.remove('idle'); }
+      if (fsPlayBtn)  fsPlayBtn.textContent  = '⏸';
+      startBarTimer();
+      syncBarToActive();
+    });
+
+    buildFsOverlay();
+  }
+
+  function loadClips(rawClips) {
+    var ordered = buildOrderedClips(rawClips);
+    labelClips(ordered);
+    mobileClips = ordered;
+    if (barSheet) {
+      var titleNode = barSheet.querySelector('.chiron-bar-sheet-title');
+      barSheet.innerHTML = '';
+      if (titleNode) barSheet.appendChild(titleNode);
+      buildClipRows(barSheet, ordered, function (c) { playBarClip(c); closeSheet(); });
+    }
+    populateFsClipList();
+    updateAllDisplays();
+  }
+
+  function initMobile() {
+    injectHamburger();
+    injectBottomBar();
+    if (window.__chironAudioManifest) {
+      var ready = (window.__chironAudioManifest.clips || []).filter(function (c) { return c.status === 'done' && c.audioPath; });
+      if (ready.length) loadClips(ready);
+      return;
+    }
+    fetch('audio/manifest.json', { cache: 'no-store' })
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (m) {
+        if (!m || !m.clips) return;
+        var ready = m.clips.filter(function (c) { return c.status === 'done' && c.audioPath; });
+        if (ready.length) loadClips(ready);
+      })
+      .catch(function () {});
+  }
+
+  function onMqlChange(mq) {
+    if (mq.matches) {
+      if (document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', initMobile); }
+      else { initMobile(); }
+    } else {
+      if (hamburger) hamburger.style.display = 'none';
+      if (backdrop)  backdrop.style.display  = 'none';
+      if (bottomBar) bottomBar.style.display = 'none';
+      if (fsOverlay) { fsOverlay.classList.remove('open'); }
+      if (sidebar) {
+        sidebar.classList.remove('drawer-open');
+        sidebar.style.removeProperty('display');
+      }
+      document.body.classList.remove('drawer-scroll-lock', 'chiron-fs-lock');
+      drawerOpen_ = false;
+    }
+  }
+
+  if (MQL) {
+    if (MQL.addEventListener) MQL.addEventListener('change', onMqlChange);
+    else if (MQL.addListener) MQL.addListener(onMqlChange);
+    onMqlChange(MQL);
+  }
+})();
+  </script>
 
 </body>
 </html>
