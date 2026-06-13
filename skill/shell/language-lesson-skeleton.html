@@ -1511,6 +1511,26 @@
       .v-table td.ex { margin-top: 4px; }
     }
 
+  
+    /* FLASHCARD-REVEAL (2026-06-13): vocab cards hide everything after the first
+       (Italian) cell behind a tap — tap to reveal the translation + note.
+       Mobile only; desktop unchanged. Every row's first <td> is .it (Italian). */
+    @media (max-width: 768px) {
+      .v-table tr { cursor: pointer; }
+      .v-table tr > td:not(:first-child) { display: none; }
+      .v-table tr.revealed > td:not(:first-child) { display: block; }
+      .v-table tr:not(.revealed)::after {
+        content: "Tocca per la traduzione ▾";
+        display: block;
+        margin-top: var(--chiron-space-2);
+        font-size: 0.7rem;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+        color: var(--chiron-muted);
+      }
+      .v-table tr.revealed::after { content: none; }
+    }
+
   </style>
 <script>
 // Audio-QC info-icon: reads audio/qc-report.json (written by the 2-loop Gemini QC)
@@ -2155,6 +2175,29 @@
     }
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', wrap);
     else wrap();
+  })();
+  </script>
+
+  <script>
+  /* flashcard-reveal (2026-06-13): tap a vocab card to reveal its translation.
+     Excludes the inline audio ▶ control so playback still works. CSS gates the
+     hide/reveal to ≤768px, so toggling on desktop is a harmless no-op. */
+  (function () {
+    function init() {
+      var rows = document.querySelectorAll('.v-table tr');
+      for (var i = 0; i < rows.length; i++) {
+        (function (tr) {
+          if (tr.__flip) return; tr.__flip = true;
+          tr.addEventListener('click', function (e) {
+            if (e.target.closest &&
+                e.target.closest('.chiron-play-inline, button, a, audio, input')) return;
+            tr.classList.toggle('revealed');
+          });
+        })(rows[i]);
+      }
+    }
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
+    else init();
   })();
   </script>
 </body>
