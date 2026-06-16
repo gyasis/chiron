@@ -12,6 +12,12 @@
 const LESSON_CACHE = 'chiron-lessons-v1';
 const INDEX_KEY = 'chiron.library.v1';   // localStorage: lesson metadata
 
+// Inside the Tauri native app, service workers / Cache Storage don't work, so
+// lessons are imported + served NATIVELY via Rust (the lesson:// protocol).
+const TAURI = !!(window.__TAURI__ && window.__TAURI__.core);
+const LESSON_BASE = /android/i.test(navigator.userAgent) ? 'http://lesson.localhost/' : 'lesson://localhost/';
+let tauriLessons = [];
+
 const els = {
   lessons: document.getElementById('lessons'),
   importBtn: document.getElementById('import-btn'),
@@ -50,6 +56,7 @@ function mimeFor(path) {
 }
 
 function loadIndex() {
+  if (TAURI) return tauriLessons;
   try { return JSON.parse(localStorage.getItem(INDEX_KEY)) || []; }
   catch { return []; }
 }
@@ -153,6 +160,12 @@ async function importBundle(file) {
 }
 
 async function deleteLesson(id) {
+  if (TAURI) {
+    try { await window.__TAURI__.core.invoke('delete_lesson', { id }); } catch (e) { /* ignore */ }
+    tauriLessons = tauriLessons.filter((l) => l.id !== id);
+    render(); toast('Removed.');
+    return;
+  }
   const cache = await caches.open(LESSON_CACHE);
   const keys = await cache.keys();
   await Promise.all(
@@ -169,15 +182,30 @@ async function deleteLesson(id) {
 // ---------------------------------------------------------------------------
 function openLesson(l) {
   els.vtitle.textContent = l.title;
-  els.frame.src = new URL('lessons/' + l.id + '/' + l.entry, location.href).href;
+  els.frame.src = TAURI ? (LESSON_BASE + l.id + '/' + l.entry)
+                        : new URL('lessons/' + l.id + '/' + l.entry, location.href).href;
   els.viewer.classList.add('open');
   document.body.style.overflow = 'hidden';
+  // Push a history entry so the Android back gesture (or browser back) returns
+  // to the library instead of exiting the app.
+  history.pushState({ chironViewer: 1 }, '');
 }
-function closeViewer() {
+function actuallyClose() {
   els.viewer.classList.remove('open');
   els.frame.src = 'about:blank';
   document.body.style.overflow = '';
 }
+function closeViewer() {
+  if (!els.viewer.classList.contains('open')) return;
+  // Pop our pushed entry → fires popstate → actuallyClose(); falls back to a
+  // direct close if the state isn't ours.
+  if (history.state && history.state.chironViewer) history.back();
+  else actuallyClose();
+}
+// Android system back / swipe-back, browser back button.
+window.addEventListener('popstate', () => {
+  if (els.viewer.classList.contains('open')) actuallyClose();
+});
 
 // ---------------------------------------------------------------------------
 // render
@@ -199,12 +227,13 @@ function render() {
   for (const l of list) {
     const card = document.createElement('div');
     card.className = 'card';
-    const d = new Date(l.importedAt);
+    const sub = (l.size ? humanSize(l.size) : 'Lesson')
+              + (l.importedAt ? ' · added ' + new Date(l.importedAt).toLocaleDateString() : '');
     card.innerHTML =
       '<div class="thumb">📖</div>' +
       '<div class="meta">' +
         '<p class="title"></p>' +
-        '<div class="sub">' + humanSize(l.size) + ' · added ' + d.toLocaleDateString() + '</div>' +
+        '<div class="sub">' + sub + '</div>' +
       '</div>' +
       '<button class="del" title="Remove" aria-label="Remove lesson">×</button>';
     card.querySelector('.title').textContent = l.title;
@@ -220,7 +249,28 @@ function render() {
 // ---------------------------------------------------------------------------
 // wire-up
 // ---------------------------------------------------------------------------
-els.importBtn.addEventListener('click', () => els.fileInput.click());
+// Tauri native import: native file dialog → Rust unzips + registers the lesson.
+async function tauriImport() {
+  try {
+    // No extension filter: Android maps filters to MIME types and `.chiron`
+    // has none, so a filter greys it out. Show all files; Rust validates it's
+    // a real zip on import.
+    const path = await window.__TAURI__.dialog.open({ multiple: false });
+    if (!path) return;
+    toast('Importing…', 0);
+    // Read bytes via the fs plugin — it understands Android content:// URIs,
+    // which std::fs in Rust cannot. Then hand the raw bytes to Rust to unzip.
+    const data = await window.__TAURI__.fs.readFile(path);
+    const lesson = await window.__TAURI__.core.invoke('import_lesson', { data });
+    tauriLessons.unshift(lesson);
+    render();
+    toast('Added “' + lesson.title + '”');
+  } catch (e) {
+    toast('Import failed: ' + e);
+  }
+}
+
+els.importBtn.addEventListener('click', () => { if (TAURI) tauriImport(); else els.fileInput.click(); });
 els.fileInput.addEventListener('change', (ev) => {
   const f = ev.target.files && ev.target.files[0];
   els.fileInput.value = '';
@@ -229,12 +279,17 @@ els.fileInput.addEventListener('change', (ev) => {
 els.back.addEventListener('click', closeViewer);
 window.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeViewer(); });
 
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('sw.js').catch(() => {
-    toast('Offline mode unavailable here (needs https/localhost).');
-  });
+if (TAURI) {
+  window.__TAURI__.core.invoke('list_lessons')
+    .then((ls) => { tauriLessons = ls || []; render(); })
+    .catch(() => render());
 } else {
-  toast('This browser can’t run the offline player.');
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('sw.js').catch(() => {
+      toast('Offline mode unavailable here (needs https/localhost).');
+    });
+  } else {
+    toast('This browser can’t run the offline player.');
+  }
+  render();
 }
-
-render();

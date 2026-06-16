@@ -1,0 +1,10 @@
+# Tauri / Rust / Node build artifacts — never commit (multi-GB)
+node_modules/
+src-tauri/target/
+# Generated mobile project (regenerate with `npm run tauri android init`).
+# NOTE: the BuildTask.kt runner gotcha (see README) lives here — re-init
+# regenerates it; with the local @tauri-apps/cli present it resolves correctly.
+src-tauri/gen/
+# build outputs
+*.apk
+*.aab
