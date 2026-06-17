@@ -11,6 +11,7 @@
 
 const LESSON_CACHE = 'chiron-lessons-v1';
 const INDEX_KEY = 'chiron.library.v1';   // localStorage: lesson metadata
+const SERVER_KEY = 'chiron.server.v1';   // localStorage: catalog URL override
 
 // Inside the Tauri native app, service workers / Cache Storage don't work, so
 // lessons are imported + served NATIVELY via Rust (the lesson:// protocol).
@@ -21,12 +22,20 @@ let tauriLessons = [];
 const els = {
   lessons: document.getElementById('lessons'),
   importBtn: document.getElementById('import-btn'),
+  getBtn: document.getElementById('get-btn'),
   fileInput: document.getElementById('file-input'),
   viewer: document.getElementById('viewer'),
   frame: document.getElementById('frame'),
   back: document.getElementById('back-btn'),
   vtitle: document.getElementById('viewer-title'),
   toast: document.getElementById('toast'),
+  server: document.getElementById('server'),
+  serverClose: document.getElementById('server-close'),
+  serverCfg: document.getElementById('server-cfg'),
+  serverUrlRow: document.getElementById('server-url-row'),
+  serverUrlInput: document.getElementById('server-url'),
+  serverUrlSave: document.getElementById('server-url-save'),
+  serverList: document.getElementById('server-list'),
 };
 
 // ---------------------------------------------------------------------------
@@ -61,6 +70,12 @@ function loadIndex() {
   catch { return []; }
 }
 function saveIndex(list) { localStorage.setItem(INDEX_KEY, JSON.stringify(list)); }
+
+function serverUrl() {
+  return localStorage.getItem(SERVER_KEY) ||
+         (TAURI ? 'https://gyasis.github.io/chiron/lessons' : 'lessons');
+}
+function setServerUrl(v) { localStorage.setItem(SERVER_KEY, v.trim()); }
 
 function humanSize(bytes) {
   if (bytes < 1024) return bytes + ' B';
@@ -112,16 +127,15 @@ function unzip(u8) {
   });
 }
 
-async function importBundle(file) {
+// Core import logic — takes raw bytes and a display name, writes to cache,
+// saves to the index, and re-renders. Extracted so server downloads can reuse it.
+async function importBundleBytes(u8, name) {
   if (!('caches' in window)) { toast('Storage unavailable — open via https/localhost.'); return; }
-  toast('Reading ' + file.name + '…', 0);
-  const buf = new Uint8Array(await file.arrayBuffer());
 
   let files;
-  try { files = await unzip(buf); }
+  try { files = await unzip(u8); }
   catch { toast('Could not read that file — is it a .chiron/.zip?'); return; }
 
-  // entries (skip directory placeholders + macOS junk)
   let names = Object.keys(files).filter(
     (n) => !n.endsWith('/') && !n.includes('__MACOSX/') && !n.endsWith('.DS_Store'),
   );
@@ -150,13 +164,22 @@ async function importBundle(file) {
     );
   }
 
-  const title = titleFromHtml(files[names[relPaths.indexOf(entry)]] || new Uint8Array(),
-                              file.name.replace(/\.(chiron\.)?zip$/i, '').replace(/\.chiron$/i, ''));
+  const title = titleFromHtml(
+    files[names[relPaths.indexOf(entry)]] || new Uint8Array(),
+    name.replace(/\.(chiron\.)?zip$/i, '').replace(/\.chiron$/i, ''),
+  );
   const list = loadIndex();
   list.unshift({ id, title, entry, size: total, importedAt: Date.now() });
   saveIndex(list);
   render();
-  toast('Added “' + title + '”');
+  return title;
+}
+
+async function importBundle(file) {
+  toast('Reading ' + file.name + '…', 0);
+  const u8 = new Uint8Array(await file.arrayBuffer());
+  const title = await importBundleBytes(u8, file.name);
+  if (title) toast('Added “' + title + '”');
 }
 
 async function deleteLesson(id) {
@@ -247,6 +270,122 @@ function render() {
 }
 
 // ---------------------------------------------------------------------------
+// server overlay
+// ---------------------------------------------------------------------------
+function domainIcon(domain) {
+  if (!domain) return '📖';
+  const d = String(domain).toLowerCase();
+  if (d === 'medicine' || d === 'medical') return '🩺';
+  if (d === 'language' || d === 'lang') return '🗣';
+  return '📖';
+}
+
+async function renderServerList(catalog) {
+  const library = loadIndex();
+  const importedTitles = new Set(library.map((l) => l.title));
+  els.serverList.innerHTML = '';
+
+  if (!catalog.length) {
+    const e = document.createElement('div');
+    e.className = 'empty';
+    e.innerHTML = '<p><strong>No lessons available on this server.</strong></p>';
+    els.serverList.appendChild(e);
+    return;
+  }
+
+  for (const item of catalog) {
+    const already = importedTitles.has(item.title);
+    const row = document.createElement('div');
+    row.className = 'server-item' + (already ? ' imported' : '');
+    const sub = (item.sizeMB != null ? item.sizeMB + ' MB' : '')
+              + (item.clips != null ? (item.sizeMB != null ? ' · ' : '') + item.clips + ' clips' : '');
+    row.innerHTML =
+      '<div class="si-thumb">' + domainIcon(item.domain) + '</div>' +
+      '<div class="si-meta">' +
+        '<p class="si-title"></p>' +
+        '<div class="si-sub">' + sub + '</div>' +
+      '</div>' +
+      (already ? '<span class="si-badge">In library</span>' : '');
+    row.querySelector('.si-title').textContent = item.title;
+    if (!already) {
+      row.addEventListener('click', () => getServerLesson(item));
+    }
+    els.serverList.appendChild(row);
+  }
+}
+
+async function openServer() {
+  els.server.classList.add('open');
+  document.body.style.overflow = 'hidden';
+  els.serverList.innerHTML = '<div class="empty"><p>Loading…</p></div>';
+
+  let catalog = [];
+  try {
+    if (TAURI) {
+      const result = await window.__TAURI__.core.invoke('server_lessons', { url: serverUrl() });
+      // handle both {lessons:[...]} and [...] directly
+      catalog = Array.isArray(result) ? result : (result.lessons || []);
+    } else {
+      const base = serverUrl();
+      const sep = base.endsWith('/') ? '' : '/';
+      const resp = await fetch(base + sep + 'lessons.json');
+      if (!resp.ok) throw new Error('HTTP ' + resp.status);
+      const data = await resp.json();
+      catalog = Array.isArray(data) ? data : (data.lessons || []);
+    }
+  } catch (err) {
+    els.serverList.innerHTML = '';
+    const e = document.createElement('div');
+    e.className = 'empty';
+    e.innerHTML = '<p><strong>Server unreachable</strong></p>' +
+                  '<p class="hint">Check the URL or your Wi-Fi connection.</p>';
+    els.serverList.appendChild(e);
+    toast('Server unreachable — check the URL/Wi-Fi');
+    return;
+  }
+
+  await renderServerList(catalog);
+}
+
+async function getServerLesson(item) {
+  toast('Downloading…', 0);
+  try {
+    if (TAURI) {
+      const lesson = await window.__TAURI__.core.invoke('import_from_server', { url: serverUrl(), file: item.file });
+      tauriLessons.unshift(lesson);
+      render();
+      toast('Added "' + lesson.title + '"');
+    } else {
+      const base = serverUrl();
+      const sep = base.endsWith('/') ? '' : '/';
+      const resp = await fetch(base + sep + item.file);
+      if (!resp.ok) throw new Error('HTTP ' + resp.status);
+      const buf = await resp.arrayBuffer();
+      const title = await importBundleBytes(new Uint8Array(buf), item.file);
+      if (title) toast('Added "' + title + '"');
+    }
+    // Refresh imported-state badges in the list without a full reload
+    const library = loadIndex();
+    const importedTitles = new Set(library.map((l) => l.title));
+    els.serverList.querySelectorAll('.server-item').forEach((row) => {
+      const t = row.querySelector('.si-title');
+      if (t && importedTitles.has(t.textContent) && !row.classList.contains('imported')) {
+        row.classList.add('imported');
+        row.insertAdjacentHTML('beforeend', '<span class="si-badge">In library</span>');
+        row.replaceWith(row.cloneNode(true)); // remove click listener
+      }
+    });
+  } catch (err) {
+    toast('Download failed — check the URL/Wi-Fi');
+  }
+}
+
+function closeServer() {
+  els.server.classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+// ---------------------------------------------------------------------------
 // wire-up
 // ---------------------------------------------------------------------------
 // Tauri native import: native file dialog → Rust unzips + registers the lesson.
@@ -277,7 +416,30 @@ els.fileInput.addEventListener('change', (ev) => {
   if (f) importBundle(f);
 });
 els.back.addEventListener('click', closeViewer);
-window.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeViewer(); });
+window.addEventListener('keydown', (e) => { if (e.key === 'Escape') { closeViewer(); closeServer(); } });
+
+// Server overlay
+els.getBtn.addEventListener('click', openServer);
+els.serverClose.addEventListener('click', closeServer);
+
+els.serverCfg.addEventListener('click', () => {
+  const row = els.serverUrlRow;
+  const opening = !row.classList.contains('open');
+  row.classList.toggle('open');
+  if (opening) {
+    els.serverUrlInput.value = serverUrl();
+    els.serverUrlInput.focus();
+  }
+});
+
+function saveAndReloadServer() {
+  const v = els.serverUrlInput.value.trim();
+  if (v) setServerUrl(v);
+  els.serverUrlRow.classList.remove('open');
+  openServer();
+}
+els.serverUrlSave.addEventListener('click', saveAndReloadServer);
+els.serverUrlInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') saveAndReloadServer(); });
 
 if (TAURI) {
   window.__TAURI__.core.invoke('list_lessons')

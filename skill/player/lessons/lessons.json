@@ -1,0 +1,53 @@
+{
+  "lessons": [
+    {
+      "file": "chiron-blood-chemistry-amboss.chiron",
+      "title": "Chiron \u00b7 Blood Chemistry \u2014 Derangements & Their Acute Presentations",
+      "sizeMB": 4.8,
+      "clips": 7,
+      "domain": "medicine"
+    },
+    {
+      "file": "chiron-italian-cafe.chiron",
+      "title": "Chiron \u00b7 Al bar, al ristorante, il conto",
+      "sizeMB": 4.1,
+      "clips": 44,
+      "domain": "language-it"
+    },
+    {
+      "file": "chiron-italian-lesson.chiron",
+      "title": "Al bar \u2014 Your First Italian Caf\u00e9",
+      "sizeMB": 0.7,
+      "clips": 4,
+      "domain": "language-it"
+    },
+    {
+      "file": "chiron-italian-past-future.chiron",
+      "title": "Chiron \u00b7 Passato, imperfetto &amp; futuro \u2014 Italian tenses",
+      "sizeMB": 2.2,
+      "clips": 23,
+      "domain": "language-it"
+    },
+    {
+      "file": "chiron-klinefelter-amboss.chiron",
+      "title": "Chiron \u00b7 Klinefelter syndrome (47,XXY) \u2014 sex-chromosome aneuploidy, primary hypogonadism, infertility, TRT, microTESE",
+      "sizeMB": 2.5,
+      "clips": 7,
+      "domain": "medicine"
+    },
+    {
+      "file": "chiron-medicina-italiana.chiron",
+      "title": "Italiano per Medici \u00b7 con Lucrezia",
+      "sizeMB": 30.0,
+      "clips": 294,
+      "domain": "medicine"
+    },
+    {
+      "file": "chiron-sarcoma-amboss.chiron",
+      "title": "Chiron \u00b7 Sarcoma of the Chest",
+      "sizeMB": 2.1,
+      "clips": 2,
+      "domain": "medicine"
+    }
+  ]
+}
