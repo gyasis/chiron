@@ -22,20 +22,11 @@ let tauriLessons = [];
 const els = {
   lessons: document.getElementById('lessons'),
   importBtn: document.getElementById('import-btn'),
-  getBtn: document.getElementById('get-btn'),
+  cfgBtn: document.getElementById('cfg-btn'),
   fileInput: document.getElementById('file-input'),
   viewer: document.getElementById('viewer'),
   frame: document.getElementById('frame'),
-  back: document.getElementById('back-btn'),
-  vtitle: document.getElementById('viewer-title'),
   toast: document.getElementById('toast'),
-  server: document.getElementById('server'),
-  serverClose: document.getElementById('server-close'),
-  serverCfg: document.getElementById('server-cfg'),
-  serverUrlRow: document.getElementById('server-url-row'),
-  serverUrlInput: document.getElementById('server-url'),
-  serverUrlSave: document.getElementById('server-url-save'),
-  serverList: document.getElementById('server-list'),
 };
 
 // ---------------------------------------------------------------------------
@@ -81,6 +72,14 @@ function humanSize(bytes) {
   if (bytes < 1024) return bytes + ' B';
   if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(0) + ' KB';
   return (bytes / 1024 / 1024).toFixed(1) + ' MB';
+}
+
+function domainIcon(domain) {
+  if (!domain) return '📖';
+  const d = String(domain).toLowerCase();
+  if (d === 'medicine' || d === 'medical') return '🩺';
+  if (d === 'language' || d === 'lang') return '🗣';
+  return '📖';
 }
 
 // Strip a single common top-level directory if EVERY entry shares it, so the
@@ -179,7 +178,7 @@ async function importBundle(file) {
   toast('Reading ' + file.name + '…', 0);
   const u8 = new Uint8Array(await file.arrayBuffer());
   const title = await importBundleBytes(u8, file.name);
-  if (title) toast('Added “' + title + '”');
+  if (title) toast('Added "' + title + '"');
 }
 
 async function deleteLesson(id) {
@@ -201,10 +200,9 @@ async function deleteLesson(id) {
 }
 
 // ---------------------------------------------------------------------------
-// viewer
+// viewer — no bar; iframe fills the overlay; back gesture via history
 // ---------------------------------------------------------------------------
 function openLesson(l) {
-  els.vtitle.textContent = l.title;
   els.frame.src = TAURI ? (LESSON_BASE + l.id + '/' + l.entry)
                         : new URL('lessons/' + l.id + '/' + l.entry, location.href).href;
   els.viewer.classList.add('open');
@@ -231,99 +229,84 @@ window.addEventListener('popstate', () => {
 });
 
 // ---------------------------------------------------------------------------
-// render
+// catalog download — shared by render()
+// ---------------------------------------------------------------------------
+async function downloadCatalogLesson(item) {
+  toast('Downloading…', 0);
+  try {
+    if (TAURI) {
+      const lesson = await window.__TAURI__.core.invoke('import_from_server', { url: serverUrl(), file: item.file });
+      tauriLessons.unshift(lesson);
+      render();
+      toast('Added "' + lesson.title + '"');
+      openLesson(lesson);
+    } else {
+      const base = serverUrl();
+      const sep = base.endsWith('/') ? '' : '/';
+      const resp = await fetch(base + sep + item.file);
+      if (!resp.ok) throw new Error('HTTP ' + resp.status);
+      const buf = await resp.arrayBuffer();
+      const title = await importBundleBytes(new Uint8Array(buf), item.file);
+      if (title) {
+        toast('Added "' + title + '"');
+        // Open the freshly imported lesson (it's now first in the index)
+        const list = loadIndex();
+        if (list.length) openLesson(list[0]);
+      }
+    }
+  } catch (err) {
+    toast('Download failed — check the URL/Wi-Fi');
+  }
+}
+
+// ---------------------------------------------------------------------------
+// render — local library first, then append catalog asynchronously
 // ---------------------------------------------------------------------------
 function render() {
   const list = loadIndex();
   els.lessons.innerHTML = '';
+
   if (!list.length) {
     const e = document.createElement('div');
     e.className = 'empty';
     e.innerHTML =
       '<div class="big"><img src="icons/icon-192.png" alt="" style="width:88px;height:88px;border-radius:19px"></div>' +
       '<p><strong>No lessons yet.</strong></p>' +
-      '<p class="hint">Tap “Add lesson” and pick a <code>.chiron</code> file.<br>' +
-      'It opens here instantly — no extracting, works offline.</p>';
+      '<p class="hint">Tap "+ Add" to import a <code>.chiron</code> file, or wait while the catalog loads.<br>' +
+      'Lessons open here instantly — no extracting, works offline.</p>';
     els.lessons.appendChild(e);
-    return;
-  }
-  for (const l of list) {
-    const card = document.createElement('div');
-    card.className = 'card';
-    const sub = (l.size ? humanSize(l.size) : 'Lesson')
-              + (l.importedAt ? ' · added ' + new Date(l.importedAt).toLocaleDateString() : '');
-    card.innerHTML =
-      '<div class="thumb">📖</div>' +
-      '<div class="meta">' +
-        '<p class="title"></p>' +
-        '<div class="sub">' + sub + '</div>' +
-      '</div>' +
-      '<button class="del" title="Remove" aria-label="Remove lesson">×</button>';
-    card.querySelector('.title').textContent = l.title;
-    card.addEventListener('click', () => openLesson(l));
-    card.querySelector('.del').addEventListener('click', (ev) => {
-      ev.stopPropagation();
-      if (confirm('Remove “' + l.title + '” from this device?')) deleteLesson(l.id);
-    });
-    els.lessons.appendChild(card);
-  }
-}
-
-// ---------------------------------------------------------------------------
-// server overlay
-// ---------------------------------------------------------------------------
-function domainIcon(domain) {
-  if (!domain) return '📖';
-  const d = String(domain).toLowerCase();
-  if (d === 'medicine' || d === 'medical') return '🩺';
-  if (d === 'language' || d === 'lang') return '🗣';
-  return '📖';
-}
-
-async function renderServerList(catalog) {
-  const library = loadIndex();
-  const importedTitles = new Set(library.map((l) => l.title));
-  els.serverList.innerHTML = '';
-
-  if (!catalog.length) {
-    const e = document.createElement('div');
-    e.className = 'empty';
-    e.innerHTML = '<p><strong>No lessons available on this server.</strong></p>';
-    els.serverList.appendChild(e);
-    return;
-  }
-
-  for (const item of catalog) {
-    const already = importedTitles.has(item.title);
-    const row = document.createElement('div');
-    row.className = 'server-item' + (already ? ' imported' : '');
-    const sub = (item.sizeMB != null ? item.sizeMB + ' MB' : '')
-              + (item.clips != null ? (item.sizeMB != null ? ' · ' : '') + item.clips + ' clips' : '');
-    row.innerHTML =
-      '<div class="si-thumb">' + domainIcon(item.domain) + '</div>' +
-      '<div class="si-meta">' +
-        '<p class="si-title"></p>' +
-        '<div class="si-sub">' + sub + '</div>' +
-      '</div>' +
-      (already ? '<span class="si-badge">In library</span>' : '');
-    row.querySelector('.si-title').textContent = item.title;
-    if (!already) {
-      row.addEventListener('click', () => getServerLesson(item));
+  } else {
+    for (const l of list) {
+      const card = document.createElement('div');
+      card.className = 'card';
+      const sub = (l.size ? humanSize(l.size) : 'Lesson')
+                + (l.importedAt ? ' · added ' + new Date(l.importedAt).toLocaleDateString() : '');
+      card.innerHTML =
+        '<div class="thumb">📖</div>' +
+        '<div class="meta">' +
+          '<p class="title"></p>' +
+          '<div class="sub">' + sub + '</div>' +
+        '</div>' +
+        '<button class="del" title="Remove" aria-label="Remove lesson">×</button>';
+      card.querySelector('.title').textContent = l.title;
+      card.addEventListener('click', () => openLesson(l));
+      card.querySelector('.del').addEventListener('click', (ev) => {
+        ev.stopPropagation();
+        if (confirm('Remove "' + l.title + '" from this device?')) deleteLesson(l.id);
+      });
+      els.lessons.appendChild(card);
     }
-    els.serverList.appendChild(row);
   }
+
+  // Asynchronously append catalog items not already in the local library.
+  appendCatalog(new Set(list.map((l) => l.title)));
 }
 
-async function openServer() {
-  els.server.classList.add('open');
-  document.body.style.overflow = 'hidden';
-  els.serverList.innerHTML = '<div class="empty"><p>Loading…</p></div>';
-
+async function appendCatalog(localTitles) {
   let catalog = [];
   try {
     if (TAURI) {
       const result = await window.__TAURI__.core.invoke('server_lessons', { url: serverUrl() });
-      // handle both {lessons:[...]} and [...] directly
       catalog = Array.isArray(result) ? result : (result.lessons || []);
     } else {
       const base = serverUrl();
@@ -333,56 +316,35 @@ async function openServer() {
       const data = await resp.json();
       catalog = Array.isArray(data) ? data : (data.lessons || []);
     }
-  } catch (err) {
-    els.serverList.innerHTML = '';
-    const e = document.createElement('div');
-    e.className = 'empty';
-    e.innerHTML = '<p><strong>Server unreachable</strong></p>' +
-                  '<p class="hint">Check the URL or your Wi-Fi connection.</p>';
-    els.serverList.appendChild(e);
-    toast('Server unreachable — check the URL/Wi-Fi');
+  } catch {
+    // Catalog unreachable — silently skip; local library is unaffected.
     return;
   }
 
-  await renderServerList(catalog);
-}
+  // Remove the "No lessons yet" empty state if catalog has items.
+  const emptyEl = els.lessons.querySelector('.empty');
 
-async function getServerLesson(item) {
-  toast('Downloading…', 0);
-  try {
-    if (TAURI) {
-      const lesson = await window.__TAURI__.core.invoke('import_from_server', { url: serverUrl(), file: item.file });
-      tauriLessons.unshift(lesson);
-      render();
-      toast('Added "' + lesson.title + '"');
-    } else {
-      const base = serverUrl();
-      const sep = base.endsWith('/') ? '' : '/';
-      const resp = await fetch(base + sep + item.file);
-      if (!resp.ok) throw new Error('HTTP ' + resp.status);
-      const buf = await resp.arrayBuffer();
-      const title = await importBundleBytes(new Uint8Array(buf), item.file);
-      if (title) toast('Added "' + title + '"');
-    }
-    // Refresh imported-state badges in the list without a full reload
-    const library = loadIndex();
-    const importedTitles = new Set(library.map((l) => l.title));
-    els.serverList.querySelectorAll('.server-item').forEach((row) => {
-      const t = row.querySelector('.si-title');
-      if (t && importedTitles.has(t.textContent) && !row.classList.contains('imported')) {
-        row.classList.add('imported');
-        row.insertAdjacentHTML('beforeend', '<span class="si-badge">In library</span>');
-        row.replaceWith(row.cloneNode(true)); // remove click listener
-      }
-    });
-  } catch (err) {
-    toast('Download failed — check the URL/Wi-Fi');
+  for (const item of catalog) {
+    if (localTitles.has(item.title)) continue; // already downloaded
+
+    if (emptyEl) emptyEl.remove();
+
+    const card = document.createElement('div');
+    card.className = 'card catalog';
+    const sub = (item.sizeMB != null ? item.sizeMB + ' MB' : '')
+              + (item.clips != null ? (item.sizeMB != null ? ' · ' : '') + item.clips + ' clips' : '')
+              + ((item.sizeMB != null || item.clips != null) ? ' · ' : '') + 'tap to download';
+    card.innerHTML =
+      '<div class="thumb">' + domainIcon(item.domain) + '</div>' +
+      '<div class="meta">' +
+        '<p class="title"></p>' +
+        '<div class="sub">' + sub + '</div>' +
+      '</div>' +
+      '<span class="dl-badge" aria-label="Download">⬇</span>';
+    card.querySelector('.title').textContent = item.title;
+    card.addEventListener('click', () => downloadCatalogLesson(item));
+    els.lessons.appendChild(card);
   }
-}
-
-function closeServer() {
-  els.server.classList.remove('open');
-  document.body.style.overflow = '';
 }
 
 // ---------------------------------------------------------------------------
@@ -403,7 +365,7 @@ async function tauriImport() {
     const lesson = await window.__TAURI__.core.invoke('import_lesson', { data });
     tauriLessons.unshift(lesson);
     render();
-    toast('Added “' + lesson.title + '”');
+    toast('Added "' + lesson.title + '"');
   } catch (e) {
     toast('Import failed: ' + e);
   }
@@ -415,31 +377,19 @@ els.fileInput.addEventListener('change', (ev) => {
   els.fileInput.value = '';
   if (f) importBundle(f);
 });
-els.back.addEventListener('click', closeViewer);
-window.addEventListener('keydown', (e) => { if (e.key === 'Escape') { closeViewer(); closeServer(); } });
 
-// Server overlay
-els.getBtn.addEventListener('click', openServer);
-els.serverClose.addEventListener('click', closeServer);
-
-els.serverCfg.addEventListener('click', () => {
-  const row = els.serverUrlRow;
-  const opening = !row.classList.contains('open');
-  row.classList.toggle('open');
-  if (opening) {
-    els.serverUrlInput.value = serverUrl();
-    els.serverUrlInput.focus();
+// ⚙ button: prompt for server URL, then re-render to pick up new catalog.
+els.cfgBtn.addEventListener('click', () => {
+  const current = serverUrl();
+  // eslint-disable-next-line no-alert
+  const val = prompt('Catalog server URL:', current);
+  if (val !== null && val.trim() && val.trim() !== current) {
+    setServerUrl(val.trim());
+    render();
   }
 });
 
-function saveAndReloadServer() {
-  const v = els.serverUrlInput.value.trim();
-  if (v) setServerUrl(v);
-  els.serverUrlRow.classList.remove('open');
-  openServer();
-}
-els.serverUrlSave.addEventListener('click', saveAndReloadServer);
-els.serverUrlInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') saveAndReloadServer(); });
+window.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeViewer(); });
 
 if (TAURI) {
   window.__TAURI__.core.invoke('list_lessons')
@@ -451,7 +401,7 @@ if (TAURI) {
       toast('Offline mode unavailable here (needs https/localhost).');
     });
   } else {
-    toast('This browser can’t run the offline player.');
+    toast('This browser can\'t run the offline player.');
   }
   render();
 }

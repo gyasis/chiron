@@ -24,6 +24,7 @@
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
       color: var(--ink); background: var(--paper);
       display: flex; flex-direction: column; min-height: 100dvh;
+      overflow-x: hidden; max-width: 100vw;
     }
     /* ---- Library view ---- */
     #library { display: flex; flex-direction: column; min-height: 100dvh; }
@@ -43,8 +44,8 @@
       background: var(--accent); color: var(--navy); transition: background .15s;
     }
     .btn:active { background: var(--accent-hover); }
-    .btn.ghost { background: var(--accent-light); color: var(--accent-hover); }
-    main.lessons { flex: 1; padding: 16px; display: grid; gap: 12px; align-content: start; }
+    .btn.ghost { background: transparent; color: var(--accent); font-size: 18px; padding: 6px 8px; }
+    main.lessons { flex: 1; padding: 16px; display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; align-content: start; }
     .card {
       background: var(--card); border: 1px solid var(--line); border-radius: 14px;
       padding: 16px 18px; display: flex; align-items: center; gap: 14px; cursor: pointer;
@@ -58,68 +59,25 @@
                    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .card .sub { color: var(--muted); font-size: 13px; }
     .card .del { background: none; border: 0; color: var(--muted); font-size: 20px; padding: 6px; cursor: pointer; }
+    /* catalog-only card: download badge instead of delete */
+    .card.catalog { border-style: dashed; }
+    .card .dl-badge { font-size: 18px; padding: 6px; color: var(--accent); flex: none; }
     .empty { text-align: center; color: var(--muted); padding: 60px 24px; }
     .empty .big { font-size: 46px; margin-bottom: 14px; }
     .empty p { margin: 6px 0; line-height: 1.5; }
     .hint { font-size: 13px; }
-    /* ---- Viewer view ---- */
+    /* ---- Viewer view: iframe fills everything, no bar ---- */
     #viewer { position: fixed; inset: 0; z-index: 20; background: var(--paper);
-              display: none; flex-direction: column; }
-    #viewer.open { display: flex; }
-    .viewer-bar { display: flex; align-items: center; gap: 10px;
-                  padding: calc(var(--safe-top) + 8px) 12px 8px; background: var(--navy);
-                  border-bottom: 1px solid var(--navy-2); }
-    .viewer-bar button { appearance: none; border: 0; background: rgba(251,248,244,.14);
-                         color: var(--ivory); font-weight: 700; font-size: 15px;
-                         border-radius: 10px; padding: 9px 14px; cursor: pointer; }
-    .viewer-bar .vtitle { flex: 1; font-weight: 700; font-size: 15px; min-width: 0; color: var(--ivory);
-                          white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    #frame { flex: 1; width: 100%; border: 0; background: #fff; }
-    /* ---- toast / progress ---- */
+              display: none; }
+    #viewer.open { display: block; }
+    #frame { position: absolute; inset: 0; width: 100%; height: 100dvh; border: 0; background: #fff; }
+    /* ---- toast ---- */
     #toast { position: fixed; left: 50%; bottom: calc(var(--safe-bottom) + 22px);
              transform: translateX(-50%); background: var(--ink); color: #fff;
              padding: 11px 18px; border-radius: 999px; font-size: 14px; font-weight: 600;
              opacity: 0; pointer-events: none; transition: opacity .2s; z-index: 40; max-width: 88vw; }
     #toast.show { opacity: 1; }
     input[type=file] { display: none; }
-
-    /* ---- Server overlay ---- */
-    #server { position: fixed; inset: 0; z-index: 25; background: var(--paper);
-              display: none; flex-direction: column; }
-    #server.open { display: flex; }
-    .server-bar { display: flex; align-items: center; gap: 10px;
-                  padding: calc(var(--safe-top) + 8px) 12px 8px; background: var(--navy);
-                  border-bottom: 1px solid var(--navy-2); flex-shrink: 0; }
-    .server-bar button { appearance: none; border: 0; background: rgba(251,248,244,.14);
-                         color: var(--ivory); font-weight: 700; font-size: 15px;
-                         border-radius: 10px; padding: 9px 14px; cursor: pointer; }
-    .server-bar .stitle { flex: 1; font-weight: 700; font-size: 15px; color: var(--ivory); }
-    .server-bar .gear { background: none; color: var(--accent); font-size: 18px;
-                        padding: 8px 10px; }
-    .server-url-row { display: none; gap: 8px; padding: 10px 12px;
-                      background: var(--navy-2); border-bottom: 1px solid var(--navy);
-                      flex-shrink: 0; }
-    .server-url-row.open { display: flex; }
-    #server-url { flex: 1; border: 1px solid var(--line); border-radius: 8px;
-                  padding: 7px 10px; font-size: 13px; background: var(--card); color: var(--ink); }
-    #server-url-save { appearance: none; border: 0; background: var(--accent); color: var(--navy);
-                       font-weight: 700; font-size: 13px; padding: 7px 12px; border-radius: 8px;
-                       cursor: pointer; white-space: nowrap; }
-    #server-list { flex: 1; overflow-y: auto; padding: 16px; display: grid; gap: 10px; align-content: start; }
-    .server-item { background: var(--card); border: 1px solid var(--line); border-radius: 14px;
-                   padding: 14px 16px; display: flex; align-items: center; gap: 12px;
-                   cursor: pointer; transition: transform .08s, box-shadow .15s; }
-    .server-item:active { transform: scale(.985); }
-    .server-item.imported { opacity: .5; cursor: default; }
-    .server-item .si-thumb { width: 40px; height: 40px; border-radius: 10px; background: var(--accent-light);
-                              color: var(--accent-hover); display: grid; place-items: center;
-                              font-size: 20px; flex: none; }
-    .server-item .si-meta { flex: 1; min-width: 0; }
-    .server-item .si-title { font-weight: 700; font-size: 15px; margin: 0 0 2px;
-                              white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .server-item .si-sub { color: var(--muted); font-size: 13px; }
-    .server-item .si-badge { font-size: 12px; color: var(--muted); background: var(--accent-light);
-                              border-radius: 6px; padding: 2px 7px; flex: none; }
   </style>
 </head>
 <body>
@@ -128,31 +86,14 @@
       <div class="logo"><img src="icons/icon-192.png" alt="Chiron"></div>
       <h1>Chiron</h1>
       <span class="spacer"></span>
-      <button class="btn ghost" id="get-btn">☁ Get</button>
+      <button class="btn ghost" id="cfg-btn" title="Configure server URL">⚙</button>
       <button class="btn" id="import-btn">+ Add</button>
     </header>
     <main class="lessons" id="lessons"></main>
   </section>
 
   <section id="viewer">
-    <div class="viewer-bar">
-      <button id="back-btn">‹ Library</button>
-      <span class="vtitle" id="viewer-title"></span>
-    </div>
     <iframe id="frame" title="Lesson" allow="autoplay; fullscreen"></iframe>
-  </section>
-
-  <section id="server">
-    <div class="server-bar">
-      <button id="server-close">‹ Back</button>
-      <span class="stitle">Get lessons</span>
-      <button class="gear" id="server-cfg" title="Configure server URL">⚙</button>
-    </div>
-    <div class="server-url-row" id="server-url-row">
-      <input type="url" id="server-url" placeholder="https://example.com/lessons">
-      <button id="server-url-save">Save</button>
-    </div>
-    <div id="server-list"></div>
   </section>
 
   <div id="toast"></div>
