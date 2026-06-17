@@ -78,6 +78,9 @@
              opacity: 0; pointer-events: none; transition: opacity .2s; z-index: 40; max-width: 88vw; }
     #toast.show { opacity: 1; }
     input[type=file] { display: none; }
+    .appdl { text-align: center; padding: 18px 16px calc(var(--safe-bottom) + 18px); }
+    .appdl a { color: var(--muted); font-size: 13px; text-decoration: none; }
+    .appdl a:active { color: var(--accent); }
   </style>
 </head>
 <body>
@@ -90,6 +93,9 @@
       <button class="btn" id="import-btn">+ Add</button>
     </header>
     <main class="lessons" id="lessons"></main>
+    <footer class="appdl">
+      <a href="https://github.com/gyasis/chiron/releases/latest/download/Chiron.apk">📱 Get the Android app</a>
+    </footer>
   </section>
 
   <section id="viewer">
