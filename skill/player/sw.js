@@ -10,7 +10,7 @@
  *     the file:// fetch limits apply.
  */
 
-const SHELL_CACHE = 'chiron-shell-v1';
+const SHELL_CACHE = 'chiron-shell-v2';
 const LESSON_CACHE = 'chiron-lessons-v1';   // written by app.js on import
 
 const SHELL_ASSETS = [
@@ -45,12 +45,14 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
 
-  // Lesson content → serve from the lessons cache (the "local server").
+  // Lesson paths: imported-lesson assets (lessons/<id>/…) are served from cache;
+  // anything not cached (the catalog: lessons/lessons.json + lessons/*.chiron)
+  // falls through to the network so "Get lessons" can fetch it from Pages.
   if (url.pathname.includes('/lessons/')) {
     event.respondWith(
       caches.open(LESSON_CACHE)
         .then((cache) => cache.match(event.request, { ignoreSearch: true }))
-        .then((hit) => hit || new Response('Lesson asset not found', { status: 404 })),
+        .then((hit) => hit || fetch(event.request)),
     );
     return;
   }
