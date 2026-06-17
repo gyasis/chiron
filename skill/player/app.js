@@ -167,7 +167,8 @@ async function importBundleBytes(u8, name) {
     files[names[relPaths.indexOf(entry)]] || new Uint8Array(),
     name.replace(/\.(chiron\.)?zip$/i, '').replace(/\.chiron$/i, ''),
   );
-  const list = loadIndex();
+  // replace any existing entry with the same title (no duplicates)
+  const list = loadIndex().filter((l) => l.title !== title);
   list.unshift({ id, title, entry, size: total, importedAt: Date.now() });
   saveIndex(list);
   render();
@@ -236,6 +237,7 @@ async function downloadCatalogLesson(item) {
   try {
     if (TAURI) {
       const lesson = await window.__TAURI__.core.invoke('import_from_server', { url: serverUrl(), file: item.file });
+      tauriLessons = tauriLessons.filter((l) => l.title !== lesson.title);
       tauriLessons.unshift(lesson);
       render();
       toast('Added "' + lesson.title + '"');
@@ -263,7 +265,15 @@ async function downloadCatalogLesson(item) {
 // render — local library first, then append catalog asynchronously
 // ---------------------------------------------------------------------------
 function render() {
-  const list = loadIndex();
+  // De-dupe by title (heals libraries that accumulated repeat imports).
+  const seen = new Set();
+  const list = loadIndex().filter((l) => {
+    if (seen.has(l.title)) return false;
+    seen.add(l.title);
+    return true;
+  });
+  // Persist the cleaned list so the dupes don't come back.
+  if (!TAURI) { saveIndex(list); } else { tauriLessons = list; }
   els.lessons.innerHTML = '';
 
   if (!list.length) {
@@ -363,6 +373,7 @@ async function tauriImport() {
     // which std::fs in Rust cannot. Then hand the raw bytes to Rust to unzip.
     const data = await window.__TAURI__.fs.readFile(path);
     const lesson = await window.__TAURI__.core.invoke('import_lesson', { data });
+    tauriLessons = tauriLessons.filter((l) => l.title !== lesson.title);
     tauriLessons.unshift(lesson);
     render();
     toast('Added "' + lesson.title + '"');
