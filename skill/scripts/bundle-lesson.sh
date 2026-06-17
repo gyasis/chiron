@@ -112,7 +112,9 @@ TITLE="$(grep -oE '<title>[^<]*' "${LESSON_DIR}/${ENTRY}" | head -1 | sed 's/<ti
 [[ -z "${TITLE}" || "${TITLE}" == "COURSE_TITLE" ]] && TITLE="${NAME}"
 # JSON-escape backslashes and quotes in the title
 TITLE_ESC="$(printf '%s' "${TITLE}" | sed 's/\\/\\\\/g; s/"/\\"/g')"
-CLIPS="$(find "${LESSON_DIR}/audio" -name '*.mp3' 2>/dev/null | wc -l | tr -d ' ')"
+# count mp3s recursively (top-level audio/ AND multi-page wards/*/audio/); the
+# trailing `|| true` keeps set -e/pipefail from aborting when there's no audio.
+CLIPS="$( { find "${LESSON_DIR}" -name '*.mp3' 2>/dev/null || true; } | wc -l | tr -d ' ')"
 CREATED="$(date +%F)"
 cat > "${LESSON_DIR}/chiron.json" <<JSON
 {
