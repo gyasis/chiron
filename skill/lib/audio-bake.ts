@@ -21,7 +21,7 @@
 
 import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
-import { existsSync, mkdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, renameSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import Database from 'better-sqlite3';
@@ -50,11 +50,24 @@ export type ArtifactKind =
   | 'dialogue' | 'phrase' | 'grammar-pearl'          // inline (anchored to a DOM element)
   | 'story-verbatim' | 'story-description';
 
+/** Synthesis engine for an artifact — OmniVoice (default) or the Dia sidecar. */
+export type SynthEngine = 'omni' | 'dia';
+
 /** A bakeable lecture unit. `sectionId` set only for `kind: 'section'`. */
 export interface LectureArtifact {
   kind: ArtifactKind;
   sectionId?: string;
   segments: LectureSegment[];
+  /** Which sidecar synthesizes this artifact's segments (default: 'omni'). */
+  engine?: SynthEngine;
+  /** Dia speaker tag (S1/S2/S3) — required form is `[S1] text`. */
+  speaker?: string;
+  /** Dia playback speed (<1.0 = slower, pitch-preserved). Also drives the OmniVoice fallback atempo. */
+  speed?: number;
+  /** Dia emotion hint ∈ {neutral,calm,measured,warm,expressive}. */
+  emotion?: string;
+  /** On Dia failure: 'omni' (default) falls back to OmniVoice; 'none' lets the clip fail. */
+  fallback?: 'omni' | 'none';
 }
 
 /** OmniVoice reference for a registered voice (paths are Mac-side, read by the sidecar). */
@@ -72,6 +85,8 @@ export interface AudioBakeOptions {
   voices: Record<string, VoiceRef>;
   /** default `http://192.168.0.159:8770`. */
   omnivoiceUrl?: string;
+  /** Dia sidecar base URL; default `http://192.168.0.159:8769`. */
+  diaUrl?: string;
   /** target playback LUFS, default −30. */
   playbackTarget?: number;
   /**
@@ -97,6 +112,7 @@ export interface AudioClipResult {
 
 const STAGE = 'audio-bake';
 const DEFAULT_OV = 'http://192.168.0.159:8770';
+const DEFAULT_DIA = 'http://192.168.0.159:8769';
 const DEFAULT_TARGET = -20; // playback LUFS — Gyasi's preference (raised from -30; -30 was too quiet, 2026-06-10)
 /** Bake order: shortest/most-useful first so it's playable while the rest run. */
 const ORDER: ArtifactKind[] = [
@@ -251,6 +267,47 @@ async function synthWithRetry(url: string, seg: LectureSegment, ref: VoiceRef, o
   }
 }
 
+async function diaReady(url: string): Promise<boolean> {
+  try {
+    const r = await fetch(`${url}/readyz`, { signal: AbortSignal.timeout(6000) });
+    return r.ok;
+  } catch {
+    return false;
+  }
+}
+
+/** Dia synth params for a section's slow reading. */
+interface DiaParams { speaker: string; speed: number; emotion: string; }
+
+/**
+ * Synthesize ONE segment via the Dia sidecar (different cloned voice, with
+ * speed + emotion). Dia does its OWN server-side voice cloning (S1/S2/S3 refs),
+ * so we send ONLY the `[speaker]` tag + text — never ref_audio/ref_text. The
+ * leading `[Sn]` tag is mandatory: with no tag Dia prepends all clone refs →
+ * bloat → timeout. Dia idle-unloads, so the first call cold-loads (~10–30s);
+ * we pre-check /readyz and use a long per-request timeout.
+ */
+async function synthDiaSegment(diaUrl: string, seg: LectureSegment, params: DiaParams, outWav: string): Promise<void> {
+  if (!(await diaReady(diaUrl))) throw new Error(`Dia sidecar not ready at ${diaUrl}/readyz`);
+  const body = JSON.stringify({
+    text: `[${params.speaker}] ${seg.text}`,
+    speed: params.speed,
+    emotion: params.emotion,
+    use_voice_clone: true,
+    max_new_tokens: 2048,
+  });
+  const r = await fetch(`${diaUrl}/tts`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body,
+    signal: AbortSignal.timeout(180_000),
+  });
+  if (!r.ok) throw new Error(`Dia HTTP ${r.status} for "${seg.text.slice(0, 32)}…"`);
+  const buf = Buffer.from(await r.arrayBuffer());
+  if (buf.length < 2000) throw new Error(`Dia returned ${buf.length} bytes (too small) for "${seg.text.slice(0, 32)}…"`);
+  writeFileSync(outWav, buf);
+}
+
 function probeDuration(p: string): number | null {
   try {
     const out = execFileSync('ffprobe', ['-v', 'error', '-show_entries', 'format=duration', '-of', 'csv=p=0', p], { encoding: 'utf-8' });
@@ -316,6 +373,7 @@ function buildRow(
 export async function bakeAudio(opts: AudioBakeOptions): Promise<AudioClipResult[]> {
   const lessonDir = resolve(opts.lessonOutputDir);
   const url = opts.omnivoiceUrl ?? DEFAULT_OV;
+  const diaUrl = opts.diaUrl ?? DEFAULT_DIA;
   const target = opts.playbackTarget ?? DEFAULT_TARGET;
   // QC is on by default when a key exists and CHIRON_AUDIO_QC is not "0".
   const qcEnabled = opts.qc !== undefined
@@ -394,17 +452,65 @@ export async function bakeAudio(opts: AudioBakeOptions): Promise<AudioClipResult
         upsert.run(buildRow(opts.courseId, art, sid, hash, 'pending', {})); // mark in-flight
         mkdirSync(work, { recursive: true });
 
+        const useDia = art.engine === 'dia';
+        const diaParams: DiaParams = {
+          speaker: art.speaker ?? 'S1',
+          speed: art.speed ?? 1.0,
+          emotion: art.emotion ?? 'neutral',
+        };
+        const fallbackMode = art.fallback ?? 'omni';
+
+        /**
+         * Synth ONE segment to `rawWav`. For a Dia artifact: try Dia first; on ANY
+         * Dia failure with fallback==='omni', synth via OmniVoice and (if speed<1.0)
+         * apply a pitch-preserved atempo so the fallback keeps the slow reading.
+         * Returns which engine actually produced the clip (for logging).
+         */
+        const synthSegmentToWav = async (seg: LectureSegment, rawWav: string): Promise<SynthEngine> => {
+          if (useDia) {
+            try {
+              await synthDiaSegment(diaUrl, seg, diaParams, rawWav);
+              return 'dia';
+            } catch (diaErr) {
+              if (fallbackMode !== 'omni') throw diaErr;
+              const msg = diaErr instanceof Error ? diaErr.message : String(diaErr);
+              progress(STAGE, `  Dia failed (${msg.slice(0, 44)}) — falling back to OmniVoice`);
+              const ref = opts.voices[seg.voice];
+              if (!ref) throw new Error(`no voice ref registered for '${seg.voice}' (Dia fallback)`);
+              await synthWithRetry(url, seg, ref, rawWav);
+              if (diaParams.speed < 1.0) {
+                const slowed = `${rawWav}.slow.wav`;
+                execFileSync('ffmpeg', ['-y', '-loglevel', 'error', '-i', rawWav, '-filter:a', `atempo=${diaParams.speed}`, slowed], { stdio: 'pipe' });
+                renameSync(slowed, rawWav);
+              }
+              return 'omni';
+            }
+          }
+          const ref = opts.voices[seg.voice];
+          if (!ref) throw new Error(`no voice ref registered for '${seg.voice}'`);
+          await synthWithRetry(url, seg, ref, rawWav);
+          // OmniVoice slow read: apply pitch-preserved atempo for any omni section
+          // with speed<1.0. This is the Italian slow-reading path — Dia is English-
+          // only, so `language-it` passage slow-reads use omni+atempo (same voice as
+          // the fast read, just slowed/enunciated).
+          if (diaParams.speed < 1.0) {
+            const slowed = `${rawWav}.slow.wav`;
+            execFileSync('ffmpeg', ['-y', '-loglevel', 'error', '-i', rawWav, '-filter:a', `atempo=${diaParams.speed}`, slowed], { stdio: 'pipe' });
+            renameSync(slowed, rawWav);
+          }
+          return 'omni';
+        };
+
         const manifestLines: string[] = [];
         for (let i = 0; i < art.segments.length; i++) {
           const seg = art.segments[i]!;
-          const ref = opts.voices[seg.voice];
-          if (!ref) throw new Error(`no voice ref registered for '${seg.voice}'`);
-          progress(STAGE, `${label}: segment ${i + 1}/${art.segments.length} [${seg.lang}] synth`, {
+          progress(STAGE, `${label}: segment ${i + 1}/${art.segments.length} [${seg.lang}] synth (engine=${useDia ? 'dia' : 'omni'})`, {
             pct: Math.round((i / art.segments.length) * 100),
           });
           const rawWav = join(work, `raw${i}.wav`);
           const segWav = join(work, `seg${i}.wav`);
-          await synthWithRetry(url, seg, ref, rawWav);
+          const produced = await synthSegmentToWav(seg, rawWav);
+          progress(STAGE, `${label}: segment ${i + 1}/${art.segments.length} produced by ${produced}`);
           execFileSync('tts-normalize', [rawWav, segWav, String(target)], { stdio: 'pipe' });
           const gap = i < art.segments.length - 1 ? seg.gapAfterMs : 0;
           manifestLines.push(`${segWav}|${gap}${seg.gainDb != null ? `|${seg.gainDb}` : ''}`);
@@ -426,11 +532,9 @@ export async function bakeAudio(opts: AudioBakeOptions): Promise<AudioClipResult
           const mLines: string[] = [];
           for (let i = 0; i < art.segments.length; i++) {
             const seg = art.segments[i]!;
-            const ref2 = opts.voices[seg.voice];
-            if (!ref2) throw new Error(`no voice ref registered for '${seg.voice}'`);
             const rawWav2 = join(work, `raw${i}.wav`);
             const segWav2 = join(work, `seg${i}.wav`);
-            await synthWithRetry(url, seg, ref2, rawWav2);
+            await synthSegmentToWav(seg, rawWav2);
             execFileSync('tts-normalize', [rawWav2, segWav2, String(target)], { stdio: 'pipe' });
             const gap2 = i < art.segments.length - 1 ? seg.gapAfterMs : 0;
             mLines.push(`${segWav2}|${gap2}${seg.gainDb != null ? `|${seg.gainDb}` : ''}`);

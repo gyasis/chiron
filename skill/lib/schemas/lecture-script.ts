@@ -12,7 +12,10 @@
  */
 
 import { z } from 'zod';
-import type { LectureArtifact, LectureSegment } from '../audio-bake.js';
+import type { LectureArtifact, LectureSegment, SynthEngine } from '../audio-bake.js';
+
+/** Engine ∈ {omni,dia} — which sidecar synthesizes a section artifact. */
+export const SynthEngineSchema = z.enum(['omni', 'dia']);
 
 export const SegLangSchema = z.enum(['en', 'it']);
 
@@ -49,6 +52,16 @@ export const LectureScriptArtifactSchema = z
     /** DOM id of the section this lecture covers — REQUIRED iff kind === 'section'. */
     sectionId: z.string().optional(),
     segments: z.array(LectureScriptSegmentSchema).min(1),
+    /** Synthesis engine override (default omni). Dia routes the slow reading. */
+    engine: SynthEngineSchema.optional(),
+    /** Dia speaker tag (S1/S2/S3). */
+    speaker: z.string().optional(),
+    /** Dia speed (<1.0 = slower, pitch-preserved). Also drives the OmniVoice fallback atempo. */
+    speed: z.number().optional(),
+    /** Dia emotion ∈ {neutral,calm,measured,warm,expressive}. */
+    emotion: z.string().optional(),
+    /** On Dia failure: 'omni' (default) → OmniVoice fallback; 'none' → let it fail. */
+    fallback: z.enum(['omni', 'none']).optional(),
   })
   .refine((a) => !ANCHORED_KINDS.has(a.kind) || (a.sectionId !== undefined && a.sectionId.length > 0), {
     message: 'this artifact kind requires a non-empty sectionId (the DOM anchor it attaches to)',
@@ -101,6 +114,13 @@ export function resolveLecture(script: LectureScript, domain: LectureDomain): Le
     });
     const artifact: LectureArtifact = { kind: art.kind, segments };
     if (art.sectionId) artifact.sectionId = art.sectionId;
+    // Pass engine params through for section artifacts (read at bake time).
+    // Voices are still assigned per segment above, so the OmniVoice fallback works.
+    if (art.engine) artifact.engine = art.engine as SynthEngine;
+    if (art.speaker) artifact.speaker = art.speaker;
+    if (art.speed !== undefined) artifact.speed = art.speed;
+    if (art.emotion) artifact.emotion = art.emotion;
+    if (art.fallback) artifact.fallback = art.fallback;
     return artifact;
   });
 }

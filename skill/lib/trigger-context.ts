@@ -24,7 +24,8 @@ export type TriggerDomain =
   | 'auto';
 export type TriggerMode = 'A' | 'B' | 'auto';
 export type ModeForcedBy = 'user-flag' | 'slash-command' | null;
-export type TriggerSubMode = 'amboss' | 'uptodate';
+// medicine sub-modes: amboss | uptodate. language-it sub-modes: grammar | vocab | passage.
+export type TriggerSubMode = 'amboss' | 'uptodate' | 'grammar' | 'vocab' | 'passage';
 
 export interface TriggerContext {
   raw: string;                   // original user text or slash-command + args
@@ -141,6 +142,9 @@ const SLASH_TABLE: Record<string, SlashSpec> = {
   '/chiron-medicine':        { domain: 'medicine',       mode: 'A',    modeForcedBy: null },
   '/chiron-language':        { domain: 'language-it',    mode: 'A',    modeForcedBy: null },
   '/chiron-language-it':     { domain: 'language-it',    mode: 'A',    modeForcedBy: null },
+  '/chiron-language-passage':{ domain: 'language-it',    mode: 'A',    modeForcedBy: null },
+  '/chiron-language-grammar':{ domain: 'language-it',    mode: 'A',    modeForcedBy: null },
+  '/chiron-language-vocab':  { domain: 'language-it',    mode: 'A',    modeForcedBy: null },
   '/chiron-research-paper':  { domain: 'research-paper', mode: 'A',    modeForcedBy: null },
   '/chiron-case-study':      { domain: 'auto',           mode: 'B',    modeForcedBy: 'slash-command' },
 };
@@ -211,6 +215,13 @@ function parseSlashCommand(
   // sourceArg: last non-flag arg, if any.
   const positional = parts.slice(1).filter((p) => p && !p.startsWith('--'));
   const sourceArg = positional.length > 0 ? positional[positional.length - 1]! : null;
+
+  // A language sub-mode carried by the slash suffix (/chiron-language-<sub>)
+  // seeds flags.subMode unless an explicit --submode= flag already set it.
+  const langSub = /^\/chiron-language-(passage|grammar|vocab)$/.exec(head);
+  if (langSub && !flags.subMode) {
+    flags.subMode = langSub[1] as TriggerSubMode;
+  }
 
   return {
     raw,
@@ -376,7 +387,7 @@ function parseFlags(raw: string): TriggerContext['flags'] {
     flags.theme = themeMatch[1];
   }
 
-  const subModeMatch = raw.match(/--submode=(amboss|uptodate)\b/i);
+  const subModeMatch = raw.match(/--submode=(amboss|uptodate|grammar|vocab|passage)\b/i);
   if (subModeMatch && subModeMatch[1]) {
     flags.subMode = subModeMatch[1].toLowerCase() as TriggerSubMode;
   }

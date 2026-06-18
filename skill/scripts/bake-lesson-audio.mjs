@@ -360,8 +360,22 @@ if (fs.existsSync(audioScriptsPath)) {
     if (as.summary) lectureArtifacts.push({ kind: 'summary', segments: as.summary });
     if (as.shortened) lectureArtifacts.push({ kind: 'shortened', segments: as.shortened });
     if (as.sections) {
-      for (const [sectionId, segs] of Object.entries(as.sections)) {
-        lectureArtifacts.push({ kind: 'section', sectionId, segments: segs });
+      for (const [sectionId, val] of Object.entries(as.sections)) {
+        // Back-compat: a section value is EITHER the segments[] array (→ OmniVoice,
+        // unchanged) OR an object { segments, engine, speaker, speed, emotion, fallback }.
+        if (Array.isArray(val)) {
+          lectureArtifacts.push({ kind: 'section', sectionId, segments: val });
+        } else if (val && typeof val === 'object' && Array.isArray(val.segments)) {
+          const art = { kind: 'section', sectionId, segments: val.segments };
+          if (val.engine) art.engine = val.engine;
+          if (val.speaker) art.speaker = val.speaker;
+          if (val.speed !== undefined) art.speed = val.speed;
+          if (val.emotion) art.emotion = val.emotion;
+          if (val.fallback) art.fallback = val.fallback;
+          lectureArtifacts.push(art);
+        } else {
+          process.stderr.write(`[bake-lesson-audio] WARNING: section '${sectionId}' has no segments — skipping\n`);
+        }
       }
     }
   } catch (e) {

@@ -133,6 +133,45 @@ If the user requests `language-de` or any German lesson in v1, respond:
 > deferred to post-v1. The blockers are TTS-voice quality validation and the
 > verb-conjugation-table widget, both planned for v1.1.
 
+## Language sub-modes (curriculum selection)
+
+`language-it` has three curriculum variants, selected by `TriggerContext.flags.subMode`
+(set by `--submode=<x>` or the `/chiron-language-<x>` slash):
+
+| subMode | curriculum file | what it is |
+|---|---|---|
+| `grammar` (default) | `curricula/language-it-grammar.json` | grammar-arc course |
+| `vocab` | `curricula/language-it-vocab.json` | SR-card-heavy vocab course |
+| `passage` | `curricula/language-it-passage.json` | **source-driven** interlinear breakdown of a passage / story / exam item / script (prompt `prompts/04t-language-passage-breakdown.md`, widget `annotated-passage`) |
+
+**Selection rule (BLOCKING):** for `domain==='language-it'`, load
+`curricula/language-it-${subMode || 'grammar'}.json`. If the curriculum has
+`promptOverride`, use that prompt for the content stage instead of `04a`.
+
+**Persona injection:** when the curriculum sets `personaPackOverride`, resolve the
+active persona via `activePersonaFor('language-it')` (e.g. `lucrezia`), `loadPersona(id)`
+from `lib/persona.ts`, and inject the register into the content prompt's
+`{{personaContextBlock}}` + `{{learnerName}}` slots (falls back to `personasFile`'s
+generic tutor when no pack is active). This is how `04t` is voiced in Lucrezia.
+
+**Passage readings (passage submode):** the `passage` curriculum declares
+`passageReadings` (a `fast` + `slow` full reading of the source passage). The
+generator emits them into `audio-scripts.json` `sections`: `passage-fast` and
+`passage-slow`, each an **object** `{engine, voice|speaker, speed, segments}`.
+For `language-it` BOTH use `engine:"omni"` (Lucrezia) — the slow one with
+`speed:0.8`, which the bake renders as a pitch-preserved `atempo` slow-down (same
+voice, just slower/enunciated). **`engine:"dia"` is ENGLISH-ONLY** — Dia emits a
+drone on Italian — so it's reserved for an English-domain different-voice slow
+read; the bake falls back to OmniVoice+atempo if Dia is unreachable.
+
+Two surfaces, both genre-driven (NOT hand-coded per lesson):
+1. **Read-first block** at the TOP of section 1 (a `.passage-listen` element with
+   ▶ Veloce / ▶ Lenta & scandita), above the `annotated-passage` breakdown — so the
+   learner hears the whole passage before dissecting it. This is a generator-emitted
+   lesson element (NOT inside the annotated-passage widget).
+2. The lesson **🎧 player panel** surfaces both in a "La frase" group (skeleton
+   `language-lesson-skeleton.html`).
+
 ## Mode A vs Mode B
 
 - **Mode A — Course-style.** Multi-chapter scroll-snap lesson, Coursera-feel.

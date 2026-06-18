@@ -565,6 +565,71 @@ export const CodeEnglishTranslationSchema = z.object({
 });
 
 // ----------------------------------------------------------------------------
+// annotated-passage — language sub-mode `passage` centerpiece (2026-06-17)
+//
+// Interlinear breakdown of a real source passage. Each content/function word is
+// a token tagged to ONE annotation `layer`; multi-word units are `phrases`. The
+// learner independently toggles each layer on/off (the toggle bar). `defaultOn`
+// controls only initial visibility — every declared layer's data is ALWAYS
+// emitted so it can be switched on. domain!=null adds a `concept` layer;
+// genre='dialogue-script' adds a `subtext` layer. See prompts/04t-…breakdown.md.
+// ----------------------------------------------------------------------------
+
+export const ApTokenSchema = z.object({
+  surface: z.string(),                       // word as it appears in the passage
+  lemma: z.string().optional(),              // dictionary / infinitive form (root)
+  pos: z.string(),                           // DET, NOUN, VERB, ADP (prep), PRON, ADV, CONJ, …
+  layer: z.enum([
+    'articles', 'nouns', 'verbs', 'adverbs', 'preps', 'pronouns',
+  ]),
+  features: z.record(z.string(), z.union([z.string(), z.number(), z.boolean()])).optional(),
+  note: z.string(),                          // plain-English beginner explanation
+});
+
+export const ApPhraseSchema = z.object({
+  surface: z.string(),                       // the multi-word unit verbatim
+  type: z.string(),                          // collocation | idiom | fixed-expression | verb-phrase | …
+  literal: z.string().optional(),            // word-order gloss
+  meaning: z.string(),                       // what it means as a unit
+  note: z.string().optional(),               // why it's idiomatic / when to reuse
+});
+
+export const ApSentenceSchema = z.object({
+  idx: z.number().int().min(1),
+  text: z.string(),                          // verbatim sentence
+  audioId: z.string().optional(),            // anchor id for the per-sentence ▶ clip
+  translation: z.string(),                   // natural English (the `translation` layer)
+  literal: z.string().optional(),            // word-order gloss (the `literal` layer)
+  mood: z.string().optional(),               // declarative / interrogative / …
+  registerNote: z.string().optional(),       // formal address, clinical register, slang
+  concept: z.string().optional(),            // domain explanation for THIS sentence (`concept` layer)
+  subtext: z.string().optional(),            // speaker intent (`subtext` layer; dialogue-script)
+  tokens: z.array(ApTokenSchema).min(1),
+  phrases: z.array(ApPhraseSchema).default([]),
+  tips: z.array(z.string()).default([]),
+});
+
+export const AnnotatedPassageSchema = z.object({
+  type: z.literal('annotated-passage'),
+  id: z.string(),
+  language: z.enum(['it', 'de']),
+  domain: z.string().nullable().default(null),
+  genre: z.enum(['narrative', 'expository', 'exam-question', 'dialogue-script']),
+  register: z.string().optional(),
+  layers: z.array(z.object({
+    key: z.string(),                         // articles | nouns | verbs | adverbs | preps | pronouns | phrases | translation | literal | concept | subtext
+    label: z.string(),                       // toggle-button label (localized ok)
+    defaultOn: z.boolean(),                  // initial visibility ONLY — never gates generation
+  })).min(1),
+  sentences: z.array(ApSentenceSchema).min(1),
+  anomalies: z.array(z.object({
+    span: z.string(),                        // verbatim from source
+    issue: z.string(),                       // what's off
+    likely: z.string(),                      // the intended form
+  })).default([]),
+});
+
+// ----------------------------------------------------------------------------
 // Discriminated union — the public schema
 // ----------------------------------------------------------------------------
 
@@ -608,6 +673,8 @@ const WidgetUnionSchema = z.discriminatedUnion('type', [
   ChartXyWidgetSchema,
   // Code-only widget (v1)
   CodeEnglishTranslationSchema,
+  // Language passage sub-mode (2026-06-17)
+  AnnotatedPassageSchema,
 ]);
 
 /**
@@ -692,6 +759,8 @@ export const WIDGET_KINDS: WidgetKind[] = [
   'layer-toggle', 'why-care-callout', 'chart-xy',
   // Code-only (v1)
   'code-english-translation',
+  // Language passage sub-mode (2026-06-17)
+  'annotated-passage',
 ];
 
 /** Which widgets are universal (no domain constraint) vs domain-gated.
@@ -715,4 +784,5 @@ export const MEDICINE_ONLY_WIDGETS: WidgetKind[] = [
 export const LANGUAGE_ONLY_WIDGETS: WidgetKind[] = [
   'fill-blank', 'matching-pair', 'cloze',
   'audio-tts', 'match-madness', 'language-flashcard-deck',
+  'annotated-passage',
 ];

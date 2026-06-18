@@ -1,0 +1,47 @@
+{
+  "domain": "language-it",
+  "subMode": "passage",
+  "version": "1",
+  "description": "Italian passage-breakdown learning path: the SOURCE passage (paragraph, story, exam item, or movie/play script) is the syllabus. One chapter per coherent chunk; each is dissected with an interlinear `annotated-passage` widget whose grammar layers (articles, nouns, verbs, adverbs, preps, pronouns, translation, literal) toggle on/off independently. When the passage is domain text (e.g. medicine) a parallel `concept` layer teaches the subject behind the language; when it is a dialogue-script a `subtext` layer teaches speaker intent.",
+  "templateStyle": "passage-interlinear",
+  "primaryWidget": "annotated-passage",
+  "chapterCountTarget": 0,
+  "chapterCountFrom": "passage-chunks",
+  "perChapterQuizTarget": 3,
+  "perChapterSrCardTarget": 12,
+  "modeAOnly": true,
+  "sourceDriven": true,
+  "promptOverride": "prompts/04t-language-passage-breakdown.md",
+  "passageReadings": {
+    "_doc": "Every passage lesson opens with TWO full readings of the source passage, surfaced in the lesson audio player. Emitted as audio-scripts.json `sections`: passage-fast and passage-slow. The bake applies pitch-preserved atempo to any section with speed<1.0. NOTE: Dia (engine:dia) is ENGLISH-ONLY — it emits a drone/garbage on Italian — so `language-it` slow reads use engine:omni (Lucrezia, same voice, slowed). engine:dia is reserved for an English-domain different-voice slow read.",
+    "fast": { "section": "passage-fast", "engine": "omni", "voice": "lucrezia_italian", "label": "Veloce" },
+    "slow": { "section": "passage-slow", "engine": "omni", "voice": "lucrezia_italian", "speed": 0.8, "label": "Lenta & scandita" }
+  },
+  "allLayersAlwaysGenerated": true,
+  "layersDefaultOn": {
+    "articles": true,
+    "nouns": true,
+    "verbs": true,
+    "phrases": true,
+    "adverbs": false,
+    "preps": true,
+    "pronouns": false,
+    "translation": true,
+    "literal": false,
+    "concept": true,
+    "subtext": true
+  },
+  "widgetMix": {
+    "annotated-passage": 0.5,
+    "language-flashcard-deck": 0.2,
+    "glossary-tooltips": 0.1,
+    "match-madness": 0.1,
+    "cloze": 0.1
+  },
+  "personasFile": "personas/language-it.json",
+  "personaPackOverride": "activePersonaFor:language-it",
+  "audienceLevel": "basic",
+  "parseEveryFunctionWord": true,
+  "themeId": "linguistic",
+  "srCardEmphasis": "passage"
+}
