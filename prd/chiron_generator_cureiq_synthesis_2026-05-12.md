@@ -65,7 +65,7 @@ Order chosen to maximize early value with minimum dependency:
 | **GP2** | G1 — Image source adapter | **✅ SHIPPED 2026-06-18** (`skill/ingest-adapters/image.ts`). Second-highest immediate utility (you screenshot AMBOSS pages constantly). Pure additive — new adapter file, no pipeline changes. |
 | **GP3** | G5 — Rich-media (video/YouTube) | **video slice built 2026-06-18** (`skill/ingest-adapters/video.ts`). Same additive adapter→handoff pattern as G1; reuses `mcp__gemini-mcp__watch_video` (zero new Gemini plumbing). Audio is a small follow-on. |
 | **GP4** | G2 — RAG source adapter | Depends on a stable HybridRAG/DeepLake index for the source domain you care about. Comes after you've built up an index worth pulling from. |
-| **GP5** | G6 — Phone-camera capture sidecar | **✅ BUILT 2026-06-18** as a standalone Node server (`skill/scripts/capture-server.mjs`) — LAN server + phone-camera page + capture + inbox hand-in; 6 integration tests. (Tauri embedding deferred — not needed for the working feature.) |
+| **GP5** | G6 — Phone-camera capture sidecar | **✅ BUILT 2026-06-18** as a standalone Node server (`skill/scripts/capture-server.mjs`) — LAN server + phone-camera page + capture + inbox hand-in + **`--auto-ingest`** (debounced → live image-folder Brief via G1); 10 integration tests. (Tauri embedding deferred — not needed for the working feature.) |
 | **GP6** | G4 — Multi-hop integration | Once the source adapters individually work, integrate so one lesson generation can draw from PDF + image + video + RAG + expanded-from-prior-lesson in one pipeline. |
 
 ---
@@ -424,18 +424,28 @@ Delivered against the component breakdown:
 3. **Camera capture UI** ✅ — mobile-first page with `capture="environment"`
    (rear camera) + gallery + desktop drag-drop + clipboard-paste; live thumbnails
    + running count.
-4. **Hand-in to ingest** ✅ (decoupled) — captures land in the inbox dir; the
-   server prints the exact `chiron --source <inbox>` (image-folder/G1) command
-   and exposes `GET /list`. An `onCapture` hook is available for auto-ingest
-   wiring later. Kept decoupled from the TS pipeline (observable, build-free).
+4. **Hand-in to ingest** ✅ — two modes. Default (decoupled): captures land in the
+   inbox; the server prints the exact `chiron --source <inbox>` (image-folder/G1)
+   command and exposes `GET /list`. **`--auto-ingest --domain <d>`** ✅: each
+   capture (debounced ~1.5s to collapse bursts) runs the real G1 `ingestImage`
+   over the inbox, refreshing a live image-folder Brief
+   (`<lesson-dir>/brief.json` + `.scratch/vision-handoffs.json` + copied
+   `source/`). So the moment you stop snapping, the workspace is a ready source —
+   the agent only has to fulfill the `interpret_image` vision handoffs + run the
+   pipeline. The LLM steps stay the agent's job (a Node process can't call the
+   LLM/MCP) — that boundary is explicit, not hidden.
 
-Tests: `skill/tests/capture-server.test.mjs` (6 integration tests — page serve,
-capture+save, list, mime reject 415, oversize reject 413, health). Live CLI
-smoke confirmed: LAN URL banner + capture round-trip.
+Tests: `skill/tests/capture-server.test.mjs` (10 integration tests — page serve,
+capture+save, list, mime reject 415, oversize reject 413, health; plus
+auto-ingest: injected-adapter, domain-required, debounce-burst-to-one, and a
+REAL-G1-adapter end-to-end producing an image-folder Brief). Live CLI smoke
+confirmed both: LAN banner + capture round-trip, and `--auto-ingest` collapsing a
+2-photo burst into one `brief ready` with `sourceType: image-folder`.
 
-**Deferred (follow-ons):** auto-ingest on capture (wire `onCapture` → `ingestImage`
-→ pipeline); a desktop QR rendered in-page; Tauri shell embedding;
-`HEIC→jpg` transcode for older iPhones (currently stored as-is).
+**Deferred (follow-ons):** auto-ingest could optionally also drive the vision
+handoffs locally (via the Mac's ollama/llava or a vision sidecar) to reach
+snap→text without the agent; a desktop QR rendered in-page; Tauri shell
+embedding; `HEIC→jpg` transcode for older iPhones (currently stored as-is).
 
 ---
 

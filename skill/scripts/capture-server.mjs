@@ -17,7 +17,7 @@
 // exact `chiron` command to ingest, keeping it decoupled + observable.
 
 import http from 'node:http';
-import { createWriteStream, mkdirSync, readdirSync, statSync, unlinkSync } from 'node:fs';
+import { createWriteStream, mkdirSync, readdirSync, statSync, unlinkSync, writeFileSync } from 'node:fs';
 import { join, basename } from 'node:path';
 import { networkInterfaces } from 'node:os';
 
@@ -191,16 +191,73 @@ export function createCaptureServer({ inboxDir, maxBytes = 25 * 1024 * 1024, onC
   return { server, inboxDir, get count() { return count; } };
 }
 
+// ---------- Auto-ingest (wire captures -> the G1 image adapter) ----------
+
+/**
+ * (Re)build a live image-folder Brief from the inbox by running the real G1
+ * `ingestImage` adapter (compiled to dist/). Each call refreshes
+ * `<lessonDir>/brief.json` + `.scratch/vision-handoffs.json` + copies sources,
+ * so the workspace is always a ready image-folder source. The vision OCR
+ * (interpret_image) + 5-stage generation remain the agent's job — a standalone
+ * Node process can't call the LLM/MCP.
+ *
+ * `ingestImageFn` is injectable for tests; production lazily imports the
+ * compiled adapter (requires `npm run build` / tsc first).
+ */
+export async function ingestInbox(
+  { inboxDir, lessonDir, domain, mode = 'A' },
+  ingestImageFn,
+) {
+  if (!domain) throw new Error('ingestInbox: domain is required (code|medicine|language-it|research-paper|concepts)');
+  mkdirSync(lessonDir, { recursive: true });
+  let ingest = ingestImageFn;
+  if (!ingest) {
+    const mod = await import(new URL('../dist/ingest-adapters/image.js', import.meta.url).href);
+    ingest = mod.ingestImage;
+  }
+  // The inbox is a directory -> ingestImage produces an 'image-folder' Brief.
+  const brief = await ingest({ sourcePath: inboxDir, lessonOutputDir: lessonDir, mode, domain });
+  writeFileSync(join(lessonDir, 'brief.json'), JSON.stringify(brief, null, 2), 'utf8');
+  return brief;
+}
+
+/**
+ * Returns a debounced onCapture handler that rebuilds the Brief after captures
+ * settle (avoids thrashing when several photos arrive at once).
+ */
+export function makeAutoIngest(opts, { delayMs = 1500, onReady, onError } = {}) {
+  let timer = null, running = false, again = false;
+  const run = async () => {
+    if (running) { again = true; return; }
+    running = true;
+    try {
+      const brief = await ingestInbox(opts, opts.ingestImageFn);
+      const n = brief?.metadata?.imageCount ?? '?';
+      if (onReady) onReady({ brief, imageCount: n });
+    } catch (e) {
+      if (onError) onError(e); // eslint-disable-next-line no-console
+      else console.error('  auto-ingest failed:', e?.message ?? e);
+    } finally {
+      running = false;
+      if (again) { again = false; run(); }
+    }
+  };
+  return () => { clearTimeout(timer); timer = setTimeout(run, delayMs); };
+}
+
 // ---------- CLI ----------
 
 function parseArgs(argv) {
-  const a = { host: '0.0.0.0', port: 8788, inbox: null, maxMb: 25 };
+  const a = { host: '0.0.0.0', port: 8788, inbox: null, maxMb: 25, autoIngest: false, domain: null, lessonDir: null };
   for (let i = 0; i < argv.length; i++) {
     const k = argv[i];
     if (k === '--host') a.host = argv[++i];
     else if (k === '--port') a.port = Number(argv[++i]);
     else if (k === '--inbox') a.inbox = argv[++i];
     else if (k === '--max-mb') a.maxMb = Number(argv[++i]);
+    else if (k === '--auto-ingest') a.autoIngest = true;
+    else if (k === '--domain') a.domain = argv[++i];
+    else if (k === '--lesson-dir') a.lessonDir = argv[++i];
   }
   return a;
 }
@@ -219,8 +276,36 @@ async function printPairing(urls) {
 
 async function main() {
   const a = parseArgs(process.argv.slice(2));
-  const inbox = a.inbox || join(process.cwd(), '.chiron-capture', 'inbox');
-  const { server } = createCaptureServer({ inboxDir: inbox, maxBytes: a.maxMb * 1024 * 1024 });
+  const base = join(process.cwd(), '.chiron-capture');
+  const lessonDir = a.lessonDir || join(base, 'lesson');
+  // In auto-ingest mode the inbox IS the lesson's source folder (ingestImage
+  // copies it into <lessonDir>/source/); otherwise a standalone inbox.
+  const inbox = a.inbox || (a.autoIngest ? join(base, 'inbox') : join(base, 'inbox'));
+
+  if (a.autoIngest && !a.domain) {
+    console.error('--auto-ingest requires --domain <code|medicine|language-it|research-paper|concepts>');
+    process.exit(2);
+  }
+
+  let onCapture;
+  if (a.autoIngest) {
+    const trigger = makeAutoIngest(
+      { inboxDir: inbox, lessonDir, domain: a.domain, mode: 'A' },
+      {
+        onReady: ({ imageCount }) =>
+          console.log(`  🧩 auto-ingest: ${imageCount} image(s) → brief ready at ${join(lessonDir, 'brief.json')}`),
+        onError: (e) => {
+          console.error(`  ⚠️  auto-ingest failed: ${e?.message ?? e}`);
+          if (String(e?.message ?? e).includes('image.js')) {
+            console.error('     (run `npm run build` in skill/ first — auto-ingest uses the compiled G1 adapter)');
+          }
+        },
+      },
+    );
+    onCapture = () => trigger();
+  }
+
+  const { server } = createCaptureServer({ inboxDir: inbox, maxBytes: a.maxMb * 1024 * 1024, onCapture });
   server.listen(a.port, a.host, async () => {
     const ips = lanIPv4s();
     const urls = (ips.length ? ips : ['127.0.0.1']).map((ip) => `http://${ip}:${a.port}/`);
@@ -228,8 +313,15 @@ async function main() {
     console.log(`   Inbox: ${inbox}`);
     console.log('   Open on your phone (same Wi-Fi):');
     await printPairing(urls);
-    console.log('\n   When done, ingest the inbox as an image-folder source, e.g.:');
-    console.log(`     chiron --source "${inbox}" --domain medicine   # (image-folder via G1)`);
+    if (a.autoIngest) {
+      console.log(`\n   AUTO-INGEST on (domain=${a.domain}). Each photo refreshes the image-folder Brief at:`);
+      console.log(`     ${lessonDir}/brief.json  (+ .scratch/vision-handoffs.json)`);
+      console.log('   When done, the agent finishes it: fulfill the interpret_image vision handoffs,');
+      console.log('   then run the chiron pipeline on the lesson dir to generate lesson.html.');
+    } else {
+      console.log('\n   When done, ingest the inbox as an image-folder source, e.g.:');
+      console.log(`     chiron --source "${inbox}" --domain medicine   # (image-folder via G1)`);
+    }
     console.log('\n   Ctrl-C to stop.\n');
   });
 }

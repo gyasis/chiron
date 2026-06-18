@@ -2,10 +2,14 @@
 // Run: node --test skill/tests/capture-server.test.mjs
 import { test, before, after } from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtempSync, readdirSync } from 'node:fs';
+import { mkdtempSync, readdirSync, readFileSync, writeFileSync, existsSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { createCaptureServer } from '../scripts/capture-server.mjs';
+import {
+  createCaptureServer,
+  ingestInbox,
+  makeAutoIngest,
+} from '../scripts/capture-server.mjs';
 
 let handle, base, inbox;
 
@@ -79,4 +83,62 @@ test('health endpoint', async () => {
   const r = await fetch(base + '/health');
   const j = await r.json();
   assert.ok(j.ok);
+});
+
+// ---------- auto-ingest ----------
+
+test('ingestInbox runs the (injected) image adapter and writes brief.json', async () => {
+  const dir = mkdtempSync(join(tmpdir(), 'chiron-autoingest-'));
+  const lessonDir = join(dir, 'lesson');
+  let calledWith = null;
+  const stub = async (opts) => {
+    calledWith = opts;
+    return {
+      domain: opts.domain, mode: opts.mode, sourceType: 'image-folder',
+      sourcePath: opts.sourcePath, sourceCopiedTo: 'source/inbox',
+      extractedText: '<PENDING-VISION-HANDOFF>',
+      sourceManifest: [{ path: 'source/inbox/a.png', role: 'primary', extractor: 'vision-image', tokenCount: 0, extractedAt: 1 }],
+      metadata: { imageCount: 2 }, briefSchemaVersion: '1',
+    };
+  };
+  const brief = await ingestInbox({ inboxDir: dir, lessonDir, domain: 'medicine', mode: 'A' }, stub);
+  assert.equal(calledWith.sourcePath, dir);          // inbox passed as the source folder
+  assert.equal(calledWith.lessonOutputDir, lessonDir);
+  assert.equal(brief.sourceType, 'image-folder');
+  const onDisk = JSON.parse(readFileSync(join(lessonDir, 'brief.json'), 'utf8'));
+  assert.equal(onDisk.metadata.imageCount, 2);
+});
+
+test('ingestInbox requires a domain', async () => {
+  const dir = mkdtempSync(join(tmpdir(), 'chiron-autoingest-'));
+  await assert.rejects(ingestInbox({ inboxDir: dir, lessonDir: join(dir, 'l') }, async () => ({})), /domain is required/);
+});
+
+test('makeAutoIngest debounces bursts into a single ingest', async () => {
+  const dir = mkdtempSync(join(tmpdir(), 'chiron-autoingest-'));
+  let calls = 0;
+  const stub = async (opts) => { calls += 1; return { ...opts, sourceType: 'image-folder', metadata: { imageCount: calls } }; };
+  let ready = null;
+  const trigger = makeAutoIngest(
+    { inboxDir: dir, lessonDir: join(dir, 'lesson'), domain: 'code', mode: 'A', ingestImageFn: stub },
+    { delayMs: 25, onReady: (r) => { ready = r; } },
+  );
+  trigger(); trigger(); trigger();                   // burst of 3 captures
+  await new Promise((r) => setTimeout(r, 120));
+  assert.equal(calls, 1, 'burst should collapse to one ingest');
+  assert.equal(ready.imageCount, 1);
+});
+
+test('end-to-end with the REAL G1 adapter (if dist is built)', async (t) => {
+  const adapter = new URL('../dist/ingest-adapters/image.js', import.meta.url);
+  if (!existsSync(adapter)) { t.skip('dist not built (run npx tsc)'); return; }
+  const dir = mkdtempSync(join(tmpdir(), 'chiron-autoingest-real-'));
+  // a real-ish PNG header so the extension/mime path is sane
+  writeFileSync(join(dir, 'page-001.png'), Buffer.from('89504e470d0a1a0a', 'hex'));
+  const lessonDir = join(dir, 'lesson');
+  const brief = await ingestInbox({ inboxDir: dir, lessonDir, domain: 'medicine', mode: 'A' });
+  assert.equal(brief.sourceType, 'image-folder');
+  assert.equal(brief.extractedText, '<PENDING-VISION-HANDOFF>'); // vision still pending (agent's job)
+  assert.ok(existsSync(join(lessonDir, 'brief.json')));
+  assert.ok(existsSync(join(lessonDir, '.scratch', 'vision-handoffs.json')));
 });
