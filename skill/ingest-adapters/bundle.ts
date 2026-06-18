@@ -44,6 +44,7 @@ import { ingestUrl } from './url.js';
 import { ingestTranscript } from './transcript.js';
 import { ingestAgentReport } from './agent-report.js';
 import { ingestVocabList } from './vocab-list.js';
+import { ingestVideo } from './video.js';
 
 // ---------- Types ----------
 
@@ -169,6 +170,7 @@ function listTopLevelFiles(rootDir: string): string[] {
 // ---------- Dispatch ----------
 
 const IMAGE_EXTS = new Set(['.png', '.jpg', '.jpeg', '.webp', '.gif']);
+const VIDEO_EXTS = new Set(['.mp4', '.mov', '.webm', '.mkv', '.avi', '.m4v', '.mpeg', '.mpg']);
 
 interface DispatchResult {
   /** May be null if the file was skipped (unknown ext / domain mismatch). */
@@ -201,6 +203,9 @@ async function dispatchOne(
   }
   if (IMAGE_EXTS.has(ext)) {
     return { brief: await ingestImage(sub), isAgentReport: false };
+  }
+  if (VIDEO_EXTS.has(ext)) {
+    return { brief: await ingestVideo(sub), isAgentReport: false };
   }
   if (ext === '.html' || ext === '.htm') {
     return { brief: await ingestUrl(sub), isAgentReport: false };
@@ -244,6 +249,7 @@ function inferExtractor(ext: string, isAgentReport: boolean): SourceFileEntry['e
   if (isAgentReport) return 'agent-report';
   if (ext === '.pdf') return 'text-pdf';
   if (IMAGE_EXTS.has(ext)) return 'vision-image';
+  if (VIDEO_EXTS.has(ext)) return 'vision-video';
   if (ext === '.html' || ext === '.htm') return 'html';
   return 'transcript';
 }

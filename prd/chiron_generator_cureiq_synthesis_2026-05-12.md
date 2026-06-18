@@ -5,7 +5,10 @@
 **Owner:** Gyasi Sutton (solo)
 **Related:** [`chiron_design_v1_2026-04-28.md`](./chiron_design_v1_2026-04-28.md) (parent skill design), [`chiron_server_cms_2026-05-12.md`](./chiron_server_cms_2026-05-12.md) (sibling CMS PRD), prior art: [`gyasis/CureIQ`](https://github.com/gyasis/CureIQ) (Python MCQ ingestion system, 2024-2025)
 
-**Delete when:** All three sub-features (image-source adapter, RAG-source adapter, lesson expander) ship and pass acceptance.
+**Delete when:** All sub-features (image-source adapter, RAG-source adapter, lesson expander, G5 rich-media adapters, G6 capture sidecar) ship and pass acceptance.
+
+**Revision Log:**
+- 2026-06-18 — G1 (image adapter) shipped (`skill/ingest-adapters/image.ts`). Added **G5 — Rich-media source adapters (video/audio/YouTube)** (§8) and **G6 — Phone-camera capture sidecar** (§9), synthesized from CureIQ's `image_capture.py` (0.0.0.0 upload server + `capture="environment"` mobile camera) and grounded in `mcp__gemini-mcp__watch_video`. G5 **video** slice built this session (see §8).
 
 ---
 
@@ -19,8 +22,10 @@ This PRD extends Chiron's **generator side** (the Claude Code skill that produce
 | **G2 — RAG source adapter** | Generate a lesson from an existing RAG dataset (HybridRAG / DeepLake index) rather than re-ingesting from raw PDF every time | Inline in §6 |
 | **G3 — Lesson expander** | Given an existing Chiron lesson, generate N more quiz items (MCQs / vignettes / fill-blanks) against the same source without re-generating the whole lesson | **Detailed in [`chiron_lesson_expander_2026-05-12.md`](./chiron_lesson_expander_2026-05-12.md)** |
 | **G4 — Multi-hop integration** | Wire G1/G2/G3 into Chiron's existing 5-stage pipeline (INGEST → BRIEF → SYLLABUS → VALIDATE → BUILD → ASSEMBLE) so they compose | Inline in §7 |
+| **G5 — Rich-media source adapters** | Ingest a **video** file or **YouTube URL** (and audio) as a lesson source — Gemini reads the video (transcript + visual) via `watch_video`; "throw a video, get a lesson/quiz" | Inline in §8 |
+| **G6 — Phone-camera capture sidecar** | Start a small LAN server; pair your **phone camera** (book page, whiteboard) over the network; captured images flow straight into the image adapter. Synthesized from CureIQ's `capture="environment"` upload server | Inline in §9 |
 
-All four are generator-side changes; the CMS PRD already handles the consumption side via the upload bundle protocol.
+All generator-side changes; the CMS PRD already handles the consumption side via the upload bundle protocol.
 
 ---
 
@@ -57,9 +62,11 @@ Order chosen to maximize early value with minimum dependency:
 | Phase | Feature | Why this order |
 |---|---|---|
 | **GP1** | G3 — Lesson Expander (own PRD) | Immediate utility (you have lessons today; you'll want more vignettes for any of them); no new ingestion surface required; uses existing source files in `lessons/<slug>/source/`. |
-| **GP2** | G1 — Image source adapter | Second-highest immediate utility (you screenshot AMBOSS pages constantly). Pure additive — new adapter file, no pipeline changes. |
-| **GP3** | G2 — RAG source adapter | Depends on a stable HybridRAG/DeepLake index for the source domain you care about. Comes after you've built up an index worth pulling from. |
-| **GP4** | G4 — Multi-hop integration | Once G1/G2/G3 individually work, integrate so a single lesson generation can draw from PDF + image + RAG + expanded-from-prior-lesson in one pipeline. |
+| **GP2** | G1 — Image source adapter | **✅ SHIPPED 2026-06-18** (`skill/ingest-adapters/image.ts`). Second-highest immediate utility (you screenshot AMBOSS pages constantly). Pure additive — new adapter file, no pipeline changes. |
+| **GP3** | G5 — Rich-media (video/YouTube) | **video slice built 2026-06-18** (`skill/ingest-adapters/video.ts`). Same additive adapter→handoff pattern as G1; reuses `mcp__gemini-mcp__watch_video` (zero new Gemini plumbing). Audio is a small follow-on. |
+| **GP4** | G2 — RAG source adapter | Depends on a stable HybridRAG/DeepLake index for the source domain you care about. Comes after you've built up an index worth pulling from. |
+| **GP5** | G6 — Phone-camera capture sidecar | Bigger ("a few skills"): a running LAN server + phone pairing + camera capture + hand-in to the image adapter. Against the serverless core grain → host on the **Tauri shell** (`chiron-tauri/`). Build after G5. |
+| **GP6** | G4 — Multi-hop integration | Once the source adapters individually work, integrate so one lesson generation can draw from PDF + image + video + RAG + expanded-from-prior-lesson in one pipeline. |
 
 ---
 
@@ -298,8 +305,105 @@ Each sub-feature is a 1-3 day build. Order:
 
 ---
 
+## 8. G5 — Rich-media source adapters (video / YouTube / audio)
+
+### Goal
+Accept a **video file** or a **YouTube URL** (and, as a follow-on, an audio file)
+as the source for a lesson. "Throw a video at chiron and get a lesson or a set of
+MCQs." Gemini reads the media — transcript + visual content — and the extracted
+text feeds the normal pipeline like any other source.
+
+### Architectural fit (the key finding)
+chiron already has the exact machinery: a **deterministic adapter emits a handoff
+sidecar; the parent Claude agent fulfills it via Gemini MCP** (this is how
+scanned-PDF/image vision works today). Rich media needs **zero new Gemini
+plumbing** — `mcp__gemini-mcp__watch_video` already handles every transport:
+- **YouTube URL** → `Part.from_uri(url)` passed straight to Gemini (no download)
+- **local <20MB** → inline; **>20MB** → File API upload + auto-poll
+- returns transcript + visual summary; supports time-range prompts ("summarize 1:00–1:30")
+
+So the adapter only points at the source and names the tool. `interpret_image`
+(G1) covers the book-page-photo case already.
+
+### Adapter contract
+File: `skill/ingest-adapters/video.ts`. Accepts one local video path OR a YouTube
+URL, returns a `Brief` (same shape as all adapters). Writes a single handoff to
+`<lesson-output-dir>/.scratch/vision-handoffs.json` (the sidecar the pipeline
+already reads):
+```
+{ source, isYouTube, mcpTool: 'mcp__gemini-mcp__watch_video', prompt }
+```
+Local files are copied into `source/` (FR-030); YouTube URLs are NOT downloaded
+(`sourceCopiedTo: null`). `recordVideoResult(briefPath, analysis)` folds the
+returned analysis back into the Brief (clears `<PENDING-VISION-HANDOFF>`).
+
+### Functional Requirements
+- **FR-G5-001** — `ingestVideo` accepts `.mp4/.mov/.webm/.mkv/.avi/.m4v/.mpeg/.mpg`
+  and any `youtube.com`/`youtu.be` URL; unknown extension hard-fails.
+- **FR-G5-002** — exactly one `watch_video` handoff per video; the Stage-0 driver
+  (`prompts/00-ingest/video.md`) fulfills it and folds the result in.
+- **FR-G5-003** — base extraction prompt yields transcript + visual summary +
+  a `SUBJECT:` line; medicine domain classifies subject via CureIQ's
+  body-system/topic/specialty taxonomy (from `image_reader.py`).
+- **FR-G5-004** — `SourceType` gains `'video'`; `SourceFileEntry.extractor` gains
+  `'vision-video'`; `bundle.ts` dispatches video extensions.
+- **FR-G5-005** — extracted text is treated as untrusted (prompt-injection
+  isolation, FR-016), same as image vision output.
+
+### Status (2026-06-18)
+**Video slice BUILT** on branch `feat/rich-media-ingest`: `video.ts`,
+`SourceType 'video'` + `vision-video` extractor, `bundle.ts` dispatch,
+`pipeline.ts` handoff case, `prompts/00-ingest/video.md`, and
+`tests/video-adapter.test.ts` (5 tests, green; tsc clean). **Audio** (`.mp3/.wav/.m4a`
+→ same `watch_video`/transcription path → existing `transcript` flow) is the
+remaining G5 follow-on.
+
+---
+
+## 9. G6 — Phone-camera capture sidecar (the "see a book page" inbox)
+
+### Goal
+Point your **phone camera** at a real book page / whiteboard / screen and have
+the image flow straight into chiron's image adapter — the original purpose of
+CureIQ's capture server. This is "a few skills" of work: a running service +
+phone pairing + camera capture + hand-in. It is **deliberately out of the
+serverless single-file core** — its home is the **Tauri shell** (`chiron-tauri/`).
+
+### Prior art (CureIQ, to port)
+`web/api/image_capture.py` → `ImageCaptureGateway` ran a FastAPI server on
+`host="0.0.0.0", port=5667`; `web/templates/upload.html` had a **Mobile Upload**
+block with `<input type="file" accept="image/*" capture="environment">` (opens the
+phone's rear camera). Flow: phone → server page → snap → `POST /process-image/`
+→ vision OCR → ingest.
+
+### Component breakdown ("the few skills")
+1. **Capture server** — small local HTTP service bound to the LAN (Tauri-hosted,
+   or a `chiron capture` skill), serving an upload page + `POST /capture`.
+2. **Phone pairing** — show a QR code / `http://<lan-ip>:<port>` so the phone
+   joins; reuse the LAN-host patterns from home-infra notes.
+3. **Camera capture UI** — the `capture="environment"` mobile page (+ desktop
+   drag-drop + clipboard-paste, as CureIQ had).
+4. **Hand-in to ingest** — captured image lands in a watched inbox dir →
+   `ingestImage` runs → lesson/quiz generation (or G3 lesson-expander top-up).
+
+### Functional Requirements (draft)
+- **FR-G6-001** — `chiron capture start` launches the LAN server, prints the
+  pairing URL/QR, and a watched inbox dir under the lesson workspace.
+- **FR-G6-002** — uploaded images are validated (type/size), copied to the
+  inbox, and routed through `ingestImage` (G1) — no duplicate vision code.
+- **FR-G6-003** — single-learner / LAN-only by default (no auth, no exposure
+  beyond localhost/LAN); matches chiron's "single learner = Gyasi" lock.
+- **FR-G6-004** — graceful when offline / no phone: desktop drag-drop +
+  clipboard-paste fallbacks (CureIQ's `ClipboardImageReader` parity).
+
+### Status
+**Planned (not built).** Next phase after G5. Tracked here so the multi-skill
+scope (server + pairing + capture + hand-in) is explicit.
+
+---
+
 ## 14. Speckit handoff
 
 This PRD is structured for `/speckit-specify` ingestion. Each sub-feature (G1/G2/G3/G4) has its own FR/NFR/user-story block (G3 in a sibling PRD). After TTS fix and server CMS P0.5 ships, run `/speckit-specify` against this PRD scoped to ONE sub-feature at a time, generate per-feature `spec.md` + `plan.md` + `tasks.md`, build incrementally.
 
-**Recommended order for speckit invocation:** G3 (lesson expander, own PRD) → G1 (image adapter) → G2 (RAG adapter) → G4 (multi-hop integration).
+**Recommended order for speckit invocation:** G3 (lesson expander, own PRD) → G1 (image adapter ✅) → G5 (rich-media: video ✅ / audio) → G2 (RAG adapter) → G6 (capture sidecar, Tauri) → G4 (multi-hop integration).

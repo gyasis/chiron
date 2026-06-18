@@ -8,6 +8,7 @@ export const SourceFileEntrySchema = z.object({
     'text-pdf',
     'vision-pdf',
     'vision-image',
+    'vision-video', // G5 — video/YouTube via mcp__gemini-mcp__watch_video
     'html',
     'transcript',
     'agent-report',
@@ -38,6 +39,9 @@ export const SourceTypeSchema = z.enum([
   // from a PDF, repo, etc.
   'text',
   'markdown',
+  // 2026-06-18 — G5 rich-media: a single video file OR a YouTube URL,
+  // read by mcp__gemini-mcp__watch_video (transcript + visual analysis).
+  'video',
 ]);
 
 export type SourceType = z.infer<typeof SourceTypeSchema>;

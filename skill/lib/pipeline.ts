@@ -181,6 +181,11 @@ export function announceImageExtraction(
       progress.stage(0, 5, 'ingest: image (1 image — 1 interpret_image call follows)');
       return;
     }
+    case 'video': {
+      const yt = (brief.metadata as Record<string, unknown>)?.youtubeUrl ? 'YouTube' : 'local file';
+      progress.stage(0, 5, `ingest: video (${yt} — 1 watch_video call follows)`);
+      return;
+    }
     case 'image-folder': {
       const n = sidecarCount > 0 ? sidecarCount : 0;
       progress.stage(0, 5, `ingest: image-folder (${n} images — ${n} interpret_image calls follow)`);
