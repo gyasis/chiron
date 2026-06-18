@@ -354,9 +354,19 @@ returned analysis back into the Brief (clears `<PENDING-VISION-HANDOFF>`).
 **Video slice BUILT** on branch `feat/rich-media-ingest`: `video.ts`,
 `SourceType 'video'` + `vision-video` extractor, `bundle.ts` dispatch,
 `pipeline.ts` handoff case, `prompts/00-ingest/video.md`, and
-`tests/video-adapter.test.ts` (5 tests, green; tsc clean). **Audio** (`.mp3/.wav/.m4a`
-→ same `watch_video`/transcription path → existing `transcript` flow) is the
-remaining G5 follow-on.
+`tests/video-adapter.test.ts` (5 tests, green; tsc clean).
+
+**Audio slice BUILT** (same branch): `audio.ts`, `SourceType 'audio'` +
+`whisper-audio` extractor, `bundle.ts` dispatch, `pipeline.ts` case,
+`prompts/00-ingest/audio.md`, `tests/audio-adapter.test.ts` (4 tests, green).
+Transcription is **LOCAL via the Atelier whisper sidecar** (mlx-whisper on the
+Mac Studio, `http://192.168.0.159:8766/transcribe`, model alias `large-v3` =
+heaviest/most-accurate; `turbo` = fast) — NOT gemini/MCP. The user has whisper;
+no cloud needed (local-first). Endpoint/model overridable via
+`CHIRON_WHISPER_URL` / `CHIRON_WHISPER_MODEL`. **End-to-end verified**: omnivoice
+TTS → whisper round-trip returned the phrase verbatim (`{text,language,segments}`,
+confidence 0.78, 1.5s). watch_video was ruled out for audio — it hard-guards
+`video/` mime and gemini-mcp exposes no audio tool (verified in server.py).
 
 ---
 

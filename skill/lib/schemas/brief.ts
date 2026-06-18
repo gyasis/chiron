@@ -9,6 +9,7 @@ export const SourceFileEntrySchema = z.object({
     'vision-pdf',
     'vision-image',
     'vision-video', // G5 — video/YouTube via mcp__gemini-mcp__watch_video
+    'whisper-audio', // G5 — audio via the Atelier whisper sidecar (mlx-whisper)
     'html',
     'transcript',
     'agent-report',
@@ -42,6 +43,9 @@ export const SourceTypeSchema = z.enum([
   // 2026-06-18 — G5 rich-media: a single video file OR a YouTube URL,
   // read by mcp__gemini-mcp__watch_video (transcript + visual analysis).
   'video',
+  // 2026-06-18 — G5 rich-media: a single audio file, transcribed locally by
+  // the Atelier whisper sidecar (mlx-whisper, large-v3) — no LLM/MCP.
+  'audio',
 ]);
 
 export type SourceType = z.infer<typeof SourceTypeSchema>;

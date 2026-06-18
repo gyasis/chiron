@@ -186,6 +186,11 @@ export function announceImageExtraction(
       progress.stage(0, 5, `ingest: video (${yt} — 1 watch_video call follows)`);
       return;
     }
+    case 'audio': {
+      const m = (brief.metadata as Record<string, unknown>)?.whisperModel ?? 'large-v3';
+      progress.stage(0, 5, `ingest: audio (1 file — 1 whisper transcription follows, model=${m})`);
+      return;
+    }
     case 'image-folder': {
       const n = sidecarCount > 0 ? sidecarCount : 0;
       progress.stage(0, 5, `ingest: image-folder (${n} images — ${n} interpret_image calls follow)`);
