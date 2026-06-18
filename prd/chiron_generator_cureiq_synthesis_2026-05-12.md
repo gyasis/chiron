@@ -65,7 +65,7 @@ Order chosen to maximize early value with minimum dependency:
 | **GP2** | G1 — Image source adapter | **✅ SHIPPED 2026-06-18** (`skill/ingest-adapters/image.ts`). Second-highest immediate utility (you screenshot AMBOSS pages constantly). Pure additive — new adapter file, no pipeline changes. |
 | **GP3** | G5 — Rich-media (video/YouTube) | **video slice built 2026-06-18** (`skill/ingest-adapters/video.ts`). Same additive adapter→handoff pattern as G1; reuses `mcp__gemini-mcp__watch_video` (zero new Gemini plumbing). Audio is a small follow-on. |
 | **GP4** | G2 — RAG source adapter | Depends on a stable HybridRAG/DeepLake index for the source domain you care about. Comes after you've built up an index worth pulling from. |
-| **GP5** | G6 — Phone-camera capture sidecar | Bigger ("a few skills"): a running LAN server + phone pairing + camera capture + hand-in to the image adapter. Against the serverless core grain → host on the **Tauri shell** (`chiron-tauri/`). Build after G5. |
+| **GP5** | G6 — Phone-camera capture sidecar | **✅ BUILT 2026-06-18** as a standalone Node server (`skill/scripts/capture-server.mjs`) — LAN server + phone-camera page + capture + inbox hand-in; 6 integration tests. (Tauri embedding deferred — not needed for the working feature.) |
 | **GP6** | G4 — Multi-hop integration | Once the source adapters individually work, integrate so one lesson generation can draw from PDF + image + video + RAG + expanded-from-prior-lesson in one pipeline. |
 
 ---
@@ -406,9 +406,36 @@ phone's rear camera). Flow: phone → server page → snap → `POST /process-im
 - **FR-G6-004** — graceful when offline / no phone: desktop drag-drop +
   clipboard-paste fallbacks (CureIQ's `ClipboardImageReader` parity).
 
-### Status
-**Planned (not built).** Next phase after G5. Tracked here so the multi-skill
-scope (server + pairing + capture + hand-in) is explicit.
+### Status (2026-06-18)
+**BUILT** on branch `feat/capture-sidecar` — as a **standalone Node server**
+(`skill/scripts/capture-server.mjs`), NOT Tauri. Rationale: chiron's stack is
+Node/TS and `.mjs` is the runnable-script convention; a zero-dependency
+`node scripts/capture-server.mjs` delivers the working feature without a
+Rust/desktop build. Tauri embedding is a later nicety, not a prerequisite.
+
+Delivered against the component breakdown:
+1. **Capture server** ✅ — dependency-free `node:http`, binds `0.0.0.0:<port>`
+   (default 8788), LAN-only, no auth (FR-G6-003). Raw-body uploads (no multipart
+   parsing, no deps); mime + size validation (FR-G6-002, default 25MB cap), early
+   `Content-Length` reject + unlink-on-abort.
+2. **Phone pairing** ✅ — prints reachable LAN URLs on start, real home-LAN IPs
+   ranked first (docker/VM bridges last) so the QR targets a reachable address.
+   Optional terminal QR via lazy `qrcode` import (graceful if absent).
+3. **Camera capture UI** ✅ — mobile-first page with `capture="environment"`
+   (rear camera) + gallery + desktop drag-drop + clipboard-paste; live thumbnails
+   + running count.
+4. **Hand-in to ingest** ✅ (decoupled) — captures land in the inbox dir; the
+   server prints the exact `chiron --source <inbox>` (image-folder/G1) command
+   and exposes `GET /list`. An `onCapture` hook is available for auto-ingest
+   wiring later. Kept decoupled from the TS pipeline (observable, build-free).
+
+Tests: `skill/tests/capture-server.test.mjs` (6 integration tests — page serve,
+capture+save, list, mime reject 415, oversize reject 413, health). Live CLI
+smoke confirmed: LAN URL banner + capture round-trip.
+
+**Deferred (follow-ons):** auto-ingest on capture (wire `onCapture` → `ingestImage`
+→ pipeline); a desktop QR rendered in-page; Tauri shell embedding;
+`HEIC→jpg` transcode for older iPhones (currently stored as-is).
 
 ---
 
