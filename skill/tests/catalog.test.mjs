@@ -25,21 +25,21 @@ function makeBundle(dir, name, domain, cards) {
   return out;
 }
 
-test('resolveCardId ladder: concept→T1, chapter→T2, hash→T3', () => {
-  assert.deepEqual(resolveCardId('bun', { concept_id: 'hypogonadism' }, 2), { id: 'hypogonadism:2', tier: 1 });
+test('resolveCardId ladder: concept→T1 (bundle-scoped), chapter→T2, hash→T3', () => {
+  assert.deepEqual(resolveCardId('bun', { concept_id: 'hypogonadism' }, 2), { id: 'bun:hypogonadism:2', tier: 1 });
   assert.deepEqual(resolveCardId('bun', { chapterId: 'ch3' }, 5), { id: 'bun:ch3:5', tier: 2 });
   const t3 = resolveCardId('bun', { front: 'What is X?' }, 0);
   assert.equal(t3.tier, 3);
   assert.match(t3.id, /^bun:[0-9a-f]{8}$/);
 });
 
-test('resolveCardId honors an explicit generator-emitted stable id (Tier 1)', () => {
-  // generator emitted "<concept>:<nn>" → used verbatim, ignores the derived ordinal
+test('resolveCardId honors an explicit generator-emitted stable id, bundle-scoped (Tier 1)', () => {
+  // generator emitted "<concept>:<nn>" → namespaced to the bundle
   assert.deepEqual(resolveCardId('bun', { id: 'hypogonadism:3', concept_id: 'hypogonadism' }, 0),
-    { id: 'hypogonadism:3', tier: 1 });
+    { id: 'bun:hypogonadism:3', tier: 1 });
   // a bogus explicit id NOT matching the concept prefix is ignored → derived
   assert.deepEqual(resolveCardId('bun', { id: 'wrong', concept_id: 'hypogonadism' }, 1),
-    { id: 'hypogonadism:1', tier: 1 });
+    { id: 'bun:hypogonadism:1', tier: 1 });
 });
 
 test('Tier-1 derived ids are stable per-concept across chapter position', () => {
@@ -55,7 +55,8 @@ test('Tier-1 derived ids are stable per-concept across chapter position', () => 
   const r = indexBundle(cat, bundle);
   assert.equal(r.tier, 1);
   const ids = cat.raw.prepare('SELECT id FROM cards ORDER BY id').all().map((x) => x.id);
-  assert.deepEqual(ids, ['alpha:0', 'alpha:1', 'beta:0']); // per-concept ordinal, not chapter pos
+  // bundle-scoped, per-concept ordinal (not chapter position); bundle id = 'conc'
+  assert.deepEqual(ids, ['conc:alpha:0', 'conc:alpha:1', 'conc:beta:0']);
   cat.raw.close();
 });
 

@@ -87,7 +87,9 @@ SR history is keyed by `card_id`; if a lesson is regenerated the id must NOT cha
 - Chapters carry `chapterId`. ✅
 - BUT card-level `id` is currently `z.string().optional()` and several cards share a `concept_id`, so `concept_id` alone is not unique per card. ⚠️
 
-**Resolution:** `card_id = <concept_id>:<ordinal-or-slug>`, anchored on the stable concept id (survives typo-fixes AND restructuring — what `md5(front)` got wrong). The generator MUST emit a deterministic per-card ordinal/slug into the manifest. Content-hash is a fallback only for bundles authored without it. **Bonus:** because concept ids are global/curated, the same concept reviewed in two different lessons shares SR lineage → cross-lesson mastery for free. Deleted cards' events go to `tombstone_events` so a restored card regains history. **No `card_lineage` table** (cut as a maintenance trap).
+**Resolution:** `card_id = <bundle_id>:<concept_id>:<ordinal-or-slug>`, anchored on the stable concept id (survives typo-fixes AND restructuring — what `md5(front)` got wrong). The generator emits a deterministic per-card ordinal/slug; the indexer namespaces it to the bundle. Content-hash is a fallback only for bundles authored without it. Deleted cards' events go to `tombstone_events` so a restored card regains history. **No `card_lineage` table** (cut as a maintenance trap).
+
+**Reconciliation (2026-06-19, assessment-engine debate):** ids are **bundle-scoped**, NOT bare `<concept_id>:<ordinal>`. An earlier draft proposed bare concept ids so the same concept across lessons would *share* SR lineage — but the assessment debate **rejected concept-level SR** (difficulty drift) in favor of per-question SR. So two lessons covering the same concept are DISTINCT questions, each its own SR unit and its own catalog row (bundle-scoped id avoids a primary-key collision). Cross-lesson relatedness is delivered by **Tier-2 cross-pollination** (a query over `concept_id`), not a shared SR key. See `chiron_assessment_engine_2026-06-19.md`.
 
 ## 6. How heterogeneous per-domain layouts are organized
 

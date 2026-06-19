@@ -45,14 +45,18 @@ export function resolveCardId(
   ordinal: number,
 ): { id: string; tier: 1 | 2 | 3 } {
   const concept = card.concept_id ?? card.conceptId;
-  // Tier 1 (explicit) — the generator emitted a stable id (`<concept>:<nn>`).
-  // Honor it verbatim so reordering/typo-fixes never move the id (PRD §5).
-  if (card.id && concept && card.id.startsWith(`${concept}:`)) {
-    return { id: card.id, tier: 1 };
-  }
+  // Tier 1 — BUNDLE-SCOPED stable id: <bundle>:<concept>:<ordinal>. Bundle-scoped
+  // (not bare <concept>:<ord>) because SR tracks the stable QUESTION, not the
+  // concept (assessment-engine PRD — concept-level SR was rejected): two lessons
+  // covering the same concept are DISTINCT questions/rows, each its own SR unit.
+  // Cross-lesson relatedness is a Tier-2 query (similar.ts), not a shared key.
   if (concept) {
-    // Tier 1 (derived) — stable per-concept ordinal supplied by the indexer.
-    return { id: `${concept}:${ordinal}`, tier: 1 };
+    // Honor an explicit generator-emitted "<concept>:<nn>" by namespacing it to
+    // the bundle; reordering/typo-fixes never move it (stable concept + ordinal).
+    if (card.id && card.id.startsWith(`${concept}:`)) {
+      return { id: `${bundleId}:${card.id}`, tier: 1 };
+    }
+    return { id: `${bundleId}:${concept}:${ordinal}`, tier: 1 };
   }
   if (card.chapterId) {
     // Tier 2 — legacy bundle with structured cards but no concept_id.
