@@ -148,11 +148,29 @@ The single-learner premise may evolve into a platform where many people create +
 | SQLite→Postgres dialect gap (FTS5 vs tsvector, JSON, dates) | Drizzle ORM from day one — swap the driver, not the queries |
 | Virtual-Bundle media pathing (cross-bundle decks) | a media resolver mapping `media/x.mp3` → its origin bundle's S3 key |
 
-## 11. Open questions (for the user)
+## 11. Resolved decisions (2026-06-19)
 
-1. **Bundle storage today:** S3 immediately, or local-dir + Syncthing first and S3 when the platform/PWA-hosting need is real? (Design supports either; S3 is the eventual home.)
-2. **Drizzle now?** Adds a dependency but is the cheapest multi-user insurance. Recommended yes.
-3. **Generator change scope:** emitting stable per-card ordinals/slugs touches the Stage-4 card-gen prompts + assemble step — do that as part of this PRD or a follow-on?
+1. **Bundle storage:** **local dir + Syncthing first** (`~/chiron/bundles/`), S3 later when PWA-hosting/sharing is real. Design unchanged either way.
+2. **Drizzle:** **YES, now** (drizzle-orm 0.45.2, drives the existing better-sqlite3). Cheapest multi-user insurance — neutralizes the SQLite↔Postgres dialect gap.
+3. **Generator card-IDs:** **YES, fold in.** Stage-4 card-gen emits stable `<concept_id>:<ordinal>` slugs into the manifest as part of this work (Tier 1 below).
+
+## 12. Migration & legacy fallback (consolidation = the FIRST build step)
+
+**Decisive fact (verified 2026-06-19): there are 0 `.chiron-state.db` files — NO legacy SR history exists.** So legacy cards need only a *deterministic, collision-free* id, not a *lineage-stable* one. Stable concept-based ids only need to matter GOING FORWARD. This dissolves the hard part of the card-ID problem for migration.
+
+**Gather into one location (`chiron catalog-sync` step 0):**
+1. Normalize everything to `.chiron` bundles in `~/chiron/bundles/` (Syncthing-synced): copy the 8 player bundles; zip each of the 11 loose `lessons/*/` dirs (already self-contained: lesson.html+themes+vendor) into a `.chiron`.
+2. Dedupe SURFACING (hash + title similarity, e.g. `graphiti-implementation` vs `-v1`) — shown to the user, never auto-deleted.
+3. Emit `bundles.jsonl` registry.
+
+**Card-ID fallback ladder (catalog-sync must handle all three + two bundle layouts):**
+| Tier | Source | card_id strategy |
+|---|---|---|
+| 1 | NEW lessons (post-generator-update) | `<concept_id>:<ordinal>` — stable, cross-lesson-shareable |
+| 2 | legacy bundles WITH structured srCards (the 3 medicine; `chapter*.json`) — note: their srCards currently lack `concept_id` | `<bundle_id>:<chapterId>:<ordinal>` (deterministic; bundle-scoped); SR starts fresh |
+| 3 | loose-HTML lessons + Italian bundles (`chiron.json`, no structured cards) | **catalog at LESSON level** (searchable/openable); SR cards created only on regeneration |
+
+**Two bundle layouts to parse:** `chapter*.json` (medicine) AND `chiron.json` single-content (Italian/older). catalog-sync detects and handles both.
 
 ---
 
