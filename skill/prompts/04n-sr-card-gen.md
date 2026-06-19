@@ -29,6 +29,7 @@ and stop):
 ```json
 [
   {
+    "id": "<concept_id>:1",
     "card_type": "term-def",
     "front": "...",
     "back": "...",
@@ -41,6 +42,13 @@ and stop):
 
 Field rules:
 
+- `id` — REQUIRED, STABLE. Format `"<concept_id>:<nn>"` where `nn` is the
+  1-based ordinal among cards sharing the SAME `concept_id` (first card for a
+  concept = `:1`, second = `:2`, …). This is the cross-lesson spaced-repetition
+  key (catalog `sr_cards.card_id`). It MUST be derived from the stable
+  `concept_id` + a stable ordinal — NEVER from the (mutable) front text — so a
+  typo-fix or reordering does not orphan a card's review history. Two cards for
+  the same concept must NOT share an ordinal. (Storage PRD §5.)
 - `card_type` — MUST be a value in the per-domain table below. The
   `sr_cards.card_type` column is `TEXT`; downstream readers (`sr-scheduler`,
   the lesson HTML renderer) branch on these exact strings.

@@ -41,12 +41,17 @@ function shortHash(s: string): string {
  */
 export function resolveCardId(
   bundleId: string,
-  card: { concept_id?: string; conceptId?: string; chapterId?: string; front?: string },
+  card: { id?: string; concept_id?: string; conceptId?: string; chapterId?: string; front?: string },
   ordinal: number,
 ): { id: string; tier: 1 | 2 | 3 } {
   const concept = card.concept_id ?? card.conceptId;
+  // Tier 1 (explicit) — the generator emitted a stable id (`<concept>:<nn>`).
+  // Honor it verbatim so reordering/typo-fixes never move the id (PRD §5).
+  if (card.id && concept && card.id.startsWith(`${concept}:`)) {
+    return { id: card.id, tier: 1 };
+  }
   if (concept) {
-    // Tier 1 — stable, cross-lesson-shareable (post-generator-update lessons).
+    // Tier 1 (derived) — stable per-concept ordinal supplied by the indexer.
     return { id: `${concept}:${ordinal}`, tier: 1 };
   }
   if (card.chapterId) {

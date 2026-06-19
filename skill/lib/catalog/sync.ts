@@ -139,6 +139,7 @@ export function indexBundle(cat: Catalog, bundlePath: string): IndexResult {
 
   const chapterFiles = members.filter((m) => /^chapter.*\.json$/i.test(m)).sort();
   let cardCount = 0; let bestTier = 3;
+  const conceptOrd = new Map<string, number>(); // bundle-wide stable per-concept ordinal
 
   const insChapter = raw.prepare('INSERT OR REPLACE INTO chapters (id,bundle_id,title,sort_order) VALUES (?,?,?,?)');
   const insCard = raw.prepare('INSERT OR REPLACE INTO cards (id,bundle_id,chapter_id,concept_id,card_type,front,back,media_ref,tags,meta) VALUES (?,?,?,?,?,?,?,?,?,?)');
@@ -153,7 +154,12 @@ export function indexBundle(cat: Catalog, bundlePath: string): IndexResult {
       insChapter.run(chapterId, id, (ch.title as string) ?? `Chapter ${ci + 1}`, (ch.chapterNumber as number) ?? ci);
       const srCards = Array.isArray(ch.srCards) ? (ch.srCards as Array<Record<string, unknown>>) : [];
       srCards.forEach((card, oi) => {
-        const { id: cardId, tier } = resolveCardId(id, { ...card, chapterId: (ch.chapterId as string) ?? `ch${ci}` } as never, oi);
+        // Stable per-concept ordinal (not chapter position) so a Tier-1 id is
+        // stable across reordering; falls back to chapter position when no concept.
+        const concept = (card.concept_id as string) ?? (card.conceptId as string);
+        let ord = oi;
+        if (concept) { ord = conceptOrd.get(concept) ?? 0; conceptOrd.set(concept, ord + 1); }
+        const { id: cardId, tier } = resolveCardId(id, { ...card, chapterId: (ch.chapterId as string) ?? `ch${ci}` } as never, ord);
         bestTier = Math.min(bestTier, tier);
         const tags = Array.isArray(card.tags) ? (card.tags as string[]) : [];
         insCard.run(cardId, id, chapterId, (card.concept_id as string) ?? (card.conceptId as string) ?? null,

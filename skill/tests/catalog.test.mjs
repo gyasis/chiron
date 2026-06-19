@@ -33,6 +33,32 @@ test('resolveCardId ladder: concept→T1, chapter→T2, hash→T3', () => {
   assert.match(t3.id, /^bun:[0-9a-f]{8}$/);
 });
 
+test('resolveCardId honors an explicit generator-emitted stable id (Tier 1)', () => {
+  // generator emitted "<concept>:<nn>" → used verbatim, ignores the derived ordinal
+  assert.deepEqual(resolveCardId('bun', { id: 'hypogonadism:3', concept_id: 'hypogonadism' }, 0),
+    { id: 'hypogonadism:3', tier: 1 });
+  // a bogus explicit id NOT matching the concept prefix is ignored → derived
+  assert.deepEqual(resolveCardId('bun', { id: 'wrong', concept_id: 'hypogonadism' }, 1),
+    { id: 'hypogonadism:1', tier: 1 });
+});
+
+test('Tier-1 derived ids are stable per-concept across chapter position', () => {
+  const dir = fresh();
+  const sources = join(dir, 'src'); mkdirSync(sources, { recursive: true });
+  // two cards share concept "alpha" in different positions; one "beta"
+  const bundle = makeBundle(sources, 'chiron-conc', 'medicine', [
+    { front: 'a1?', back: 'x', concept_id: 'alpha' },
+    { front: 'b1?', back: 'y', concept_id: 'beta' },
+    { front: 'a2?', back: 'z', concept_id: 'alpha' },
+  ]);
+  const cat = openCatalog(join(dir, 'catalog.db'));
+  const r = indexBundle(cat, bundle);
+  assert.equal(r.tier, 1);
+  const ids = cat.raw.prepare('SELECT id FROM cards ORDER BY id').all().map((x) => x.id);
+  assert.deepEqual(ids, ['alpha:0', 'alpha:1', 'beta:0']); // per-concept ordinal, not chapter pos
+  cat.raw.close();
+});
+
 test('bundleIdFromName strips chiron- prefix, date stamp, version', () => {
   assert.equal(bundleIdFromName('chiron-klinefelter-amboss.chiron'), 'klinefelter-amboss');
   assert.equal(bundleIdFromName('graphiti-implementation-2026-05-23-v1'), 'graphiti-implementation');
