@@ -3,7 +3,7 @@
 **Date:** 2026-06-24
 **Status:** DRAFT — captured from a design conversation (ssm_essame session). Design not yet locked; build after the storage + assessment engines land.
 **Owner:** Gyasi Sutton (solo)
-**Related:** [`chiron_storage_consolidation_2026-06-19.md`](./chiron_storage_consolidation_2026-06-19.md) (the catalog DB this reuses), [`chiron_assessment_engine_2026-06-19.md`](./chiron_assessment_engine_2026-06-19.md) (the Tier-1/2 reuse primitives `hydrate.ts` + `similar.ts`), [`chiron_lesson_expander_2026-05-12.md`](./chiron_lesson_expander_2026-05-12.md). Working note: [`../skill/docs/LESSON-SCOPE-AND-REUSE.md`](../skill/docs/LESSON-SCOPE-AND-REUSE.md). External spine: the ssm_essame 3-level disease taxonomy (system → class → disease).
+**Related:** [`chiron_storage_consolidation_2026-06-19.md`](./chiron_storage_consolidation_2026-06-19.md) (the catalog DB this reuses), [`chiron_assessment_engine_2026-06-19.md`](./chiron_assessment_engine_2026-06-19.md) (the Tier-1/2 reuse primitives `hydrate.ts` + `similar.ts`), [`chiron_lesson_expander_2026-05-12.md`](./chiron_lesson_expander_2026-05-12.md). Working note: [`../skill/docs/LESSON-SCOPE-AND-REUSE.md`](../skill/docs/LESSON-SCOPE-AND-REUSE.md). Node spine: **a pluggable disease taxonomy** (system → class → disease), supplied as a generic input — chiron stays domain-general and never hardcodes any particular exam or curriculum.
 
 **Delete when:** the `scope` knob ships AND a disease deep-dive inherits a class-owned Foundations block AND the REPEAT/PULL/CITE policy runs at generation time.
 
@@ -13,7 +13,7 @@
 
 A chiron lesson today is generated at exactly one altitude — a flat single-topic lesson — and each lesson is authored **in isolation**. Two consequences:
 
-1. **No scope choice.** You can ask for "acute pericarditis" but not for "pericardial disease" as a *class survey* that shows the disease among its siblings. The taxonomy built in ssm_essame (system → class → disease) has no representation in generation.
+1. **No scope choice.** You can ask for "acute pericarditis" but not for "pericardial disease" as a *class survey* that shows the disease among its siblings. A disease taxonomy (system → class → disease), supplied as input, has no representation in generation.
 2. **Chiron repeats itself.** If an "acute pericarditis" deep-dive exists and you then build a "pericardial disease" class lesson, the shared anatomy / pathophysiology / biochemistry / epidemiology is **re-authored from scratch** — wasted generation, and the two lessons can silently drift apart. The same applies across domains (a medical fact re-authored for the medicine×Italian lesson).
 
 The storage + assessment PRDs already built a cross-lesson catalog with stable IDs, FTS, concept linkage, cross-bundle `similar()`, and reskin-on-reuse `hydrate()`. This PRD **uses that substrate** to add scope + author-once content, instead of letting overlapping lessons duplicate work.
@@ -95,12 +95,12 @@ a small schema add, not new substrate.
 3. **Foundations as a reusable unit** — extend the catalog so a Foundations/exposition block is a stable, addressable, class-owned content unit (not only `cards`). (schema add)
 4. **REPEAT/PULL/CITE policy** — generation-time decision per content unit (§4 table), defaulting to PULL/CITE for shared content. (pipeline)
 5. **Class→disease inheritance** — a disease deep-dive PULLs the class's Foundations block. (pipeline)
-6. **Taxonomy binding** — bind generation to the ssm_essame disease taxonomy as the node spine; decide canonical-vs-mirror (see §7 Q1). (integration)
+6. **Taxonomy binding** — bind generation to a **pluggable disease taxonomy** (system→class→disease) as the node spine, supplied as a generic input; decide canonical-vs-mirror (see §7 Q1). No exam/curriculum is hardcoded. (integration)
 7. **Cross-domain PULL** — medicine → medicine×Italian Foundations/fact reuse via `concept_id`. (pipeline)
 
 ## 7. Open questions
 
-1. Is the ssm_essame taxonomy DB the **canonical** node spine, or does chiron **mirror** it into its own catalog?
+1. Does chiron consume an **external taxonomy** as the canonical node spine, or **mirror/import** it into its own catalog (versioned)? Either way the taxonomy is a generic, swappable input — not a built-in.
 2. Similarity threshold for PULL-vs-REPEAT — automatic, or author judgment?
 3. Does a disease deep-dive **embed** the class Foundations inline, or **link + summarize**?
 4. Does `scope: class` **compose upward** from members' existing deep-dive units, or author class-level content fresh and let diseases **inherit downward**?
@@ -112,8 +112,8 @@ a small schema add, not new substrate.
 | Foundations block bloats the lesson / breaks AMBOSS rhythm | collapsible + summary-first; "learn more" is opt-in depth |
 | PULL stale content after the source unit changes | content-hash the unit (catalog `bundles.hash` pattern); re-pull on change |
 | Over-aggressive PULL strips a lesson of self-containedness | default REPEAT for local-and-central units; CITE (not silent omit) for tangents |
-| Taxonomy coupling — ssm_essame schema drift breaks chiron | resolve §7 Q1 first; if mirror, version the import |
+| Taxonomy coupling — external taxonomy schema drift breaks chiron | treat the taxonomy as a generic, versioned input (never hardcoded); resolve §7 Q1 first; if mirror, version the import |
 
 ---
 
-*Captured 2026-06-24 (ssm_essame session). Builds directly on the storage-consolidation catalog + assessment-engine reuse primitives. Cross-project spine: ssm_essame disease taxonomy.*
+*Captured 2026-06-24. Builds directly on the storage-consolidation catalog + assessment-engine reuse primitives. Node spine: a pluggable disease taxonomy supplied as a generic input — chiron stays domain-general and hardcodes no exam or curriculum.*

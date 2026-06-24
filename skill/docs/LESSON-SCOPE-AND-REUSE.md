@@ -1,6 +1,6 @@
 # Chiron — Lesson Scope & Content Reuse (design note)
 
-> Origin: 2026-06-24, ssm_essame session. Captured from a design conversation while
+> Origin: 2026-06-24 design session. Captured from a design conversation while
 > exploring how chiron would teach a single disease (acute pericarditis) vs its disease
 > *class* (pericardial disease). Status: **design note / not yet built.**
 >
@@ -19,8 +19,8 @@ This note codifies **one model with two faces** (the union, not two separate ide
 
 ## 1. The scope dial
 
-A lesson is generated against a **node in the disease taxonomy** (the 3-level taxonomy
-built in ssm_essame: system → class → disease). The node's level sets the lesson genre:
+A lesson is generated against a **node in a disease taxonomy** (a 3-level taxonomy
+supplied as a generic, pluggable input: system → class → disease). The node's level sets the lesson genre:
 
 | `scope` | Keyed to | Genre | Behavior |
 |---|---|---|---|
@@ -104,14 +104,14 @@ One verified fact → two domains, no re-verification.
 | Pull verified content from other lessons | `similar.ts` — `byConcept` + `byText` (FTS5), cross-bundle | exists for cards; needs the REPEAT/PULL/CITE *policy* at generation time |
 | Reuse without stale repetition | `hydrate.ts` — deterministic option-shuffle reskin | ready as-is |
 | Cross-domain reuse | `bundles.domain` + `cards.concept_id` (domain-neutral concept link) | needs the Italian-lesson PULL path wired |
-| Scope = class vs disease | — | **not built**: no `scope` knob; taxonomy (ssm_essame) not yet the spine of generation |
+| Scope = class vs disease | — | **not built**: no `scope` knob; the taxonomy is not yet the spine of generation |
 
 **Verdict: well poised.** The hard part (a stable-ID cross-lesson catalog with cross-bundle
 similarity + FTS + concept linkage + reskin) is done. What's missing is mostly *orchestration*,
 not *substrate*:
 
 1. Add a `scope: system | class | disease` curriculum knob.
-2. Bind chiron to the **ssm_essame disease taxonomy** as the node spine (system→class→disease).
+2. Bind chiron to a **pluggable disease taxonomy** as the node spine (system→class→disease) — supplied as a generic input, never hardcoded.
 3. Extend the catalog's reusable unit from card → also **Foundations/exposition blocks**.
 4. Implement the **REPEAT/PULL/CITE** decision at generation time (§3 table).
 5. Wire the class→disease **inheritance** (disease deep-dive pulls class Foundations).
@@ -127,5 +127,5 @@ integration with the taxonomy DB.
 - Does the disease deep-dive embed the class Foundations inline, or link + summarize?
 - Should `scope: class` reuse the member diseases' *existing* deep-dive cards (compose
   upward), or author class-level cards fresh and let diseases inherit downward?
-- Is the ssm_essame taxonomy DB the canonical node spine, or does chiron mirror it into
+- Does chiron consume an external taxonomy as the canonical node spine, or mirror it into
   its own catalog?
