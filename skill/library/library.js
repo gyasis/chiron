@@ -97,7 +97,10 @@ function crumb(){ const p=[];
   return p.length?'· '+p.join(' › '):''; }
 function renderRows(){
   const list = sortLessons(LESSONS.filter(match));
-  document.getElementById('rcount').textContent = `${list.length} of ${LESSONS.length} lessons`;
+  const nReady = list.filter(l=>l.ready).length, nQueued = list.length - nReady;
+  document.getElementById('rcount').textContent = nQueued
+    ? `${nReady} ready · ${nQueued} to generate`
+    : `${nReady} lesson${nReady===1?'':'s'} ready`;
   document.getElementById('crumb').innerHTML = crumb();
   const rows = list.slice(0,600).map(l=>{
     const cat = l.subject ? `<span class="tag sys">${l.system}</span><span class="tag subj">${l.subject}</span>`
