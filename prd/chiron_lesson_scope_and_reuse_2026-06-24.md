@@ -5,7 +5,18 @@
 **Owner:** Gyasi Sutton (solo)
 **Related:** [`chiron_storage_consolidation_2026-06-19.md`](./chiron_storage_consolidation_2026-06-19.md) (the catalog DB this reuses), [`chiron_assessment_engine_2026-06-19.md`](./chiron_assessment_engine_2026-06-19.md) (the Tier-1/2 reuse primitives `hydrate.ts` + `similar.ts`), [`chiron_lesson_expander_2026-05-12.md`](./chiron_lesson_expander_2026-05-12.md). Working note: [`../skill/docs/LESSON-SCOPE-AND-REUSE.md`](../skill/docs/LESSON-SCOPE-AND-REUSE.md). Node spine: **a pluggable disease taxonomy** (system → class → disease), supplied as a generic input — chiron stays domain-general and never hardcodes any particular exam or curriculum.
 
-**Delete when:** the `scope` knob ships AND a disease deep-dive inherits a class-owned Foundations block AND the REPEAT/PULL/CITE policy runs at generation time.
+**Delete when:** the `scope` knob ships AND foundations are always-on + audio-bearing per domain.
+
+> ## DECISION 2026-06-24 — foundations are PER-LESSON; reuse/dedup DROPPED (supersedes §3b-inherit / §4-PULL / §4b-audio-cache below)
+> The 3-phase dogfood test measured **0% text overlap** between the Phase-2 and Phase-3
+> foundations — independent generations of "the same foundation" share no text. The user's call:
+> **this is GOOD — different lessons SHOULD have different foundations, and that's fine.** The
+> reuse/inheritance/audio-dedup framework was only justified IF foundations were duplicated; they
+> are not, so it is **dropped**. Keep lessons INDEPENDENT (each generates its own foundation).
+> **Still in force:** the `scope` dial (class vs disease lessons — §3a), foundations **always-on +
+> audio-bearing** with **domain-specific depth/source** (§3b: medicine=Harrison full / medical-IT=
+> light 3-sentence), and the audio pronunciation-lexicon fix. **Deferred/closed:** verbatim
+> inheritance, REPEAT/PULL/CITE, the `(script_hash, voice)` audio cache, catalog-citizenship-for-reuse.
 
 ---
 
@@ -43,6 +54,17 @@ The AMBOSS skeleton is clinical-reasoning-first and omits the basic-science scaf
 dedicated **"Foundations — Background & Deep Dive"** block: collapsible, reference-style,
 not diluting the active-recall flow.
 
+- **ALWAYS-ON, and it FEEDS THE AUDIO (BLOCKING).** Foundations is NOT optional — present in
+  EVERY medical lesson, rendered as its own **audio section the persona narrates** (the grounded
+  foundation is the richest material to speak over). Never omit it. **Source + depth are
+  domain-specific** (decided 2026-06-24):
+  - **Medicine** → FULL foundation (anatomy/pathophys/biochem/epidemiology), Harrison-grounded
+    (harrison-search + gemini), summary-first + "learn more" deep-dive.
+  - **Medical-language** → **EXTREMELY LIGHT ~2-3 sentence** foundation spoken in Italian
+    (definition + very light pathophys + treatment), sourced from the **SSM MCQ corpus**, NOT
+    Harrison (this domain was never Harrison-grounded; its chunks are too heavy). booklake is not
+    a lighter alt (same Harrison corpus; its search is currently broken).
+
 - **Progressive depth / "learn more".** Pathophysiology and biochemistry are a **deep
   layer**, not a flat paragraph. Foundations shows a *summary first* with an explicit
   **"learn more"** drill into the deep mechanism (molecular cascade, pressure-volume curves,
@@ -72,6 +94,26 @@ A clinical fact tagged with a `concept_id` is domain-neutral. The medicine×Ital
 board-style MCQ that teaches the medical subject **and** Italian at once — one verified fact,
 two domains, no re-verification. Uses the catalog's existing cross-bundle `similar()` over
 `concept_id` (domain-agnostic) + `bundles.domain`.
+
+### 4b. Audio-clip reuse — content-addressed bake cache (the biggest single saving)
+
+The audio bake (TTS via Atelier) is the most expensive + slowest step. The baker ALREADY
+content-addresses each clip — `script_hash = sha256(JSON(segments))` (`audio-bake.ts` `hashSegments`)
+— and reuses a clip **within** a lesson when the hash is unchanged (`audio_clips` table, status
+`reused`). **Lift this to the CENTRAL catalog so reuse is CROSS-lesson:**
+
+- A central **content-addressed audio store** keyed by **(script_hash, voice)** → the mp3.
+- Before synthesizing ANY segment in ANY lesson, check the store: **HIT → copy/link the existing
+  mp3, NO TTS call; MISS → bake once, store, reuse forever.**
+- Effect: a **class-owned foundation narration bakes ONCE** and is reused by every member/disease
+  lesson that inherits the SAME text + voice (pairs with §3b inheritance + §4 PULL). Identical
+  script + same persona ⇒ automatic audio dedup.
+- This is the **economy-first principle ($5K scar) applied to TTS**: hash-dedup BEFORE the paid
+  synthesis call. Voice is part of the key (same text in Lucrezia ≠ pauls_tutor).
+- **Caveat:** reuse needs byte-identical script text + same voice — so lessons must INHERIT the same
+  foundation text (not paraphrase per lesson). This is the concrete reason inheritance (§3b/§4)
+  must share text, not just topic. (Validated empirically 2026-06-24: Phase-2 and Phase-3 each
+  re-baked the same pericardial foundation — pure waste a (script_hash, voice) cache eliminates.)
 
 ## 5. Readiness — substrate ~80% built (`lib/catalog/`)
 

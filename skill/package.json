@@ -17,6 +17,7 @@
   "dependencies": {
     "better-sqlite3": "^11.3.0",
     "drizzle-orm": "^0.45.2",
+    "js-yaml": "^5.1.0",
     "pdf-to-img": "^4.4.0",
     "pdfjs-dist": "^4.7.76",
     "zod": "^3.23.0"

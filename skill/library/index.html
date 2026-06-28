@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Chiron Library</title>
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#1e3a5f">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Chiron">
+<style>
+:root{
+  --chiron-bg:#faf8f5;--chiron-surface:#fff;--chiron-elevated:#f0ebe4;
+  --chiron-fg:#1a1a1a;--chiron-fg-secondary:#4a4a4a;--chiron-muted:#7a7a7a;
+  --chiron-accent:#1e3a5f;--chiron-border:#e5e0d8;--chiron-divider:#ede8df;
+  --r-md:8px;--r-lg:12px;--sh-sm:0 1px 2px rgba(0,0,0,.05);--sh-md:0 4px 6px rgba(0,0,0,.07);
+  --med:#1e6fbf;--medbg:#eef4fb;--medit:#b3522e;--meditbg:#f3e9d8;--lang:#6b8e4e;--langbg:#eef3e6;--code:#6d28d9;--codebg:#efeafe;
+  --t-RISING:#15803d;--t-PERENNIAL:#1e6fbf;--t-FADING:#9a7b3f;--t-EMERGING:#7c3aed;
+  --font-h:'Inter',system-ui,sans-serif;--font-b:'Source Sans 3','Inter',system-ui,sans-serif;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;font-family:var(--font-b);background:var(--chiron-bg);color:var(--chiron-fg);display:flex;flex-direction:column}
+.topbar{flex:0 0 auto;height:58px;background:var(--chiron-surface);border-bottom:1px solid var(--chiron-border);display:flex;align-items:center;gap:14px;padding:0 18px}
+.brand{display:flex;align-items:center;gap:9px;font-family:var(--font-h);font-weight:800;color:var(--chiron-accent);font-size:16px}
+.brand .mk{width:28px;height:28px;border-radius:8px;background:var(--chiron-accent);color:#fff;display:grid;place-items:center;font-size:14px}
+.search{flex:1;max-width:560px;position:relative}
+.search input{width:100%;height:38px;border:1px solid var(--chiron-border);border-radius:99px;padding:0 16px 0 38px;font:inherit;font-size:14px;background:var(--chiron-bg);color:var(--chiron-fg)}
+.search input:focus{outline:none;border-color:var(--chiron-accent);box-shadow:0 0 0 3px rgba(30,111,191,.12)}
+.search .mag{position:absolute;left:14px;top:11px;color:var(--chiron-muted)}
+.sort{margin-left:auto;display:flex;align-items:center;gap:8px;font-size:13px;color:var(--chiron-muted)}
+.sort select{font:inherit;font-size:13px;border:1px solid var(--chiron-border);border-radius:99px;padding:6px 12px;background:var(--chiron-surface);color:var(--chiron-fg);cursor:pointer}
+.pills{flex:0 0 auto;background:var(--chiron-surface);border-bottom:1px solid var(--chiron-border);padding:9px 18px;display:flex;flex-wrap:wrap;gap:7px;align-items:center}
+.pgl{font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--chiron-muted);margin-right:4px}
+.pill{font:inherit;font-size:12px;padding:4px 12px;border-radius:99px;border:1px solid var(--chiron-border);background:var(--chiron-bg);color:var(--chiron-fg-secondary);cursor:pointer;display:inline-flex;align-items:center;gap:6px}
+.pill:hover{border-color:var(--chiron-accent)}.pill.on{background:var(--chiron-accent);color:#fff;border-color:var(--chiron-accent)}
+.pill .ct{opacity:.6;font-size:11px}
+.pill.dom-medicine.on{background:var(--med);border-color:var(--med)}.pill.dom-medical-italian.on{background:var(--medit);border-color:var(--medit)}.pill.dom-italian.on{background:var(--lang);border-color:var(--lang)}.pill.dom-code.on{background:var(--code);border-color:var(--code)}
+.sep{width:1px;height:18px;background:var(--chiron-border);margin:0 4px}
+.body{flex:1;display:flex;min-height:0}
+.facets{flex:0 0 236px;border-right:1px solid var(--chiron-border);background:var(--chiron-surface);overflow:auto;padding:6px 0}
+.facets h4{font-family:var(--font-h);font-size:11px;letter-spacing:.07em;text-transform:uppercase;color:var(--chiron-muted);margin:14px 16px 6px}
+.frow{display:flex;align-items:center;gap:8px;padding:5px 16px;font-size:13px;color:var(--chiron-fg-secondary);cursor:pointer}
+.frow:hover{background:var(--chiron-elevated)}.frow.on{color:var(--chiron-accent);font-weight:600}
+.frow.sub{padding-left:28px;font-size:12.5px}
+.frow .fct{margin-left:auto;font-size:11px;color:var(--chiron-muted);background:var(--chiron-elevated);border-radius:99px;padding:1px 7px}
+.fhint{font-size:11.5px;color:var(--chiron-muted);font-style:italic;padding:2px 16px 6px}
+.results{flex:1;overflow:auto}
+.rhead{position:sticky;top:0;background:var(--chiron-bg);padding:12px 18px 8px;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--chiron-divider);z-index:2}
+.rcount{font-family:var(--font-h);font-size:13px;color:var(--chiron-fg-secondary);font-weight:600}
+.crumb{font-size:12px;color:var(--chiron-muted)}.crumb b{color:var(--chiron-accent)}
+.clr{font-size:12px;color:var(--chiron-accent);cursor:pointer;margin-left:auto}
+.row{display:flex;align-items:center;gap:12px;padding:9px 18px;border-bottom:1px solid var(--chiron-divider);cursor:pointer;text-decoration:none;color:inherit}
+.row:hover{background:var(--chiron-surface)}
+.dbadge{flex:0 0 auto;width:8px;height:40px;border-radius:3px}
+.dbadge.medicine{background:var(--med)}.dbadge.medical-italian{background:var(--medit)}.dbadge.italian{background:var(--lang)}.dbadge.code{background:var(--code)}
+.rinfo{min-width:0;flex:1}
+.rtitle{font-family:var(--font-h);font-size:14px;color:var(--chiron-fg);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rmeta{font-size:11.5px;color:var(--chiron-muted);display:flex;gap:7px;align-items:center;margin-top:2px;flex-wrap:wrap}
+.tag{font-size:10.5px;padding:1px 8px;border-radius:99px;background:var(--chiron-elevated);color:var(--chiron-fg-secondary)}
+.tag.sys{background:var(--medbg);color:var(--med)}.tag.subj{background:#e7eef9;color:#1b4f86;font-weight:600}.tag.topic{background:var(--langbg);color:var(--lang)}
+.tag.dom-medicine{background:var(--medbg);color:var(--med)}.tag.dom-medical-italian{background:var(--meditbg);color:var(--medit)}.tag.dom-italian{background:var(--langbg);color:var(--lang)}.tag.dom-code{background:var(--codebg);color:var(--code)}
+.scope{font-size:10px;border:1px solid var(--chiron-border);border-radius:99px;padding:0 7px;color:var(--chiron-muted)}
+.trend{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.04em}
+.trend.RISING{color:var(--t-RISING)}.trend.PERENNIAL{color:var(--t-PERENNIAL)}.trend.FADING{color:var(--t-FADING)}.trend.EMERGING{color:var(--t-EMERGING)}
+.rstatus{flex:0 0 auto;font-size:11px;display:flex;align-items:center;gap:8px}
+.ready{color:var(--t-RISING)}.queued{color:var(--chiron-muted)}
+.open{font-size:11px;font-weight:600;color:var(--chiron-accent);border:1px solid var(--chiron-border);border-radius:99px;padding:3px 11px}
+.gen{font-size:11px;border:1px dashed var(--chiron-border);border-radius:99px;padding:3px 10px;color:var(--chiron-muted)}
+.empty{padding:40px;text-align:center;color:var(--chiron-muted)}
+/* ---------- MOBILE (M-A: tab bar + filter sheet) ---------- */
+.mbar{display:none}
+.sheet-backdrop{display:none}
+.sheet-apply{display:none}
+@media (max-width:760px){
+  .topbar{height:52px;gap:8px;padding:0 12px}
+  .brand .lbl{display:none}
+  .sort{margin-left:0}.sort .sl{display:none}
+  .sort select{padding:6px 8px;max-width:120px}
+  .pills{flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch}
+  .pills::-webkit-scrollbar{display:none}
+  .pills .pgl{display:none}.pills .sep{display:none}
+  .facets{position:fixed;left:0;right:0;bottom:0;top:auto;width:auto;max-height:80vh;
+    border-right:none;border-top:1px solid var(--chiron-border);border-radius:18px 18px 0 0;
+    transform:translateY(105%);transition:transform .26s ease;z-index:60;box-shadow:0 -10px 30px rgba(0,0,0,.2);padding-bottom:64px}
+  .facets.open{transform:translateY(0)}
+  .facets::before{content:"";display:block;width:40px;height:4px;border-radius:99px;background:var(--chiron-border);margin:9px auto 2px}
+  .sheet-apply{display:block;position:sticky;bottom:0;background:var(--chiron-surface);border-top:1px solid var(--chiron-border);padding:10px 14px}
+  .sheet-apply button{width:100%;height:44px;border:none;border-radius:99px;background:var(--chiron-accent);color:#fff;font:inherit;font-weight:700;font-size:15px}
+  .sheet-backdrop.show{display:block;position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:55}
+  .results{padding-bottom:66px}
+  .rhead .crumb{display:none}
+  .mbar{display:flex;position:fixed;left:0;right:0;bottom:0;height:56px;background:var(--chiron-surface);border-top:1px solid var(--chiron-border);z-index:50}
+  .mbar button{flex:1;border:none;background:none;font:inherit;font-size:10px;color:var(--chiron-muted);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;cursor:pointer}
+  .mbar button .ic{font-size:18px}
+  .mbar button.on{color:var(--chiron-accent)}
+}
+</style></head>
+<body>
+  <div class="topbar">
+    <div class="brand"><span class="mk">C</span><span class="lbl">Chiron Library</span></div>
+    <div class="search"><span class="mag">⌕</span><input id="q" placeholder="Search lessons, diseases, systems, subjects, topics…"></div>
+    <div class="sort"><span class="sl">Sort</span> <select id="sort"></select></div>
+  </div>
+  <div class="pills" id="pills"></div>
+  <div class="body">
+    <div class="facets" id="facets"></div>
+    <div class="results">
+      <div class="rhead"><span class="rcount" id="rcount">…</span><span class="crumb" id="crumb"></span><span class="clr" onclick="LIB.clearAll()">Clear all</span></div>
+      <div id="rows"></div>
+    </div>
+  </div>
+<div class="sheet-backdrop" id="backdrop" onclick="LIB.sheet(false)"></div>
+<div class="mbar">
+  <button class="on" onclick="document.querySelector('.results').scrollTo(0,0)"><span class="ic">▤</span>Library</button>
+  <button onclick="LIB.sheet(true)"><span class="ic">⚗</span>Filters</button>
+  <button onclick="document.getElementById('q').focus()"><span class="ic">⌕</span>Search</button>
+</div>
+<script src="vendor/fflate.min.js"></script>
+<script src="library.js"></script>
+<script>if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));}</script>
+</body></html>
