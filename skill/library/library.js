@@ -114,7 +114,7 @@ function renderRows(){
     // Desktop gets NO remove/delete affordance — only Open — so nothing can be mistakenly deleted.
     const isPhone = matchMedia('(max-width:760px)').matches;
     const status = !l.ready
-      ? `<span class="queued">not generated</span><span class="gen">Generate</span>`
+      ? `<span class="queued">not generated</span><span class="gen" aria-disabled="true" title="On-device generation is coming soon (Phase 2)" style="cursor:not-allowed;opacity:.55">Generate · soon</span>`
       : isPhone
         ? `<span class="ready">▸ ${l.clips}</span>` + (dl
             ? `<span class="ready" title="cached on this device">✓ offline</span><span class="open" onclick="event.stopPropagation();LIB.remove('${slug}')">Remove</span>`
@@ -139,7 +139,7 @@ const LIB = {
   clearAll(){ F.q=''; F.domain.clear(); Object.values(F.facets).forEach(s=>s.clear()); document.getElementById('q').value=''; renderAll(); },
   sheet(open){ document.getElementById('facets').classList.toggle('open',open); document.getElementById('backdrop').classList.toggle('show',open); },
   open(slug){ const l=LMAP[slug]; if(!l) return; const dl=DL[slug];
-    window.open(dl ? ('lessons/'+dl.id+'/'+dl.entry) : ('../'+l.path), '_blank'); },
+    window.open(dl ? ('lessons/'+dl.id+'/'+dl.entry) : l.path, '_blank'); },
   async download(slug){ const l=LMAP[slug]; if(!l || DL[slug]) return;
     try{
       const u8 = new Uint8Array(await (await fetch('lessons/'+slug+'.chiron')).arrayBuffer());

@@ -2,7 +2,7 @@
  * DOWNLOADED lessons (lessons/dl-<slug>/…, written by library.js via fflate) for
  * offline. The hub catalog (lessons/*.chiron, lessons/lessons.json) and not-yet-
  * downloaded lessons go to the network. Removing a download clears only the cache. */
-const SHELL = 'chiron-lib-shell-v2';
+const SHELL = 'chiron-lib-shell-v3';
 const LESSON = 'chiron-lib-lessons-v1';   // written by library.js on Download
 const ASSETS = [
   './', 'index.html', 'library.js', 'vendor/fflate.min.js',
