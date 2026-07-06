@@ -1,20 +1,29 @@
-"""Chiron MEDICINE PRIMER lesson generator — the "simple & quick" depth (chain variant).
+"""Chiron MEDICINE ATLAS lesson generator — the organ-system SURVEY depth (chain variant).
 
-Third depth in the depth ladder (primer < atlas < systematic). Unlike the AMBOSS medicine chain
-(one disease per chapter, LLM-planned), the PRIMER:
-  - READS `skill/blueprints/disease-atlas.json` for the subject's curated issue list (our guidance),
-  - GROUPS those issues into a handful of concise chapters (chapterCountExact — deterministic count),
-  - authors each chapter as a FULL canonical AMBOSS chapter (full 04a widget palette + srCards) —
-    "primer" = fewer, thematically-GROUPED chapters, NOT fewer widgets,
+Second depth in the depth ladder (primer < ATLAS < systematic). Unlike the primer (which GROUPS
+curated issues into a handful of concise chapters), the ATLAS:
+  - READS `skill/blueprints/disease-atlas.json` for the subject's curated organ-system issue list,
+  - BOUNDS to the top ~N high-yield diseases (CH_MAX_DISEASES, default 12) so the atlas stays a
+    manageable 10-15 chapters — one chapter PER DISEASE (entity-axis survey, deterministic mapping,
+    no LLM planning step: `brief.clinicalAtlasUnits` = the disease list, chapterCountExact = len(diseases)),
+  - authors EVERY chapter as a FULL canonical AMBOSS disease article (the FULL 04a widget palette —
+    NOT the primer's stripped-down set): why-care-callout, pattern-cards, flow-animation for DDx/
+    workup, step-cards for protocols, agreement-matrix, assertion-reason, glossary-tooltips, ONE
+    mandatory mcq-clinical-vignette, and srCards — covering overview -> epidemiology -> etiology ->
+    pathophysiology -> clinical-features -> diagnostics -> differential -> treatment ->
+    complications -> prognosis inside the chapter,
   - assembles (assemble-medicine.mjs) -> bakes (Atelier/Mac) -> stamps chiron.json tags -> library index.
-Good for narrow systems (immunology/ENT/male-GU) and cross-cutting subjects (geriatrics).
+Good for a full organ-system survey (Cardiovascular, Respiratory, Neurology, ...) where the primer's
+light 1-2-widget-per-chapter treatment would be too thin.
 
-Verdict (C) Hybrid. Facts from code (atlas + harrison), judgment from LLM (grouping + authoring).
-NO model ever codes HTML — typed chapter JSON -> deterministic assembler.
+Verdict (C) Hybrid. Facts from code (atlas + harrison) drive WHICH diseases and HOW MANY chapters —
+Phase 1 is fully deterministic, no LLM call. Judgment from LLM is reserved for per-chapter AUTHORING
+(Phase 3) only. NO model ever codes HTML — typed chapter JSON -> deterministic assembler.
 
-Run:  cd ~/Documents/PromptChain && bash scripts/observe.sh runs/2026-07-05_chiron-medicine-primer-chain
-Env:  OLLAMA_API_KEY ; CH_SUBJECT (atlas system name, default "Geriatrics – General") ;
-      CH_CHAPTERS (grouped primer chapters, default 6) ; CH_STAGE (plan|chapters|assemble|audio|all).
+Run:  cd ~/Documents/PromptChain && bash scripts/observe.sh runs/2026-07-06_chiron-medicine-atlas-chain
+Env:  OLLAMA_API_KEY ; CH_SUBJECT (atlas system name, default "Cardiovascular") ;
+      CH_MAX_DISEASES (bound on high-yield diseases -> chapters, default 12) ;
+      CH_STAGE (plan|chapters|assemble|audio|all).
 """
 from promptchain.observability import init_mlflow
 init_mlflow()
@@ -39,19 +48,19 @@ HOME = Path(os.path.expanduser("~"))
 SKILL = Path(os.environ.get("CHIRON_SKILL", HOME / "Documents/code/chiron/skill"))
 PROMPTS = SKILL / "prompts"
 ATLAS = SKILL / "blueprints" / "disease-atlas.json"
+AMBOSS_CURR = json.loads((SKILL / "curricula" / "medicine-amboss.json").read_text())
 GEN = HOME / "Documents/generated"
 OLLAMA_KEY = os.environ.get("OLLAMA_API_KEY", "")
 
-SUBJECT = os.environ.get("CH_SUBJECT", "Geriatrics – General")
-N_CHAPTERS = int(os.environ.get("CH_CHAPTERS", "6"))
+SUBJECT = os.environ.get("CH_SUBJECT", "Cardiovascular")
+MAX_DISEASES = int(os.environ.get("CH_MAX_DISEASES", "12"))
 STAGE = os.environ.get("CH_STAGE", "plan")  # plan | chapters | assemble | audio | all
-SLUG = "chiron-" + re.sub(r"[^a-z0-9]+", "-", SUBJECT.lower()).strip("-") + "-primer"
+SLUG = "chiron-" + re.sub(r"[^a-z0-9]+", "-", SUBJECT.lower()).strip("-") + "-atlas"
 OUT = GEN / SLUG
 
 MODEL_REASON = os.environ.get("CH_MODEL_REASON", "glm-5.2")
 MODEL_STRUCT = os.environ.get("CH_MODEL_STRUCT", "glm-5.2")
 CHAPTER_ENGINE = os.environ.get("CH_CHAPTER_ENGINE", "glm")  # "glm" | "claude"
-AMBOSS_CURR = json.loads((SKILL / "curricula" / "medicine-amboss.json").read_text())  # full widget palette + targets
 
 
 def ollama(model: str, temperature: float = 0.4) -> dict:
@@ -67,6 +76,10 @@ def fill(t: str, **slots) -> str:
     for k, v in slots.items():
         t = t.replace("{{" + k + "}}", v if isinstance(v, str) else json.dumps(v))
     return t
+
+
+def slugify(s: str) -> str:
+    return re.sub(r"[^a-z0-9]+", "-", s.lower()).strip("-")
 
 
 def extract_json(s: str):
@@ -166,44 +179,64 @@ def render_check(chapter_obj) -> list:
         return []
 
 
-# ── Phase 0.5 — READ the curated atlas (our guidance) ──────────────────────────
-def atlas_issues() -> list:
+# ── Phase 0.5 — READ the curated atlas + BOUND to top high-yield diseases ──────
+def atlas_diseases() -> list:
+    """Read disease-atlas.json for SUBJECT, keep only highYield===True entries (some rows carry a
+    stray non-bool 'highYield' array — treat strictly, `is True` only), drop cross-list pointer rows
+    ("... (see OtherSystem)" — a duplicate of another system's canonical entry), and bound to the
+    first MAX_DISEASES in curated order (the atlas is already roughly importance-ordered)."""
     atlas = json.loads(ATLAS.read_text())
     entry = next((s for s in atlas["systems"]
                   if s["system"] == SUBJECT or SUBJECT in (s.get("aliases") or [])), None)
     if not entry:
         raise SystemExit(f"[abort] subject '{SUBJECT}' not found in {ATLAS.name}. "
                          f"Available: {[s['system'] for s in atlas['systems']]}")
-    issues = [d["name"] for d in entry["diseases"]]
-    print(f"[phase 0.5] atlas '{SUBJECT}': {len(issues)} curated issues -> grouping into {N_CHAPTERS} primer chapters", flush=True)
-    return issues
+    all_d = entry["diseases"]
+    selected = []
+    for d in all_d:
+        if d.get("highYield") is not True:
+            continue
+        if re.search(r"\(see\s", d["name"], re.I):
+            continue  # cross-list pointer to another system's canonical entry — skip the duplicate
+        selected.append(d)
+        if len(selected) >= MAX_DISEASES:
+            break
+    print(f"[phase 0.5] atlas '{SUBJECT}': {len(all_d)} total diseases -> {len(selected)} high-yield "
+          f"(bounded to {MAX_DISEASES}): {[d['name'] for d in selected]}", flush=True)
+    return selected
 
 
-# ── Phase 1 — PLAN: group the curated issues into N concise primer chapters ─────
-async def phase1(issues: list, source: str):
+# ── Phase 1 — PLAN: one chapter PER disease (DETERMINISTIC, no LLM) ─────────────
+def build_syllabus(diseases: list) -> list:
+    syl = []
+    for i, d in enumerate(diseases, start=1):
+        name = d["name"]
+        syl.append({
+            "chapterNumber": i,
+            "chapterId": slugify(name),
+            "title": name,
+            "diseaseName": name,
+            "keyConcepts": d.get("aliases", []),
+            "sources": d.get("sources", []),
+            "narrative": f"Full AMBOSS-style survey of {name}: presentation, workup, and management.",
+        })
+    return syl
+
+
+def phase1(diseases: list, source: str):
     OUT.mkdir(parents=True, exist_ok=True)
-    plan_p = (
-        f"You are planning a SHORT medical PRIMER lesson on '{SUBJECT}'. This is a quick, high-yield "
-        f"overview — NOT an exhaustive per-disease deep dive.\n\n"
-        f"Our curriculum names these {len(issues)} clinical issues for this subject (cover the important ones; "
-        f"you MAY merge closely-related issues into one chapter):\n- " + "\n- ".join(issues) + "\n\n"
-        f"GROUP them into EXACTLY {N_CHAPTERS} coherent primer chapters (each chapter bundles related issues "
-        f"under one teaching theme). Return a JSON array of EXACTLY {N_CHAPTERS} objects:\n"
-        f'  {{"chapterNumber": <1-based>, "chapterId": "<kebab-id>", "title": "<theme title>", '
-        f'"issues": ["<issue names covered>"], "narrative": "<80-150 word teaching arc, high-level only>", '
-        f'"keyConcepts": ["<3-6 concepts>"]}}\n'
-        f"Order chapters pedagogically (foundational first). Return ONLY the JSON array."
-    )
-    print("[phase 1] plan — grouping curated issues into primer chapters…", flush=True)
-    syl = await llm_json(ollama(MODEL_REASON), plan_p, "syllabus")
-    if isinstance(syl, dict):
-        syl = syl.get("chapters") or syl.get("syllabus") or [syl]
-    # brief.json (assembler/library read metadata from here + chiron.json)
+    syl = build_syllabus(diseases)
+    # brief.json: clinicalAtlasUnits + chapterCountExact are the forward-path tags the 04a prompt +
+    # assembler prefer (chapter count = atlas length; overrides chapterCountTarget/Exact — see
+    # skill/prompts/04a-chapter-write.md "Brief inputs that drive medicine layout").
     (OUT / "brief.json").write_text(json.dumps(
-        {"domain": "medicine", "subMode": "primer", "extractedText": source,
-         "metadata": {"subject": SUBJECT, "topic": SUBJECT, "depth": "primer"}}, indent=2))
+        {"domain": "medicine", "subMode": "atlas", "extractedText": source,
+         "metadata": {"subject": SUBJECT, "topic": SUBJECT, "depth": "atlas"},
+         "clinicalAtlasUnits": [d["name"] for d in diseases],
+         "chapterCountExact": len(diseases)}, indent=2))
     (OUT / "syllabus.json").write_text(json.dumps(syl, indent=2))
-    print(f"[phase 1] syllabus: {len(syl)} chapters -> {[c.get('title') for c in syl]}", flush=True)
+    print(f"[phase 1] DETERMINISTIC syllabus (no LLM, one chapter per disease): {len(syl)} chapters -> "
+          f"{[c['title'] for c in syl]}", flush=True)
     return syl
 
 
@@ -212,8 +245,6 @@ def validate(syl) -> list:
     issues = []
     if not isinstance(syl, list) or not syl:
         return ["syllabus is not a non-empty array"]
-    if len(syl) != N_CHAPTERS:
-        issues.append(f"expected {N_CHAPTERS} chapters, got {len(syl)}")
     for i, c in enumerate(syl):
         if not c.get("title"):
             issues.append(f"ch{i}: missing title")
@@ -221,48 +252,52 @@ def validate(syl) -> list:
     return issues
 
 
-# ── Phase 3 — per-chapter author (Harrison-grounded, PRIMER-LIGHT) ──────────────
+# ── Phase 3 — per-chapter author (Harrison-grounded, FULL AMBOSS widget palette) ─
 async def author_chapter(chapter, idx: int):
     n = chapter.get("chapterNumber", idx + 1)
-    theme = chapter.get("title", SUBJECT)
-    covered = chapter.get("issues", []) or chapter.get("keyConcepts", [])
+    disease = chapter.get("diseaseName") or chapter.get("title", SUBJECT)
+    key_concepts = chapter.get("keyConcepts", []) or []
     if (OUT / f"chapter{n}.json").exists() and os.environ.get("CH_FORCE") != "1":
         print(f"[phase 3] chapter {n} — RESUME (exists, skip)", flush=True)
         return n
-    grounding = harrison(SUBJECT + " " + theme + " " + " ".join(covered[:4]), n=5)
+    grounding = harrison(disease + " " + " ".join(key_concepts[:3]), n=5)
     p = fill(load_prompt("04a-chapter-write.md"), chapterSyllabus=chapter, curriculum=AMBOSS_CURR) \
         + "\n\n## CLINICAL VIGNETTE (mandatory)\n" + load_prompt("04c-quiz-clinical-vignette.md") \
         + "\n\n" + load_prompt("04u-medical-algorithm-widgets.md")
     p += (
-        f"\n\n## GROUNDING (Harrison's — ground every clinical claim to this; never invent):\n{grounding[:5000]}"
-        f"\n\n## THIS PRIMER CHAPTER groups these clinical issues: {', '.join(covered)}."
-        f"\n\n## WIDGETS (BLOCKING): produce a FULL canonical AMBOSS chapter — use the FULL 04a widget palette, NOT "
-        f"a reduced set. Open with a why-care-callout; emit a VARIED widget mix per the curriculum widgetMix "
-        f"({', '.join(AMBOSS_CURR.get('widgetMix', {}).keys())}) PLUS pedagogical widgets where they fit "
-        f"(flow-animation for a differential/algorithm, step-cards for protocols, pattern-cards, agreement-matrix, "
-        f"assertion-reason, glossary-tooltips); include ONE full mcq-clinical-vignette (stem, keyInfo[], 5 options "
-        f"w/ per-distractor explanation, hammer, attendingTip, vignetteCategory); emit srCards "
-        f"(aim ~{AMBOSS_CURR.get('perChapterSrCardTarget', 8)}). 'Primer' means fewer, THEMATICALLY-GROUPED chapters "
-        f"— per-chapter widget VARIETY must match a full medicine lesson, NOT be reduced."
-        f"\n\nReturn ONE JSON object: {{\"chapterIndex\": {n}, \"title\": \"{theme}\", \"exposition\": \"...\", "
-        f"\"widgets\": [...], \"srCards\": [...]}}."
+        f"\n\n## GROUNDING (Harrison's — ground every clinical claim to this; never invent):\n{grounding[:6000]}"
+        f"\n\n## ATLAS SURVEY (BLOCKING — CRITICAL, do NOT reduce widgets): Produce a FULL canonical "
+        f"AMBOSS disease article for '{disease}' — a high-yield SURVEY covering overview -> epidemiology "
+        f"-> etiology -> pathophysiology -> clinical-features -> diagnostics -> differential -> "
+        f"treatment -> complications -> prognosis inside the chapter. Use the FULL 04a widget palette "
+        f"(why-care-callout to open, pattern-cards, flow-animation for DDx/workup algorithms, step-cards "
+        f"for protocols, agreement-matrix, assertion-reason, glossary-tooltips), ONE full "
+        f"mcq-clinical-vignette, varied widgets per the curriculum widgetMix, and srCards (aim "
+        f"perChapterSrCardTarget={AMBOSS_CURR.get('perChapterSrCardTarget', 8)}). This is a SURVEY "
+        f"chapter, NOT a light primer — do not strip the widget set down."
+        f"\n\nReturn ONE JSON object: {{\"chapterIndex\": {n}, \"title\": \"{disease}\", "
+        f"\"exposition\": \"...\", \"widgets\": [...], \"srCards\": [...]}}."
     )
-    print(f"[phase 3] chapter {n} — {theme} (grounded {len(grounding)}c, engine={CHAPTER_ENGINE})…", flush=True)
+    print(f"[phase 3] chapter {n} — {disease} (grounded {len(grounding)}c, engine={CHAPTER_ENGINE})…", flush=True)
 
     def ch_valid(obj):
         iss = []
         if not any(obj.get(k) for k in ("exposition", "narrativeHtml", "narrative", "body", "prose")):
             iss.append("missing prose (exposition/narrativeHtml)")
-        if not any(w.get("type") == "mcq-clinical-vignette" for w in (obj.get("widgets") or [])):
+        widgets = obj.get("widgets") or []
+        if not any(w.get("type") == "mcq-clinical-vignette" for w in widgets):
             iss.append("missing the mandatory mcq-clinical-vignette widget")
+        if len(widgets) < 4:
+            iss.append("widget palette too thin for an atlas SURVEY chapter (<4) — use the FULL 04a "
+                       "palette, this is not a primer")
         return iss or None
 
     ch = await json_with_repair(p, f"chapter{n}", ollama(MODEL_STRUCT), validate_fn=ch_valid)
     if ch is None:
-        (OUT / f"chapter{n}.NEEDS_REVIEW").write_text(f"chapter {n} ({theme}) failed validation after repair")
+        (OUT / f"chapter{n}.NEEDS_REVIEW").write_text(f"chapter {n} ({disease}) failed validation after repair")
         print(f"[phase 3] chapter {n} — NEEDS_REVIEW (kept lesson running)", flush=True)
         return None
-    ch.setdefault("chapterIndex", n); ch.setdefault("title", theme)
+    ch.setdefault("chapterIndex", n); ch.setdefault("title", disease)
     ch.setdefault("chapterId", chapter.get("chapterId", f"ch-{n}"))
     fails = render_check(ch)
     if fails:
@@ -283,7 +318,7 @@ async def phase3(syl):
             print(f"[phase 3] chapter idx {i}: unexpected error ({e}) — skipped, lesson continues", flush=True)
             r = None
         state.setdefault("done", []).append(r)
-    state = await over_worklist(syl, handler, max_iters=len(syl) + 1, max_seconds=1800)
+    state = await over_worklist(syl, handler, max_iters=len(syl) + 1, max_seconds=2400)
     done = [x for x in state.get("done", []) if x]
     print(f"[phase 3] authored {len(done)}/{len(syl)} chapters: {sorted(done)}", flush=True)
     return state
@@ -359,18 +394,17 @@ def register_library(clips: int):
     clips = clips or (len(list((OUT / "audio").glob("**/*.mp3"))) if (OUT / "audio").exists() else 0)
     chiron_json = {
         "format": "chiron/1",
-        "title": f"Chiron · {SUBJECT} — Primer",
+        "title": f"Chiron · {SUBJECT} — Atlas",
         "entry": "lesson.html",
         "domain": "medicine",
         "created": date.today().isoformat(),
         "audioClips": clips,
-        "generator": "chiron-primer",
+        "generator": "chiron-atlas",
         "status": "staged",  # new lessons land in the library's "Needs Review" band until accepted
-        # forward-path tags the library builder prefers (skips inference)
-        "tags": {"dom": "medicine", "sys": "Geriatrics", "subj": SUBJECT, "scope": "subject", "depth": "primer"},
+        "tags": {"dom": "medicine", "sys": SUBJECT, "subj": None, "scope": "system", "depth": "atlas"},
     }
     (OUT / "chiron.json").write_text(json.dumps(chiron_json, indent=2))
-    print(f"[phase 7] stamped chiron.json (tags: medicine/Geriatrics/{SUBJECT}, clips={clips})", flush=True)
+    print(f"[phase 7] stamped chiron.json (tags: medicine/{SUBJECT}/atlas, clips={clips})", flush=True)
     print("[phase 7] rebuilding chiron library index…", flush=True)
     r = subprocess.run(["node", str(SKILL / "scripts" / "build-library-index.mjs")],
                        capture_output=True, text=True, timeout=180)
@@ -380,17 +414,18 @@ def register_library(clips: int):
 # ── orchestrate ────────────────────────────────────────────────────────────────
 async def main():
     assert OLLAMA_KEY, "OLLAMA_API_KEY not set (source ~/.config/environment.d/ollama-cloud.conf)"
-    print(f"=== chiron PRIMER | subject='{SUBJECT}' chapters={N_CHAPTERS} stage={STAGE} -> {OUT}")
-    issues = atlas_issues()
-    source = f"# {SUBJECT} — primer grounding\n\nCurated issues: {', '.join(issues)}\n\n" + harrison(SUBJECT, n=8)
+    print(f"=== chiron ATLAS | subject='{SUBJECT}' max_diseases={MAX_DISEASES} stage={STAGE} -> {OUT}")
+    diseases = atlas_diseases()
+    source = (f"# {SUBJECT} — atlas grounding\n\nCurated high-yield diseases: "
+              f"{', '.join(d['name'] for d in diseases)}\n\n" + harrison(SUBJECT, n=8))
     syl_path = OUT / "syllabus.json"
     if syl_path.exists() and os.environ.get("CH_FORCE") != "1":
         syl = json.loads(syl_path.read_text())
         if isinstance(syl, dict):
             syl = syl.get("chapters") or syl.get("syllabus") or [syl]
-        print(f"[phase 1] RESUME — reusing syllabus ({len(syl)} chapters). CH_FORCE=1 to replan.", flush=True)
+        print(f"[phase 1] RESUME — reusing syllabus ({len(syl)} chapters). CH_FORCE=1 to rebuild.", flush=True)
     else:
-        syl = await phase1(issues, source)
+        syl = phase1(diseases, source)
     issues_v = validate(syl)
     if issues_v and STAGE != "plan":
         print("[warn] validation issues (continuing):", issues_v)
