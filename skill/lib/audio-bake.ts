@@ -326,9 +326,28 @@ function writeManifest(db: Database.Database, lessonDir: string, courseId: strin
   const clips = db
     .prepare(
       `SELECT artifact, section_id AS sectionId, audio_path AS audioPath, status, duration_s AS durationS
-         FROM audio_clips WHERE course_id = ? ORDER BY artifact, section_id`,
+         FROM audio_clips WHERE course_id = ?`,
     )
-    .all(courseId);
+    .all(courseId) as Array<{ artifact: string; sectionId: string | null }>;
+  // Order by CHAPTER sequence (from syllabus.json), NOT alphabetically by section slug — the old
+  // `ORDER BY section_id` sorted the Listen widgets alphabetically, so they played out of order.
+  // Whole-lesson kinds (summary/shortened/overview) sort first; sections follow in chapter order.
+  const chapterOrder: Record<string, number> = {};
+  try {
+    const raw = JSON.parse(readFileSync(join(lessonDir, 'syllabus.json'), 'utf8'));
+    const chs: any[] = Array.isArray(raw) ? raw : (raw.chapters || raw.syllabus || []);
+    chs.forEach((c: any, i: number) => {
+      const id = c.chapterId || c.id || `ch-${c.chapterNumber ?? i + 1}`;
+      chapterOrder[id] = i;
+    });
+  } catch { /* no syllabus → fall back to the stable slug order below */ }
+  const kindRank = (k: string) => (k === 'summary' ? -3 : k === 'shortened' ? -2 : k === 'overview' ? -1 : 0);
+  clips.sort(
+    (a, b) =>
+      kindRank(a.artifact) - kindRank(b.artifact) ||
+      (chapterOrder[a.sectionId ?? ''] ?? 1e6) - (chapterOrder[b.sectionId ?? ''] ?? 1e6) ||
+      String(a.sectionId ?? '').localeCompare(String(b.sectionId ?? '')),
+  );
   const audioDir = join(lessonDir, 'audio');
   mkdirSync(audioDir, { recursive: true });
   const payload = JSON.stringify({ clips });
