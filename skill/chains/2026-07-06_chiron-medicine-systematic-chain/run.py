@@ -396,6 +396,10 @@ def lesson_sections() -> list:
 
 
 async def phase_lecture_scripts():
+    asp = OUT / "audio-scripts.json"
+    if asp.exists() and os.environ.get("CH_FORCE") != "1":
+        print("[phase 5.5] RESUME — reusing existing audio-scripts.json (skip regen; keeps bake resumable)", flush=True)
+        return
     secs = lesson_sections()
     print(f"[phase 5.5] lecture scripts for {len(secs)} sections + summary…", flush=True)
     p = fill(load_prompt("04s-lecture-script.md"), lessonTitle=SUBJECT, domain="medicine",
