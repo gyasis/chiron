@@ -1005,14 +1005,18 @@ export function renderMcqClinicalVignette(spec: McqClinicalVignetteWidget): stri
     .map((opt, idx) => {
       const letter = letters[idx] ?? String(idx + 1);
       const correct = opt.correct === true ? 'true' : 'false';
+      // Prefer the real option TEXT over `label` (some authors put the letter in `label`, the text in `text`);
+      // accept `reasoning` as an alias for `explanation`. Makes the renderer robust across all Italian lessons.
+      const body = (opt as { text?: string }).text ?? opt.label ?? '';
+      const reasoning = opt.explanation ?? (opt as { reasoning?: string }).reasoning ?? '';
       return [
         `      <li class="option" data-correct="${correct}" data-option-letter="${letter}" data-option-index="${idx}">`,
         `        <label class="option-label">`,
         `          <input type="radio" name="${id}-opt" value="${idx}" />`,
         `          <span class="option-letter">${letter}.</span>`,
-        `          <span class="option-text">${escapeHtml(opt.label ?? '')}</span>`,
+        `          <span class="option-text">${escapeHtml(body)}</span>`,
         `        </label>`,
-        `        <div class="explanation" hidden>${escapeHtml(opt.explanation ?? '')}</div>`,
+        `        <div class="explanation" hidden>${escapeHtml(reasoning)}</div>`,
         `      </li>`,
       ].join('\n');
     })
@@ -2024,14 +2028,18 @@ export function renderMcq(spec: McqWidget): string {
     .map((opt, idx) => {
       const letter = letters[idx] ?? String(idx + 1);
       const correct = opt.correct === true ? 'true' : 'false';
+      // Prefer the real option TEXT over `label` (some authors put the letter in `label`, the text in `text`);
+      // accept `reasoning` as an alias for `explanation`. Makes the renderer robust across all Italian lessons.
+      const body = (opt as { text?: string }).text ?? opt.label ?? '';
+      const reasoning = opt.explanation ?? (opt as { reasoning?: string }).reasoning ?? '';
       return [
         `      <li class="option" data-correct="${correct}" data-option-letter="${letter}" data-option-index="${idx}">`,
         `        <label class="option-label">`,
         `          <input type="radio" name="${id}-opt" value="${idx}" />`,
         `          <span class="option-letter">${letter}.</span>`,
-        `          <span class="option-text">${escapeHtml(opt.label ?? '')}</span>`,
+        `          <span class="option-text">${escapeHtml(body)}</span>`,
         `        </label>`,
-        `        <div class="explanation" hidden>${escapeHtml(opt.explanation ?? '')}</div>`,
+        `        <div class="explanation" hidden>${escapeHtml(reasoning)}</div>`,
         `      </li>`,
       ].join('\n');
     })
@@ -2454,20 +2462,25 @@ export function renderGroupChatAnimation(spec: GroupChatAnimationWidget): string
   const msgsHtml = spec.messages
     .map((m) => {
       const colorVar = m.avatarColorVar || senderColors.get(m.sender)!;
+      // Optional English translation per turn (any Italian lesson): revealed by the 🇬🇧 toggle below.
+      const bodyEn = (m as { bodyEn?: string }).bodyEn;
+      const en = bodyEn ? `<div class="chat-en"><span class="chat-en-tag">EN</span> ${escapeHtml(bodyEn)}</div>` : '';
       return (
         `<div class="chat-message" data-sender="${escapeHtml(m.sender)}" style="display:none">` +
         `<div class="chat-avatar" style="background:var(${escapeHtml(colorVar)})">${escapeHtml(m.avatarChar)}</div>` +
         `<div class="chat-bubble">` +
         `<div class="chat-sender">${escapeHtml(m.senderLabel)}</div>` +
-        `<p>${m.body}</p>` +
+        `<p>${m.body}</p>` + en +
         `</div></div>`
       );
     })
     .join('');
+  const hasEn = spec.messages.some((m) => (m as { bodyEn?: string }).bodyEn);
   return (
     (spec.title ? `<h4>${escapeHtml(spec.title)}</h4>` : '') +
     (spec.framing ? `<p>${escapeHtml(spec.framing)}</p>` : '') +
-    `<div class="chat-window" id="${id}">` +
+    `<div class="chat-window${hasEn ? ' has-en' : ''}" id="${id}">` +
+    (hasEn ? `<div class="chat-toolbar"><button type="button" class="chat-en-toggle">\u{1F1EC}\u{1F1E7} English</button></div>` : '') +
     `<div class="chat-messages">${msgsHtml}</div>` +
     `<div class="chat-typing" style="display:none">` +
       `<div class="chat-avatar"></div>` +
@@ -2821,7 +2834,76 @@ function formatNumber(n: number): string {
   return Number.isInteger(n) ? n.toFixed(0) : n.toFixed(2);
 }
 
+// ── Medical-algorithm / DDx family (2026-06-29) — deterministic, theme-token-driven ──
+type DdxTreeWidget = Extract<WidgetSpec, { type: 'ddx-tree' }>;
+type DecisionFlowWidget = Extract<WidgetSpec, { type: 'decision-flow' }>;
+type CompareLanesWidget = Extract<WidgetSpec, { type: 'compare-lanes' }>;
+
+function toneVar(tone: string | undefined, fallback: string): string {
+  const map: Record<string, string> = {
+    accent: 'var(--chiron-accent)', teal: 'var(--chiron-warm-accent)', success: 'var(--chiron-success)',
+    warning: 'var(--chiron-warning)', error: 'var(--chiron-error)', muted: 'var(--chiron-muted)',
+  };
+  return map[tone ?? ''] ?? map[fallback] ?? 'var(--chiron-accent)';
+}
+
+/** ddx-tree — root finding → colour-coded branches → leaf diagnoses. */
+export function renderDdxTree(spec: DdxTreeWidget): string {
+  const id = spec.id || nextWidgetId('cdx');
+  const cols = (spec.branches ?? []).map((b) => {
+    const leaves = (b.leaves ?? []).map((l) =>
+      `<div class="cdx-leaf"><b>${escapeHtml(l.title ?? '')}</b>` +
+      (l.detail ? `<span>${escapeHtml(l.detail)}</span>` : '') + `</div>`).join('');
+    return `<div class="cdx-branch" style="--bc:${toneVar(b.tone, 'accent')}">` +
+      `<div class="cdx-bh">${escapeHtml(b.label ?? '')}` +
+      (b.sublabel ? `<small>${escapeHtml(b.sublabel)}</small>` : '') + `</div>${leaves}</div>`;
+  }).join('');
+  return (spec.title ? `<h3 class="cdx-title">${escapeHtml(spec.title)}</h3>` : '') +
+    `<div class="cdx" id="${id}">` +
+    `<div class="cdx-root"><div class="cdx-node">${escapeHtml(spec.root ?? '')}</div></div>` +
+    `<div class="cdx-stem"></div><div class="cdx-bus"></div>` +
+    `<div class="cdx-cols">${cols}</div></div>`;
+}
+
+/** decision-flow — clinical algorithm: start → first decision → yes/no branches to endpoints. */
+export function renderDecisionFlow(spec: DecisionFlowWidget): string {
+  const id = spec.id || nextWidgetId('calg');
+  const branches = (spec.branches ?? []).map((b) => {
+    const steps = (b.steps ?? []).map((s, i) => {
+      const cls = s.kind === 'decision' ? 'calg-node decision' : 'calg-node dx';
+      const dc = s.kind === 'dx' ? ` style="--dc:${toneVar(s.tone, 'success')}"` : '';
+      return (i > 0 ? `<div class="calg-conn"></div>` : '') +
+        `<div class="${cls}"${dc}>${escapeHtml(s.text ?? '')}</div>`;
+    }).join('');
+    return `<div class="calg-col"><div class="calg-ylabel" style="--yc:${toneVar(b.tone, 'muted')}">` +
+      `${escapeHtml(b.label ?? '')}</div>${steps}</div>`;
+  }).join('');
+  return (spec.title ? `<h3 class="calg-title">${escapeHtml(spec.title)}</h3>` : '') +
+    `<div class="calg" id="${id}">` +
+    `<div class="calg-node start">${escapeHtml(spec.start ?? '')}</div>` +
+    `<div class="calg-conn"></div>` +
+    `<div class="calg-node decision">${escapeHtml(spec.question ?? '')}</div>` +
+    `<div class="calg-split">${branches}</div></div>`;
+}
+
+/** compare-lanes — two+ aligned columns contrasting a finding across entities (X vs Y). */
+export function renderCompareLanes(spec: CompareLanesWidget): string {
+  const id = spec.id || nextWidgetId('ccmp');
+  const cols = spec.columns ?? [];
+  const head = `<div class="ccmp-cell ccmp-corner"></div>` +
+    cols.map((c) => `<div class="ccmp-head" style="--hc:${toneVar(c.tone, 'accent')}">${escapeHtml(c.label ?? '')}</div>`).join('');
+  const rows = (spec.rows ?? []).map((r) => {
+    const cells = cols.map((_, i) => `<div class="ccmp-val">${escapeHtml(r.cells?.[i] ?? '')}</div>`).join('');
+    return `<div class="ccmp-feat">${escapeHtml(r.feature ?? '')}</div>${cells}`;
+  }).join('');
+  return (spec.title ? `<h3 class="ccmp-title">${escapeHtml(spec.title)}</h3>` : '') +
+    `<div class="ccmp" id="${id}" style="--ccmp-cols:${cols.length}">${head}${rows}</div>`;
+}
+
 // Register all 10 new renderers (overrides Wave-2 throwing stubs)
+registerRenderer('ddx-tree', (w) => renderDdxTree(w as DdxTreeWidget));
+registerRenderer('decision-flow', (w) => renderDecisionFlow(w as DecisionFlowWidget));
+registerRenderer('compare-lanes', (w) => renderCompareLanes(w as CompareLanesWidget));
 registerRenderer('group-chat-animation', (w) =>
   renderGroupChatAnimation(w as GroupChatAnimationWidget),
 );

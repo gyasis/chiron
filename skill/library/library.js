@@ -44,7 +44,11 @@ function match(l){
   return true;
 }
 function sortLessons(a){ a=[...a];
-  if (F.sort==='priority') a.sort((x,y)=>(y.priority??(y.ready?500:0)+ (y.clips||0)) - (x.priority??(x.ready?500:0)+(x.clips||0)));
+  // priority score: queued classes ranked by exam priority + a do-first bankable bonus
+  // (mirrors study_plan.py's fused score, priority + 4×gimme-repeats); ready lessons float on 500+clips
+  const pri = l => l.priority!=null ? l.priority + 4*(l.bankable||0) : (l.ready?500:0)+(l.clips||0);
+  if (F.sort==='priority') a.sort((x,y)=>pri(y)-pri(x));
+  if (F.sort==='bankable') a.sort((x,y)=>(y.bankable||0)-(x.bankable||0) || (y.priority||0)-(x.priority||0));
   if (F.sort==='recent')   a.sort((x,y)=>(y.ready-x.ready)|| (y.mtime||0)-(x.mtime||0));
   if (F.sort==='title')    a.sort((x,y)=>x.title.localeCompare(y.title));
   if (F.sort==='clips')    a.sort((x,y)=>(y.clips||0)-(x.clips||0));
@@ -102,12 +106,14 @@ function renderRows(){
     ? `${nReady} ready · ${nQueued} to generate`
     : `${nReady} lesson${nReady===1?'':'s'} ready`;
   document.getElementById('crumb').innerHTML = crumb();
-  const rows = list.slice(0,600).map(l=>{
-    const cat = l.subject ? `<span class="tag sys">${l.system}</span><span class="tag subj">${l.subject}</span>`
+  const rowHtml = l =>{
+    const cat = l.scope==='system' ? `<span class="tag sys">${l.system}</span><span class="tag">${l.exam_pct}% of exam · ${l.total_q}Q · ${l.n_classes} classes</span>`
+              : l.subject ? `<span class="tag sys">${l.system}</span><span class="tag subj">${l.subject}</span>`
               : l.topic ? `<span class="tag topic">${l.topic}</span>` : '';
     const lvl = l.level ? `<span class="tag">${l.level}</span>` : '';
     const tr = l.trend ? `<span class="trend ${l.trend}">▲ ${l.trend}</span>` : '';
-    const sc = l.scope ? `<span class="scope">${l.scope==='subject'?'class survey':'deep-dive'}</span>` : '';
+    const sc = l.scope ? `<span class="scope${l.scope==='system'?' sysscope':''}">${l.scope==='system'?'organ system':l.scope==='subject'?'class survey':'deep-dive'}</span>` : '';
+    const bk = l.bankable>0 ? `<span class="bank" title="${l.bankable} recurring exam repeats — high-yield, generate first">💰 ${l.bankable}</span>` : '';
     const slug = l.ready ? slugOf(l.id) : null;
     const dl = slug && DL[slug];
     // SAFETY: storage management (Download / Remove-from-device) is PHONE-ONLY.
@@ -121,12 +127,20 @@ function renderRows(){
             : `<span class="open" onclick="event.stopPropagation();LIB.download('${slug}')">Download</span>`)
         : `<span class="ready">▸ ${l.clips} audio</span><span class="open">Open →</span>`;
     const onclick = l.ready ? ` onclick="LIB.open('${slug}')"` : '';
-    return `<div class="row"${onclick} style="cursor:${l.ready ? 'pointer' : 'default'}">
+    return `<div class="row${l.bankable>0?' bank':''}${l.scope==='system'?' sys-overview':''}"${onclick} style="cursor:${l.ready ? 'pointer' : 'default'}">
       <div class="dbadge ${l.domain}"></div>
       <div class="rinfo"><div class="rtitle">${l.title}</div>
-        <div class="rmeta"><span class="tag ${domCls(l.domain)}">${domLabel(l.domain)}</span>${cat}${lvl}${sc}${tr}</div></div>
+        <div class="rmeta"><span class="tag ${domCls(l.domain)}">${domLabel(l.domain)}</span>${l.status==='staged'?'<span class="tag" style="background:#fde68a;color:#713f12;font-weight:700">🟡 REVIEW</span>':''}${cat}${lvl}${sc}${bk}${tr}</div></div>
       <div class="rstatus">${status}</div></div>`;
-  }).join('');
+  };
+  // STAGING: newly-generated lessons (status==='staged') surface in a "Needs Review" band
+  // at the top, separate from the published library, until the user reviews + accepts them.
+  const staged = list.filter(l=>l.ready && l.status==='staged');
+  const rest   = list.filter(l=>!(l.ready && l.status==='staged'));
+  const banner = staged.length
+    ? `<div style="grid-column:1/-1;padding:11px 14px;margin:6px 0 10px;background:#fef9c3;border:1px solid #eab308;border-radius:10px;color:#713f12;font-weight:600">🟡 Needs Review — ${staged.length} newly generated lesson${staged.length===1?'':'s'}, not yet published. Open to review; say &ldquo;accept&rdquo; to publish.</div>`
+    : '';
+  const rows = banner + staged.map(rowHtml).join('') + rest.slice(0,600).map(rowHtml).join('');
   document.getElementById('rows').innerHTML = rows || `<div class="empty">No lessons match these filters.</div>`;
 }
 function renderAll(){ renderPills(); renderFacets(); renderRows(); }
@@ -139,7 +153,7 @@ const LIB = {
   clearAll(){ F.q=''; F.domain.clear(); Object.values(F.facets).forEach(s=>s.clear()); document.getElementById('q').value=''; renderAll(); },
   sheet(open){ document.getElementById('facets').classList.toggle('open',open); document.getElementById('backdrop').classList.toggle('show',open); },
   open(slug){ const l=LMAP[slug]; if(!l) return; const dl=DL[slug];
-    window.open(dl ? ('lessons/'+dl.id+'/'+dl.entry) : l.path, '_blank'); },
+    window.open(dl ? ('lessons/'+dl.id+'/'+dl.entry) : ('../'+l.path), '_blank'); },
   async download(slug){ const l=LMAP[slug]; if(!l || DL[slug]) return;
     try{
       const u8 = new Uint8Array(await (await fetch('lessons/'+slug+'.chiron')).arrayBuffer());

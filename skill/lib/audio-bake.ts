@@ -113,7 +113,7 @@ export interface AudioClipResult {
 const STAGE = 'audio-bake';
 const DEFAULT_OV = 'http://192.168.0.159:8770';
 const DEFAULT_DIA = 'http://192.168.0.159:8769';
-const DEFAULT_TARGET = -20; // playback LUFS — Gyasi's preference (raised from -30; -30 was too quiet, 2026-06-10)
+const DEFAULT_TARGET = -16; // playback LUFS — Gyasi's preference (−30→−20 2026-06-10, →−16 2026-07-05: −20 still too quiet, −16 = podcast/audiobook loudness)
 /** Bake order: shortest/most-useful first so it's playable while the rest run. */
 const ORDER: ArtifactKind[] = [
   'summary', 'shortened', 'section',

@@ -50,6 +50,12 @@ body{margin:0;font-family:var(--font-b);background:var(--chiron-bg);color:var(--
 .clr{font-size:12px;color:var(--chiron-accent);cursor:pointer;margin-left:auto}
 .row{display:flex;align-items:center;gap:12px;padding:9px 18px;border-bottom:1px solid var(--chiron-divider);cursor:pointer;text-decoration:none;color:inherit}
 .row:hover{background:var(--chiron-surface)}
+.row.bank{background:linear-gradient(90deg,rgba(200,163,63,.08),transparent 55%);box-shadow:inset 2px 0 0 rgba(200,163,63,.5)}
+.row.bank:hover{background:linear-gradient(90deg,rgba(200,163,63,.13),var(--chiron-surface) 55%)}
+.bank{font-size:10px;font-weight:700;color:#8a6d1e;background:#f6edd0;border:1px solid #e6d9ad;border-radius:99px;padding:0 7px;letter-spacing:.02em;white-space:nowrap}
+.scope.sysscope{color:var(--chiron-accent);border-color:#c7d4e4;background:#eef3f9;font-weight:700}
+.row.sys-overview{box-shadow:inset 3px 0 0 var(--chiron-accent)}
+.row.sys-overview .rtitle{font-weight:800}
 .dbadge{flex:0 0 auto;width:8px;height:40px;border-radius:3px}
 .dbadge.medicine{background:var(--med)}.dbadge.medical-italian{background:var(--medit)}.dbadge.italian{background:var(--lang)}.dbadge.code{background:var(--code)}
 .rinfo{min-width:0;flex:1}

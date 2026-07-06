@@ -70,6 +70,7 @@ facets:
 
 sorts:
   - { key: priority, label: Exam priority }
+  - { key: bankable, label: Bankable first }
   - { key: recent,   label: Recently generated }
   - { key: title,    label: Title A–Z }
   - { key: clips,    label: Most audio }

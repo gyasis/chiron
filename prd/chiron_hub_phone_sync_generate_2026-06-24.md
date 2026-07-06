@@ -50,6 +50,34 @@ HOME HUB (Linux box, always-on, LAN HTTPS)        PHONE (installed PWA — Libra
   2. App **Generate** on a queued lesson → POST → "preparing lesson…" live status (poll `/jobs`) → ready → Download.
   3. Bake step still routes to **Atelier** (Mac) per `chiron.md` R-CH1.
 
+### Phase-2 engine — RESOLVED by investigation (2026-06-28/29)
+The off-site generation engine + job payload (what "the real pipeline" in 5.2.1 actually is)
+was scoped in `chiron_offsite_lesson_gen_promptchain_2026-06-28.md` → deliverables in
+[`chiron_offsite_lesson_gen_DELIVERABLES_2026-06-28.md`](./chiron_offsite_lesson_gen_DELIVERABLES_2026-06-28.md). Verdict folded back here:
+
+- **Engine = (C) HYBRID** — a deterministic, **resumable** PromptChain spine with two bounded
+  agentic seams (grounded authoring + clinical verify). Built as **FOUR concrete prompt-chains**,
+  one per lesson type, same spine: **1 Medical-AMBOSS · 2 Wards medical-Italian · 3 Medical-language
+  Italian (patologie) · 4 Pure Italian**. (Headless `claude -p` YOLO is the per-domain fallback +
+  a parity-fixture oracle, usable surgically as a function step.)
+- **`/generate` job runner** = `validate job-payload (D3) → dispatch the lesson-type's chain → on
+  success: assemble + bake (Atelier) + catalog/bundle; on any loop exhausting its bound: write
+  `status=needs_review` + the structured abort report and STOP` (never ship an unverified medical
+  lesson). **Stateful: checkpoint per completed `chapterN.json`, resume from the failed chapter** —
+  not fire-and-forget. This answers Open Question 3 (in-process queue + per-chapter checkpoint files).
+- **Job payload** (`POST /generate`) ⊇ `{subject, domain, sub_mode/curriculum, scope, grounding
+  {primary, source_path, foundations_depth}, persona, audio, on_fail:"review_queue", output_dir}` —
+  the per-lesson *content* decisions; nearly every other historical "ask the human" was one-time
+  infra now settled in rules. See D3 for the full schema + decision-point map.
+- **No big model codes HTML (BLOCKING for the runner).** Every chain emits **typed `WidgetSpec`
+  JSON piecemeal** → a **generic, data-driven assembler** (`renderWidget` + shell/theme/audio inject)
+  builds `lesson.html`. Pre-Phase-2 prerequisite: **generalize the per-lesson `build-*-assemble.mjs`
+  forks into ONE data-driven assembler per chain**, and put chains 2/3/4 on that same data→render rail
+  (today the Italian lessons hand-author HTML — the R-CH-PIPELINE antipattern). See D4c.
+- **Grounding** (`harrison-search`, MRCP PACES / SSM MCQ) = registered **tool/function steps**; large
+  pulls get a **big-context DIGEST step** (Gemini 1M / Claude) into a span-preserving `source/` pack
+  before authoring. See D4a.
+
 ## 6. Reuse (don't reinvent)
 - Player `skill/player/app.js`: `serverUrl`, `server_lessons`, `import_from_server`, `importBundleBytes` (fflate unzip → Cache), `delete_lesson` (local), `sw.js` (SW serves cached lessons). Lift the engine; keep the Library UI.
 - `chiron-https-serve` (LAN HTTPS, supports Range → audio works).
@@ -58,7 +86,7 @@ HOME HUB (Linux box, always-on, LAN HTTPS)        PHONE (installed PWA — Libra
 ## 7. Open questions
 1. Trusted LAN HTTPS for a real phone PWA install — self-signed needs device trust; **mkcert** (local CA trusted once on the phone) is the clean fix. Decide in Phase 1 install step.
 2. Hub always-on: a small `systemd --user` service for `chiron-https-serve` (+ later the generate API) so the hub survives reboots.
-3. Phase-2 job runner: in-process queue vs a tiny job file/dir; bake concurrency vs Atelier (one omnivoice).
+3. ~~Phase-2 job runner: in-process queue vs a tiny job file/dir; bake concurrency vs Atelier (one omnivoice).~~ **RESOLVED** (see §5 "Phase-2 engine"): in-process queue + per-chapter checkpoint files (stateful/resumable); bakes serialize through the one Atelier omnivoice regardless of engine.
 
 ---
 

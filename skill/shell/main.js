@@ -2087,3 +2087,14 @@
     onMqlChange(MQL);
   }
 })();
+
+// group-chat English-translation toggle (universal — all Italian lessons)
+(function () {
+  document.querySelectorAll('.chat-window.has-en .chat-en-toggle').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var w = btn.closest('.chat-window');
+      var on = w.classList.toggle('show-en');
+      btn.textContent = on ? '\u{1F1EE}\u{1F1F9} Italiano' : '\u{1F1EC}\u{1F1E7} English';
+    });
+  });
+})();

@@ -1,0 +1,3383 @@
+{
+  "version": "1",
+  "description": "Curated master disease list by organ system — union of USMLE Step 1, USMLE Step 2 CK, and UK Foundation Programme Y1/Y2. Seed for chiron medicine ATLAS mode (subject_type=system). Reviewable seed (path #1); validate against published condition lists later.",
+  "blueprints": [
+    {
+      "id": "usmle-step1",
+      "name": "USMLE Step 1",
+      "scope": "basic science / mechanisms / pathology"
+    },
+    {
+      "id": "usmle-step2ck",
+      "name": "USMLE Step 2 CK",
+      "scope": "clinical diagnosis & management"
+    },
+    {
+      "id": "uk-foundation",
+      "name": "UK Foundation Programme Y1-Y2",
+      "scope": "common conditions managed by junior doctors"
+    }
+  ],
+  "systems": [
+    {
+      "system": "Cardiovascular",
+      "aliases": [
+        "Cardiology"
+      ],
+      "diseases": [
+        {
+          "name": "Acute coronary syndrome (STEMI/NSTEMI/unstable angina)",
+          "sources": [
+            "usmle-step1",
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": true,
+          "aliases": [
+            "Myocardial infarction"
+          ]
+        },
+        {
+          "name": "Stable angina",
+          "sources": [
+            "usmle-step1",
+            "usmle-step2ck"
+          ],
+          "highYield": false
+        },
+        {
+          "name": "Acute heart failure",
+          "sources": [
+            "usmle-step1",
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": true
+        },
+        {
+          "name": "Chronic heart failure",
+          "sources": [
+            "usmle-step1",
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": true
+        },
+        {
+          "name": "Atrial fibrillation",
+          "sources": [
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": true
+        },
+        {
+          "name": "Supraventricular tachycardia",
+          "sources": [
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": false
+        },
+        {
+          "name": "Ventricular tachycardia / fibrillation",
+          "sources": [
+            "usmle-step1",
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": true
+        },
+        {
+          "name": "Bradyarrhythmia / heart block",
+          "sources": [
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": false
+        },
+        {
+          "name": "Hypertension",
+          "sources": [
+            "usmle-step1",
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": true
+        },
+        {
+          "name": "Hypertensive emergency",
+          "sources": [
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": false
+        },
+        {
+          "name": "Infective endocarditis",
+          "sources": [
+            "usmle-step1",
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": true
+        },
+        {
+          "name": "Rheumatic heart disease",
+          "sources": [
+            "usmle-step1",
+            "usmle-step2ck"
+          ],
+          "highYield": false
+        },
+        {
+          "name": "Aortic stenosis",
+          "sources": [
+            "usmle-step1",
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": false
+        },
+        {
+          "name": "Mitral regurgitation",
+          "sources": [
+            "usmle-step1",
+            "usmle-step2ck"
+          ],
+          "highYield": false
+        },
+        {
+          "name": "Mitral stenosis",
+          "sources": [
+            "usmle-step1"
+          ],
+          "highYield": false
+        },
+        {
+          "name": "Aortic dissection",
+          "sources": [
+            "usmle-step1",
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": true
+        },
+        {
+          "name": "Abdominal aortic aneurysm",
+          "sources": [
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": true
+        },
+        {
+          "name": "Peripheral arterial disease",
+          "sources": [
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": false
+        },
+        {
+          "name": "Deep vein thrombosis",
+          "sources": [
+            "usmle-step1",
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": true
+        },
+        {
+          "name": "Pulmonary embolism",
+          "sources": [
+            "usmle-step1",
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": true
+        },
+        {
+          "name": "Pericarditis",
+          "sources": [
+            "usmle-step1",
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": false
+        },
+        {
+          "name": "Cardiac tamponade",
+          "sources": [
+            "usmle-step1",
+            "usmle-step2ck"
+          ],
+          "highYield": true
+        },
+        {
+          "name": "Cardiomyopathy (dilated/hypertrophic/restrictive)",
+          "sources": [
+            "usmle-step1",
+            "usmle-step2ck"
+          ],
+          "highYield": false
+        },
+        {
+          "name": "Syncope",
+          "sources": [
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": true
+        },
+        {
+          "name": "Cardiac arrest",
+          "sources": [
+            "uk-foundation"
+          ],
+          "highYield": true
+        }
+      ]
+    },
+    {
+      "system": "Respiratory",
+      "aliases": [
+        "Pulmonology"
+      ],
+      "diseases": [
+        {
+          "name": "Community-acquired pneumonia",
+          "sources": [
+            "usmle-step1",
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": true
+        },
+        {
+          "name": "Hospital-acquired / aspiration pneumonia",
+          "sources": [
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": false
+        },
+        {
+          "name": "COPD exacerbation",
+          "sources": [
+            "usmle-step1",
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": true,
+          "aliases": [
+            "Chronic obstructive pulmonary disease"
+          ]
+        },
+        {
+          "name": "Acute asthma exacerbation",
+          "sources": [
+            "usmle-step1",
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": true
+        },
+        {
+          "name": "Pneumothorax (spontaneous/tension)",
+          "sources": [
+            "usmle-step1",
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": true
+        },
+        {
+          "name": "Pleural effusion",
+          "sources": [
+            "usmle-step1",
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": false
+        },
+        {
+          "name": "Lung cancer (NSCLC/SCLC)",
+          "sources": [
+            "usmle-step1",
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": true
+        },
+        {
+          "name": "Tuberculosis",
+          "sources": [
+            "usmle-step1",
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": true
+        },
+        {
+          "name": "Bronchiectasis",
+          "sources": [
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": false
+        },
+        {
+          "name": "Cystic fibrosis",
+          "sources": [
+            "usmle-step1",
+            "usmle-step2ck"
+          ],
+          "highYield": false
+        },
+        {
+          "name": "Interstitial lung disease / pulmonary fibrosis",
+          "sources": [
+            "usmle-step1",
+            "usmle-step2ck"
+          ],
+          "highYield": false
+        },
+        {
+          "name": "Sarcoidosis",
+          "sources": [
+            "usmle-step1",
+            "usmle-step2ck"
+          ],
+          "highYield": false
+        },
+        {
+          "name": "Acute respiratory distress syndrome (ARDS)",
+          "sources": [
+            "usmle-step1",
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": true
+        },
+        {
+          "name": "Obstructive sleep apnea",
+          "sources": [
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": false
+        },
+        {
+          "name": "Pulmonary hypertension",
+          "sources": [
+            "usmle-step1",
+            "usmle-step2ck"
+          ],
+          "highYield": false
+        },
+        {
+          "name": "Croup",
+          "sources": [
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": false
+        },
+        {
+          "name": "Acute epiglottitis",
+          "sources": [
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": false
+        },
+        {
+          "name": "Pertussis",
+          "sources": [
+            "usmle-step1"
+          ],
+          "highYield": false
+        },
+        {
+          "name": "Pneumoconiosis (asbestosis, silicosis, coal worker's)",
+          "sources": [
+            "usmle-step1"
+          ],
+          "highYield": false
+        },
+        {
+          "name": "Influenza / viral pneumonia (incl. COVID-19)",
+          "sources": [
+            "uk-foundation"
+          ],
+          "highYield": true
+        }
+      ]
+    },
+    {
+      "system": "Gastrointestinal & Hepatobiliary",
+      "aliases": [
+        "Gastroenterology",
+        "Hepatology"
+      ],
+      "diseases": [
+        {
+          "name": "Gastroesophageal reflux disease (GERD)",
+          "sources": [
+            "usmle-step1",
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": true
+        },
+        {
+          "name": "Peptic ulcer disease",
+          "sources": [
+            "usmle-step1",
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": true
+        },
+        {
+          "name": "Acute upper GI bleed",
+          "sources": [
+            "usmle-step1",
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": true
+        },
+        {
+          "name": "Lower GI bleed",
+          "sources": [
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": false
+        },
+        {
+          "name": "Acute pancreatitis",
+          "sources": [
+            "usmle-step1",
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": true
+        },
+        {
+          "name": "Chronic pancreatitis",
+          "sources": [
+            "usmle-step1",
+            "usmle-step2ck"
+          ],
+          "highYield": false
+        },
+        {
+          "name": "Acute cholecystitis",
+          "sources": [
+            "usmle-step1",
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": true
+        },
+        {
+          "name": "Ascending cholangitis",
+          "sources": [
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": true
+        },
+        {
+          "name": "Gallstones / choledocholithiasis",
+          "sources": [
+            "usmle-step1",
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": false
+        },
+        {
+          "name": "Acute appendicitis",
+          "sources": [
+            "usmle-step1",
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": true
+        },
+        {
+          "name": "Bowel obstruction (small & large)",
+          "sources": [
+            "usmle-step1",
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": true
+        },
+        {
+          "name": "Diverticulitis",
+          "sources": [
+            "usmle-step1",
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": true
+        },
+        {
+          "name": "Inflammatory bowel disease (Crohn disease & ulcerative colitis)",
+          "sources": [
+            "usmle-step1",
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": true
+        },
+        {
+          "name": "Irritable bowel syndrome",
+          "sources": [
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": false
+        },
+        {
+          "name": "Celiac disease",
+          "sources": [
+            "usmle-step1",
+            "usmle-step2ck"
+          ],
+          "highYield": false
+        },
+        {
+          "name": "Colorectal cancer",
+          "sources": [
+            "usmle-step1",
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": true
+        },
+        {
+          "name": "Gastric cancer",
+          "sources": [
+            "usmle-step1",
+            "usmle-step2ck"
+          ],
+          "highYield": false
+        },
+        {
+          "name": "Esophageal cancer",
+          "sources": [
+            "usmle-step1",
+            "usmle-step2ck"
+          ],
+          "highYield": false
+        },
+        {
+          "name": "Viral hepatitis (A-E)",
+          "sources": [
+            "usmle-step1",
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": true
+        },
+        {
+          "name": "Alcoholic liver disease",
+          "sources": [
+            "usmle-step1",
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": false
+        },
+        {
+          "name": "Cirrhosis & portal hypertension",
+          "sources": [
+            "usmle-step1",
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": true
+        },
+        {
+          "name": "Hepatocellular carcinoma",
+          "sources": [
+            "usmle-step1",
+            "usmle-step2ck"
+          ],
+          "highYield": false
+        },
+        {
+          "name": "Non-alcoholic fatty liver disease",
+          "sources": [
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": false
+        },
+        {
+          "name": "Acute liver failure",
+          "sources": [
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": false
+        },
+        {
+          "name": "Ascites / spontaneous bacterial peritonitis",
+          "sources": [
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": false
+        },
+        {
+          "name": "Acute mesenteric ischemia",
+          "sources": [
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": false
+        },
+        {
+          "name": "Abdominal wall hernia (inguinal/femoral/umbilical)",
+          "sources": [
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": false
+        },
+        {
+          "name": "Perianal disease (hemorrhoids, anal fissure, fistula-in-ano)",
+          "sources": [
+            "uk-foundation"
+          ],
+          "highYield": false
+        }
+      ]
+    },
+    {
+      "system": "Renal, Urinary & Electrolyte/Acid-Base",
+      "aliases": [
+        "Nephrology"
+      ],
+      "diseases": [
+        {
+          "name": "Acute kidney injury",
+          "sources": [
+            "usmle-step1",
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": true
+        },
+        {
+          "name": "Chronic kidney disease",
+          "sources": [
+            "usmle-step1",
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": true
+        },
+        {
+          "name": "Nephrotic syndrome",
+          "sources": [
+            "usmle-step1",
+            "usmle-step2ck"
+          ],
+          "highYield": false
+        },
+        {
+          "name": "Nephritic syndrome / glomerulonephritis",
+          "sources": [
+            "usmle-step1",
+            "usmle-step2ck"
+          ],
+          "highYield": false
+        },
+        {
+          "name": "IgA nephropathy",
+          "sources": [
+            "usmle-step1"
+          ],
+          "highYield": false
+        },
+        {
+          "name": "Diabetic nephropathy",
+          "sources": [
+            "usmle-step1",
+            "usmle-step2ck"
+          ],
+          "highYield": false
+        },
+        {
+          "name": "Autosomal dominant polycystic kidney disease",
+          "sources": [
+            "usmle-step1",
+            "usmle-step2ck"
+          ],
+          "highYield": false
+        },
+        {
+          "name": "Urinary tract infection",
+          "sources": [
+            "usmle-step1",
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": true
+        },
+        {
+          "name": "Acute pyelonephritis",
+          "sources": [
+            "usmle-step1",
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": true
+        },
+        {
+          "name": "Nephrolithiasis (renal colic)",
+          "sources": [
+            "usmle-step1",
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": true
+        },
+        {
+          "name": "Acute urinary retention",
+          "sources": [
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": true
+        },
+        {
+          "name": "Hyperkalemia",
+          "sources": [
+            "usmle-step1",
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": true
+        },
+        {
+          "name": "Hypokalemia",
+          "sources": [
+            "usmle-step1",
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": false
+        },
+        {
+          "name": "Hyponatremia",
+          "sources": [
+            "usmle-step1",
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": true
+        },
+        {
+          "name": "Hypernatremia",
+          "sources": [
+            "usmle-step1",
+            "usmle-step2ck"
+          ],
+          "highYield": false
+        },
+        {
+          "name": "Metabolic acidosis",
+          "sources": [
+            "usmle-step1",
+            "usmle-step2ck"
+          ],
+          "highYield": false
+        },
+        {
+          "name": "Metabolic alkalosis",
+          "sources": [
+            "usmle-step1"
+          ],
+          "highYield": false
+        },
+        {
+          "name": "Renal artery stenosis",
+          "sources": [
+            "usmle-step1",
+            "usmle-step2ck"
+          ],
+          "highYield": false
+        },
+        {
+          "name": "Rhabdomyolysis",
+          "sources": [
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": false
+        }
+      ]
+    },
+    {
+      "system": "Endocrine & Metabolic",
+      "aliases": [
+        "Endocrinology"
+      ],
+      "diseases": [
+        {
+          "name": "Type 2 diabetes mellitus",
+          "sources": [
+            "usmle-step1",
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": true
+        },
+        {
+          "name": "Type 1 diabetes mellitus",
+          "sources": [
+            "usmle-step1",
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": true
+        },
+        {
+          "name": "Diabetic ketoacidosis",
+          "sources": [
+            "usmle-step1",
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": true
+        },
+        {
+          "name": "Hyperosmolar hyperglycemic state",
+          "sources": [
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": false
+        },
+        {
+          "name": "Hypoglycemia",
+          "sources": [
+            "usmle-step1",
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": true
+        },
+        {
+          "name": "Hypothyroidism",
+          "sources": [
+            "usmle-step1",
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": true
+        },
+        {
+          "name": "Hyperthyroidism / Graves disease",
+          "sources": [
+            "usmle-step1",
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": true
+        },
+        {
+          "name": "Thyroid storm",
+          "sources": [
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": false
+        },
+        {
+          "name": "Thyroid nodule / thyroid cancer",
+          "sources": [
+            "usmle-step1",
+            "usmle-step2ck"
+          ],
+          "highYield": false
+        },
+        {
+          "name": "Cushing syndrome",
+          "sources": [
+            "usmle-step1",
+            "usmle-step2ck"
+          ],
+          "highYield": false
+        },
+        {
+          "name": "Primary adrenal insufficiency (Addison disease)",
+          "sources": [
+            "usmle-step1",
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": true
+        },
+        {
+          "name": "Adrenal crisis",
+          "sources": [
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": true
+        },
+        {
+          "name": "Primary hyperaldosteronism (Conn syndrome)",
+          "sources": [
+            "usmle-step1",
+            "usmle-step2ck"
+          ],
+          "highYield": false
+        },
+        {
+          "name": "Pheochromocytoma",
+          "sources": [
+            "usmle-step1",
+            "usmle-step2ck"
+          ],
+          "highYield": false
+        },
+        {
+          "name": "Primary hyperparathyroidism",
+          "sources": [
+            "usmle-step1",
+            "usmle-step2ck"
+          ],
+          "highYield": false
+        },
+        {
+          "name": "Hypoparathyroidism",
+          "sources": [
+            "usmle-step1"
+          ],
+          "highYield": false
+        },
+        {
+          "name": "Hypercalcemia",
+          "sources": [
+            "usmle-step1",
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": false
+        },
+        {
+          "name": "Hypocalcemia",
+          "sources": [
+            "usmle-step1",
+            "usmle-step2ck"
+          ],
+          "highYield": false
+        },
+        {
+          "name": "Syndrome of inappropriate ADH (SIADH)",
+          "sources": [
+            "usmle-step1",
+            "usmle-step2ck"
+          ],
+          "highYield": false
+        },
+        {
+          "name": "Diabetes insipidus",
+          "sources": [
+            "usmle-step1",
+            "usmle-step2ck"
+          ],
+          "highYield": false
+        },
+        {
+          "name": "Obesity / metabolic syndrome",
+          "sources": [
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": false
+        },
+        {
+          "name": "Dyslipidemia",
+          "sources": [
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": false
+        },
+        {
+          "name": "Pituitary adenoma / acromegaly",
+          "sources": [
+            "usmle-step1",
+            "usmle-step2ck"
+          ],
+          "highYield": false
+        },
+        {
+          "name": "Multiple endocrine neoplasia syndromes",
+          "sources": [
+            "usmle-step1"
+          ],
+          "highYield": false
+        }
+      ]
+    },
+    {
+      "system": "Hematology & Oncology",
+      "aliases": [
+        "Heme/Onc"
+      ],
+      "diseases": [
+        {
+          "name": "Iron deficiency anemia",
+          "sources": [
+            "usmle-step1",
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": true
+        },
+        {
+          "name": "Anemia of chronic disease",
+          "sources": [
+            "usmle-step1",
+            "usmle-step2ck"
+          ],
+          "highYield": false
+        },
+        {
+          "name": "Megaloblastic anemia (B12/folate deficiency)",
+          "sources": [
+            "usmle-step1",
+            "usmle-step2ck"
+          ],
+          "highYield": false
+        },
+        {
+          "name": "Hemolytic anemia (general)",
+          "sources": [
+            "usmle-step1"
+          ],
+          "highYield": false
+        },
+        {
+          "name": "Sickle cell disease",
+          "sources": [
+            "usmle-step1",
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": true
+        },
+        {
+          "name": "Thalassemia",
+          "sources": [
+            "usmle-step1"
+          ],
+          "highYield": false
+        },
+        {
+          "name": "G6PD deficiency",
+          "sources": [
+            "usmle-step1"
+          ],
+          "highYield": false
+        },
+        {
+          "name": "Aplastic anemia",
+          "sources": [
+            "usmle-step1",
+            "usmle-step2ck"
+          ],
+          "highYield": false
+        },
+        {
+          "name": "Acute leukemia (ALL/AML)",
+          "sources": [
+            "usmle-step1",
+            "usmle-step2ck"
+          ],
+          "highYield": true
+        },
+        {
+          "name": "Chronic leukemia (CLL/CML)",
+          "sources": [
+            "usmle-step1",
+            "usmle-step2ck"
+          ],
+          "highYield": false
+        },
+        {
+          "name": "Lymphoma (Hodgkin & non-Hodgkin)",
+          "sources": [
+            "usmle-step1",
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": true
+        },
+        {
+          "name": "Multiple myeloma",
+          "sources": [
+            "usmle-step1",
+            "usmle-step2ck"
+          ],
+          "highYield": false
+        },
+        {
+          "name": "Myelodysplastic syndrome",
+          "sources": [
+            "usmle-step1"
+          ],
+          "highYield": false
+        },
+        {
+          "name": "Polycythemia vera",
+          "sources": [
+            "usmle-step1"
+          ],
+          "highYield": false
+        },
+        {
+          "name": "Immune thrombocytopenic purpura",
+          "sources": [
+            "usmle-step1",
+            "usmle-step2ck"
+          ],
+          "highYield": false
+        },
+        {
+          "name": "Thrombotic thrombocytopenic purpura",
+          "sources": [
+            "usmle-step1",
+            "usmle-step2ck"
+          ],
+          "highYield": false
+        },
+        {
+          "name": "Disseminated intravascular coagulation",
+          "sources": [
+            "usmle-step1",
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": true
+        },
+        {
+          "name": "Hemophilia A/B",
+          "sources": [
+            "usmle-step1",
+            "usmle-step2ck"
+          ],
+          "highYield": false
+        },
+        {
+          "name": "Von Willebrand disease",
+          "sources": [
+            "usmle-step1"
+          ],
+          "highYield": false
+        },
+        {
+          "name": "Neutropenic sepsis",
+          "sources": [
+            "uk-foundation"
+          ],
+          "highYield": true
+        },
+        {
+          "name": "Blood transfusion reactions",
+          "sources": [
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": false
+        }
+      ]
+    },
+    {
+      "system": "Infectious Disease",
+      "aliases": [
+        "ID",
+        "Microbiology"
+      ],
+      "diseases": [
+        {
+          "name": "Sepsis / septic shock",
+          "sources": [
+            "usmle-step1",
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": true
+        },
+        {
+          "name": "Cellulitis",
+          "sources": [
+            "usmle-step1",
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": true
+        },
+        {
+          "name": "Necrotizing fasciitis",
+          "sources": [
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": false
+        },
+        {
+          "name": "Bacterial & viral meningitis",
+          "sources": [
+            "usmle-step1",
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": true
+        },
+        {
+          "name": "Encephalitis",
+          "sources": [
+            "usmle-step1",
+            "usmle-step2ck"
+          ],
+          "highYield": false
+        },
+        {
+          "name": "HIV / AIDS",
+          "sources": [
+            "usmle-step1",
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": true
+        },
+        {
+          "name": "Opportunistic infections (PCP, CMV, toxoplasmosis)",
+          "sources": [
+            "usmle-step1",
+            "usmle-step2ck"
+          ],
+          "highYield": false
+        },
+        {
+          "name": "Malaria",
+          "sources": [
+            "usmle-step1",
+            "usmle-step2ck"
+          ],
+          "highYield": false
+        },
+        {
+          "name": "Infectious mononucleosis (EBV)",
+          "sources": [
+            "usmle-step1",
+            "usmle-step2ck"
+          ],
+          "highYield": false
+        },
+        {
+          "name": "Influenza",
+          "sources": [
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": false
+        },
+        {
+          "name": "Clostridioides difficile infection",
+          "sources": [
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": true
+        },
+        {
+          "name": "Osteomyelitis",
+          "sources": [
+            "usmle-step1",
+            "usmle-step2ck"
+          ],
+          "highYield": false
+        },
+        {
+          "name": "Septic arthritis",
+          "sources": [
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": true
+        },
+        {
+          "name": "Syphilis",
+          "sources": [
+            "usmle-step1",
+            "usmle-step2ck"
+          ],
+          "highYield": false
+        },
+        {
+          "name": "Gonorrhea / Chlamydia genital infection",
+          "sources": [
+            "usmle-step1",
+            "usmle-step2ck"
+          ],
+          "highYield": false
+        },
+        {
+          "name": "Herpes simplex virus infection",
+          "sources": [
+            "usmle-step1"
+          ],
+          "highYield": false
+        },
+        {
+          "name": "Varicella-zoster virus infection / shingles",
+          "sources": [
+            "usmle-step1",
+            "uk-foundation"
+          ],
+          "highYield": false
+        },
+        {
+          "name": "Lyme disease",
+          "sources": [
+            "usmle-step1"
+          ],
+          "highYield": false
+        },
+        {
+          "name": "Infective gastroenteritis / traveller's diarrhea",
+          "sources": [
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": false
+        },
+        {
+          "name": "Infective endocarditis (see Cardiovascular)",
+          "sources": [
+            "usmle-step1",
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": false
+        }
+      ]
+    },
+    {
+      "system": "Rheumatology & Musculoskeletal",
+      "aliases": [
+        "Rheum",
+        "MSK",
+        "Orthopedics"
+      ],
+      "diseases": [
+        {
+          "name": "Rheumatoid arthritis",
+          "sources": [
+            "usmle-step1",
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": true
+        },
+        {
+          "name": "Osteoarthritis",
+          "sources": [
+            "usmle-step1",
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": true
+        },
+        {
+          "name": "Systemic lupus erythematosus",
+          "sources": [
+            "usmle-step1",
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": true
+        },
+        {
+          "name": "Gout",
+          "sources": [
+            "usmle-step1",
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": true
+        },
+        {
+          "name": "Pseudogout (CPPD deposition)",
+          "sources": [
+            "usmle-step1",
+            "usmle-step2ck"
+          ],
+          "highYield": false
+        },
+        {
+          "name": "Ankylosing spondylitis",
+          "sources": [
+            "usmle-step1",
+            "usmle-step2ck"
+          ],
+          "highYield": false
+        },
+        {
+          "name": "Psoriatic arthritis",
+          "sources": [
+            "usmle-step1",
+            "usmle-step2ck"
+          ],
+          "highYield": false
+        },
+        {
+          "name": "Reactive arthritis",
+          "sources": [
+            "usmle-step1"
+          ],
+          "highYield": false
+        },
+        {
+          "name": "Polymyalgia rheumatica",
+          "sources": [
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": true
+        },
+        {
+          "name": "Giant cell (temporal) arteritis",
+          "sources": [
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": true
+        },
+        {
+          "name": "Systemic sclerosis (scleroderma)",
+          "sources": [
+            "usmle-step1",
+            "usmle-step2ck"
+          ],
+          "highYield": false
+        },
+        {
+          "name": "Sjögren syndrome",
+          "sources": [
+            "usmle-step1"
+          ],
+          "highYield": false
+        },
+        {
+          "name": "ANCA-associated vasculitis",
+          "sources": [
+            "usmle-step1",
+            "usmle-step2ck"
+          ],
+          "highYield": false
+        },
+        {
+          "name": "Fibromyalgia",
+          "sources": [
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": false
+        },
+        {
+          "name": "Osteoporosis",
+          "sources": [
+            "usmle-step1",
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": true
+        },
+        {
+          "name": "Osteomalacia / rickets",
+          "sources": [
+            "usmle-step1"
+          ],
+          "highYield": false
+        },
+        {
+          "name": "Paget disease of bone",
+          "sources": [
+            "usmle-step1"
+          ],
+          "highYield": false
+        },
+        {
+          "name": "Fragility & long-bone fractures (esp. hip)",
+          "sources": [
+            "uk-foundation"
+          ],
+          "highYield": true
+        },
+        {
+          "name": "Compartment syndrome",
+          "sources": [
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": true
+        },
+        {
+          "name": "Mechanical back pain / disc herniation",
+          "sources": [
+            "uk-foundation"
+          ],
+          "highYield": true
+        }
+      ]
+    },
+    {
+      "system": "Neurology",
+      "aliases": [
+        "Neuro"
+      ],
+      "diseases": [
+        {
+          "name": "Acute ischemic stroke",
+          "sources": [
+            "usmle-step1",
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": true
+        },
+        {
+          "name": "Hemorrhagic stroke (intracerebral hemorrhage)",
+          "sources": [
+            "usmle-step1",
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": true
+        },
+        {
+          "name": "Subarachnoid hemorrhage",
+          "sources": [
+            "usmle-step1",
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": true
+        },
+        {
+          "name": "Transient ischemic attack",
+          "sources": [
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": false
+        },
+        {
+          "name": "Epilepsy / seizure disorder",
+          "sources": [
+            "usmle-step1",
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": true
+        },
+        {
+          "name": "Status epilepticus",
+          "sources": [
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": true
+        },
+        {
+          "name": "Migraine",
+          "sources": [
+            "usmle-step1",
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": true
+        },
+        {
+          "name": "Tension-type headache",
+          "sources": [
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": false
+        },
+        {
+          "name": "Cluster headache",
+          "sources": [
+            "usmle-step1"
+          ],
+          "highYield": false
+        },
+        {
+          "name": "Parkinson disease",
+          "sources": [
+            "usmle-step1",
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": true
+        },
+        {
+          "name": "Multiple sclerosis",
+          "sources": [
+            "usmle-step1",
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": true
+        },
+        {
+          "name": "Guillain-Barré syndrome",
+          "sources": [
+            "usmle-step1",
+            "usmle-step2ck"
+          ],
+          "highYield": false
+        },
+        {
+          "name": "Myasthenia gravis",
+          "sources": [
+            "usmle-step1",
+            "usmle-step2ck"
+          ],
+          "highYield": false
+        },
+        {
+          "name": "Alzheimer disease / dementia",
+          "sources": [
+            "usmle-step1",
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": true
+        },
+        {
+          "name": "Delirium",
+          "sources": [
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": true
+        },
+        {
+          "name": "Peripheral neuropathy",
+          "sources": [
+            "usmle-step1",
+            "usmle-step2ck"
+          ],
+          "highYield": false
+        },
+        {
+          "name": "Bell palsy",
+          "sources": [
+            "usmle-step1",
+            "uk-foundation"
+          ],
+          "highYield": false
+        },
+        {
+          "name": "Brain tumor (glioma/meningioma)",
+          "sources": [
+            "usmle-step1",
+            "usmle-step2ck"
+          ],
+          "highYield": false
+        },
+        {
+          "name": "Raised intracranial pressure",
+          "sources": [
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": true
+        },
+        {
+          "name": "Spinal cord compression / cauda equina syndrome",
+          "sources": [
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": true
+        },
+        {
+          "name": "Trigeminal neuralgia",
+          "sources": [
+            "usmle-step1"
+          ],
+          "highYield": false
+        },
+        {
+          "name": "Essential tremor",
+          "sources": [
+            "usmle-step1"
+          ],
+          "highYield": false
+        }
+      ]
+    },
+    {
+      "system": "Psychiatry & Behavioral",
+      "aliases": [
+        "Psych",
+        "Mental Health"
+      ],
+      "diseases": [
+        {
+          "name": "Major depressive disorder",
+          "sources": [
+            "usmle-step1",
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": true
+        },
+        {
+          "name": "Generalized anxiety disorder",
+          "sources": [
+            "usmle-step1",
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": true
+        },
+        {
+          "name": "Bipolar disorder",
+          "sources": [
+            "usmle-step1",
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": true
+        },
+        {
+          "name": "Schizophrenia",
+          "sources": [
+            "usmle-step1",
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": true
+        },
+        {
+          "name": "Panic disorder",
+          "sources": [
+            "usmle-step1",
+            "usmle-step2ck"
+          ],
+          "highYield": false
+        },
+        {
+          "name": "Obsessive-compulsive disorder",
+          "sources": [
+            "usmle-step1",
+            "usmle-step2ck"
+          ],
+          "highYield": false
+        },
+        {
+          "name": "Post-traumatic stress disorder",
+          "sources": [
+            "usmle-step1",
+            "usmle-step2ck"
+          ],
+          "highYield": false
+        },
+        {
+          "name": "Alcohol use disorder & withdrawal",
+          "sources": [
+            "usmle-step1",
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": true
+        },
+        {
+          "name": "Delirium tremens",
+          "sources": [
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": true
+        },
+        {
+          "name": "Opioid / substance use disorder",
+          "sources": [
+            "usmle-step1",
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": true
+        },
+        {
+          "name": "Eating disorders (anorexia & bulimia nervosa)",
+          "sources": [
+            "usmle-step1",
+            "usmle-step2ck"
+          ],
+          "highYield": false
+        },
+        {
+          "name": "Personality disorders",
+          "sources": [
+            "usmle-step1"
+          ],
+          "highYield": false
+        },
+        {
+          "name": "Suicide risk & deliberate self-harm",
+          "sources": [
+            "uk-foundation"
+          ],
+          "highYield": true
+        },
+        {
+          "name": "Acute psychosis",
+          "sources": [
+            "uk-foundation"
+          ],
+          "highYield": true
+        },
+        {
+          "name": "Somatic symptom disorder",
+          "sources": [
+            "usmle-step1"
+          ],
+          "highYield": false
+        },
+        {
+          "name": "Attention-deficit/hyperactivity disorder",
+          "sources": [
+            "usmle-step1",
+            "usmle-step2ck"
+          ],
+          "highYield": false
+        },
+        {
+          "name": "Autism spectrum disorder",
+          "sources": [
+            "usmle-step1"
+          ],
+          "highYield": false
+        }
+      ]
+    },
+    {
+      "system": "Dermatology",
+      "aliases": [
+        "Derm"
+      ],
+      "diseases": [
+        {
+          "name": "Atopic dermatitis (eczema)",
+          "sources": [
+            "usmle-step1",
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": true
+        },
+        {
+          "name": "Psoriasis",
+          "sources": [
+            "usmle-step1",
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": true
+        },
+        {
+          "name": "Contact dermatitis",
+          "sources": [
+            "usmle-step1",
+            "usmle-step2ck"
+          ],
+          "highYield": false
+        },
+        {
+          "name": "Acne vulgaris",
+          "sources": [
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": false
+        },
+        {
+          "name": "Urticaria / angioedema",
+          "sources": [
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": true
+        },
+        {
+          "name": "Erythema multiforme / Stevens-Johnson syndrome / TEN",
+          "sources": [
+            "usmle-step1",
+            "usmle-step2ck"
+          ],
+          "highYield": true
+        },
+        {
+          "name": "Skin cancer (basal cell, squamous cell, melanoma)",
+          "sources": [
+            "usmle-step1",
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": true
+        },
+        {
+          "name": "Erysipelas",
+          "sources": [
+            "usmle-step1"
+          ],
+          "highYield": false
+        },
+        {
+          "name": "Pressure ulcers",
+          "sources": [
+            "uk-foundation"
+          ],
+          "highYield": true
+        },
+        {
+          "name": "Scabies",
+          "sources": [
+            "usmle-step1",
+            "uk-foundation"
+          ],
+          "highYield": false
+        },
+        {
+          "name": "Tinea (dermatophyte) infection",
+          "sources": [
+            "usmle-step1",
+            "uk-foundation"
+          ],
+          "highYield": false
+        },
+        {
+          "name": "Pemphigus vulgaris / bullous pemphigoid",
+          "sources": [
+            "usmle-step1"
+          ],
+          "highYield": false
+        },
+        {
+          "name": "Vitiligo",
+          "sources": [
+            "usmle-step1"
+          ],
+          "highYield": false
+        }
+      ]
+    },
+    {
+      "system": "Obstetrics & Gynecology",
+      "aliases": [
+        "OB/GYN"
+      ],
+      "diseases": [
+        {
+          "name": "Ectopic pregnancy",
+          "sources": [
+            "usmle-step1",
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": true
+        },
+        {
+          "name": "Miscarriage (spontaneous abortion)",
+          "sources": [
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": true
+        },
+        {
+          "name": "Pre-eclampsia & eclampsia",
+          "sources": [
+            "usmle-step1",
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": true
+        },
+        {
+          "name": "Gestational diabetes",
+          "sources": [
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": false
+        },
+        {
+          "name": "Placenta previa",
+          "sources": [
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": true
+        },
+        {
+          "name": "Placental abruption",
+          "sources": [
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": true
+        },
+        {
+          "name": "Postpartum hemorrhage",
+          "sources": [
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": true
+        },
+        {
+          "name": "Preterm labor",
+          "sources": [
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": false
+        },
+        {
+          "name": "Pelvic inflammatory disease",
+          "sources": [
+            "usmle-step1",
+            "usmle-step2ck"
+          ],
+          "highYield": false
+        },
+        {
+          "name": "Ovarian cyst / ovarian torsion",
+          "sources": [
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": true
+        },
+        {
+          "name": "Endometriosis",
+          "sources": [
+            "usmle-step1",
+            "usmle-step2ck"
+          ],
+          "highYield": false
+        },
+        {
+          "name": "Polycystic ovary syndrome",
+          "sources": [
+            "usmle-step1",
+            "usmle-step2ck"
+          ],
+          "highYield": true
+        },
+        {
+          "name": "Cervical cancer",
+          "sources": [
+            "usmle-step1",
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": true
+        },
+        {
+          "name": "Endometrial cancer",
+          "sources": [
+            "usmle-step1",
+            "usmle-step2ck"
+          ],
+          "highYield": false
+        },
+        {
+          "name": "Ovarian cancer",
+          "sources": [
+            "usmle-step1",
+            "usmle-step2ck"
+          ],
+          "highYield": false
+        },
+        {
+          "name": "Uterine fibroids (leiomyoma)",
+          "sources": [
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": false
+        },
+        {
+          "name": "Menopause",
+          "sources": [
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": false
+        },
+        {
+          "name": "Abnormal uterine bleeding",
+          "sources": [
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": false
+        }
+      ]
+    },
+    {
+      "system": "Male Reproductive & Urology",
+      "aliases": [
+        "Urology"
+      ],
+      "diseases": [
+        {
+          "name": "Benign prostatic hyperplasia",
+          "sources": [
+            "usmle-step1",
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": true
+        },
+        {
+          "name": "Prostate cancer",
+          "sources": [
+            "usmle-step1",
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": true
+        },
+        {
+          "name": "Prostatitis",
+          "sources": [
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": false
+        },
+        {
+          "name": "Testicular torsion",
+          "sources": [
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": true
+        },
+        {
+          "name": "Epididymo-orchitis",
+          "sources": [
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": [
+            "Epididymitis",
+            "Orchitis"
+          ]
+        },
+        {
+          "name": "Testicular cancer",
+          "sources": [
+            "usmle-step1",
+            "usmle-step2ck"
+          ],
+          "highYield": false
+        },
+        {
+          "name": "Varicocele",
+          "sources": [
+            "usmle-step1"
+          ],
+          "highYield": false
+        },
+        {
+          "name": "Hydrocele",
+          "sources": [
+            "usmle-step1",
+            "uk-foundation"
+          ],
+          "highYield": false
+        },
+        {
+          "name": "Erectile dysfunction",
+          "sources": [
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": false
+        },
+        {
+          "name": "Peyronie disease",
+          "sources": [
+            "usmle-step1"
+          ],
+          "highYield": false
+        },
+        {
+          "name": "Priapism",
+          "sources": [
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": false
+        },
+        {
+          "name": "Male urinary incontinence",
+          "sources": [
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": false
+        },
+        {
+          "name": "Acute urinary retention (see Renal, Urinary & Electrolyte/Acid-Base)",
+          "sources": [
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": true
+        },
+        {
+          "name": "Urolithiasis (see Renal, Urinary & Electrolyte/Acid-Base)",
+          "sources": [
+            "usmle-step1",
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": false
+        },
+        {
+          "name": "Bladder cancer",
+          "sources": [
+            "usmle-step1",
+            "usmle-step2ck"
+          ],
+          "highYield": false
+        },
+        {
+          "name": "Renal cell carcinoma",
+          "sources": [
+            "usmle-step1",
+            "usmle-step2ck"
+          ],
+          "highYield": false
+        },
+        {
+          "name": "Phimosis / paraphimosis",
+          "sources": [
+            "uk-foundation"
+          ],
+          "highYield": false
+        },
+        {
+          "name": "Hypospadias / cryptorchidism",
+          "sources": [
+            "usmle-step1"
+          ],
+          "highYield": false
+        },
+        {
+          "name": "Male infertility",
+          "sources": [
+            "usmle-step1",
+            "usmle-step2ck"
+          ],
+          "highYield": false
+        }
+      ]
+    },
+    {
+      "system": "Pediatrics & Congenital/Genetic",
+      "aliases": [
+        "Peds",
+        "Genetics"
+      ],
+      "diseases": [
+        {
+          "name": "Down syndrome (trisomy 21)",
+          "sources": [
+            "usmle-step1"
+          ],
+          "highYield": true
+        },
+        {
+          "name": "Congenital heart disease (VSD, ASD, PDA, tetralogy of Fallot)",
+          "sources": [
+            "usmle-step1",
+            "usmle-step2ck"
+          ],
+          "highYield": false
+        },
+        {
+          "name": "Neural tube defects (spina bifida)",
+          "sources": [
+            "usmle-step1"
+          ],
+          "highYield": false
+        },
+        {
+          "name": "Developmental dysplasia of the hip",
+          "sources": [
+            "uk-foundation"
+          ],
+          "highYield": false
+        },
+        {
+          "name": "Failure to thrive",
+          "sources": [
+            "uk-foundation"
+          ],
+          "highYield": false
+        },
+        {
+          "name": "Neonatal jaundice",
+          "sources": [
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": true
+        },
+        {
+          "name": "Necrotizing enterocolitis",
+          "sources": [
+            "usmle-step1",
+            "usmle-step2ck"
+          ],
+          "highYield": false
+        },
+        {
+          "name": "Neonatal respiratory distress syndrome",
+          "sources": [
+            "usmle-step1",
+            "usmle-step2ck"
+          ],
+          "highYield": false
+        },
+        {
+          "name": "Pyloric stenosis",
+          "sources": [
+            "usmle-step1",
+            "usmle-step2ck"
+          ],
+          "highYield": true
+        },
+        {
+          "name": "Intussusception",
+          "sources": [
+            "usmle-step1",
+            "usmle-step2ck"
+          ],
+          "highYield": true
+        },
+        {
+          "name": "Bronchiolitis",
+          "sources": [
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": true
+        },
+        {
+          "name": "Kawasaki disease",
+          "sources": [
+            "usmle-step1",
+            "usmle-step2ck"
+          ],
+          "highYield": false
+        },
+        {
+          "name": "Febrile seizures",
+          "sources": [
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": false
+        },
+        {
+          "name": "Child abuse / non-accidental injury",
+          "sources": [
+            "uk-foundation"
+          ],
+          "highYield": true
+        },
+        {
+          "name": "Cerebral palsy",
+          "sources": [
+            "usmle-step1",
+            "uk-foundation"
+          ],
+          "highYield": false
+        },
+        {
+          "name": "Turner syndrome",
+          "sources": [
+            "usmle-step1"
+          ],
+          "highYield": false
+        },
+        {
+          "name": "Fragile X syndrome",
+          "sources": [
+            "usmle-step1"
+          ],
+          "highYield": false
+        },
+        {
+          "name": "Cystic fibrosis (see Respiratory)",
+          "sources": [
+            "usmle-step1",
+            "usmle-step2ck"
+          ],
+          "highYield": false
+        }
+      ]
+    },
+    {
+      "system": "Ophthalmology",
+      "aliases": [
+        "Eye"
+      ],
+      "diseases": [
+        {
+          "name": "Acute angle-closure glaucoma",
+          "sources": [
+            "usmle-step1",
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": true
+        },
+        {
+          "name": "Primary open-angle glaucoma",
+          "sources": [
+            "usmle-step1",
+            "usmle-step2ck"
+          ],
+          "highYield": false
+        },
+        {
+          "name": "Cataract",
+          "sources": [
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": true
+        },
+        {
+          "name": "Diabetic retinopathy",
+          "sources": [
+            "usmle-step1",
+            "usmle-step2ck"
+          ],
+          "highYield": true
+        },
+        {
+          "name": "Age-related macular degeneration",
+          "sources": [
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": false
+        },
+        {
+          "name": "Retinal detachment",
+          "sources": [
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": true
+        },
+        {
+          "name": "Central retinal artery occlusion",
+          "sources": [
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": false
+        },
+        {
+          "name": "Conjunctivitis",
+          "sources": [
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": true
+        },
+        {
+          "name": "Uveitis",
+          "sources": [
+            "usmle-step1",
+            "usmle-step2ck"
+          ],
+          "highYield": false
+        },
+        {
+          "name": "Orbital cellulitis",
+          "sources": [
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": true
+        },
+        {
+          "name": "Optic neuritis",
+          "sources": [
+            "usmle-step1",
+            "usmle-step2ck"
+          ],
+          "highYield": false
+        },
+        {
+          "name": "Corneal abrasion / keratitis",
+          "sources": [
+            "uk-foundation"
+          ],
+          "highYield": false
+        }
+      ]
+    },
+    {
+      "system": "ENT / Head & Neck",
+      "aliases": [
+        "Otolaryngology"
+      ],
+      "diseases": [
+        {
+          "name": "Acute otitis media",
+          "sources": [
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": true
+        },
+        {
+          "name": "Otitis media with effusion (glue ear)",
+          "sources": [
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": false
+        },
+        {
+          "name": "Otitis externa",
+          "sources": [
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": false
+        },
+        {
+          "name": "Cholesteatoma",
+          "sources": [
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": false
+        },
+        {
+          "name": "Acute pharyngitis / tonsillitis",
+          "sources": [
+            "usmle-step1",
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": true
+        },
+        {
+          "name": "Peritonsillar abscess (quinsy)",
+          "sources": [
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": true
+        },
+        {
+          "name": "Acute rhinosinusitis",
+          "sources": [
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": [
+            "Acute sinusitis"
+          ]
+        },
+        {
+          "name": "Chronic rhinosinusitis",
+          "sources": [
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": false
+        },
+        {
+          "name": "Nasal polyps",
+          "sources": [
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": false
+        },
+        {
+          "name": "Epistaxis",
+          "sources": [
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": true
+        },
+        {
+          "name": "Benign paroxysmal positional vertigo",
+          "sources": [
+            "usmle-step1",
+            "usmle-step2ck"
+          ],
+          "highYield": true
+        },
+        {
+          "name": "Vestibular neuritis / labyrinthitis",
+          "sources": [
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": false
+        },
+        {
+          "name": "Ménière disease",
+          "sources": [
+            "usmle-step1",
+            "usmle-step2ck"
+          ],
+          "highYield": false
+        },
+        {
+          "name": "Sudden sensorineural hearing loss",
+          "sources": [
+            "usmle-step2ck"
+          ],
+          "highYield": false
+        },
+        {
+          "name": "Laryngitis",
+          "sources": [
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": false
+        },
+        {
+          "name": "Head and neck squamous cell carcinoma",
+          "sources": [
+            "usmle-step1",
+            "usmle-step2ck"
+          ],
+          "highYield": true,
+          "aliases": [
+            "Head and neck cancer"
+          ]
+        },
+        {
+          "name": "Thyroid nodule / goiter (see Endocrine & Metabolic)",
+          "sources": [
+            "usmle-step1",
+            "usmle-step2ck"
+          ],
+          "highYield": false
+        },
+        {
+          "name": "Salivary gland stones / tumors (sialolithiasis)",
+          "sources": [
+            "usmle-step1",
+            "usmle-step2ck"
+          ],
+          "highYield": false
+        },
+        {
+          "name": "Foreign body aspiration / ingestion",
+          "sources": [
+            "uk-foundation"
+          ],
+          "highYield": true
+        }
+      ]
+    },
+    {
+      "system": "Immunology & Allergy",
+      "aliases": [
+        "Allergy"
+      ],
+      "diseases": [
+        {
+          "name": "Anaphylaxis",
+          "sources": [
+            "usmle-step1",
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": true
+        },
+        {
+          "name": "Allergic rhinitis",
+          "sources": [
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": true
+        },
+        {
+          "name": "Allergic asthma (see Respiratory)",
+          "sources": [
+            "usmle-step1",
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": true
+        },
+        {
+          "name": "Urticaria / angioedema",
+          "sources": [
+            "usmle-step1",
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": true
+        },
+        {
+          "name": "Atopic dermatitis (see Dermatology)",
+          "sources": [
+            "usmle-step1",
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": false
+        },
+        {
+          "name": "Food allergy",
+          "sources": [
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": false
+        },
+        {
+          "name": "Drug allergy / hypersensitivity reaction",
+          "sources": [
+            "usmle-step1",
+            "usmle-step2ck"
+          ],
+          "highYield": false
+        },
+        {
+          "name": "Type IV (contact / delayed) hypersensitivity",
+          "sources": [
+            "usmle-step1"
+          ],
+          "highYield": false
+        },
+        {
+          "name": "Serum sickness",
+          "sources": [
+            "usmle-step1"
+          ],
+          "highYield": false
+        },
+        {
+          "name": "Hereditary angioedema (C1-esterase inhibitor deficiency)",
+          "sources": [
+            "usmle-step1"
+          ],
+          "highYield": false
+        },
+        {
+          "name": "Complement deficiencies",
+          "sources": [
+            "usmle-step1"
+          ],
+          "highYield": false
+        },
+        {
+          "name": "Common variable immunodeficiency",
+          "sources": [
+            "usmle-step1"
+          ],
+          "highYield": false
+        },
+        {
+          "name": "Selective IgA deficiency",
+          "sources": [
+            "usmle-step1"
+          ],
+          "highYield": false
+        },
+        {
+          "name": "Severe combined immunodeficiency (SCID)",
+          "sources": [
+            "usmle-step1"
+          ],
+          "highYield": false
+        },
+        {
+          "name": "Chronic granulomatous disease",
+          "sources": [
+            "usmle-step1"
+          ],
+          "highYield": false
+        },
+        {
+          "name": "Hyper-IgE syndrome (Job syndrome)",
+          "sources": [
+            "usmle-step1"
+          ],
+          "highYield": false
+        },
+        {
+          "name": "Mastocytosis / mast cell activation",
+          "sources": [
+            "usmle-step1"
+          ],
+          "highYield": false
+        },
+        {
+          "name": "Transplant rejection",
+          "sources": [
+            "usmle-step1"
+          ],
+          "highYield": false
+        },
+        {
+          "name": "Graft-versus-host disease",
+          "sources": [
+            "usmle-step1"
+          ],
+          "highYield": false
+        },
+        {
+          "name": "Systemic lupus erythematosus (see Rheumatology & Musculoskeletal)",
+          "sources": [
+            "usmle-step1",
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": false
+        },
+        {
+          "name": "ANCA-associated vasculitis (see Rheumatology & Musculoskeletal)",
+          "sources": [
+            "usmle-step1",
+            "usmle-step2ck"
+          ],
+          "highYield": false
+        },
+        {
+          "name": "HIV / AIDS (see Infectious Disease)",
+          "sources": [
+            "usmle-step1",
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": false
+        }
+      ]
+    },
+    {
+      "system": "Emergency, Critical Care & Toxicology",
+      "aliases": [
+        "Emergency Medicine",
+        "Critical Care",
+        "Toxicology"
+      ],
+      "diseases": [
+        {
+          "name": "Cardiac arrest (see Cardiovascular)",
+          "sources": [
+            "uk-foundation"
+          ],
+          "highYield": true
+        },
+        {
+          "name": "Septic shock (see Infectious Disease)",
+          "sources": [
+            "usmle-step1",
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": true
+        },
+        {
+          "name": "Major trauma / hemorrhagic shock",
+          "sources": [
+            "uk-foundation"
+          ],
+          "highYield": true
+        },
+        {
+          "name": "Traumatic brain injury",
+          "sources": [
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": true
+        },
+        {
+          "name": "Burns",
+          "sources": [
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": true
+        },
+        {
+          "name": "Paracetamol (acetaminophen) overdose",
+          "sources": [
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": true
+        },
+        {
+          "name": "Opioid overdose",
+          "sources": [
+            "usmle-step1",
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": true
+        },
+        {
+          "name": "Carbon monoxide poisoning",
+          "sources": [
+            "usmle-step1",
+            "usmle-step2ck"
+          ],
+          "highYield": false
+        },
+        {
+          "name": "Heat stroke",
+          "sources": [
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": false
+        },
+        {
+          "name": "Hypothermia",
+          "sources": [
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": false
+        },
+        {
+          "name": "Acute respiratory failure",
+          "sources": [
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": true
+        },
+        {
+          "name": "Shock (hypovolemic, cardiogenic, septic, anaphylactic)",
+          "sources": [
+            "usmle-step1",
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": true
+        },
+        {
+          "name": "Drowning",
+          "sources": [
+            "uk-foundation"
+          ],
+          "highYield": false
+        },
+        {
+          "name": "Electrical injury",
+          "sources": [
+            "uk-foundation"
+          ],
+          "highYield": false
+        },
+        {
+          "name": "Multi-organ dysfunction syndrome",
+          "sources": [
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": false
+        }
+      ]
+    },
+    {
+      "system": "Geriatrics – General",
+      "category": "cross-cutting",
+      "aliases": [
+        "Geriatric Medicine",
+        "Care of the Elderly"
+      ],
+      "diseases": [
+        {
+          "name": "Falls in the elderly",
+          "sources": [
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": true
+        },
+        {
+          "name": "Delirium",
+          "sources": [
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": true
+        },
+        {
+          "name": "Dementia (Alzheimer / vascular / Lewy body)",
+          "sources": [
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": true
+        },
+        {
+          "name": "Frailty & sarcopenia",
+          "sources": [
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": true
+        },
+        {
+          "name": "Polypharmacy & adverse drug reactions",
+          "sources": [
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": true
+        },
+        {
+          "name": "Urinary incontinence",
+          "sources": [
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": true
+        },
+        {
+          "name": "Immobility & pressure ulcers",
+          "sources": [
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": true
+        },
+        {
+          "name": "Malnutrition",
+          "sources": [
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": false
+        },
+        {
+          "name": "Osteoporosis & fragility fractures",
+          "sources": [
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": true
+        },
+        {
+          "name": "Orthostatic (postural) hypotension",
+          "sources": [
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": false
+        },
+        {
+          "name": "Sensory impairment (vision & hearing loss)",
+          "sources": [
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": false
+        },
+        {
+          "name": "Late-life depression",
+          "sources": [
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": false
+        },
+        {
+          "name": "Constipation",
+          "sources": [
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": false
+        },
+        {
+          "name": "Sleep disorders in older adults",
+          "sources": [
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": false
+        },
+        {
+          "name": "Elder abuse & neglect",
+          "sources": [
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": true
+        },
+        {
+          "name": "Palliative & end-of-life care",
+          "sources": [
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": true
+        }
+      ]
+    },
+    {
+      "system": "Geriatrics – Male",
+      "category": "cross-cutting",
+      "aliases": [
+        "Geriatric Medicine – Male"
+      ],
+      "diseases": [
+        {
+          "name": "Benign prostatic hyperplasia",
+          "sources": [
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": true
+        },
+        {
+          "name": "Prostate cancer",
+          "sources": [
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": true
+        },
+        {
+          "name": "Male urinary retention & incontinence",
+          "sources": [
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": true
+        },
+        {
+          "name": "Erectile dysfunction",
+          "sources": [
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": false
+        },
+        {
+          "name": "Scrotal / testicular issues in the elderly",
+          "sources": [
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": false
+        },
+        {
+          "name": "Osteoporosis in men & fragility fractures",
+          "sources": [
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": false
+        },
+        {
+          "name": "Falls in the elderly",
+          "sources": [
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": true
+        },
+        {
+          "name": "Delirium",
+          "sources": [
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": true
+        },
+        {
+          "name": "Polypharmacy & adverse drug reactions",
+          "sources": [
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": true
+        },
+        {
+          "name": "Frailty & sarcopenia",
+          "sources": [
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": true
+        },
+        {
+          "name": "Late-life depression",
+          "sources": [
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": false
+        },
+        {
+          "name": "Palliative & end-of-life care",
+          "sources": [
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": false
+        }
+      ]
+    },
+    {
+      "system": "Geriatrics – Female",
+      "category": "cross-cutting",
+      "aliases": [
+        "Geriatric Medicine – Female"
+      ],
+      "diseases": [
+        {
+          "name": "Post-menopausal osteoporosis & fragility fractures",
+          "sources": [
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": true
+        },
+        {
+          "name": "Pelvic organ prolapse",
+          "sources": [
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": true
+        },
+        {
+          "name": "Stress & urge urinary incontinence",
+          "sources": [
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": true
+        },
+        {
+          "name": "Atrophic vaginitis (genitourinary syndrome of menopause)",
+          "sources": [
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": false
+        },
+        {
+          "name": "Breast cancer & screening",
+          "sources": [
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": true
+        },
+        {
+          "name": "Post-menopausal cardiovascular risk",
+          "sources": [
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": false
+        },
+        {
+          "name": "Falls in the elderly",
+          "sources": [
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": true
+        },
+        {
+          "name": "Delirium",
+          "sources": [
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": true
+        },
+        {
+          "name": "Polypharmacy & adverse drug reactions",
+          "sources": [
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": true
+        },
+        {
+          "name": "Frailty & sarcopenia",
+          "sources": [
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": true
+        },
+        {
+          "name": "Late-life depression",
+          "sources": [
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": false
+        },
+        {
+          "name": "Palliative & end-of-life care",
+          "sources": [
+            "usmle-step2ck",
+            "uk-foundation"
+          ],
+          "highYield": false
+        }
+      ]
+    }
+  ]
+}

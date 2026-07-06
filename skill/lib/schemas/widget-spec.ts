@@ -633,6 +633,59 @@ export const AnnotatedPassageSchema = z.object({
 // Discriminated union — the public schema
 // ----------------------------------------------------------------------------
 
+// ── Medical-algorithm / DDx family (2026-06-29 — from the ddx-algorithm pilot) ──
+// Three deterministic, theme-token-driven widgets. The author picks per content:
+//   ddx-tree (branching differential) · decision-flow (clinical algorithm) · compare-lanes (X vs Y).
+// Shared across medicine / wards / medical-italian chains. tone → a clinical theme colour.
+const WidgetTone = z.enum(['accent', 'teal', 'success', 'warning', 'error', 'muted']);
+
+export const DdxTreeWidgetSchema = z.object({
+  type: z.literal('ddx-tree'),
+  id: z.string().optional(),
+  title: z.string().optional(),
+  root: z.string(),                                  // the root finding/criterion that splits the differential
+  branches: z.array(z.object({
+    label: z.string(),
+    sublabel: z.string().optional(),                 // small descriptor under the branch header
+    tone: WidgetTone.optional(),
+    leaves: z.array(z.object({
+      title: z.string(),
+      detail: z.string().optional(),
+    })).min(1),
+  })).min(2),
+});
+
+export const DecisionFlowWidgetSchema = z.object({
+  type: z.literal('decision-flow'),
+  id: z.string().optional(),
+  title: z.string().optional(),
+  start: z.string(),                                 // the presenting state (top node)
+  question: z.string(),                              // the first decision (e.g. "QRS < 120 ms?")
+  branches: z.array(z.object({                       // typically 2 (yes/no)
+    label: z.string(),                               // e.g. "Yes · narrow"
+    tone: WidgetTone.optional(),
+    steps: z.array(z.object({
+      kind: z.enum(['decision', 'dx']),              // a further decision, or a diagnosis/endpoint
+      text: z.string(),
+      tone: WidgetTone.optional(),
+    })).min(1),
+  })).min(2),
+});
+
+export const CompareLanesWidgetSchema = z.object({
+  type: z.literal('compare-lanes'),
+  id: z.string().optional(),
+  title: z.string().optional(),
+  columns: z.array(z.object({                        // typically 2 entities being compared
+    label: z.string(),
+    tone: WidgetTone.optional(),
+  })).min(2),
+  rows: z.array(z.object({
+    feature: z.string(),
+    cells: z.array(z.string()),                      // one cell per column (order matches columns)
+  })).min(1),
+});
+
 const WidgetUnionSchema = z.discriminatedUnion('type', [
   // Quiz primitives
   McqWidgetSchema,
@@ -675,6 +728,10 @@ const WidgetUnionSchema = z.discriminatedUnion('type', [
   CodeEnglishTranslationSchema,
   // Language passage sub-mode (2026-06-17)
   AnnotatedPassageSchema,
+  // Medical-algorithm / DDx family (2026-06-29)
+  DdxTreeWidgetSchema,
+  DecisionFlowWidgetSchema,
+  CompareLanesWidgetSchema,
 ]);
 
 /**
@@ -761,6 +818,8 @@ export const WIDGET_KINDS: WidgetKind[] = [
   'code-english-translation',
   // Language passage sub-mode (2026-06-17)
   'annotated-passage',
+  // Medical-algorithm / DDx family (2026-06-29)
+  'ddx-tree', 'decision-flow', 'compare-lanes',
 ];
 
 /** Which widgets are universal (no domain constraint) vs domain-gated.

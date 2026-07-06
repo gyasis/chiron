@@ -139,31 +139,66 @@ for (const d of dirs) {
     id: rel, title, path: join(rel, cj.entry || 'lesson.html'), domain: tags.dom,
     system: tags.sys || null, subject: tags.subj || null, topic: tags.topic || null,
     level: tags.level || null, scope: tags.scope || (tags.subj && /diseases|disorders/i.test(title) ? 'subject' : 'disease'),
-    trend: tags.trend || null, clips, ready: true, mtime,
+    trend: tags.trend || null, status: cj.status || 'published', clips, ready: true, mtime,
   });
 }
 
 // ---------- 3. merge SSM taxonomy classes as QUEUED lessons ----------
-let queued = [];
+// AMBOSS-style display labels for the generalized year-2 organ systems (taxonomy system → label).
+const SYS_LABEL = {
+  'Cardiovascular': 'Cardiovascular', 'Respiratory': 'Respiratory', 'Gastrointestinal': 'Gastrointestinal',
+  'Renal/Urinary': 'Renal & Urinary', 'Endocrine/Metabolic': 'Endocrine & Metabolic', 'Reproductive': 'Reproductive',
+  'Musculoskeletal': 'Musculoskeletal', 'Nervous/CNS': 'Nervous System & Special Senses',
+  'Psychiatric/Behavioral': 'Behavioral Health & Psychiatry', 'Skin/Integumentary': 'Skin & Subcutaneous',
+  'Hematologic/Lymphatic': 'Blood & Lymphoreticular', 'Immune/Rheumatologic': 'Immune',
+  'Infectious Disease': 'Infectious Disease', 'Multisystem/General': 'Multisystem & General Principles',
+};
+let queued = [], systemLessons = [];
 try {
   const tax = JSON.parse(readFileSync(TAX, 'utf8'));
-  const SYS_NORM = { Cardiovascular: 'Cardiovascular', Gastrointestinal: 'Gastrointestinal', Respiratory: 'Respiratory', Renal: 'Renal', Endocrine: 'Endocrine', Neurology: 'Neurology', 'Hematology/Oncology': 'Hematology/Oncology' };
   const haveSubjects = new Set(lessons.filter(l => l.subject).map(l => l.subject.toLowerCase()));
+  const corpusTotal = tax.reduce((s, c) => s + (c.total_q || 0), 0) || 1;
   for (const c of tax) {
     const subject = (c.disease_class || '').replace(/ and /g, ' & ');
-    const system = SYS_NORM[c.system] || c.system || 'Emergency';
+    const system = c.system || 'Emergency';
     if (!subject) continue;
     if (haveSubjects.has(subject.toLowerCase())) continue;  // already a generated lesson
     queued.push({
       id: 'queued:' + subject, title: subject, path: null, domain: 'medicine',
       system, subject, topic: null, level: null, scope: 'subject',
       trend: c.trend || 'PERENNIAL', difficulty: c.avg_difficulty ?? null, priority: c.priority ?? 0,
+      bankable: c.bankable ?? 0,  // # recurring "gimme" repeats — the do-first signal
       per_year: c.per_year || null, clips: 0, ready: false, mtime: 0,
+    });
+  }
+
+  // 3b. generalized ORGAN-SYSTEM overview lessons (AMBOSS year-2 scaffold) — one per system,
+  // aggregated from its disease-classes: exam weight + common disease-classes + top diseases.
+  const bySys = {};
+  for (const c of tax) {
+    const g = (bySys[c.system] ??= { total_q: 0, priority: 0, bankable: 0, classes: [], members: [] });
+    g.total_q += c.total_q || 0; g.priority += c.priority || 0; g.bankable += c.bankable || 0;
+    g.classes.push({ name: c.disease_class, q: c.total_q || 0 });
+    for (const m of (c.members || [])) g.members.push({ concept: m.concept, count: m.count || 0 });
+  }
+  const haveSystems = new Set(lessons.filter(l => l.scope === 'system' && l.system).map(l => l.system.toLowerCase()));
+  for (const [sys, g] of Object.entries(bySys)) {
+    if (haveSystems.has(sys.toLowerCase())) continue;
+    const label = SYS_LABEL[sys] || sys;
+    systemLessons.push({
+      id: 'system:' + sys, title: label, path: null, domain: 'medicine',
+      system: sys, subject: null, topic: null, level: null, scope: 'system',
+      trend: null, difficulty: null, priority: g.priority, bankable: 0,
+      exam_pct: Math.round(1000 * g.total_q / corpusTotal) / 10, total_q: g.total_q,
+      n_classes: g.classes.length, system_bankable: g.bankable,
+      classes: g.classes.sort((a, b) => b.q - a.q).map(x => x.name),
+      diseases: g.members.sort((a, b) => b.count - a.count).slice(0, 12).map(x => x.concept),
+      per_year: null, clips: 0, ready: false, mtime: 0,
     });
   }
 } catch (e) { process.stderr.write('taxonomy merge skipped: ' + e.message + '\n'); }
 
-const index = { generatedAt: new Date().toISOString(), counts: { ready: lessons.length, queued: queued.length }, lessons: [...lessons, ...queued] };
+const index = { generatedAt: new Date().toISOString(), counts: { ready: lessons.length, systems: systemLessons.length, queued: queued.length }, lessons: [...lessons, ...systemLessons, ...queued] };
 writeFileSync(join(OUT, 'library.index.json'), JSON.stringify(index, null, 2));
 
 // ---------- 4. copy app ----------
@@ -177,5 +212,5 @@ for (const dir of ['icons', 'vendor']) {
 }
 
 console.log(`Library built → ${OUT}`);
-console.log(`  ready lessons: ${lessons.length}   queued (taxonomy): ${queued.length}`);
+console.log(`  ready lessons: ${lessons.length}   organ-system overviews: ${systemLessons.length}   queued classes: ${queued.length}`);
 console.log(`  config: library.config.json   index: library.index.json`);
