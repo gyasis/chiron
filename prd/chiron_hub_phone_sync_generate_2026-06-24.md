@@ -124,6 +124,11 @@ was scoped in `chiron_offsite_lesson_gen_promptchain_2026-06-28.md` → delivera
 **Discussed / decided:** OCR = **server-side ingest step** (reuse `ingest-adapters/image.ts`), pre-chain, into the grounding slot. Dark mode uses the `midnight` theme. Dev-toggle idea (show composed prompt / step chain no-bake) **parked**.
 **Next pickup:** Phase 0 — build the **dispatcher** (`domain×depth×subject_type → chain`) + **E2E-verify the 3 Italian chains**, then build the **Chiron server** wrapping it.
 
+### 2026-07-07 (later) — Phase 0 COMPLETE
+**Done:** **Dispatcher** shipped (`skill/chains/dispatch.py`, commit `5934d74`) — the single entry the server calls; `resolve(domain,depth,subject,subject_type,extra)→{runpy,env,slug,depth}` + `run(res,stage)`, auto-derives depth (system→atlas · disease→systematic · geriatrics→primer), maps subject → each chain's env contract (`CH_SUBJECT`/`SSM_QID`/`CH_TOPIC`). Routing verified dry-run across all **7 chains**. **All 3 Italian chains E2E-verified** through the dispatcher: passage (`SSM_QID=ssm2019_050`)→220K; ward (`CH_TOPIC=cardiologia`)→192K/36 listen; pure-italian (`magari`)→200K/36 listen.
+**Fixed:** wards + pure-italian chains printed `=== done → lesson.html` even when `CH_STAGE=author` skipped the assemble step (false success). Made the done-print conditional on `lesson.html` actually existing (observability). NB stage contract: these two chains assemble only at `STAGE ∈ {assemble,audio,all}`; the server generates at `stage=all`, so it's unaffected.
+**Next pickup:** **Phase 1 — the Chiron generate-server** (`POST /generate` → dispatcher subprocess + job tracking; `GET /jobs/<id>`; `POST /accept/<id>` flips staged→published + rebuilds catalog; `POST /regenerate/<id>`). Server-side ingest/OCR pre-chain; Mac/Atelier bake at the audio stage.
+
 ---
 
 *Captured 2026-06-24. LAN home hub; phone is a cache of the hub; phone-remove never touches the source. Updated 2026-07-07: chains built, Wizard + Staging locked, Chiron server next.*

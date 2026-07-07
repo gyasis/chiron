@@ -244,7 +244,10 @@ async def main():
             bake()
         else:
             print("[phase 5] BAKE skipped — CH_STAGE=all or CH_BAKE=1 to bake.", flush=True)
-    print(f"=== done → {OUT}/lesson.html")
+    if (OUT / "lesson.html").exists():
+        print(f"=== done → {OUT}/lesson.html")
+    else:
+        print(f"=== authored content.json (no lesson.html — run CH_STAGE=assemble to build it) → {OUT}")
 
 
 if __name__ == "__main__":
