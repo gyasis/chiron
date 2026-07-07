@@ -16,6 +16,23 @@ function commonPrefix(ns){ if(ns.length<2) return ''; let p=ns[0]; for(const n o
 function pickEntry(rel){ return rel.find(n=>n==='lesson.html') || rel.find(n=>n.endsWith('/lesson.html')) || rel.find(n=>n.endsWith('.html')) || rel[0]; }
 const unzip = u8 => new Promise((res,rej)=> fflate.unzip(u8,(e,f)=> e?rej(e):res(f)));
 
+/* ---- Phase 2: the generate-server (:8911) — Wizard + Staging wiring ---- */
+const API = (location.port === '8911') ? '' : 'http://127.0.0.1:8911';   // same-origin when served by the server, else cross-origin (CORS on)
+const DEPTHS = {
+  medicine: [['','Auto (detect from subject)'],['primer','Primer — quick, grouped'],['atlas','Atlas — organ-system survey'],['systematic','Systematic — 11-section deep-dive'],['amboss','AMBOSS — clinical']],
+  'medical-italian': [['ward','Ward — clinical scene'],['passage','Passage — SSM question']],
+  italian: [['lesson','Lesson']],
+};
+const ATLAS_SYSTEMS = ['cardiovascular','respiratory','gastrointestinal','renal','genitourinary','endocrine','metabolic','hematolog','oncolog','neurolog','psychiatr','musculoskeletal','rheumatolog','dermatolog','infectious','immunolog','ent','ophthalmolog','reproductive','obstetric','gynaecolog','gynecolog','geriatric'];
+function detectDepthHint(subject, domain){
+  if(domain!=='medicine') return '';
+  const s=(subject||'').toLowerCase().trim(); if(!s) return '';
+  if(s.includes('geriatr')) return 'primer';
+  if(ATLAS_SYSTEMS.some(k=>s===k||s.includes(k))) return 'atlas';
+  return 'systematic';
+}
+let GENJOB=null;
+
 async function boot(){
   CONFIG = await (await fetch('library.config.json')).json();
   LESSONS = (await (await fetch('library.index.json')).json()).lessons;
@@ -27,6 +44,12 @@ async function boot(){
   document.getElementById('sort').addEventListener('change', e=>{F.sort=e.target.value;renderRows();});
   document.getElementById('q').addEventListener('input', e=>{F.q=e.target.value;renderRows();});
   matchMedia('(max-width:760px)').addEventListener('change', ()=>renderRows());   // desktop↔phone: toggle storage controls
+  // wizard controls
+  const wd=document.getElementById('w-domain');
+  if(wd){ wd.innerHTML=Object.keys(DEPTHS).map(d=>`<option value="${d}">${domLabel(d)}</option>`).join(''); LIB.wizDepth();
+    document.getElementById('w-images').addEventListener('change', e=>{
+      document.getElementById('w-imglist').innerHTML=[...e.target.files].map(f=>`<span class="chip">🖼 ${f.name}</span>`).join(''); }); }
+  document.getElementById('themebtn').textContent = document.documentElement.getAttribute('data-theme')==='dark'?'☀️':'🌙';
   renderAll();
 }
 const domCls = d => 'dom-'+d;
@@ -127,11 +150,13 @@ function renderRows(){
             : `<span class="open" onclick="event.stopPropagation();LIB.download('${slug}')">Download</span>`)
         : `<span class="ready">▸ ${l.clips} audio</span><span class="open">Open →</span>`;
     const onclick = l.ready ? ` onclick="LIB.open('${slug}')"` : '';
+    const stagedActions = (l.ready && l.status==='staged')
+      ? `<button class="sendback" onclick="event.stopPropagation();LIB.sendback('${slug}')">Send back</button><button class="accept" onclick="event.stopPropagation();LIB.accept('${slug}')">✓ Accept</button>` : '';
     return `<div class="row${l.bankable>0?' bank':''}${l.scope==='system'?' sys-overview':''}"${onclick} style="cursor:${l.ready ? 'pointer' : 'default'}">
       <div class="dbadge ${l.domain}"></div>
       <div class="rinfo"><div class="rtitle">${l.title}</div>
         <div class="rmeta"><span class="tag ${domCls(l.domain)}">${domLabel(l.domain)}</span>${l.status==='staged'?'<span class="tag" style="background:#fde68a;color:#713f12;font-weight:700">🟡 REVIEW</span>':''}${cat}${lvl}${sc}${bk}${tr}</div></div>
-      <div class="rstatus">${status}</div></div>`;
+      <div class="rstatus">${status}${stagedActions}</div></div>`;
   };
   // STAGING: newly-generated lessons (status==='staged') surface in a "Needs Review" band
   // at the top, separate from the published library, until the user reviews + accepts them.
@@ -169,6 +194,74 @@ const LIB = {
     const keys=await cache.keys();
     await Promise.all(keys.filter(r=>new URL(r.url).pathname.includes('/lessons/'+dl.id+'/')).map(r=>cache.delete(r)));
     delete DL[slug]; saveDL(); renderRows(); },
+
+  /* ---- theme (single 🌙/☀️ toggle) ---- */
+  theme(){ const dark=document.documentElement.getAttribute('data-theme')==='dark', nx=dark?'light':'dark';
+    document.documentElement.setAttribute('data-theme',nx);
+    try{localStorage.setItem('chiron.theme',nx);}catch(e){}
+    document.getElementById('themebtn').textContent=nx==='dark'?'☀️':'🌙'; },
+
+  /* ---- Wizard ---- */
+  wizard(open){ document.getElementById('wizback').classList.toggle('show',open);
+    if(open){ document.getElementById('wizform').style.display=''; document.getElementById('wizprog').style.display='none';
+      setTimeout(()=>document.getElementById('w-subject').focus(),50); } },
+  wizDepth(){ const d=document.getElementById('w-domain').value;
+    document.getElementById('w-depth').innerHTML=(DEPTHS[d]||[]).map(([v,l])=>`<option value="${v}">${l}</option>`).join('');
+    LIB.wizHint(); },
+  wizHint(){ const subj=document.getElementById('w-subject').value, dom=document.getElementById('w-domain').value, dep=document.getElementById('w-depth').value, h=document.getElementById('w-hint');
+    if(dom==='medicine' && !dep){ const det=detectDepthHint(subj,dom); h.innerHTML=det?`Auto → <b>${det}</b> lesson`:'Type a subject — depth auto-detects (system→atlas · disease→systematic · geriatrics→primer)'; }
+    else h.innerHTML=''; },
+  async genSubmit(){
+    const subject=document.getElementById('w-subject').value.trim();
+    if(!subject){ document.getElementById('w-subject').focus(); return; }
+    const domain=document.getElementById('w-domain').value;
+    const depth=document.getElementById('w-depth').value || null;
+    const grounding=document.getElementById('w-grounding').value.trim() || null;
+    const stage=document.getElementById('w-nobake').checked?'assemble':'all';
+    const btn=document.querySelector('.btn-gen'); btn.disabled=true; btn.textContent='Starting…';
+    try{
+      let images=null; const files=document.getElementById('w-images').files;
+      if(files && files.length){ const fd=new FormData(); [...files].forEach(f=>fd.append('files',f));
+        images=(await (await fetch(API+'/upload',{method:'POST',body:fd})).json()).paths; }
+      const r=await (await fetch(API+'/generate',{method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({domain,subject,depth,grounding,images,stage})})).json();
+      if(!r.job_id) throw new Error(r.detail||'generate failed');
+      GENJOB=r.job_id; LIB._showProg(r); LIB._poll(r.job_id);
+    }catch(e){ alert('Generate failed: '+e.message); }
+    btn.disabled=false; btn.textContent='✦ Generate';
+  },
+  _showProg(r){ document.getElementById('wizform').style.display='none';
+    const pg=document.getElementById('wizprog'); pg.style.display='';
+    document.getElementById('p-title').textContent=`Generating: ${r.slug||''}${r.depth?' ('+r.depth+')':''}`;
+    document.getElementById('p-open').style.display='none'; document.getElementById('p-log').textContent='';
+    LIB._renderSteps('queued'); },
+  _renderSteps(phase){
+    const order=['grounding','planning','writing','assembling','baking','ready'];
+    const labels={grounding:'Grounding (Harrison / atlas)',planning:'Planning chapters',writing:'Writing chapters',assembling:'Assembling lesson',baking:'Baking audio (Mac)',ready:'Ready'};
+    let ci=order.indexOf(phase); if(phase==='queued'||ci<0) ci=(phase==='ready')?order.length-1:0;
+    document.getElementById('p-steps').innerHTML=order.map(s=>{ const i=order.indexOf(s), cls=i<ci?'done':i===ci?'active':'';
+      return `<div class="step ${cls}"><span class="dot">${i<ci?'✓':''}</span>${labels[s]}</div>`; }).join(''); },
+  async _poll(jid){
+    try{ const d=await (await fetch(API+'/jobs/'+jid)).json();
+      LIB._renderSteps(d.phase||d.status);
+      if(d.log_tail) document.getElementById('p-log').textContent=d.log_tail;
+      if(d.status==='ready'||d.status==='published'){
+        document.getElementById('p-title').textContent='✓ Lesson ready — staged for review';
+        const ob=document.getElementById('p-open'); ob.style.display=''; ob.onclick=()=>window.open(API+(d.lesson_url||''),'_blank');
+        LIB.reload(); return; }
+      if(d.status==='error'){ document.getElementById('p-title').textContent='✗ Generation failed — see log'; return; }
+      setTimeout(()=>LIB._poll(jid), 2500);
+    }catch(e){ setTimeout(()=>LIB._poll(jid), 4000); } },
+
+  /* ---- Staging: accept → publish, send-back → regenerate ---- */
+  async reload(){ try{ LESSONS=(await (await fetch('library.index.json?'+Date.now())).json()).lessons;
+    Object.keys(LMAP).forEach(k=>delete LMAP[k]); LESSONS.forEach(l=>{ if(l.ready) LMAP[slugOf(l.id)]=l; }); renderAll(); }catch(e){} },
+  async accept(slug){ try{ const r=await (await fetch(API+'/accept/'+slug,{method:'POST'})).json();
+    if(r.ok) LIB.reload(); else alert('Accept failed'); }catch(e){ alert('Accept failed: '+e.message); } },
+  async sendback(slug){ const note=prompt('What needs fixing? (sent to regenerate)'); if(note===null) return;
+    try{ const r=await (await fetch(API+'/regenerate/'+slug,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({note})})).json();
+      if(r.job_id){ LIB.wizard(true); GENJOB=r.job_id; LIB._showProg({slug:r.slug}); LIB._poll(r.job_id); }
+    }catch(e){ alert('Regenerate failed: '+e.message); } },
 };
 window.LIB = LIB;
 boot().catch(e=>{ document.getElementById('rows').innerHTML = `<div class="empty">Failed to load library: ${e.message}<br>Run the index builder + serve over http.</div>`; });

@@ -6,6 +6,7 @@
 <link rel="apple-touch-icon" href="icons/icon-192.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Chiron">
+<script>try{var _t=localStorage.getItem('chiron.theme');if(_t)document.documentElement.setAttribute('data-theme',_t);}catch(e){}</script>
 <style>
 :root{
   --chiron-bg:#faf8f5;--chiron-surface:#fff;--chiron-elevated:#f0ebe4;
@@ -99,12 +100,67 @@ body{margin:0;font-family:var(--font-b);background:var(--chiron-bg);color:var(--
   .mbar button .ic{font-size:18px}
   .mbar button.on{color:var(--chiron-accent)}
 }
+/* ---------- dark theme (single toggle: 🌙/☀️) ---------- */
+:root[data-theme=dark]{
+  --chiron-bg:#0f0f1a;--chiron-surface:#1a1a2e;--chiron-elevated:#252540;
+  --chiron-fg:#f1f5f9;--chiron-fg-secondary:#cbd5e1;--chiron-muted:#64748b;
+  --chiron-accent:#8b5cf6;--chiron-border:#2e2e4a;--chiron-divider:#1f1f35;
+  --med:#38bdf8;--medbg:#12263a;--medit:#f59e0b;--meditbg:#332510;--lang:#86efac;--langbg:#15301e;--code:#a78bfa;--codebg:#241a3a;
+  --t-RISING:#22c55e;--sh-sm:0 1px 2px rgba(0,0,0,.3);--sh-md:0 4px 8px rgba(0,0,0,.45);
+}
+body,.topbar,.pills,.facets,.row,.rhead{transition:background .2s,color .2s,border-color .2s}
+/* topbar actions */
+.genbtn{font:inherit;font-weight:700;font-size:13px;font-family:var(--font-h);border:none;border-radius:99px;background:var(--chiron-accent);color:#fff;padding:8px 15px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+.genbtn:hover{filter:brightness(1.1)}
+.themebtn{border:1px solid var(--chiron-border);background:var(--chiron-surface);color:var(--chiron-fg);border-radius:99px;width:36px;height:36px;font-size:15px;cursor:pointer;flex:0 0 auto}
+.themebtn:hover{border-color:var(--chiron-accent)}
+/* staging row actions */
+.accept{font-size:11px;font-weight:700;color:#fff;background:var(--t-RISING);border:none;border-radius:99px;padding:4px 12px;cursor:pointer}
+.accept:hover{filter:brightness(1.1)}
+.sendback{font-size:11px;font-weight:600;color:var(--t-FADING);border:1px solid var(--chiron-border);border-radius:99px;padding:3px 11px;cursor:pointer;background:none}
+.sendback:hover{border-color:var(--t-FADING)}
+/* modal + wizard */
+.modal-back{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:100;align-items:flex-start;justify-content:center;padding:38px 16px;overflow:auto}
+.modal-back.show{display:flex}
+.modal{background:var(--chiron-surface);border:1px solid var(--chiron-border);border-radius:16px;box-shadow:var(--sh-md);width:100%;max-width:520px}
+.modal-h{display:flex;align-items:center;padding:15px 18px;border-bottom:1px solid var(--chiron-divider);font-family:var(--font-h);font-size:16px;color:var(--chiron-fg)}
+.modal-h b{flex:1}
+.modal-h .x{border:none;background:none;font-size:18px;color:var(--chiron-muted);cursor:pointer}
+.modal-b{padding:16px 18px}
+.fl{display:block;font-family:var(--font-h);font-size:12px;font-weight:600;color:var(--chiron-fg-secondary);margin:13px 0 5px}
+.fl:first-child{margin-top:0}
+.opt{font-weight:400;color:var(--chiron-muted)}
+.fi{width:100%;border:1px solid var(--chiron-border);border-radius:9px;background:var(--chiron-bg);color:var(--chiron-fg);font:inherit;font-size:14px;padding:9px 11px}
+.fi:focus{outline:none;border-color:var(--chiron-accent);box-shadow:0 0 0 3px rgba(139,92,246,.14)}
+.frow2{display:flex;gap:12px}.frow2>div{flex:1;min-width:0}
+.hint{font-size:12px;color:var(--chiron-muted);margin-top:7px;min-height:16px}
+.hint b{color:var(--chiron-accent);text-transform:capitalize}
+.imglist{display:flex;flex-wrap:wrap;gap:6px;margin-top:7px}
+.imglist .chip{font-size:11px;background:var(--chiron-elevated);border-radius:6px;padding:3px 8px;color:var(--chiron-fg-secondary)}
+.modal-f{display:flex;align-items:center;gap:12px;margin-top:18px;padding-top:14px;border-top:1px solid var(--chiron-divider)}
+.chk{font-size:12px;color:var(--chiron-muted);display:flex;align-items:center;gap:6px;cursor:pointer}
+.btn-gen{margin-left:auto;font:inherit;font-family:var(--font-h);font-weight:700;font-size:14px;border:none;border-radius:99px;background:var(--chiron-accent);color:#fff;padding:10px 20px;cursor:pointer}
+.btn-gen:disabled{opacity:.5;cursor:default}
+.btn-sec{font:inherit;font-family:var(--font-h);font-weight:600;font-size:13px;border:1px solid var(--chiron-border);border-radius:99px;background:var(--chiron-surface);color:var(--chiron-fg);padding:8px 15px;cursor:pointer}
+.btn-sec:first-child{margin-left:auto}
+/* live progress */
+.progtitle{font-family:var(--font-h);font-size:15px;font-weight:700;margin-bottom:14px;color:var(--chiron-fg)}
+.steps{display:flex;flex-direction:column;gap:9px}
+.step{display:flex;align-items:center;gap:10px;font-size:13px;color:var(--chiron-muted)}
+.step .dot{width:18px;height:18px;border-radius:50%;border:2px solid var(--chiron-border);flex:0 0 auto;display:grid;place-items:center;font-size:10px}
+.step.done{color:var(--chiron-fg)}.step.done .dot{background:var(--t-RISING);border-color:var(--t-RISING);color:#fff}
+.step.active{color:var(--chiron-fg);font-weight:600}.step.active .dot{border-color:var(--chiron-accent);animation:pulse 1s infinite}
+@keyframes pulse{50%{box-shadow:0 0 0 4px rgba(139,92,246,.22)}}
+.plog{background:var(--chiron-bg);border:1px solid var(--chiron-divider);border-radius:8px;padding:9px;font-size:11px;color:var(--chiron-muted);max-height:120px;overflow:auto;margin-top:14px;white-space:pre-wrap;font-family:ui-monospace,monospace}
+@media (max-width:760px){ .genbtn .glbl{display:none} }
 </style></head>
 <body>
   <div class="topbar">
     <div class="brand"><span class="mk">C</span><span class="lbl">Chiron Library</span></div>
     <div class="search"><span class="mag">⌕</span><input id="q" placeholder="Search lessons, diseases, systems, subjects, topics…"></div>
     <div class="sort"><span class="sl">Sort</span> <select id="sort"></select></div>
+    <button class="genbtn" onclick="LIB.wizard(true)">✦ <span class="glbl">Generate</span></button>
+    <button class="themebtn" id="themebtn" onclick="LIB.theme()" title="Toggle light / dark">🌙</button>
   </div>
   <div class="pills" id="pills"></div>
   <div class="body">
@@ -119,6 +175,37 @@ body{margin:0;font-family:var(--font-b);background:var(--chiron-bg);color:var(--
   <button class="on" onclick="document.querySelector('.results').scrollTo(0,0)"><span class="ic">▤</span>Library</button>
   <button onclick="LIB.sheet(true)"><span class="ic">⚗</span>Filters</button>
   <button onclick="document.getElementById('q').focus()"><span class="ic">⌕</span>Search</button>
+</div>
+<!-- Lesson-Builder Wizard (Phase 2) -->
+<div id="wizback" class="modal-back" onclick="if(event.target===this)LIB.wizard(false)">
+ <div class="modal">
+  <div class="modal-h"><b>✦ Generate a lesson</b><button class="x" onclick="LIB.wizard(false)">✕</button></div>
+  <div id="wizform" class="modal-b">
+    <label class="fl">Subject / topic</label>
+    <input id="w-subject" class="fi" placeholder="e.g. Aortic aneurysm · Cardiovascular · «magari»" oninput="LIB.wizHint()">
+    <div class="frow2">
+      <div><label class="fl">Domain</label><select id="w-domain" class="fi" onchange="LIB.wizDepth()"></select></div>
+      <div><label class="fl">Type / depth</label><select id="w-depth" class="fi" onchange="LIB.wizHint()"></select></div>
+    </div>
+    <div id="w-hint" class="hint"></div>
+    <label class="fl">Extra context <span class="opt">optional</span></label>
+    <textarea id="w-grounding" class="fi" rows="2" placeholder="Source notes, a focus, a reviewer instruction…"></textarea>
+    <label class="fl">Images → OCR <span class="opt">optional · use as context</span></label>
+    <input id="w-images" class="fi" type="file" accept="image/*" multiple>
+    <div id="w-imglist" class="imglist"></div>
+    <div class="modal-f">
+      <label class="chk"><input type="checkbox" id="w-nobake"> quick preview (skip audio bake)</label>
+      <button class="btn-gen" onclick="LIB.genSubmit()">✦ Generate</button>
+    </div>
+  </div>
+  <div id="wizprog" class="modal-b" style="display:none">
+    <div class="progtitle" id="p-title">Preparing…</div>
+    <div class="steps" id="p-steps"></div>
+    <pre class="plog" id="p-log"></pre>
+    <div class="modal-f"><button class="btn-sec" id="p-open" style="display:none">Open lesson →</button>
+      <button class="btn-sec" onclick="LIB.wizard(false)">Close</button></div>
+  </div>
+ </div>
 </div>
 <script src="vendor/fflate.min.js"></script>
 <script src="library.js"></script>
