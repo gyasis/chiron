@@ -1,7 +1,7 @@
 # Chiron Hub — LAN home hub, phone sync, on-device generate PRD
 
 **Date:** 2026-06-24
-**Status:** DRAFT — design confirmed with the user (LAN home hub; phased). Build Phase 1 first.
+**Status:** ACTIVE — **2026-07-07:** the Phase-2 **engine chains are BUILT + E2E-tested**; the **Wizard** (generate) and **Staging/Review** (accept) app surfaces are **design-locked** (pilots). Next: the **dispatcher** + the **Chiron generate-server** that powers both. (Original: DRAFT — LAN home hub, phased.)
 **Owner:** Gyasi Sutton (solo)
 **Related:** [`chiron_lesson_scope_and_reuse_2026-06-24.md`](./chiron_lesson_scope_and_reuse_2026-06-24.md) (library.yaml + the Library app), `skill/player` (PWA import/offline/delete-local engine), `skill/library` (faceted Library UI), `skill/chiron-tauri` (native wrapper, audio Range fix). Working artifacts: `~/Documents/generated/chiron-library/`, the LAN HTTPS server `~/.local/bin/chiron-https-serve`.
 
@@ -78,6 +78,35 @@ was scoped in `chiron_offsite_lesson_gen_promptchain_2026-06-28.md` → delivera
   pulls get a **big-context DIGEST step** (Gemini 1M / Claude) into a span-preserving `source/` pack
   before authoring. See D4a.
 
+## 5b. Current state + locked designs (2026-07-07)
+
+**Engine chains — BUILT, full-widget, E2E-tested, tracked in `skill/chains/`:**
+- Medicine depth ladder: **primer** (grouped/quick), **atlas** (organ-system survey, reads `skill/blueprints/disease-atlas.json`), **systematic** (single-disease 11-section deep-dive), + the original **amboss** chain. All use the FULL `04a` widget palette + curriculum `widgetMix` + `srCards` (the primer's stripped-palette regression was fixed).
+- Italian: **medical-italian-passage**, **wards**, **pure-italian** (recovered from a stash; assemblers exist — **NOT yet E2E-re-verified → Phase-0 task**).
+- `disease-atlas.json` — curated **392-disease** master list by organ system (USMLE Step 1/2 + UK Foundation Y1/2); atlas-mode source; the `highYield` flag naturally bounds each system's chapter count.
+- Verified this session: generated + baked E2E (**query → lesson → audio**) for endocrine primer, aortic-aneurysm systematic, cardiovascular + respiratory atlases — all full-widget, published.
+
+**Audio infra fixes (committed):** manifest ordered by **CHAPTER sequence** (was alphabetical `section_id` → Listen widgets out of order); player **blob-caches clips** so seeking works with **no HTTP-Range dependency** (desktop + mobile), traveling inside the `.chiron` package; loudness `-16 LUFS`.
+
+**Wizard (generate) — DESIGN LOCKED** (pilot `~/Documents/generated/chiron-wizard-pilot-variants.html`):
+- **Variant A — single-panel smart form** (chosen). Subject box **auto-detects** subject_type → suggested depth (system→atlas, disease→systematic).
+- **Multi-page image capture** — snap N pages → each OCR'd → **"used as context"** (checkbox); maps to `ingest-adapters/image.ts` + the phone `capture-server`.
+- **Single-icon sun/moon dark toggle**; dark = the real `midnight` theme palette.
+
+**Staging / Review (accept) — DESIGN LOCKED** (pilot `~/Documents/generated/chiron-staging-review-pilot.html`):
+- Generated lessons land **`status: staged`** → shown in the library's **🟡 Needs Review** band (already built in `library.js`).
+- Per-card **Open** (view + listen) · **Accept** (`staged→published` + rebuild catalog) · **Send back** (regenerate with a note). Desktop + mobile.
+
+**The Chiron server (the convergence — powers Wizard + Staging):**
+- `POST /generate {subject, domain, depth, subject_type, images[], source_note}` → **ingest/OCR pages → dispatch to the correct chain → author → assemble → bake (Mac/Atelier) → bundle + catalog** → lands staged. (This *is* §5 Phase-2's job runner, now that the engine exists.)
+- `GET /jobs/<id>` → live status (grounding→writing→baking→ready) for the Wizard progress.
+- `POST /accept/<id>` (Staging Accept) · `POST /regenerate/<id>` (Send back).
+- **OCR/image→markdown is a server-side ingest step BEFORE the chain**, feeding grounding context via the same slot Harrison-search uses.
+
+**Phase 0 (prerequisite, IN PROGRESS 2026-07-07):**
+1. **Dispatcher** — one entry point routing `domain × depth × subject_type → the correct chain` (chains are 6 separate scripts today; the server needs one call).
+2. **E2E-verify the 3 Italian chains** (recovered from stash; untested this session).
+
 ## 6. Reuse (don't reinvent)
 - Player `skill/player/app.js`: `serverUrl`, `server_lessons`, `import_from_server`, `importBundleBytes` (fflate unzip → Cache), `delete_lesson` (local), `sw.js` (SW serves cached lessons). Lift the engine; keep the Library UI.
 - `chiron-https-serve` (LAN HTTPS, supports Range → audio works).
@@ -88,6 +117,13 @@ was scoped in `chiron_offsite_lesson_gen_promptchain_2026-06-28.md` → delivera
 2. Hub always-on: a small `systemd --user` service for `chiron-https-serve` (+ later the generate API) so the hub survives reboots.
 3. ~~Phase-2 job runner: in-process queue vs a tiny job file/dir; bake concurrency vs Atelier (one omnivoice).~~ **RESOLVED** (see §5 "Phase-2 engine"): in-process queue + per-chapter checkpoint files (stateful/resumable); bakes serialize through the one Atelier omnivoice regardless of engine.
 
+## Dev Diary
+
+### 2026-07-07 — captured current state; locked designs; starting Phase 0
+**Done:** engine chains built + E2E-tested (medicine ladder + amboss; Italian recovered from stash); `disease-atlas.json` (392 dz); audio manifest-order + blob-seek fixes committed; `-16 LUFS`. **Wizard** + **Staging/Review** app surfaces piloted and **design-locked** (single-panel form + multi-page "use-as-context" capture; Needs-Review → Open/listen → Accept/Send-back). Chiron generate-server API scoped (`/generate /jobs /accept /regenerate`).
+**Discussed / decided:** OCR = **server-side ingest step** (reuse `ingest-adapters/image.ts`), pre-chain, into the grounding slot. Dark mode uses the `midnight` theme. Dev-toggle idea (show composed prompt / step chain no-bake) **parked**.
+**Next pickup:** Phase 0 — build the **dispatcher** (`domain×depth×subject_type → chain`) + **E2E-verify the 3 Italian chains**, then build the **Chiron server** wrapping it.
+
 ---
 
-*Captured 2026-06-24. LAN home hub; phone is a cache of the hub; phone-remove never touches the source.*
+*Captured 2026-06-24. LAN home hub; phone is a cache of the hub; phone-remove never touches the source. Updated 2026-07-07: chains built, Wizard + Staging locked, Chiron server next.*
