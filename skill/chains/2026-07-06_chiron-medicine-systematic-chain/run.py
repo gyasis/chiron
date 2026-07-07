@@ -195,6 +195,22 @@ async def llm_json(model_dict: dict, prompt: str, name: str, user_input: str = "
         raise
 
 
+def _user_ctx() -> str:
+    """Wizard/OCR grounding: CH_GROUNDING points to a markdown file of user-provided source/context."""
+    p = os.environ.get("CH_GROUNDING")
+    if p:
+        try:
+            t = Path(p).read_text().strip()
+        except Exception:
+            t = ""
+        if t:
+            return f"## USER-PROVIDED CONTEXT (source material / OCR — prioritize this, weave it in):\n{t[:4000]}\n\n"
+    return ""
+
+
+USER_CTX = _user_ctx()
+
+
 def harrison(query: str, n: int = 5) -> str:
     try:
         r = subprocess.run([str(HOME / ".local/bin/harrison-search"), "-q", query, "-n", str(n), "--prose", "--full"],
@@ -292,7 +308,7 @@ async def author_chapter(chapter, idx: int):
         + "\n\n## CLINICAL VIGNETTE (mandatory)\n" + load_prompt("04c-quiz-clinical-vignette.md") \
         + "\n\n" + load_prompt("04u-medical-algorithm-widgets.md")
     p += (
-        f"\n\n## GROUNDING (Harrison's — ground every clinical claim to this; never invent):\n{grounding[:6000]}"
+        f"\n\n{USER_CTX}## GROUNDING (Harrison's — ground every clinical claim to this; never invent):\n{grounding[:6000]}"
         f"\n\n## SYSTEMATIC DEEP-DIVE (BLOCKING): this lesson is a single-disease, {CHAPTER_COUNT_EXACT}-section "
         f"systematic deep-dive on '{SUBJECT}'. Produce a FULL canonical AMBOSS chapter for the section "
         f"'{theme}' (sectionKey={section_key}), focused on: {focus}. Use the FULL widget palette per 04a — "

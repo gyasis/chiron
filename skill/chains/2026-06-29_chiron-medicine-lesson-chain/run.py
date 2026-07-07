@@ -161,6 +161,19 @@ async def llm_json(model_dict: dict, prompt: str, name: str, user_input: str = "
 
 
 # ── Phase 0 — source pack (deterministic grounding via harrison-search) ─────────
+def _user_ctx() -> str:
+    """Wizard/OCR grounding: CH_GROUNDING points to a markdown file of user-provided source/context."""
+    p = os.environ.get("CH_GROUNDING")
+    if p:
+        try:
+            t = Path(p).read_text().strip()
+        except Exception:
+            t = ""
+        if t:
+            return f"## USER-PROVIDED CONTEXT (source material / OCR — prioritize this, weave it in):\n{t[:4000]}\n\n"
+    return ""
+
+
 def harrison(query: str, n: int = 6) -> str:
     try:
         r = subprocess.run([str(HOME / ".local/bin/harrison-search"), "-q", query, "-n", str(n), "--prose", "--full"],
@@ -176,7 +189,7 @@ def build_source_pack() -> str:
     if sp.exists() and sp.stat().st_size > 500:
         return sp.read_text()
     print(f"[phase 0] grounding source pack from Harrison's for: {SUBJECT}")
-    text = f"# {SUBJECT} — grounded source pack (Harrison's 22e)\n\n" + harrison(SUBJECT, n=10)
+    text = _user_ctx() + f"# {SUBJECT} — grounded source pack (Harrison's 22e)\n\n" + harrison(SUBJECT, n=10)
     sp.write_text(text)
     return text
 
