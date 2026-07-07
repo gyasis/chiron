@@ -160,6 +160,12 @@ was scoped in `chiron_offsite_lesson_gen_promptchain_2026-06-28.md` → delivera
 **Remaining tails:** Italian chains' `CH_GROUNDING` (MCQ/PACES injection point); an "Available to download" section header; on-device install-from-a-shared-`.chiron` file (drag/open a `.chiron` → import into the SW cache).
 **Status:** the chiron web+mobile app is a complete generate → review → publish → download loop with image-grounded generation. Core build (Phases 0–4) DONE.
 
+### 2026-07-07 (Phase 4 tails) — all three remaining tails closed (commit `3356281`)
+1. **Italian chains consume `CH_GROUNDING`** — ward + passage weave it into their grounding block; pure-italian builds the lesson around the OCR'd source. **All 7 chains are now grounding-aware** (verified `USER_CTX` population).
+2. **Download/Generate section headers** — library rows grouped into three bands with counts: **🟡 Needs Review** · **📚 Available** (N downloadable) · **○ To generate**. The available-vs-generate split is now explicit (verified: "Available 39 · 33 downloadable", "To generate 118").
+3. **⬆ Import a `.chiron`** — topbar button opens a `.chiron`/`.zip` → unzips into the SW offline cache (sideload), synthesizing a minimal index entry for bundles not in the catalog so a shared lesson lists + opens offline (verified: fetched a real bundle → cached under `dl-…/` + listed as imported).
+**DONE — Phases 0–4 + all tails complete.** The chiron web+mobile app: snap pages / type a subject → image-grounded generate (any of 7 chains) → live progress → staging review → accept/publish → `.chiron` package → download or share/import offline. Installable PWA, dark mode, governed OCR + audio bake on the Mac.
+
 ---
 
 *Captured 2026-06-24. LAN home hub; phone is a cache of the hub; phone-remove never touches the source. Updated 2026-07-07: chains built, Wizard + Staging locked, Chiron server next.*
