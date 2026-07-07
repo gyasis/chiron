@@ -150,6 +150,16 @@ was scoped in `chiron_offsite_lesson_gen_promptchain_2026-06-28.md` → delivera
 **Remaining:** mobile PWA camera-capture polish; Italian chains' `CH_GROUNDING` consumption (MCQ/PACES injection point); an "available to download" section header split in the UI (currently inline per-row affordances).
 **Next pickup:** Phase 4 — mobile PWA capture polish + install-from-`.chiron` flow on the phone.
 
+### 2026-07-07 (Phase 4) — real OCR + mobile capture SHIPPED
+**Found:** the Phase-2 image ingest was a stub — `ingest-adapters/image.ts` only writes a *vision-handoff* JSON for the agent to call `interpret_image`; it never OCRs. So captured images produced no context. **Done (commit `0e6ced6`):**
+- **Real OCR through the Atelier governor** (R-AG2): `_ocr_image` base64s each page → `POST :8799/llm/ollama/api/chat` with **`qwen2.5vl:7b`** + a "transcribe to Markdown" prompt → text → concatenated into `_ingest.md` → `CH_GROUNDING`. Host default matches `audio-bake.ts` (`CHIRON_VLM_URL`/`CHIRON_VLM_MODEL` env-overridable); best-effort + graceful if the governor's down. **Verified live:** a text image → exact transcription returned.
+- **Mobile multi-page capture UX** in the wizard: **📷 Camera** (`capture=environment` → rear camera) + **🖼 Gallery** buttons **accumulate** pages (`WIZ_IMAGES`) into thumbnails with per-page **×remove** + a "N pages · OCR'd on generate" count; all uploaded together on Generate. (Replaced the single flat file input.)
+- **PWA confirmed installable:** standalone manifest + 512 maskable icon + SW active + offline app-shell + downloaded-lesson caching (all pre-existing, verified).
+**Verified in a real headed browser:** capture accumulation (2 pages → 2 thumbs → remove → 1), PWA `installable:true`, SW active.
+**Full pipeline now real:** snap pages → `/upload` → governor OCR → `CH_GROUNDING` → medicine chains weave it into every chapter's author prompt.
+**Remaining tails:** Italian chains' `CH_GROUNDING` (MCQ/PACES injection point); an "Available to download" section header; on-device install-from-a-shared-`.chiron` file (drag/open a `.chiron` → import into the SW cache).
+**Status:** the chiron web+mobile app is a complete generate → review → publish → download loop with image-grounded generation. Core build (Phases 0–4) DONE.
+
 ---
 
 *Captured 2026-06-24. LAN home hub; phone is a cache of the hub; phone-remove never touches the source. Updated 2026-07-07: chains built, Wizard + Staging locked, Chiron server next.*
