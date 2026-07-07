@@ -1267,22 +1267,27 @@
   });
 
   /* Blob-cache each clip in memory so the <audio> source is a fully-buffered blob: URL —
-     seeking then works with ZERO dependency on HTTP Range support. This is a player-level
-     fix so it travels inside the .chiron package (a plain static host or the bundle's
-     service worker no longer break scrubbing). Cached per clip; freed on page-hide. */
-  var _clipBlobs = {};
-  function _resolveSrc(path, cb) {
-    if (_clipBlobs[path]) { cb(_clipBlobs[path]); return; }
-    try {
-      fetch(path).then(function (r) { return r.ok ? r.blob() : Promise.reject(); })
-        .then(function (b) { var u = URL.createObjectURL(b); _clipBlobs[path] = u; cb(u); })
-        .catch(function () { cb(path); });  // fallback: direct URL (e.g. file:// where fetch is blocked)
-    } catch (e) { cb(path); }
+     seeking works with ZERO dependency on HTTP Range support. GLOBAL (window) so BOTH the
+     desktop Listen player and the mobile bottom-bar (separate closures) share one cache.
+     Player-level fix → travels inside the .chiron package. Freed on page-hide. */
+  if (!window._chironResolveSrc) {
+    window._chironClipBlobs = {};
+    window._chironResolveSrc = function (path, cb) {
+      var C = window._chironClipBlobs;
+      if (C[path]) { cb(C[path]); return; }
+      try {
+        fetch(path).then(function (r) { return r.ok ? r.blob() : Promise.reject(); })
+          .then(function (b) { var u = URL.createObjectURL(b); C[path] = u; cb(u); })
+          .catch(function () { cb(path); });  // fallback: direct URL (e.g. file:// where fetch is blocked)
+      } catch (e) { cb(path); }
+    };
+    window.addEventListener('pagehide', function () {
+      var C = window._chironClipBlobs || {};
+      Object.keys(C).forEach(function (k) { try { URL.revokeObjectURL(C[k]); } catch (e) {} });
+      window._chironClipBlobs = {};
+    });
   }
-  window.addEventListener('pagehide', function () {
-    Object.keys(_clipBlobs).forEach(function (k) { try { URL.revokeObjectURL(_clipBlobs[k]); } catch (e) {} });
-    _clipBlobs = {};
-  });
+  var _resolveSrc = window._chironResolveSrc;
 
   function play(clip, btn, glowEl, idleIco) {
     if (active && active.btn === btn) { audio.pause(); audio.currentTime = 0; clearActive(); return; }
@@ -1590,11 +1595,13 @@
 
     // New clip
     activeClip = { clip: clip, idx: idx };
-    mobileAudio.src = clip.audioPath;
+    window._chironResolveSrc(clip.audioPath, function (resolvedSrc) {
+    mobileAudio.src = resolvedSrc;
     mobileAudio.play().then(function () {
       syncBarToActive();
     }).catch(function () {
       activeClip = null;
+    });
     });
   }
 
