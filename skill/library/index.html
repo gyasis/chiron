@@ -75,6 +75,11 @@ body{margin:0;font-family:var(--font-b);background:var(--chiron-bg);color:var(--
 .gen.on{border-style:solid;border-color:var(--chiron-accent);color:var(--chiron-accent);cursor:pointer}
 .gen.on:hover{background:var(--chiron-accent);color:#fff}
 .empty{padding:40px;text-align:center;color:var(--chiron-muted)}
+.sechdr{display:flex;align-items:center;gap:8px;padding:16px 18px 7px;font-family:var(--font-h);font-weight:700;font-size:13px;color:var(--chiron-fg-secondary);border-bottom:1px solid var(--chiron-divider)}
+.secct{font-weight:600;font-size:12px;color:#fff;background:var(--chiron-accent);border-radius:99px;padding:0 8px}
+.secnote{font-weight:400;font-size:12px;color:var(--chiron-muted);margin-left:auto}
+.reviewband{padding:11px 14px;margin:8px 14px 4px;background:#fef9c3;border:1px solid #eab308;border-radius:10px;color:#713f12;font-weight:600;font-size:13px}
+:root[data-theme=dark] .reviewband{background:#3a3312;color:#eab308}
 /* ---------- MOBILE (M-A: tab bar + filter sheet) ---------- */
 .mbar{display:none}
 .sheet-backdrop{display:none}
@@ -169,6 +174,8 @@ body,.topbar,.pills,.facets,.row,.rhead{transition:background .2s,color .2s,bord
     <div class="sort"><span class="sl">Sort</span> <select id="sort"></select></div>
     <button class="genbtn" onclick="LIB.wizard(true)">✦ <span class="glbl">Generate</span></button>
     <button class="themebtn" id="themebtn" onclick="LIB.theme()" title="Toggle light / dark">🌙</button>
+    <button class="themebtn" title="Import a .chiron lesson file (install offline)" onclick="document.getElementById('importfile').click()">⬆</button>
+    <input id="importfile" type="file" accept=".chiron,.zip" hidden>
   </div>
   <div class="pills" id="pills"></div>
   <div class="body">

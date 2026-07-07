@@ -208,6 +208,22 @@ def load_persona_block() -> str:
     return "Persona: Lucrezia — warm Italian medical tutor; greets the learner by name; bilingual (English instruction, perfect Italian for target words); rigorous on clinical facts; never voices the learner's own turns."
 
 
+def _user_ctx() -> str:
+    """Wizard/OCR grounding: CH_GROUNDING points to a markdown file of user-provided source/context."""
+    p = os.environ.get("CH_GROUNDING")
+    if p:
+        try:
+            t = Path(p).read_text().strip()
+        except Exception:
+            t = ""
+        if t:
+            return f"## USER-PROVIDED SOURCE (OCR'd pages / notes — prioritize, weave in):\n{t[:4000]}"
+    return ""
+
+
+USER_CTX = _user_ctx()
+
+
 async def phase2_author(passage: dict, cur: dict) -> dict:
     if (OUT / "breakdown.json").exists() and os.environ.get("CH_FORCE") != "1":
         print("[phase 2] RESUME — reusing existing breakdown.json (CH_FORCE=1 to re-author)", flush=True)
@@ -222,6 +238,8 @@ async def phase2_author(passage: dict, cur: dict) -> dict:
           f"Options (verbatim): {passage['options_it']}. In the question/concept track, state the answer and give "
           f"per-option medical reasoning (associated vs NOT associated). Bilingual: English instruction, Italian for "
           f"every target term, and gloss each Italian term in English (podcast-safe). Return ONLY the JSON object.")
+    if USER_CTX:
+        p += "\n\n" + USER_CTX
 
     def ap_valid(obj):
         iss = []

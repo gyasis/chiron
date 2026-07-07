@@ -78,11 +78,25 @@ async def json_with_repair(prompt, name, md, validate_fn=None, max_repair=3):
     return None
 
 
+def _user_ctx() -> str:
+    """Wizard/OCR grounding: CH_GROUNDING points to a markdown file of user-provided source/context."""
+    p = os.environ.get("CH_GROUNDING")
+    if p:
+        try:
+            t = Path(p).read_text().strip()
+        except Exception:
+            t = ""
+        if t:
+            return f"## USER-PROVIDED SOURCE (OCR'd pages / notes — build the lesson around this):\n{t[:4000]}\n\n"
+    return ""
+
+
 async def phase2_author():
     OUT.mkdir(parents=True, exist_ok=True)
     p = (
         f"You are Lucrezia, a warm Italian tutor. Author a REGULAR (non-medical) Italian-language lesson on **{TOPIC}** "
         f"for {LEARNER} — a native-English speaker learning Italian. LANGUAGE-FIRST: the learner must understand and use the Italian.\n\n"
+        + _user_ctx() +
         "## OUTPUT — return ONLY a content.json with this schema:\n"
         "{\n"
         '  "title":"<Italian title>", "subtitle":"<one EN sentence>", "langName":"Italiano", "cefr":"A2-B1",\n'

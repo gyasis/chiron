@@ -116,6 +116,22 @@ def harrison(q, n=4):
         return f"[harrison unavailable: {e}]"
 
 
+def _user_ctx() -> str:
+    """Wizard/OCR grounding: CH_GROUNDING points to a markdown file of user-provided source/context."""
+    p = os.environ.get("CH_GROUNDING")
+    if p:
+        try:
+            t = Path(p).read_text().strip()
+        except Exception:
+            t = ""
+        if t:
+            return f"## USER-PROVIDED SOURCE (OCR'd pages / notes — prioritize, weave in):\n{t[:4000]}\n\n"
+    return ""
+
+
+USER_CTX = _user_ctx()
+
+
 # ── Phase 2 — AUTHOR the ward-shape content.json ──
 async def phase2_author():
     OUT.mkdir(parents=True, exist_ok=True)
@@ -125,7 +141,7 @@ async def phase2_author():
         f"You are Lucrezia, a warm Italian medical tutor. Author a MEDICAL-ITALIAN ward lesson on **{TOPIC}**, "
         f"set in **{setting}**, for {LEARNER} — a native-English-speaker DOCTOR learning medical Italian for the SSM exam.\n"
         "LANGUAGE-FIRST: the goal is to UNDERSTAND and SPEAK the Italian; the medicine is the bonus (but must be ACCURATE).\n\n"
-        f"## GROUNDING (Harrison's — keep every clinical claim accurate to this; do not invent):\n{grounding}\n\n"
+        f"{USER_CTX}## GROUNDING (Harrison's — keep every clinical claim accurate to this; do not invent):\n{grounding}\n\n"
         "## OUTPUT — return ONLY a content.json with EXACTLY this schema:\n"
         "{\n"
         '  "title": "<Italian title>", "subtitle": "<one EN sentence>", "langName": "Italiano medico", "cefr": "B1-B2",\n'

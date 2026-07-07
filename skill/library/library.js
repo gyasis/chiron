@@ -56,6 +56,7 @@ async function boot(){
     document.getElementById('w-cam').addEventListener('change', e=>LIB.wizAddImgs(e.target));
     document.getElementById('w-gal').addEventListener('change', e=>LIB.wizAddImgs(e.target)); }
   document.getElementById('themebtn').textContent = document.documentElement.getAttribute('data-theme')==='dark'?'☀️':'🌙';
+  const imp=document.getElementById('importfile'); if(imp) imp.addEventListener('change', e=>LIB.importChiron(e.target));
   renderAll();
 }
 const domCls = d => 'dom-'+d;
@@ -172,12 +173,24 @@ function renderRows(){
   // STAGING: newly-generated lessons (status==='staged') surface in a "Needs Review" band
   // at the top, separate from the published library, until the user reviews + accepts them.
   const staged = list.filter(l=>l.ready && l.status==='staged');
-  const rest   = list.filter(l=>!(l.ready && l.status==='staged'));
-  const banner = staged.length
-    ? `<div style="grid-column:1/-1;padding:11px 14px;margin:6px 0 10px;background:#fef9c3;border:1px solid #eab308;border-radius:10px;color:#713f12;font-weight:600">🟡 Needs Review — ${staged.length} newly generated lesson${staged.length===1?'':'s'}, not yet published. Open to review; say &ldquo;accept&rdquo; to publish.</div>`
-    : '';
-  const rows = banner + staged.map(rowHtml).join('') + rest.slice(0,600).map(rowHtml).join('');
-  document.getElementById('rows').innerHTML = rows || `<div class="empty">No lessons match these filters.</div>`;
+  const ready  = list.filter(l=>l.ready && l.status!=='staged');
+  const queued = list.filter(l=>!l.ready);
+  const hdr = (icon,label,n,note) => `<div class="sechdr">${icon} ${label} <span class="secct">${n}</span><span class="secnote">${note}</span></div>`;
+  const parts = [];
+  if (staged.length){
+    parts.push(`<div class="reviewband">🟡 Needs Review — ${staged.length} newly generated lesson${staged.length===1?'':'s'}, not yet published. Open to review, then Accept to publish.</div>`);
+    parts.push(...staged.map(rowHtml));
+  }
+  if (ready.length){
+    const dl = ready.filter(l=>l.bundle).length;
+    parts.push(hdr('📚','Available', ready.length, dl?`${dl} downloadable`:'open to study'));
+    parts.push(...ready.map(rowHtml));
+  }
+  if (queued.length){
+    parts.push(hdr('○','To generate', queued.length, 'tap Generate to build'));
+    parts.push(...queued.slice(0,600).map(rowHtml));
+  }
+  document.getElementById('rows').innerHTML = parts.join('') || `<div class="empty">No lessons match these filters.</div>`;
 }
 function renderAll(){ renderPills(); renderFacets(); renderRows(); }
 const LIB = {
@@ -215,6 +228,31 @@ const LIB = {
     const keys=await cache.keys();
     await Promise.all(keys.filter(r=>new URL(r.url).pathname.includes('/lessons/'+dl.id+'/')).map(r=>cache.delete(r)));
     delete DL[slug]; saveDL(); renderRows(); },
+  /* ---- import a shared .chiron file → unzip into the offline cache (sideload) ---- */
+  async importChiron(input){ const f=input.files&&input.files[0]; if(!f) return; input.value='';
+    try{
+      const slug=(f.name||'imported').replace(/\.(chiron|zip)$/i,'');
+      const files=await unzip(new Uint8Array(await f.arrayBuffer()));
+      const names=Object.keys(files).filter(n=>!n.endsWith('/') && !n.includes('__MACOSX'));
+      if(!names.some(n=>/\.html$/.test(n))) throw new Error('no lesson HTML in this bundle');
+      const prefix=commonPrefix(names), rel=n=>prefix && n.startsWith(prefix)?n.slice(prefix.length):n;
+      const id='dl-'+slug, cache=await caches.open(LCACHE);
+      for(const n of names){ const path=rel(n);
+        await cache.put(new Request(new URL('lessons/'+id+'/'+path, location.href)), new Response(files[n],{headers:{'Content-Type':mimeFor(path)}})); }
+      DL[slug]={ id, entry: pickEntry(names.map(rel)) }; saveDL();
+      // sideloaded lesson not in the index → synthesize a minimal entry so it lists + opens
+      if(!LMAP[slug]){
+        let title=slug, dom='medicine';
+        try{ const cjn=names.find(n=>/(^|\/)chiron\.json$/.test(n));
+          if(cjn){ const cj=JSON.parse(new TextDecoder().decode(files[cjn])); title=cj.title||slug;
+            dom=(cj.domain==='language-it')?'medical-italian':(cj.domain||'medicine'); } }catch(e){}
+        const clips=names.filter(n=>/\.mp3$/.test(n)).length;
+        LESSONS.push({id:slug,title,domain:dom,system:null,subject:null,topic:null,level:null,scope:'disease',trend:null,status:'published',clips,ready:true,mtime:0,bundle:false,imported:true});
+        LMAP[slug]=LESSONS[LESSONS.length-1];
+      }
+      renderRows();
+      alert('Imported "'+(LMAP[slug]?LMAP[slug].title:slug)+'" — now available offline on this device.');
+    }catch(e){ alert('Import failed: '+e.message); } },
 
   /* ---- theme (single 🌙/☀️ toggle) ---- */
   theme(){ const dark=document.documentElement.getAttribute('data-theme')==='dark', nx=dark?'light':'dark';
