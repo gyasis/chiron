@@ -32,6 +32,12 @@ function detectDepthHint(subject, domain){
   return 'systematic';
 }
 let GENJOB=null;
+let WIZ_IMAGES=[];   // accumulated page captures (File[]) — camera adds one at a time, gallery adds many
+function wizRenderImgs(){
+  const el=document.getElementById('w-imglist'); if(!el) return;
+  el.innerHTML=WIZ_IMAGES.map((f,i)=>`<span class="thumb"><img src="${URL.createObjectURL(f)}" alt=""><button onclick="LIB.wizRmImg(${i})" title="remove">×</button></span>`).join('');
+  const c=document.getElementById('w-imgcount'); if(c) c.textContent=WIZ_IMAGES.length?`${WIZ_IMAGES.length} page${WIZ_IMAGES.length>1?'s':''} · OCR'd on generate`:'';
+}
 
 async function boot(){
   CONFIG = await (await fetch('library.config.json')).json();
@@ -47,8 +53,8 @@ async function boot(){
   // wizard controls
   const wd=document.getElementById('w-domain');
   if(wd){ wd.innerHTML=Object.keys(DEPTHS).map(d=>`<option value="${d}">${domLabel(d)}</option>`).join(''); LIB.wizDepth();
-    document.getElementById('w-images').addEventListener('change', e=>{
-      document.getElementById('w-imglist').innerHTML=[...e.target.files].map(f=>`<span class="chip">🖼 ${f.name}</span>`).join(''); }); }
+    document.getElementById('w-cam').addEventListener('change', e=>LIB.wizAddImgs(e.target));
+    document.getElementById('w-gal').addEventListener('change', e=>LIB.wizAddImgs(e.target)); }
   document.getElementById('themebtn').textContent = document.documentElement.getAttribute('data-theme')==='dark'?'☀️':'🌙';
   renderAll();
 }
@@ -219,7 +225,9 @@ const LIB = {
   /* ---- Wizard ---- */
   wizard(open){ document.getElementById('wizback').classList.toggle('show',open);
     if(open){ document.getElementById('wizform').style.display=''; document.getElementById('wizprog').style.display='none';
-      setTimeout(()=>document.getElementById('w-subject').focus(),50); } },
+      WIZ_IMAGES=[]; wizRenderImgs(); setTimeout(()=>document.getElementById('w-subject').focus(),50); } },
+  wizAddImgs(input){ [...input.files].forEach(f=>WIZ_IMAGES.push(f)); input.value=''; wizRenderImgs(); },
+  wizRmImg(i){ WIZ_IMAGES.splice(i,1); wizRenderImgs(); },
   wizDepth(){ const d=document.getElementById('w-domain').value;
     document.getElementById('w-depth').innerHTML=(DEPTHS[d]||[]).map(([v,l])=>`<option value="${v}">${l}</option>`).join('');
     LIB.wizHint(); },
@@ -235,8 +243,8 @@ const LIB = {
     const stage=document.getElementById('w-nobake').checked?'assemble':'all';
     const btn=document.querySelector('.btn-gen'); btn.disabled=true; btn.textContent='Starting…';
     try{
-      let images=null; const files=document.getElementById('w-images').files;
-      if(files && files.length){ const fd=new FormData(); [...files].forEach(f=>fd.append('files',f));
+      let images=null;
+      if(WIZ_IMAGES.length){ const fd=new FormData(); WIZ_IMAGES.forEach((f,i)=>fd.append('files',f,f.name||`page-${i+1}.jpg`));
         images=(await (await fetch(API+'/upload',{method:'POST',body:fd})).json()).paths; }
       const r=await (await fetch(API+'/generate',{method:'POST',headers:{'Content-Type':'application/json'},
         body:JSON.stringify({domain,subject,depth,grounding,images,stage})})).json();

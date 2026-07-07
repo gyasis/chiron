@@ -16,7 +16,7 @@ Endpoints
 A generated lesson lands with chiron.json.status='staged' → it shows in the library's
 "🟡 Needs Review" band until Accept publishes it. Run:  python3 app.py   (uvicorn :8911)
 """
-import json, os, subprocess, sys, threading, uuid
+import base64, json, os, subprocess, sys, threading, urllib.request, uuid
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -107,20 +107,38 @@ def _write_status(out: Path, job: dict, status: str) -> None:
     cj_path.write_text(json.dumps(cj, indent=2))
 
 
+# OCR the wizard's captured page images through the Atelier governor (R-AG1/AG2 — vision model,
+# governed, NOT raw ollama). Host default matches audio-bake.ts's convention (env-overridable).
+VLM_URL = os.environ.get("CHIRON_VLM_URL", "http://192.168.0.159:8799/llm/ollama")
+VLM_MODEL = os.environ.get("CHIRON_VLM_MODEL", "qwen2.5vl:7b")
+_OCR_PROMPT = ("Transcribe this page image to clean Markdown. Preserve every heading, list, table and "
+               "clinical fact verbatim; keep drug names, doses and values exact. Output ONLY the transcription.")
+
+
+def _ocr_image(path: str) -> str:
+    """One image → Markdown via the governor's vision lane. Governed, not raw :11434 (R-AG2)."""
+    with open(path, "rb") as f:
+        b64 = base64.b64encode(f.read()).decode()
+    body = json.dumps({"model": VLM_MODEL, "stream": False,
+                       "messages": [{"role": "user", "content": _OCR_PROMPT, "images": [b64]}]}).encode()
+    req = urllib.request.Request(VLM_URL.rstrip("/") + "/api/chat", data=body,
+                                 headers={"Content-Type": "application/json"})
+    with urllib.request.urlopen(req, timeout=180) as r:
+        return json.loads(r.read()).get("message", {}).get("content", "")
+
+
 def _ingest_images(images: list, out: Path) -> str:
-    """Server-side OCR: run each image through the node ingest adapter → markdown, concatenated.
-    Best-effort — a missing adapter or failure yields '' rather than aborting the job."""
-    md_parts = []
-    adapter = SKILL / "dist" / "ingest-adapters" / "image.js"
+    """Captured page images → OCR'd Markdown (concatenated) for the CH_GROUNDING slot.
+    Best-effort — governor unreachable / a bad image yields '' rather than aborting the job."""
+    parts = []
     for img in images or []:
         try:
-            r = subprocess.run(["node", str(adapter), img], cwd=str(SKILL),
-                               capture_output=True, text=True, timeout=120)
-            if r.returncode == 0 and r.stdout.strip():
-                md_parts.append(r.stdout.strip())
+            md = _ocr_image(img)
+            if md and md.strip():
+                parts.append(md.strip())
         except Exception:
             pass
-    md = "\n\n".join(md_parts)
+    md = "\n\n---\n\n".join(parts)
     if md:
         (out / "_ingest.md").write_text(md)
     return md

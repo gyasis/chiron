@@ -137,8 +137,14 @@ body,.topbar,.pills,.facets,.row,.rhead{transition:background .2s,color .2s,bord
 .frow2{display:flex;gap:12px}.frow2>div{flex:1;min-width:0}
 .hint{font-size:12px;color:var(--chiron-muted);margin-top:7px;min-height:16px}
 .hint b{color:var(--chiron-accent);text-transform:capitalize}
-.imglist{display:flex;flex-wrap:wrap;gap:6px;margin-top:7px}
-.imglist .chip{font-size:11px;background:var(--chiron-elevated);border-radius:6px;padding:3px 8px;color:var(--chiron-fg-secondary)}
+.imglist{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+.capture{display:flex;align-items:center;gap:8px}
+.capbtn{font:inherit;font-size:13px;font-family:var(--font-h);border:1px solid var(--chiron-border);background:var(--chiron-bg);color:var(--chiron-fg);border-radius:9px;padding:8px 13px;cursor:pointer}
+.capbtn:hover{border-color:var(--chiron-accent)}
+.imgcount{font-size:12px;color:var(--chiron-muted)}
+.imglist .thumb{position:relative;display:inline-block}
+.imglist .thumb img{width:50px;height:50px;object-fit:cover;border-radius:7px;border:1px solid var(--chiron-border);display:block}
+.imglist .thumb button{position:absolute;top:-6px;right:-6px;width:18px;height:18px;border-radius:50%;border:none;background:var(--chiron-fg);color:var(--chiron-bg);font-size:12px;line-height:16px;cursor:pointer;padding:0}
 .modal-f{display:flex;align-items:center;gap:12px;margin-top:18px;padding-top:14px;border-top:1px solid var(--chiron-divider)}
 .chk{font-size:12px;color:var(--chiron-muted);display:flex;align-items:center;gap:6px;cursor:pointer}
 .btn-gen{margin-left:auto;font:inherit;font-family:var(--font-h);font-weight:700;font-size:14px;border:none;border-radius:99px;background:var(--chiron-accent);color:#fff;padding:10px 20px;cursor:pointer}
@@ -192,8 +198,14 @@ body,.topbar,.pills,.facets,.row,.rhead{transition:background .2s,color .2s,bord
     <div id="w-hint" class="hint"></div>
     <label class="fl">Extra context <span class="opt">optional</span></label>
     <textarea id="w-grounding" class="fi" rows="2" placeholder="Source notes, a focus, a reviewer instruction…"></textarea>
-    <label class="fl">Images → OCR <span class="opt">optional · use as context</span></label>
-    <input id="w-images" class="fi" type="file" accept="image/*" multiple>
+    <label class="fl">Pages → OCR <span class="opt">optional · snap or add pages, used as context</span></label>
+    <div class="capture">
+      <button type="button" class="capbtn" onclick="document.getElementById('w-cam').click()">📷 Camera</button>
+      <button type="button" class="capbtn" onclick="document.getElementById('w-gal').click()">🖼 Gallery</button>
+      <span id="w-imgcount" class="imgcount"></span>
+    </div>
+    <input id="w-cam" type="file" accept="image/*" capture="environment" hidden>
+    <input id="w-gal" type="file" accept="image/*" multiple hidden>
     <div id="w-imglist" class="imglist"></div>
     <div class="modal-f">
       <label class="chk"><input type="checkbox" id="w-nobake"> quick preview (skip audio bake)</label>
