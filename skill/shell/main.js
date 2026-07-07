@@ -1266,11 +1266,30 @@
     if (_progressTimer) { clearInterval(_progressTimer); _progressTimer = null; }
   });
 
+  /* Blob-cache each clip in memory so the <audio> source is a fully-buffered blob: URL —
+     seeking then works with ZERO dependency on HTTP Range support. This is a player-level
+     fix so it travels inside the .chiron package (a plain static host or the bundle's
+     service worker no longer break scrubbing). Cached per clip; freed on page-hide. */
+  var _clipBlobs = {};
+  function _resolveSrc(path, cb) {
+    if (_clipBlobs[path]) { cb(_clipBlobs[path]); return; }
+    try {
+      fetch(path).then(function (r) { return r.ok ? r.blob() : Promise.reject(); })
+        .then(function (b) { var u = URL.createObjectURL(b); _clipBlobs[path] = u; cb(u); })
+        .catch(function () { cb(path); });  // fallback: direct URL (e.g. file:// where fetch is blocked)
+    } catch (e) { cb(path); }
+  }
+  window.addEventListener('pagehide', function () {
+    Object.keys(_clipBlobs).forEach(function (k) { try { URL.revokeObjectURL(_clipBlobs[k]); } catch (e) {} });
+    _clipBlobs = {};
+  });
+
   function play(clip, btn, glowEl, idleIco) {
     if (active && active.btn === btn) { audio.pause(); audio.currentTime = 0; clearActive(); return; }
     clearActive();
     userTookOver = false; // fresh play: re-enable auto-scroll
-    audio.src = clip.audioPath;
+    _resolveSrc(clip.audioPath, function (resolvedSrc) {
+    audio.src = resolvedSrc;
     audio.play().then(function () {
       // Find or create the countdown timer element for this button
       var timerEl = btn.querySelector('.chiron-clip-timer');
@@ -1291,6 +1310,7 @@
       if (glowEl) { glowEl.classList.add('chiron-listening'); glowEl.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
       _startProgress();
     }).catch(function () { btn.classList.add('err'); setTimeout(function () { btn.classList.remove('err'); }, 1600); });
+    });
   }
 
   function panelLabel(c) {
