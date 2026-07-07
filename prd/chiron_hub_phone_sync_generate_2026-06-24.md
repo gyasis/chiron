@@ -140,6 +140,16 @@ was scoped in `chiron_offsite_lesson_gen_promptchain_2026-06-28.md` → delivera
 **Remaining (own phase):** (c) `.chiron` bundle **packaging** (zip a published lesson → `lessons/<slug>.chiron` so the library's Download/offline path has something to fetch; `build-hub-catalog.mjs` is the seed) + a "available to download vs generate" split; (d) **mobile PWA** camera polish (file-input already accepts camera on mobile; the OCR adapter path works server-side); Italian chains' `CH_GROUNDING` consumption (their grounding is MCQ/PACES-based — different injection point).
 **Next pickup:** Phase 3 — `.chiron` packaging + the download/available catalog, then the mobile PWA capture polish.
 
+### 2026-07-07 (Phase 3) — `.chiron` packaging wired + download/available/generate split SHIPPED
+**Found:** packaging already existed (`build-hub-catalog.mjs` → `.chiron` + `lessons.json`; `bundle-lesson.sh` the zipper) but wasn't wired to accept, and the UI didn't expose it. **Done (commit `2270a43`):**
+- **`build-library-index.mjs`** now stamps `bundle` + `sizeMB` per lesson from the `.chiron` on disk (single source of truth).
+- **`build-hub-catalog.mjs --only <slug>`** — bundle ONE lesson + **upsert** `lessons.json` (the server calls this on accept, cheap).
+- **Server accept** → `_bundle_lesson(slug)` then stamp `status=published` then reindex. NB the bundler **regenerates `chiron.json` as the chiron/1 manifest (no status)**, so status is stamped AFTER bundling (verified: `chiron.json` keeps both manifest fields + `status:published`).
+- **Library UI three-way split:** bundled → **⬇ Download{size}** (phone, caches offline via SW) / **⬇{size}** (desktop, grab the `.chiron` to install/share) · ready-unbundled → **Open** (stream) · queued → **✦ Generate** (opens the wizard **prefilled** from the class, depth auto-detected). `open()` now resolves under the generate-server's `/lessons` mount.
+**Verified in a real headed browser:** 33 bundled rows show ⬇, 118 queued show ✦ Generate, 6 ready-unbundled show Open; `open()`→HTTP 200, `.chiron`→200, `genFor` prefill (Gastrointestinal→Atlas); end-to-end accept re-bundles the `.chiron` + upserts `lessons.json`.
+**Remaining:** mobile PWA camera-capture polish; Italian chains' `CH_GROUNDING` consumption (MCQ/PACES injection point); an "available to download" section header split in the UI (currently inline per-row affordances).
+**Next pickup:** Phase 4 — mobile PWA capture polish + install-from-`.chiron` flow on the phone.
+
 ---
 
 *Captured 2026-06-24. LAN home hub; phone is a cache of the hub; phone-remove never touches the source. Updated 2026-07-07: chains built, Wizard + Staging locked, Chiron server next.*
