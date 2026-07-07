@@ -142,13 +142,18 @@ function renderRows(){
     // SAFETY: storage management (Download / Remove-from-device) is PHONE-ONLY.
     // Desktop gets NO remove/delete affordance — only Open — so nothing can be mistakenly deleted.
     const isPhone = matchMedia('(max-width:760px)').matches;
+    const size = l.sizeMB ? ` ${l.sizeMB}MB` : '';
     const status = !l.ready
-      ? `<span class="queued">not generated</span><span class="gen" aria-disabled="true" title="On-device generation is coming soon (Phase 2)" style="cursor:not-allowed;opacity:.55">Generate · soon</span>`
+      ? `<span class="queued">not generated</span><span class="gen on" onclick="event.stopPropagation();LIB.genFor('${cssq(l.subject||l.system||l.topic||l.title)}','${l.domain}')">✦ Generate</span>`
       : isPhone
         ? `<span class="ready">▸ ${l.clips}</span>` + (dl
             ? `<span class="ready" title="cached on this device">✓ offline</span><span class="open" onclick="event.stopPropagation();LIB.remove('${slug}')">Remove</span>`
-            : `<span class="open" onclick="event.stopPropagation();LIB.download('${slug}')">Download</span>`)
-        : `<span class="ready">▸ ${l.clips} audio</span><span class="open">Open →</span>`;
+            : l.bundle
+              ? `<span class="open" onclick="event.stopPropagation();LIB.download('${slug}')">⬇ Download${size}</span>`
+              : `<span class="open" onclick="event.stopPropagation();LIB.open('${slug}')">Open →</span>`)
+        : `<span class="ready">▸ ${l.clips} audio</span>`
+          + (l.bundle ? `<span class="open" title="download the .chiron bundle (install / share)" onclick="event.stopPropagation();LIB.dlfile('${slug}')">⬇${size}</span>` : '')
+          + `<span class="open">Open →</span>`;
     const onclick = l.ready ? ` onclick="LIB.open('${slug}')"` : '';
     const stagedActions = (l.ready && l.status==='staged')
       ? `<button class="sendback" onclick="event.stopPropagation();LIB.sendback('${slug}')">Send back</button><button class="accept" onclick="event.stopPropagation();LIB.accept('${slug}')">✓ Accept</button>` : '';
@@ -178,7 +183,17 @@ const LIB = {
   clearAll(){ F.q=''; F.domain.clear(); Object.values(F.facets).forEach(s=>s.clear()); document.getElementById('q').value=''; renderAll(); },
   sheet(open){ document.getElementById('facets').classList.toggle('open',open); document.getElementById('backdrop').classList.toggle('show',open); },
   open(slug){ const l=LMAP[slug]; if(!l) return; const dl=DL[slug];
-    window.open(dl ? ('lessons/'+dl.id+'/'+dl.entry) : ('../'+l.path), '_blank'); },
+    if(dl){ window.open('lessons/'+dl.id+'/'+dl.entry, '_blank'); return; }         // offline cache (SW)
+    const entry=(l.path||'lesson.html').split('/').pop();
+    // served by the generate-server → its /lessons mount (=generated/); else ../ (page sits in generated/chiron-library)
+    const url=(location.port==='8911') ? (API+'/lessons/'+l.id+'/'+entry) : ('../'+l.path);
+    window.open(url, '_blank'); },
+  genFor(subject,domain){ LIB.wizard(true);
+    document.getElementById('w-subject').value=subject||'';
+    if(domain && DEPTHS[domain]){ document.getElementById('w-domain').value=domain; LIB.wizDepth(); }
+    LIB.wizHint(); },
+  dlfile(slug){ const a=document.createElement('a'); a.href='lessons/'+slug+'.chiron'; a.download=slug+'.chiron';
+    document.body.appendChild(a); a.click(); a.remove(); },
   async download(slug){ const l=LMAP[slug]; if(!l || DL[slug]) return;
     try{
       const u8 = new Uint8Array(await (await fetch('lessons/'+slug+'.chiron')).arrayBuffer());

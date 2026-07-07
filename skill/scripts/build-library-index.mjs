@@ -135,11 +135,16 @@ for (const d of dirs) {
     }
   }
   const mtime = statSync(join(d, 'lesson.html')).mtimeMs;
+  // download-availability = disk truth: is there a packaged .chiron for this lesson?
+  const slug = rel.replace(/[\/]/g, '-');
+  const chironPath = join(OUT, 'lessons', slug + '.chiron');
+  const hasBundle = existsSync(chironPath);
   lessons.push({
     id: rel, title, path: join(rel, cj.entry || 'lesson.html'), domain: tags.dom,
     system: tags.sys || null, subject: tags.subj || null, topic: tags.topic || null,
     level: tags.level || null, scope: tags.scope || (tags.subj && /diseases|disorders/i.test(title) ? 'subject' : 'disease'),
     trend: tags.trend || null, status: cj.status || 'published', clips, ready: true, mtime,
+    bundle: hasBundle, sizeMB: hasBundle ? +(statSync(chironPath).size / 1048576).toFixed(1) : null,
   });
 }
 

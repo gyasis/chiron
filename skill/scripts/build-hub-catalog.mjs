@@ -16,7 +16,9 @@ const BUNDLER = join(SKILL, 'scripts', 'bundle-lesson.sh');
 mkdirSync(LESSONS_DIR, { recursive: true });
 
 const index = JSON.parse(readFileSync(join(OUT, 'library.index.json'), 'utf8'));
-const ready = index.lessons.filter((l) => l.ready);
+const onlyIdx = process.argv.indexOf('--only');
+const only = onlyIdx >= 0 ? process.argv[onlyIdx + 1] : null;   // bundle ONE slug (the server calls this on accept)
+const ready = index.lessons.filter((l) => l.ready && (!only || l.id.replace(/[\/]/g, '-') === only));
 const DOMAP = { medicine: 'medicine', 'medical-italian': 'language-it', italian: 'language-it' };
 const catalog = [];
 let ok = 0, fail = 0;
@@ -39,7 +41,17 @@ for (const l of ready) {
     ok++;
   } catch (e) { fail++; process.stderr.write(`bundle fail ${slug}: ${String(e.message).slice(0,80)}\n`); }
 }
-writeFileSync(join(LESSONS_DIR, 'lessons.json'), JSON.stringify({ generatedAt: new Date().toISOString(), lessons: catalog }, null, 2));
+// --only bundles one lesson → UPSERT it into the existing manifest instead of replacing the whole thing
+let manifest = catalog;
+if (only && existsSync(join(LESSONS_DIR, 'lessons.json'))) {
+  try {
+    const prev = JSON.parse(readFileSync(join(LESSONS_DIR, 'lessons.json'), 'utf8')).lessons || [];
+    const byFile = new Map(prev.map((e) => [e.file, e]));
+    for (const e of catalog) byFile.set(e.file, e);
+    manifest = [...byFile.values()];
+  } catch {}
+}
+writeFileSync(join(LESSONS_DIR, 'lessons.json'), JSON.stringify({ generatedAt: new Date().toISOString(), lessons: manifest }, null, 2));
 // persist the root-relative `path` rewrites (Open streams these) back into the index the app reads
 writeFileSync(join(OUT, 'library.index.json'), JSON.stringify(index, null, 2));
 console.log(`hub catalog → ${LESSONS_DIR}`);

@@ -20,7 +20,8 @@ import json, os, subprocess, sys, threading, uuid
 from datetime import datetime, timezone
 from pathlib import Path
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, File, HTTPException, UploadFile
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
@@ -80,6 +81,12 @@ def _derive_phase(log: Path, status: str) -> str:
 
 def _rebuild_catalog() -> None:
     subprocess.run(["node", str(SKILL / "scripts" / "build-library-index.mjs")],
+                   cwd=str(SKILL), capture_output=True)
+
+
+def _bundle_lesson(slug: str) -> None:
+    """Package one lesson → chiron-library/lessons/<slug>.chiron (+ lessons.json upsert) so it's downloadable."""
+    subprocess.run(["node", str(SKILL / "scripts" / "build-hub-catalog.mjs"), "--only", slug],
                    cwd=str(SKILL), capture_output=True)
 
 
@@ -183,8 +190,34 @@ def _reconcile() -> None:
 
 
 app = FastAPI(title="Chiron generate-server")
+# 127.0.0.1-only server; allow the library app to call it whichever local origin it's served from.
+app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
 _load()
 _reconcile()
+
+
+def _slug_of(ref: str) -> str:
+    return JOBS[ref]["slug"] if ref in JOBS else ref
+
+
+def _job_for_slug(slug: str) -> dict:
+    """An existing job for this slug, else synthesize one from the lesson's chiron.json (for slug-only re-gen)."""
+    for j in JOBS.values():
+        if j.get("slug") == slug:
+            return j
+    cj = {}
+    p = GEN / slug / "chiron.json"
+    if p.exists():
+        try:
+            cj = json.loads(p.read_text())
+        except Exception:
+            cj = {}
+    jid = uuid.uuid4().hex[:12]
+    job = {"id": jid, "created": _now(), "status": "queued", "phase": "queued",
+           "domain": cj.get("domain", "medicine"), "subject": cj.get("subject", slug),
+           "depth": cj.get("depth"), "slug": slug, "stage": "all", "extra": {}}
+    JOBS[jid] = job
+    return job
 
 
 class GenReq(BaseModel):
@@ -241,29 +274,55 @@ def job_status(jid: str):
     return {**j, "phase": _derive_phase(log, j.get("status", "")), "log_tail": tail}
 
 
-@app.post("/accept/{jid}")
-def accept(jid: str):
-    j = _get(jid)
-    out = GEN / j["slug"]
+@app.post("/accept/{ref}")
+def accept(ref: str):
+    """ref = a job id OR a lesson slug (the library is slug-centric). Flip chiron.json → published."""
+    slug = _slug_of(ref)
+    out = GEN / slug
     if not (out / "lesson.html").exists():
         raise HTTPException(409, "lesson not built yet")
-    _write_status(out, j, "published")
-    _rebuild_catalog()
-    j["status"] = "published"
-    _save()
-    return {"ok": True, "slug": j["slug"], "status": "published"}
+    p = out / "chiron.json"
+    _bundle_lesson(slug)   # package → .chiron (this REGENERATES chiron.json as the chiron/1 manifest — no status)
+    cj = {}                # so stamp status AFTER bundling, merging onto the manifest the bundler wrote
+    if p.exists():
+        try:
+            cj = json.loads(p.read_text())
+        except Exception:
+            cj = {}
+    cj.update(status="published", accepted=_now())
+    cj.setdefault("subject", slug)
+    p.write_text(json.dumps(cj, indent=2))
+    _rebuild_catalog()     # re-index → picks up published status + bundle=true/sizeMB from disk
+    if ref in JOBS:
+        JOBS[ref]["status"] = "published"
+        _save()
+    return {"ok": True, "slug": slug, "status": "published"}
 
 
-@app.post("/regenerate/{jid}")
-def regenerate(jid: str, body: RegenReq):
-    j = _get(jid)
+@app.post("/regenerate/{ref}")
+def regenerate(ref: str, body: RegenReq):
+    """ref = a job id OR a lesson slug. Re-run the same routing, appending the reviewer note to grounding."""
+    job = JOBS.get(ref) or _job_for_slug(ref)
     if body.note:
-        j["grounding"] = (j.get("grounding") or "") + f"\n\nReviewer note: {body.note}"
-        j["note"] = body.note
-    j.update(status="queued", phase="queued")
+        job["grounding"] = (job.get("grounding") or "") + f"\n\nReviewer note: {body.note}"
+        job["note"] = body.note
+    job.update(status="queued", phase="queued")
     _save()
-    threading.Thread(target=_run_job, args=(j,), daemon=True).start()
-    return {"ok": True, "job_id": jid, "status": "queued"}
+    threading.Thread(target=_run_job, args=(job,), daemon=True).start()
+    return {"ok": True, "job_id": job["id"], "slug": job["slug"], "status": "queued"}
+
+
+@app.post("/upload")
+async def upload(files: list[UploadFile] = File(...)):
+    """Mobile/desktop image capture lands here → saved to disk → returned paths go in /generate `images`."""
+    updir = STATE / "uploads"
+    updir.mkdir(exist_ok=True)
+    paths = []
+    for f in files:
+        dest = updir / f"{uuid.uuid4().hex[:8]}_{Path(f.filename or 'img').name}"
+        dest.write_bytes(await f.read())
+        paths.append(str(dest))
+    return {"paths": paths}
 
 
 # static: open a generated lesson, or the faceted library, straight from the app
