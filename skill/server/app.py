@@ -351,4 +351,6 @@ if (GEN / "chiron-library").exists():
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="127.0.0.1", port=PORT, log_level="info")
+    # 127.0.0.1 by default; set CHIRON_SERVER_HOST=0.0.0.0 to let the phone connect + sync over home wifi
+    host = os.environ.get("CHIRON_SERVER_HOST", "127.0.0.1")
+    uvicorn.run(app, host=host, port=PORT, log_level="info")

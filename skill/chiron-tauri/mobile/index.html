@@ -1,0 +1,188 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Chiron</title>
+<script>try{var _t=localStorage.getItem('chiron.theme');if(_t)document.documentElement.setAttribute('data-theme',_t);}catch(e){}</script>
+<style>
+:root{
+  --bg:#faf8f5;--surface:#fff;--elevated:#f0ebe4;--fg:#1a1a1a;--fg2:#4a4a4a;--muted:#7a7a7a;
+  --accent:#1e3a5f;--border:#e5e0d8;--divider:#ede8df;
+  --med:#1e6fbf;--medbg:#eef4fb;--medit:#b3522e;--meditbg:#f3e9d8;--lang:#6b8e4e;--langbg:#eef3e6;
+  --ok:#15803d;--review:#eab308;--reviewbg:#fef9c3;--reviewfg:#713f12;
+  --fh:'Inter',system-ui,sans-serif;--fb:'Source Sans 3','Inter',system-ui,sans-serif;
+}
+:root[data-theme=dark]{
+  --bg:#0f0f1a;--surface:#1a1a2e;--elevated:#252540;--fg:#f1f5f9;--fg2:#cbd5e1;--muted:#64748b;
+  --accent:#8b5cf6;--border:#2e2e4a;--divider:#1f1f35;
+  --med:#38bdf8;--medbg:#12263a;--medit:#f59e0b;--meditbg:#332510;--lang:#86efac;--langbg:#15301e;
+  --ok:#22c55e;--review:#eab308;--reviewbg:#3a3312;--reviewfg:#eab308;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;margin:0}
+body{background:var(--bg);color:var(--fg);font-family:var(--fb);display:flex;flex-direction:column;overflow:hidden;
+  transition:background .25s,color .25s;padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bottom)}
+/* header */
+.hd{flex:0 0 auto;display:flex;align-items:center;gap:10px;padding:12px 16px 8px;background:var(--surface);border-bottom:1px solid var(--divider)}
+.hd .mk{width:30px;height:30px;border-radius:9px;background:var(--accent);color:#fff;display:grid;place-items:center;font-weight:800;font-family:var(--fh);font-size:15px}
+.hd .ttl{font-family:var(--fh);font-weight:800;font-size:17px;color:var(--accent);flex:1}
+.hd .ico{width:36px;height:36px;border-radius:50%;border:1px solid var(--border);background:var(--bg);color:var(--fg);display:grid;place-items:center;font-size:15px}
+/* swipe pane */
+.pane{flex:1;display:flex;overflow-x:auto;scroll-snap-type:x mandatory;scroll-behavior:smooth;-ms-overflow-style:none;scrollbar-width:none;min-height:0}
+.pane::-webkit-scrollbar{display:none}
+.scr{flex:0 0 100%;width:100%;scroll-snap-align:start;overflow-y:auto;padding:12px 14px 82px}
+.scr::-webkit-scrollbar{display:none}
+.scrh{font-family:var(--fh);font-weight:800;font-size:20px;letter-spacing:-.01em;margin:6px 2px 12px}
+.scrh small{display:block;font-weight:500;font-size:13px;color:var(--muted);margin-top:3px}
+.search{display:flex;align-items:center;gap:8px;background:var(--bg);border:1px solid var(--border);border-radius:99px;padding:10px 14px;color:var(--fg);font-size:14px;margin-bottom:11px}
+.search input{border:none;background:none;flex:1;font:inherit;color:var(--fg);outline:none}
+.chips{display:flex;gap:7px;overflow-x:auto;padding-bottom:8px;margin-bottom:2px}
+.chips::-webkit-scrollbar{display:none}
+.chip{flex:0 0 auto;font-size:12.5px;padding:7px 14px;border-radius:99px;border:1px solid var(--border);background:var(--bg);color:var(--fg2);white-space:nowrap}
+.chip.on{background:var(--accent);color:#fff;border-color:var(--accent)}
+.sec{display:flex;align-items:center;gap:8px;font-family:var(--fh);font-weight:700;font-size:13px;color:var(--fg2);margin:16px 2px 8px}
+.sec .ct{font-size:11px;font-weight:700;color:#fff;background:var(--accent);border-radius:99px;padding:1px 8px}
+.sec .note{margin-left:auto;font-weight:400;font-size:11.5px;color:var(--muted)}
+.reviewband{background:var(--reviewbg);border:1px solid var(--review);border-radius:11px;padding:10px 13px;font-size:12.5px;color:var(--reviewfg);font-weight:600;margin:6px 0 4px}
+.row{display:flex;gap:12px;align-items:center;background:var(--surface);border:1px solid var(--border);border-radius:13px;padding:12px;margin-bottom:9px}
+.row .edge{width:5px;align-self:stretch;border-radius:3px;flex:0 0 auto;min-height:38px}
+.row.m .edge{background:var(--med)}.row.mi .edge{background:var(--medit)}.row.l .edge{background:var(--lang)}
+.row .body{flex:1;min-width:0}
+.row .t{font-family:var(--fh);font-weight:600;font-size:14.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.row .meta{display:flex;gap:6px;flex-wrap:wrap;margin-top:5px;align-items:center}
+.tag{font-size:10.5px;padding:1px 8px;border-radius:99px;background:var(--elevated);color:var(--fg2)}
+.tag.m{background:var(--medbg);color:var(--med)}.tag.mi{background:var(--meditbg);color:var(--medit)}.tag.l{background:var(--langbg);color:var(--lang)}
+.tag.rev{background:var(--reviewbg);color:var(--reviewfg);font-weight:700}
+.clip{font-size:11px;color:var(--muted)}
+.act{flex:0 0 auto;display:flex;flex-direction:column;gap:6px;align-items:flex-end}
+.btn{font-size:12px;font-weight:700;font-family:var(--fh);border-radius:99px;padding:7px 13px;border:1px solid var(--border);background:var(--bg);color:var(--accent);white-space:nowrap}
+.btn.dl{color:var(--ok);border-color:var(--ok)}.btn.gen{color:#fff;background:var(--accent);border-color:var(--accent)}
+.btn.acc{color:#fff;background:var(--ok);border-color:var(--ok)}
+.empty{padding:32px 10px;text-align:center;color:var(--muted);font-size:13.5px}
+/* generate */
+.fl{font-family:var(--fh);font-weight:600;font-size:12.5px;color:var(--fg2);margin:15px 2px 6px;display:block}
+.fi{width:100%;border:1px solid var(--border);background:var(--bg);color:var(--fg);border-radius:11px;padding:12px 13px;font:inherit;font-size:15px}
+.seg{display:flex;gap:7px;flex-wrap:wrap;margin-top:4px}
+.hintline{font-size:12.5px;color:var(--muted);margin-top:9px}.hintline b{color:var(--accent);text-transform:capitalize}
+.cap{display:flex;gap:9px;margin-top:6px}
+.capb{flex:1;border:1px dashed var(--border);background:var(--bg);color:var(--fg);border-radius:11px;padding:13px;font:inherit;font-size:13.5px;font-weight:600;font-family:var(--fh);text-align:center}
+.thumbs{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;align-items:center}
+.thumb{width:52px;height:52px;border-radius:9px;object-fit:cover;border:1px solid var(--border);position:relative}
+.thumbwrap{position:relative}.thumbwrap b{position:absolute;top:-6px;right:-6px;width:18px;height:18px;border-radius:50%;background:var(--fg);color:var(--bg);font-size:12px;display:grid;place-items:center}
+.genbig{margin-top:20px;width:100%;border:none;border-radius:14px;background:var(--accent);color:#fff;font-family:var(--fh);font-weight:800;font-size:16px;padding:15px}
+.genbig:disabled{opacity:.5}
+.steps{margin-top:14px;display:flex;flex-direction:column;gap:11px}
+.step{display:flex;align-items:center;gap:11px;font-size:14px;color:var(--muted)}
+.step .dot{width:22px;height:22px;border-radius:50%;border:2px solid var(--border);display:grid;place-items:center;font-size:12px;flex:0 0 auto}
+.step.done{color:var(--fg)}.step.done .dot{background:var(--ok);border-color:var(--ok);color:#fff}
+.step.now{color:var(--fg);font-weight:700}.step.now .dot{border-color:var(--accent)}
+.plog{background:var(--bg);border:1px solid var(--divider);border-radius:9px;padding:9px;font-size:11px;color:var(--muted);max-height:110px;overflow:auto;margin-top:12px;white-space:pre-wrap;font-family:ui-monospace,monospace}
+/* lesson page */
+.scr.lesson{display:flex;flex-direction:column;overflow:hidden;padding:12px 14px 82px}
+.lhd{display:flex;align-items:center;gap:8px;margin:2px 0 12px}
+.lback{font-size:26px;color:var(--muted)}
+.lttl{font-family:var(--fh);font-weight:800;font-size:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.modeseg{display:flex;background:var(--elevated);border-radius:11px;padding:4px;gap:4px;margin-bottom:12px}
+.modeseg button{flex:1;border:none;background:none;font:inherit;font-family:var(--fh);font-weight:700;font-size:14px;color:var(--muted);padding:10px;border-radius:8px}
+.modeseg button.mon{background:var(--surface);color:var(--accent);box-shadow:0 1px 3px rgba(0,0,0,.12)}
+.resume{display:flex;align-items:center;gap:6px;background:var(--medbg);color:var(--med);border-radius:10px;padding:10px 13px;font-size:12.5px;margin-bottom:12px}
+#mread.readwrap{flex:1;min-height:0;display:flex}
+.lessonframe{flex:1;width:100%;border:1px solid var(--border);border-radius:12px;background:#fff}
+#mplay{overflow-y:auto}
+.cover{height:150px;border-radius:16px;background:linear-gradient(135deg,var(--med),var(--accent));display:grid;place-items:center;color:#fff;font-family:var(--fh);font-weight:800;font-size:15px;margin:6px 0 16px;text-align:center;padding:16px}
+.np-t{font-family:var(--fh);font-weight:800;font-size:19px}.np-s{color:var(--muted);font-size:13.5px;margin-top:4px}
+.scrub{height:6px;border-radius:99px;background:var(--elevated);margin:20px 0 6px;overflow:hidden}.scrub i{display:block;height:100%;width:0;background:var(--accent)}
+.tspan{display:flex;justify-content:space-between;font-size:11.5px;color:var(--muted)}
+.transport{display:flex;align-items:center;justify-content:center;gap:26px;margin:20px 0}
+.transport .b{font-size:26px;color:var(--fg)}
+.transport .play{width:74px;height:74px;border-radius:50%;background:var(--accent);color:#fff;display:grid;place-items:center;font-size:30px}
+.autonote{background:var(--elevated);border-radius:10px;padding:11px 13px;font-size:12.5px;color:var(--fg2);margin:6px 0}
+/* offline / sync / settings */
+.synccard{background:var(--surface);border:1px solid var(--border);border-radius:13px;padding:14px;margin-bottom:12px}
+.syncrow{display:flex;align-items:center;gap:8px;font-family:var(--fh);font-size:14.5px;font-weight:700}
+.syncrow .dot2{width:9px;height:9px;border-radius:50%;background:var(--ok)}
+.syncrow .synced{margin-left:auto;font-size:12px;font-weight:600;color:var(--ok)}
+.syncsub{font-size:12.5px;color:var(--muted);margin:8px 0 12px;word-break:break-all}
+.syncbtn{width:100%;border:none;border-radius:10px;background:var(--accent);color:#fff;font-family:var(--fh);font-weight:700;font-size:14px;padding:12px}
+.impbtn{width:100%;border:1px dashed var(--border);background:var(--bg);color:var(--fg);border-radius:12px;padding:14px;font-family:var(--fh);font-weight:700;font-size:14px;margin-top:10px}
+.setrow{display:flex;gap:8px;margin-top:8px}.setrow .fi{flex:1}
+.setrow button{border:1px solid var(--accent);background:var(--accent);color:#fff;border-radius:10px;font-family:var(--fh);font-weight:700;padding:0 14px}
+/* bottom nav */
+.nav{position:fixed;left:0;right:0;bottom:0;height:calc(64px + env(safe-area-inset-bottom));padding-bottom:env(safe-area-inset-bottom);background:var(--surface);border-top:1px solid var(--border);display:flex;z-index:15}
+.nav button{flex:1;border:none;background:none;color:var(--muted);font:inherit;font-size:10.5px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font-family:var(--fh);font-weight:600}
+.nav button .i{font-size:20px}.nav button.on{color:var(--accent)}
+.dots{position:fixed;bottom:calc(72px + env(safe-area-inset-bottom));left:0;right:0;display:flex;justify-content:center;gap:6px;z-index:15}
+.dots i{width:6px;height:6px;border-radius:50%;background:var(--border)}.dots i.on{background:var(--accent);width:18px;border-radius:99px}
+.toast{position:fixed;left:50%;bottom:calc(84px + env(safe-area-inset-bottom));transform:translateX(-50%);background:var(--fg);color:var(--bg);font-size:13px;padding:10px 16px;border-radius:99px;z-index:40;opacity:0;transition:opacity .2s;pointer-events:none;max-width:88vw;text-align:center}
+.toast.show{opacity:.95}
+</style></head>
+<body>
+  <div class="hd"><div class="mk">C</div><div class="ttl" id="hdt">Library</div>
+    <div class="ico" id="importbtn">⬆</div><div class="ico" id="themebtn">🌙</div></div>
+
+  <div class="pane" id="pane">
+    <!-- 1 LIBRARY -->
+    <section class="scr" id="s-lib">
+      <div class="search">⌕ <input id="q" placeholder="Search lessons, diseases, systems…"></div>
+      <div class="chips" id="chips"></div>
+      <div id="rows"><div class="empty">Connecting to your library…</div></div>
+    </section>
+    <!-- 2 GENERATE -->
+    <section class="scr" id="s-gen">
+      <div class="scrh">Generate a lesson<small>Type a subject, or snap pages to ground it</small></div>
+      <div id="genform">
+        <label class="fl">Subject / topic</label>
+        <input id="w-subject" class="fi" placeholder="e.g. Aortic aneurysm · Cardiovascular · «magari»">
+        <label class="fl">Domain</label><div class="seg" id="w-domseg"></div>
+        <label class="fl">Depth</label><div class="seg" id="w-depseg"></div>
+        <div class="hintline" id="w-hint"></div>
+        <label class="fl">Pages → OCR <span style="font-weight:400;color:var(--muted)">optional · use as context</span></label>
+        <div class="cap"><label class="capb">📷 Camera<input id="w-cam" type="file" accept="image/*" capture="environment" hidden></label>
+          <label class="capb">🖼 Gallery<input id="w-gal" type="file" accept="image/*" multiple hidden></label></div>
+        <div class="thumbs" id="w-thumbs"></div>
+        <button class="genbig" id="w-go">✦ Generate</button>
+      </div>
+      <div id="genprog" style="display:none">
+        <div class="scrh" style="margin-top:2px" id="p-title">Generating…<small id="p-sub"></small></div>
+        <div class="steps" id="p-steps"></div>
+        <pre class="plog" id="p-log"></pre>
+      </div>
+    </section>
+    <!-- 3 LESSON -->
+    <section class="scr lesson" id="s-lesson">
+      <div class="lhd"><span class="lback" onclick="go(0)">‹</span><div class="lttl" id="l-title">No lesson open</div></div>
+      <div class="modeseg"><button class="mon" id="m-read" onclick="setMode('read')">📖 Read</button><button id="m-play" onclick="setMode('play')">▸ Autoplay</button></div>
+      <div class="resume" id="l-resume" style="display:none">↩ Continue where you left off</div>
+      <div id="mread" class="readwrap"><iframe class="lessonframe" id="l-frame" title="lesson"></iframe></div>
+      <div id="mplay" style="display:none">
+        <div class="cover" id="pl-cover">Open a lesson from the Library</div>
+        <div class="np-t" id="pl-t">—</div><div class="np-s" id="pl-s">autoplay · saves your spot</div>
+        <div class="scrub"><i id="pl-bar"></i></div><div class="tspan"><span id="pl-cur">0:00</span><span id="pl-rem">—</span></div>
+        <div class="transport"><span class="b">⏮</span><span class="play" id="pl-btn">❚❚</span><span class="b">⏭</span></div>
+        <div class="autonote">▸ Autoplay plays each chapter hands-free and <b>saves your spot</b> — reading + listening share one position.</div>
+      </div>
+    </section>
+    <!-- 4 OFFLINE -->
+    <section class="scr" id="s-off">
+      <div class="scrh">Offline<small>Synced from your library — plays with no signal</small></div>
+      <div class="synccard">
+        <div class="syncrow"><span class="dot2"></span>Your library<span class="synced" id="syncedtag">…</span></div>
+        <div class="syncsub" id="syncsub"></div>
+        <button class="syncbtn" id="syncbtn">⟳ Sync now</button>
+      </div>
+      <div id="offrows"></div>
+      <button class="impbtn" id="impfile">⬆ Import a .chiron file</button>
+      <label class="fl">Library address</label>
+      <div class="setrow"><input id="liburl" class="fi" placeholder="http://192.168.0.112:8911"><button id="libsave">Save</button></div>
+      <div style="font-size:11.5px;color:var(--muted);margin-top:8px">Point this at the computer running your Chiron library (home wifi).</div>
+    </section>
+  </div>
+
+  <div class="dots" id="dots"><i class="on"></i><i></i><i></i><i></i></div>
+  <div class="nav" id="nav">
+    <button class="on" data-i="0"><span class="i">▤</span>Library</button>
+    <button data-i="1"><span class="i">✦</span>Generate</button>
+    <button data-i="2"><span class="i">📖</span>Lesson</button>
+    <button data-i="3"><span class="i">⤓</span>Offline</button>
+  </div>
+  <div class="toast" id="toast"></div>
+<script src="app.js"></script>
+</body></html>
