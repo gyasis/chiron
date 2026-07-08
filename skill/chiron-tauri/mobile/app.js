@@ -12,23 +12,37 @@ const catUrl = () => LIB + '/library/lessons';           // server_lessons(catUr
 const slugOf = id => id.replace(/\//g, '-');
 let LESSONS = [], OFFLINE = {};   // slug -> {id,entry} of installed lessons (native)
 
-/* ---------- nav / swipe ---------- */
-const pane = document.getElementById('pane'), names = ['Library', 'Generate', 'Lesson', 'Offline'];
-const navB = [...document.querySelectorAll('#nav button')], dots = [...document.querySelectorAll('#dots i')];
-function go(i) { pane.scrollTo({ left: i * pane.clientWidth, behavior: 'smooth' }); }
-function syncNav() { const i = Math.round(pane.scrollLeft / pane.clientWidth);
-  navB.forEach((b, j) => b.classList.toggle('on', j === i)); dots.forEach((d, j) => d.classList.toggle('on', j === i));
-  document.getElementById('hdt').textContent = names[i]; }
-pane.addEventListener('scroll', () => requestAnimationFrame(syncNav), { passive: true });
-navB.forEach(b => b.onclick = () => go(+b.dataset.i));
+/* ---------- nav: swipe panes + EDGE DRAWER ---------- */
+const pane = document.getElementById('pane');
+const drawerEl = document.getElementById('drawer'), scrimEl = document.getElementById('scrim');
+const dItems = [...document.querySelectorAll('#drawer .ditem[data-nav]')];
+let OPEN_SLUG = null;
+function go(i) { pane.scrollTo({ left: i * pane.clientWidth, behavior: 'smooth' }); syncNav(i); }
+function syncNav(i) { if (i == null) i = Math.round(pane.scrollLeft / pane.clientWidth);
+  dItems.forEach((b, j) => b.classList.toggle('on', j === i)); }
+pane.addEventListener('scroll', () => requestAnimationFrame(() => syncNav()), { passive: true });
+function drawer(open) { drawerEl.classList.toggle('open', open); scrimEl.classList.toggle('on', open); }
+scrimEl.onclick = () => drawer(false);
+document.getElementById('ereg').onclick = () => drawer(true);          // TAP the invisible left strip → always opens (no gesture conflict)
+dItems.forEach(b => b.onclick = () => { go(+b.dataset.nav); drawer(false); });
+// SWIPE to open — mid-band ONLY (30–62% height). Top + BOTTOM-LEFT stay free for Android system gestures (back/home).
+let _sx = null, _sy = null;
+document.body.addEventListener('touchstart', e => { const t = e.touches[0], h = innerHeight;
+  if (t.clientX < 26 && t.clientY > h * 0.30 && t.clientY < h * 0.62) { _sx = t.clientX; _sy = t.clientY; } }, { passive: true });
+document.body.addEventListener('touchmove', e => { if (_sx === null) return; const t = e.touches[0];
+  if (t.clientX - _sx > 34 && Math.abs(t.clientY - _sy) < 44) { drawer(true); _sx = null; } }, { passive: true });
+document.body.addEventListener('touchend', () => { _sx = null; });
+function closeLesson() { document.getElementById('lesson').classList.remove('open'); }
 function toast(m) { const t = document.getElementById('toast'); t.textContent = m; t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 2200); }
 
 /* ---------- theme ---------- */
-document.getElementById('themebtn').onclick = e => {
+function paintTheme() { const dark = document.documentElement.getAttribute('data-theme') === 'dark';
+  document.getElementById('themebtn').innerHTML = (dark ? '☀️' : '🌙') + ' &nbsp;Theme'; }
+document.getElementById('themebtn').onclick = () => {
   const dark = document.documentElement.getAttribute('data-theme') === 'dark', nx = dark ? 'light' : 'dark';
   document.documentElement.setAttribute('data-theme', nx); try { localStorage.setItem('chiron.theme', nx); } catch (e2) {}
-  e.currentTarget.textContent = nx === 'dark' ? '☀️' : '🌙'; };
-document.getElementById('themebtn').textContent = document.documentElement.getAttribute('data-theme') === 'dark' ? '☀️' : '🌙';
+  paintTheme(); drawer(false); };
+paintTheme();
 
 /* ---------- library ---------- */
 const F = { q: '', dom: '' };
@@ -101,7 +115,10 @@ function openLesson(slug) {
   const r = document.getElementById('l-resume'); const pos = localStorage.getItem('chiron.pos.' + slug);
   r.style.display = pos ? '' : 'none'; if (pos) r.innerHTML = '↩ Continue where you left off';
   localStorage.setItem('chiron.pos.' + slug, '1');
-  setMode('read'); go(2);
+  OPEN_SLUG = slug; setMode('read');
+  // show "save offline" only when it isn't already on the device
+  document.getElementById('l-save').style.display = OFFLINE[slug] ? 'none' : '';
+  document.getElementById('lesson').classList.add('open');
 }
 function setMode(m) {
   document.getElementById('mread').style.display = m === 'read' ? '' : 'none';
@@ -110,6 +127,7 @@ function setMode(m) {
   document.getElementById('m-play').classList.toggle('mon', m === 'play');
 }
 document.getElementById('pl-btn').onclick = e => { e.currentTarget.textContent = e.currentTarget.textContent === '▶' ? '❚❚' : '▶'; };
+document.getElementById('l-save').onclick = () => { if (OPEN_SLUG) download(OPEN_SLUG); };   // cache the streaming lesson for offline
 
 /* ---------- download / sync from the live library (native) ---------- */
 async function download(slug) {
@@ -153,6 +171,7 @@ async function refreshSync() {
 
 /* ---------- import a .chiron file (native) ---------- */
 document.getElementById('impfile').onclick = document.getElementById('importbtn').onclick = async () => {
+  drawer(false);
   if (!TAURI) { toast('File import works in the installed app'); return; }
   try {
     const { open } = window.__TAURI__.dialog; const { readFile } = window.__TAURI__.fs;
