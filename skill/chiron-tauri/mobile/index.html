@@ -57,6 +57,8 @@ body{background:var(--bg);color:var(--fg);font-family:var(--fb);height:100vh;ove
 .chev{color:var(--muted);font-size:22px}
 .btn.spin{color:var(--accent);border-color:var(--accent);display:inline-flex;align-items:center;gap:6px}
 .spinc{width:13px;height:13px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin360 .7s linear infinite;flex:0 0 auto}
+.ptr{height:0;overflow:hidden;display:flex;align-items:center;justify-content:center;opacity:0;transition:height .16s ease,opacity .16s}
+.ptr .spinc{width:20px;height:20px}
 @keyframes spin360{to{transform:rotate(360deg)}}
 .genrow{display:flex;align-items:center;gap:11px;background:var(--surface);border:1px solid var(--accent);border-radius:12px;padding:12px 13px;margin-bottom:9px}
 .genrow .gi{flex:1;min-width:0}

@@ -306,3 +306,19 @@ async function accept(slug) { try { const r = await (await fetch(LIB + '/accept/
 renderSegs(); hint();
 loadLibrary().then(() => { refreshOffline(); pollActive(); });
 setInterval(pollActive, 4000);   // keep the "Generating" band + row spinners live across the app
+
+/* ---- pull-down-to-sync on the Library ---- */
+(function () {
+  const scr = document.getElementById('s-lib'); if (!scr) return;
+  const ind = document.createElement('div'); ind.className = 'ptr'; ind.innerHTML = '<span class="spinc"></span>'; scr.insertBefore(ind, scr.firstChild);
+  let startY = null, dy = 0, busy = false;
+  scr.addEventListener('touchstart', e => { startY = (scr.scrollTop <= 0 && !busy) ? e.touches[0].clientY : null; dy = 0; }, { passive: true });
+  scr.addEventListener('touchmove', e => { if (startY === null) return; dy = e.touches[0].clientY - startY;
+    if (dy > 0 && scr.scrollTop <= 0) { ind.style.height = Math.min(dy * 0.5, 64) + 'px'; ind.style.opacity = Math.min(dy / 64, 1); if (e.cancelable && dy > 6) e.preventDefault(); }
+    else startY = null; }, { passive: false });
+  scr.addEventListener('touchend', async () => {
+    if (startY !== null && dy > 64) { busy = true; ind.style.height = '46px'; ind.style.opacity = '1';
+      try { await (typeof syncNow === 'function' ? syncNow() : loadLibrary()); } catch (e) {} busy = false; }
+    ind.style.height = '0'; ind.style.opacity = '0'; startY = null; dy = 0;
+  }, { passive: true });
+})();
