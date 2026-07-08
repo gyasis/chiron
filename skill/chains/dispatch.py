@@ -24,6 +24,7 @@ CHAIN = {
     ("medicine", "primer"):        "2026-07-05_chiron-medicine-primer-chain",
     ("medicine", "atlas"):         "2026-07-06_chiron-medicine-atlas-chain",
     ("medicine", "systematic"):    "2026-07-06_chiron-medicine-systematic-chain",
+    ("medicine", "drug"):          "2026-07-06_chiron-medicine-systematic-chain",   # same chain, CH_TEMPLATE=drug
     ("medical-italian", "passage"): "2026-06-30_chiron-medical-italian-passage-chain",
     ("medical-italian", "ward"):    "2026-06-30_chiron-wards-lesson-chain",
     ("italian", "lesson"):          "2026-06-30_chiron-pure-italian-lesson-chain",
@@ -78,6 +79,8 @@ def resolve(domain, depth=None, subject="", subject_type=None, extra=None):
     env = {}
     if domain == "medicine":
         env["CH_SUBJECT"] = subject
+        if depth == "drug":
+            env["CH_TEMPLATE"] = "drug"   # systematic chain, drug-class skeleton
         if depth == "atlas" and extra.get("max_diseases"):
             env["CH_MAX_DISEASES"] = str(extra["max_diseases"])
         if depth == "primer" and extra.get("chapters"):

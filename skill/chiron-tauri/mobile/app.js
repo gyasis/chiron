@@ -191,10 +191,10 @@ document.getElementById('libsave').onclick = () => {
 };
 
 /* ---------- generate wizard ---------- */
-const DEPTHS = { medicine: [['', 'Auto'], ['primer', 'Primer'], ['atlas', 'Atlas'], ['systematic', 'Systematic'], ['amboss', 'AMBOSS']],
+const DEPTHS = { medicine: [['', 'Auto'], ['primer', 'Primer'], ['atlas', 'Atlas'], ['systematic', 'Systematic'], ['drug', 'Drug'], ['amboss', 'AMBOSS']],
   'medical-italian': [['ward', 'Ward'], ['passage', 'Passage']], italian: [['lesson', 'Lesson']] };
 const ATLAS = ['cardiovascular', 'respiratory', 'gastrointestinal', 'renal', 'endocrine', 'metabolic', 'hematolog', 'oncolog', 'neurolog', 'psychiatr', 'musculoskeletal', 'rheumatolog', 'dermatolog', 'infectious', 'immunolog', 'reproductive', 'geriatric'];
-const G = { dom: 'medicine', dep: '', imgs: [] };
+const G = { dom: 'medicine', dep: '', imgs: [], paths: [], autofill: true, suggested: false };
 function detectDepth(s) { s = (s || '').toLowerCase().trim(); if (!s) return ''; if (s.includes('geriatr')) return 'primer'; if (ATLAS.some(k => s === k || s.includes(k))) return 'atlas'; return 'systematic'; }
 function renderSegs() {
   document.getElementById('w-domseg').innerHTML = Object.keys(DEPTHS).map(d => `<div class="chip ${G.dom === d ? 'on' : ''}" data-d="${d}">${d === 'medical-italian' ? 'Med-Italian' : d[0].toUpperCase() + d.slice(1)}</div>`).join('');
@@ -203,23 +203,45 @@ function renderSegs() {
   document.querySelectorAll('#w-depseg .chip').forEach(c => c.onclick = () => { G.dep = c.dataset.v; renderSegs(); hint(); });
 }
 function hint() { const s = document.getElementById('w-subject').value, h = document.getElementById('w-hint');
+  if (G.suggested) { h.innerHTML = '✨ suggested from your photos — edit if you like'; return; }
   if (G.dom === 'medicine' && !G.dep) { const d = detectDepth(s); h.innerHTML = d ? `Auto → <b>${d}</b> lesson` : 'Type a subject — depth auto-detects'; } else h.innerHTML = ''; }
-document.getElementById('w-subject').oninput = hint;
-function genFor(subject, dom) { document.getElementById('w-subject').value = subject || ''; if (dom && DEPTHS[dom]) { G.dom = dom; G.dep = ''; } renderSegs(); hint(); go(1); }
-function addImgs(input) { [...input.files].forEach(f => G.imgs.push(f)); input.value = ''; renderThumbs(); }
-function renderThumbs() { document.getElementById('w-thumbs').innerHTML = G.imgs.map((f, i) => `<span class="thumbwrap"><img class="thumb" src="${URL.createObjectURL(f)}"><b data-rm="${i}">×</b></span>`).join('') + (G.imgs.length ? `<span class="clip">${G.imgs.length} page(s) · OCR'd on generate</span>` : '');
-  document.querySelectorAll('#w-thumbs [data-rm]').forEach(e => e.onclick = () => { G.imgs.splice(+e.dataset.rm, 1); renderThumbs(); }); }
+document.getElementById('w-subject').oninput = () => { G.autofill = false; G.suggested = false; hint(); };   // you typed → your subject wins
+function genFor(subject, dom) { document.getElementById('w-subject').value = subject || ''; G.autofill = false; G.suggested = false; if (dom && DEPTHS[dom]) { G.dom = dom; G.dep = ''; } renderSegs(); hint(); go(1); }
+async function addImgs(input) {
+  const files = [...input.files]; input.value = ''; if (!files.length) return;
+  files.forEach(f => G.imgs.push(f)); renderThumbs('uploading');
+  try { const fd = new FormData(); files.forEach((f, i) => fd.append('files', f, f.name || `page-${i + 1}.jpg`));
+    const up = await (await fetch(LIB + '/upload', { method: 'POST', body: fd })).json(); G.paths.push(...(up.paths || [])); } catch (e) {}
+  renderThumbs(); maybeSuggest();
+}
+async function maybeSuggest() {   // async subject suggestion — ONLY when the subject is blank / still auto-filled
+  const field = document.getElementById('w-subject');
+  if (!G.paths.length) return;
+  if (field.value.trim() && !G.autofill) return;      // you typed a subject → don't touch it
+  document.getElementById('w-hint').innerHTML = '✨ reading your photos…';
+  try {
+    const s = await (await fetch(LIB + '/suggest', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ images: G.paths }) })).json();
+    if (s && s.subject && G.autofill) {
+      field.value = s.subject; G.suggested = true;
+      if (s.domain && DEPTHS[s.domain]) G.dom = s.domain;
+      G.dep = (s.depth && DEPTHS[G.dom].some(([v]) => v === s.depth)) ? s.depth : '';
+      renderSegs(); hint();
+    } else if (!field.value.trim()) hint();
+  } catch (e) { hint(); }
+}
+function renderThumbs(state) { document.getElementById('w-thumbs').innerHTML = G.imgs.map((f, i) => `<span class="thumbwrap"><img class="thumb" src="${URL.createObjectURL(f)}"><b data-rm="${i}">×</b></span>`).join('') + (G.imgs.length ? `<span class="clip">${G.imgs.length} page(s)${state === 'uploading' ? ' · uploading…' : ' · used as context'}</span>` : '');
+  document.querySelectorAll('#w-thumbs [data-rm]').forEach(e => e.onclick = () => { const i = +e.dataset.rm; G.imgs.splice(i, 1); G.paths.splice(i, 1);
+    if (!G.paths.length && G.autofill) { document.getElementById('w-subject').value = ''; G.suggested = false; } renderThumbs();
+    if (G.paths.length && G.autofill) maybeSuggest(); else hint(); }); }
 document.getElementById('w-cam').onchange = e => addImgs(e.target);
 document.getElementById('w-gal').onchange = e => addImgs(e.target);
 document.getElementById('w-go').onclick = async () => {
-  const subject = document.getElementById('w-subject').value.trim(); if (!subject) { toast('Type a subject'); return; }
+  const subject = document.getElementById('w-subject').value.trim();
+  if (!subject) { toast(G.paths.length ? 'Reading your photos — one moment, then Generate' : 'Type a subject, or add a photo'); return; }
   const btn = document.getElementById('w-go'); btn.disabled = true; btn.textContent = 'Starting…';
   try {
-    let images = null;
-    if (G.imgs.length) { const fd = new FormData(); G.imgs.forEach((f, i) => fd.append('files', f, f.name || `page-${i + 1}.jpg`));
-      images = (await (await fetch(LIB + '/upload', { method: 'POST', body: fd })).json()).paths; }
     const r = await (await fetch(LIB + '/generate', { method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ domain: G.dom, subject, depth: G.dep || null, images, stage: 'all' }) })).json();
+      body: JSON.stringify({ domain: G.dom, subject, depth: G.dep || null, images: G.paths.length ? G.paths : null, stage: 'all' }) })).json();
     if (!r.job_id) throw 0;
     showProg(r); poll(r.job_id);
   } catch (e) { toast('Generate failed — is the library reachable?'); }

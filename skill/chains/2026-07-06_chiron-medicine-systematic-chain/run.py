@@ -87,6 +87,25 @@ SECTION_SKELETON = [
      "title": "Clinical Reasoning & High-Yield Integration"},
 ]
 
+# ── DRUG / PHARMACOLOGY template (CH_TEMPLATE=drug) — a drug-class-axis skeleton, NOT the disease one ──
+DRUG_SKELETON = [
+    {"chapterNumber": 1, "sectionKey": "overview", "title": "Drug Class & Overview"},
+    {"chapterNumber": 2, "sectionKey": "mechanism", "title": "Mechanism of Action"},
+    {"chapterNumber": 3, "sectionKey": "indications", "title": "Indications & Clinical Uses"},
+    {"chapterNumber": 4, "sectionKey": "pharmacokinetics", "title": "Pharmacokinetics (ADME)"},
+    {"chapterNumber": 5, "sectionKey": "contraindications", "title": "Contraindications & Cautions"},
+    {"chapterNumber": 6, "sectionKey": "adverse-effects", "title": "Adverse Effects"},
+    {"chapterNumber": 7, "sectionKey": "interactions", "title": "Drug Interactions"},
+    {"chapterNumber": 8, "sectionKey": "dosing-monitoring", "title": "Dosing & Monitoring"},
+    {"chapterNumber": 9, "sectionKey": "key-drugs", "title": "Key Drugs & Comparisons"},
+    {"chapterNumber": 10, "sectionKey": "capstone", "title": "Clinical Reasoning & High-Yield Integration"},
+]
+TEMPLATE = os.environ.get("CH_TEMPLATE", "disease")   # disease | drug
+if TEMPLATE == "drug":
+    SECTION_SKELETON = DRUG_SKELETON
+CHAPTER_COUNT_EXACT = len(SECTION_SKELETON)
+ENTITY = "drug / drug-class" if TEMPLATE == "drug" else "disease"
+
 # Per-section widget hints (04a's widget-mix table, adapted to our fixed 11-section skeleton).
 SECTION_WIDGET_HINTS = {
     "overview": "why-care-callout (opening) + one crisp summary paragraph",
@@ -238,7 +257,7 @@ async def phase1(source: str):
                               for s in SECTION_SKELETON)
     plan_p = (
         f"You are planning a SYSTEMATIC (deep-dive, board-exam depth) medical lesson on the SINGLE "
-        f"disease '{SUBJECT}'. The lesson has a FIXED {CHAPTER_COUNT_EXACT}-section structure — you may "
+        f"{ENTITY} '{SUBJECT}'. The lesson has a FIXED {CHAPTER_COUNT_EXACT}-section structure — you may "
         f"NOT reorder, rename, merge, or drop sections:\n{section_list}\n\n"
         f"For EACH of the {CHAPTER_COUNT_EXACT} sections, produce (a) a ONE-sentence 'focus' statement "
         f"tailored SPECIFICALLY to {SUBJECT} (what this exact section will teach for THIS disease, not "
@@ -309,7 +328,7 @@ async def author_chapter(chapter, idx: int):
         + "\n\n" + load_prompt("04u-medical-algorithm-widgets.md")
     p += (
         f"\n\n{USER_CTX}## GROUNDING (Harrison's — ground every clinical claim to this; never invent):\n{grounding[:6000]}"
-        f"\n\n## SYSTEMATIC DEEP-DIVE (BLOCKING): this lesson is a single-disease, {CHAPTER_COUNT_EXACT}-section "
+        f"\n\n## SYSTEMATIC DEEP-DIVE (BLOCKING): this lesson is a single-{ENTITY}, {CHAPTER_COUNT_EXACT}-section "
         f"systematic deep-dive on '{SUBJECT}'. Produce a FULL canonical AMBOSS chapter for the section "
         f"'{theme}' (sectionKey={section_key}), focused on: {focus}. Use the FULL widget palette per 04a — "
         f"do NOT thin it down the way a primer would. This section's recommended widgets: {hint}. "

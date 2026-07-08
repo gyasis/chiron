@@ -115,8 +115,22 @@ _OCR_PROMPT = ("Transcribe this page image to clean Markdown. Preserve every hea
                "clinical fact verbatim; keep drug names, doses and values exact. Output ONLY the transcription.")
 
 
+OCR_CACHE = {}   # path → transcription (so /suggest and /generate never double-OCR the same photo)
+CLASSIFY_MODEL = os.environ.get("CHIRON_CLASSIFY_MODEL", VLM_MODEL)
+_CLASSIFY_PROMPT = (
+    'You route study material to the right lesson type. Read the SOURCE and return ONLY JSON:\n'
+    '{"subject":"<specific lesson topic, 2-5 words>","domain":"medicine|medical-italian|italian",'
+    '"depth":"drug|systematic|atlas|primer|amboss|passage|ward|lesson"}\n'
+    'Rules: a drug / drug-class / pharmacology page → medicine, drug (subject = the drug or class, e.g. "Alpha-1 blockers"). '
+    'A single disease → medicine, systematic. An organ-system overview → medicine, atlas. Several related conditions / a '
+    'broad topic → medicine, primer. A multiple-choice EXAM question (options A–E) in Italian → medical-italian, passage. '
+    'An Italian clinical/ward scenario → medical-italian, ward. General Italian language text → italian, lesson.\nSOURCE:\n')
+
+
 def _ocr_image(path: str) -> str:
-    """One image → Markdown via the governor's vision lane. Governed, not raw :11434 (R-AG2)."""
+    """One image → Markdown via the governor's vision lane (cached). Governed, not raw :11434 (R-AG2)."""
+    if path in OCR_CACHE:
+        return OCR_CACHE[path]
     with open(path, "rb") as f:
         b64 = base64.b64encode(f.read()).decode()
     body = json.dumps({"model": VLM_MODEL, "stream": False,
@@ -124,7 +138,34 @@ def _ocr_image(path: str) -> str:
     req = urllib.request.Request(VLM_URL.rstrip("/") + "/api/chat", data=body,
                                  headers={"Content-Type": "application/json"})
     with urllib.request.urlopen(req, timeout=180) as r:
-        return json.loads(r.read()).get("message", {}).get("content", "")
+        out = json.loads(r.read()).get("message", {}).get("content", "")
+    OCR_CACHE[path] = out
+    return out
+
+
+def _classify(text: str) -> dict:
+    """OCR'd content → {subject, domain, depth} via the governor (JSON mode)."""
+    body = json.dumps({"model": CLASSIFY_MODEL, "stream": False, "format": "json",
+                       "messages": [{"role": "user", "content": _CLASSIFY_PROMPT + text[:6000]}]}).encode()
+    req = urllib.request.Request(VLM_URL.rstrip("/") + "/api/chat", data=body,
+                                 headers={"Content-Type": "application/json"})
+    with urllib.request.urlopen(req, timeout=120) as r:
+        c = json.loads(r.read()).get("message", {}).get("content", "{}")
+    return json.loads(c)
+
+
+_DRUG_SUFFIXES = ("blocker", "blockers", "inhibitor", "inhibitors", "statin", "sartan", "agonist",
+                  "antagonist", "-pril", "olol", "azole", "mycin", "cycline", "parin", "caine")
+
+
+def _looks_drug(subject: str, text: str) -> bool:
+    """Deterministic drug/pharmacology signal — a drug-class page must route to the drug template."""
+    s = (subject or "").lower()
+    if any(suf in s for suf in _DRUG_SUFFIXES):
+        return True
+    blob = (text or "")[:3000].lower()
+    return sum(k in blob for k in ("mechanism of action", "adverse effect", "indication",
+                                   "contraindication", "pharmacokinet", "adrenoceptor", "dosing")) >= 2
 
 
 def _ingest_images(images: list, out: Path) -> str:
@@ -341,6 +382,38 @@ async def upload(files: list[UploadFile] = File(...)):
         dest.write_bytes(await f.read())
         paths.append(str(dest))
     return {"paths": paths}
+
+
+class SuggestReq(BaseModel):
+    images: list = []
+    grounding: str | None = None
+
+
+@app.post("/suggest")
+def suggest(req: SuggestReq):
+    """Blank-subject helper: OCR the attached photos (cached) → classify → suggested {subject, domain, depth}."""
+    parts = []
+    for img in req.images or []:
+        try:
+            md = _ocr_image(img)
+            if md and md.strip():
+                parts.append(md.strip())
+        except Exception:
+            pass
+    text = "\n\n".join(parts)
+    if req.grounding:
+        text = (req.grounding + "\n\n" + text).strip()
+    if not text.strip():
+        raise HTTPException(400, "no readable content to classify")
+    try:
+        c = _classify(text)
+    except Exception as e:
+        raise HTTPException(502, f"classify failed: {e}")
+    domain = c.get("domain") or "medicine"
+    depth = c.get("depth")
+    if domain == "medicine" and depth != "drug" and _looks_drug(c.get("subject"), text):
+        depth = "drug"   # safety net: a drug-class page → the drug template, whatever the model said
+    return {"subject": c.get("subject"), "domain": domain, "depth": depth, "chars": len(text)}
 
 
 # static: open a generated lesson, or the faceted library, straight from the app
