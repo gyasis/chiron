@@ -63,7 +63,9 @@ function rowHtml(l) {
   const cat = l.system ? `<span class="tag ${domCls(l.domain)}">${l.system}</span>` : l.topic ? `<span class="tag l">${l.topic}</span>` : '';
   const lvl = l.level ? `<span class="tag">${l.level}</span>` : '';
   let act;
-  if (!l.ready) act = `<span class="btn gen" data-gen="${esc(l.subject || l.system || l.topic || l.title)}" data-dom="${l.domain}">✦ Generate</span>`;
+  if (!l.ready) { const gs = l.subject || l.system || l.topic || l.title, aj = activeFor(gs);
+    act = aj ? `<span class="btn spin" data-recon="${aj.id}"><span class="spinc"></span>Generating</span>`
+             : `<span class="btn gen" data-gen="${esc(gs)}" data-dom="${l.domain}">✦ Generate</span>`; }
   else if (l.status === 'staged') act = `<span class="btn acc" data-acc="${slug}">✓ Accept</span>`;
   else if (off) act = `<span class="btn" data-open="${slug}">Open →</span>`;
   else if (l.bundle) act = `<span class="btn dl" data-dl="${slug}">⬇ ${l.sizeMB || ''}${l.sizeMB ? 'MB' : 'Get'}</span>`;
@@ -74,6 +76,25 @@ function rowHtml(l) {
     <div class="act">${act}</div></div>`;
 }
 function esc(s) { return String(s == null ? '' : s).replace(/"/g, '&quot;').replace(/</g, '&lt;'); }
+/* ---- generation status: poll active jobs, show spinners, tap to reconnect ---- */
+let ACTIVE = [], ACTIVE_SIG = '';
+function activeFor(subject) { const s = (subject || '').toLowerCase().trim(); return s && ACTIVE.find(j => (j.subject || '').toLowerCase().trim() === s); }
+async function pollActive() {
+  try {
+    const d = await (await fetch(LIB + '/jobs')).json();
+    const a = (d.jobs || []).filter(j => j.status === 'queued' || j.status === 'running');
+    const sig = a.map(j => j.id + j.status + (j.phase || '')).join(',');
+    if (sig !== ACTIVE_SIG) { ACTIVE = a; ACTIVE_SIG = sig; renderRows(); }
+  } catch (e) {}
+}
+async function quickGen(subject, dom) {   // queue a lesson straight from a library row — never cancels others
+  try {
+    const r = await (await fetch(LIB + '/generate', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ domain: dom || 'medicine', subject, depth: null, stage: 'all' }) })).json();
+    if (r.job_id) { toast('Queued: ' + subject); pollActive(); } else toast('Queue failed');
+  } catch (e) { toast('Queue failed — library reachable?'); }
+}
+function reconnect(job) { if (!job) return; go(1); showProg({ slug: job.slug, depth: job.depth }); poll(job.id); }
 function renderRows() {
   const list = LESSONS.filter(match);
   const staged = list.filter(l => l.ready && l.status === 'staged');
@@ -81,6 +102,8 @@ function renderRows() {
   const queued = list.filter(l => !l.ready);
   const hdr = (i, t, n, note) => `<div class="sec">${i} ${t} <span class="ct">${n}</span><span class="note">${note}</span></div>`;
   let h = '';
+  if (ACTIVE.length) h += `<div class="sec">⏳ Generating <span class="ct">${ACTIVE.length}</span><span class="note">tap to watch</span></div>` +
+    ACTIVE.map(j => `<div class="genrow" data-recon="${j.id}"><span class="spinc"></span><div class="gi"><b>${esc(j.subject || j.slug || 'lesson')}</b><small>${j.status === 'queued' ? 'queued…' : (j.phase || 'generating') + '…'}</small></div><span class="chev">›</span></div>`).join('');
   if (staged.length) { h += `<div class="reviewband">🟡 Needs Review — ${staged.length} generated, not yet published.</div>` + staged.map(rowHtml).join(''); }
   if (ready.length) { const dl = ready.filter(l => l.bundle).length; h += hdr('📚', 'Available', ready.length, dl ? dl + ' downloadable' : 'open to study') + ready.map(rowHtml).join(''); }
   if (queued.length) h += hdr('○', 'To generate', queued.length, 'tap Generate') + queued.slice(0, 400).map(rowHtml).join('');
@@ -88,7 +111,8 @@ function renderRows() {
   document.querySelectorAll('#rows [data-open]').forEach(e => e.onclick = ev => { ev.stopPropagation(); openLesson(e.dataset.open); });
   document.querySelectorAll('#rows [data-dl]').forEach(e => e.onclick = ev => { ev.stopPropagation(); download(e.dataset.dl); });
   document.querySelectorAll('#rows [data-acc]').forEach(e => e.onclick = ev => { ev.stopPropagation(); accept(e.dataset.acc); });
-  document.querySelectorAll('#rows [data-gen]').forEach(e => e.onclick = ev => { ev.stopPropagation(); genFor(e.dataset.gen, e.dataset.dom); });
+  document.querySelectorAll('#rows [data-gen]').forEach(e => e.onclick = ev => { ev.stopPropagation(); quickGen(e.dataset.gen, e.dataset.dom); });
+  document.querySelectorAll('#rows [data-recon]').forEach(e => e.onclick = ev => { ev.stopPropagation(); reconnect(ACTIVE.find(j => j.id === e.dataset.recon)); });
 }
 document.getElementById('q').oninput = e => { F.q = e.target.value; renderRows(); };
 async function loadLibrary() {
@@ -269,4 +293,5 @@ async function accept(slug) { try { const r = await (await fetch(LIB + '/accept/
 
 /* ---------- boot ---------- */
 renderSegs(); hint();
-loadLibrary().then(() => { refreshOffline(); });
+loadLibrary().then(() => { refreshOffline(); pollActive(); });
+setInterval(pollActive, 4000);   // keep the "Generating" band + row spinners live across the app

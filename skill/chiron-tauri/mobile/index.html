@@ -51,6 +51,13 @@ body{background:var(--bg);color:var(--fg);font-family:var(--fb);height:100vh;ove
 .btn{font-size:12px;font-weight:700;font-family:var(--fh);border-radius:99px;padding:7px 13px;border:1px solid var(--border);background:var(--bg);color:var(--accent);white-space:nowrap}
 .btn.dl{color:var(--ok);border-color:var(--ok)}.btn.gen{color:#fff;background:var(--accent);border-color:var(--accent)}.btn.acc{color:#fff;background:var(--ok);border-color:var(--ok)}
 .chev{color:var(--muted);font-size:22px}
+.btn.spin{color:var(--accent);border-color:var(--accent);display:inline-flex;align-items:center;gap:6px}
+.spinc{width:13px;height:13px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin360 .7s linear infinite;flex:0 0 auto}
+@keyframes spin360{to{transform:rotate(360deg)}}
+.genrow{display:flex;align-items:center;gap:11px;background:var(--surface);border:1px solid var(--accent);border-radius:12px;padding:12px 13px;margin-bottom:9px}
+.genrow .gi{flex:1;min-width:0}
+.genrow .gi b{font-family:var(--fh);font-weight:600;font-size:14.5px;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.genrow .gi small{color:var(--muted);font-size:11.5px}
 .empty{padding:34px 10px;text-align:center;color:var(--muted);font-size:13.5px;line-height:1.5}
 /* generate */
 .fl{font-family:var(--fh);font-weight:600;font-size:12.5px;color:var(--fg2);margin:15px 2px 6px;display:block}
