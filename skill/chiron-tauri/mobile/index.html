@@ -55,6 +55,10 @@ body{background:var(--bg);color:var(--fg);font-family:var(--fb);height:100vh;ove
 /* generate */
 .fl{font-family:var(--fh);font-weight:600;font-size:12.5px;color:var(--fg2);margin:15px 2px 6px;display:block}
 .fi{width:100%;border:1px solid var(--border);background:var(--surface);color:var(--fg);border-radius:12px;padding:13px;font:inherit;font-size:15px}
+.fieldwrap{position:relative}
+.wspin{position:absolute;right:13px;top:50%;transform:translateY(-50%);width:18px;height:18px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:wspin .7s linear infinite;display:none}
+.wspin.on{display:block}
+@keyframes wspin{to{transform:translateY(-50%) rotate(360deg)}}
 .seg{display:flex;gap:7px;flex-wrap:wrap;margin-top:4px}
 .hintline{font-size:12.5px;color:var(--muted);margin-top:9px}.hintline b{color:var(--accent);text-transform:capitalize}
 .cap{display:flex;gap:9px;margin-top:6px}
@@ -132,8 +136,8 @@ body{background:var(--bg);color:var(--fg);font-family:var(--fb);height:100vh;ove
     <section class="scr" id="s-gen"><div class="pad">
       <div class="big">Generate<small>Type a subject, or snap pages to ground it</small></div>
       <div id="genform">
-        <label class="fl">Subject / topic</label>
-        <input id="w-subject" class="fi" placeholder="e.g. Aortic aneurysm · Cardiovascular · «magari»">
+        <label class="fl">Subject / topic <span style="font-weight:400;color:var(--muted)">— leave blank to name it from your photos</span></label>
+        <div class="fieldwrap"><input id="w-subject" class="fi" placeholder="e.g. Aortic aneurysm · Cardiovascular · «magari»"><span class="wspin" id="w-spin"></span></div>
         <label class="fl">Domain</label><div class="seg" id="w-domseg"></div>
         <label class="fl">Depth</label><div class="seg" id="w-depseg"></div>
         <div class="hintline" id="w-hint"></div>

@@ -215,10 +215,12 @@ async function addImgs(input) {
   renderThumbs(); maybeSuggest();
 }
 async function maybeSuggest() {   // async subject suggestion — ONLY when the subject is blank / still auto-filled
-  const field = document.getElementById('w-subject');
+  const field = document.getElementById('w-subject'), spin = document.getElementById('w-spin');
   if (!G.paths.length) return;
   if (field.value.trim() && !G.autofill) return;      // you typed a subject → don't touch it
-  document.getElementById('w-hint').innerHTML = '✨ reading your photos…';
+  const ph = field.getAttribute('placeholder');
+  spin.classList.add('on'); field.setAttribute('placeholder', 'Reading your photos to name this lesson…');
+  document.getElementById('w-hint').innerHTML = '✨ finding a good subject from your photos…';
   try {
     const s = await (await fetch(LIB + '/suggest', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ images: G.paths }) })).json();
     if (s && s.subject && G.autofill) {
@@ -228,6 +230,7 @@ async function maybeSuggest() {   // async subject suggestion — ONLY when the 
       renderSegs(); hint();
     } else if (!field.value.trim()) hint();
   } catch (e) { hint(); }
+  finally { spin.classList.remove('on'); field.setAttribute('placeholder', ph); }
 }
 function renderThumbs(state) { document.getElementById('w-thumbs').innerHTML = G.imgs.map((f, i) => `<span class="thumbwrap"><img class="thumb" src="${URL.createObjectURL(f)}"><b data-rm="${i}">×</b></span>`).join('') + (G.imgs.length ? `<span class="clip">${G.imgs.length} page(s)${state === 'uploading' ? ' · uploading…' : ' · used as context'}</span>` : '');
   document.querySelectorAll('#w-thumbs [data-rm]').forEach(e => e.onclick = () => { const i = +e.dataset.rm; G.imgs.splice(i, 1); G.paths.splice(i, 1);
