@@ -33,6 +33,10 @@ body{background:var(--bg);color:var(--fg);font-family:var(--fb);height:100vh;ove
 .chips{display:flex;gap:7px;overflow-x:auto;padding-bottom:8px}.chips::-webkit-scrollbar{display:none}
 .chip{flex:0 0 auto;font-size:12.5px;padding:7px 14px;border-radius:99px;border:1px solid var(--border);background:var(--bg);color:var(--fg2);white-space:nowrap}
 .chip.on{background:var(--accent);color:#fff;border-color:var(--accent)}
+.sortrow{display:flex;align-items:center;gap:6px;margin:2px 0 6px;overflow-x:auto}
+.sortrow::-webkit-scrollbar{display:none}
+.sortlab{font-size:10.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-right:2px;flex:0 0 auto}
+.chip.sm{padding:5px 11px;font-size:12px}
 .sec{display:flex;align-items:center;gap:8px;font-family:var(--fh);font-weight:700;font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin:18px 2px 8px}
 .sec .ct{font-size:11px;font-weight:700;color:#fff;background:var(--accent);border-radius:99px;padding:1px 8px;letter-spacing:0}
 .sec .note{margin-left:auto;font-weight:500;font-size:11px;letter-spacing:0;text-transform:none}
@@ -137,6 +141,7 @@ body{background:var(--bg);color:var(--fg);font-family:var(--fb);height:100vh;ove
       <div class="big">Library</div>
       <div class="search">⌕ <input id="q" placeholder="Search lessons, diseases, systems…"></div>
       <div class="chips" id="chips"></div>
+      <div class="sortrow" id="sortrow"></div>
       <div id="rows"><div class="empty">Connecting to your library…</div></div>
     </div></section>
     <!-- GENERATE -->

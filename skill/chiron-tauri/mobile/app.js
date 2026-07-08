@@ -45,7 +45,18 @@ document.getElementById('themebtn').onclick = () => {
 paintTheme();
 
 /* ---------- library ---------- */
-const F = { q: '', dom: '' };
+const F = { q: '', dom: '', sort: 'domain' };
+const DL_TIME = JSON.parse(localStorage.getItem('chiron.dltime') || '{}');   // slug → when it was synced to THIS device
+function markSynced(slug) { if (!slug) return; DL_TIME[slug] = Date.now(); try { localStorage.setItem('chiron.dltime', JSON.stringify(DL_TIME)); } catch (e) {} }
+const SORTS = [['domain', 'By domain'], ['generated', 'Recently made'], ['synced', 'Recently synced']];
+function renderSort() { const el = document.getElementById('sortrow'); if (!el) return;
+  el.innerHTML = '<span class="sortlab">Sort</span>' + SORTS.map(([v, l]) => `<div class="chip sm ${F.sort === v ? 'on' : ''}" data-s="${v}">${l}</div>`).join('');
+  el.querySelectorAll('.chip').forEach(c => c.onclick = () => { F.sort = c.dataset.s; renderSort(); renderRows(); }); }
+function sortLessons(arr) { const a = [...arr];
+  if (F.sort === 'generated') a.sort((x, y) => (y.mtime || 0) - (x.mtime || 0));                                   // newest lesson.html first
+  else if (F.sort === 'synced') a.sort((x, y) => ((DL_TIME[slugOf(y.id)] || 0) - (DL_TIME[slugOf(x.id)] || 0)) || (y.mtime || 0) - (x.mtime || 0));  // most-recently downloaded first
+  else a.sort((x, y) => (x.domain || '').localeCompare(y.domain || '') || (x.title || '').localeCompare(y.title || ''));  // by domain, then title
+  return a; }
 const DOMS = [['', 'All'], ['medicine', 'Medicine'], ['medical-italian', 'Med-Italian'], ['italian', 'Italian']];
 function domCls(d) { return d === 'medicine' ? 'm' : d === 'medical-italian' ? 'mi' : 'l'; }
 function renderChips() {
@@ -97,8 +108,8 @@ async function quickGen(subject, dom) {   // queue a lesson straight from a libr
 function reconnect(job) { if (!job) return; go(1); showProg({ slug: job.slug, depth: job.depth }); poll(job.id); }
 function renderRows() {
   const list = LESSONS.filter(match);
-  const staged = list.filter(l => l.ready && l.status === 'staged');
-  const ready = list.filter(l => l.ready && l.status !== 'staged');
+  const staged = sortLessons(list.filter(l => l.ready && l.status === 'staged'));
+  const ready = sortLessons(list.filter(l => l.ready && l.status !== 'staged'));
   const queued = list.filter(l => !l.ready);
   const hdr = (i, t, n, note) => `<div class="sec">${i} ${t} <span class="ct">${n}</span><span class="note">${note}</span></div>`;
   let h = '';
@@ -118,7 +129,7 @@ document.getElementById('q').oninput = e => { F.q = e.target.value; renderRows()
 async function loadLibrary() {
   try {
     const d = await (await fetch(idxUrl() + '?' + Date.now())).json();
-    LESSONS = d.lessons || []; renderChips(); renderRows(); refreshSync();
+    LESSONS = d.lessons || []; renderChips(); renderSort(); renderRows(); refreshSync();
   } catch (e) {
     document.getElementById('rows').innerHTML = `<div class="empty">Can't reach your library at<br><b>${LIB}</b><br><br>Make sure the computer running Chiron is on, on the same wifi. Set the address in the Offline tab.</div>`;
     document.getElementById('syncedtag').textContent = 'offline';
@@ -159,7 +170,7 @@ async function download(slug) {
   toast('Downloading…');
   try {
     const l = await invoke('import_from_server', { url: catUrl(), file: slug + '.chiron' });
-    OFFLINE[slug] = { id: l.id, entry: l.entry }; renderRows(); refreshOffline(); toast('Saved offline ✓');
+    OFFLINE[slug] = { id: l.id, entry: l.entry }; markSynced(slug); renderRows(); refreshOffline(); toast('Saved offline ✓');
   } catch (e) { toast('Download failed'); }
 }
 async function refreshOffline() {
@@ -181,7 +192,7 @@ async function syncNow() {
     const files = (cat.lessons || []).map(e => e.file);
     let n = 0;
     for (const f of files) { const slug = f.replace(/\.chiron$/, ''); if (OFFLINE[slug]) continue;
-      try { const l = await invoke('import_from_server', { url: catUrl(), file: f }); OFFLINE[slug] = { id: l.id, entry: l.entry }; n++; } catch (e) {} }
+      try { const l = await invoke('import_from_server', { url: catUrl(), file: f }); OFFLINE[slug] = { id: l.id, entry: l.entry }; markSynced(slug); n++; } catch (e) {} }
     renderRows(); refreshOffline(); toast(n ? `Synced ${n} new lesson${n > 1 ? 's' : ''}` : 'Up to date'); refreshSync();
   } catch (e) { toast('Sync failed — is the library reachable?'); tag.textContent = 'offline'; }
 }
