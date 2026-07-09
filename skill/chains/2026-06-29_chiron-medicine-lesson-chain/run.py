@@ -43,7 +43,7 @@ GEN = HOME / "Documents/generated"
 OLLAMA_KEY = os.environ.get("OLLAMA_API_KEY", "")
 
 SUBJECT = os.environ.get("CH_SUBJECT", "Cardiac Arrhythmias")
-SYSTEM = os.environ.get("CH_SYSTEM", "Cardiovascular")
+SYSTEM = os.environ.get("CH_SYSTEM", "").strip()   # NO hardcoded default — inferred from the subject in main() if absent
 N_CHAPTERS = int(os.environ.get("CH_CHAPTERS", "4"))
 STAGE = os.environ.get("CH_STAGE", "plan")  # plan | chapters | assemble | all
 SLUG = "chiron-" + re.sub(r"[^a-z0-9]+", "-", SUBJECT.lower()).strip("-") + "-amboss"
@@ -104,6 +104,20 @@ def extract_json(s: str):
 async def llm(model_dict: dict, prompt: str, user_input: str = "go") -> str:
     chain = PromptChain(models=[model_dict], instructions=[prompt + "\n\n{input}" if "{input}" not in prompt else prompt])
     return await chain.process_prompt_async(user_input)
+
+
+async def infer_system(subject: str) -> str:
+    """Derive the medical system/specialty for ANY subject (the model knows them all — NOT a hardcoded list)."""
+    try:
+        r = await llm(ollama(MODEL_REASON),
+            "You are a medical curriculum router. Name the SINGLE best medical system/specialty that contains the topic. "
+            "Reply with ONLY the specialty name — e.g. Immunology, Dermatology, Radiology, Cardiovascular, Neurology, Endocrine, "
+            "Hematology/Oncology, Infectious Disease, Nephrology, Gastroenterology, Respiratory, Musculoskeletal, Psychiatry, "
+            "Reproductive, Genetics. No other words.\nTopic: " + subject, "go")
+        s = (r or "").strip().splitlines()[0].strip().strip('."*').strip()
+        return s[:48] if s else "General Medicine"
+    except Exception:
+        return "General Medicine"
 
 
 def claude_p(prompt: str) -> str:
@@ -458,7 +472,11 @@ def bake_audio():
 
 # ── orchestrate ────────────────────────────────────────────────────────────────
 async def main():
+    global SYSTEM
     assert OLLAMA_KEY, "OLLAMA_API_KEY not set (source ~/.config/environment.d/ollama-cloud.conf)"
+    if not SYSTEM:
+        SYSTEM = await infer_system(SUBJECT)
+        print(f"[phase 0] inferred system for '{SUBJECT}': {SYSTEM}", flush=True)
     print(f"=== chiron medicine chain | subject='{SUBJECT}' system='{SYSTEM}' chapters={N_CHAPTERS} stage={STAGE} -> {OUT}")
     source = build_source_pack()
     avoid = dedup_scan()
