@@ -42,7 +42,9 @@ PROMPTS = SKILL / "prompts"
 GEN = HOME / "Documents/generated"
 OLLAMA_KEY = os.environ.get("OLLAMA_API_KEY", "")
 
-SUBJECT = os.environ.get("CH_SUBJECT", "Cardiac Arrhythmias")
+SUBJECT = os.environ.get("CH_SUBJECT", "").strip()
+if __name__ == "__main__" and not SUBJECT:
+    raise SystemExit("[chiron] CH_SUBJECT is empty — refusing to generate a placeholder lesson (wrong-subject guard).")
 SYSTEM = os.environ.get("CH_SYSTEM", "").strip()   # NO hardcoded default — inferred from the subject in main() if absent
 N_CHAPTERS = int(os.environ.get("CH_CHAPTERS", "4"))
 STAGE = os.environ.get("CH_STAGE", "plan")  # plan | chapters | assemble | all

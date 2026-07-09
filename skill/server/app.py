@@ -303,6 +303,8 @@ def health():
 
 @app.post("/generate")
 def generate(req: GenReq):
+    if not (req.subject or "").strip():
+        raise HTTPException(400, "subject is required — refusing to generate without one")
     try:
         res = dispatch.resolve(req.domain, req.depth, req.subject, req.subject_type, req.extra)
     except SystemExit as e:

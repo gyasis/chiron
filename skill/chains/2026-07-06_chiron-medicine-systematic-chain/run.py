@@ -49,7 +49,9 @@ CURRICULA = SKILL / "curricula"
 GEN = HOME / "Documents/generated"
 OLLAMA_KEY = os.environ.get("OLLAMA_API_KEY", "")
 
-SUBJECT = os.environ.get("CH_SUBJECT", "Aortic aneurysm")
+SUBJECT = os.environ.get("CH_SUBJECT", "").strip()
+if __name__ == "__main__" and not SUBJECT:
+    raise SystemExit("[chiron] CH_SUBJECT is empty — refusing to generate a placeholder lesson (wrong-subject guard).")
 SYSTEM = os.environ.get("CH_SYSTEM", "General")  # tag-only; no atlas/grouping implication
 STAGE = os.environ.get("CH_STAGE", "plan")  # plan | chapters | assemble | audio | all
 SLUG = "chiron-" + re.sub(r"[^a-z0-9]+", "-", SUBJECT.lower()).strip("-") + "-systematic"
