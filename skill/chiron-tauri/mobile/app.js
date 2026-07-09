@@ -293,7 +293,9 @@ function renderSteps(phase) { const order = ['grounding', 'planning', 'writing',
   document.getElementById('p-steps').innerHTML = order.map(s => { const i = order.indexOf(s), c = i < ci ? 'done' : i === ci ? 'now' : ''; return `<div class="step ${c}"><span class="dot">${i < ci ? '✓' : ''}</span>${lab[s]}</div>`; }).join(''); }
 async function poll(jid) {
   try { const d = await (await fetch(LIB + '/jobs/' + jid)).json();
-    renderSteps(d.phase || d.status); if (d.log_tail) document.getElementById('p-log').textContent = d.log_tail;
+    renderSteps(d.phase || d.status);
+    if (d.log_tail) { const lg = document.getElementById('p-log'); const atBottom = lg.scrollHeight - lg.scrollTop - lg.clientHeight < 40;
+      lg.textContent = d.log_tail; if (atBottom) lg.scrollTop = lg.scrollHeight; }   // auto-follow unless you scrolled up
     if (d.status === 'ready' || d.status === 'published') { document.getElementById('p-title').firstChild.textContent = '✓ Ready — staged for review'; loadLibrary();
       setTimeout(() => { document.getElementById('genform').style.display = ''; document.getElementById('genprog').style.display = 'none'; }, 4000); return; }
     if (d.status === 'error') { document.getElementById('p-title').firstChild.textContent = '✗ Failed — see log'; return; }

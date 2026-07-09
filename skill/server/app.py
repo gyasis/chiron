@@ -329,7 +329,7 @@ def jobs():
 def job_status(jid: str):
     j = _get(jid)
     log = STATE / f"{jid}.log"
-    tail = "\n".join(log.read_text(errors="ignore").splitlines()[-14:]) if log.exists() else ""
+    tail = "\n".join(log.read_text(errors="ignore").splitlines()[-80:]) if log.exists() else ""
     return {**j, "phase": _derive_phase(log, j.get("status", "")), "log_tail": tail}
 
 

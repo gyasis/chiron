@@ -251,7 +251,9 @@ async def phase1(source: str, avoid: dict):
     # escape quotes/backslashes in a 12K blob → invalid JSON. Leave it empty; we inject it after.
     brief_p += '\n\nIMPORTANT: in your output JSON, set "extractedText" to "" (empty string). Do NOT echo the source text.'
     print("[phase 1] brief…", flush=True)
-    brief = await llm_json(ollama(MODEL_REASON), brief_p, "brief")
+    brief = await json_with_repair(brief_p, "brief", ollama(MODEL_REASON))
+    if brief is None:
+        raise RuntimeError("[chiron] phase-1 brief: the reasoning model returned unusable JSON after 3 repair attempts — try regenerating (usually transient).")
     brief["extractedText"] = source            # inject the real source deterministically
     brief.setdefault("metadata", {})["subject"] = SUBJECT
     (OUT / "brief.json").write_text(json.dumps(brief, indent=2))
@@ -264,7 +266,9 @@ async def phase1(source: str, avoid: dict):
               "Each: {chapterId, chapterNumber, title, narrative (150-400w arc), keyConcepts[], "
               "widgets:[{type}]} — medicine chapters MUST include a 'mcq-clinical-vignette' widget.")
     print("[phase 1] syllabus…", flush=True)
-    syl = await llm_json(ollama(MODEL_REASON), syl_p, "syllabus")
+    syl = await json_with_repair(syl_p, "syllabus", ollama(MODEL_REASON))
+    if syl is None:
+        raise RuntimeError("[chiron] phase-1 syllabus: unusable JSON after 3 repair attempts — try regenerating.")
     if isinstance(syl, dict):
         syl = syl.get("chapters") or syl.get("syllabus") or [syl]
     (OUT / "syllabus.json").write_text(json.dumps(syl, indent=2))
@@ -419,7 +423,7 @@ async def phase_lecture_scripts():
     p += ("\n\n## MEDICAL-TTS SAFETY (BLOCKING): this is SPOKEN audio. Write every electrolyte/clinical "
           "term as plain English 'low/high X' BEFORE any Latin (the TTS reverses hypo-/hyper- prefixes). "
           "Return ONLY the JSON object {\"artifacts\":[...]}.")
-    res = await llm_json(ollama(MODEL_REASON), p, "lecture-scripts")
+    res = await json_with_repair(p, "lecture-scripts", ollama(MODEL_REASON)) or {}
     arts = res.get("artifacts", res if isinstance(res, list) else [])
     # transform artifacts -> audio-scripts.json {summary, shortened, sections:{id:segments}}
     out = {"summary": [], "sections": {}}
