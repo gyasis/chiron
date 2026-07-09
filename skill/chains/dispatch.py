@@ -85,8 +85,8 @@ def resolve(domain, depth=None, subject="", subject_type=None, extra=None):
             env["CH_MAX_DISEASES"] = str(extra["max_diseases"])
         if depth == "primer" and extra.get("chapters"):
             env["CH_CHAPTERS"] = str(extra["chapters"])
-        if depth == "amboss" and extra.get("system"):
-            env["CH_SYSTEM"] = extra["system"]
+        if extra.get("system"):
+            env["CH_SYSTEM"] = extra["system"]   # user-confirmed/edited system → chain uses it, never re-infers
     elif domain == "medical-italian" and depth == "passage":
         env["SSM_QID"] = subject   # an SSM question id; blank → the chain picks random
     elif domain == "medical-italian" and depth == "ward":

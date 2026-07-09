@@ -229,19 +229,37 @@ document.getElementById('libsave').onclick = () => {
 const DEPTHS = { medicine: [['', 'Auto'], ['primer', 'Primer'], ['atlas', 'Atlas'], ['systematic', 'Systematic'], ['drug', 'Drug'], ['amboss', 'AMBOSS']],
   'medical-italian': [['ward', 'Ward'], ['passage', 'Passage']], italian: [['lesson', 'Lesson']] };
 const ATLAS = ['cardiovascular', 'respiratory', 'gastrointestinal', 'renal', 'endocrine', 'metabolic', 'hematolog', 'oncolog', 'neurolog', 'psychiatr', 'musculoskeletal', 'rheumatolog', 'dermatolog', 'infectious', 'immunolog', 'reproductive', 'geriatric'];
-const G = { dom: 'medicine', dep: '', imgs: [], paths: [], autofill: true, suggested: false };
+const G = { dom: 'medicine', dep: '', imgs: [], paths: [], autofill: true, suggested: false, system: '', sysAutofill: true };
+let sysTimer;
+function scheduleResolve() { clearTimeout(sysTimer); sysTimer = setTimeout(resolveSystem, 700); }
+async function resolveSystem() {   // pre-send preview: infer the medical system from the typed subject (spinner → editable)
+  const row = document.getElementById('w-sysrow'), fld = document.getElementById('w-system'), spin = document.getElementById('w-sysspin');
+  if (!row) return;
+  if (G.dom !== 'medicine') { row.style.display = 'none'; return; }
+  row.style.display = '';
+  const subj = document.getElementById('w-subject').value.trim();
+  if (!subj) { if (G.sysAutofill) { fld.value = ''; G.system = ''; } return; }
+  if (!G.sysAutofill) return;   // you edited the system → yours wins
+  spin.classList.add('on'); const ph = fld.getAttribute('placeholder'); fld.setAttribute('placeholder', 'detecting specialty…');
+  try {
+    const r = await (await fetch(LIB + '/resolve', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ subject: subj, domain: G.dom, depth: G.dep || null }) })).json();
+    if (r && r.system && G.sysAutofill) { fld.value = r.system; G.system = r.system; }
+  } catch (e) {}
+  spin.classList.remove('on'); fld.setAttribute('placeholder', ph);
+}
 function detectDepth(s) { s = (s || '').toLowerCase().trim(); if (!s) return ''; if (s.includes('geriatr')) return 'primer'; if (ATLAS.some(k => s === k || s.includes(k))) return 'atlas'; return 'systematic'; }
 function renderSegs() {
   document.getElementById('w-domseg').innerHTML = Object.keys(DEPTHS).map(d => `<div class="chip ${G.dom === d ? 'on' : ''}" data-d="${d}">${d === 'medical-italian' ? 'Med-Italian' : d[0].toUpperCase() + d.slice(1)}</div>`).join('');
   document.getElementById('w-depseg').innerHTML = DEPTHS[G.dom].map(([v, l]) => `<div class="chip ${G.dep === v ? 'on' : ''}" data-v="${v}">${l}</div>`).join('');
-  document.querySelectorAll('#w-domseg .chip').forEach(c => c.onclick = () => { G.dom = c.dataset.d; G.dep = ''; renderSegs(); hint(); });
+  document.querySelectorAll('#w-domseg .chip').forEach(c => c.onclick = () => { G.dom = c.dataset.d; G.dep = ''; renderSegs(); hint(); resolveSystem(); });
   document.querySelectorAll('#w-depseg .chip').forEach(c => c.onclick = () => { G.dep = c.dataset.v; renderSegs(); hint(); });
 }
 function hint() { const s = document.getElementById('w-subject').value, h = document.getElementById('w-hint');
   if (G.suggested) { h.innerHTML = '✨ suggested from your photos — edit if you like'; return; }
   if (G.dom === 'medicine' && !G.dep) { const d = detectDepth(s); h.innerHTML = d ? `Auto → <b>${d}</b> lesson` : 'Type a subject — depth auto-detects'; } else h.innerHTML = ''; }
-document.getElementById('w-subject').oninput = () => { G.autofill = false; G.suggested = false; hint(); };   // you typed → your subject wins
-function genFor(subject, dom) { document.getElementById('w-subject').value = subject || ''; G.autofill = false; G.suggested = false; if (dom && DEPTHS[dom]) { G.dom = dom; G.dep = ''; } renderSegs(); hint(); go(1); }
+document.getElementById('w-subject').oninput = () => { G.autofill = false; G.suggested = false; G.sysAutofill = true; hint(); scheduleResolve(); };   // you typed → your subject wins; re-infer system
+document.getElementById('w-system').oninput = e => { G.sysAutofill = false; G.system = e.target.value.trim(); };   // you edited the system → yours wins
+function genFor(subject, dom) { document.getElementById('w-subject').value = subject || ''; G.autofill = false; G.suggested = false; G.sysAutofill = true; if (dom && DEPTHS[dom]) { G.dom = dom; G.dep = ''; } renderSegs(); hint(); resolveSystem(); go(1); }
 async function addImgs(input) {
   const files = [...input.files]; input.value = ''; if (!files.length) return;
   files.forEach(f => G.imgs.push(f)); renderThumbs('uploading');
@@ -263,6 +281,8 @@ async function maybeSuggest() {   // async subject suggestion — ONLY when the 
       if (s.domain && DEPTHS[s.domain]) G.dom = s.domain;
       G.dep = (s.depth && DEPTHS[G.dom].some(([v]) => v === s.depth)) ? s.depth : '';
       renderSegs(); hint();
+      if (s.system && G.dom === 'medicine' && G.sysAutofill) { document.getElementById('w-system').value = s.system; G.system = s.system; document.getElementById('w-sysrow').style.display = ''; }
+      else resolveSystem();
     } else if (!field.value.trim()) hint();
   } catch (e) { hint(); }
   finally { spin.classList.remove('on'); field.setAttribute('placeholder', ph); }
@@ -279,7 +299,7 @@ document.getElementById('w-go').onclick = async () => {
   const btn = document.getElementById('w-go'); btn.disabled = true; btn.textContent = 'Starting…';
   try {
     const r = await (await fetch(LIB + '/generate', { method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ domain: G.dom, subject, depth: G.dep || null, images: G.paths.length ? G.paths : null, stage: 'all' }) })).json();
+      body: JSON.stringify({ domain: G.dom, subject, depth: G.dep || null, images: G.paths.length ? G.paths : null, stage: 'all', extra: (G.dom === 'medicine' && G.system) ? { system: G.system } : {} }) })).json();
     if (!r.job_id) throw 0;
     showProg(r); poll(r.job_id);
   } catch (e) { toast('Generate failed — is the library reachable?'); }

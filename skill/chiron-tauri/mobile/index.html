@@ -155,6 +155,8 @@ body{background:var(--bg);color:var(--fg);font-family:var(--fb);height:100vh;ove
         <label class="fl">Domain</label><div class="seg" id="w-domseg"></div>
         <label class="fl">Depth</label><div class="seg" id="w-depseg"></div>
         <div class="hintline" id="w-hint"></div>
+        <div id="w-sysrow" style="display:none"><label class="fl">System <span style="font-weight:400;color:var(--muted)">— auto-detected, edit if it's off</span></label>
+          <div class="fieldwrap"><input id="w-system" class="fi" placeholder="detecting specialty…"><span class="wspin" id="w-sysspin"></span></div></div>
         <label class="fl">Pages → OCR <span style="font-weight:400;color:var(--muted)">optional · use as context</span></label>
         <div class="cap"><label class="capb">📷 Camera<input id="w-cam" type="file" accept="image/*" capture="environment" hidden></label>
           <label class="capb">🖼 Gallery<input id="w-gal" type="file" accept="image/*" multiple hidden></label></div>

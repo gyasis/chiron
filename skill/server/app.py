@@ -168,6 +168,22 @@ def _looks_drug(subject: str, text: str) -> bool:
                                    "contraindication", "pharmacokinet", "adrenoceptor", "dosing")) >= 2
 
 
+_SYS_PROMPT = ("Name the SINGLE best medical system/specialty for this topic. Reply with ONLY the specialty name — e.g. "
+               "Immunology, Dermatology, Radiology, Cardiovascular, Neurology, Endocrine, Hematology/Oncology, Infectious "
+               "Disease, Nephrology, Gastroenterology, Respiratory, Musculoskeletal, Psychiatry, Reproductive, Genetics. "
+               "No other words.\nTopic: ")
+
+
+def _infer_system(subject: str) -> str:
+    """Infer the medical specialty for a subject via the governor (same idea the chain uses) — for the pre-send preview."""
+    body = json.dumps({"model": CLASSIFY_MODEL, "stream": False,
+                       "messages": [{"role": "user", "content": _SYS_PROMPT + (subject or "")}]}).encode()
+    req = urllib.request.Request(VLM_URL.rstrip("/") + "/api/chat", data=body, headers={"Content-Type": "application/json"})
+    with urllib.request.urlopen(req, timeout=60) as r:
+        c = (json.loads(r.read()).get("message", {}).get("content", "") or "").strip()
+    return c.splitlines()[0].strip().strip('."*').strip()[:48] if c else ""
+
+
 def _ingest_images(images: list, out: Path) -> str:
     """Captured page images → OCR'd Markdown (concatenated) for the CH_GROUNDING slot.
     Best-effort — governor unreachable / a bad image yields '' rather than aborting the job."""
@@ -415,7 +431,34 @@ def suggest(req: SuggestReq):
     depth = c.get("depth")
     if domain == "medicine" and depth != "drug" and _looks_drug(c.get("subject"), text):
         depth = "drug"   # safety net: a drug-class page → the drug template, whatever the model said
-    return {"subject": c.get("subject"), "domain": domain, "depth": depth, "chars": len(text)}
+    system = None
+    if domain == "medicine":
+        try:
+            system = _infer_system(c.get("subject") or "")
+        except Exception:
+            system = None
+    return {"subject": c.get("subject"), "domain": domain, "depth": depth, "system": system, "chars": len(text)}
+
+
+class ResolveReq(BaseModel):
+    subject: str = ""
+    domain: str = "medicine"
+    depth: str | None = None
+
+
+@app.post("/resolve")
+def resolve_preview(req: ResolveReq):
+    """Pre-send preview — what the chain will actually get. Infers the medical system from a typed subject."""
+    subj = (req.subject or "").strip()
+    if not subj:
+        raise HTTPException(400, "subject required")
+    system = None
+    if (req.domain or "medicine") == "medicine":
+        try:
+            system = _infer_system(subj)
+        except Exception:
+            system = None
+    return {"subject": subj, "domain": req.domain or "medicine", "depth": req.depth, "system": system}
 
 
 # static: open a generated lesson, or the faceted library, straight from the app
