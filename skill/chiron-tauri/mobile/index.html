@@ -135,6 +135,32 @@ body{background:var(--bg);color:var(--fg);font-family:var(--fb);height:100vh;ove
 .savebtn{margin-top:14px;width:100%;border:1px solid var(--ok);background:none;color:var(--ok);border-radius:11px;font-family:var(--fh);font-weight:700;font-size:14px;padding:12px}
 .toast{position:fixed;left:50%;bottom:calc(90px + env(safe-area-inset-bottom));transform:translateX(-50%);background:var(--fg);color:var(--bg);font-size:13px;padding:10px 16px;border-radius:99px;z-index:60;opacity:0;transition:opacity .2s;pointer-events:none;max-width:88vw;text-align:center}
 .toast.show{opacity:.95}
+/* ---- Activity ---- */
+.actsum{display:flex;gap:8px;margin:10px 0 6px}
+.actsum .pill2{flex:1;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:10px;text-align:center}
+.actsum .pill2 b{display:block;font-family:var(--fh);font-weight:800;font-size:20px}
+.actsum .pill2 span{font-size:10.5px;color:var(--muted)}
+.actsum .pill2.live b{color:var(--accent)}.actsum .pill2.ok b{color:var(--ok)}.actsum .pill2.err b{color:#dc2626}
+.acard{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:13px 14px;margin-bottom:10px}
+.acard.live{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent) inset}
+.acard .ah{display:flex;align-items:center;gap:9px}
+.acard .ah .sp{width:14px;height:14px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin360 .7s linear infinite;flex:0 0 auto}
+.acard .ah .ico{width:20px;height:20px;border-radius:6px;display:grid;place-items:center;font-size:12px;flex:0 0 auto}
+.acard .ah .ico.ok{background:var(--langbg);color:var(--ok)}.acard .ah .ico.err{background:#fde2e2;color:#dc2626}
+:root[data-theme=dark] .acard .ah .ico.err{background:#3a1414}
+.acard .ah .at{flex:1;min-width:0;font-family:var(--fh);font-weight:700;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.acard .ah .atime{font-size:11px;color:var(--muted);flex:0 0 auto}
+.acard .asub{font-size:11.5px;color:var(--muted);margin:5px 0 0;display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.acard .src{font-size:9.5px;font-weight:700;padding:1px 7px;border-radius:99px;background:var(--elevated);color:var(--fg2)}
+.acard .src.app{background:var(--medbg);color:var(--med)}.acard .src.ext{background:var(--meditbg);color:var(--medit)}
+.acard .prog{display:flex;gap:4px;margin-top:10px}
+.acard .prog i{flex:1;height:5px;border-radius:99px;background:var(--elevated)}
+.acard .prog i.done{background:var(--ok)}.acard .prog i.now{background:var(--accent);animation:apulse 1s infinite}
+@keyframes apulse{50%{opacity:.4}}
+.acard .plabel{font-size:11px;color:var(--fg2);margin-top:7px;display:flex;justify-content:space-between}
+.acard .eta{color:var(--accent);font-weight:600}
+.acard.tapp{cursor:pointer}
+.acthead{font-family:var(--fh);font-weight:700;font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin:16px 2px 8px}
 </style></head>
 <body>
   <div class="pane" id="pane">
@@ -183,6 +209,11 @@ body{background:var(--bg);color:var(--fg);font-family:var(--fb);height:100vh;ove
       <div class="setrow"><input id="liburl" class="fi" placeholder="http://192.168.0.112:8911"><button id="libsave">Save</button></div>
       <div style="font-size:11.5px;color:var(--muted);margin-top:8px">Point this at the computer running your Chiron library (home wifi).</div>
     </div></section>
+    <!-- ACTIVITY -->
+    <section class="scr" id="s-act"><div class="pad">
+      <div class="big">Activity<small id="act-sub">Every lesson generation — live &amp; historical</small></div>
+      <div id="act-body"><div class="empty">Loading activity…</div></div>
+    </div></section>
   </div>
 
   <!-- edge drawer: invisible full-height left TAP strip + region swipe -->
@@ -193,6 +224,7 @@ body{background:var(--bg);color:var(--fg);font-family:var(--fb);height:100vh;ove
     <button class="ditem on" data-nav="0">▤ &nbsp;Library</button>
     <button class="ditem" data-nav="1">✦ &nbsp;Generate</button>
     <button class="ditem" data-nav="2">⤓ &nbsp;Offline</button>
+    <button class="ditem" data-nav="3">◷ &nbsp;Activity</button>
     <div class="dsep"></div>
     <button class="ditem" id="importbtn">⬆ &nbsp;Import a lesson</button>
     <button class="ditem" id="themebtn">🌙 &nbsp;Theme</button>

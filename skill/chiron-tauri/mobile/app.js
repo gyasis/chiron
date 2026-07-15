@@ -24,7 +24,7 @@ pane.addEventListener('scroll', () => requestAnimationFrame(() => syncNav()), { 
 function drawer(open) { drawerEl.classList.toggle('open', open); scrimEl.classList.toggle('on', open); }
 scrimEl.onclick = () => drawer(false);
 document.getElementById('ereg').onclick = () => drawer(true);          // TAP the invisible left strip → always opens (no gesture conflict)
-dItems.forEach(b => b.onclick = () => { go(+b.dataset.nav); drawer(false); });
+dItems.forEach(b => b.onclick = () => { const n = +b.dataset.nav; go(n); drawer(false); if (n === 3) renderActivity(); });
 // SWIPE to open — mid-band ONLY (30–62% height). Top + BOTTOM-LEFT stay free for Android system gestures (back/home).
 let _sx = null, _sy = null;
 document.body.addEventListener('touchstart', e => { const t = e.touches[0], h = innerHeight;
@@ -126,6 +126,49 @@ function renderRows() {
   document.querySelectorAll('#rows [data-recon]').forEach(e => e.onclick = ev => { ev.stopPropagation(); reconnect(ACTIVE.find(j => j.id === e.dataset.recon)); });
 }
 document.getElementById('q').oninput = e => { F.q = e.target.value; renderRows(); };
+
+/* ---------- Activity: persistent cross-source job journal (survives app close) ---------- */
+const PHASES = [['grounding', 'Grounding'], ['planning', 'Planning'], ['writing', 'Writing'], ['assembling', 'Assembling'], ['baking', 'Baking audio'], ['ready', 'Ready']];
+function fmtDur(s) { if (s == null) return ''; s = Math.round(s); if (s < 60) return s + 's'; const m = Math.floor(s / 60); return m + 'm' + (s % 60 ? ' ' + (s % 60) + 's' : ''); }
+function relTime(iso) { if (!iso) return ''; const t = Date.parse(iso); if (!t) return ''; const d = (Date.now() - t) / 1000;
+  if (d < 60) return 'just now'; if (d < 3600) return Math.floor(d / 60) + 'm ago'; if (d < 86400) return Math.floor(d / 3600) + 'h ago'; return Math.floor(d / 86400) + 'd ago'; }
+function actCard(j) {
+  const src = j.source || (j.external ? 'External' : 'App'), srcCls = (j.external || (j.source && j.source !== 'App')) ? 'ext' : 'app';
+  const live = j.status === 'queued' || j.status === 'running';
+  const ci = PHASES.findIndex(([p]) => p === j.phase);
+  const curIdx = (j.status === 'ready' || j.status === 'published') ? PHASES.length : (ci < 0 ? 0 : ci);
+  if (live) {
+    const bars = PHASES.map((_, i) => `<i class="${i < curIdx ? 'done' : i === curIdx ? 'now' : ''}"></i>`).join('');
+    const phaseLabel = (PHASES[curIdx] || ['', 'Working'])[1];
+    const eta = j.eta_seconds != null ? `<span class="eta">~${fmtDur(j.eta_seconds)} left</span>` : '';
+    return `<div class="acard live tapp"><div class="ah"><span class="sp"></span><span class="at">${esc(j.subject || j.slug || 'lesson')}</span><span class="atime">${fmtDur(j.elapsed_seconds)}</span></div>
+      <div class="asub"><span class="src ${srcCls}">${esc(src)}</span>${j.chain ? `<span>${esc(j.chain)}</span>` : ''}${j.depth ? `<span>· ${esc(j.depth)}</span>` : ''}</div>
+      <div class="prog">${bars}</div><div class="plabel"><span>${phaseLabel}…</span>${eta}</div></div>`;
+  }
+  const ok = j.status === 'ready' || j.status === 'published';
+  return `<div class="acard ${ok && j.slug ? 'tapp' : ''}"><div class="ah"><span class="ico ${ok ? 'ok' : 'err'}">${ok ? '✓' : '✕'}</span><span class="at">${esc(j.subject || j.slug || 'lesson')}</span><span class="atime">${relTime(j.finished || j.created)}</span></div>
+    <div class="asub"><span class="src ${srcCls}">${esc(src)}</span>${j.chain ? `<span>${esc(j.chain)}</span>` : ''}${j.elapsed_seconds != null ? `<span>· took ${fmtDur(j.elapsed_seconds)}</span>` : ''}${j.status === 'error' ? '<span style="color:#dc2626">· failed</span>' : ''}</div></div>`;
+}
+let ACT_BUSY = false;
+async function renderActivity() {
+  const body = document.getElementById('act-body'); if (!body || ACT_BUSY) return; ACT_BUSY = true;
+  try {
+    const d = await (await fetch(LIB + '/activity?limit=80')).json();
+    const c = d.counts || { active: 0, done: 0, error: 0 };
+    let h = `<div class="actsum"><div class="pill2 live"><b>${c.active}</b><span>active</span></div><div class="pill2 ok"><b>${c.done}</b><span>completed</span></div><div class="pill2 err"><b>${c.error}</b><span>failed</span></div></div>`;
+    if (d.active.length) h += `<div class="acthead">Now running</div>` + d.active.map(actCard).join('');
+    if (d.history.length) h += `<div class="acthead">History</div>` + d.history.map(actCard).join('');
+    if (!d.active.length && !d.history.length) h += `<div class="empty">No lessons generated yet — start one from Generate. Anything you kick off will show here, even if you close the app.</div>`;
+    body.innerHTML = h;
+    const all = [...d.active, ...d.history];
+    body.querySelectorAll('.acard').forEach((el, i) => { const j = all[i]; if (!j) return;
+      if (j.status === 'queued' || j.status === 'running') el.onclick = () => reconnect(j);
+      else if ((j.status === 'ready' || j.status === 'published') && j.slug) el.onclick = () => openLesson(j.slug); });
+    const sub = document.getElementById('act-sub'); if (sub) sub.textContent = `${c.active} live · ${c.done} done · ${c.error} failed`;
+  } catch (e) { body.innerHTML = `<div class="empty">Can't reach your library for activity.<br>Is the computer running Chiron on the same wifi?</div>`; }
+  ACT_BUSY = false;
+}
+function curPane() { return Math.round(pane.scrollLeft / pane.clientWidth); }
 async function loadLibrary() {
   try {
     const d = await (await fetch(idxUrl() + '?' + Date.now())).json();
@@ -326,8 +369,8 @@ async function accept(slug) { try { const r = await (await fetch(LIB + '/accept/
 
 /* ---------- boot ---------- */
 renderSegs(); hint();
-loadLibrary().then(() => { refreshOffline(); pollActive(); });
-setInterval(pollActive, 4000);   // keep the "Generating" band + row spinners live across the app
+loadLibrary().then(() => { refreshOffline(); pollActive(); renderActivity(); });
+setInterval(() => { pollActive(); if (curPane() === 3) renderActivity(); }, 4000);   // keep the "Generating" band, row spinners + Activity feed live
 
 /* ---- pull-down-to-sync on the Library ---- */
 (function () {

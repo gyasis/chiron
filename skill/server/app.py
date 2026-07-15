@@ -79,6 +79,50 @@ def _derive_phase(log: Path, status: str) -> str:
     return status
 
 
+def _ts(s: str):
+    try:
+        return datetime.fromisoformat(s).timestamp()
+    except Exception:
+        return None
+
+
+def _dur(j: dict):
+    """Wall-clock seconds a job has run (started→finished, or started→now if live)."""
+    a = _ts(j.get("started") or j.get("created"))
+    if not a:
+        return None
+    b = _ts(j["finished"]) if j.get("finished") else datetime.now(timezone.utc).timestamp()
+    return (b - a) if b else None
+
+
+def _avg_duration(chain, depth):
+    """Mean run-time of recent COMPLETED jobs of the same chain — the ETA basis."""
+    ds = [d for j in JOBS.values()
+          if j.get("status") in ("ready", "published") and j.get("chain") == chain and j.get("finished")
+          for d in [_dur(j)] if d and d > 0]
+    return sum(ds) / len(ds) if ds else None
+
+
+def _enrich_job(j: dict, stamp: bool = False) -> bool:
+    """Attach live phase + timing (elapsed, per-phase timeline, ETA). Returns True if the timeline changed."""
+    changed = False
+    ph = _derive_phase(STATE / f"{j['id']}.log", j.get("status", ""))
+    j["phase"] = ph
+    if j.get("status") in ("queued", "running") and stamp:
+        tl = j.setdefault("phase_log", {})
+        if ph not in tl and ph not in ("queued",):
+            tl[ph] = _now()
+            changed = True
+    d = _dur(j)
+    j["elapsed_seconds"] = round(d) if d is not None else None
+    if j.get("status") == "running":
+        avg = _avg_duration(j.get("chain"), j.get("depth"))
+        j["eta_seconds"] = max(0, round(avg - (d or 0))) if avg else None
+        j["eta_basis"] = round(avg) if avg else None
+    j.setdefault("source", None)   # None = started in-app / via the server; else a caller-declared origin
+    return changed
+
+
 def _rebuild_catalog() -> None:
     subprocess.run(["node", str(SKILL / "scripts" / "build-library-index.mjs")],
                    cwd=str(SKILL), capture_output=True)
@@ -103,6 +147,11 @@ def _write_status(out: Path, job: dict, status: str) -> None:
     cj.setdefault("domain", job.get("domain"))
     cj.setdefault("depth", job.get("depth"))
     cj.setdefault("subject", job.get("subject"))
+    # caller-declared provenance (generic — chiron persists whatever the caller sent, it knows no source names)
+    if job.get("source"):
+        cj["source"] = job["source"]
+    if job.get("source_ref"):
+        cj["source_ref"] = job["source_ref"]
     cj[("accepted" if status == "published" else "generated")] = _now()
     cj_path.write_text(json.dumps(cj, indent=2))
 
@@ -303,11 +352,27 @@ class GenReq(BaseModel):
     grounding: str | None = None
     images: list | None = None      # file paths already on disk (mobile upload lands them here)
     stage: str = "all"              # all = author→assemble→bake; assemble = no bake (fast preview)
+    source: str | None = None       # caller-declared origin (generic — e.g. an external study app), runtime DATA only
+    source_ref: str | None = None   # the caller's own record id, used to build a "back to source" link
     extra: dict = {}
 
 
 class RegenReq(BaseModel):
     note: str = ""
+
+
+class RegisterReq(BaseModel):
+    """Register (or update) a job that ran OUTSIDE the server — a CLI dispatcher run, a PromptChain
+    script, a Claude Code session — so it shows up in the Activity journal alongside in-app jobs."""
+    subject: str
+    domain: str = "medicine"
+    depth: str | None = None
+    chain: str | None = None
+    slug: str | None = None
+    source: str = "external"        # a human label of the origin: "Claude Code", "CLI", "PromptChain"…
+    status: str = "running"         # running → ready | error
+    phase: str | None = None
+    job_id: str | None = None       # pass the same id at start + end to UPDATE one job
 
 
 @app.get("/health")
@@ -338,9 +403,44 @@ def generate(req: GenReq):
 @app.get("/jobs")
 def jobs():
     items = sorted(JOBS.values(), key=lambda j: j.get("created", ""), reverse=True)
+    changed = False
     for j in items:
-        j["phase"] = _derive_phase(STATE / f"{j['id']}.log", j.get("status", ""))
+        changed = _enrich_job(j, stamp=True) or changed
+    if changed:
+        _save()
     return {"jobs": items}
+
+
+@app.get("/activity")
+def activity(limit: int = 100):
+    """The Activity feed — every generation (active + historical) with timing, for the Activity page.
+    Resilient to the app closing: this is disk-backed, so a job started hours ago still shows here."""
+    items = sorted(JOBS.values(), key=lambda j: j.get("created", ""), reverse=True)[:limit]
+    changed = False
+    for j in items:
+        changed = _enrich_job(j, stamp=True) or changed
+    if changed:
+        _save()
+    active = [j for j in items if j.get("status") in ("queued", "running")]
+    history = [j for j in items if j.get("status") not in ("queued", "running")]
+    return {"active": active, "history": history,
+            "counts": {"active": len(active), "done": len([j for j in history if j.get("status") in ("ready", "published")]),
+                       "error": len([j for j in history if j.get("status") == "error"])}}
+
+
+@app.post("/register")
+def register(req: RegisterReq):
+    """Record/update an externally-run generation in the shared journal (Phase-2 hook — a CLI/Claude Code
+    run POSTs status=running at start, then the same job_id with status=ready|error at the end)."""
+    jid = req.job_id or ("ext-" + uuid.uuid4().hex[:10])
+    j = JOBS.get(jid) or {"id": jid, "created": _now(), "started": _now(), "external": True}
+    j.update({k: v for k, v in req.model_dump().items() if v is not None and k != "job_id"})
+    j["external"] = True
+    if req.status in ("ready", "published", "error"):
+        j.setdefault("finished", _now())
+    JOBS[jid] = j
+    _save()
+    return {"job_id": jid, "ok": True}
 
 
 @app.get("/jobs/{jid}")
@@ -348,7 +448,9 @@ def job_status(jid: str):
     j = _get(jid)
     log = STATE / f"{jid}.log"
     tail = "\n".join(log.read_text(errors="ignore").splitlines()[-80:]) if log.exists() else ""
-    return {**j, "phase": _derive_phase(log, j.get("status", "")), "log_tail": tail}
+    if _enrich_job(j, stamp=True):
+        _save()
+    return {**j, "log_tail": tail}
 
 
 @app.post("/accept/{ref}")
@@ -359,6 +461,12 @@ def accept(ref: str):
     if not (out / "lesson.html").exists():
         raise HTTPException(409, "lesson not built yet")
     p = out / "chiron.json"
+    prior = {}             # capture caller provenance BEFORE bundling (the bundler regenerates chiron.json fresh)
+    if p.exists():
+        try:
+            prior = json.loads(p.read_text())
+        except Exception:
+            prior = {}
     _bundle_lesson(slug)   # package → .chiron (this REGENERATES chiron.json as the chiron/1 manifest — no status)
     cj = {}                # so stamp status AFTER bundling, merging onto the manifest the bundler wrote
     if p.exists():
@@ -368,6 +476,9 @@ def accept(ref: str):
             cj = {}
     cj.update(status="published", accepted=_now())
     cj.setdefault("subject", slug)
+    for k in ("source", "source_ref"):   # preserve provenance the bundler dropped
+        if prior.get(k) and not cj.get(k):
+            cj[k] = prior[k]
     p.write_text(json.dumps(cj, indent=2))
     _rebuild_catalog()     # re-index → picks up published status + bundle=true/sizeMB from disk
     if ref in JOBS:

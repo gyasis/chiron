@@ -2,9 +2,12 @@
  * Adding a facet to library.yaml → rebuild → it appears here. Lessons open their own lesson.html
  * (served over http, where audio + nav work). */
 'use strict';
-const FIELD = { system:'system', subject:'subject', topic:'topic', trend:'trend', lang_level:'level' }; // facet → lesson field
+const FIELD = { system:'system', subject:'subject', topic:'topic', trend:'trend', lang_level:'level', source:'source' }; // facet → lesson field
 let CONFIG, LESSONS;
-const F = { q:'', sort:'priority', domain:new Set(), facets:{} };
+const F = { q:'', sort:'priority', domain:new Set(), facets:{}, hiddenDom:new Set(), hiddenSys:new Set() };
+/* ---- W1 hide-filters: persist which domains/systems are hidden across reloads ---- */
+try{ const H=JSON.parse(localStorage.getItem('chiron.hide')||'{}'); (H.dom||[]).forEach(d=>F.hiddenDom.add(d)); (H.sys||[]).forEach(s=>F.hiddenSys.add(s)); }catch(e){}
+const saveHide = () => { try{ localStorage.setItem('chiron.hide', JSON.stringify({dom:[...F.hiddenDom], sys:[...F.hiddenSys]})); }catch(e){} };
 /* ---- offline engine (lifted from the player): Download → cache, Remove → local-only ---- */
 const LCACHE = 'chiron-lib-lessons-v1';
 const DL = JSON.parse(localStorage.getItem('chiron.dl') || '{}');   // slug → {id, entry}
@@ -64,6 +67,9 @@ const domLabel = d => (CONFIG.domains[d]||{}).label || d;
 const count = pred => LESSONS.filter(pred).length;
 
 function match(l){
+  // W1 hide-filters take precedence — a hidden domain/system is removed everywhere, incl. search.
+  if (F.hiddenDom.has(l.domain)) return false;
+  if (l.system && F.hiddenSys.has(l.system)) return false;
   if (F.q){ const s=(l.title+' '+(l.system||'')+' '+(l.subject||'')+' '+(l.topic||'')).toLowerCase(); if(!s.includes(F.q.toLowerCase())) return false; }
   if (F.domain.size && !F.domain.has(l.domain)) return false;
   for (const [k,set] of Object.entries(F.facets)){
@@ -84,42 +90,41 @@ function sortLessons(a){ a=[...a];
   if (F.sort==='clips')    a.sort((x,y)=>(y.clips||0)-(x.clips||0));
   return a;
 }
-/* ---- pills: domain (from config.domains) + any facet of type 'pills' ---- */
+/* ---- pills: secondary facets of type 'pills' (domain + system now live in the hide-rail) ---- */
 function renderPills(){
-  let h = '<span class="pgl">Domain</span>';
-  for (const d of Object.keys(CONFIG.domains)){ const n=count(l=>l.domain===d); if(!n) continue;
-    h += `<button class="pill ${domCls(d)} ${F.domain.has(d)?'on':''}" onclick="LIB.togDom('${d}')">${domLabel(d)}<span class="ct">${n}</span></button>`; }
+  let h = '';
   for (const [k,f] of Object.entries(CONFIG.facets)){
     if (f.type!=='pills' || !FIELD[k]) continue;
+    // 'source: derived' facets discover their values from the lessons at runtime (keeps external
+    // source names out of the committed config); others use the fixed vocab in library.yaml.
+    const vals = (f.source==='derived') ? [...new Set(LESSONS.map(l=>l[FIELD[k]]).filter(Boolean))].sort() : (f.values||[]);
+    if (!vals.length) continue;
     h += `<span class="sep"></span><span class="pgl">${f.label}</span>`;
-    for (const v of (f.values||[])){ const n=count(l=>l[FIELD[k]]===v); if(!n) continue;
-      h += `<button class="pill ${F.facets[k].has(v)?'on':''}" onclick="LIB.tog('${k}','${v}')">${v[0]+v.slice(1).toLowerCase()}<span class="ct">${n}</span></button>`; }
+    for (const v of vals){ const n=count(l=>l[FIELD[k]]===v); if(!n) continue;
+      const disp = (CONFIG.sources && CONFIG.sources[v] && CONFIG.sources[v].label) || (v[0]+v.slice(1).toLowerCase());
+      h += `<button class="pill ${F.facets[k].has(v)?'on':''}" onclick="LIB.tog('${k}','${cssq(v)}')">${disp}<span class="ct">${n}</span></button>`; }
   }
-  document.getElementById('pills').innerHTML = h;
+  const pel = document.getElementById('pills');
+  pel.innerHTML = h; pel.style.display = h.trim() ? '' : 'none';
 }
-/* ---- facet rails: type 'rail' (system with nestUnder subject, topic) ---- */
-function renderFacets(){
-  let h='';
-  for (const [k,f] of Object.entries(CONFIG.facets)){
-    if (f.type!=='rail') continue;
-    h += `<h4>${f.label}</h4>`;
-    if (k==='subject'){ continue; } // rendered nested under system
-    const vals = f.values || [];
-    let any=false;
-    for (const v of vals){ const n=count(l=>l[FIELD[k]]===v); if(!n) continue; any=true;
-      const on=F.facets[k].has(v);
-      h += `<div class="frow ${on?'on':''}" onclick="LIB.tog('${k}','${cssq(v)}')"><span>${on&&f.nestUnderChildren?'▾ ':''}${v}</span><span class="fct">${n}</span></div>`;
-      // nest: if a child facet declares nestUnder this facet, render its members for selected parent
-      const child = childFacetOf(k);
-      if (child && on){
-        const map = CONFIG.facets[child].valuesBySystem?.[v] || [];
-        for (const sv of map){ const m=count(l=>l[FIELD[child]]===sv && l[FIELD[k]]===v); if(!m) continue;
-          h += `<div class="frow sub ${F.facets[child].has(sv)?'on':''}" onclick="event.stopPropagation();LIB.tog('${child}','${cssq(sv)}')"><span>${sv}</span><span class="fct">${m}</span></div>`; }
-      }
-    }
-    if (!any) h += `<div class="fhint">—</div>`;
-    if (childFacetOf(k) && !F.facets[k].size) h += `<div class="fhint">▸ pick a ${f.label.toLowerCase()} to drill into ${CONFIG.facets[childFacetOf(k)].label.toLowerCase()}s</div>`;
-  }
+/* ---- W1 hide-rail: domain + system, click a row to gray it out & drop it from the wall ---- */
+const CHK = '<span class="box"><svg viewBox="0 0 12 12"><path d="M2 6l3 3 5-6"/></svg></span>';
+const domCode = d => ({medicine:'m','medical-italian':'mi',italian:'l',code:'l'}[d] || 'm');
+function railSystems(){ return [...new Set(LESSONS.map(l=>l.system).filter(Boolean))]
+  .map(s=>[s, LESSONS.filter(l=>l.system===s).length]).sort((a,b)=>b[1]-a[1]); }
+function renderFacets(){                                        // (id="facets" kept; now the hide-rail)
+  const doms = Object.keys(CONFIG.domains).map(d=>[d, count(l=>l.domain===d)]).filter(([,n])=>n);
+  const anyDomHidden = [...F.hiddenDom].some(d=>doms.some(([k])=>k===d));
+  const anySysHidden = F.hiddenSys.size>0;
+  let h = `<div class="hgrp">Domain <span class="unhide ${anyDomHidden?'':'dim'}" onclick="LIB.unhideDoms()">Unhide all</span></div>`;
+  for (const [d,n] of doms){ const c=domCode(d), off=F.hiddenDom.has(d);
+    h += `<div class="hrow ${c} ${off?'off':'vis'}" onclick="LIB.hideDom('${d}')" title="${off?'Show':'Hide'} ${domLabel(d)}">${CHK}<span class="hn">${domLabel(d)}</span><span class="hc">${n}</span></div>`; }
+  h += `<div class="hgrp">System <span class="unhide ${anySysHidden?'':'dim'}" onclick="LIB.unhideSys()">Unhide all</span></div>`;
+  for (const [s,n] of railSystems()){ const off=F.hiddenSys.has(s);
+    // color the system dot by the dominant domain that carries it
+    const dom = (LESSONS.find(l=>l.system===s)||{}).domain || 'medicine', c=domCode(dom);
+    h += `<div class="hrow ${c} ${off?'off':'vis'}" onclick="LIB.hideSys('${cssq(s)}')" title="${off?'Show':'Hide'} ${s}">${CHK}<span class="hn">${s}</span><span class="hc">${n}</span></div>`; }
+  h += `<div class="fhint" style="padding:10px 16px">Tap a row to hide it. A lesson shows only when both its domain and its system are visible.</div>`;
   h += `<div class="sheet-apply"><button onclick="LIB.sheet(false)">Show results</button></div>`;
   document.getElementById('facets').innerHTML = h;
 }
@@ -129,6 +134,37 @@ function crumb(){ const p=[];
   if (F.domain.size) p.push([...F.domain].map(domLabel).join('/'));
   for (const [k,set] of Object.entries(F.facets)){ if(!set.size) continue; const t=[...set].join('/'); p.push(k==='subject'?'<b>'+t+'</b>':t); }
   return p.length?'· '+p.join(' › '):''; }
+/* ---- W1 tile wall (replaces the list rows) ---- */
+function subtagOf(l){ return (l.scope==='system' && l.system) ? l.system
+  : (l.subject || l.system || l.topic || l.level || 'General'); }
+function hideChips(){
+  const chips = [...[...F.hiddenDom].map(d=>({t:'dom',k:d,label:domLabel(d)})),
+                 ...[...F.hiddenSys].map(s=>({t:'sys',k:s,label:s}))];
+  if(!chips.length) return '';
+  return `<div class="hidechips">${chips.map(c=>`<span class="hchip" onclick="LIB.unhideOne('${c.t}','${cssq(c.k)}')" title="show ${c.label}">${c.label} <b>✕</b></span>`).join('')}
+    <span class="hchip" onclick="LIB.unhideAll()" style="border-color:var(--chiron-accent);color:var(--chiron-accent)">↺ Unhide all</span></div>`;
+}
+function tileHtml(l){
+  const slug = l.ready ? slugOf(l.id) : null;
+  const isPhone = matchMedia('(max-width:760px)').matches;
+  const dl = slug && DL[slug];
+  const staged = l.ready && l.status==='staged';
+  let action;
+  if(!l.ready) action = `<span class="taction gen" onclick="event.stopPropagation();LIB.genFor('${cssq(l.subject||l.system||l.topic||l.title)}','${l.domain}')">✦ Generate</span>`;
+  else if(isPhone) action = dl ? `<span class="taction dl">✓ offline</span>`
+      : (l.bundle ? `<span class="taction dl" onclick="event.stopPropagation();LIB.download('${slug}')">⬇ Get</span>`
+                  : `<span class="taction open" onclick="event.stopPropagation();LIB.open('${slug}')">Open →</span>`);
+  else action = (l.bundle ? `<span class="taction dl" title="download .chiron bundle" onclick="event.stopPropagation();LIB.dlfile('${slug}')">⬇</span>` : '')
+              + `<span class="taction open">Open →</span>`;
+  const badges = (staged?`<span class="treview">🟡 REVIEW</span>`:'') + (l.bankable>0?`<span class="tbank">💰 ${l.bankable}</span>`:'')
+    + (l.scope==='system'?`<span class="tag sys">organ system</span>`:'');
+  const onclick = l.ready ? ` onclick="LIB.open('${slug}')"` : '';
+  return `<div class="tcard ${l.domain}${l.ready?'':' queued'}${l.bankable>0?' bankq':''}"${onclick}>
+    <div class="strip"></div>
+    <div class="tb"><div class="tt">${l.title}</div><div class="ts">${subtagOf(l)}</div>${badges?`<div class="tbadges">${badges}</div>`:''}</div>
+    <div class="tf"><span class="db">${domLabel(l.domain)}</span>${l.ready?`<span class="tclips">🔊 ${l.clips||0}</span>`:'<span class="tclips">not generated</span>'}${action}</div>
+  </div>`;
+}
 function renderRows(){
   const list = sortLessons(LESSONS.filter(match));
   const nReady = list.filter(l=>l.ready).length, nQueued = list.length - nReady;
@@ -136,70 +172,32 @@ function renderRows(){
     ? `${nReady} ready · ${nQueued} to generate`
     : `${nReady} lesson${nReady===1?'':'s'} ready`;
   document.getElementById('crumb').innerHTML = crumb();
-  const rowHtml = l =>{
-    const cat = l.scope==='system' ? `<span class="tag sys">${l.system}</span><span class="tag">${l.exam_pct}% of exam · ${l.total_q}Q · ${l.n_classes} classes</span>`
-              : l.subject ? `<span class="tag sys">${l.system}</span><span class="tag subj">${l.subject}</span>`
-              : l.topic ? `<span class="tag topic">${l.topic}</span>` : '';
-    const lvl = l.level ? `<span class="tag">${l.level}</span>` : '';
-    const tr = l.trend ? `<span class="trend ${l.trend}">▲ ${l.trend}</span>` : '';
-    const sc = l.scope ? `<span class="scope${l.scope==='system'?' sysscope':''}">${l.scope==='system'?'organ system':l.scope==='subject'?'class survey':'deep-dive'}</span>` : '';
-    const bk = l.bankable>0 ? `<span class="bank" title="${l.bankable} recurring exam repeats — high-yield, generate first">💰 ${l.bankable}</span>` : '';
-    const slug = l.ready ? slugOf(l.id) : null;
-    const dl = slug && DL[slug];
-    // SAFETY: storage management (Download / Remove-from-device) is PHONE-ONLY.
-    // Desktop gets NO remove/delete affordance — only Open — so nothing can be mistakenly deleted.
-    const isPhone = matchMedia('(max-width:760px)').matches;
-    const size = l.sizeMB ? ` ${l.sizeMB}MB` : '';
-    const status = !l.ready
-      ? `<span class="queued">not generated</span><span class="gen on" onclick="event.stopPropagation();LIB.genFor('${cssq(l.subject||l.system||l.topic||l.title)}','${l.domain}')">✦ Generate</span>`
-      : isPhone
-        ? `<span class="ready">▸ ${l.clips}</span>` + (dl
-            ? `<span class="ready" title="cached on this device">✓ offline</span><span class="open" onclick="event.stopPropagation();LIB.remove('${slug}')">Remove</span>`
-            : l.bundle
-              ? `<span class="open" onclick="event.stopPropagation();LIB.download('${slug}')">⬇ Download${size}</span>`
-              : `<span class="open" onclick="event.stopPropagation();LIB.open('${slug}')">Open →</span>`)
-        : `<span class="ready">▸ ${l.clips} audio</span>`
-          + (l.bundle ? `<span class="open" title="download the .chiron bundle (install / share)" onclick="event.stopPropagation();LIB.dlfile('${slug}')">⬇${size}</span>` : '')
-          + `<span class="open">Open →</span>`;
-    const onclick = l.ready ? ` onclick="LIB.open('${slug}')"` : '';
-    const stagedActions = (l.ready && l.status==='staged')
-      ? `<button class="sendback" onclick="event.stopPropagation();LIB.sendback('${slug}')">Send back</button><button class="accept" onclick="event.stopPropagation();LIB.accept('${slug}')">✓ Accept</button>` : '';
-    return `<div class="row${l.bankable>0?' bank':''}${l.scope==='system'?' sys-overview':''}"${onclick} style="cursor:${l.ready ? 'pointer' : 'default'}">
-      <div class="dbadge ${l.domain}"></div>
-      <div class="rinfo"><div class="rtitle">${l.title}</div>
-        <div class="rmeta"><span class="tag ${domCls(l.domain)}">${domLabel(l.domain)}</span>${l.status==='staged'?'<span class="tag" style="background:#fde68a;color:#713f12;font-weight:700">🟡 REVIEW</span>':''}${cat}${lvl}${sc}${bk}${tr}</div></div>
-      <div class="rstatus">${status}${stagedActions}</div></div>`;
-  };
-  // STAGING: newly-generated lessons (status==='staged') surface in a "Needs Review" band
-  // at the top, separate from the published library, until the user reviews + accepts them.
   const staged = list.filter(l=>l.ready && l.status==='staged');
   const ready  = list.filter(l=>l.ready && l.status!=='staged');
   const queued = list.filter(l=>!l.ready);
-  const hdr = (icon,label,n,note) => `<div class="sechdr">${icon} ${label} <span class="secct">${n}</span><span class="secnote">${note}</span></div>`;
-  const parts = [];
-  if (staged.length){
-    parts.push(`<div class="reviewband">🟡 Needs Review — ${staged.length} newly generated lesson${staged.length===1?'':'s'}, not yet published. Open to review, then Accept to publish.</div>`);
-    parts.push(...staged.map(rowHtml));
-  }
-  if (ready.length){
-    const dl = ready.filter(l=>l.bundle).length;
-    parts.push(hdr('📚','Available', ready.length, dl?`${dl} downloadable`:'open to study'));
-    parts.push(...ready.map(rowHtml));
-  }
-  if (queued.length){
-    parts.push(hdr('○','To generate', queued.length, 'tap Generate to build'));
-    parts.push(...queued.slice(0,600).map(rowHtml));
-  }
-  document.getElementById('rows').innerHTML = parts.join('') || `<div class="empty">No lessons match these filters.</div>`;
+  const ordered = [...staged, ...ready, ...queued];
+  const parts = [ hideChips() ];
+  if (staged.length) parts.push(`<div class="reviewband">🟡 Needs Review — ${staged.length} newly generated lesson${staged.length===1?'':'s'}, not yet published. Open to review, then Accept to publish.</div>`);
+  parts.push(ordered.length
+    ? `<div class="twall"><div class="tgrid">${ordered.slice(0,800).map(tileHtml).join('')}</div></div>`
+    : `<div class="empty">No lessons match — ${F.hiddenDom.size||F.hiddenSys.size?'unhide a facet in the sidebar':'try a different search'}.</div>`);
+  document.getElementById('rows').innerHTML = parts.join('');
 }
 function renderAll(){ renderPills(); renderFacets(); renderRows(); }
 const LIB = {
   togDom(d){ F.domain.has(d)?F.domain.delete(d):F.domain.add(d); renderAll(); },
+  /* ---- W1 hide-filters ---- */
+  hideDom(d){ F.hiddenDom.has(d)?F.hiddenDom.delete(d):F.hiddenDom.add(d); saveHide(); renderAll(); },
+  hideSys(s){ F.hiddenSys.has(s)?F.hiddenSys.delete(s):F.hiddenSys.add(s); saveHide(); renderAll(); },
+  unhideDoms(){ F.hiddenDom.clear(); saveHide(); renderAll(); },
+  unhideSys(){ F.hiddenSys.clear(); saveHide(); renderAll(); },
+  unhideOne(t,k){ (t==='dom'?F.hiddenDom:F.hiddenSys).delete(k); saveHide(); renderAll(); },
+  unhideAll(){ F.hiddenDom.clear(); F.hiddenSys.clear(); saveHide(); renderAll(); },
   tog(k,v){ const s=F.facets[k]; s.has(v)?s.delete(v):s.add(v);
     // deselecting a parent clears its nested children
     const child=childFacetOf(k); if(child && !s.has(v)){ const map=CONFIG.facets[child].valuesBySystem?.[v]||[]; map.forEach(sv=>F.facets[child].delete(sv)); }
     renderAll(); },
-  clearAll(){ F.q=''; F.domain.clear(); Object.values(F.facets).forEach(s=>s.clear()); document.getElementById('q').value=''; renderAll(); },
+  clearAll(){ F.q=''; F.domain.clear(); Object.values(F.facets).forEach(s=>s.clear()); F.hiddenDom.clear(); F.hiddenSys.clear(); saveHide(); document.getElementById('q').value=''; renderAll(); },
   sheet(open){ document.getElementById('facets').classList.toggle('open',open); document.getElementById('backdrop').classList.toggle('show',open); },
   open(slug){ const l=LMAP[slug]; if(!l) return; const dl=DL[slug];
     if(dl){ window.open('lessons/'+dl.id+'/'+dl.entry, '_blank'); return; }         // offline cache (SW)
