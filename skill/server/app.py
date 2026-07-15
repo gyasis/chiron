@@ -428,6 +428,31 @@ def activity(limit: int = 100):
                        "error": len([j for j in history if j.get("status") == "error"])}}
 
 
+@app.post("/retry/{jid}")
+def retry(jid: str):
+    """Re-fire a FAILED job with its original params. Refuses if the lesson already generated —
+    a completed/accepted lesson is never redone (the caller should Preview/Accept it instead)."""
+    j = _get(jid)
+    if j.get("status") in ("ready", "published"):
+        raise HTTPException(409, "already generated — a completed lesson is never redone")
+    try:
+        res = dispatch.resolve(j.get("domain", "medicine"), j.get("depth"), j["subject"],
+                               j.get("subject_type"), j.get("extra") or {})
+    except SystemExit as e:
+        raise HTTPException(400, str(e))
+    nid = uuid.uuid4().hex[:12]
+    job = {"id": nid, "created": _now(), "status": "queued", "phase": "queued",
+           "domain": j.get("domain", "medicine"), "subject": j["subject"], "depth": res["depth"],
+           "subject_type": j.get("subject_type"), "grounding": j.get("grounding"),
+           "images": j.get("images"), "stage": j.get("stage", "all"),
+           "source": j.get("source"), "source_ref": j.get("source_ref"), "extra": j.get("extra") or {},
+           "slug": res["slug"], "chain": res["chain_name"], "retry_of": jid}
+    JOBS[nid] = job
+    _save()
+    threading.Thread(target=_run_job, args=(job,), daemon=True).start()
+    return {"job_id": nid, "slug": res["slug"], "status": "queued"}
+
+
 @app.post("/register")
 def register(req: RegisterReq):
     """Record/update an externally-run generation in the shared journal (Phase-2 hook — a CLI/Claude Code

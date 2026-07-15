@@ -151,6 +151,7 @@ function tileHtml(l){
   const staged = l.ready && l.status==='staged';
   let action;
   if(!l.ready) action = `<span class="taction gen" onclick="event.stopPropagation();LIB.genFor('${cssq(l.subject||l.system||l.topic||l.title)}','${l.domain}')">✦ Generate</span>`;
+  else if(staged) action = `<span class="taction open">👁 Preview</span><span class="taction acc" onclick="event.stopPropagation();LIB.accept('${slug}')">✓ Accept</span>`;
   else if(isPhone) action = dl ? `<span class="taction dl">✓ offline</span>`
       : (l.bundle ? `<span class="taction dl" onclick="event.stopPropagation();LIB.download('${slug}')">⬇ Get</span>`
                   : `<span class="taction open" onclick="event.stopPropagation();LIB.open('${slug}')">Open →</span>`);

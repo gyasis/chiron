@@ -146,9 +146,21 @@ function actCard(j) {
       <div class="prog">${bars}</div><div class="plabel"><span>${phaseLabel}…</span>${eta}</div></div>`;
   }
   const ok = j.status === 'ready' || j.status === 'published';
-  return `<div class="acard ${ok && j.slug ? 'tapp' : ''}"><div class="ah"><span class="ico ${ok ? 'ok' : 'err'}">${ok ? '✓' : '✕'}</span><span class="at">${esc(j.subject || j.slug || 'lesson')}</span><span class="atime">${relTime(j.finished || j.created)}</span></div>
-    <div class="asub"><span class="src ${srcCls}">${esc(src)}</span>${j.chain ? `<span>${esc(j.chain)}</span>` : ''}${j.elapsed_seconds != null ? `<span>· took ${fmtDur(j.elapsed_seconds)}</span>` : ''}${j.status === 'error' ? '<span style="color:#dc2626">· failed</span>' : ''}</div></div>`;
+  const staged = j.status === 'ready';        // generated, not yet accepted → Preview + Accept
+  // actions: failed → Retry · staged → Preview + Accept · accepted(published) → Open
+  let acts = '';
+  if (j.status === 'error') acts = `<button class="abtn retry">↻ Retry</button>`;
+  else if (staged && j.slug) acts = `<button class="abtn ghost preview">👁 Preview</button><button class="abtn accept">✓ Accept & keep</button>`;
+  else if (j.status === 'published' && j.slug) acts = `<button class="abtn ghost open">Open →</button>`;
+  return `<div class="acard"><div class="ah"><span class="ico ${ok ? 'ok' : 'err'}">${ok ? '✓' : '✕'}</span><span class="at">${esc(j.subject || j.slug || 'lesson')}</span><span class="atime">${relTime(j.finished || j.created)}</span></div>
+    <div class="asub"><span class="src ${srcCls}">${esc(src)}</span>${j.chain ? `<span>${esc(j.chain)}</span>` : ''}${j.elapsed_seconds != null ? `<span>· took ${fmtDur(j.elapsed_seconds)}</span>` : ''}${staged ? '<span style="color:var(--review)">· needs review</span>' : j.status === 'error' ? '<span style="color:#dc2626">· failed</span>' : ''}</div>
+    ${acts ? `<div class="aacts">${acts}</div>` : ''}</div>`;
 }
+async function retryJob(j) { try { const r = await (await fetch(LIB + '/retry/' + j.id, { method: 'POST' })).json();
+  if (r.job_id) { toast('Retrying: ' + (j.subject || 'lesson')); pollActive(); renderActivity(); } else toast(r.detail || 'Retry failed'); }
+  catch (e) { toast('Retry failed — library reachable?'); } }
+async function acceptJob(j) { const ref = j.slug || j.id; try { const r = await (await fetch(LIB + '/accept/' + ref, { method: 'POST' })).json();
+  if (r.ok) { toast('Kept in your library ✓'); loadLibrary(); renderActivity(); } else toast('Accept failed'); } catch (e) { toast('Accept failed'); } }
 let ACT_BUSY = false;
 async function renderActivity() {
   const body = document.getElementById('act-body'); if (!body || ACT_BUSY) return; ACT_BUSY = true;
@@ -163,7 +175,11 @@ async function renderActivity() {
     const all = [...d.active, ...d.history];
     body.querySelectorAll('.acard').forEach((el, i) => { const j = all[i]; if (!j) return;
       if (j.status === 'queued' || j.status === 'running') el.onclick = () => reconnect(j);
-      else if ((j.status === 'ready' || j.status === 'published') && j.slug) el.onclick = () => openLesson(j.slug); });
+      const on = (sel, fn) => { const b = el.querySelector(sel); if (b) b.onclick = ev => { ev.stopPropagation(); fn(); }; };
+      on('.retry', () => retryJob(j));
+      on('.preview', () => openLesson(j.slug));
+      on('.open', () => openLesson(j.slug));
+      on('.accept', () => acceptJob(j)); });
     const sub = document.getElementById('act-sub'); if (sub) sub.textContent = `${c.active} live · ${c.done} done · ${c.error} failed`;
   } catch (e) { body.innerHTML = `<div class="empty">Can't reach your library for activity.<br>Is the computer running Chiron on the same wifi?</div>`; }
   ACT_BUSY = false;
