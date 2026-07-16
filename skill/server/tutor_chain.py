@@ -155,20 +155,23 @@ def _sys(lang: str, mode: str, section_text: str, selection: str, section_id: st
     langname = "Italiano" if lang == "it" else "English"
     ground = ""
     if (section_text or "").strip():
-        ground = (f"\n\nThe learner is reading THIS lesson section"
-                  f"{f' ({section_id})' if section_id else ''}. Ground your answer FIRST in it, then your own "
-                  f"knowledge; refer to it directly:\n<<<SECTION\n{section_text.strip()[:4000]}\nSECTION>>>")
+        ground = ("\n\nContext the learner is currently reading (use it SILENTLY as background — never mention, quote, "
+                  "or comment on what this section does or does not contain):\n<<<\n" + section_text.strip()[:4000] + "\n>>>")
     if (selection or "").strip():
-        ground += f"\n\nThe learner highlighted this text — treat it as the focus of the question:\n\"{selection.strip()[:600]}\""
+        ground += f"\n\nThe learner highlighted: \"{selection.strip()[:600]}\" — focus the answer there."
+    # Universal style rule — the user wants the ANSWER, straight, with no meta-narration about sources.
+    style = ("\n\nSTYLE (strict): Answer the question directly and immediately. Do NOT preface with what the "
+             "section/page/lesson covers or omits. Do NOT say where the information comes from (the section, a "
+             "textbook, Harrison's, the web, or 'the provided reference') — the learner does not want to know the "
+             "source. No hedging, no 'while the text focuses on…'. Just give the best answer. Use clean markdown "
+             "(headings, **bold**, bullet lists, and tables) — it is rendered.")
     if mode == "ita":
         return ("You are a clinical-Italian language coach for a doctor studying medicine in Italian. When the learner "
                 "asks how to say something or what a term/phrase means, TEACH the Italian: the phrase in **Italian** (bold) "
                 "with the **English** translation, the key **verb(s)** (infinitive), the formal clinical register (**Lei**), "
-                "and a one-line clinical usage. ALWAYS bilingual IT+EN. Short markdown, high-yield, focused on doctor–patient "
-                "communication — not deep medicine." + ground)
-    return (f"You are a concise, exam-focused medical tutor helping a learner understand a Chiron lesson. Answer in "
-            f"{langname}. Be direct and high-yield; short markdown. The learner is reading a specific section and asking "
-            f"about it — clarify the concept in the context of what's on the page, don't lecture from scratch." + ground)
+                "and a one-line clinical usage. ALWAYS bilingual IT+EN. High-yield, focused on doctor–patient "
+                "communication — not deep medicine." + ground + style)
+    return (f"You are a concise, exam-focused medical tutor. Answer in {langname}, high-yield and direct." + ground + style)
 
 async def _agentic_answer(question: str, history: list[dict], lang: str, sysprompt: str) -> str:
     """COMPLEX + model=='agent': a TRUE agent that decides when to call harrison_search, grounded on the section."""
@@ -212,9 +215,10 @@ def _static_synth(spec: str, question: str, history: list[dict], sysprompt: str,
         ctx, label = _harrison(topic), "Harrison's (authoritative internal-medicine reference — prefer it)"
     if not ctx:
         return draft, False
-    p = (f"{sysprompt}\nThe learner asked: {question}\n\nFirst-pass (section + general knowledge):\n{draft}\n\n"
-         f"REFERENCE — {label}:\n{ctx}\n\nWrite the FINAL answer: reconcile the two, fix errors per the reference, "
-         f"keep it grounded in the lesson section, concise + high-yield. Markdown.")
+    p = (f"{sysprompt}\nThe learner asked: {question}\n\nDraft answer:\n{draft}\n\n"
+         f"Authoritative reference to verify against:\n{ctx}\n\nWrite the FINAL answer to the learner's question, "
+         f"correcting the draft where the reference differs. Output ONLY the answer — do not mention the draft, the "
+         f"reference, or any source, and do not comment on the section. Direct, high-yield, clean markdown.")
     return _answer(spec, p, [], ""), True
 
 async def answer_turn(section_text: str, selection: str, section_id: str, lesson_slug: str,

@@ -25,6 +25,20 @@ passage (a paragraph, a scene, or the whole item if short).
   words/phrases), warm but rigorous on the hard parts, her sign-off at the end. The
   persona never dilutes correctness. (The learner's own dialogue turns are NEVER voiced.)
   If no persona pack is active, fall back to the generic tutor in `personasFile`.
+- **`coldOpen` — her greeting + sign-off, authored fresh every lesson.** Return a
+  top-level `coldOpen: {greeting:{it,en}, closing:{it,en}}`. This is Lucrezia speaking
+  in HER OWN voice/personality — a natural Italian opener of her choosing (time-of-day
+  greeting, a warm aside, a check-in), never the same fixed phrase twice, and a warm,
+  distinct sign-off closing. Vary it lesson to lesson the way a real person would.
+
+## `coldOpen` field
+
+```json
+"coldOpen": {
+  "greeting": {"it": "<Lucrezia's own varied Italian greeting to {{learnerName}}>", "en": "<EN translation>"},
+  "closing":  {"it": "<Lucrezia's own varied Italian sign-off>",                    "en": "<EN translation>"}
+}
+```
 
 ## Input slots
 
@@ -163,6 +177,10 @@ keeps `subtext` on and `articles` off. That independent on/off is the point.
   "genre": "<genre>",
   "register": "formal | informal | mixed",
   "narrativeHtml": "<orientation: what this passage is, why it's worth dissecting>",
+  "coldOpen": {
+    "greeting": {"it": "<Lucrezia's own varied Italian greeting to {{learnerName}}>", "en": "<EN translation>"},
+    "closing":  {"it": "<Lucrezia's own varied Italian sign-off>",                    "en": "<EN translation>"}
+  },
   "anomalies": [
     {"span": "<verbatim from source>", "issue": "<what's off>", "likely": "<intended form>"}
   ],

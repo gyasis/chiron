@@ -243,7 +243,21 @@ async def phase2_author(passage: dict, cur: dict) -> dict:
     p += (f"\n\n## THIS ITEM (options supplied — NOT placeholder)\nCorrect answer: {passage['correct']}. "
           f"Options (verbatim): {passage['options_it']}. In the question/concept track, state the answer and give "
           f"per-option medical reasoning (associated vs NOT associated). Bilingual: English instruction, Italian for "
-          f"every target term, and gloss each Italian term in English (podcast-safe). Return ONLY the JSON object.")
+          f"every target term, and gloss each Italian term in English (podcast-safe).")
+    # COLD-OPEN — Lucrezia authors her OWN greeting + sign-off, from her personality, varied every lesson
+    # (mirrors the wards chain's `coldOpen`, which is authored the same way — see chiron-wards-lesson-chain).
+    p += (
+        f"\n\n## COLD-OPEN GREETING + SIGN-OFF (Persona Lucrezia — HER voice, varies every lesson)\n"
+        f"Author a fresh, warm, NATURAL Italian greeting to {LEARNER} in Lucrezia's own voice — a typical Italian "
+        f"opener of YOUR choosing (a time-of-day greeting, a warm aside, a check-in on how the exam prep is going, "
+        f"a light remark about today's topic) — NEVER the same fixed phrase twice; vary it naturally the way a real "
+        f"person would greet someone lesson to lesson. She genuinely enjoys seeing {LEARNER} and loves teaching him — "
+        f"let that warmth show, with a little personal, affectionate touch about him (per her persona). Then a warm, "
+        f"distinct sign-off closing (not a repeat of the greeting). Return them as a top-level `coldOpen` object:\n"
+        '  "coldOpen": {"greeting": {"it":"<Italian greeting, her own voice, varied>", "en":"<EN translation>"},\n'
+        '               "closing":  {"it":"<Italian sign-off, warm, varied>",         "en":"<EN translation>"}}\n'
+        "Return ONLY the JSON object."
+    )
     if USER_CTX:
         p += "\n\n" + USER_CTX
 
@@ -257,6 +271,9 @@ async def phase2_author(passage: dict, cur: dict) -> dict:
             iss.append("annotated-passage has no sentences/tokens")
         if not obj.get("narrativeHtml"):
             iss.append("missing narrativeHtml (orientation)")
+        co = obj.get("coldOpen") or {}
+        if not (co.get("greeting", {}).get("it") and co.get("closing", {}).get("it")):
+            iss.append("missing coldOpen.greeting.it / coldOpen.closing.it (Lucrezia-authored, required)")
         return iss or None
 
     print(f"[phase 2] AUTHOR via {cur['promptOverride']} (domain={DOMAIN}, layers_on={[k for k,v in layers_on.items() if v]})…", flush=True)
@@ -376,8 +393,9 @@ async def phase4_audio_scripts(passage: dict, cur: dict) -> dict:
              domain="language-it", sections=llm_secs, granularity="all")
     p += ("\n\n## LEARNER + PODCAST (BLOCKING): native English speaker; audio is a PODCAST (not looking at the page). "
           "English is the medium; every Italian term is its OWN lang:'it' segment and the NEXT lang:'en' segment glosses it. "
-          "Persona Lucrezia: do NOT open with a greeting (the shared personalized greeting is prepended automatically to "
-          "summary and shortened) — start straight into the content; sign off warmly. Return ONLY {\"artifacts\":[...]}.")
+          "Persona Lucrezia: do NOT open with a greeting (her own persona-authored greeting for THIS lesson — varied, "
+          "not a fixed phrase — is prepended automatically to summary and shortened) — start straight into the content; "
+          "sign off warmly. Return ONLY {\"artifacts\":[...]}.")
     print(f"[phase 4] AUDIO transcripts — 04s bilingual ({len(secs)} sections) + Veloce/Lenta reads…", flush=True)
     res = await json_with_repair(p, "lecture-scripts", ollama(MODEL_REASON),
                                  validate_fn=lambda o: None if (o.get("artifacts") or isinstance(o, list)) else ["no artifacts"])
@@ -474,8 +492,19 @@ async def main():
     if STAGE in ("assemble", "audio", "all"):
         obs.phase("Assembling the page", "start")
         print("[phase 3] ASSEMBLE → renderWidget + skeleton shell → lesson.html", flush=True)
+        # Lucrezia authored her own coldOpen (greeting + closing) in Phase 2 — pass it to the
+        # assembler via env so the SAME persona-authored strings feed the on-page cold-open AND
+        # the audio-intro.json greeting/closing (single-sourced, no drift). Falls back to the
+        # assembler's own neutral default if Phase 2 didn't produce one (needs_review case).
+        cold = (bd or {}).get("coldOpen", {}) or {}
+        greeting, closing = cold.get("greeting", {}) or {}, cold.get("closing", {}) or {}
+        assemble_env = {**os.environ, "CH_LEARNER": LEARNER}
+        if greeting.get("it"): assemble_env["CH_GREETING_IT"] = greeting["it"]
+        if greeting.get("en"): assemble_env["CH_GREETING_EN"] = greeting["en"]
+        if closing.get("it"): assemble_env["CH_CLOSING_IT"] = closing["it"]
+        if closing.get("en"): assemble_env["CH_CLOSING_EN"] = closing["en"]
         r = subprocess.run(["node", str(SKILL / "scripts" / "assemble-passage.mjs"), str(OUT)],
-                           capture_output=True, text=True, env={**os.environ, "CH_LEARNER": LEARNER})
+                           capture_output=True, text=True, env=assemble_env)
         print("  " + (r.stdout or r.stderr).strip()[-400:], flush=True)
         if r.returncode != 0:
             print("=== stopped: assemble failed."); obs.error("Assembling the page", "assemble failed"); return

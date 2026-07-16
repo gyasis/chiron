@@ -15,6 +15,7 @@
 
   var LS_MODEL = 'chiron.tutormodel';
   var LS_MODE = 'chiron.tutormode';
+  var LS_WIDTH = 'chiron.tutorwidth';
   var FALLBACK_MODELS = [
     { id: 'gemma4', label: 'Gemma 4 · cloud (fast)' },
     { id: 'gemini3', label: 'Gemini 3 Flash · cloud' },
@@ -28,13 +29,9 @@
   var sectionId = null;
   var sectionText = '';
 
-  var tab, scrim, drawer, head, badge, title, modelSel, modeBtn, closeBtn,
-      scope, chips, msgs, inputRow, textarea, sendBtn, tabPen;
+  var tab, scrim, drawer, head, badge, title, modelSel, modeBtn, penBtn, closeBtn,
+      scope, chips, msgs, inputRow, textarea, sendBtn, tabPen, resizeHandle;
   var mode = 'med';
-
-  function isMobile() {
-    return !!(window.matchMedia && window.matchMedia('(max-width:640px)').matches);
-  }
 
   function deriveLessonSlug() {
     var parts = location.pathname.split('/').filter(Boolean);
@@ -115,6 +112,12 @@
   }
 
   function build() {
+    /* ── restore persisted drawer width (desktop drag-resize, #4) ──── */
+    try {
+      var savedWidth = localStorage.getItem(LS_WIDTH);
+      if (savedWidth) document.documentElement.style.setProperty('--ct-width', savedWidth);
+    } catch (e) {}
+
     /* ── tab ──────────────────────────────────────────────────────── */
     tab = document.createElement('button');
     tab.type = 'button';
@@ -130,6 +133,14 @@
     tab.appendChild(tabPen);
     document.body.appendChild(tab);
 
+    /* ── back-to-library bar — every lesson needs a way home (slides down at top) ── */
+    var backbar = document.createElement('a');
+    backbar.className = 'chiron-backbar';
+    backbar.href = location.origin + '/library/';
+    backbar.setAttribute('aria-label', 'Back to the Chiron library');
+    backbar.innerHTML = '<span class="cb-arrow">‹</span> Library';
+    document.body.appendChild(backbar);
+
     /* ── scrim (mobile backdrop) ──────────────────────────────────── */
     scrim = document.createElement('div');
     scrim.className = 'ct-scrim';
@@ -139,6 +150,10 @@
     drawer = document.createElement('div');
     drawer.className = 'chiron-tutor';
 
+    resizeHandle = document.createElement('div');
+    resizeHandle.className = 'ct-resize';
+    drawer.appendChild(resizeHandle); // must be the drawer's first child
+
     head = document.createElement('div');
     head.className = 'ct-head';
     badge = document.createElement('div'); badge.className = 'ct-badge'; badge.textContent = '🎓';
@@ -146,11 +161,15 @@
     modelSel = document.createElement('select'); modelSel.className = 'ct-model';
     modeBtn = document.createElement('button');
     modeBtn.type = 'button'; modeBtn.className = 'ct-mode'; modeBtn.title = 'Toggle med / ita mode';
+    penBtn = document.createElement('button');
+    penBtn.type = 'button'; penBtn.className = 'ct-pen';
+    penBtn.title = 'Highlighter — turn on, then select lesson text to mark';
+    penBtn.textContent = '🖉'; // 🖉
     closeBtn = document.createElement('button');
     closeBtn.type = 'button'; closeBtn.className = 'ct-close'; closeBtn.setAttribute('aria-label', 'Close');
     closeBtn.textContent = '✕';
     head.appendChild(badge); head.appendChild(title); head.appendChild(modelSel);
-    head.appendChild(modeBtn); head.appendChild(closeBtn);
+    head.appendChild(modeBtn); head.appendChild(penBtn); head.appendChild(closeBtn);
 
     scope = document.createElement('div'); scope.className = 'ct-scope';
     chips = document.createElement('div'); chips.className = 'ct-chips';
@@ -161,7 +180,7 @@
     textarea.rows = 1; textarea.placeholder = 'Ask the tutor…';
     sendBtn = document.createElement('button');
     sendBtn.type = 'button'; sendBtn.className = 'ct-send'; sendBtn.setAttribute('aria-label', 'Send');
-    sendBtn.textContent = '↑';
+    sendBtn.innerHTML = '<svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor" aria-hidden="true"><path d="M2 21l21-9L2 3v7l15 2-15 2z"/></svg>';
     inputRow.appendChild(textarea); inputRow.appendChild(sendBtn);
 
     drawer.appendChild(head);
@@ -193,10 +212,31 @@
     scrim.addEventListener('click', closeDrawer);
 
     /* ── pen toggle ────────────────────────────────────────────────── */
-    tabPen.addEventListener('click', function (e) {
-      e.stopPropagation();
-      var on = document.body.classList.toggle('chiron-pen-on');
-      tabPen.classList.toggle('on', on);
+    tabPen.addEventListener('click', togglePen);
+    penBtn.addEventListener('click', togglePen);
+
+    /* ── drag-resize (desktop only, #4) ───────────────────────────── */
+    resizeHandle.addEventListener('pointerdown', function (e) {
+      e.preventDefault();
+      resizeHandle.classList.add('dragging');
+      try { resizeHandle.setPointerCapture(e.pointerId); } catch (err) {}
+      var onMove = function (ev) {
+        var w = window.innerWidth - ev.clientX;
+        w = Math.max(320, Math.min(640, w));
+        document.documentElement.style.setProperty('--ct-width', w + 'px');
+      };
+      var onUp = function (ev) {
+        resizeHandle.classList.remove('dragging');
+        resizeHandle.removeEventListener('pointermove', onMove);
+        resizeHandle.removeEventListener('pointerup', onUp);
+        try { resizeHandle.releasePointerCapture(ev.pointerId); } catch (err) {}
+        try {
+          var finalWidth = document.documentElement.style.getPropertyValue('--ct-width').trim();
+          if (finalWidth) localStorage.setItem(LS_WIDTH, finalWidth);
+        } catch (err) {}
+      };
+      resizeHandle.addEventListener('pointermove', onMove);
+      resizeHandle.addEventListener('pointerup', onUp);
     });
 
     /* ── scope tracking ───────────────────────────────────────────── */
@@ -241,16 +281,42 @@
     if (modeBtn) modeBtn.textContent = mode === 'ita' ? '🗣' : '🩺'; // 🗣 / 🩺
   }
 
+  /* ── pen toggle (shared by the edge tab AND the drawer-header button) ── */
+  function togglePen(e) {
+    if (e) e.stopPropagation();
+    var on = document.body.classList.toggle('chiron-pen-on');
+    tabPen.classList.toggle('on', on);
+    penBtn.classList.toggle('on', on);
+    showPenHint(on);
+  }
+
+  function showPenHint(on) {
+    if (!on || !textarea) return;
+    var prev = textarea.placeholder;
+    textarea.placeholder = 'Select text in the lesson to highlight it';
+    setTimeout(function () {
+      if (textarea.placeholder === 'Select text in the lesson to highlight it') {
+        textarea.placeholder = prev;
+      }
+    }, 2500);
+  }
+
+  /* ── open/close — desktop PUSHES content, narrow viewports OVERLAY ──── */
   function openDrawer() {
     drawer.classList.add('open');
     collapseAudio(true);
-    if (isMobile()) scrim.classList.add('open');
+    if (window.innerWidth >= 760) {
+      document.documentElement.classList.add('chiron-tutor-pushed');
+    } else {
+      scrim.classList.add('open');
+    }
     updateScope();
     textarea.focus();
   }
   function closeDrawer() {
     drawer.classList.remove('open');
     scrim.classList.remove('open');
+    document.documentElement.classList.remove('chiron-tutor-pushed');
   }
 
   function findCurrentSection() {
@@ -341,11 +407,121 @@
     chips.appendChild(chip);
   }
 
+  /* ── compact, safe markdown → HTML (assistant bubbles only) ─────── */
+  function escapeHtml(s) {
+    return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  }
+
+  function inlineMd(s) {
+    return s
+      .replace(/`([^`]+)`/g, '<code>$1</code>')
+      .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+      .replace(/(^|[^*])\*([^*\s][^*]*?)\*(?!\*)/g, '$1<em>$2</em>')
+      .replace(/(^|[^_])_([^_\s][^_]*?)_(?!_)/g, '$1<em>$2</em>')
+      .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>');
+  }
+
+  function isTableSep(line) {
+    return /^[\s|:-]+$/.test(line) && line.indexOf('-') !== -1;
+  }
+
+  function splitTableRow(line) {
+    var t = line.trim();
+    if (t.charAt(0) === '|') t = t.slice(1);
+    if (t.charAt(t.length - 1) === '|') t = t.slice(0, -1);
+    return t.split('|').map(function (c) { return c.trim(); });
+  }
+
+  function mdToHtml(src) {
+    if (!src) return '';
+    var out = escapeHtml(src);
+
+    // fenced code blocks → placeholders, so later rules can't mangle them
+    var codeBlocks = [];
+    out = out.replace(/```[a-zA-Z0-9_-]*\n?([\s\S]*?)```/g, function (m, code) {
+      var idx = codeBlocks.length;
+      codeBlocks.push('<pre><code>' + code.replace(/\n$/, '') + '</code></pre>');
+      return '@@CB' + idx + '@@';
+    });
+
+    var lines = out.split('\n');
+    var htmlParts = [];
+    var i = 0;
+    while (i < lines.length) {
+      var line = lines[i];
+      var cbMatch = /^@@CB(\d+)@@$/.exec(line.trim());
+      var hMatch = /^(#{1,4})\s+(.*)$/.exec(line);
+
+      if (cbMatch) { htmlParts.push(line.trim()); i++; continue; }
+
+      if (hMatch) {
+        var level = hMatch[1].length;
+        htmlParts.push('<h' + level + '>' + inlineMd(hMatch[2]) + '</h' + level + '>');
+        i++; continue;
+      }
+
+      if (/^---+\s*$/.test(line)) { htmlParts.push('<hr>'); i++; continue; }
+
+      if (/^\s*\|.*\|\s*$/.test(line) && lines[i + 1] !== undefined && isTableSep(lines[i + 1])) {
+        var headerCells = splitTableRow(line);
+        var rows = [];
+        var j = i + 2;
+        while (j < lines.length && /^\s*\|.*\|\s*$/.test(lines[j])) {
+          rows.push(splitTableRow(lines[j]));
+          j++;
+        }
+        var thead = '<thead><tr>' + headerCells.map(function (c) { return '<th>' + inlineMd(c) + '</th>'; }).join('') + '</tr></thead>';
+        var tbody = '<tbody>' + rows.map(function (r) {
+          return '<tr>' + r.map(function (c) { return '<td>' + inlineMd(c) + '</td>'; }).join('') + '</tr>';
+        }).join('') + '</tbody>';
+        htmlParts.push('<table>' + thead + tbody + '</table>');
+        i = j; continue;
+      }
+
+      if (/^\s*[-*]\s+/.test(line)) {
+        var uitems = [];
+        while (i < lines.length && /^\s*[-*]\s+/.test(lines[i])) {
+          uitems.push(lines[i].replace(/^\s*[-*]\s+/, ''));
+          i++;
+        }
+        htmlParts.push('<ul>' + uitems.map(function (it) { return '<li>' + inlineMd(it) + '</li>'; }).join('') + '</ul>');
+        continue;
+      }
+
+      if (/^\s*\d+\.\s+/.test(line)) {
+        var oitems = [];
+        while (i < lines.length && /^\s*\d+\.\s+/.test(lines[i])) {
+          oitems.push(lines[i].replace(/^\s*\d+\.\s+/, ''));
+          i++;
+        }
+        htmlParts.push('<ol>' + oitems.map(function (it) { return '<li>' + inlineMd(it) + '</li>'; }).join('') + '</ol>');
+        continue;
+      }
+
+      if (/^\s*$/.test(line)) { i++; continue; }
+
+      var paraLines = [];
+      while (i < lines.length && lines[i].trim() !== '' &&
+             !/^#{1,4}\s+/.test(lines[i]) && !/^---+\s*$/.test(lines[i]) &&
+             !/^\s*[-*]\s+/.test(lines[i]) && !/^\s*\d+\.\s+/.test(lines[i]) &&
+             !/^\s*\|.*\|\s*$/.test(lines[i]) && !/^@@CB\d+@@$/.test(lines[i].trim())) {
+        paraLines.push(lines[i]);
+        i++;
+      }
+      if (paraLines.length) htmlParts.push('<p>' + paraLines.map(inlineMd).join('<br>') + '</p>');
+    }
+
+    var result = htmlParts.join('\n');
+    result = result.replace(/@@CB(\d+)@@/g, function (m, idx) { return codeBlocks[idx]; });
+    return result;
+  }
+
   /* ── chat ──────────────────────────────────────────────────────── */
   function appendBubble(role, text) {
     var b = document.createElement('div');
     b.className = 'ct-bub ' + (role === 'user' ? 'u' : 'a');
-    b.textContent = text;
+    if (role === 'assistant') b.innerHTML = mdToHtml(text);
+    else b.textContent = text;
     msgs.appendChild(b);
     msgs.scrollTop = msgs.scrollHeight;
     return b;
@@ -380,7 +556,7 @@
       return r.json();
     }).then(function (data) {
       var reply = (data && data.reply) || '(no reply)';
-      loadingBub.textContent = reply;
+      loadingBub.innerHTML = mdToHtml(reply);
       if (data && data.grounded) {
         var g = document.createElement('span');
         g.className = 'ct-grounded';

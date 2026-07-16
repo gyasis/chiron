@@ -144,15 +144,16 @@ const orient = bd.narrativeHtml || '';
 // Cold-open greeting + closing sign-off. SINGLE-SOURCED: these exact strings are also
 // emitted to audio-intro.json (bottom of file) so the audio bake voices EXACTLY what's
 // shown on screen (no drift). Name is templated from LEARNER — never hardcoded.
-// The shared personalized greeting — the SAME opener for the intro cold-open AND
-// the summary + full-lecture audio (so all three clips open identically). Emitted
-// separately to audio-intro.json so run.py can prepend it to summary/shortened.
-const greetingIt = `Buongiorno, ${LEARNER} — guarda chi è tornato.`;
-const greetingEn = `Good morning, ${LEARNER} — look who's back.`;
+// Lucrezia AUTHORS her own greeting + sign-off from her PERSONALITY (varies each lesson — persona.md;
+// typical warm Italian openers, her choice — NOT a canned set). The chain (run.py) has her write them,
+// then passes them in via env so the SAME persona-authored opener feeds the on-page cold-open AND the
+// summary/full-lecture audio (single-sourced, no drift). Minimal fallback only if none was authored.
+const greetingIt = process.env.CH_GREETING_IT || `Buongiorno, ${LEARNER}.`;
+const greetingEn = process.env.CH_GREETING_EN || `Good morning, ${LEARNER}.`;
+const closingIt = process.env.CH_CLOSING_IT || `Bravo, ${LEARNER}. A presto… io sono qui.`;
+const closingEn = process.env.CH_CLOSING_EN || `Well done, ${LEARNER}. See you soon… I'm right here.`;
 const coldOpenIt = `${greetingIt} Oggi prendiamo un vero quesito SSM e lo apriamo parola per parola. Leggi prima tutto — il caso e le opzioni — poi te lo leggo io.`;
 const coldOpenEn = `${greetingEn} Today we take a real SSM item and open it word by word. Read it all first — the case and the options — then I'll read it to you.`;
-const closingIt = `Bravo, ${LEARNER}. Una parola ti ha portato alla risposta. A presto… io sono qui.`;
-const closingEn = `Well done, ${LEARNER}. A single word led you to the answer. See you soon… I'm right here.`;
 
 // ── body (sidebar + 5 sections) ──────────────────────────────────────────────
 const body = `

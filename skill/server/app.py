@@ -1049,7 +1049,8 @@ def _lesson_with_tutor(slug: str):
     if not p.exists():
         raise HTTPException(404, "lesson not found")
     html = p.read_text(encoding="utf-8")
-    tags = '<link rel="stylesheet" href="/shell/tutor.css"><script src="/shell/tutor.js" defer></script>'
+    v = int((SKILL / "shell" / "tutor.js").stat().st_mtime)
+    tags = f'<link rel="stylesheet" href="/shell/tutor.css?v={v}"><script src="/shell/tutor.js?v={v}" defer></script>'
     if "/shell/tutor.js" not in html:
         html = html.replace("</body>", tags + "</body>", 1) if "</body>" in html else html + tags
     return HTMLResponse(html)
