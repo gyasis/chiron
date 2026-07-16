@@ -2,11 +2,16 @@
 name: chiron
 description: |
   Universal LLM-powered lesson generator for solo learners across code, medicine,
-  and language. Triggers on natural-language phrases ("teach me X", "make a course
-  on Y", "lesson from this PDF", "case-study this", "chiron …") AND on slash-commands
-  (/chiron, /chiron-code, /chiron-medicine, /chiron-language, /chiron-research-paper,
-  /chiron-case-study). Produces a single self-contained lesson.html plus a per-lesson
-  SQLite state DB.
+  and language. Sources: text, PDFs, code repos, images/book-page photos, VIDEO
+  files & YouTube URLs, and AUDIO (lectures/podcasts, transcribed locally via the
+  Atelier whisper sidecar). Also runs a phone-camera capture sidecar (snap pages
+  on your phone → lesson). Triggers on natural-language phrases ("teach me X",
+  "make a course on Y", "lesson from this PDF", "make a lesson from this
+  video/audio/recording", "turn this YouTube video into a course", "transcribe
+  this lecture into a lesson", "capture pages from my phone", "case-study this",
+  "chiron …") AND on slash-commands (/chiron, /chiron-code, /chiron-medicine,
+  /chiron-language, /chiron-research-paper, /chiron-case-study). Produces a single
+  self-contained lesson.html plus a per-lesson SQLite state DB.
 allowed-tools:
   - Read
   - Write
@@ -15,6 +20,7 @@ allowed-tools:
   - Glob
   - Grep
   - mcp__gemini-mcp__interpret_image
+  - mcp__gemini-mcp__watch_video
   - mcp__gemini-mcp__gemini_research
   - mcp__gemini-mcp__start_deep_research
   - mcp__gemini-mcp__check_research_status
@@ -78,6 +84,11 @@ modern browser. It is built around three foundational facts:
 | `make a course on <X>` | Mode A |
 | `make a lesson out of <X>` | Mode auto |
 | `lesson from this PDF` | Mode A; source = PDF |
+| `make a lesson from this video` / `<file>.mp4` | Mode A; source = video (Gemini `watch_video`) |
+| `turn this YouTube video into a course` / a `youtube.com` URL | Mode A; source = YouTube |
+| `make a lesson from this audio/recording/lecture` / `<file>.mp3` | Mode A; source = audio (local whisper) |
+| `transcribe this lecture into a lesson` | Mode A; source = audio |
+| `capture pages from my phone` / `start the capture server` | runs the G6 capture sidecar |
 | `case-study this` | Mode B (forced) |
 | `explain the pattern` | Mode B (forced) |
 | `chiron <…>` | Generic fallback |
@@ -96,6 +107,24 @@ modern browser. It is built around three foundational facts:
 Both styles produce a `TriggerContext` (see `lib/trigger-context.ts`) and feed
 the same 5-stage pipeline.
 
+### Rich-media & phone-capture sources (G5 / G6)
+
+Sources are dispatched by file extension / URL — same entry points, just point
+them at media. Full guide: **`RICH-MEDIA-GUIDE.md`**.
+
+| Source | Adapter / engine | Notes |
+|---|---|---|
+| image / book-page photo / screenshot, or a folder of pages | `ingest-adapters/image.ts` → `mcp__gemini-mcp__interpret_image` | medicine = raw description (no dx); language-it = accents preserved |
+| video file / YouTube URL | `ingest-adapters/video.ts` → `mcp__gemini-mcp__watch_video` | transcript + visuals; medicine `SUBJECT:` = USMLE body-system/topic/specialty |
+| audio file | `ingest-adapters/audio.ts` → **Atelier whisper sidecar** (local, `192.168.0.159:8766`, `large-v3`) | NOT gemini; `CHIRON_WHISPER_URL`/`_MODEL` overridable |
+| **phone camera** | `scripts/capture-server.mjs` (standalone Node, LAN) | `node scripts/capture-server.mjs --auto-ingest --domain <d>` → snap → live image-folder Brief |
+
+The Stage-0 adapters are deterministic (copy + emit a handoff sidecar); the
+parent agent fulfils the vision/transcription handoff and folds the result into
+`brief.json`. The capture server is a plain Node process — it cannot call the
+LLM/MCP, so it automates capture → ready workspace, and the agent finishes
+(vision OCR + generation). All three domains are first-class for every source.
+
 ### German — refuse with clear message
 
 If the user requests `language-de` or any German lesson in v1, respond:
@@ -103,6 +132,45 @@ If the user requests `language-de` or any German lesson in v1, respond:
 > Chiron v1 supports Italian only on the language axis. German tutoring is
 > deferred to post-v1. The blockers are TTS-voice quality validation and the
 > verb-conjugation-table widget, both planned for v1.1.
+
+## Language sub-modes (curriculum selection)
+
+`language-it` has three curriculum variants, selected by `TriggerContext.flags.subMode`
+(set by `--submode=<x>` or the `/chiron-language-<x>` slash):
+
+| subMode | curriculum file | what it is |
+|---|---|---|
+| `grammar` (default) | `curricula/language-it-grammar.json` | grammar-arc course |
+| `vocab` | `curricula/language-it-vocab.json` | SR-card-heavy vocab course |
+| `passage` | `curricula/language-it-passage.json` | **source-driven** interlinear breakdown of a passage / story / exam item / script (prompt `prompts/04t-language-passage-breakdown.md`, widget `annotated-passage`) |
+
+**Selection rule (BLOCKING):** for `domain==='language-it'`, load
+`curricula/language-it-${subMode || 'grammar'}.json`. If the curriculum has
+`promptOverride`, use that prompt for the content stage instead of `04a`.
+
+**Persona injection:** when the curriculum sets `personaPackOverride`, resolve the
+active persona via `activePersonaFor('language-it')` (e.g. `lucrezia`), `loadPersona(id)`
+from `lib/persona.ts`, and inject the register into the content prompt's
+`{{personaContextBlock}}` + `{{learnerName}}` slots (falls back to `personasFile`'s
+generic tutor when no pack is active). This is how `04t` is voiced in Lucrezia.
+
+**Passage readings (passage submode):** the `passage` curriculum declares
+`passageReadings` (a `fast` + `slow` full reading of the source passage). The
+generator emits them into `audio-scripts.json` `sections`: `passage-fast` and
+`passage-slow`, each an **object** `{engine, voice|speaker, speed, segments}`.
+For `language-it` BOTH use `engine:"omni"` (Lucrezia) — the slow one with
+`speed:0.8`, which the bake renders as a pitch-preserved `atempo` slow-down (same
+voice, just slower/enunciated). **`engine:"dia"` is ENGLISH-ONLY** — Dia emits a
+drone on Italian — so it's reserved for an English-domain different-voice slow
+read; the bake falls back to OmniVoice+atempo if Dia is unreachable.
+
+Two surfaces, both genre-driven (NOT hand-coded per lesson):
+1. **Read-first block** at the TOP of section 1 (a `.passage-listen` element with
+   ▶ Veloce / ▶ Lenta & scandita), above the `annotated-passage` breakdown — so the
+   learner hears the whole passage before dissecting it. This is a generator-emitted
+   lesson element (NOT inside the annotated-passage widget).
+2. The lesson **🎧 player panel** surfaces both in a "La frase" group (skeleton
+   `language-lesson-skeleton.html`).
 
 ## Mode A vs Mode B
 
@@ -124,14 +192,16 @@ with "mode a" or "mode b".
    vendored libs and writes `lesson.html` + `.chiron-state.db`.
 
 Per Q8, every text-LLM call is performed by the parent Claude Code agent
-running this skill — there is no in-tree SDK call. Vision extraction routes
-through `mcp__gemini-mcp__interpret_image`.
+running this skill — there is no in-tree SDK call. Image/video extraction routes
+through `mcp__gemini-mcp__interpret_image` / `mcp__gemini-mcp__watch_video`;
+audio is transcribed locally by the Atelier whisper sidecar (no LLM/MCP).
 
 ## MCP toolset (FR-036)
 
 | Tool | Purpose |
 |---|---|
-| `mcp__gemini-mcp__interpret_image` | Vision extraction for scanned PDFs, images, image folders |
+| `mcp__gemini-mcp__interpret_image` | Vision extraction for scanned PDFs, images, image folders, phone captures |
+| `mcp__gemini-mcp__watch_video` | Video / YouTube extraction — transcript + visual analysis (G5) |
 | `mcp__gemini-mcp__gemini_research` | Quick grounded supplementary research |
 | `mcp__gemini-mcp__start_deep_research` | Deep research — **user opt-in only**, ≤ 1 / lesson (FR-029) |
 | `mcp__gemini-mcp__check_research_status` | Poll deep-research task |

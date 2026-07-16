@@ -43,6 +43,26 @@ case-study this incident-report.md
 
 Both styles produce the same output. The slash-command form pre-fills the domain/mode and bypasses the heuristic.
 
+### Rich-media & phone-capture sources
+
+Beyond text/PDF/repo, Chiron ingests **images, video, YouTube, and audio** — and
+can take live **phone-camera captures**. All work across code, medicine, and
+language. Full guide: [`RICH-MEDIA-GUIDE.md`](./RICH-MEDIA-GUIDE.md).
+
+```text
+# Image / book-page photo / screenshot (Gemini vision)
+/chiron-medicine ./harrison-cap-page.jpg
+
+# Video file or YouTube URL (Gemini watch_video — transcript + visuals)
+/chiron-code https://www.youtube.com/watch?v=<id>
+
+# Audio — transcribed LOCALLY by the Atelier whisper sidecar (no cloud)
+/chiron-language ./podcast-italiano.m4a
+
+# Phone camera → lesson: start the sidecar, snap pages on your phone
+node skill/scripts/capture-server.mjs --auto-ingest --domain medicine
+```
+
 ### One-time setup
 
 ```bash

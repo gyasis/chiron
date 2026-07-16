@@ -39,3 +39,13 @@ memory-bank/private/
 *.pem
 
 skill/_*.mjs
+
+# session artifacts / build junk
+__pycache__/
+*.pyc
+.playwright-mcp/
+console-*.yml
+console-*.png
+r-filter.yml
+/corpus/
+.appstore-vc

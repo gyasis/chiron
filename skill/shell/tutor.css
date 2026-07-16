@@ -1,0 +1,320 @@
+/* ── Chiron Tutor (eco-lite) + highlighter — Concept C ── */
+
+:root { --ct-width: 380px; }
+
+/* Desktop PUSH mode — drawer pushes the page instead of overlaying it (#4) */
+html.chiron-tutor-pushed body {
+  padding-right: var(--ct-width);
+  transition: padding-right .28s ease;
+}
+
+/* Audio panel collapse (the tutor auto-collapses the Listen widget on open) */
+.chiron-listen-head { position: relative; }
+.chiron-listen-collapse {
+  margin-left: auto; background: transparent; border: 0; cursor: pointer;
+  font-size: 12px; line-height: 1; color: var(--color-text-muted, #9E9790);
+  padding: 2px 4px; transition: transform .18s ease;
+}
+.chiron-listen.min .chiron-listen-list,
+.chiron-listen.min .chiron-listen-group,
+.chiron-listen.min .chiron-listen-grouptitle { display: none; }
+.chiron-listen.min .chiron-listen-collapse { transform: rotate(180deg); }
+
+/* Tab (always visible edge-tab, opens the drawer) */
+.chiron-tutor-tab {
+  position: fixed; right: 0; top: 42%; transform: translateY(-50%);
+  writing-mode: vertical-rl;
+  background: var(--color-accent);
+  color: #fff;
+  font: 800 12px var(--font-display, sans-serif);
+  padding: 12px 6px;
+  border-radius: 10px 0 0 10px;
+  box-shadow: -2px 0 8px rgba(0,0,0,.18);
+  z-index: 9998;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border: 0;
+}
+.chiron-tutor-pen {
+  writing-mode: horizontal-tb;
+  font-size: 15px;
+  line-height: 1;
+  padding: 2px 5px;
+  border-radius: 6px;
+  background: rgba(255,255,255,.18);
+}
+.chiron-tutor-pen.on { background: #fde68a; color: #7a5b00; }
+
+/* Drawer */
+.chiron-tutor {
+  position: fixed;
+  top: 0; right: 0;
+  height: 100%;
+  width: var(--ct-width);
+  max-width: 94vw;
+  background: var(--color-surface, #fff);
+  border-left: 1px solid var(--color-border);
+  box-shadow: -10px 0 30px rgba(0,0,0,.16);
+  z-index: 10000;
+  transform: translateX(102%);
+  transition: transform .28s ease;
+  display: flex;
+  flex-direction: column;
+  font-family: var(--font-body);
+}
+.chiron-tutor.open { transform: none; }
+
+/* Drag-to-resize handle — desktop only (#4); hidden on the mobile bottom-sheet */
+.ct-resize {
+  position: absolute; left: 0; top: 0; width: 6px; height: 100%;
+  cursor: col-resize; z-index: 2;
+  background: transparent;
+}
+.ct-resize:hover, .ct-resize.dragging { background: rgba(0,0,0,.08); }
+
+.ct-scrim {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,.35);
+  z-index: 9999;
+  display: none;
+}
+.ct-scrim.open { display: block; }
+
+.ct-head {
+  display: flex; align-items: center; gap: 8px;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--color-border);
+  flex: none;
+}
+.ct-badge {
+  flex: none; width: 26px; height: 26px; display: grid; place-items: center;
+  border-radius: 7px; background: var(--color-accent-light, rgba(217,79,48,.12));
+  font-size: 14px;
+}
+.ct-title {
+  font-family: var(--font-display); font-weight: 700; font-size: 14px;
+  color: var(--color-text); margin-right: auto;
+}
+.ct-model {
+  font: 600 11px var(--font-body);
+  color: var(--color-text);
+  background: var(--color-bg, transparent);
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  padding: 4px 10px;
+  cursor: pointer;
+}
+.ct-mode {
+  flex: none; background: transparent; border: 1px solid var(--color-border);
+  border-radius: 999px; width: 28px; height: 28px; cursor: pointer; font-size: 13px;
+}
+.ct-pen {
+  flex: none; background: transparent; border: 1px solid var(--color-border);
+  border-radius: 999px; width: 28px; height: 28px; cursor: pointer; font-size: 13px;
+}
+.ct-pen.on { background: #fde68a; color: #7a5b00; }
+.ct-close {
+  flex: none; background: transparent; border: 0; cursor: pointer;
+  font-size: 16px; color: var(--color-text-secondary); padding: 2px 4px;
+}
+
+.ct-scope {
+  margin: 8px 12px 0;
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 11px; font-weight: 600;
+  color: var(--color-accent);
+  background: var(--color-accent-light, rgba(217,79,48,.10));
+  border-radius: 999px;
+  padding: 4px 10px;
+  max-width: calc(100% - 24px);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+
+.ct-chips {
+  display: flex; flex-wrap: wrap; gap: 6px;
+  margin: 8px 12px 0;
+}
+.ct-chips:empty { display: none; }
+.ct-chip {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: #fef3c7; border: 1px solid #fde68a;
+  border-radius: 999px; padding: 3px 8px 3px 4px;
+  font-size: 11px; color: #7c5a0a;
+  max-width: 100%;
+}
+.ct-chip-num {
+  flex: none; width: 15px; height: 15px; display: grid; place-items: center;
+  border-radius: 50%; background: var(--color-accent); color: #fff;
+  font-size: 9px; font-weight: 800;
+}
+.ct-chip-text {
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 180px;
+}
+.ct-chip-x {
+  flex: none; background: transparent; border: 0; cursor: pointer;
+  font-size: 11px; color: #7c5a0a; line-height: 1; padding: 0 2px;
+}
+
+.ct-msgs {
+  flex: 1;
+  overflow-y: auto;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.ct-bub {
+  max-width: 86%;
+  padding: 9px 12px;
+  border-radius: 14px;
+  font-size: 13px;
+  line-height: 1.4;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.ct-bub.u {
+  align-self: flex-end;
+  background: var(--color-accent);
+  color: #fff;
+  border-bottom-right-radius: 3px;
+}
+.ct-bub.a {
+  align-self: flex-start;
+  background: #eef2f7;
+  color: #0f172a;
+  border-bottom-left-radius: 3px;
+}
+/* rendered-markdown elements — assistant bubbles only */
+.ct-bub.a h3, .ct-bub.a h4 {
+  font-size: 1em; font-weight: 700; margin: .5em 0 .25em; line-height: 1.3;
+}
+.ct-bub.a h1, .ct-bub.a h2 {
+  font-size: 1.05em; font-weight: 800; margin: .5em 0 .25em; line-height: 1.3;
+}
+.ct-bub.a p { margin: .4em 0; }
+.ct-bub.a p:first-child { margin-top: 0; }
+.ct-bub.a p:last-child { margin-bottom: 0; }
+.ct-bub.a ul, .ct-bub.a ol { padding-left: 1.1em; margin: .4em 0; }
+.ct-bub.a li { margin: .15em 0; }
+.ct-bub.a code {
+  font-family: var(--font-mono, monospace);
+  background: rgba(0,0,0,.06);
+  padding: 0 3px;
+  border-radius: 3px;
+  font-size: .92em;
+}
+.ct-bub.a pre {
+  display: block;
+  background: rgba(0,0,0,.06);
+  padding: 6px;
+  border-radius: 6px;
+  margin: .4em 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.ct-bub.a pre code { background: transparent; padding: 0; white-space: inherit; }
+.ct-bub.a a { color: var(--color-accent); text-decoration: underline; }
+.ct-bub.a hr { border: 0; border-top: 1px solid rgba(0,0,0,.12); margin: .5em 0; }
+.ct-bub.a table {
+  display: block;
+  overflow-x: auto;
+  border-collapse: collapse;
+  font-size: 12px;
+  max-width: 100%;
+  margin: .4em 0;
+}
+.ct-bub.a th, .ct-bub.a td {
+  border: 1px solid var(--color-border, #ddd);
+  padding: 3px 6px;
+  text-align: left;
+  white-space: nowrap;
+}
+.ct-bub.a th { background: rgba(0,0,0,.04); }
+.ct-grounded {
+  display: block;
+  margin-top: 6px;
+  font-size: 10.5px;
+  color: #0d9488;
+}
+
+.ct-input {
+  flex: none;
+  display: flex; align-items: flex-end; gap: 8px;
+  padding: 10px 12px;
+  border-top: 1px solid var(--color-border);
+}
+.ct-input textarea {
+  flex: 1;
+  resize: none;
+  max-height: 120px;
+  font: inherit;
+  font-size: 13px;
+  color: var(--color-text);
+  background: var(--color-bg, transparent);
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  padding: 8px 10px;
+}
+.ct-send {
+  flex: none; width: 34px; height: 34px; border-radius: 50%;
+  background: var(--color-accent); color: #fff; border: 0;
+  cursor: pointer; font-size: 15px; display: grid; place-items: center;
+}
+.ct-send:hover { background: var(--color-accent-hover); }
+
+@media (max-width: 640px) {
+  .chiron-tutor {
+    top: auto; bottom: 0;
+    height: 80vh;
+    width: 100%;
+    max-width: none;
+    border-left: 0;
+    border-top: 1px solid var(--color-border);
+    border-radius: 16px 16px 0 0;
+    transform: translateY(102%);
+  }
+  .chiron-tutor.open { transform: none; }
+  .ct-resize { display: none; }
+}
+
+/* Highlighter marks (matches Specializzando's look) */
+mark.chiron-hl {
+  background: linear-gradient(180deg, transparent 55%, #fde68a 55%);
+  border-radius: 2px;
+  padding: 0 1px;
+  cursor: pointer;
+}
+mark.chiron-hl:hover {
+  background: linear-gradient(180deg, transparent 30%, #6ee7b7 30%);
+  box-shadow: 0 1px 0 #10b981;
+}
+sup.chiron-hl-num {
+  font-size: .62em;
+  font-weight: 800;
+  color: #059669;
+  margin: 0 1px 0 3px;
+  padding: 0 .28em;
+  border: 1px solid rgba(5,150,105,.5);
+  border-radius: .45em;
+  vertical-align: super;
+  cursor: pointer;
+}
+body.chiron-pen-on ::selection { background: #fde68a; color: #000; }
+
+/* ── back-to-library bar — slides down from top-center; tappable on touch ── */
+.chiron-backbar{
+  position:fixed; top:0; left:50%; transform:translateX(-50%) translateY(-64%);
+  z-index:9997; display:inline-flex; align-items:center; gap:5px;
+  background:var(--color-surface,#fff); color:var(--color-accent,#1e6fbf);
+  border:1px solid var(--color-border,#d8e3f0); border-top:0;
+  border-radius:0 0 12px 12px; padding:7px 16px 6px;
+  font:800 12.5px var(--font-body,system-ui); text-decoration:none;
+  box-shadow:0 3px 10px rgba(15,31,51,.14); opacity:.92;
+  transition:transform .24s ease, opacity .2s ease;
+}
+.chiron-backbar:hover, .chiron-backbar:focus{ transform:translateX(-50%) translateY(0); opacity:1; }
+.chiron-backbar .cb-arrow{ font-size:15px; line-height:1; margin-top:-1px; }
+/* touch devices can't hover → keep it fully visible */
+@media (hover:none){ .chiron-backbar{ transform:translateX(-50%) translateY(0); opacity:1; } }

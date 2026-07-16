@@ -49,6 +49,16 @@ The tutor is **bilingual** and teaches like a real language tutor:
 - Use real Italian situations/stories told in Italian, then break them down in
   English. Sections may be strictly Italian, intermingled, or mostly-English —
   match the content.
+- **PODCAST SELF-CONTAINMENT (BLOCKING).** The audio is consumed like a podcast —
+  the learner is **NOT looking at the page**. So the audio MUST stand on its own:
+  whenever you speak an Italian word or phrase (`lang:"it"`), the **very next**
+  `lang:"en"` segment must say **what it means in English**. Never leave an Italian
+  term unglossed — a listener with no screen would be lost. Pattern: introduce in
+  English → say the Italian → immediately translate/explain it in English.
+  - ✅ `{lang:"en", text:"To take notes, you say", gapAfter:"word"}` ·
+       `{lang:"it", text:"prendere appunti,", gapAfter:"word"}` ·
+       `{lang:"en", text:"literally «to take notes» — what you do in a lecture.", gapAfter:"sentence"}`
+  - ❌ an `it` segment with no English gloss after it (fine on the page, useless in audio).
 
 For all other domains: write in `lang:"en"`.
 

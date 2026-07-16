@@ -27,3 +27,4 @@ tauri-plugin-dialog = "2"
 tauri-plugin-fs = "2"
 zip = { version = "2", default-features = false, features = ["deflate"] }
 mime_guess = "2"
+ureq = "2"

@@ -1,0 +1,85 @@
+# Chiron Library — single source of truth for the discovery MENU and per-lesson TAGGING.
+# Edited by humans; build-library-index.mjs parses this → library.config.json (the app reads JSON).
+# Two consumers: (1) the Library app renders its menu FROM this; (2) the generator tags each
+# lesson per its domain's facet set (a lesson can only carry facets whose appliesTo includes its domain).
+version: 1
+
+domains:
+  medicine:        { label: Medicine,        color: "#1e6fbf", facets: [system, subject, trend, difficulty, exam_freq] }
+  medical-italian: { label: Medical-Italian, color: "#b3522e", facets: [system, subject, lang_level, trend] }
+  italian:         { label: Italian,         color: "#6b8e4e", facets: [topic, lang_level] }
+  code:            { label: Code,            color: "#6d28d9", facets: [stack, difficulty] }   # future domain, same machinery
+
+facets:
+  system:
+    label: Body system
+    type: rail
+    appliesTo: [medicine, medical-italian]
+    source: taxonomy            # values come from the SSM taxonomy (system list)
+    values: [Cardiovascular, Gastrointestinal, Respiratory, Renal, Endocrine, Neurology, "Hematology/Oncology", "Infectious Disease", Rheumatology, Dermatology, Emergency]
+  subject:
+    label: Subject
+    type: rail
+    appliesTo: [medicine, medical-italian]
+    source: taxonomy            # disease-class level; nests under the selected system
+    nestUnder: system
+    valuesBySystem:
+      Cardiovascular: ["Pericardial Disease", "Cardiac Arrhythmias", "Vascular & Aortic Disease", "Heart Failure & Cardiomyopathy", "Valvular Disease", "Coronary Artery Disease"]
+      Gastrointestinal: ["GI Oncology", "Esophageal & Gastric", "Hepatobiliary & Pancreatic", "Inflammatory Bowel Disease", "GI Bleeding"]
+      Respiratory: ["Obstructive Lung Disease", "Pulmonary Vascular", "Interstitial Lung Disease", "Pleural Disease", "Respiratory Infection"]
+      Renal: ["Electrolyte Disorders", "Acute Kidney Injury", "Glomerular Disease", "Chronic Kidney Disease"]
+      Endocrine: ["Diabetes", "Thyroid Disease", "Adrenal Disease", "Pituitary & Sex Chromosome"]
+      Neurology: ["Cerebrovascular", "Seizure Disorders", "Neuromuscular", "CNS Infection", "Neurotrauma"]
+      "Hematology/Oncology": ["Leukemia & Lymphoma", "Soft-tissue Sarcoma", "Plasma Cell Disorders", "Anemias"]
+      "Infectious Disease": ["Sepsis", "Tuberculosis", "HIV", "Tropical Disease"]
+      Rheumatology: ["Connective Tissue Disease", "Vasculitis", "Inflammatory Arthritis"]
+      Dermatology: ["Inflammatory Dermatoses", "Skin Oncology"]
+      Emergency: ["Resuscitation", "Toxicology", "Trauma", "Ward Italian"]
+  topic:
+    label: Language topic
+    type: rail
+    appliesTo: [italian]
+    source: ai-controlled       # generator picks from this controlled vocab
+    values: [Everyday, Grammar, Conversation, Travel, Workplace]
+  lang_level:
+    label: CEFR level
+    type: pills
+    appliesTo: [medical-italian, italian]
+    values: [A1, A2, B1, B2, C1]
+  trend:
+    label: Trend
+    type: pills
+    appliesTo: [medicine, medical-italian]
+    source: taxonomy
+    values: [RISING, PERENNIAL, FADING, EMERGING]
+  difficulty:
+    label: Difficulty
+    type: range                 # 0..1, from taxonomy avg_difficulty
+    appliesTo: [medicine]
+    source: taxonomy
+  exam_freq:
+    label: Exam frequency
+    type: sparkline             # per-year 2017..2025 from taxonomy
+    appliesTo: [medicine, medical-italian]
+    source: taxonomy
+  stack:
+    label: Stack
+    type: pills
+    appliesTo: [code]
+    values: [TypeScript, Python, Rust, Go]
+  source:
+    label: Source
+    type: pills
+    appliesTo: [medicine, medical-italian, italian, code]
+    source: derived             # values discovered from the lessons at runtime (no external source names committed)
+
+sorts:
+  - { key: priority, label: Exam priority }
+  - { key: bankable, label: Bankable first }
+  - { key: recent,   label: Recently generated }
+  - { key: title,    label: Title A–Z }
+  - { key: clips,    label: Most audio }
+
+features:
+  - { key: needs_audio, label: Needs audio, type: toggle }   # ungenerated / partial
+  - { key: view,        label: List ⇄ Grid, type: toggle }

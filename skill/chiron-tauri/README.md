@@ -41,6 +41,12 @@ npm run tauri android build --debug --apk --target aarch64
 - **No file-picker MIME filter** — Android greys out `.chiron` (unknown MIME), so
   the dialog opens unfiltered; Rust validates it's a real zip on import.
 - NDK r30-beta worked for the Rust cross-compile; a stable NDK (r26/r27) is safer.
+- **Audio/video won't play unless the `lesson://` handler supports HTTP Range (BLOCKING).**
+  webkit2gtk (wry) media elements issue a `Range:` request and **refuse to play a plain `200`
+  full-body response**. The handler MUST parse `Range: bytes=start-end` and return **`206 Partial
+  Content`** with `Content-Range` + `Accept-Ranges: bytes` (and `Accept-Ranges` on the `200` too).
+  Symptom: lesson HTML + Listen buttons render fine, but no sound. Fixed in `src/lib.rs`
+  (`parse_range` + the 206 branch), 2026-06-24.
 
 ## Roadmap
 - Read `chiron.json` (chiron/1 manifest) for title/domain instead of scraping `<title>`.

@@ -1324,9 +1324,11 @@
     }).catch(function () { btn.classList.add('err'); setTimeout(function () { btn.classList.remove('err'); }, 1600); });
   }
 
+  var PASSAGE_LABEL = { 'passage-fast': 'Veloce', 'passage-slow': 'Lenta & scandita' };
   function panelLabel(c) {
     if (c.artifact === 'summary') return 'Summary';
     if (c.artifact === 'shortened') return 'Full lecture';
+    if (PASSAGE_LABEL[c.sectionId]) return PASSAGE_LABEL[c.sectionId];
     if (c.sectionId) {
       var el = document.getElementById(c.sectionId);
       var h = el && el.querySelector('h1,h2,h3,[data-section-title]');
@@ -1357,8 +1359,9 @@
       });
       panel.appendChild(g);
     }
+    group('La frase', clips.filter(function (c) { return c.artifact === 'section' && /^passage-/.test(c.sectionId); }));
     group('Full lesson', clips.filter(function (c) { return c.artifact === 'summary' || c.artifact === 'shortened'; }));
-    group('By section', clips.filter(function (c) { return c.artifact === 'section'; }));
+    group('By section', clips.filter(function (c) { return c.artifact === 'section' && !/^passage-/.test(c.sectionId); }));
     document.body.appendChild(panel);
   }
 

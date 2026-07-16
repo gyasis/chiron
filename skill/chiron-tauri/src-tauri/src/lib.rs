@@ -28,15 +28,31 @@ fn lessons_dir<R: Runtime>(app: &tauri::AppHandle<R>) -> PathBuf {
         .join("lessons")
 }
 
+/// Parse a `Range: bytes=START-END` header (END optional) → (start, end_or_usize::MAX).
+fn parse_range(h: &str) -> Option<(usize, usize)> {
+    let h = h.trim().strip_prefix("bytes=")?;
+    let (s, e) = h.split_once('-')?;
+    let start: usize = s.trim().parse().ok()?;
+    let end: usize = if e.trim().is_empty() { usize::MAX } else { e.trim().parse().ok()? };
+    if end < start {
+        return None;
+    }
+    Some((start, end))
+}
+
 fn index_path<R: Runtime>(app: &tauri::AppHandle<R>) -> PathBuf {
     lessons_dir(app).join("index.json")
 }
 
 fn read_index<R: Runtime>(app: &tauri::AppHandle<R>) -> Vec<Lesson> {
-    fs::read_to_string(index_path(app))
+    let mut v: Vec<Lesson> = fs::read_to_string(index_path(app))
         .ok()
         .and_then(|s| serde_json::from_str(&s).ok())
-        .unwrap_or_default()
+        .unwrap_or_default();
+    // de-dupe by title (heal indexes that accumulated repeat imports)
+    let mut seen = std::collections::HashSet::new();
+    v.retain(|l| seen.insert(l.title.clone()));
+    v
 }
 
 fn write_index<R: Runtime>(app: &tauri::AppHandle<R>, v: &[Lesson]) -> Result<(), String> {
@@ -58,11 +74,9 @@ fn delete_lesson(app: tauri::AppHandle, id: String) -> Result<(), String> {
     write_index(&app, &kept)
 }
 
-// Import a .chiron (zip) from its raw BYTES (read on the JS side via the fs
-// plugin, which understands Android content:// URIs). Unzip into
-// app_local_data/lessons/<id>/, register it, return the new Lesson.
-#[tauri::command]
-fn import_lesson(app: tauri::AppHandle, data: Vec<u8>) -> Result<Lesson, String> {
+// Shared: unzip a .chiron's BYTES into app_local_data/lessons/<id>/, register
+// it, return the new Lesson. Used by file-import AND server-download.
+fn import_zip_bytes(app: &tauri::AppHandle, data: Vec<u8>) -> Result<Lesson, String> {
     let mut zip = zip::ZipArchive::new(Cursor::new(data)).map_err(|e| e.to_string())?;
 
     let id = format!(
@@ -72,7 +86,7 @@ fn import_lesson(app: tauri::AppHandle, data: Vec<u8>) -> Result<Lesson, String>
             .map(|d| d.as_millis())
             .unwrap_or(0)
     );
-    let dest = lessons_dir(&app).join(&id);
+    let dest = lessons_dir(app).join(&id);
     let mut entry = String::new();
     let mut title = String::new();
 
@@ -124,10 +138,42 @@ fn import_lesson(app: tauri::AppHandle, data: Vec<u8>) -> Result<Lesson, String>
     }
 
     let lesson = Lesson { id, title, entry };
-    let mut idx = read_index(&app);
+    let mut idx = read_index(app);
+    idx.retain(|l| l.title != lesson.title); // replace existing same-title (no dup)
     idx.insert(0, lesson.clone());
-    write_index(&app, &idx)?;
+    write_index(app, &idx)?;
     Ok(lesson)
+}
+
+// Import a .chiron from raw BYTES (read on the JS side via the fs plugin, which
+// understands Android content:// URIs).
+#[tauri::command]
+fn import_lesson(app: tauri::AppHandle, data: Vec<u8>) -> Result<Lesson, String> {
+    import_zip_bytes(&app, data)
+}
+
+// List a server catalog: GET <url>/lessons.json (works for http LAN + https Pages).
+#[tauri::command]
+fn server_lessons(url: String) -> Result<serde_json::Value, String> {
+    let u = format!("{}/lessons.json", url.trim_end_matches('/'));
+    let body = ureq::get(&u)
+        .call()
+        .map_err(|e| format!("fetch {u}: {e}"))?
+        .into_string()
+        .map_err(|e| e.to_string())?;
+    serde_json::from_str(&body).map_err(|e| format!("bad lessons.json: {e}"))
+}
+
+// Download a .chiron from the server and import it.
+#[tauri::command]
+fn import_from_server(app: tauri::AppHandle, url: String, file: String) -> Result<Lesson, String> {
+    let u = format!("{}/{}", url.trim_end_matches('/'), file);
+    let resp = ureq::get(&u).call().map_err(|e| format!("download {u}: {e}"))?;
+    let mut bytes = Vec::new();
+    resp.into_reader()
+        .read_to_end(&mut bytes)
+        .map_err(|e| e.to_string())?;
+    import_zip_bytes(&app, bytes)
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -155,8 +201,33 @@ pub fn run() {
                     let mime = mime_guess::from_path(&full)
                         .first_or_octet_stream()
                         .to_string();
+                    let total = body.len();
+                    // Range support — REQUIRED for <audio>/<video> playback in the webview:
+                    // webkit2gtk media elements issue a Range request and won't play a plain 200.
+                    let range = request
+                        .headers()
+                        .get("Range")
+                        .and_then(|h| h.to_str().ok())
+                        .and_then(parse_range);
+                    if let Some((start, end_req)) = range {
+                        if start < total {
+                            let end = end_req.min(total - 1);
+                            let slice = body[start..=end].to_vec();
+                            return tauri::http::Response::builder()
+                                .status(206)
+                                .header("Content-Type", mime)
+                                .header("Accept-Ranges", "bytes")
+                                .header("Content-Range", format!("bytes {}-{}/{}", start, end, total))
+                                .header("Content-Length", (end - start + 1).to_string())
+                                .header("Access-Control-Allow-Origin", "*")
+                                .body(slice)
+                                .unwrap();
+                        }
+                    }
                     tauri::http::Response::builder()
                         .header("Content-Type", mime)
+                        .header("Accept-Ranges", "bytes")
+                        .header("Content-Length", total.to_string())
                         .header("Access-Control-Allow-Origin", "*")
                         .body(body)
                         .unwrap()
@@ -170,7 +241,9 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             list_lessons,
             import_lesson,
-            delete_lesson
+            delete_lesson,
+            server_lessons,
+            import_from_server
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

@@ -106,7 +106,11 @@ for (const voiceId of Object.values(persona.voices)) {
   voices[voiceId] = voiceRegistry[voiceId];
 }
 
-process.stderr.write(`[bake-lesson-audio] persona=${personaId}  domain=${domain}  voices=${Object.keys(voices).join(', ')}\n`);
+// Learner name for the name-merge pass (Fix 3) — env first (set by the chain), else
+// the persona frontmatter. Empty ⇒ the merge pass is a no-op (safe, general).
+const learnerName = (process.env.CH_LEARNER || persona.learnerName || '').trim();
+
+process.stderr.write(`[bake-lesson-audio] persona=${personaId}  domain=${domain}  voices=${Object.keys(voices).join(', ')}  learner=${learnerName || '(none)'}\n`);
 
 // ---------------------------------------------------------------------------
 // Step 2 — Parse lesson.html
@@ -360,8 +364,22 @@ if (fs.existsSync(audioScriptsPath)) {
     if (as.summary) lectureArtifacts.push({ kind: 'summary', segments: as.summary });
     if (as.shortened) lectureArtifacts.push({ kind: 'shortened', segments: as.shortened });
     if (as.sections) {
-      for (const [sectionId, segs] of Object.entries(as.sections)) {
-        lectureArtifacts.push({ kind: 'section', sectionId, segments: segs });
+      for (const [sectionId, val] of Object.entries(as.sections)) {
+        // Back-compat: a section value is EITHER the segments[] array (→ OmniVoice,
+        // unchanged) OR an object { segments, engine, speaker, speed, emotion, fallback }.
+        if (Array.isArray(val)) {
+          lectureArtifacts.push({ kind: 'section', sectionId, segments: val });
+        } else if (val && typeof val === 'object' && Array.isArray(val.segments)) {
+          const art = { kind: 'section', sectionId, segments: val.segments };
+          if (val.engine) art.engine = val.engine;
+          if (val.speaker) art.speaker = val.speaker;
+          if (val.speed !== undefined) art.speed = val.speed;
+          if (val.emotion) art.emotion = val.emotion;
+          if (val.fallback) art.fallback = val.fallback;
+          lectureArtifacts.push(art);
+        } else {
+          process.stderr.write(`[bake-lesson-audio] WARNING: section '${sectionId}' has no segments — skipping\n`);
+        }
       }
     }
   } catch (e) {
@@ -369,6 +387,26 @@ if (fs.existsSync(audioScriptsPath)) {
   }
 } else {
   process.stderr.write(`[bake-lesson-audio] audio-scripts.json not found — skipping lecture artifacts\n`);
+}
+
+// ---------------------------------------------------------------------------
+// 2f — Displayed intro/closing text (single-sourced by the assembler) for the
+//      bake's deterministic audio-vs-DISPLAY divergence check (Fix 2). Keyed by
+//      section id; only these sections are required to match the screen.
+// ---------------------------------------------------------------------------
+const displayedText = {};
+const introPath = path.join(lessonDir, 'audio-intro.json');
+if (fs.existsSync(introPath)) {
+  try {
+    const intro = JSON.parse(fs.readFileSync(introPath, 'utf8'));
+    for (const [sid, blk] of Object.entries(intro)) {
+      const t = [blk?.it, blk?.en].filter(Boolean).join(' ').trim();
+      if (t) displayedText[sid] = t;
+    }
+    process.stderr.write(`[bake-lesson-audio] divergence-check sections (from audio-intro.json): ${Object.keys(displayedText).join(', ') || '(none)'}\n`);
+  } catch (e) {
+    process.stderr.write(`[bake-lesson-audio] WARNING: could not parse audio-intro.json: ${e.message}\n`);
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -385,7 +423,7 @@ const toResolve = [
 
 let resolvedArtifacts = [];
 if (toResolve.length > 0) {
-  resolvedArtifacts = resolveLecture({ artifacts: toResolve }, domain);
+  resolvedArtifacts = resolveLecture({ artifacts: toResolve }, domain, learnerName);
 }
 
 // Dialogue artifacts are pre-resolved — strip the private bookkeeping fields before passing to bakeAudio
@@ -448,6 +486,7 @@ const results = await bakeAudio({
   courseId,
   artifacts: allArtifacts,
   voices,
+  displayedText,
   ...(noQc ? { qc: false } : {}),
 });
 

@@ -943,29 +943,61 @@
 
 .flow-actors {
   display: flex;
-  flex-wrap: wrap;
-  justify-content: space-around;
-  gap: var(--chiron-space-4);
-  margin-bottom: var(--chiron-space-5);
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  align-items: flex-start;
+  gap: 0;
+  padding-bottom: var(--chiron-space-2);
+  margin-bottom: var(--chiron-space-4);
 }
 
 .flow-actor {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   text-align: center;
-  font-size: 0.82rem;
+  font-size: 0.8rem;
+  line-height: 1.3;
   color: var(--chiron-fg-secondary);
-  min-width: 80px;
+  min-width: 104px;
+  max-width: 132px;
+  padding: 0 var(--chiron-space-3);
+  position: relative;
   transition: transform 0.2s, color 0.2s;
+}
+
+/* directed-flow arrow between consecutive nodes (single row → reads left-to-right) */
+.flow-actor:not(:last-child)::after {
+  content: "\2192";
+  position: absolute;
+  right: -0.55em;
+  top: -2px;
+  color: var(--chiron-accent);
+  font-size: 1.7rem;
+  font-weight: 700;
+  line-height: 1;
+  opacity: 0.85;
 }
 
 .flow-actor.highlight {
   color: var(--chiron-accent);
   transform: scale(1.07);
 }
+.flow-actor.highlight .flow-actor-icon {
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--chiron-accent) 22%, transparent);
+}
 
 .flow-actor-icon {
-  font-size: 2rem;
-  margin-bottom: var(--chiron-space-1);
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--chiron-accent);
+  margin: 2px auto var(--chiron-space-2);
   display: block;
+  text-indent: -9999px;
+  overflow: hidden;
+  transition: box-shadow 0.2s;
 }
 
 .flow-actor span {
@@ -1330,3 +1362,75 @@
   color: var(--chiron-muted);
   margin: var(--chiron-space-2) 0 0;
 }
+
+/* ── Medical-algorithm / DDx family (2026-06-29) — ddx-tree · decision-flow · compare-lanes.
+   Deterministic, theme-token-driven. Shared by medicine / wards / medical-italian. Tone passed
+   as inline --bc/--dc/--yc/--hc = a clinical theme colour; NO hardcoded hex here. ───────────── */
+
+/* ddx-tree */
+.cdx-title{font-family:var(--chiron-font-heading);font-weight:700;font-size:1.05rem;margin:0 0 14px}
+.cdx-root{display:flex;justify-content:center;margin-bottom:6px}
+.cdx-root .cdx-node{background:var(--chiron-accent);color:#fff;font-family:var(--chiron-font-heading);
+  font-weight:700;padding:8px 20px;border-radius:var(--chiron-radius-md);box-shadow:var(--chiron-shadow-md)}
+.cdx-stem{height:16px;width:2px;background:var(--chiron-border);margin:0 auto}
+.cdx-bus{height:2px;background:var(--chiron-border);margin:0 12%}
+.cdx-cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin-top:0}
+/* No thin coloured line outlines — clean neutral borders; colour only as a SOFT BOX fill on the header. */
+.cdx-branch{border:1px solid var(--chiron-border);
+  border-radius:var(--chiron-radius-md);background:var(--chiron-surface);overflow:hidden;display:flex;flex-direction:column}
+.cdx-bh{font-family:var(--chiron-font-heading);font-weight:700;font-size:.9rem;padding:8px 10px;color:var(--chiron-fg);
+  background:color-mix(in srgb,var(--bc) 12%,var(--chiron-surface))}
+.cdx-bh small{display:block;font-weight:400;color:var(--chiron-muted);font-size:.74rem;letter-spacing:0}
+.cdx-leaf{margin:8px;padding:8px 10px;background:var(--chiron-bg);border:1px solid var(--chiron-divider);
+  border-radius:6px;font-size:.86rem}
+.cdx-leaf b{font-weight:600}
+.cdx-leaf span{display:block;color:var(--chiron-muted);font-size:.78rem}
+
+/* decision-flow */
+.calg-title{font-family:var(--chiron-font-heading);font-weight:700;font-size:1.05rem;margin:0 0 14px}
+.calg{display:flex;flex-direction:column;align-items:center;gap:0}
+.calg-node{max-width:340px;text-align:center;padding:9px 16px;border-radius:var(--chiron-radius-md);
+  font-size:.88rem;border:1px solid var(--chiron-border);background:var(--chiron-surface)}
+.calg-node.start{background:var(--chiron-accent);color:#fff;font-weight:700;border-color:var(--chiron-accent)}
+.calg-node.decision{background:var(--chiron-elevated);border:1.5px solid var(--chiron-accent);
+  color:var(--chiron-accent);font-weight:600}
+.calg-node.dx{background:var(--chiron-surface);border:1px solid var(--chiron-border);font-weight:600}
+.calg-conn{width:2px;height:14px;background:var(--chiron-border)}
+.calg-split{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:18px;width:100%;position:relative}
+.calg-split::before{content:"";position:absolute;top:0;left:25%;right:25%;height:2px;background:var(--chiron-border)}
+.calg-col{display:flex;flex-direction:column;align-items:center}
+.calg-col::before{content:"";width:2px;height:14px;background:var(--chiron-border)}
+.calg-ylabel{font-family:var(--chiron-font-heading);font-size:.68rem;font-weight:700;letter-spacing:.05em;
+  color:var(--yc,var(--chiron-muted));text-transform:uppercase;margin:2px 0}
+
+/* compare-lanes */
+.ccmp-title{font-family:var(--chiron-font-heading);font-weight:700;font-size:1.05rem;margin:0 0 14px}
+.ccmp{display:grid;grid-template-columns:130px repeat(var(--ccmp-cols,2),1fr);border:1px solid var(--chiron-border);
+  border-radius:var(--chiron-radius-md);overflow:hidden;font-size:.86rem}
+.ccmp > div{padding:9px 12px;border-bottom:1px solid var(--chiron-divider)}
+.ccmp-feat{font-weight:600;color:var(--chiron-fg-secondary);background:var(--chiron-surface);display:flex;align-items:center}
+.ccmp-head{font-family:var(--chiron-font-heading);font-weight:700;font-size:.95rem;text-align:center;color:#fff;
+  background:var(--hc,var(--chiron-accent));border-bottom:none}
+.ccmp-corner{background:var(--chiron-elevated)}
+.ccmp-val{background:var(--chiron-bg)}
+
+/* ── End-of-lesson Glossary section (2026-06-29) — consolidated, alphabetized term reference ── */
+.glossary-section{margin:2rem 0;padding:1.5rem;background:var(--chiron-surface);
+  border:1px solid var(--chiron-border);border-radius:var(--chiron-radius-lg)}
+.glossary-section h2{font-family:var(--chiron-font-heading);margin:0 0 4px}
+.glossary-help{color:var(--chiron-muted);font-size:.85rem;margin:0 0 16px}
+.glossary-list{display:grid;grid-template-columns:1fr;gap:0;margin:0}
+.glossary-list dt{font-family:var(--chiron-font-heading);font-weight:700;color:var(--chiron-accent);
+  margin-top:12px;padding-top:12px;border-top:1px solid var(--chiron-divider);font-size:.95rem}
+.glossary-list dt:first-child{border-top:none;margin-top:0;padding-top:0}
+.glossary-list dd{margin:2px 0 0;color:var(--chiron-fg-secondary);font-size:.9rem;line-height:1.5}
+@media(min-width:720px){.glossary-list{grid-template-columns:1fr 1fr;column-gap:28px}}
+
+/* group-chat English-translation toggle (universal — all Italian lessons; theme tokens only) */
+.chat-window .chat-toolbar{display:flex;justify-content:flex-end;padding:6px 10px 0}
+.chat-window .chat-en-toggle{font:inherit;font-size:11px;display:inline-flex;align-items:center;gap:5px;padding:3px 11px;border:1px solid var(--chiron-border);border-radius:100px;background:transparent;color:var(--chiron-muted);cursor:pointer;transition:all .12s ease}
+.chat-window .chat-en-toggle:hover{background:var(--chiron-elevated);color:var(--chiron-fg)}
+.chat-window.show-en .chat-en-toggle{color:var(--chiron-accent);border-color:var(--chiron-accent)}
+.chat-window .chat-en{display:none;margin-top:7px;padding-top:7px;border-top:1px dashed var(--chiron-divider);color:var(--chiron-fg-secondary);font-size:.92em;line-height:1.5}
+.chat-window.show-en .chat-en{display:block}
+.chat-window .chat-en-tag{font-weight:700;font-size:.78em;color:var(--chiron-accent);margin-right:4px}

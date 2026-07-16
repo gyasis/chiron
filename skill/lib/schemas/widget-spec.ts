@@ -565,8 +565,126 @@ export const CodeEnglishTranslationSchema = z.object({
 });
 
 // ----------------------------------------------------------------------------
+// annotated-passage — language sub-mode `passage` centerpiece (2026-06-17)
+//
+// Interlinear breakdown of a real source passage. Each content/function word is
+// a token tagged to ONE annotation `layer`; multi-word units are `phrases`. The
+// learner independently toggles each layer on/off (the toggle bar). `defaultOn`
+// controls only initial visibility — every declared layer's data is ALWAYS
+// emitted so it can be switched on. domain!=null adds a `concept` layer;
+// genre='dialogue-script' adds a `subtext` layer. See prompts/04t-…breakdown.md.
+// ----------------------------------------------------------------------------
+
+export const ApTokenSchema = z.object({
+  surface: z.string(),                       // word as it appears in the passage
+  lemma: z.string().optional(),              // dictionary / infinitive form (root)
+  pos: z.string(),                           // DET, NOUN, VERB, ADP (prep), PRON, ADV, CONJ, …
+  layer: z.enum([
+    'articles', 'nouns', 'verbs', 'adverbs', 'preps', 'pronouns',
+  ]),
+  features: z.record(z.string(), z.union([z.string(), z.number(), z.boolean()])).optional(),
+  note: z.string(),                          // plain-English beginner explanation
+});
+
+export const ApPhraseSchema = z.object({
+  surface: z.string(),                       // the multi-word unit verbatim
+  type: z.string(),                          // collocation | idiom | fixed-expression | verb-phrase | …
+  literal: z.string().optional(),            // word-order gloss
+  meaning: z.string(),                       // what it means as a unit
+  note: z.string().optional(),               // why it's idiomatic / when to reuse
+});
+
+export const ApSentenceSchema = z.object({
+  idx: z.number().int().min(1),
+  text: z.string(),                          // verbatim sentence
+  audioId: z.string().optional(),            // anchor id for the per-sentence ▶ clip
+  translation: z.string(),                   // natural English (the `translation` layer)
+  literal: z.string().optional(),            // word-order gloss (the `literal` layer)
+  mood: z.string().optional(),               // declarative / interrogative / …
+  registerNote: z.string().optional(),       // formal address, clinical register, slang
+  concept: z.string().optional(),            // domain explanation for THIS sentence (`concept` layer)
+  subtext: z.string().optional(),            // speaker intent (`subtext` layer; dialogue-script)
+  tokens: z.array(ApTokenSchema).min(1),
+  phrases: z.array(ApPhraseSchema).default([]),
+  tips: z.array(z.string()).default([]),
+});
+
+export const AnnotatedPassageSchema = z.object({
+  type: z.literal('annotated-passage'),
+  id: z.string(),
+  language: z.enum(['it', 'de']),
+  domain: z.string().nullable().default(null),
+  genre: z.enum(['narrative', 'expository', 'exam-question', 'dialogue-script']),
+  register: z.string().optional(),
+  layers: z.array(z.object({
+    key: z.string(),                         // articles | nouns | verbs | adverbs | preps | pronouns | phrases | translation | literal | concept | subtext
+    label: z.string(),                       // toggle-button label (localized ok)
+    defaultOn: z.boolean(),                  // initial visibility ONLY — never gates generation
+  })).min(1),
+  sentences: z.array(ApSentenceSchema).min(1),
+  anomalies: z.array(z.object({
+    span: z.string(),                        // verbatim from source
+    issue: z.string(),                       // what's off
+    likely: z.string(),                      // the intended form
+  })).default([]),
+});
+
+// ----------------------------------------------------------------------------
 // Discriminated union — the public schema
 // ----------------------------------------------------------------------------
+
+// ── Medical-algorithm / DDx family (2026-06-29 — from the ddx-algorithm pilot) ──
+// Three deterministic, theme-token-driven widgets. The author picks per content:
+//   ddx-tree (branching differential) · decision-flow (clinical algorithm) · compare-lanes (X vs Y).
+// Shared across medicine / wards / medical-italian chains. tone → a clinical theme colour.
+const WidgetTone = z.enum(['accent', 'teal', 'success', 'warning', 'error', 'muted']);
+
+export const DdxTreeWidgetSchema = z.object({
+  type: z.literal('ddx-tree'),
+  id: z.string().optional(),
+  title: z.string().optional(),
+  root: z.string(),                                  // the root finding/criterion that splits the differential
+  branches: z.array(z.object({
+    label: z.string(),
+    sublabel: z.string().optional(),                 // small descriptor under the branch header
+    tone: WidgetTone.optional(),
+    leaves: z.array(z.object({
+      title: z.string(),
+      detail: z.string().optional(),
+    })).min(1),
+  })).min(2),
+});
+
+export const DecisionFlowWidgetSchema = z.object({
+  type: z.literal('decision-flow'),
+  id: z.string().optional(),
+  title: z.string().optional(),
+  start: z.string(),                                 // the presenting state (top node)
+  question: z.string(),                              // the first decision (e.g. "QRS < 120 ms?")
+  branches: z.array(z.object({                       // typically 2 (yes/no)
+    label: z.string(),                               // e.g. "Yes · narrow"
+    tone: WidgetTone.optional(),
+    steps: z.array(z.object({
+      kind: z.enum(['decision', 'dx']),              // a further decision, or a diagnosis/endpoint
+      text: z.string(),
+      tone: WidgetTone.optional(),
+    })).min(1),
+  })).min(2),
+});
+
+export const CompareLanesWidgetSchema = z.object({
+  type: z.literal('compare-lanes'),
+  id: z.string().optional(),
+  title: z.string().optional(),
+  columns: z.array(z.object({                        // typically 2 entities being compared
+    label: z.string(),
+    tone: WidgetTone.optional(),
+  })).min(2),
+  rows: z.array(z.object({
+    feature: z.string(),
+    cells: z.array(z.string()),                      // one cell per column (order matches columns)
+  })).min(1),
+});
 
 const WidgetUnionSchema = z.discriminatedUnion('type', [
   // Quiz primitives
@@ -608,6 +726,12 @@ const WidgetUnionSchema = z.discriminatedUnion('type', [
   ChartXyWidgetSchema,
   // Code-only widget (v1)
   CodeEnglishTranslationSchema,
+  // Language passage sub-mode (2026-06-17)
+  AnnotatedPassageSchema,
+  // Medical-algorithm / DDx family (2026-06-29)
+  DdxTreeWidgetSchema,
+  DecisionFlowWidgetSchema,
+  CompareLanesWidgetSchema,
 ]);
 
 /**
@@ -692,6 +816,10 @@ export const WIDGET_KINDS: WidgetKind[] = [
   'layer-toggle', 'why-care-callout', 'chart-xy',
   // Code-only (v1)
   'code-english-translation',
+  // Language passage sub-mode (2026-06-17)
+  'annotated-passage',
+  // Medical-algorithm / DDx family (2026-06-29)
+  'ddx-tree', 'decision-flow', 'compare-lanes',
 ];
 
 /** Which widgets are universal (no domain constraint) vs domain-gated.
@@ -715,4 +843,5 @@ export const MEDICINE_ONLY_WIDGETS: WidgetKind[] = [
 export const LANGUAGE_ONLY_WIDGETS: WidgetKind[] = [
   'fill-blank', 'matching-pair', 'cloze',
   'audio-tts', 'match-madness', 'language-flashcard-deck',
+  'annotated-passage',
 ];

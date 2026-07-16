@@ -1005,14 +1005,18 @@ export function renderMcqClinicalVignette(spec: McqClinicalVignetteWidget): stri
     .map((opt, idx) => {
       const letter = letters[idx] ?? String(idx + 1);
       const correct = opt.correct === true ? 'true' : 'false';
+      // Prefer the real option TEXT over `label` (some authors put the letter in `label`, the text in `text`);
+      // accept `reasoning` as an alias for `explanation`. Makes the renderer robust across all Italian lessons.
+      const body = (opt as { text?: string }).text ?? opt.label ?? '';
+      const reasoning = opt.explanation ?? (opt as { reasoning?: string }).reasoning ?? '';
       return [
         `      <li class="option" data-correct="${correct}" data-option-letter="${letter}" data-option-index="${idx}">`,
         `        <label class="option-label">`,
         `          <input type="radio" name="${id}-opt" value="${idx}" />`,
         `          <span class="option-letter">${letter}.</span>`,
-        `          <span class="option-text">${escapeHtml(opt.label ?? '')}</span>`,
+        `          <span class="option-text">${escapeHtml(body)}</span>`,
         `        </label>`,
-        `        <div class="explanation" hidden>${escapeHtml(opt.explanation ?? '')}</div>`,
+        `        <div class="explanation" hidden>${escapeHtml(reasoning)}</div>`,
         `      </li>`,
       ].join('\n');
     })
@@ -2024,14 +2028,18 @@ export function renderMcq(spec: McqWidget): string {
     .map((opt, idx) => {
       const letter = letters[idx] ?? String(idx + 1);
       const correct = opt.correct === true ? 'true' : 'false';
+      // Prefer the real option TEXT over `label` (some authors put the letter in `label`, the text in `text`);
+      // accept `reasoning` as an alias for `explanation`. Makes the renderer robust across all Italian lessons.
+      const body = (opt as { text?: string }).text ?? opt.label ?? '';
+      const reasoning = opt.explanation ?? (opt as { reasoning?: string }).reasoning ?? '';
       return [
         `      <li class="option" data-correct="${correct}" data-option-letter="${letter}" data-option-index="${idx}">`,
         `        <label class="option-label">`,
         `          <input type="radio" name="${id}-opt" value="${idx}" />`,
         `          <span class="option-letter">${letter}.</span>`,
-        `          <span class="option-text">${escapeHtml(opt.label ?? '')}</span>`,
+        `          <span class="option-text">${escapeHtml(body)}</span>`,
         `        </label>`,
-        `        <div class="explanation" hidden>${escapeHtml(opt.explanation ?? '')}</div>`,
+        `        <div class="explanation" hidden>${escapeHtml(reasoning)}</div>`,
         `      </li>`,
       ].join('\n');
     })
@@ -2454,20 +2462,25 @@ export function renderGroupChatAnimation(spec: GroupChatAnimationWidget): string
   const msgsHtml = spec.messages
     .map((m) => {
       const colorVar = m.avatarColorVar || senderColors.get(m.sender)!;
+      // Optional English translation per turn (any Italian lesson): revealed by the 🇬🇧 toggle below.
+      const bodyEn = (m as { bodyEn?: string }).bodyEn;
+      const en = bodyEn ? `<div class="chat-en"><span class="chat-en-tag">EN</span> ${escapeHtml(bodyEn)}</div>` : '';
       return (
         `<div class="chat-message" data-sender="${escapeHtml(m.sender)}" style="display:none">` +
         `<div class="chat-avatar" style="background:var(${escapeHtml(colorVar)})">${escapeHtml(m.avatarChar)}</div>` +
         `<div class="chat-bubble">` +
         `<div class="chat-sender">${escapeHtml(m.senderLabel)}</div>` +
-        `<p>${m.body}</p>` +
+        `<p>${m.body}</p>` + en +
         `</div></div>`
       );
     })
     .join('');
+  const hasEn = spec.messages.some((m) => (m as { bodyEn?: string }).bodyEn);
   return (
     (spec.title ? `<h4>${escapeHtml(spec.title)}</h4>` : '') +
     (spec.framing ? `<p>${escapeHtml(spec.framing)}</p>` : '') +
-    `<div class="chat-window" id="${id}">` +
+    `<div class="chat-window${hasEn ? ' has-en' : ''}" id="${id}">` +
+    (hasEn ? `<div class="chat-toolbar"><button type="button" class="chat-en-toggle">\u{1F1EC}\u{1F1E7} English</button></div>` : '') +
     `<div class="chat-messages">${msgsHtml}</div>` +
     `<div class="chat-typing" style="display:none">` +
       `<div class="chat-avatar"></div>` +
@@ -2821,7 +2834,76 @@ function formatNumber(n: number): string {
   return Number.isInteger(n) ? n.toFixed(0) : n.toFixed(2);
 }
 
+// ── Medical-algorithm / DDx family (2026-06-29) — deterministic, theme-token-driven ──
+type DdxTreeWidget = Extract<WidgetSpec, { type: 'ddx-tree' }>;
+type DecisionFlowWidget = Extract<WidgetSpec, { type: 'decision-flow' }>;
+type CompareLanesWidget = Extract<WidgetSpec, { type: 'compare-lanes' }>;
+
+function toneVar(tone: string | undefined, fallback: string): string {
+  const map: Record<string, string> = {
+    accent: 'var(--chiron-accent)', teal: 'var(--chiron-warm-accent)', success: 'var(--chiron-success)',
+    warning: 'var(--chiron-warning)', error: 'var(--chiron-error)', muted: 'var(--chiron-muted)',
+  };
+  return map[tone ?? ''] ?? map[fallback] ?? 'var(--chiron-accent)';
+}
+
+/** ddx-tree — root finding → colour-coded branches → leaf diagnoses. */
+export function renderDdxTree(spec: DdxTreeWidget): string {
+  const id = spec.id || nextWidgetId('cdx');
+  const cols = (spec.branches ?? []).map((b) => {
+    const leaves = (b.leaves ?? []).map((l) =>
+      `<div class="cdx-leaf"><b>${escapeHtml(l.title ?? '')}</b>` +
+      (l.detail ? `<span>${escapeHtml(l.detail)}</span>` : '') + `</div>`).join('');
+    return `<div class="cdx-branch" style="--bc:${toneVar(b.tone, 'accent')}">` +
+      `<div class="cdx-bh">${escapeHtml(b.label ?? '')}` +
+      (b.sublabel ? `<small>${escapeHtml(b.sublabel)}</small>` : '') + `</div>${leaves}</div>`;
+  }).join('');
+  return (spec.title ? `<h3 class="cdx-title">${escapeHtml(spec.title)}</h3>` : '') +
+    `<div class="cdx" id="${id}">` +
+    `<div class="cdx-root"><div class="cdx-node">${escapeHtml(spec.root ?? '')}</div></div>` +
+    `<div class="cdx-stem"></div><div class="cdx-bus"></div>` +
+    `<div class="cdx-cols">${cols}</div></div>`;
+}
+
+/** decision-flow — clinical algorithm: start → first decision → yes/no branches to endpoints. */
+export function renderDecisionFlow(spec: DecisionFlowWidget): string {
+  const id = spec.id || nextWidgetId('calg');
+  const branches = (spec.branches ?? []).map((b) => {
+    const steps = (b.steps ?? []).map((s, i) => {
+      const cls = s.kind === 'decision' ? 'calg-node decision' : 'calg-node dx';
+      const dc = s.kind === 'dx' ? ` style="--dc:${toneVar(s.tone, 'success')}"` : '';
+      return (i > 0 ? `<div class="calg-conn"></div>` : '') +
+        `<div class="${cls}"${dc}>${escapeHtml(s.text ?? '')}</div>`;
+    }).join('');
+    return `<div class="calg-col"><div class="calg-ylabel" style="--yc:${toneVar(b.tone, 'muted')}">` +
+      `${escapeHtml(b.label ?? '')}</div>${steps}</div>`;
+  }).join('');
+  return (spec.title ? `<h3 class="calg-title">${escapeHtml(spec.title)}</h3>` : '') +
+    `<div class="calg" id="${id}">` +
+    `<div class="calg-node start">${escapeHtml(spec.start ?? '')}</div>` +
+    `<div class="calg-conn"></div>` +
+    `<div class="calg-node decision">${escapeHtml(spec.question ?? '')}</div>` +
+    `<div class="calg-split">${branches}</div></div>`;
+}
+
+/** compare-lanes — two+ aligned columns contrasting a finding across entities (X vs Y). */
+export function renderCompareLanes(spec: CompareLanesWidget): string {
+  const id = spec.id || nextWidgetId('ccmp');
+  const cols = spec.columns ?? [];
+  const head = `<div class="ccmp-cell ccmp-corner"></div>` +
+    cols.map((c) => `<div class="ccmp-head" style="--hc:${toneVar(c.tone, 'accent')}">${escapeHtml(c.label ?? '')}</div>`).join('');
+  const rows = (spec.rows ?? []).map((r) => {
+    const cells = cols.map((_, i) => `<div class="ccmp-val">${escapeHtml(r.cells?.[i] ?? '')}</div>`).join('');
+    return `<div class="ccmp-feat">${escapeHtml(r.feature ?? '')}</div>${cells}`;
+  }).join('');
+  return (spec.title ? `<h3 class="ccmp-title">${escapeHtml(spec.title)}</h3>` : '') +
+    `<div class="ccmp" id="${id}" style="--ccmp-cols:${cols.length}">${head}${rows}</div>`;
+}
+
 // Register all 10 new renderers (overrides Wave-2 throwing stubs)
+registerRenderer('ddx-tree', (w) => renderDdxTree(w as DdxTreeWidget));
+registerRenderer('decision-flow', (w) => renderDecisionFlow(w as DecisionFlowWidget));
+registerRenderer('compare-lanes', (w) => renderCompareLanes(w as CompareLanesWidget));
 registerRenderer('group-chat-animation', (w) =>
   renderGroupChatAnimation(w as GroupChatAnimationWidget),
 );
@@ -2854,4 +2936,154 @@ registerRenderer('code-english-translation', (w) =>
 );
 registerRenderer('chart-xy', (w) =>
   renderChartXy(w as ChartXyWidget),
+);
+
+// ---------------------------------------------------------------------------
+// annotated-passage — language `passage` sub-mode interlinear breakdown.
+// Self-contained: scoped CSS (token-based, ZERO hardcoded hex — passes the
+// SKILL.md palette gate) + a per-instance IIFE for the layer toggle bar.
+// Layers are differentiated by underline STYLE (dotted/dashed/solid/…), never
+// color, so the widget is theme-safe. `defaultOn:false` only HIDES a layer on
+// load — its annotations are always present, so any layer can be switched on.
+// ---------------------------------------------------------------------------
+type AnnotatedPassageWidget = Extract<WidgetSpec, { type: 'annotated-passage' }>;
+
+/** Short per-token tag shown above a word (color-free; layer is read here). */
+const AP_TAG: Record<string, string> = {
+  articles: 'art', nouns: 'n', verbs: 'v', adverbs: 'adv', preps: 'prep', pronouns: 'pron',
+};
+
+/** Scoped widget CSS — emitted once per page (duplicate identical blocks are
+ *  harmless, but we guard to keep lesson.html lean). Tokens only, no hex. */
+const AP_CSS = `<style data-ap-css="1">
+.annotated-passage{border:1px solid var(--chiron-border);border-radius:var(--chiron-radius-md);padding:var(--chiron-space-4);margin:var(--chiron-space-4) 0;background:var(--chiron-surface)}
+.annotated-passage .ap-toggles{display:flex;flex-wrap:wrap;gap:var(--chiron-space-2);margin-bottom:var(--chiron-space-4);position:sticky;top:0;background:var(--chiron-surface);padding:var(--chiron-space-2) 0;z-index:1}
+.annotated-passage .ap-layer-btn{font:inherit;font-size:.8rem;padding:.2em .7em;border:1px solid var(--chiron-border);border-radius:var(--chiron-radius-sm);background:var(--chiron-bg);color:var(--chiron-fg-secondary);cursor:pointer;opacity:.55}
+.annotated-passage .ap-layer-btn::before{content:"";display:inline-block;width:.55em;height:.55em;border-radius:50%;background:var(--ap-c,var(--chiron-muted));margin-right:.4em;vertical-align:baseline;opacity:.9}
+.annotated-passage .ap-layer-btn.active{opacity:1;border-color:var(--ap-c,var(--chiron-accent));color:var(--chiron-fg);box-shadow:inset 0 -2px 0 var(--ap-c,var(--chiron-accent))}
+/* per-layer color (theme tokens only — matches both .ap-tok and .ap-layer-btn via data-layer) */
+.annotated-passage [data-layer="articles"]{--ap-c:var(--chiron-info)}
+.annotated-passage [data-layer="nouns"]{--ap-c:var(--chiron-success)}
+.annotated-passage [data-layer="verbs"]{--ap-c:var(--chiron-warm-accent)}
+.annotated-passage [data-layer="adverbs"]{--ap-c:var(--chiron-warning)}
+.annotated-passage [data-layer="preps"]{--ap-c:var(--chiron-accent)}
+.annotated-passage [data-layer="pronouns"]{--ap-c:var(--chiron-error)}
+.annotated-passage [data-layer="phrases"]{--ap-c:var(--chiron-warm-accent)}
+.annotated-passage [data-layer="translation"]{--ap-c:var(--chiron-accent)}
+.annotated-passage [data-layer="literal"]{--ap-c:var(--chiron-muted)}
+.annotated-passage [data-layer="concept"]{--ap-c:var(--chiron-info)}
+.annotated-passage [data-layer="subtext"]{--ap-c:var(--chiron-accent-light)}
+.annotated-passage .ap-anomalies{border-left:3px solid var(--chiron-warning);background:var(--chiron-elevated);padding:var(--chiron-space-2) var(--chiron-space-3);margin-bottom:var(--chiron-space-3);border-radius:var(--chiron-radius-sm);font-size:.9rem}
+.annotated-passage .ap-anomalies b{color:var(--chiron-warning)}
+.annotated-passage .ap-sentence{margin:var(--chiron-space-4) 0;padding-top:var(--chiron-space-3);border-top:1px solid var(--chiron-divider)}
+.annotated-passage .ap-clean{font-size:1.15rem;line-height:1.7;font-family:var(--chiron-font-body)}
+.annotated-passage .ap-interlinear{display:flex;flex-wrap:wrap;gap:.15em .5em;margin:var(--chiron-space-3) 0;line-height:2.4}
+.annotated-passage .ap-tok{position:relative;cursor:help;padding-bottom:2px}
+.annotated-passage .ap-tok .ap-surface{text-decoration:underline;text-decoration-color:var(--ap-c,var(--chiron-accent));text-underline-offset:4px}
+.annotated-passage .ap-tok[data-layer="articles"] .ap-surface{text-decoration-style:dotted}
+.annotated-passage .ap-tok[data-layer="nouns"] .ap-surface{text-decoration-style:dashed}
+.annotated-passage .ap-tok[data-layer="verbs"] .ap-surface{text-decoration-thickness:2px}
+.annotated-passage .ap-tok[data-layer="adverbs"] .ap-surface{text-decoration-style:wavy}
+.annotated-passage .ap-tok[data-layer="preps"] .ap-surface{text-decoration-style:double}
+.annotated-passage .ap-tok[data-layer="pronouns"] .ap-surface{text-decoration-style:dotted;text-decoration-thickness:2px}
+.annotated-passage .ap-tag{font-size:.6rem;text-transform:uppercase;letter-spacing:.04em;color:var(--ap-c,var(--chiron-muted));vertical-align:super;margin-left:.15em}
+.annotated-passage .ap-note{display:none;position:absolute;left:0;top:100%;z-index:5;width:min(20rem,70vw);background:var(--chiron-elevated);color:var(--chiron-fg);border:1px solid var(--chiron-border);border-radius:var(--chiron-radius-sm);box-shadow:var(--chiron-shadow-md);padding:var(--chiron-space-2) var(--chiron-space-3);font-size:.85rem;line-height:1.45;white-space:normal;font-family:var(--chiron-font-body)}
+.annotated-passage .ap-tok:hover .ap-note,.annotated-passage .ap-tok:focus-within .ap-note,.annotated-passage .ap-tok.pinned .ap-note{display:block}
+.annotated-passage .ap-sub{display:block;margin:.4em 0;padding-left:var(--chiron-space-3);border-left:2px solid var(--chiron-divider);font-size:.92rem}
+.annotated-passage .ap-sub-label{font-size:.62rem;text-transform:uppercase;letter-spacing:.05em;color:var(--chiron-muted);display:block}
+.annotated-passage .ap-phrases{display:flex;flex-wrap:wrap;gap:var(--chiron-space-2);margin:.5em 0}
+.annotated-passage .ap-phrase{background:var(--chiron-elevated);border:1px solid var(--chiron-border);border-radius:var(--chiron-radius-sm);padding:.3em .6em;font-size:.85rem}
+.annotated-passage .ap-phrase b{font-family:var(--chiron-font-body)}
+.annotated-passage .ap-concept{background:var(--chiron-elevated);border-left:3px solid var(--chiron-info);padding:var(--chiron-space-2) var(--chiron-space-3);border-radius:var(--chiron-radius-sm);margin:.5em 0;font-size:.92rem}
+.annotated-passage .ap-tips{margin:.4em 0 0;padding-left:1.2em;font-size:.88rem;color:var(--chiron-fg-secondary)}
+/* layer OFF: drop the annotation affordance (the WORDS stay; only marks go) */
+.annotated-passage.ap-hide-articles .ap-tok[data-layer="articles"],.annotated-passage.ap-hide-nouns .ap-tok[data-layer="nouns"],.annotated-passage.ap-hide-verbs .ap-tok[data-layer="verbs"],.annotated-passage.ap-hide-adverbs .ap-tok[data-layer="adverbs"],.annotated-passage.ap-hide-preps .ap-tok[data-layer="preps"],.annotated-passage.ap-hide-pronouns .ap-tok[data-layer="pronouns"]{cursor:default}
+.annotated-passage.ap-hide-articles .ap-tok[data-layer="articles"] .ap-surface,.annotated-passage.ap-hide-nouns .ap-tok[data-layer="nouns"] .ap-surface,.annotated-passage.ap-hide-verbs .ap-tok[data-layer="verbs"] .ap-surface,.annotated-passage.ap-hide-adverbs .ap-tok[data-layer="adverbs"] .ap-surface,.annotated-passage.ap-hide-preps .ap-tok[data-layer="preps"] .ap-surface,.annotated-passage.ap-hide-pronouns .ap-tok[data-layer="pronouns"] .ap-surface{text-decoration:none}
+.annotated-passage.ap-hide-articles .ap-tok[data-layer="articles"] .ap-tag,.annotated-passage.ap-hide-nouns .ap-tok[data-layer="nouns"] .ap-tag,.annotated-passage.ap-hide-verbs .ap-tok[data-layer="verbs"] .ap-tag,.annotated-passage.ap-hide-adverbs .ap-tok[data-layer="adverbs"] .ap-tag,.annotated-passage.ap-hide-preps .ap-tok[data-layer="preps"] .ap-tag,.annotated-passage.ap-hide-pronouns .ap-tok[data-layer="pronouns"] .ap-tag,.annotated-passage.ap-hide-articles .ap-tok[data-layer="articles"] .ap-note,.annotated-passage.ap-hide-nouns .ap-tok[data-layer="nouns"] .ap-note,.annotated-passage.ap-hide-verbs .ap-tok[data-layer="verbs"] .ap-note,.annotated-passage.ap-hide-adverbs .ap-tok[data-layer="adverbs"] .ap-note,.annotated-passage.ap-hide-preps .ap-tok[data-layer="preps"] .ap-note,.annotated-passage.ap-hide-pronouns .ap-tok[data-layer="pronouns"] .ap-note{display:none !important}
+.annotated-passage.ap-hide-translation .ap-layer-translation,.annotated-passage.ap-hide-literal .ap-layer-literal,.annotated-passage.ap-hide-phrases .ap-layer-phrases,.annotated-passage.ap-hide-concept .ap-layer-concept,.annotated-passage.ap-hide-subtext .ap-layer-subtext{display:none}
+</style>`;
+
+let __apCssEmitted = false;
+
+function apFeatures(f: Record<string, string | number | boolean> | undefined): string {
+  if (!f) return '';
+  const parts = Object.entries(f).map(([k, v]) => `${escapeHtml(k)}: ${escapeHtml(String(v))}`);
+  return parts.length ? `<i>${parts.join(' · ')}</i> — ` : '';
+}
+
+export function renderAnnotatedPassage(spec: AnnotatedPassageWidget): string {
+  const id = spec.id || nextWidgetId('ap');
+  // Root classes: hide every default-off layer up front.
+  const hideClasses = spec.layers.filter((l) => !l.defaultOn).map((l) => `ap-hide-${l.key}`).join(' ');
+
+  const toggles = spec.layers
+    .map((l) => `<button type="button" class="ap-layer-btn${l.defaultOn ? ' active' : ''}" data-layer="${escapeHtml(l.key)}" aria-pressed="${l.defaultOn}">${escapeHtml(l.label)}</button>`)
+    .join('');
+
+  const anomalies = spec.anomalies.length
+    ? `<div class="ap-anomalies"><b>⚠ Source notes</b><ul>` +
+      spec.anomalies.map((a) => `<li>“${escapeHtml(a.span)}” — ${escapeHtml(a.issue)} → likely <b>${escapeHtml(a.likely)}</b></li>`).join('') +
+      `</ul></div>`
+    : '';
+
+  const sentences = spec.sentences
+    .map((s) => {
+      const cleanId = s.audioId ? ` id="${escapeHtml(s.audioId)}"` : '';
+      const toks = s.tokens
+        .map((t) => {
+          const tag = AP_TAG[t.layer] ?? t.layer;
+          return (
+            `<span class="ap-tok" data-layer="${escapeHtml(t.layer)}" tabindex="0">` +
+            `<span class="ap-surface">${escapeHtml(t.surface)}</span><sup class="ap-tag">${escapeHtml(tag)}</sup>` +
+            `<span class="ap-note">${apFeatures(t.features)}${escapeHtml(t.note)}` +
+            (t.lemma ? ` <span class="ap-tag">${escapeHtml(t.lemma)} · ${escapeHtml(t.pos)}</span>` : '') +
+            `</span></span>`
+          );
+        })
+        .join('');
+      const phrases = s.phrases.length
+        ? `<div class="ap-phrases ap-layer-phrases">` +
+          s.phrases.map((p) => `<span class="ap-phrase"><b>${escapeHtml(p.surface)}</b> — ${escapeHtml(p.meaning)}${p.note ? ` <span class="ap-tag">${escapeHtml(p.note)}</span>` : ''}</span>`).join('') +
+          `</div>`
+        : '';
+      const literal = s.literal ? `<span class="ap-sub ap-layer-literal"><span class="ap-sub-label">literal</span>${escapeHtml(s.literal)}</span>` : '';
+      const concept = s.concept ? `<div class="ap-concept ap-layer-concept"><span class="ap-sub-label">concept</span>${escapeHtml(s.concept)}</div>` : '';
+      const subtext = s.subtext ? `<span class="ap-sub ap-layer-subtext"><span class="ap-sub-label">subtext</span>${escapeHtml(s.subtext)}</span>` : '';
+      const tips = s.tips.length ? `<ul class="ap-tips">${s.tips.map((t) => `<li>${escapeHtml(t)}</li>`).join('')}</ul>` : '';
+      return (
+        `<div class="ap-sentence" data-idx="${s.idx}">` +
+        `<p class="ap-clean" lang="${escapeHtml(spec.language)}"${cleanId}>${escapeHtml(s.text)}</p>` +
+        `<span class="ap-sub ap-layer-translation"><span class="ap-sub-label">translation</span>${escapeHtml(s.translation)}</span>` +
+        literal +
+        `<div class="ap-interlinear">${toks}</div>` +
+        phrases + concept + subtext + tips +
+        `</div>`
+      );
+    })
+    .join('');
+
+  const css = __apCssEmitted ? '' : AP_CSS;
+  __apCssEmitted = true;
+
+  const script =
+    `<script>(function(){var r=document.getElementById(${JSON.stringify(id)});if(!r)return;` +
+    `r.querySelectorAll('.ap-layer-btn').forEach(function(b){b.addEventListener('click',function(){` +
+    `var k=b.getAttribute('data-layer');var off=r.classList.toggle('ap-hide-'+k);` +
+    `b.classList.toggle('active',!off);b.setAttribute('aria-pressed',String(!off));});});` +
+    `r.querySelectorAll('.ap-tok').forEach(function(t){t.addEventListener('click',function(){t.classList.toggle('pinned');});});` +
+    `})();</script>`;
+
+  return (
+    css +
+    `<div class="annotated-passage${hideClasses ? ' ' + hideClasses : ''}" id="${id}" data-genre="${escapeHtml(spec.genre)}"${spec.domain ? ` data-domain="${escapeHtml(spec.domain)}"` : ''}>` +
+    anomalies +
+    `<div class="ap-toggles" role="group" aria-label="Annotation layers">${toggles}</div>` +
+    `<div class="ap-sentences">${sentences}</div>` +
+    `</div>` +
+    script
+  );
+}
+
+registerRenderer('annotated-passage', (w) =>
+  renderAnnotatedPassage(w as AnnotatedPassageWidget),
 );
