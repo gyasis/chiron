@@ -51,11 +51,11 @@ body{margin:0;font-family:var(--font-b);background:var(--chiron-bg);color:var(--
 .clr{font-size:12px;color:var(--chiron-accent);cursor:pointer;margin-left:auto}
 .row{display:flex;align-items:center;gap:12px;padding:9px 18px;border-bottom:1px solid var(--chiron-divider);cursor:pointer;text-decoration:none;color:inherit}
 .row:hover{background:var(--chiron-surface)}
-.row.bank{background:linear-gradient(90deg,rgba(200,163,63,.08),transparent 55%);box-shadow:inset 2px 0 0 rgba(200,163,63,.5)}
-.row.bank:hover{background:linear-gradient(90deg,rgba(200,163,63,.13),var(--chiron-surface) 55%)}
+.row.bank{background:rgba(200,163,63,.06)}
+.row.bank:hover{background:rgba(200,163,63,.11)}
 .bank{font-size:10px;font-weight:700;color:#8a6d1e;background:#f6edd0;border:1px solid #e6d9ad;border-radius:99px;padding:0 7px;letter-spacing:.02em;white-space:nowrap}
 .scope.sysscope{color:var(--chiron-accent);border-color:#c7d4e4;background:#eef3f9;font-weight:700}
-.row.sys-overview{box-shadow:inset 3px 0 0 var(--chiron-accent)}
+.row.sys-overview{/* system overviews read via the bold title below — no accent edge */}
 .row.sys-overview .rtitle{font-weight:800}
 .dbadge{flex:0 0 auto;width:8px;height:40px;border-radius:3px}
 .dbadge.medicine{background:var(--med)}.dbadge.medical-italian{background:var(--medit)}.dbadge.italian{background:var(--lang)}.dbadge.code{background:var(--code)}
@@ -101,14 +101,12 @@ body{margin:0;font-family:var(--font-b);background:var(--chiron-bg);color:var(--
 .hchip b{font-size:12px;color:var(--chiron-muted)}.hchip:hover{border-color:var(--chiron-accent)}
 /* ---------- tile wall ---------- */
 .twall{padding:14px 18px 40px}
-.tgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(214px,1fr));gap:13px}
+.tgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:13px}
 .tcard{background:var(--chiron-surface);border:1px solid var(--chiron-border);border-radius:13px;overflow:hidden;box-shadow:var(--sh-sm);cursor:pointer;transition:transform .1s,box-shadow .1s;display:flex;flex-direction:column}
 .tcard:hover{transform:translateY(-2px);box-shadow:var(--sh-md)}
 .tcard.queued{opacity:.82;cursor:default}.tcard.queued:hover{transform:none}
-.tcard.bankq{box-shadow:inset 3px 0 0 rgba(200,163,63,.6),var(--sh-sm)}
-.tcard .strip{height:6px;flex:0 0 auto}
-.tcard.medicine .strip{background:var(--med)}.tcard.medical-italian .strip{background:var(--medit)}.tcard.italian .strip{background:var(--lang)}.tcard.code .strip{background:var(--code)}
-.tcard.queued .strip{background:var(--chiron-border)}
+.tcard.bankq{box-shadow:var(--sh-sm)}  /* bankable shown by its ★ badge, not an edge */
+/* domain color is carried by the .db badge pill below — no colored card-edge strip (removed) */
 .tcard .tb{padding:11px 13px 0;flex:1}
 .tcard .tt{font-family:var(--font-h);font-weight:700;font-size:13.5px;line-height:1.28;color:var(--chiron-fg);display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
 .tcard .ts{font-size:10.5px;color:var(--chiron-muted);margin-top:7px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -116,7 +114,9 @@ body{margin:0;font-family:var(--font-b);background:var(--chiron-bg);color:var(--
 .tcard .tbadges .tag{font-size:9.5px}
 .tcard .tf{display:flex;align-items:center;gap:7px;padding:10px 13px 12px;margin-top:6px}
 .tcard .db{font-size:9.5px;font-weight:700;padding:2px 8px;border-radius:99px}
-.tcard.medicine .db{background:var(--medbg);color:var(--med)}.tcard.medical-italian .db{background:var(--meditbg);color:var(--medit)}.tcard.italian .db{background:var(--langbg);color:var(--lang)}.tcard.code .db{background:var(--codebg);color:var(--code)}
+/* option C — soft domain tint fills the card (no edge); solid domain pill in the footer */
+.tcard.medicine{background:var(--medbg)}.tcard.medical-italian{background:var(--meditbg)}.tcard.italian{background:var(--langbg)}.tcard.code{background:var(--codebg)}
+.tcard.medicine .db{background:var(--med);color:#fff}.tcard.medical-italian .db{background:var(--medit);color:#fff}.tcard.italian .db{background:var(--lang);color:#fff}.tcard.code .db{background:var(--code);color:#fff}
 .tcard .tclips{font-size:10px;color:var(--chiron-muted)}
 .tcard .taction{margin-left:auto;font-size:10.5px;font-weight:700;border-radius:99px;padding:4px 11px;white-space:nowrap}
 .tcard .taction.open{color:var(--chiron-accent);border:1px solid var(--chiron-border)}
@@ -222,6 +222,7 @@ body,.topbar,.pills,.facets,.row,.rhead{transition:background .2s,color .2s,bord
     <div class="search"><span class="mag">⌕</span><input id="q" placeholder="Search lessons, diseases, systems, subjects, topics…"></div>
     <div class="sort"><span class="sl">Sort</span> <select id="sort"></select></div>
     <button class="genbtn" onclick="LIB.wizard(true)">✦ <span class="glbl">Generate</span></button>
+    <button class="genbtn" onclick="LIB.jobs(true)" title="What's generating / recently generated" style="background:#0f766e">⚡ <span class="glbl">Jobs</span><span id="jobsdot" class="jobsdot" style="display:none"></span></button>
     <button class="themebtn" id="themebtn" onclick="LIB.theme()" title="Toggle light / dark">🌙</button>
     <button class="themebtn" title="Import a .chiron lesson file (install offline)" onclick="document.getElementById('importfile').click()">⬆</button>
     <input id="importfile" type="file" accept=".chiron,.zip" hidden>
@@ -241,6 +242,70 @@ body,.topbar,.pills,.facets,.row,.rhead{transition:background .2s,color .2s,bord
   <button onclick="document.getElementById('q').focus()"><span class="ic">⌕</span>Search</button>
 </div>
 <!-- Lesson-Builder Wizard (Phase 2) -->
+<div id="rawback" onclick="if(event.target===this)LIB.closeRaw()">
+ <div class="m"><div class="mh">⚡ Live event stream<span style="font:600 10px ui-monospace,monospace;color:#8a8577">chain.callback_manager → steps.jsonl</span><span style="margin-left:auto;cursor:pointer;color:#8a8577" onclick="LIB.closeRaw()">✕</span></div><pre id="rawpre">…</pre></div>
+</div>
+<div id="jobsback" class="modal-back" onclick="if(event.target===this)LIB.jobs(false)">
+ <div class="modal">
+  <div class="modal-h"><b>⚡ Generation activity</b><button class="x" onclick="LIB.jobs(false)">✕</button></div>
+  <div class="modal-b" id="jobslist"><div class="hint">Loading…</div></div>
+ </div>
+</div>
+<style>
+ .jobsdot{width:8px;height:8px;border-radius:50%;background:#f59e0b;display:inline-block;margin-left:5px;animation:jp 1s infinite;vertical-align:middle}
+ #jobslist .jhead{font:700 11px system-ui;letter-spacing:.04em;text-transform:uppercase;color:#64748b;margin:16px 0 6px}
+ #jobslist .jhead:first-child{margin-top:2px}
+ #jobslist .jrow{display:flex;align-items:center;gap:10px;padding:9px 4px;border-top:1px solid rgba(148,163,184,.2)}
+ #jobslist .jdot{width:9px;height:9px;border-radius:50%;background:#94a3b8;flex:none}
+ #jobslist .jrow.gen .jdot{background:#f59e0b;animation:jp 1s infinite}
+ #jobslist .jrow.ready .jdot{background:#10b981}
+ #jobslist .jrow.error .jdot{background:#ef4444}
+ @keyframes jp{50%{opacity:.3}}
+ #jobslist .jmeta{flex:1;min-width:0;display:flex;flex-direction:column}
+ #jobslist .jmeta b{font:600 13px system-ui;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+ #jobslist .jsub{font:500 11px ui-monospace,monospace;color:#94a3b8}
+ #jobslist .jopen,#jobslist .jretry{border:0;border-radius:8px;padding:5px 11px;font:700 11px system-ui;cursor:pointer;white-space:nowrap}
+ #jobslist .jopen{background:#14b8a6;color:#04211d}
+ #jobslist .jretry{background:#fee2e2;color:#b91c1c}
+ #jobslist .jaccept{background:#dff3e6;color:#1f7a44;border:0;border-radius:8px;padding:5px 11px;font:700 11px system-ui;cursor:pointer;white-space:nowrap}
+ #jobslist .jrebake{background:#fdead0;color:#b5641a;border:0;border-radius:8px;padding:5px 11px;font:700 11px system-ui;cursor:pointer;white-space:nowrap}
+ @media(min-width:900px){ #jobsback .modal{max-width:min(860px,92vw)} }   /* wide on desktop; phone keeps the narrow 520 */
+ .jdepth{font:700 8.5px ui-monospace,monospace;padding:1px 6px;border-radius:5px;background:var(--chiron-elevated);color:var(--chiron-fg-secondary);margin-left:6px;text-transform:uppercase;letter-spacing:.03em;white-space:nowrap}
+ .jdepth.medicine{background:#eef4fb;color:#1e6fbf}.jdepth.medical-italian{background:#f3e9d8;color:#b3522e}.jdepth.italian{background:#eef3e6;color:#6b8e4e}
+ #jobslist .jdismiss{background:transparent;border:0;color:var(--chiron-muted);cursor:pointer;font-size:15px;line-height:1;padding:3px 6px;border-radius:6px}
+ #jobslist .jdismiss:hover{background:#fde2e2;color:#b91c1c}
+ #jobslist .jexp{background:var(--chiron-elevated);color:var(--chiron-muted);border:0;border-radius:8px;padding:5px 9px;font:700 10.5px system-ui;cursor:pointer}
+ #jobslist .jcancel{background:#fee2e2;color:#b91c1c;border:0;border-radius:8px;padding:5px 11px;font:700 11px system-ui;cursor:pointer;white-space:nowrap}
+ #jobslist .jcancel:hover{background:#fecaca}
+ /* status pills — distinguish "just needs rebaking" (text ok, audio missing) from a real failure */
+ .jpill{font:700 9px system-ui;padding:2px 7px;border-radius:99px;white-space:nowrap;margin-left:4px}
+ .jpill.rebake{background:#fdead0;color:#b5641a}   /* 🔥 needs rebaking */
+ .jpill.viewable{background:#e6f0fb;color:#1e6fbf} /* 📖 readable, audio pending */
+ .jpill.fail{background:#fde2e2;color:#b91c1c}     /* real failure */
+ /* timeline rail (per-lesson generation observability) */
+ #jobslist .rail{margin:2px 0 10px 6px}
+ .tlrail{position:relative;padding-left:20px}
+ .tlrail:before{content:'';position:absolute;left:6px;top:8px;bottom:8px;width:2px;background:var(--chiron-divider)}
+ .tln{position:relative;padding:4px 0}
+ .tldot{position:absolute;left:-17px;top:6px;width:11px;height:11px;border-radius:50%;background:var(--chiron-surface);border:2px solid #b9b2a6}
+ .tln.running .tldot{border-color:#c8781f;box-shadow:0 0 0 3px rgba(200,120,31,.16);animation:jp 1.1s infinite}
+ .tln.done .tldot{border-color:#2e8b57;background:#2e8b57} .tln.error .tldot{border-color:#ef4444;background:#ef4444}
+ .tlnm{font:600 12px system-ui} .tln.done .tlnm{color:var(--chiron-fg-secondary)}
+ .tlm{font:500 10px ui-monospace,monospace;color:var(--chiron-muted)}
+ .tlsubs{margin:4px 0 2px;padding:6px 9px;border-left:2px solid var(--chiron-divider);background:var(--chiron-bg);border-radius:0 7px 7px 0}
+ .tls{display:flex;gap:6px;align-items:center;font:500 11px system-ui;color:var(--chiron-fg-secondary);padding:1px 0}
+ .tls.err{color:#b3522e} .tchip{font:700 8.5px ui-monospace,monospace;padding:1px 5px;border-radius:4px;background:var(--chiron-elevated)}
+ .tchip.mod{background:#eef4fb;color:#1e6fbf}.tchip.tool{background:#eef3e6;color:#6b8e4e}
+ .tok{font-family:ui-monospace,monospace;color:#1e6fbf} .rail-empty{font-size:11px;color:var(--chiron-muted);padding:4px 0 8px}
+ .tspin{display:inline-block;width:9px;height:9px;border:2px solid #c8781f;border-top-color:transparent;border-radius:50%;animation:sp .7s linear infinite}
+ @keyframes sp{to{transform:rotate(360deg)}}
+ /* raw event modal */
+ #rawback{position:fixed;inset:0;background:rgba(18,16,13,.6);display:none;align-items:center;justify-content:center;padding:18px;z-index:2147483000}
+ #rawback.show{display:flex}
+ #rawback .m{width:min(720px,96vw);max-height:84vh;background:#12100d;border-radius:12px;overflow:hidden;display:flex;flex-direction:column}
+ #rawback .mh{display:flex;gap:8px;align-items:center;padding:10px 13px;color:#e5e0d8;font:700 12.5px system-ui;border-bottom:1px solid #2a251d}
+ #rawback pre{margin:0;flex:1;overflow:auto;padding:11px 13px;color:#cfc9bd;font:400 11px ui-monospace,monospace;white-space:pre-wrap;overflow-wrap:anywhere}
+</style>
 <div id="wizback" class="modal-back" onclick="if(event.target===this)LIB.wizard(false)">
  <div class="modal">
   <div class="modal-h"><b>✦ Generate a lesson</b><button class="x" onclick="LIB.wizard(false)">✕</button></div>
@@ -278,6 +343,6 @@ body,.topbar,.pills,.facets,.row,.rhead{transition:background .2s,color .2s,bord
  </div>
 </div>
 <script src="vendor/fflate.min.js"></script>
-<script src="library.js"></script>
+<script src="library.js?v=20260716k"></script>
 <script>if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));}</script>
 </body></html>

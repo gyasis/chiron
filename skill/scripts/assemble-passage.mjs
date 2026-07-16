@@ -24,6 +24,20 @@ const OUT = process.argv[2];
 if (!OUT) { console.error('usage: node assemble-passage.mjs <lesson-dir>'); process.exit(1); }
 const esc = s => String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
+// Learner name — single source of truth: CH_LEARNER env (set by the chain from its
+// resolved LEARNER), else the persona pack frontmatter, else a neutral fallback.
+// NEVER a hardcoded personal name (keeps the greeting general for any learner).
+function resolveLearnerName() {
+  if (process.env.CH_LEARNER) return process.env.CH_LEARNER.trim();
+  try {
+    const raw = readFileSync(resolve(HOME, '.chiron/packs/lucrezia/persona.md'), 'utf8');
+    const m = /^learner_name:\s*(.+)$/m.exec(raw);
+    if (m) return m[1].trim();
+  } catch { /* persona not readable → neutral fallback */ }
+  return 'learner';
+}
+const LEARNER = resolveLearnerName();
+
 const passage = JSON.parse(readFileSync(resolve(OUT, 'source/passage.json'), 'utf8'));
 const bd = JSON.parse(readFileSync(resolve(OUT, 'breakdown.json'), 'utf8'));
 
@@ -127,9 +141,18 @@ const _correctOpt = (passage.options_it || []).find(o => o.startsWith((passage.c
 const correctText = _correctOpt ? _correctOpt.replace(/^[A-E]\.\s*/, '') : (passage.correct || '');
 const subtitle = 'A real SSM residency item — read it, hear it, take it apart word by word, and meet the medicine underneath.';
 const orient = bd.narrativeHtml || '';
-// cold-open greeting (the audio summary is the spoken version; this is the on-page warm open)
-const coldOpenIt = `Buongiorno, Gyasi — guarda chi è tornato. Oggi prendiamo un vero quesito SSM e lo apriamo parola per parola. Leggi prima tutto — il caso e le opzioni — poi te lo leggo io.`;
-const coldOpenEn = `Good morning, Gyasi — look who's back. Today we take a real SSM item and open it word by word. Read it all first — the case and the options — then I'll read it to you.`;
+// Cold-open greeting + closing sign-off. SINGLE-SOURCED: these exact strings are also
+// emitted to audio-intro.json (bottom of file) so the audio bake voices EXACTLY what's
+// shown on screen (no drift). Name is templated from LEARNER — never hardcoded.
+// The shared personalized greeting — the SAME opener for the intro cold-open AND
+// the summary + full-lecture audio (so all three clips open identically). Emitted
+// separately to audio-intro.json so run.py can prepend it to summary/shortened.
+const greetingIt = `Buongiorno, ${LEARNER} — guarda chi è tornato.`;
+const greetingEn = `Good morning, ${LEARNER} — look who's back.`;
+const coldOpenIt = `${greetingIt} Oggi prendiamo un vero quesito SSM e lo apriamo parola per parola. Leggi prima tutto — il caso e le opzioni — poi te lo leggo io.`;
+const coldOpenEn = `${greetingEn} Today we take a real SSM item and open it word by word. Read it all first — the case and the options — then I'll read it to you.`;
+const closingIt = `Bravo, ${LEARNER}. Una parola ti ha portato alla risposta. A presto… io sono qui.`;
+const closingEn = `Well done, ${LEARNER}. A single word led you to the answer. See you soon… I'm right here.`;
 
 // ── body (sidebar + 5 sections) ──────────────────────────────────────────────
 const body = `
@@ -204,7 +227,7 @@ const body = `
     <section class="lesson-section" id="closing">
       <h2 class="section-h"><span class="num">✦</span>Chiusura</h2>
       <div class="closing">
-        <p style="margin-bottom: var(--chiron-space-4);"><em>Lucrezia</em>: «Bravo, Gyasi. Una parola ti ha portato alla risposta. A presto… io sono qui.»</p>
+        <p class="cold-open" data-en="${esc(closingEn)}" style="margin-bottom: var(--chiron-space-4);"><em>Lucrezia</em>: «<span class="it">${esc(closingIt)}</span>»</p>
         <p>In this item you worked through the full SSM stem + options (read as text and audio), the beginner grammar of the sentence, and the medicine underneath — landing on <strong>${esc(correctText)}</strong>.</p>
       </div>
     </section>
@@ -229,6 +252,16 @@ try { shellEngine = `\n  <script>\n${readFileSync(resolve(SKILL, 'shell/main.js'
 
 const html = `${head}\n<body>\n${body}\n${shellEngine}\n  ${scripts}`;
 writeFileSync(resolve(OUT, 'lesson.html'), html);
+
+// ── SINGLE SOURCE for the overview/closing AUDIO ──────────────────────────────
+// Emit the EXACT displayed cold-open + closing text so the audio phase (run.py
+// phase4) voices what's on screen instead of an independently-authored script.
+// Bilingual: {it} line + {en} gloss (podcast self-contained). Keyed by section id.
+writeFileSync(resolve(OUT, 'audio-intro.json'), JSON.stringify({
+  greeting: { it: greetingIt, en: greetingEn }, // shared opener → prepended to summary + shortened
+  overview: { it: coldOpenIt, en: coldOpenEn },
+  closing:  { it: closingIt,  en: closingEn },
+}, null, 2));
 
 // ── copy shell assets (themes + clinical widget CSS) next to the lesson ──
 const themesDst = resolve(OUT, 'themes'); mkdirSync(themesDst, { recursive: true });

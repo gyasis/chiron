@@ -67,6 +67,11 @@ facets:
     type: pills
     appliesTo: [code]
     values: [TypeScript, Python, Rust, Go]
+  source:
+    label: Source
+    type: pills
+    appliesTo: [medicine, medical-italian, italian, code]
+    source: derived             # values discovered from the lessons at runtime (no external source names committed)
 
 sorts:
   - { key: priority, label: Exam priority }

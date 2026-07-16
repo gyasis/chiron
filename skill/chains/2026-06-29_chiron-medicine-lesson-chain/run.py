@@ -33,6 +33,8 @@ from pathlib import Path
 sys.stdout.reconfigure(line_buffering=True)  # flush phase prints even when redirected to a log
 
 from promptchain import PromptChain
+import sys as _sys; from pathlib import Path as _P; _sys.path.insert(0, str(_P(__file__).resolve().parent.parent))
+import obs   # shared chains/obs.py — per-lesson steps.jsonl observability (best-effort; never breaks generation)
 from promptchain.utils.external_loop import over_worklist
 
 # ── config ────────────────────────────────────────────────────────────────────
@@ -105,6 +107,8 @@ def extract_json(s: str):
 
 async def llm(model_dict: dict, prompt: str, user_input: str = "go") -> str:
     chain = PromptChain(models=[model_dict], instructions=[prompt + "\n\n{input}" if "{input}" not in prompt else prompt])
+    try: chain.register_callback(obs.make_callback())
+    except Exception: pass
     return await chain.process_prompt_async(user_input)
 
 
@@ -476,12 +480,17 @@ def bake_audio():
 async def main():
     global SYSTEM
     assert OLLAMA_KEY, "OLLAMA_API_KEY not set (source ~/.config/environment.d/ollama-cloud.conf)"
+    obs.set_out(OUT)
     if not SYSTEM:
         SYSTEM = await infer_system(SUBJECT)
         print(f"[phase 0] inferred system for '{SUBJECT}': {SYSTEM}", flush=True)
     print(f"=== chiron medicine chain | subject='{SUBJECT}' system='{SYSTEM}' chapters={N_CHAPTERS} stage={STAGE} -> {OUT}")
+    obs.phase("Grounding the source", "start")
     source = build_source_pack()
+    obs.phase("Grounding the source", "end")
+    obs.phase("Checking library for duplicates", "start")
     avoid = dedup_scan()
+    obs.phase("Checking library for duplicates", "end")
     # Resume (stateful, D5): reuse an existing valid plan instead of re-running Phase 1 every time.
     syl_path = OUT / "syllabus.json"
     if syl_path.exists() and os.environ.get("CH_FORCE") != "1":
@@ -490,14 +499,20 @@ async def main():
             syl = syl.get("chapters") or syl.get("syllabus") or [syl]
         print(f"[phase 1] RESUME — reusing existing syllabus ({len(syl)} chapters). CH_FORCE=1 to replan.", flush=True)
     else:
+        obs.phase("Writing the brief & syllabus", "start")
         syl = await phase1(source, avoid)
+        obs.phase("Writing the brief & syllabus", "end")
     issues = validate(syl)
     if issues:
         print("[abort] validation issues (v1 stops; Phase-2 retry loop is the next increment):", issues)
+        obs.error("Writing the brief & syllabus", str(issues))
         return
     if STAGE in ("chapters", "all"):
+        obs.phase("Authoring chapters", "start")
         await phase3(syl, source, avoid)
+        obs.phase("Authoring chapters", "end")
     if STAGE in ("assemble", "all"):
+        obs.phase("Assembling the page", "start")
         copy_shell_assets()   # Phase 3.9 — themes next to the lesson (styling)
         # Phase 3.95 — curated end-of-lesson glossary (grounded; the assembler renders glossary.json)
         try:
@@ -506,9 +521,14 @@ async def main():
         except Exception as e:
             print(f"[phase 3.95] glossary gen skipped ({e})", flush=True)
         assemble()
+        obs.phase("Assembling the page", "end")
     if STAGE in ("audio", "all"):
+        obs.phase("Writing narration scripts", "start")
         await phase_lecture_scripts()   # Phase 5.5 — lecture scripts → audio-scripts.json
+        obs.phase("Writing narration scripts", "end")
+        obs.phase("Baking audio", "start")
         bake_audio()                    # Phase 6 — Atelier bake + QC
+        obs.phase("Baking audio", "end")
     print("=== done.")
 
 

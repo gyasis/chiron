@@ -22,6 +22,8 @@ import asyncio, json, os, re, subprocess, sys
 from pathlib import Path
 sys.stdout.reconfigure(line_buffering=True)
 from promptchain import PromptChain
+import sys as _sys; from pathlib import Path as _P; _sys.path.insert(0, str(_P(__file__).resolve().parent.parent))
+import obs   # shared chains/obs.py — per-lesson steps.jsonl observability (best-effort; never breaks generation)
 
 HOME = Path(os.path.expanduser("~"))
 SKILL = Path(os.environ.get("CHIRON_SKILL", HOME / "Documents/code/chiron/skill"))
@@ -60,7 +62,10 @@ def extract_json(s):
 
 
 async def llm(md, prompt, user_input="go"):
-    return await PromptChain(models=[md], instructions=[prompt + "\n\n{input}" if "{input}" not in prompt else prompt]).process_prompt_async(user_input)
+    chain = PromptChain(models=[md], instructions=[prompt + "\n\n{input}" if "{input}" not in prompt else prompt])
+    try: chain.register_callback(obs.make_callback())
+    except Exception: pass
+    return await chain.process_prompt_async(user_input)
 
 
 async def json_with_repair(prompt, name, md, validate_fn=None, max_repair=3):
@@ -181,17 +186,28 @@ def bake():
 async def main():
     assert OLLAMA_KEY, "OLLAMA_API_KEY not set"
     assert TOPIC, "CH_TOPIC not set (e.g. CH_TOPIC='how to use the word appunto')"
+    obs.set_out(OUT)
     print(f"=== chiron PURE-ITALIAN chain | topic='{TOPIC}' stage={STAGE} -> {OUT}")
     if (OUT / "content.json").exists() and os.environ.get("CH_FORCE") != "1" and STAGE != "author":
         print("[phase 2] RESUME — reusing content.json", flush=True)
     else:
-        if await phase2_author() is None: return
+        obs.phase("Writing the lesson content", "start")
+        r = await phase2_author()
+        obs.phase("Writing the lesson content", "end")
+        if r is None: return
     if STAGE in ("assemble", "audio", "all"):
-        if not assemble(): print("=== assemble failed"); return
+        obs.phase("Assembling the page", "start")
+        ok = assemble()
+        obs.phase("Assembling the page", "end")
+        if not ok: print("=== assemble failed"); return
     if STAGE in ("audio", "all"):
+        obs.phase("Writing narration scripts", "start")
         await phase4_audio_scripts()
+        obs.phase("Writing narration scripts", "end")
         if STAGE == "all" or os.environ.get("CH_BAKE") == "1":
+            obs.phase("Baking audio", "start")
             bake()
+            obs.phase("Baking audio", "end")
         else:
             print("[phase 5] BAKE skipped — CH_STAGE=all or CH_BAKE=1 to bake.", flush=True)
     if (OUT / "lesson.html").exists():

@@ -161,7 +161,6 @@ function tileHtml(l){
     + (l.scope==='system'?`<span class="tag sys">organ system</span>`:'');
   const onclick = l.ready ? ` onclick="LIB.open('${slug}')"` : '';
   return `<div class="tcard ${l.domain}${l.ready?'':' queued'}${l.bankable>0?' bankq':''}"${onclick}>
-    <div class="strip"></div>
     <div class="tb"><div class="tt">${l.title}</div><div class="ts">${subtagOf(l)}</div>${badges?`<div class="tbadges">${badges}</div>`:''}</div>
     <div class="tf"><span class="db">${domLabel(l.domain)}</span>${l.ready?`<span class="tclips">🔊 ${l.clips||0}</span>`:'<span class="tclips">not generated</span>'}${action}</div>
   </div>`;
@@ -201,11 +200,45 @@ const LIB = {
   clearAll(){ F.q=''; F.domain.clear(); Object.values(F.facets).forEach(s=>s.clear()); F.hiddenDom.clear(); F.hiddenSys.clear(); saveHide(); document.getElementById('q').value=''; renderAll(); },
   sheet(open){ document.getElementById('facets').classList.toggle('open',open); document.getElementById('backdrop').classList.toggle('show',open); },
   open(slug){ const l=LMAP[slug]; if(!l) return; const dl=DL[slug];
-    if(dl){ window.open('lessons/'+dl.id+'/'+dl.entry, '_blank'); return; }         // offline cache (SW)
-    const entry=(l.path||'lesson.html').split('/').pop();
-    // served by the generate-server → its /lessons mount (=generated/); else ../ (page sits in generated/chiron-library)
-    const url=(location.port==='8911') ? (API+'/lessons/'+l.id+'/'+entry) : ('../'+l.path);
-    window.open(url, '_blank'); },
+    let url;
+    if(dl){ url='lessons/'+dl.id+'/'+dl.entry; }                                     // offline cache (SW)
+    else { const entry=(l.path||'lesson.html').split('/').pop();
+      // served by the generate-server → its /lessons mount (=generated/); else ../ (page sits in generated/chiron-library)
+      url=(location.port==='8911') ? (API+'/lessons/'+l.id+'/'+entry) : ('../'+l.path); }
+    LIB._overlay(url, l.title || slug); },
+  // open a lesson INSIDE the library (iframe overlay) with a persistent "← Library" bar, so you can
+  // always get home — works for every existing lesson + on the phone (no browser chrome needed).
+  _overlay(url, title){
+    let ov=document.getElementById('lessonOverlay');
+    if(!ov){
+      ov=document.createElement('div'); ov.id='lessonOverlay';
+      ov.innerHTML='<div class="lov-bar"><button class="lov-back" onclick="LIB._overClose()">← Library</button>'
+        +'<span class="lov-title"></span><a class="lov-ext" target="_blank" title="open in new tab">↗</a></div>'
+        +'<iframe class="lov-frame" referrerpolicy="no-referrer"></iframe>';
+      document.body.appendChild(ov);
+      const st=document.createElement('style'); st.textContent=
+        '#lessonOverlay{position:fixed;inset:0;z-index:99999;display:none;flex-direction:column;background:#0c1117}'
+        +'#lessonOverlay.show{display:flex}'
+        +'.lov-bar{display:flex;align-items:center;gap:12px;padding:10px 14px;background:#0f172a;color:#e5e7eb;border-bottom:1px solid #1f2a37;flex:none;padding-top:calc(10px + env(safe-area-inset-top))}'
+        +'.lov-back{background:#14b8a6;color:#04211d;border:0;border-radius:9px;padding:8px 14px;font:700 14px system-ui;cursor:pointer;white-space:nowrap}'
+        +'.lov-back:hover{background:#2dd4bf}'
+        +'.lov-title{flex:1;min-width:0;font:600 14px system-ui;color:#cbd5e1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}'
+        +'.lov-ext{color:#94a3b8;text-decoration:none;font-size:18px;padding:2px 6px}'
+        +'.lov-frame{flex:1;border:0;width:100%;background:#fff}';
+      document.head.appendChild(st);
+      window.addEventListener('popstate', ()=>{ const o=document.getElementById('lessonOverlay'); if(o && o.classList.contains('show')) LIB._overClose(true); });
+    }
+    ov.querySelector('.lov-title').textContent = title || '';
+    ov.querySelector('.lov-ext').href = url;
+    ov.querySelector('.lov-frame').src = url;
+    ov.classList.add('show');
+    try{ history.pushState({lov:1}, ''); }catch(e){}   // so hardware/browser Back closes the lesson, not the app
+  },
+  _overClose(fromPop){
+    const ov=document.getElementById('lessonOverlay'); if(!ov) return;
+    ov.classList.remove('show'); ov.querySelector('.lov-frame').src='about:blank';
+    if(!fromPop){ try{ history.back(); }catch(e){} }   // keep history in sync when closed via the button
+  },
   genFor(subject,domain){ LIB.wizard(true);
     document.getElementById('w-subject').value=subject||'';
     if(domain && DEPTHS[domain]){ document.getElementById('w-domain').value=domain; LIB.wizDepth(); }
@@ -322,6 +355,149 @@ const LIB = {
     try{ const r=await (await fetch(API+'/regenerate/'+slug,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({note})})).json();
       if(r.job_id){ LIB.wizard(true); GENJOB=r.job_id; LIB._showProg({slug:r.slug}); LIB._poll(r.job_id); }
     }catch(e){ alert('Regenerate failed: '+e.message); } },
+
+  /* ---- Jobs / generation activity (reads /activity) — so you always know what's baking ---- */
+  jobs(open){
+    document.getElementById('jobsback').classList.toggle('show', open);
+    clearInterval(LIB._jobsTimer);
+    if(open){ LIB._loadJobs(); LIB._jobsTimer=setInterval(()=>LIB._loadJobs(), 4000); }
+  },
+  async _loadJobs(){
+    const el=document.getElementById('jobslist'); if(!el) return;
+    let d; try{ d=await (await fetch(API+'/activity?'+Date.now())).json(); }
+    catch(e){ el.innerHTML='<div class="hint">Server unreachable — is the Chiron server up?</div>'; return; }
+    const active=d.active||[];
+    const hist=(d.history||[]).slice().sort((a,b)=>(b.started||'').localeCompare(a.started||''));
+    const esc=s=>String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/'/g,'&#39;').replace(/"/g,'&quot;');
+    const lbl=x=> esc(x.domain==='medical-italian' ? (x.source_ref||x.subject) : x.subject);
+    const mins=x=> x.elapsed_seconds!=null ? Math.round(x.elapsed_seconds/60)+'m' : '';
+    const eta=x=> x.eta_seconds ? ' · ~'+Math.max(1,Math.round(x.eta_seconds/60))+'m left' : '';
+    const when=s=>{ if(!s) return ''; const t=new Date(s); return isNaN(t)?'':t.toLocaleString([], {month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}); };
+    LIB._open = LIB._open || new Set();
+    let h='';
+    if(active.length){
+      h+='<div class="jhead">🔴 Generating now · '+active.length+'</div>';
+      for(const x of active){ const sl=x.slug||x.id; LIB._open.add(sl);   // active is always expanded
+        h+=`<div class="jrow gen"><span class="jdot"></span><div class="jmeta"><b>${lbl(x)}</b>${x.depth?`<span class="jdepth ${x.domain||''}">${esc(x.depth)}</span>`:''}<span class="jsub">${esc(x.phase||x.status)} · ${mins(x)}${eta(x)}</span></div>
+             <button class="jexp" title="full live event stream" onclick="LIB.rawSteps('${sl}')">⤢</button><button class="jcancel" title="stop this job (keeps the lesson text)" onclick="LIB.cancel('${x.id}')">✕ Cancel</button></div>
+           <div class="rail" data-slug="${sl}"></div>`; }
+    } else h+='<div class="jhead">Nothing generating right now</div>';
+    const ids=new Set(active.map(a=>a.id));
+    // Accepted/promoted lessons live in the library → drop them from the activity list. Keep the
+    // un-accepted (staged 'ready') + failed ones here, so you can review/accept or retry them.
+    // ONE row per lesson (dedupe the retry/rebake duplicates); drop accepted; prefer ready > audio-failed > error, newest
+    const _rank=s=> s==='ready'?3 : s==='audio-failed'?2 : s==='error'?1 : 0;
+    const _bySlug=new Map();
+    for(const x of hist){ if(ids.has(x.id) || x.status==='published') continue;
+      const sl=x.slug||x.id; const p=_bySlug.get(sl);
+      if(!p || _rank(x.status)>_rank(p.status) || (_rank(x.status)===_rank(p.status) && (x.started||'')>(p.started||''))) _bySlug.set(sl,x);
+    }
+    LIB._dismissed = LIB._dismissed || (()=>{try{return JSON.parse(localStorage.getItem('chiron.dismissed')||'{}')}catch{return{}}})();
+    const recent=[..._bySlug.values()]
+      .filter(x=>{ const dz=LIB._dismissed[x.slug||x.id]; return !dz || (x.started||'')>dz; })   // hide dismissed (a newer regen reappears)
+      .sort((a,b)=>(b.started||'').localeCompare(a.started||'')).slice(0,30);
+    const nr=recent.filter(x=>x.status==='ready').length, ne=recent.filter(x=>x.status==='error').length;
+    h+=`<div class="jhead">Needs review · ${nr} to accept · ${ne} failed</div>`;
+    LIB._rec = LIB._rec || {};
+    for(const x of recent){ const sl=x.slug||x.id;
+      const st=x.status; const r=LIB._rec[sl]||{};
+      const missTip=`text ${r.text?'✓':'✗'}${r.clips_total?` · ${r.clips_done}/${r.clips_total} clips${(r.missing&&r.missing.length)?' · missing: '+r.missing.join(', '):''}`:''}`;
+      let pill='';
+      if(r.needs_rebake && r.text) pill=`<span class="jpill rebake" title="${missTip}">🔥 needs rebaking</span>`;
+      else if(st==='error') pill=`<span class="jpill fail">✗ failed</span>`;
+      let act='';
+      if(st==='ready'){
+        if(x.lesson_url){ const u=(location.port==='8911'?API:'')+x.lesson_url; act+=`<button class="jopen" onclick="LIB._overlay('${u}','${lbl(x)}')">Open →</button>`; }
+        if(r.needs_rebake) act+=`<button class="jrebake" title="reuse ${r.clips_done}/${r.clips_total} clips, bake the rest — no text redo" onclick="LIB.rebake('${sl}')">🔥 Rebake</button>`;
+        act+=`<button class="jaccept" onclick="LIB.acceptJob('${sl}')">✓ Accept</button>`;   // promote → into the library, removes it from here
+      }
+      // smart retry: if the text already exists, only re-bake the audio (never redo the lesson)
+      else if(st==='error'||st==='audio-failed'){
+        if(r.text){   // text exists → let it be OPENED (see the lesson + hear the clips already baked)
+          const u=(location.port==='8911'?API:'')+'/lessons/'+sl+'/lesson.html';
+          act=`<button class="jopen" onclick="LIB._overlay('${u}','${lbl(x).replace(/'/g,'')}')">Open →</button>`
+             +`<button class="jrebake" title="${missTip} — bake the rest, no redo" onclick="LIB.rebake('${sl}')">🔥 Rebake audio</button>`;
+        } else act=`<button class="jretry" onclick="LIB.retry('${x.id}')">↻ Retry (full)</button>`;
+      }
+      const open=LIB._open.has(sl);
+      const depth=x.depth?`<span class="jdepth ${x.domain||''}">${esc(x.depth)}</span>`:'';
+      const dismiss=(st==='error'||st==='audio-failed')?`<button class="jdismiss" title="dismiss — remove from the list (doesn't delete the lesson)" onclick="LIB.dismiss('${sl}','${x.started||''}')">✕</button>`:'';
+      h+=`<div class="jrow ${st}"><span class="jdot"></span><div class="jmeta"><b>${lbl(x)}</b>${depth}${pill}<span class="jsub">${st} · ${when(x.started)}${r.clips_total?` · ${r.clips_done}/${r.clips_total} clips`:''}</span></div>
+           <button class="jexp" onclick="LIB.toggleSteps('${sl}')">${open?'▾':'▸'} steps</button>${act}${dismiss}</div>
+           <div class="rail" data-slug="${sl}" ${open?'':'style="display:none"'}></div>`;
+    }
+    if(h!==LIB._lastHTML){ LIB._lastHTML=h; el.innerHTML=h; }   // skip the full re-render when nothing changed → kills the 4s-poll flicker/reflow
+    LIB._fillRails();
+    LIB._fetchRecovery(recent);
+    const dot=document.getElementById('jobsdot'); if(dot) dot.style.display=active.length?'inline-block':'none';
+  },
+  // lazily fetch recovery (text?/clips) per pill-relevant row, ONCE, cached — keeps /activity fast
+  async _fetchRecovery(recent){
+    let got=false;
+    for(const x of (recent||[])){ const sl=x.slug||x.id;
+      if(!['ready','error','audio-failed'].includes(x.status)) continue;
+      if(LIB._rec[sl]) continue;
+      try{ LIB._rec[sl]=await (await fetch(API+'/jobs/'+encodeURIComponent(sl)+'/recovery?'+Date.now())).json(); got=true; }
+      catch(e){ LIB._rec[sl]={}; }
+    }
+    if(got) LIB._loadJobs();   // re-render with the now-cached recovery (cached → no re-fetch loop)
+  },
+  toggleSteps(sl){ LIB._open=LIB._open||new Set(); LIB._open.has(sl)?LIB._open.delete(sl):LIB._open.add(sl); LIB._loadJobs(); },
+  async _fillRails(){
+    for(const el of document.querySelectorAll('#jobslist .rail')){
+      if(el.style.display==='none') continue;
+      try{ const d=await (await fetch(API+'/jobs/'+encodeURIComponent(el.dataset.slug)+'/steps?'+Date.now())).json();
+        const html=LIB._railHTML(d); if(el._lastRail!==html){ el._lastRail=html; el.innerHTML=html; } }   // per-rail guard: only repaint the rail whose steps actually changed (the baking one), not every row
+      catch(e){ if(el._lastRail!=='__err'){ el._lastRail='__err'; el.innerHTML='<div class="rail-empty">no steps yet…</div>'; } }
+    }
+  },
+  _railHTML(d){
+    const esc=s=>String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;');
+    const secs=n=> n==null?'':(n>=60?Math.floor(n/60)+'m'+String(n%60).padStart(2,'0')+'s':n+'s');
+    const P=d.phases||[]; if(!P.length) return '<div class="rail-empty">no steps yet…</div>';
+    return '<div class="tlrail">'+P.map(p=>{
+      let subs='';
+      if(p.status==='running' && p.events && p.events.length){
+        subs='<div class="tlsubs">'+p.events.slice(-6).map(ev=>{ const et=ev.event_type||'';
+          if(et.indexOf('MODEL_CALL')===0) return `<div class="tls"><span class="tchip mod">MODEL</span> ${esc(ev.model||'')} ${ev.tokens?`· <span class="tok">${ev.tokens} tok</span>`:''} ${et==='MODEL_CALL_END'?'✓':'<span class="tspin"></span>'}</div>`;
+          if(et.indexOf('TOOL_CALL')===0) return `<div class="tls"><span class="tchip tool">TOOL</span> ${esc(ev.instruction||'')} ${et==='TOOL_CALL_END'?'✓':'<span class="tspin"></span>'}</div>`;
+          if(et==='STEP_ERROR') return `<div class="tls err">⚠ ${esc(ev.instruction||ev.error||'')}</div>`;
+          if(et==='RECOVERY') return `<div class="tls" style="color:var(--lang)">♻ ${esc(ev.instruction||'')}</div>`;
+          return `<div class="tls">${esc(et)}</div>`; }).join('')+'</div>';
+      }
+      const meta = p.status==='done'?'✓ '+secs(p.seconds) : p.status==='error'?'✗ failed' : p.status==='running'?('running'+(p.seconds?' · '+secs(p.seconds):'')+(p.events&&p.events.length?' · '+p.events.length+' events':'')):'pending';
+      return `<div class="tln ${p.status}"><span class="tldot"></span><div class="tlnm">${esc(p.name)}</div><div class="tlm">${meta}</div>${subs}</div>`;
+    }).join('')+'</div>';
+  },
+  async rawSteps(sl){
+    document.getElementById('rawback').classList.add('show');
+    document.getElementById('rawpre').textContent='loading…';
+    try{ const d=await (await fetch(API+'/jobs/'+encodeURIComponent(sl)+'/steps?'+Date.now())).json();
+      const evs=(d.phases||[]).flatMap(p=>(p.events||[]).map(e=>({...e,phase:p.name})));
+      const lines=(d.phases||[]).flatMap(p=>[`▸ ${p.name}  [${p.status}${p.seconds!=null?' '+p.seconds+'s':''}]`,
+        ...(p.events||[]).map(e=>`   ${(e.ts||'').slice(11,19)}  ${e.event_type}${e.model?' model='+e.model:''}${e.tokens?' tokens='+e.tokens:''}${e.ms?' time_ms='+e.ms:''}${e.error?' · '+e.error:''}`)]);
+      document.getElementById('rawpre').textContent = lines.join('\n') || '(no events yet)';
+    }catch(e){ document.getElementById('rawpre').textContent='unavailable'; }
+  },
+  closeRaw(){ document.getElementById('rawback').classList.remove('show'); },
+  async retry(id){ try{ await fetch(API+'/retry/'+id,{method:'POST'}); LIB._loadJobs(); }catch(e){ alert('Retry failed: '+e.message); } },
+  // stop a queued/baking/generating job — kills the subprocess (or de-queues it); lesson TEXT is kept → still viewable + rebakeable
+  async cancel(id){ if(!confirm('Cancel this job? The lesson text is kept — you can rebake the audio later.')) return;
+    try{ const r=await (await fetch(API+'/cancel/'+encodeURIComponent(id),{method:'POST'})).json();
+      if(r && r.ok===false) alert('Nothing to cancel: '+(r.error||'no active job')); LIB._loadJobs(); }
+    catch(e){ alert('Cancel failed: '+e.message); } },
+  // hide a dead/unwanted row from the activity (client-side; does NOT delete the lesson). A newer regen reappears.
+  dismiss(sl, started){ LIB._dismissed=LIB._dismissed||{}; LIB._dismissed[sl]=started||new Date().toISOString();
+    try{ localStorage.setItem('chiron.dismissed', JSON.stringify(LIB._dismissed)); }catch(e){} LIB._loadJobs(); },
+  async acceptJob(sl){ try{ await fetch(API+'/accept/'+encodeURIComponent(sl),{method:'POST'}); if(LIB._rec)delete LIB._rec[sl]; LIB._loadJobs(); LIB.reload(); }catch(e){ alert('Accept failed: '+e.message); } },
+  // re-bake ONLY the audio (reuses the clips already done) — never redoes the lesson text
+  async rebake(sl){ try{ await fetch(API+'/bake/'+encodeURIComponent(sl),{method:'POST'}); if(LIB._rec)delete LIB._rec[sl]; (LIB._open=LIB._open||new Set()).add(sl); LIB._loadJobs(); }catch(e){ alert('Rebake failed: '+e.message); } },
+  async _jobsHeartbeat(){
+    try{ const d=await (await fetch(API+'/activity?'+Date.now())).json();
+      const dot=document.getElementById('jobsdot'); if(dot) dot.style.display=(d.active&&d.active.length)?'inline-block':'none';
+    }catch(e){}
+  },
 };
 window.LIB = LIB;
+LIB._jobsHeartbeat(); setInterval(()=>LIB._jobsHeartbeat(), 15000);   // light the ⚡Jobs dot when something's baking
 boot().catch(e=>{ document.getElementById('rows').innerHTML = `<div class="empty">Failed to load library: ${e.message}<br>Run the index builder + serve over http.</div>`; });

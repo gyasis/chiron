@@ -31,6 +31,8 @@ from pathlib import Path
 sys.stdout.reconfigure(line_buffering=True)
 
 from promptchain import PromptChain
+import sys as _sys; from pathlib import Path as _P; _sys.path.insert(0, str(_P(__file__).resolve().parent.parent))
+import obs   # shared chains/obs.py — per-lesson steps.jsonl observability (best-effort; never breaks generation)
 from promptchain.utils.external_loop import over_worklist  # used from Phase 1 on
 
 # ── config ──────────────────────────────────────────────────────────────────────
@@ -101,6 +103,8 @@ def extract_json(s: str):
 async def llm(model_dict: dict, prompt: str, user_input: str = "go") -> str:
     chain = PromptChain(models=[model_dict],
                         instructions=[prompt + "\n\n{input}" if "{input}" not in prompt else prompt])
+    try: chain.register_callback(obs.make_callback())   # stream MODEL_CALL/token events → steps.jsonl
+    except Exception: pass
     return await chain.process_prompt_async(user_input)
 
 
@@ -118,12 +122,14 @@ async def json_with_repair(prompt: str, name: str, model_dict: dict, validate_fn
             obj = extract_json(last_raw)
         except Exception as e:
             print(f"[repair] {name} {attempt}/{max_repair}: parse failed ({e}) — re-prompting", flush=True)
+            obs.error(f"{name} — JSON parse failed (repair {attempt}/{max_repair})", e)
             cur = (prompt + f"\n\n## PREVIOUS OUTPUT WAS INVALID JSON\nError: {e}\nPrevious:\n{last_raw[:4000]}\n\n"
                    "Return ONLY corrected valid JSON. Escape every \" and newline inside string values.")
             continue
         issues = validate_fn(obj) if validate_fn else None
         if issues:
             print(f"[repair] {name} {attempt}/{max_repair}: invalid ({issues[:2]}) — re-prompting", flush=True)
+            obs.error(f"{name} — validation failed (repair {attempt}/{max_repair})", str(issues[:2]))
             cur = prompt + f"\n\n## PREVIOUS OUTPUT HAD PROBLEMS\n{issues}\nReturn ONLY corrected valid JSON fixing them."
             continue
         return obj
@@ -362,11 +368,16 @@ def passage_sections(passage: dict) -> list:
 async def phase4_audio_scripts(passage: dict, cur: dict) -> dict:
     bd = json.loads((OUT / "breakdown.json").read_text())
     secs = passage_sections(passage)
+    # overview + closing are voiced from the DISPLAYED text (single-sourced via
+    # audio-intro.json, injected below) — so they bypass the 04s "teach-don't-read"
+    # LLM. The deeper sections (breakdown/medicine/question) keep 04s teaching.
+    llm_secs = [s for s in secs if s["id"] not in ("overview", "closing")]
     p = fill(load_prompt("04s-lecture-script.md"), lessonTitle=bd.get("title", passage["qid"]),
-             domain="language-it", sections=secs, granularity="all")
+             domain="language-it", sections=llm_secs, granularity="all")
     p += ("\n\n## LEARNER + PODCAST (BLOCKING): native English speaker; audio is a PODCAST (not looking at the page). "
           "English is the medium; every Italian term is its OWN lang:'it' segment and the NEXT lang:'en' segment glosses it. "
-          "Persona Lucrezia: greet 'Gyasi' by name in the summary, sign off warmly. Return ONLY {\"artifacts\":[...]}.")
+          "Persona Lucrezia: do NOT open with a greeting (the shared personalized greeting is prepended automatically to "
+          "summary and shortened) — start straight into the content; sign off warmly. Return ONLY {\"artifacts\":[...]}.")
     print(f"[phase 4] AUDIO transcripts — 04s bilingual ({len(secs)} sections) + Veloce/Lenta reads…", flush=True)
     res = await json_with_repair(p, "lecture-scripts", ollama(MODEL_REASON),
                                  validate_fn=lambda o: None if (o.get("artifacts") or isinstance(o, list)) else ["no artifacts"])
@@ -377,6 +388,34 @@ async def phase4_audio_scripts(passage: dict, cur: dict) -> dict:
         if k == "summary": out["summary"] = segs
         elif k == "shortened": out["shortened"] = segs
         elif k == "section" and a.get("sectionId"): out["sections"][a["sectionId"]] = segs
+
+    # OVERVIEW + CLOSING AUDIO == the DISPLAYED cold-open/closing text. The assembler
+    # single-sources those exact strings to audio-intro.json; voice them verbatim
+    # (IT line + EN gloss → bilingual, podcast self-contained) so narration matches
+    # the screen and can never drift. General: any lesson whose assembler emits
+    # audio-intro.json gets its listed sections matched to the display.
+    def _intro_segs(blk, anchor=None):
+        s = []
+        if blk.get("it"): s.append({"lang": "it", "text": blk["it"], "gapAfter": "sentence", **({"refAnchor": anchor} if anchor else {})})
+        if blk.get("en"): s.append({"lang": "en", "text": blk["en"], "gapAfter": "sentence", **({"refAnchor": anchor} if anchor else {})})
+        return s
+
+    intro_path = OUT / "audio-intro.json"
+    if intro_path.exists():
+        intro = json.loads(intro_path.read_text())
+        # overview + closing == the DISPLAYED cold-open/closing text (verbatim).
+        for sec_id in ("overview", "closing"):
+            segs = _intro_segs(intro.get(sec_id, {}), anchor=sec_id)
+            if segs: out["sections"][sec_id] = segs
+        # summary + full-lecture OPEN WITH THE SAME personalized greeting as the intro
+        # (single-sourced) so all three clips are consistent; the LLM body follows.
+        greet = _intro_segs(intro.get("greeting", {}))
+        if greet:
+            if out.get("summary"): out["summary"] = greet + out["summary"]
+            if out.get("shortened"): out["shortened"] = greet + out["shortened"]
+        print(f"[phase 4] intro single-sourced from audio-intro.json → overview/closing verbatim; greeting prepended to summary+shortened", flush=True)
+    else:
+        print("[phase 4] WARNING: audio-intro.json missing — overview/closing/greeting not single-sourced", flush=True)
 
     # PASSAGE READINGS (curriculum.passageReadings) — Veloce + Lenta (Lucrezia, omni; slow = speed 0.8)
     pr = cur.get("passageReadings", {})
@@ -416,36 +455,52 @@ async def main():
     if STAGE == "ingest":
         print("=== ingest + route done.")
         return
+    obs.set_out(OUT)                               # OUT is now bound to the real slug → start steps.jsonl
+    obs.phase("Analyzing the question", "start"); obs.phase("Analyzing the question", "end")  # ingest (fast, already done)
+    obs.phase("Planning the passage", "start")
     chunks = phase1_chunk(passage)               # Phase 1 — PLAN
+    obs.phase("Planning the passage", "end")
     if STAGE in ("author", "scenario", "assemble", "audio", "all"):
+        obs.phase("Writing the breakdown / scaffold", "start")
         bd = await phase2_author(passage, cur)   # Phase 2 — 04t breakdown
         if bd is None:
             print("=== stopped: breakdown failed (see breakdown.NEEDS_REVIEW).")
-            return
+            obs.error("Writing the breakdown / scaffold", "breakdown failed — needs review"); return
+        obs.phase("Writing the breakdown / scaffold", "end")
     if STAGE in ("scenario", "assemble", "audio", "all") and os.environ.get("CH_NO_SCENARIO") != "1":
+        obs.phase("Building the clinical scenario", "start")
         await phase_scenario(passage)            # Phase 2.6 — grounded clinical-scenario chat (Harrison+PACES, scoped)
+        obs.phase("Building the clinical scenario", "end")
     if STAGE in ("assemble", "audio", "all"):
+        obs.phase("Assembling the page", "start")
         print("[phase 3] ASSEMBLE → renderWidget + skeleton shell → lesson.html", flush=True)
         r = subprocess.run(["node", str(SKILL / "scripts" / "assemble-passage.mjs"), str(OUT)],
-                           capture_output=True, text=True)
+                           capture_output=True, text=True, env={**os.environ, "CH_LEARNER": LEARNER})
         print("  " + (r.stdout or r.stderr).strip()[-400:], flush=True)
         if r.returncode != 0:
-            print("=== stopped: assemble failed."); return
+            print("=== stopped: assemble failed."); obs.error("Assembling the page", "assemble failed"); return
+        obs.phase("Assembling the page", "end")
     if STAGE in ("audio", "all"):
+        obs.phase("Writing narration scripts", "start")
         await phase4_audio_scripts(passage, cur)  # Phase 4 — 04s bilingual + Veloce/Lenta → audio-scripts.json
+        obs.phase("Writing narration scripts", "end")
         # Phase 5 — BAKE (audio is first-class; runs on CH_STAGE=all or CH_BAKE=1). Without it there's no
         # manifest → no 🎧 player. Heavy Mac TTS; needs Atelier reachable.
         if STAGE == "all" or os.environ.get("CH_BAKE") == "1":
+            obs.phase("Baking audio (Lucrezia)", "start")
             print("[phase 5] BAKE → Atelier OmniVoice (Mac), Lucrezia, language-it …", flush=True)
             r = subprocess.run(["node", str(SKILL / "scripts" / "bake-lesson-audio.mjs"), str(OUT),
                                 "--domain", "language-it", "--persona", "lucrezia"],
-                               capture_output=True, text=True, timeout=2400)
+                               capture_output=True, text=True, timeout=2400,
+                               env={**os.environ, "CH_LEARNER": LEARNER})
             print("  " + ((r.stdout or "") + (r.stderr or "")).strip()[-300:], flush=True)
+            obs.phase("Baking audio (Lucrezia)", "end")
         else:
             print(f"[phase 5] BAKE skipped (CH_STAGE={STAGE}). Use CH_STAGE=all or CH_BAKE=1 to bake "
                   "(audio is first-class — bake before shipping).", flush=True)
     # Phase 6 — PUBLISH to the chiron library (so it shows up in the app). Always on CH_STAGE=all.
     if STAGE == "all" or os.environ.get("CH_PUBLISH") == "1":
+        obs.phase("Publishing to the library", "start")
         lib = GEN / "chiron-library"
         bundle = lib / "lessons" / f"{SLUG}.chiron"
         try:
@@ -455,6 +510,7 @@ async def main():
             print(f"[phase 6] PUBLISHED → chiron-library/lessons/{SLUG}.chiron (in the app)", flush=True)
         except Exception as e:
             print(f"[phase 6] publish failed: {e}", flush=True)
+        obs.phase("Publishing to the library", "end")
     print(f"=== done → {OUT}/lesson.html")
 
 

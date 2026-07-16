@@ -160,6 +160,15 @@ was scoped in `chiron_offsite_lesson_gen_promptchain_2026-06-28.md` → delivera
 **Remaining tails:** Italian chains' `CH_GROUNDING` (MCQ/PACES injection point); an "Available to download" section header; on-device install-from-a-shared-`.chiron` file (drag/open a `.chiron` → import into the SW cache).
 **Status:** the chiron web+mobile app is a complete generate → review → publish → download loop with image-grounded generation. Core build (Phases 0–4) DONE.
 
+### 2026-07-08 — FULL NATIVE MOBILE APP shipped (Tauri → F-Droid → phone)
+The mobile app is a **connected client of the live library on this computer** (user's spec: "the mobile app connects to the server and downloads/syncs files from that library"). **Published: `com.gyasi.chiron` v0.2.0**, 18 MB signed release APK, live in the F-Droid repo on the Pi (`appstore list` confirms; served HTTP 200). Commit `2fa3155`.
+- **New mobile frontend** `skill/chiron-tauri/mobile/` (index.html + app.js) — 4 **swipeable** screens (Library · Generate · Lesson[Read/Autoplay+resume] · Offline), phone-native (not the desktop shrunk). Wired to the live library: `library.index.json` → real sectioned lessons, stream/open, generate wizard (📷 camera capture → OCR), Offline **sync card** (real counts) + a **Library-address setting** (DHCP-proof).
+- **Reused the existing Rust `lesson://` engine** (`chiron-tauri/src-tauri/src/lib.rs`) — offline `.chiron` via `import_from_server` (download straight from the live library) / `list_lessons` / `import_lesson`, audio Range support. Native branch on `window.__TAURI__`; web branch streams.
+- **Server LAN-reachable**: added `CHIRON_SERVER_HOST` (set `0.0.0.0` in the **systemd `--user` unit** `chiron-server` — persistent + auto-restart, survives the harness/reboots). Box LAN IP currently `192.168.0.112` (DHCP — flagged; app has a settings field; reserve IP or mDNS for stability).
+- **Build/sign**: reused the appstore keystore (`CN=Gyasi Sutton, O=TwiceData`) + cleartext for LAN, via the `appstore publish` pathway (Tauri android build → fdroid index → rsync Pi). APK verified: INTERNET + `usesCleartextTraffic=true` + v2-signed.
+- **To install:** phone → F-Droid → refresh → install/update **Chiron**. Opens connected to the live library (box on + same wifi).
+**Remaining:** on-device smoke test (install + connect + download-offline + play) with the actual phone; MOBILE-GUIDE.md points at the OLD player — update it to the new library app; consider a stable box address (reserved IP / `chiron.local`).
+
 ### 2026-07-07 (Phase 4 tails) — all three remaining tails closed (commit `3356281`)
 1. **Italian chains consume `CH_GROUNDING`** — ward + passage weave it into their grounding block; pure-italian builds the lesson around the OCR'd source. **All 7 chains are now grounding-aware** (verified `USER_CTX` population).
 2. **Download/Generate section headers** — library rows grouped into three bands with counts: **🟡 Needs Review** · **📚 Available** (N downloadable) · **○ To generate**. The available-vs-generate split is now explicit (verified: "Available 39 · 33 downloadable", "To generate 118").

@@ -41,6 +41,8 @@ from pathlib import Path
 sys.stdout.reconfigure(line_buffering=True)
 
 from promptchain import PromptChain
+import sys as _sys; from pathlib import Path as _P; _sys.path.insert(0, str(_P(__file__).resolve().parent.parent))
+import obs   # shared chains/obs.py — per-lesson steps.jsonl observability (best-effort; never breaks generation)
 from promptchain.utils.external_loop import over_worklist
 
 # ── config ────────────────────────────────────────────────────────────────────
@@ -110,6 +112,8 @@ def extract_json(s: str):
 
 async def llm(model_dict: dict, prompt: str, user_input: str = "go") -> str:
     chain = PromptChain(models=[model_dict], instructions=[prompt + "\n\n{input}" if "{input}" not in prompt else prompt])
+    try: chain.register_callback(obs.make_callback())
+    except Exception: pass
     return await chain.process_prompt_async(user_input)
 
 
@@ -436,10 +440,13 @@ def register_library(clips: int):
 # ── orchestrate ────────────────────────────────────────────────────────────────
 async def main():
     assert OLLAMA_KEY, "OLLAMA_API_KEY not set (source ~/.config/environment.d/ollama-cloud.conf)"
+    obs.set_out(OUT)
     print(f"=== chiron ATLAS | subject='{SUBJECT}' max_diseases={MAX_DISEASES} stage={STAGE} -> {OUT}")
+    obs.phase("Reading the atlas", "start")
     diseases = atlas_diseases()
     source = (f"# {SUBJECT} — atlas grounding\n\nCurated high-yield diseases: "
               f"{', '.join(d['name'] for d in diseases)}\n\n" + harrison(SUBJECT, n=8))
+    obs.phase("Reading the atlas", "end")
     syl_path = OUT / "syllabus.json"
     if syl_path.exists() and os.environ.get("CH_FORCE") != "1":
         syl = json.loads(syl_path.read_text())
@@ -447,25 +454,37 @@ async def main():
             syl = syl.get("chapters") or syl.get("syllabus") or [syl]
         print(f"[phase 1] RESUME — reusing syllabus ({len(syl)} chapters). CH_FORCE=1 to rebuild.", flush=True)
     else:
+        obs.phase("Planning the chapters", "start")
         syl = phase1(diseases, source)
+        obs.phase("Planning the chapters", "end")
     issues_v = validate(syl)
     if issues_v and STAGE != "plan":
         print("[warn] validation issues (continuing):", issues_v)
     if STAGE in ("chapters", "all"):
+        obs.phase("Authoring chapters", "start")
         await phase3(syl)
+        obs.phase("Authoring chapters", "end")
     if STAGE in ("assemble", "all"):
+        obs.phase("Assembling the page", "start")
         copy_shell_assets()
         try:
             subprocess.run(["python3", str(SKILL / "scripts" / "gen-glossary.py"), str(OUT)], timeout=240, check=False)
         except Exception as e:
             print(f"[phase 3.95] glossary skipped ({e})", flush=True)
         assemble()
+        obs.phase("Assembling the page", "end")
     clips = 0
     if STAGE in ("audio", "all"):
+        obs.phase("Writing narration scripts", "start")
         await phase_lecture_scripts()
+        obs.phase("Writing narration scripts", "end")
+        obs.phase("Baking audio", "start")
         clips = bake_audio()
+        obs.phase("Baking audio", "end")
     if STAGE in ("assemble", "audio", "all"):
+        obs.phase("Publishing to the library", "start")
         register_library(clips)
+        obs.phase("Publishing to the library", "end")
     print("=== done.")
 
 

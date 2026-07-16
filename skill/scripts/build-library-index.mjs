@@ -26,6 +26,13 @@ mkdirSync(OUT, { recursive: true });
 
 // ---------- 1. config from yaml ----------
 const config = yaml.load(readFileSync(join(LIB_DIR, 'library.yaml'), 'utf8'));
+// runtime source-map (the "back to source" link targets) — lives OUTSIDE the repo so no external
+// app name / LAN URL is ever committed to chiron. ~/.chiron/library.sources.json wins, else env.
+try {
+  const srcFile = join(homedir(), '.chiron', 'library.sources.json');
+  if (existsSync(srcFile)) config.sources = JSON.parse(readFileSync(srcFile, 'utf8'));
+  else if (process.env.CHIRON_LIBRARY_SOURCES) config.sources = JSON.parse(process.env.CHIRON_LIBRARY_SOURCES);
+} catch (e) { process.stderr.write('sources map skipped: ' + e.message + '\n'); }
 writeFileSync(join(OUT, 'library.config.json'), JSON.stringify(config, null, 2));
 
 // ---------- helpers: tag inference ----------
@@ -139,12 +146,23 @@ for (const d of dirs) {
   const slug = rel.replace(/[\/]/g, '-');
   const chironPath = join(OUT, 'lessons', slug + '.chiron');
   const hasBundle = existsSync(chironPath);
+  // provenance: prefer chiron.json (forward path — server stamps it). Else backfill GENERICALLY from the
+  // runtime source-map keys: a slug `chiron-<key>-<rest>` belongs to source <key>; ref = <rest> (trailing
+  // numeric group restored to '_' since the slugifier turned it to '-'). No source name is hard-coded here.
+  let source = cj.source || null, sourceRef = cj.source_ref || null;
+  if (!source) {
+    for (const key of Object.keys(config.sources || {})) {
+      const pfx = `chiron-${key}-`;
+      if (slug.startsWith(pfx)) { source = key; sourceRef = slug.slice(pfx.length).replace(/-(\d+)$/, '_$1'); break; }
+    }
+  }
   lessons.push({
     id: rel, title, path: join(rel, cj.entry || 'lesson.html'), domain: tags.dom,
     system: tags.sys || null, subject: tags.subj || null, topic: tags.topic || null,
     level: tags.level || null, scope: tags.scope || (tags.subj && /diseases|disorders/i.test(title) ? 'subject' : 'disease'),
     trend: tags.trend || null, status: cj.status || 'published', clips, ready: true, mtime,
     bundle: hasBundle, sizeMB: hasBundle ? +(statSync(chironPath).size / 1048576).toFixed(1) : null,
+    source, source_ref: sourceRef,
   });
 }
 

@@ -96,6 +96,15 @@ export interface AudioBakeOptions {
    * Pass false to force-disable regardless of env.
    */
   qc?: boolean;
+  /**
+   * Optional map of sectionId → the DISPLAYED on-page text that this section's
+   * AUDIO must faithfully voice (single-sourced upstream, e.g. audio-intro.json).
+   * When present for a `section` artifact, the bake runs a deterministic
+   * audio-vs-display divergence check (no model) and writes a `type:"divergence"`
+   * defect to qc-report.json when the narration does not correspond to the screen.
+   * Sections NOT in this map are allowed to be supplementary (04s teach-don't-read).
+   */
+  displayedText?: Record<string, string>;
 }
 
 export type ClipStatus = 'done' | 'reused' | 'failed' | 'pending';
@@ -151,6 +160,26 @@ function inferDefectType(defect: string): string {
 
 interface QcDefectEntry { time: string; type: string; detail: string; }
 interface QcReportEntry { status: string; defects: QcDefectEntry[]; }
+
+/** Min fraction of the displayed section's content-words that must appear in the
+ *  spoken audio script for the two to be considered "corresponding". Below this
+ *  the audio has been rewritten away from the screen (the overview divergence). */
+const DIVERGENCE_MIN_CONTAINMENT = 0.6;
+
+/** Content-word set: lowercased alphanumeric tokens of length > 2 (drops articles/prepositions/punct). */
+function contentWords(s: string): Set<string> {
+  return new Set((s.toLowerCase().match(/[\p{L}\p{N}]+/gu) ?? []).filter((w) => w.length > 2));
+}
+
+/** Fraction of the DISPLAYED content-words that also appear in the AUDIO script (1 ⇒ audio covers the screen). */
+function displayContainment(audioText: string, displayedText: string): number {
+  const audio = contentWords(audioText);
+  const shown = contentWords(displayedText);
+  if (shown.size === 0) return 1;
+  let hit = 0;
+  for (const w of shown) if (audio.has(w)) hit++;
+  return hit / shown.size;
+}
 
 /**
  * Write (or merge) audio/qc-report.json so it always reflects the CURRENT
@@ -450,6 +479,30 @@ export async function bakeAudio(opts: AudioBakeOptions): Promise<AudioClipResult
       const label = `${art.kind}${sid ? `/${sid}` : ''}`;
       const hash = hashSegments(art.segments);
       const relPath = relAudioPath(art.kind, sid);
+
+      // Deterministic audio-vs-DISPLAY divergence check (no model). Runs for any
+      // `section` whose displayed text was supplied — regardless of bake/reuse
+      // status — so a narration that was rewritten away from the screen is flagged.
+      if (art.kind === 'section' && opts.displayedText && opts.displayedText[sid]) {
+        const audioText = art.segments.map((s) => s.text).join(' ');
+        const containment = displayContainment(audioText, opts.displayedText[sid]!);
+        const dlbl = panelLabel(art.kind, sid);
+        qcCheckedLabels.add(dlbl);
+        if (containment < DIVERGENCE_MIN_CONTAINMENT) {
+          const prior = qcReportEntries.get(dlbl) ?? [];
+          prior.push({
+            time: '',
+            type: 'divergence',
+            detail:
+              `audio narration diverges from the displayed '${sid}' text ` +
+              `(only ${Math.round(containment * 100)}% of on-screen words are spoken; ` +
+              `threshold ${Math.round(DIVERGENCE_MIN_CONTAINMENT * 100)}%)`,
+          });
+          qcReportEntries.set(dlbl, prior);
+          progress(STAGE, `DIVERGENCE ${label}: audio ≠ display (containment ${Math.round(containment * 100)}%)`);
+        }
+      }
+
       const existing = findExisting.get(opts.courseId, art.kind, sid) as
         | { scriptHash: string; audioPath: string | null; reuseCount: number }
         | undefined;
@@ -592,11 +645,14 @@ export async function bakeAudio(opts: AudioBakeOptions): Promise<AudioClipResult
           const lbl = panelLabel(art.kind, sid);
           qcCheckedLabels.add(lbl);
           if (finalQcDefects.length > 0) {
-            qcReportEntries.set(lbl, finalQcDefects.map((d) => ({
+            // Append — a divergence defect for this label may already be present.
+            const prior = qcReportEntries.get(lbl) ?? [];
+            prior.push(...finalQcDefects.map((d) => ({
               time: parseDefectTime(d),
               type: inferDefectType(d),
               detail: d,
             })));
+            qcReportEntries.set(lbl, prior);
             progress(STAGE, `QC ${label}: ${finalQcDefects.length} defect(s) surviving — logged to qc-report.json`);
           } else {
             progress(STAGE, `QC ${label}: clean`);
@@ -628,7 +684,9 @@ export async function bakeAudio(opts: AudioBakeOptions): Promise<AudioClipResult
     }
 
     writeManifest(db, lessonDir, opts.courseId);
-    if (qcEnabled && qcCheckedLabels.size > 0) {
+    // Write the report whenever ANY label was checked — Gemini QC OR the
+    // deterministic divergence check (which runs even when Gemini QC is off).
+    if (qcCheckedLabels.size > 0) {
       mergeQcReport(lessonDir, qcReportEntries, qcCheckedLabels);
     }
     const qcSummary = qcEnabled

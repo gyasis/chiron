@@ -68,15 +68,24 @@ export async function qcAudioClip(mp3Path: string, expectedText: string): Promis
   });
 
   try {
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${key}`;
+    // Canonical header auth (`x-goog-api-key`) — the legacy `?key=` query is being
+    // phased out and unrestricted AIza keys now 400. Do NOT silently pass on a bad
+    // response: a dead key must be visible, not swallowed as "clean".
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
     const resp = await fetch(url, {
       method: 'POST',
-      headers: { 'content-type': 'application/json' },
+      headers: { 'content-type': 'application/json', 'x-goog-api-key': key },
       body,
       signal: AbortSignal.timeout(QC_TIMEOUT_MS),
     });
 
-    if (!resp.ok) return { clean: true, defects: [] };
+    if (!resp.ok) {
+      process.stderr.write(
+        `[audio-qc] WARNING: Gemini QC HTTP ${resp.status} — clip treated as clean (QC unavailable). ` +
+        `Verify the key with: cred verify gemini\n`,
+      );
+      return { clean: true, defects: [] };
+    }
 
     const json = (await resp.json()) as {
       candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }>;
