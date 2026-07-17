@@ -40,14 +40,16 @@
   ];
 
   var messages = [];   // { role: 'user'|'assistant', content }
-  var highlights = []; // { num, mark, sup, text }
+  var highlights = []; // { num, mark, sup, text, chipEl, captureId }
+  var selected = [];   // subset of `highlights` entries currently selected for batch dispatch
   var hlCounter = 0;
   var sectionId = null;
   var sectionText = '';
   var lastQuestion = null; // most recent user turn — paired with the next assistant reply for capture
 
   var tab, scrim, drawer, head, badge, title, modelSel, modeBtn, penBtn, newChatBtn, gearBtn, closeBtn,
-      scope, chips, msgs, inputRow, textarea, sendBtn, tabPen, resizeHandle,
+      scope, chips, msgs, dispatchBar, dispatchLabel, dispatchSpin, dispatchKeepBtn, dispatchCardsBtn,
+      dispatchClearBtn, dispatchMsg, inputRow, textarea, sendBtn, tabPen, resizeHandle,
       settingsPop, suggToggle, transportSseBtn, transportPollBtn;
   var mode = 'med';
   var scopeMode = 'section'; // 'section' | 'lesson' | 'free' — cycled by clicking .ct-scope
@@ -235,6 +237,30 @@
     chips = document.createElement('div'); chips.className = 'ct-chips';
     msgs = document.createElement('div'); msgs.className = 'ct-msgs';
 
+    /* ── dispatch bar — batch actions (Keep / Cards) for selected highlight
+       chips; hidden until ≥1 chip is selected (see toggleSelect/renderDispatchBar) ── */
+    dispatchBar = document.createElement('div'); dispatchBar.className = 'ct-dispatch';
+    dispatchLabel = document.createElement('span'); dispatchLabel.className = 'ct-dispatch-n';
+    dispatchSpin = document.createElement('span'); dispatchSpin.className = 'ct-spin ct-dispatch-spin';
+    dispatchKeepBtn = document.createElement('button');
+    dispatchKeepBtn.type = 'button'; dispatchKeepBtn.className = 'ct-dispatch-keep';
+    dispatchKeepBtn.textContent = '⭐ Keep';
+    dispatchCardsBtn = document.createElement('button');
+    dispatchCardsBtn.type = 'button'; dispatchCardsBtn.className = 'ct-dispatch-cards';
+    dispatchCardsBtn.textContent = '🎴 Cards';
+    dispatchClearBtn = document.createElement('button');
+    dispatchClearBtn.type = 'button'; dispatchClearBtn.className = 'ct-dispatch-clear';
+    dispatchClearBtn.title = 'Clear selection';
+    dispatchClearBtn.setAttribute('aria-label', 'Clear selection');
+    dispatchClearBtn.textContent = '✕';
+    dispatchMsg = document.createElement('span'); dispatchMsg.className = 'msg';
+    dispatchBar.appendChild(dispatchLabel);
+    dispatchBar.appendChild(dispatchSpin);
+    dispatchBar.appendChild(dispatchKeepBtn);
+    dispatchBar.appendChild(dispatchCardsBtn);
+    dispatchBar.appendChild(dispatchClearBtn);
+    dispatchBar.appendChild(dispatchMsg);
+
     inputRow = document.createElement('div'); inputRow.className = 'ct-input';
     textarea = document.createElement('textarea');
     textarea.rows = 1; textarea.placeholder = 'Ask the tutor…';
@@ -248,6 +274,7 @@
     drawer.appendChild(scope);
     drawer.appendChild(chips);
     drawer.appendChild(msgs);
+    drawer.appendChild(dispatchBar);
     drawer.appendChild(inputRow);
     document.body.appendChild(drawer);
 
@@ -309,6 +336,11 @@
       try { localStorage.setItem(LS_SCOPE, scopeMode); } catch (e) {}
       renderScopePill();
     });
+
+    /* ── dispatch bar — batch actions for selected highlight chips ──── */
+    dispatchKeepBtn.addEventListener('click', dispatchKeep);
+    dispatchCardsBtn.addEventListener('click', dispatchCards);
+    dispatchClearBtn.addEventListener('click', clearSelection);
 
     /* ── open / close ─────────────────────────────────────────────── */
     tab.addEventListener('click', function () {
@@ -571,6 +603,8 @@
     var chip = chips.querySelector('.ct-chip[data-hl-num="' + num + '"]');
     if (chip) chip.remove();
     highlights.splice(idx, 1);
+    var selIdx = selected.indexOf(h);
+    if (selIdx !== -1) { selected.splice(selIdx, 1); renderDispatchBar(); }
   }
 
   function flashHighlight(num) {
@@ -587,6 +621,7 @@
     chip.className = 'ct-chip';
     chip.dataset.hlNum = String(entry.num);
     var numEl = document.createElement('span'); numEl.className = 'ct-chip-num'; numEl.textContent = String(entry.num);
+    numEl.addEventListener('click', function (e) { e.stopPropagation(); flashHighlight(entry.num); });
     var textEl = document.createElement('span'); textEl.className = 'ct-chip-text'; textEl.textContent = entry.text;
     var starEl = document.createElement('button');
     starEl.type = 'button'; starEl.className = 'ct-chip-star'; starEl.textContent = '☆';
@@ -622,8 +657,149 @@
     xEl.type = 'button'; xEl.className = 'ct-chip-x'; xEl.textContent = '✕';
     xEl.addEventListener('click', function (e) { e.stopPropagation(); removeHighlight(entry.num); });
     chip.appendChild(numEl); chip.appendChild(textEl); chip.appendChild(starEl); chip.appendChild(xEl);
-    chip.addEventListener('click', function () { flashHighlight(entry.num); });
+    entry.chipEl = chip;
+    chip.addEventListener('click', function () { toggleSelect(entry, chip); });
     chips.appendChild(chip);
+  }
+
+  /* ── selectable chips + dispatch bar (batch Keep / Cards) ──────────── */
+  function toggleSelect(entry, chip) {
+    var idx = selected.indexOf(entry);
+    if (idx === -1) { selected.push(entry); chip.classList.add('selected'); }
+    else { selected.splice(idx, 1); chip.classList.remove('selected'); }
+    renderDispatchBar();
+  }
+
+  function renderDispatchBar() {
+    if (!dispatchBar) return;
+    if (!selected.length) { dispatchBar.classList.remove('open'); return; }
+    dispatchBar.classList.add('open');
+    dispatchLabel.textContent = selected.length + ' selected';
+    dispatchMsg.textContent = '';
+  }
+
+  function clearChipSelectionState() {
+    selected.forEach(function (entry) { if (entry.chipEl) entry.chipEl.classList.remove('selected'); });
+    selected = [];
+  }
+
+  function clearSelection() {
+    clearChipSelectionState();
+    renderDispatchBar();
+  }
+
+  function hideDispatchBar() {
+    if (!dispatchBar) return;
+    dispatchBar.classList.remove('open', 'working');
+    dispatchLabel.textContent = '';
+    dispatchMsg.textContent = '';
+  }
+
+  function setDispatchButtonsDisabled(v) {
+    dispatchKeepBtn.disabled = v; dispatchCardsBtn.disabled = v; dispatchClearBtn.disabled = v;
+  }
+
+  /* capture ONE highlight entry (idempotent — reuses entry.captureId if already saved) */
+  function captureEntry(entry, done) {
+    if (entry.captureId) { done(entry.captureId); return; }
+    var qa = lastQA();
+    var payload = {
+      kind: 'term',
+      text: entry.text,
+      question: qa.question,
+      source_answer: qa.answer,
+      surrounding_text: sectionText,
+      lesson_slug: deriveLessonSlug(),
+      section_id: sectionId,
+      concept: entry.text,
+      model: modelSel ? modelSel.value : null,
+      source: 'tutor'
+    };
+    postCapture(payload, function (data) {
+      entry.captureId = (data && data.id) || null;
+      done(entry.captureId);
+    }, function () {
+      done(null);
+    });
+  }
+
+  /* capture every currently-selected entry that doesn't already have a captureId,
+     then hand back the full list of ids (existing + newly captured) */
+  function captureAllSelected(cb) {
+    var toCapture = selected.filter(function (e) { return !e.captureId; });
+    if (!toCapture.length) {
+      cb(selected.map(function (e) { return e.captureId; }).filter(Boolean));
+      return;
+    }
+    var remaining = toCapture.length;
+    toCapture.forEach(function (entry) {
+      captureEntry(entry, function () {
+        remaining -= 1;
+        if (remaining === 0) cb(selected.map(function (e) { return e.captureId; }).filter(Boolean));
+      });
+    });
+  }
+
+  function dispatchKeep() {
+    if (!selected.length) return;
+    var toMark = selected.slice();
+    setDispatchButtonsDisabled(true);
+    dispatchLabel.textContent = '';
+    dispatchMsg.textContent = 'saving…';
+    captureAllSelected(function (ids) {
+      setDispatchButtonsDisabled(false);
+      if (!ids.length) {
+        dispatchMsg.textContent = '⚠ save failed — try again';
+        return;
+      }
+      toMark.forEach(function (entry) {
+        if (entry.captureId && entry.chipEl) entry.chipEl.classList.add('saved');
+      });
+      dispatchMsg.textContent = 'saved ' + ids.length;
+      clearChipSelectionState();
+      setTimeout(function () { if (!selected.length) hideDispatchBar(); }, 4000);
+    });
+  }
+
+  function dispatchCards() {
+    if (!selected.length) return;
+    var toMark = selected.slice();
+    setDispatchButtonsDisabled(true);
+    dispatchBar.classList.add('working');
+    dispatchLabel.textContent = '';
+    dispatchMsg.textContent = '🧬 decomposing…';
+    captureAllSelected(function (ids) {
+      if (!ids.length) {
+        dispatchBar.classList.remove('working');
+        setDispatchButtonsDisabled(false);
+        dispatchMsg.textContent = '⚠ capture failed — try again';
+        return;
+      }
+      toMark.forEach(function (entry) {
+        if (entry.captureId && entry.chipEl) entry.chipEl.classList.add('saved');
+      });
+      dispatchMsg.textContent = '🎴 making cards…';
+      fetch('/captures/cards', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ids: ids })
+      }).then(function (r) {
+        if (!r.ok) throw new Error('bad status ' + r.status);
+        return r.json();
+      }).then(function (data) {
+        dispatchBar.classList.remove('working');
+        setDispatchButtonsDisabled(false);
+        var cardCount = (data && data.cards && data.cards.length) || 0;
+        var written = (data && typeof data.written_to_sr === 'number') ? data.written_to_sr : cardCount;
+        dispatchMsg.textContent = '✓ ' + written + ' cards → due now';
+        clearChipSelectionState();
+        setTimeout(function () { if (!selected.length) hideDispatchBar(); }, 6000);
+      }).catch(function (e) {
+        dispatchBar.classList.remove('working');
+        setDispatchButtonsDisabled(false);
+        dispatchMsg.textContent = '⚠ ' + (e && e.message ? e.message : 'request failed');
+      });
+    });
   }
 
   /* ── compact, safe markdown → HTML (assistant bubbles only) ─────── */

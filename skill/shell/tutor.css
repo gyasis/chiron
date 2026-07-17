@@ -373,6 +373,57 @@ html.chiron-tutor-pushed body {
 }
 .ct-sugg-pill:hover { background: var(--color-accent-light, rgba(217,79,48,.10)); }
 
+/* Selectable / saved highlight-chip states (batch dispatch) */
+.ct-chip.selected {
+  border-color: var(--color-accent, #D94F30);
+  background: var(--color-accent-light, #FDEEE9);
+  box-shadow: 0 0 0 2px var(--color-accent-light, #FDEEE9);
+}
+.ct-chip.saved {
+  background: #fde68a;
+  border-color: #f59e0b;
+  color: #7c5a0a;
+}
+
+/* Dispatch bar — batch actions (Keep / Cards) for selected highlight chips */
+.ct-dispatch {
+  display: none;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 8px;
+  border-top: 1px solid var(--color-border, #E5DFD6);
+  background: var(--color-bg, #FAF7F2);
+  font-size: 11.5px;
+}
+.ct-dispatch.open { display: flex; }
+.ct-dispatch-n {
+  font-weight: 700;
+  color: var(--color-accent, #D94F30);
+}
+.ct-dispatch button {
+  border: 1px solid var(--color-border, #E5DFD6);
+  background: var(--color-surface, #fff);
+  color: var(--color-text, #2C2A28);
+  border-radius: 999px;
+  padding: 5px 10px;
+  font: 700 11px var(--font-body, 'DM Sans', -apple-system, sans-serif);
+  cursor: pointer;
+}
+.ct-dispatch button:disabled { opacity: .55; cursor: default; }
+.ct-dispatch-cards {
+  background: var(--color-accent, #D94F30);
+  color: #fff;
+  border-color: var(--color-accent, #D94F30);
+}
+.ct-dispatch-spin { display: none; }
+.ct-dispatch.working .ct-dispatch-spin { display: inline-block; }
+.ct-dispatch .msg {
+  font-style: italic;
+  color: var(--color-text-muted, #9E9790);
+  flex-basis: 100%;
+}
+
 .ct-input {
   flex: none;
   display: flex; align-items: flex-end; gap: 8px;
