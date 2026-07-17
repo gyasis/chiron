@@ -18,7 +18,7 @@ verdict, each search with its actual query, drafting, reconciling). TWO transpor
 """
 import asyncio, json, queue, threading, time
 from http.server import ThreadingHTTPServer, BaseHTTPRequestHandler
-from tutor_chain import answer_turn, suggestions, decompose, cards, MODELS, DEFAULT_MODEL
+from tutor_chain import answer_turn, suggestions, decompose, cards, mcqs, train_path, MODELS, DEFAULT_MODEL
 
 PORT = 8912
 
@@ -131,6 +131,21 @@ class H(BaseHTTPRequestHandler):
                                                   b.get("concept", ""), b.get("lang", "en"))})
             except Exception as e:
                 return self._json({"cards": [], "error": str(e)}, 502)
+        if self.path.startswith("/mcqs"):
+            try:
+                b = self._body()
+                return self._json({"mcqs": mcqs(b.get("topics") or [], b.get("discriminators") or [],
+                                                b.get("concept",""), b.get("lang","en"))})
+            except Exception as e:
+                return self._json({"mcqs": [], "error": str(e)}, 502)
+        if self.path.startswith("/train"):
+            try:
+                b = self._body()
+                out = train_path(b.get("topics") or [], b.get("discriminators") or [],
+                                 b.get("concept",""), b.get("lang","en"))
+                return self._json(out or {"steps": [], "error": "train produced nothing"})
+            except Exception as e:
+                return self._json({"steps": [], "error": str(e)}, 502)
         if not self.path.startswith("/tutor-chat"):
             return self._json({"error": "not found"}, 404)
         rid = None

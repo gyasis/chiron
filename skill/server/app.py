@@ -1275,45 +1275,55 @@ def _tutor_post(path: str, body: dict, timeout: int = 180) -> dict:
     return json.loads(urllib.request.urlopen(req, timeout=timeout).read())
 
 
-def _spine_to_sr(note: str, question: str, concept: str, slug: str, section_id: str, ids: list):
-    """capture(s) → 🧬 spine → 🎴 cards → the lesson's REAL SR rotation → drain the inbox.
-    Shared by the single- and batch-dispatch paths so both behave identically."""
+def _spine_dispatch(note, question, concept, slug, section_id, ids, kind="cards"):
+    """capture(s) → 🧬 spine → a generator (cards|mcqs|train) → (cards land in the lesson SR rotation) →
+    drain the inbox. Shared by single- and batch-dispatch; kind picks the destination."""
     spine = _tutor_post("/decompose", {"note": note, "question": question or "", "concept": concept or ""})
     if not spine.get("topics"):
-        raise HTTPException(502, f"decompose produced nothing: {spine.get('error', '')}")
-    made = _tutor_post("/cards", {"topics": spine["topics"],
-                                  "discriminators": spine.get("discriminators") or [],
-                                  "concept": concept or ""})
-    made_cards = made.get("cards") or []
-    if not made_cards:
-        raise HTTPException(502, "card generation produced nothing")
-    written, db = 0, (GEN / (slug or "_") / ".chiron-state.db")
-    if slug and db.exists():
-        import sqlite3, time as _t
-        con = sqlite3.connect(str(db), timeout=5)
-        try:
-            now = int(_t.time() * 1000)
-            for c in made_cards:
-                con.execute(
-                    "insert into sr_cards(course_id,chapter_id,concept_id,card_type,front,back,tags,"
-                    "ease_factor,interval_days,repetitions,next_due_at,suspended) "
-                    "values (?,?,?,?,?,?,?,?,?,?,?,0)",
-                    (slug, section_id, c.get("concept_id"), c.get("card_type"), c["front"], c["back"],
-                     "tutor-capture", 2.5, 1, 0, now))
-                written += 1
-            con.commit()
-        finally:
-            con.close()
+        raise HTTPException(502, f"decompose produced nothing: {spine.get('error','')}")
+    payload = {"topics": spine["topics"], "discriminators": spine.get("discriminators") or [], "concept": concept or ""}
+    result, written = {}, 0
+    if kind == "cards":
+        made = _tutor_post("/cards", payload); made_cards = made.get("cards") or []
+        if not made_cards:
+            raise HTTPException(502, "card generation produced nothing")
+        db = GEN / (slug or "_") / ".chiron-state.db"
+        if slug and db.exists():
+            import sqlite3, time as _t
+            con = sqlite3.connect(str(db), timeout=5)
+            try:
+                now = int(_t.time()*1000)
+                for c in made_cards:
+                    con.execute("insert into sr_cards(course_id,chapter_id,concept_id,card_type,front,back,tags,"
+                                "ease_factor,interval_days,repetitions,next_due_at,suspended) values (?,?,?,?,?,?,?,?,?,?,?,0)",
+                                (slug, section_id, c.get("concept_id"), c.get("card_type"), c["front"], c["back"],
+                                 "tutor-capture", 2.5, 1, 0, now)); written += 1
+                con.commit()
+            finally: con.close()
+        result = {"cards": made_cards}
+    elif kind == "mcqs":
+        result = {"mcqs": (_tutor_post("/mcqs", payload).get("mcqs") or [])}
+        if not result["mcqs"]: raise HTTPException(502, "mcq generation produced nothing")
+    elif kind == "train":
+        tr = _tutor_post("/train", payload)
+        if not tr.get("steps"): raise HTTPException(502, "train generation produced nothing")
+        result = {"train": tr}
+    else:
+        raise HTTPException(400, f"unknown kind: {kind}")
     if ids:
         with _pg() as pg:
             pg.cursor().execute("update captured_items set processed_at=now() where id = any(%s)", (list(ids),))
-    return {"ok": True, "captures": list(ids), "topics": len(spine["topics"]),
-            "discriminators": len(spine.get("discriminators") or []),
-            "cards": made_cards, "written_to_sr": written, "sr_db": str(db) if written else None}
+    return {"ok": True, "kind": kind, "captures": list(ids), "topics": len(spine["topics"]),
+            "discriminators": len(spine.get("discriminators") or []), "written_to_sr": written, **result}
+
+
+def _spine_to_sr(note, question, concept, slug, section_id, ids):
+    return _spine_dispatch(note, question, concept, slug, section_id, ids, "cards")
 
 
 class BatchIn(BaseModel):
     ids: list[int]
+    kind: str = "cards"   # cards | mcqs | train
 
 
 @app.post("/captures/cards")
@@ -1344,7 +1354,7 @@ def captures_to_cards_batch(b: BatchIn):
     question = next((r[3] for r in rows if r[3]), "")
     slug = next((r[7] for r in rows if r[7]), None)
     section_id = next((r[8] for r in rows if r[8]), None)
-    return _spine_to_sr("\n".join(parts), question, concept, slug, section_id, [r[0] for r in rows])
+    return _spine_dispatch("\n".join(parts), question, concept, slug, section_id, [r[0] for r in rows], b.kind)
 
 
 @app.post("/captures/{cid}/cards")

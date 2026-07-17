@@ -251,6 +251,83 @@ def cards(topics: list, discriminators: list, concept: str = "", lang: str = "en
         return []
 
 
+def mcqs(topics: list, discriminators: list, concept: str = "", lang: str = "en", n: int = 4) -> list:
+    """❓ MCQs OFF THE SPINE — exam-shaped recall, one discriminator per item.
+
+    THE DESIGN: a discriminator's `not_it` IS the distractor. "Bilious vomiting excludes gastric
+    obstruction (not pyloric stenosis)" becomes a vignette whose most tempting wrong answer is pyloric
+    stenosis. A distractor isn't filler — it's the test: it catches the learner who pattern-matched
+    instead of reasoned. Every option carries a why_wrong so the post-answer feedback can name the trap.
+    Returns [] on any failure (never fatal)."""
+    if not topics and not discriminators:
+        return []
+    try:
+        sysc = (
+            f"You write exam items for a doctor sitting a medical specialty exam (SSM/USMLE style). "
+            f"Return ONLY a JSON array of at most {n} items:\n"
+            '[{"stem":"<a short clinical vignette ending in a question>",'
+            '"options":{"a":"…","b":"…","c":"…","d":"…"},"correct":"<a|b|c|d>",'
+            '"why_wrong":{"a":"<why this is wrong / what trap it is>","b":"…","c":"…","d":"…"},'
+            '"discriminator":"<the rule this item tests>"}]\n'
+            "RULES — this is the whole point:\n"
+            "1. ONE item per DISCRIMINATOR. The item must fail anyone who does not know that rule.\n"
+            "2. THE DISTRACTORS ARE THE TEST: build the most tempting wrong option directly from the "
+            "discriminator's 'not_it' — the thing a learner who pattern-matched would grab. Never use "
+            "filler options.\n"
+            "3. why_wrong for the CORRECT option explains why it IS right; for the others, name the "
+            "specific misconception it catches.\n"
+            "4. Vignette style: age, presentation, key finding — then the question. No giveaways in the stem.\n"
+            + ("Write in Italian. " if lang == "it" else "")
+        )
+        usr = (f"Concept: {concept}\n\nDISCRIMINATORS (one item each — their 'not_it' becomes the "
+               f"tempting distractor):\n" + json.dumps(discriminators, ensure_ascii=False)
+               + "\n\nTOPICS:\n" + json.dumps(topics, ensure_ascii=False))
+        raw = _call(DECOMPOSE_SPEC, sysc, [], usr).strip()
+        m = re.search(r"\[.*\]", raw, re.S)
+        arr = json.loads(m.group(0)) if m else []
+        out = []
+        for q in arr[:n]:
+            stem, opts, corr = str(q.get("stem", "")).strip(), q.get("options") or {}, str(q.get("correct", "")).strip().lower()
+            if stem and len(opts) >= 3 and corr in opts:
+                out.append({"stem": stem[:900], "options": {k: str(v)[:220] for k, v in opts.items()},
+                            "correct": corr, "why_wrong": q.get("why_wrong") or {},
+                            "discriminator": str(q.get("discriminator", ""))[:220]})
+        return out
+    except Exception:
+        return []
+
+
+def train_path(topics: list, discriminators: list, concept: str = "", lang: str = "en") -> dict:
+    """🎓 TRAIN ME — the seam-by-seam drill: micro-teach each topic, then a drill question with why-wrong.
+    Sits between a card (atom) and a full lesson (heavy) — the 'I just learned something dense, drill me
+    NOW' size. A bounded, deterministic path over the topic worklist (NOT agentic; house rule R-PC2).
+    Returns {steps:[{topic, teach, drill:{q, answer, why}}], closer} — {} on failure."""
+    if not topics:
+        return {}
+    try:
+        sysc = (
+            "You build a short guided drill for a doctor who just learned something dense. For the given "
+            "ordered topics, return ONLY JSON:\n"
+            '{"steps":[{"topic":"<title>","teach":"<2-3 tight sentences that make the seam click>",'
+            '"drill":{"q":"<one recall/application question>","answer":"<the answer>",'
+            '"why":"<why it matters / the trap it guards against>"}}],'
+            '"closer":"<one sentence tying the discriminators together>"}\n'
+            "RULES: one step per topic, IN ORDER (each builds on the last). teach is not the essay — it is "
+            "the minimum that makes the reasoning turn. The drill question must be answerable from the teach. "
+            "Fold the discriminators into the closer so the learner leaves with the 'definitely-not-it' rules.\n"
+            + ("Write in Italian. " if lang == "it" else "")
+        )
+        usr = (f"Concept: {concept}\n\nTOPICS (in order):\n" + json.dumps(topics, ensure_ascii=False)
+               + "\n\nDISCRIMINATORS (fold into the closer):\n" + json.dumps(discriminators, ensure_ascii=False))
+        raw = _call(DECOMPOSE_SPEC, sysc, [], usr).strip()
+        m = re.search(r"\{.*\}", raw, re.S)
+        d = json.loads(m.group(0)) if m else {}
+        d["steps"] = (d.get("steps") or [])[:6]
+        return d if d.get("steps") else {}
+    except Exception:
+        return {}
+
+
 def _harrison(topic: str) -> str:
     try:
         out = subprocess.run(["harrison-search", "-q", topic, "--prose", "-n", "4", "--full"],
