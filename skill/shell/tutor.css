@@ -385,12 +385,13 @@ html.chiron-tutor-pushed body {
   color: #7c5a0a;
 }
 
-/* Dispatch bar — batch actions (Keep / Cards) for selected highlight chips */
+/* Dispatch bar — batch actions (Keep / Cards / MCQs / Train / Lesson) for
+   selected highlight chips. May hold up to 6 controls — wraps cleanly. */
 .ct-dispatch {
   display: none;
   flex-wrap: wrap;
   align-items: center;
-  gap: 6px;
+  gap: 5px;
   padding: 6px 8px;
   border-top: 1px solid var(--color-border, #E5DFD6);
   background: var(--color-bg, #FAF7F2);
@@ -406,12 +407,16 @@ html.chiron-tutor-pushed body {
   background: var(--color-surface, #fff);
   color: var(--color-text, #2C2A28);
   border-radius: 999px;
-  padding: 5px 10px;
+  padding: 5px 9px;
   font: 700 11px var(--font-body, 'DM Sans', -apple-system, sans-serif);
   cursor: pointer;
+  white-space: nowrap;
 }
 .ct-dispatch button:disabled { opacity: .55; cursor: default; }
-.ct-dispatch-cards {
+.ct-dispatch-cards,
+.ct-dispatch-mcqs,
+.ct-dispatch-train,
+.ct-dispatch-lesson {
   background: var(--color-accent, #D94F30);
   color: #fff;
   border-color: var(--color-accent, #D94F30);
@@ -422,6 +427,96 @@ html.chiron-tutor-pushed body {
   font-style: italic;
   color: var(--color-text-muted, #9E9790);
   flex-basis: 100%;
+}
+
+/* Inline MCQ practice questions (rendered into .ct-msgs as a .ct-bub.a block) */
+.ct-mcq-block { display: flex; flex-direction: column; gap: 12px; width: 100%; }
+.ct-mcq { display: flex; flex-direction: column; gap: 6px; }
+.ct-mcq-stem { font-weight: 700; font-size: 13px; }
+.ct-mcq-opts { display: flex; flex-direction: column; gap: 5px; }
+.ct-mcq-opt {
+  display: block;
+  width: 100%;
+  text-align: left;
+  border: 1px solid var(--color-border, #E5DFD6);
+  background: var(--color-surface, #fff);
+  color: var(--color-text, #2C2A28);
+  border-radius: 8px;
+  padding: 7px 10px;
+  font-size: 12.5px;
+  line-height: 1.35;
+  cursor: pointer;
+  transition: background .12s ease;
+}
+.ct-mcq-opt:hover:not(:disabled) { background: var(--color-accent-light, rgba(217,79,48,.10)); }
+.ct-mcq-opt:disabled { cursor: default; }
+.ct-mcq-opt.correct {
+  background: #dcfce7;
+  border-color: #16a34a;
+  color: #14532d;
+}
+.ct-mcq-opt.wrong {
+  background: #fee2e2;
+  border-color: #dc2626;
+  color: #7f1d1d;
+}
+.ct-mcq-why {
+  font-size: 12px;
+  color: var(--color-text-secondary, #6B6560);
+  background: rgba(0,0,0,.04);
+  border-radius: 8px;
+  padding: 7px 10px;
+}
+.ct-mcq-disc {
+  font-size: 11px;
+  font-style: italic;
+  color: var(--color-text-muted, #9E9790);
+}
+
+/* Inline Train drill (teach → drill(reveal) → closer) */
+.ct-train-block { display: flex; flex-direction: column; gap: 12px; width: 100%; }
+.ct-train-step { display: flex; flex-direction: column; gap: 5px; }
+.ct-train-topic { font-weight: 700; font-size: 13px; }
+.ct-train-teach { font-size: 12.5px; line-height: 1.4; }
+.ct-train-drill {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  background: rgba(0,0,0,.04);
+  border-radius: 8px;
+  padding: 8px 10px;
+}
+.ct-reveal {
+  align-self: flex-start;
+  border: 1px solid var(--color-border, #E5DFD6);
+  background: var(--color-surface, #fff);
+  color: var(--color-accent, #D94F30);
+  border-radius: 999px;
+  padding: 3px 9px;
+  font: 700 11px var(--font-body, 'DM Sans', -apple-system, sans-serif);
+  cursor: pointer;
+}
+.ct-train-answer {
+  font-size: 12.5px;
+  color: var(--color-text-secondary, #6B6560);
+}
+.ct-train-closer {
+  font-size: 12.5px;
+  font-weight: 600;
+  background: var(--color-accent-light, rgba(217,79,48,.10));
+  color: var(--color-accent, #D94F30);
+  border-radius: 8px;
+  padding: 8px 10px;
+}
+
+/* Inline lesson-queued notice */
+.ct-lesson-queued { display: flex; flex-direction: column; gap: 6px; }
+.ct-lesson-link {
+  align-self: flex-start;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--color-accent, #D94F30);
+  text-decoration: underline;
 }
 
 .ct-input {

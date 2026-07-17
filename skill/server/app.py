@@ -1308,6 +1308,14 @@ def _spine_dispatch(note, question, concept, slug, section_id, ids, kind="cards"
         tr = _tutor_post("/train", payload)
         if not tr.get("steps"): raise HTTPException(502, "train generation produced nothing")
         result = {"train": tr}
+    elif kind == "lesson":
+        # 📚 the heavy escalation — a full Chiron lesson (+ audio) on the concept, via the EXISTING
+        # generation pipeline. The spine seeds it as grounding so the lesson is built around the exact
+        # seams the learner flagged, not a cold LLM-guessed structure.
+        seed = "Structure this lesson around these teaching seams and boundaries:\n" + json.dumps(payload, ensure_ascii=False)
+        jr = generate(GenReq(subject=(concept or "review topic"), domain="medicine",
+                             grounding=seed, source="tutor-capture", source_ref=slug, stage="all"))
+        result = {"lesson_job": jr}
     else:
         raise HTTPException(400, f"unknown kind: {kind}")
     if ids:

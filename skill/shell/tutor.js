@@ -49,6 +49,7 @@
 
   var tab, scrim, drawer, head, badge, title, modelSel, modeBtn, penBtn, newChatBtn, gearBtn, closeBtn,
       scope, chips, msgs, dispatchBar, dispatchLabel, dispatchSpin, dispatchKeepBtn, dispatchCardsBtn,
+      dispatchMcqsBtn, dispatchTrainBtn, dispatchLessonBtn,
       dispatchClearBtn, dispatchMsg, inputRow, textarea, sendBtn, tabPen, resizeHandle,
       settingsPop, suggToggle, transportSseBtn, transportPollBtn;
   var mode = 'med';
@@ -248,6 +249,15 @@
     dispatchCardsBtn = document.createElement('button');
     dispatchCardsBtn.type = 'button'; dispatchCardsBtn.className = 'ct-dispatch-cards';
     dispatchCardsBtn.textContent = '🎴 Cards';
+    dispatchMcqsBtn = document.createElement('button');
+    dispatchMcqsBtn.type = 'button'; dispatchMcqsBtn.className = 'ct-dispatch-mcqs';
+    dispatchMcqsBtn.textContent = '❓ MCQs';
+    dispatchTrainBtn = document.createElement('button');
+    dispatchTrainBtn.type = 'button'; dispatchTrainBtn.className = 'ct-dispatch-train';
+    dispatchTrainBtn.textContent = '🎓 Train';
+    dispatchLessonBtn = document.createElement('button');
+    dispatchLessonBtn.type = 'button'; dispatchLessonBtn.className = 'ct-dispatch-lesson';
+    dispatchLessonBtn.textContent = '📚 Lesson';
     dispatchClearBtn = document.createElement('button');
     dispatchClearBtn.type = 'button'; dispatchClearBtn.className = 'ct-dispatch-clear';
     dispatchClearBtn.title = 'Clear selection';
@@ -258,6 +268,9 @@
     dispatchBar.appendChild(dispatchSpin);
     dispatchBar.appendChild(dispatchKeepBtn);
     dispatchBar.appendChild(dispatchCardsBtn);
+    dispatchBar.appendChild(dispatchMcqsBtn);
+    dispatchBar.appendChild(dispatchTrainBtn);
+    dispatchBar.appendChild(dispatchLessonBtn);
     dispatchBar.appendChild(dispatchClearBtn);
     dispatchBar.appendChild(dispatchMsg);
 
@@ -339,7 +352,10 @@
 
     /* ── dispatch bar — batch actions for selected highlight chips ──── */
     dispatchKeepBtn.addEventListener('click', dispatchKeep);
-    dispatchCardsBtn.addEventListener('click', dispatchCards);
+    dispatchCardsBtn.addEventListener('click', function () { dispatch('cards'); });
+    dispatchMcqsBtn.addEventListener('click', function () { dispatch('mcqs'); });
+    dispatchTrainBtn.addEventListener('click', function () { dispatch('train'); });
+    dispatchLessonBtn.addEventListener('click', function () { dispatch('lesson'); });
     dispatchClearBtn.addEventListener('click', clearSelection);
 
     /* ── open / close ─────────────────────────────────────────────── */
@@ -696,7 +712,9 @@
   }
 
   function setDispatchButtonsDisabled(v) {
-    dispatchKeepBtn.disabled = v; dispatchCardsBtn.disabled = v; dispatchClearBtn.disabled = v;
+    dispatchKeepBtn.disabled = v; dispatchCardsBtn.disabled = v;
+    dispatchMcqsBtn.disabled = v; dispatchTrainBtn.disabled = v; dispatchLessonBtn.disabled = v;
+    dispatchClearBtn.disabled = v;
   }
 
   /* capture ONE highlight entry (idempotent — reuses entry.captureId if already saved) */
@@ -761,7 +779,17 @@
     });
   }
 
-  function dispatchCards() {
+  var DISPATCH_WORKING_MSG = {
+    cards: '🎴 making cards…',
+    mcqs: '❓ making questions…',
+    train: '🎓 building a drill…',
+    lesson: '📚 queuing lesson…'
+  };
+
+  /* generic dispatch — Cards / MCQs / Train / Lesson all share the same
+     capture-then-POST-with-working-state flow; only the request `kind` and
+     the result rendering differ (see handleDispatchResult). */
+  function dispatch(kind) {
     if (!selected.length) return;
     var toMark = selected.slice();
     setDispatchButtonsDisabled(true);
@@ -778,20 +806,18 @@
       toMark.forEach(function (entry) {
         if (entry.captureId && entry.chipEl) entry.chipEl.classList.add('saved');
       });
-      dispatchMsg.textContent = '🎴 making cards…';
+      dispatchMsg.textContent = DISPATCH_WORKING_MSG[kind] || 'working…';
       fetch('/captures/cards', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ids: ids })
+        body: JSON.stringify({ ids: ids, kind: kind })
       }).then(function (r) {
         if (!r.ok) throw new Error('bad status ' + r.status);
         return r.json();
       }).then(function (data) {
         dispatchBar.classList.remove('working');
         setDispatchButtonsDisabled(false);
-        var cardCount = (data && data.cards && data.cards.length) || 0;
-        var written = (data && typeof data.written_to_sr === 'number') ? data.written_to_sr : cardCount;
-        dispatchMsg.textContent = '✓ ' + written + ' cards → due now';
+        handleDispatchResult(kind, data);
         clearChipSelectionState();
         setTimeout(function () { if (!selected.length) hideDispatchBar(); }, 6000);
       }).catch(function (e) {
@@ -800,6 +826,177 @@
         dispatchMsg.textContent = '⚠ ' + (e && e.message ? e.message : 'request failed');
       });
     });
+  }
+
+  /* per-kind SUCCESS handling — sets the dispatch-bar result line, and for
+     mcqs/train renders an interactive block into the message list */
+  function handleDispatchResult(kind, data) {
+    if (kind === 'mcqs') {
+      var mcqs = (data && data.mcqs) || [];
+      dispatchMsg.textContent = '✓ ' + mcqs.length + ' practice question' + (mcqs.length === 1 ? '' : 's') + ' ready';
+      if (mcqs.length) renderMcqBlock(mcqs);
+      return;
+    }
+    if (kind === 'train') {
+      var train = data && data.train;
+      dispatchMsg.textContent = '✓ drill ready';
+      if (train) renderTrainBlock(train);
+      return;
+    }
+    if (kind === 'lesson') {
+      var job = data && data.lesson_job;
+      var slug = job && job.slug;
+      dispatchMsg.textContent = slug ? ('✓ lesson queued — ' + slug) : '✓ lesson queued';
+      renderLessonQueuedBlock(slug, job && job.status);
+      return;
+    }
+    // cards (default)
+    var cardCount = (data && data.cards && data.cards.length) || 0;
+    var written = (data && typeof data.written_to_sr === 'number') ? data.written_to_sr : cardCount;
+    dispatchMsg.textContent = '✓ ' + written + ' cards → due now';
+  }
+
+  /* append a `.ct-bub a`-styled block to the message list so a dispatch
+     result reads as something the tutor produced, not a raw API response */
+  function appendResultBlock(contentEl) {
+    var b = document.createElement('div');
+    b.className = 'ct-bub a';
+    b.appendChild(contentEl);
+    msgs.appendChild(b);
+    msgs.scrollTop = msgs.scrollHeight;
+    return b;
+  }
+
+  /* ── interactive MCQ rendering — the distractor feedback (why_wrong) IS
+     the pedagogy, so it must show on every answer, right or wrong ──────── */
+  function renderMcqBlock(mcqs) {
+    var wrap = document.createElement('div');
+    wrap.className = 'ct-mcq-block';
+    mcqs.forEach(function (q) {
+      var item = document.createElement('div');
+      item.className = 'ct-mcq';
+      var stemEl = document.createElement('div');
+      stemEl.className = 'ct-mcq-stem';
+      stemEl.textContent = q && q.stem || '';
+      item.appendChild(stemEl);
+
+      var optWrap = document.createElement('div');
+      optWrap.className = 'ct-mcq-opts';
+      var options = (q && q.options) || {};
+      var correctKey = q && q.correct;
+      var whyWrong = (q && q.why_wrong) || {};
+      var answered = false;
+      var btnByKey = {};
+      Object.keys(options).forEach(function (key) {
+        var optBtn = document.createElement('button');
+        optBtn.type = 'button';
+        optBtn.className = 'ct-mcq-opt';
+        optBtn.textContent = key.toUpperCase() + '. ' + options[key];
+        btnByKey[key] = optBtn;
+        optBtn.addEventListener('click', function () {
+          if (answered) return;
+          answered = true;
+          Object.keys(btnByKey).forEach(function (k) { btnByKey[k].disabled = true; });
+          var isCorrect = key === correctKey;
+          optBtn.classList.add(isCorrect ? 'correct' : 'wrong');
+          if (!isCorrect && btnByKey[correctKey]) btnByKey[correctKey].classList.add('correct');
+          var lines = [];
+          if (whyWrong[key]) lines.push(whyWrong[key]);
+          if (!isCorrect && whyWrong[correctKey]) {
+            lines.push('Why ' + String(correctKey).toUpperCase() + ' is right: ' + whyWrong[correctKey]);
+          }
+          if (lines.length) {
+            var whyEl = document.createElement('div');
+            whyEl.className = 'ct-mcq-why';
+            whyEl.textContent = lines.join(' ');
+            item.appendChild(whyEl);
+          }
+          if (q && q.discriminator) {
+            var discEl = document.createElement('div');
+            discEl.className = 'ct-mcq-disc';
+            discEl.textContent = 'Tested rule: ' + q.discriminator;
+            item.appendChild(discEl);
+          }
+        });
+        optWrap.appendChild(optBtn);
+      });
+      item.appendChild(optWrap);
+      wrap.appendChild(item);
+    });
+    appendResultBlock(wrap);
+  }
+
+  /* ── train drill rendering — teach → drill(reveal) → closer walk ─────── */
+  function renderTrainBlock(train) {
+    var wrap = document.createElement('div');
+    wrap.className = 'ct-train-block';
+    var steps = (train && train.steps) || [];
+    steps.forEach(function (step) {
+      var stepEl = document.createElement('div');
+      stepEl.className = 'ct-train-step';
+      var topicEl = document.createElement('div');
+      topicEl.className = 'ct-train-topic';
+      topicEl.textContent = (step && step.topic) || '';
+      stepEl.appendChild(topicEl);
+      if (step && step.teach) {
+        var teachEl = document.createElement('div');
+        teachEl.className = 'ct-train-teach';
+        teachEl.textContent = step.teach;
+        stepEl.appendChild(teachEl);
+      }
+      if (step && step.drill) {
+        var drillEl = document.createElement('div');
+        drillEl.className = 'ct-train-drill';
+        var qEl = document.createElement('div');
+        qEl.textContent = step.drill.q || '';
+        drillEl.appendChild(qEl);
+        var answerEl = document.createElement('div');
+        answerEl.className = 'ct-train-answer';
+        answerEl.style.display = 'none';
+        var ansText = step.drill.answer || '';
+        if (step.drill.why) ansText += ' — ' + step.drill.why;
+        answerEl.textContent = ansText;
+        var revealBtn = document.createElement('button');
+        revealBtn.type = 'button';
+        revealBtn.className = 'ct-reveal';
+        revealBtn.textContent = 'Reveal';
+        revealBtn.addEventListener('click', function () {
+          var showing = answerEl.style.display !== 'none';
+          answerEl.style.display = showing ? 'none' : 'block';
+          revealBtn.textContent = showing ? 'Reveal' : 'Hide';
+        });
+        drillEl.appendChild(revealBtn);
+        drillEl.appendChild(answerEl);
+        stepEl.appendChild(drillEl);
+      }
+      wrap.appendChild(stepEl);
+    });
+    if (train && train.closer) {
+      var closerEl = document.createElement('div');
+      closerEl.className = 'ct-train-closer';
+      closerEl.textContent = train.closer;
+      wrap.appendChild(closerEl);
+    }
+    appendResultBlock(wrap);
+  }
+
+  /* ── lesson-job queued notice (the full lesson bakes in the background) ── */
+  function renderLessonQueuedBlock(slug, status) {
+    var wrap = document.createElement('div');
+    wrap.className = 'ct-lesson-queued';
+    var textEl = document.createElement('div');
+    textEl.textContent = slug
+      ? ('Lesson queued: ' + slug + (status ? ' (' + status + ')' : ''))
+      : 'Lesson queued.';
+    wrap.appendChild(textEl);
+    var link = document.createElement('a');
+    link.href = location.origin + '/library/';
+    link.target = '_blank';
+    link.rel = 'noopener';
+    link.className = 'ct-lesson-link';
+    link.textContent = 'open jobs →';
+    wrap.appendChild(link);
+    appendResultBlock(wrap);
   }
 
   /* ── compact, safe markdown → HTML (assistant bubbles only) ─────── */
