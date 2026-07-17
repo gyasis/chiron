@@ -1275,23 +1275,9 @@ def _tutor_post(path: str, body: dict, timeout: int = 180) -> dict:
     return json.loads(urllib.request.urlopen(req, timeout=timeout).read())
 
 
-@app.post("/captures/{cid}/cards")
-def captured_to_cards(cid: int):
-    """🎴 THE PAYOFF — a captured note → the spine (decompose) → cards → the lesson's REAL SR rotation.
-
-    This is what makes "I don't want to redo this session to remember it" actually true: the cards
-    re-surface on schedule. Cards encode the DISCRIMINATORS (the 'X excludes Y' boundaries), not the
-    prose. Marks the capture processed so the inbox drains."""
-    _ensure_capture_schema()
-    with _pg() as pg:
-        cur = pg.cursor()
-        cur.execute("select text,question,source_answer,concept,lesson_slug,section_id "
-                    "from captured_items where id=%s", (cid,))
-        row = cur.fetchone()
-    if not row:
-        raise HTTPException(404, f"capture {cid} not found")
-    text, question, answer, concept, slug, section_id = row
-    note = answer or text
+def _spine_to_sr(note: str, question: str, concept: str, slug: str, section_id: str, ids: list):
+    """capture(s) → 🧬 spine → 🎴 cards → the lesson's REAL SR rotation → drain the inbox.
+    Shared by the single- and batch-dispatch paths so both behave identically."""
     spine = _tutor_post("/decompose", {"note": note, "question": question or "", "concept": concept or ""})
     if not spine.get("topics"):
         raise HTTPException(502, f"decompose produced nothing: {spine.get('error', '')}")
@@ -1318,11 +1304,66 @@ def captured_to_cards(cid: int):
             con.commit()
         finally:
             con.close()
-    with _pg() as pg:
-        pg.cursor().execute("update captured_items set processed_at=now() where id=%s", (cid,))
-    return {"ok": True, "capture": cid, "topics": len(spine["topics"]),
+    if ids:
+        with _pg() as pg:
+            pg.cursor().execute("update captured_items set processed_at=now() where id = any(%s)", (list(ids),))
+    return {"ok": True, "captures": list(ids), "topics": len(spine["topics"]),
             "discriminators": len(spine.get("discriminators") or []),
             "cards": made_cards, "written_to_sr": written, "sr_db": str(db) if written else None}
+
+
+class BatchIn(BaseModel):
+    ids: list[int]
+
+
+@app.post("/captures/cards")
+def captures_to_cards_batch(b: BatchIn):
+    """🎴 BATCH dispatch — N selected pills/notes → ONE coherent card set. Highlighting five terms and
+    sending them together must yield a set that knows they're related, never five disconnected cards:
+    the relationships between the terms are half the learning."""
+    if not b.ids:
+        raise HTTPException(400, "no ids")
+    _ensure_capture_schema()
+    with _pg() as pg:
+        cur = pg.cursor()
+        cur.execute("select id,kind,text,question,source_answer,surrounding_text,concept,lesson_slug,"
+                    "section_id from captured_items where id = any(%s) order by id", (b.ids,))
+        rows = cur.fetchall()
+    if not rows:
+        raise HTTPException(404, "no such captures")
+    terms = [r[2] for r in rows]
+    parts = ["The learner flagged these while studying — teach them AS A CONNECTED SET:",
+             "\n".join("- " + t for t in terms)]
+    ctx = next((r[5] for r in rows if r[5]), None)
+    ans = "\n\n".join(dict.fromkeys([r[4] for r in rows if r[4]]))     # dedup, keep order
+    if ctx:
+        parts.append("\nContext they were reading:\n" + ctx[:2500])
+    if ans:
+        parts.append("\nThe explanation that taught them:\n" + ans[:5000])
+    concept = ", ".join(dict.fromkeys([r[6] for r in rows if r[6]])) or ", ".join(terms[:3])
+    question = next((r[3] for r in rows if r[3]), "")
+    slug = next((r[7] for r in rows if r[7]), None)
+    section_id = next((r[8] for r in rows if r[8]), None)
+    return _spine_to_sr("\n".join(parts), question, concept, slug, section_id, [r[0] for r in rows])
+
+
+@app.post("/captures/{cid}/cards")
+def captured_to_cards(cid: int):
+    """🎴 A single captured note → the spine → cards → the lesson's REAL SR rotation.
+
+    This is what makes "I don't want to redo this session to remember it" actually true: the cards
+    re-surface on schedule. Cards encode the DISCRIMINATORS (the 'X excludes Y' boundaries), not the
+    prose. Marks the capture processed so the inbox drains."""
+    _ensure_capture_schema()
+    with _pg() as pg:
+        cur = pg.cursor()
+        cur.execute("select text,question,source_answer,concept,lesson_slug,section_id "
+                    "from captured_items where id=%s", (cid,))
+        row = cur.fetchone()
+    if not row:
+        raise HTTPException(404, f"capture {cid} not found")
+    text, question, answer, concept, slug, section_id = row
+    return _spine_to_sr(answer or text, question, concept, slug, section_id, [cid])
 
 
 @app.get("/corpus/status")
