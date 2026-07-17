@@ -39,6 +39,8 @@ import dispatch  # noqa: E402  the single routing entry point
 JOBS: dict = {}
 import queue as _queuemod
 _BAKE_Q: "_queuemod.Queue" = _queuemod.Queue()   # rebakes queue here; one worker bakes them one at a time
+_GEN_Q: "_queuemod.Queue" = _queuemod.Queue()    # GENERATION queue — Chiron (the server) owns concurrency,
+GEN_CONC = int(os.environ.get("CHIRON_GEN_CONC", "2") or 2)  # not the client. Clients push all; N workers drain.
 _CANCELLED: set = set()   # slugs cancelled while still queued → the bake worker skips them when popped
 LOCK = threading.Lock()
 
@@ -898,6 +900,39 @@ def _resume_orphaned_bakes() -> None:
 _resume_orphaned_bakes()   # recover bakes interrupted by the last restart
 
 
+def _gen_worker() -> None:
+    """Drain the generation queue. A bounded pool of these (GEN_CONC) is the whole point: clients
+    push as many lessons as they want, Chiron runs only GEN_CONC at a time and queues the rest."""
+    while True:
+        job = _GEN_Q.get()
+        try:
+            if job.get("status") == "queued":          # skip cancelled/already-resolved jobs
+                _run_job(job)
+        except Exception as e:                          # never let one job kill the worker
+            job.update(status="error", phase="worker error", error=str(e)[:400]); _save()
+        finally:
+            _GEN_Q.task_done()
+
+
+def _resume_queued_generations() -> None:
+    """A restart wipes the in-memory _GEN_Q, so jobs left 'queued' (or 'running' but with no text on
+    disk — died mid-generation) would hang forever. Re-enqueue them so the queue survives a restart."""
+    for j in list(JOBS.values()):
+        sl = j.get("slug") or ""
+        if (GEN / sl / "lesson.html").exists():
+            continue                                    # already produced text → nothing to resume
+        if j.get("status") == "queued":
+            _GEN_Q.put(j)
+        elif j.get("status") == "running":              # interrupted mid-gen → requeue (dedup makes it safe)
+            j.update(status="queued", phase="requeued after restart"); _GEN_Q.put(j)
+    _save()
+
+
+for _ in range(max(1, GEN_CONC)):
+    threading.Thread(target=_gen_worker, daemon=True).start()   # the bounded generation worker pool
+_resume_queued_generations()   # recover generations interrupted / still queued at the last restart
+
+
 def _slug_of(ref: str) -> str:
     return JOBS[ref]["slug"] if ref in JOBS else ref
 
@@ -1001,9 +1036,10 @@ def generate(req: GenReq):
            **req.model_dump(), "slug": slug, "chain": res["chain_name"], "depth": res["depth"]}
     JOBS[jid] = job
     _save()
-    threading.Thread(target=_run_job, args=(job,), daemon=True).start()
-    return {"job_id": jid, "slug": slug, "depth": res["depth"],
-            "chain": res["chain_name"], "status": "queued"}
+    _GEN_Q.put(job)          # enqueue — the bounded worker pool runs it when a slot frees (Chiron owns concurrency)
+    return {"job_id": jid, "slug": slug, "depth": res["depth"], "chain": res["chain_name"],
+            "status": "queued", "queued_ahead": _GEN_Q.qsize()}
+
 
 
 @app.post("/bake/{ref}")
