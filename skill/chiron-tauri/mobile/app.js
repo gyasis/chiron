@@ -45,13 +45,41 @@ document.getElementById('themebtn').onclick = () => {
 paintTheme();
 
 /* ---------- library ---------- */
-const F = { q: '', dom: '', sort: 'domain' };
+const F = { q: '', dom: '', sort: 'domain', view: localStorage.getItem('chiron.view') || 'tiles', hideDom: new Set(), hideSys: new Set() };
+try { const H = JSON.parse(localStorage.getItem('chiron.hide') || '{}'); (H.dom || []).forEach(d => F.hideDom.add(d)); (H.sys || []).forEach(s => F.hideSys.add(s)); } catch (e) {}
+const saveHide = () => { try { localStorage.setItem('chiron.hide', JSON.stringify({ dom: [...F.hideDom], sys: [...F.hideSys] })); } catch (e) {} };
 const DL_TIME = JSON.parse(localStorage.getItem('chiron.dltime') || '{}');   // slug → when it was synced to THIS device
 function markSynced(slug) { if (!slug) return; DL_TIME[slug] = Date.now(); try { localStorage.setItem('chiron.dltime', JSON.stringify(DL_TIME)); } catch (e) {} }
 const SORTS = [['domain', 'By domain'], ['generated', 'Recently made'], ['synced', 'Recently synced']];
 function renderSort() { const el = document.getElementById('sortrow'); if (!el) return;
-  el.innerHTML = '<span class="sortlab">Sort</span>' + SORTS.map(([v, l]) => `<div class="chip sm ${F.sort === v ? 'on' : ''}" data-s="${v}">${l}</div>`).join('');
-  el.querySelectorAll('.chip').forEach(c => c.onclick = () => { F.sort = c.dataset.s; renderSort(); renderRows(); }); }
+  const nHidden = F.hideDom.size + F.hideSys.size;
+  el.innerHTML = '<span class="sortlab">Sort</span>'
+    + SORTS.map(([v, l]) => `<div class="chip sm ${F.sort === v ? 'on' : ''}" data-s="${v}">${l}</div>`).join('')
+    + '<span class="ctrlsp"></span>'
+    + `<div class="chip vt ${F.view === 'tiles' ? 'on' : ''}" data-view="tiles" title="Tiles">▦</div>`
+    + `<div class="chip vt ${F.view === 'index' ? 'on' : ''}" data-view="index" title="List">☰</div>`
+    + `<div class="chip sm hf ${nHidden ? 'act' : ''}" id="hfbtn" title="Hide domains / systems">⚑${nHidden ? ' ' + nHidden : ''}</div>`;
+  el.querySelectorAll('[data-s]').forEach(c => c.onclick = () => { F.sort = c.dataset.s; renderSort(); renderRows(); });
+  el.querySelectorAll('[data-view]').forEach(c => c.onclick = () => { F.view = c.dataset.view; localStorage.setItem('chiron.view', F.view); renderSort(); renderRows(); });
+  const hf = el.querySelector('#hfbtn'); if (hf) hf.onclick = () => { HIDE_OPEN = !HIDE_OPEN; renderHidePanel(); };
+}
+let HIDE_OPEN = false;
+function renderHidePanel() {
+  const el = document.getElementById('hidepanel'); if (!el) return;
+  el.style.display = HIDE_OPEN ? '' : 'none';
+  if (!HIDE_OPEN) { el.innerHTML = ''; return; }
+  const doms = [['medicine', 'Medicine'], ['medical-italian', 'Med-Italian'], ['italian', 'Italian']].filter(([d]) => LESSONS.some(l => l.domain === d));
+  const systems = [...new Set(LESSONS.map(l => l.system).filter(Boolean))].map(s => [s, LESSONS.filter(l => l.system === s).length]).sort((a, b) => b[1] - a[1]);
+  let h = `<div class="hgh">Domain <span class="un ${F.hideDom.size ? '' : 'dim'}" data-un="dom">Unhide all</span></div><div class="hwrap">`;
+  h += doms.map(([d, l]) => `<div class="hchip ${F.hideDom.has(d) ? 'off' : 'on'}" data-hd="${d}"><span class="bx"></span><span class="hn">${l}</span></div>`).join('') + `</div>`;
+  h += `<div class="hgh">System <span class="un ${F.hideSys.size ? '' : 'dim'}" data-un="sys">Unhide all</span></div><div class="hwrap">`;
+  h += systems.map(([s, n]) => `<div class="hchip ${F.hideSys.has(s) ? 'off' : 'on'}" data-hs="${esc(s)}"><span class="bx"></span><span class="hn">${esc(s)} <span style="opacity:.55">${n}</span></span></div>`).join('') + `</div>`;
+  el.innerHTML = h;
+  const refresh = () => { saveHide(); renderHidePanel(); renderSort(); renderRows(); };
+  el.querySelectorAll('[data-hd]').forEach(c => c.onclick = () => { const d = c.dataset.hd; F.hideDom.has(d) ? F.hideDom.delete(d) : F.hideDom.add(d); refresh(); });
+  el.querySelectorAll('[data-hs]').forEach(c => c.onclick = () => { const s = c.dataset.hs; F.hideSys.has(s) ? F.hideSys.delete(s) : F.hideSys.add(s); refresh(); });
+  el.querySelectorAll('[data-un]').forEach(b => b.onclick = () => { (b.dataset.un === 'dom' ? F.hideDom : F.hideSys).clear(); refresh(); });
+}
 function sortLessons(arr) { const a = [...arr];
   if (F.sort === 'generated') a.sort((x, y) => (y.mtime || 0) - (x.mtime || 0));                                   // newest lesson.html first
   else if (F.sort === 'synced') a.sort((x, y) => ((DL_TIME[slugOf(y.id)] || 0) - (DL_TIME[slugOf(x.id)] || 0)) || (y.mtime || 0) - (x.mtime || 0));  // most-recently downloaded first
@@ -65,27 +93,39 @@ function renderChips() {
   document.querySelectorAll('#chips .chip').forEach(c => c.onclick = () => { F.dom = c.dataset.d; renderChips(); renderRows(); });
 }
 function match(l) {
+  if (F.hideDom.has(l.domain)) return false;                 // hide-filters win, incl. over search
+  if (l.system && F.hideSys.has(l.system)) return false;
   if (F.dom && l.domain !== F.dom) return false;
   if (F.q) { const s = (l.title + ' ' + (l.system || '') + ' ' + (l.subject || '') + ' ' + (l.topic || '')).toLowerCase();
     if (!s.includes(F.q.toLowerCase())) return false; } return true;
 }
-function rowHtml(l) {
+function lessonAction(l) {   // shared by the list (Index) rows and the Tiles cards
   const slug = slugOf(l.id), off = !!OFFLINE[slug];
+  if (!l.ready) { const gs = l.subject || l.system || l.topic || l.title, aj = activeFor(gs);
+    return aj ? `<span class="btn spin" data-recon="${aj.id}"><span class="spinc"></span>Generating</span>`
+              : `<span class="btn gen" data-gen="${esc(gs)}" data-dom="${l.domain}">✦ Generate</span>`; }
+  if (l.status === 'staged') return `<span class="btn acc" data-acc="${slug}">✓ Accept</span>`;
+  if (off) return `<span class="btn" data-open="${slug}">Open →</span>`;
+  if (l.bundle) return `<span class="btn dl" data-dl="${slug}">⬇ ${l.sizeMB || ''}${l.sizeMB ? 'MB' : 'Get'}</span>`;
+  return `<span class="btn" data-open="${slug}">Open →</span>`;
+}
+function rowHtml(l) {   // Index view — dense one-line rows
+  const off = !!OFFLINE[slugOf(l.id)];
   const cat = l.system ? `<span class="tag ${domCls(l.domain)}">${l.system}</span>` : l.topic ? `<span class="tag l">${l.topic}</span>` : '';
   const lvl = l.level ? `<span class="tag">${l.level}</span>` : '';
-  let act;
-  if (!l.ready) { const gs = l.subject || l.system || l.topic || l.title, aj = activeFor(gs);
-    act = aj ? `<span class="btn spin" data-recon="${aj.id}"><span class="spinc"></span>Generating</span>`
-             : `<span class="btn gen" data-gen="${esc(gs)}" data-dom="${l.domain}">✦ Generate</span>`; }
-  else if (l.status === 'staged') act = `<span class="btn acc" data-acc="${slug}">✓ Accept</span>`;
-  else if (off) act = `<span class="btn" data-open="${slug}">Open →</span>`;
-  else if (l.bundle) act = `<span class="btn dl" data-dl="${slug}">⬇ ${l.sizeMB || ''}${l.sizeMB ? 'MB' : 'Get'}</span>`;
-  else act = `<span class="btn" data-open="${slug}">Open →</span>`;
   return `<div class="row ${domCls(l.domain)}"><div class="edge"></div>
     <div class="body"><div class="t">${esc(l.title)}</div>
       <div class="meta">${l.status === 'staged' ? '<span class="tag rev">🟡 REVIEW</span>' : ''}<span class="tag ${domCls(l.domain)}">${l.domain}</span>${cat}${lvl}${l.clips ? `<span class="clip">▸${l.clips}${off ? ' · ✓' : ''}</span>` : ''}</div></div>
-    <div class="act">${act}</div></div>`;
+    <div class="act">${lessonAction(l)}</div></div>`;
 }
+function tileHtml(l) {   // Tiles view — 2-up cards
+  const off = !!OFFLINE[slugOf(l.id)];
+  const sub = l.subject || l.system || l.topic || (l.level ? 'Livello ' + l.level : '') || '';
+  return `<div class="tcard ${domCls(l.domain)}${l.ready ? '' : ' q'}"><div class="tstrip"></div>
+    <div class="tbd"><div class="tt">${esc(l.title)}</div><div class="tsub">${esc(sub)}</div>${l.status === 'staged' ? '<span class="tag rev">🟡 REVIEW</span>' : ''}</div>
+    <div class="tft"><span class="tag ${domCls(l.domain)}">${esc(l.domain)}</span>${l.clips ? `<span class="clip">▸${l.clips}${off ? ' ✓' : ''}</span>` : ''}${lessonAction(l)}</div></div>`;
+}
+function group(arr) { return F.view === 'tiles' ? `<div class="tgrid">${arr.map(tileHtml).join('')}</div>` : arr.map(rowHtml).join(''); }
 function esc(s) { return String(s == null ? '' : s).replace(/"/g, '&quot;').replace(/</g, '&lt;'); }
 /* ---- generation status: poll active jobs, show spinners, tap to reconnect ---- */
 let ACTIVE = [], ACTIVE_SIG = '';
@@ -115,10 +155,10 @@ function renderRows() {
   let h = '';
   if (ACTIVE.length) h += `<div class="sec">⏳ Generating <span class="ct">${ACTIVE.length}</span><span class="note">tap to watch</span></div>` +
     ACTIVE.map(j => `<div class="genrow" data-recon="${j.id}"><span class="spinc"></span><div class="gi"><b>${esc(j.subject || j.slug || 'lesson')}</b><small>${j.status === 'queued' ? 'queued…' : (j.phase || 'generating') + '…'}</small></div><span class="chev">›</span></div>`).join('');
-  if (staged.length) { h += `<div class="reviewband">🟡 Needs Review — ${staged.length} generated, not yet published.</div>` + staged.map(rowHtml).join(''); }
-  if (ready.length) { const dl = ready.filter(l => l.bundle).length; h += hdr('📚', 'Available', ready.length, dl ? dl + ' downloadable' : 'open to study') + ready.map(rowHtml).join(''); }
-  if (queued.length) h += hdr('○', 'To generate', queued.length, 'tap Generate') + queued.slice(0, 400).map(rowHtml).join('');
-  document.getElementById('rows').innerHTML = h || `<div class="empty">No lessons match.</div>`;
+  if (staged.length) { h += `<div class="reviewband">🟡 Needs Review — ${staged.length} generated, not yet published.</div>` + group(staged); }
+  if (ready.length) { const dl = ready.filter(l => l.bundle).length; h += hdr('📚', 'Available', ready.length, dl ? dl + ' downloadable' : 'open to study') + group(ready); }
+  if (queued.length) h += hdr('○', 'To generate', queued.length, 'tap Generate') + group(queued.slice(0, 400));
+  document.getElementById('rows').innerHTML = h || `<div class="empty">No lessons match${F.hideDom.size || F.hideSys.size ? ' — some domains/systems are hidden (tap ⚑ to unhide)' : ''}.</div>`;
   document.querySelectorAll('#rows [data-open]').forEach(e => e.onclick = ev => { ev.stopPropagation(); openLesson(e.dataset.open); });
   document.querySelectorAll('#rows [data-dl]').forEach(e => e.onclick = ev => { ev.stopPropagation(); download(e.dataset.dl); });
   document.querySelectorAll('#rows [data-acc]').forEach(e => e.onclick = ev => { ev.stopPropagation(); accept(e.dataset.acc); });

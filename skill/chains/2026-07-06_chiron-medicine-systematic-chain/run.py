@@ -56,7 +56,12 @@ if __name__ == "__main__" and not SUBJECT:
     raise SystemExit("[chiron] CH_SUBJECT is empty — refusing to generate a placeholder lesson (wrong-subject guard).")
 SYSTEM = os.environ.get("CH_SYSTEM", "General")  # tag-only; no atlas/grouping implication
 STAGE = os.environ.get("CH_STAGE", "plan")  # plan | chapters | assemble | audio | all
-SLUG = "chiron-" + re.sub(r"[^a-z0-9]+", "-", SUBJECT.lower()).strip("-") + "-systematic"
+# Output slug MUST match what the server dispatched (dispatch.py suffixes by depth: '-drug' for the
+# drug template, else '-systematic'). Honor CH_SLUG if the server passed it (authoritative), else derive
+# with the template-correct suffix — otherwise a drug lesson lands in '-systematic' and the server, looking
+# in '-drug', sees no lesson.html and falsely reports 'error' (the 5α-reductase bug).
+_SUFFIX = "-drug" if os.environ.get("CH_TEMPLATE") == "drug" else "-systematic"
+SLUG = os.environ.get("CH_SLUG") or ("chiron-" + re.sub(r"[^a-z0-9]+", "-", SUBJECT.lower()).strip("-") + _SUFFIX)
 OUT = GEN / SLUG
 
 MODEL_REASON = os.environ.get("CH_MODEL_REASON", "glm-5.2")

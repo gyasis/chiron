@@ -16,7 +16,7 @@ Endpoints
 A generated lesson lands with chiron.json.status='staged' → it shows in the library's
 "🟡 Needs Review" band until Accept publishes it. Run:  python3 app.py   (uvicorn :8911)
 """
-import base64, json, os, signal, subprocess, sys, threading, urllib.request, uuid
+import base64, json, os, re, signal, subprocess, sys, threading, time, urllib.request, uuid
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -71,7 +71,9 @@ _PHASE_MARKERS = [
 
 
 def _derive_phase(log: Path, status: str) -> str:
-    if status in ("ready", "published", "error", "queued"):
+    # 'baking' is authoritative — don't let the OLD generation log (which ends '=== done')
+    # override a live re-bake back to a stale 'ready'/'writing' phase.
+    if status in ("ready", "published", "error", "queued", "baking"):
         return status
     if not log.exists():
         return status
@@ -123,6 +125,8 @@ def _enrich_job(j: dict, stamp: bool = False) -> bool:
         avg = _avg_duration(j.get("chain"), j.get("depth"))
         j["eta_seconds"] = max(0, round(avg - (d or 0))) if avg else None
         j["eta_basis"] = round(avg) if avg else None
+    else:
+        j["eta_seconds"] = None; j["eta_basis"] = None   # baking/queued/done → no stale generation ETA
     j.setdefault("source", None)   # None = started in-app / via the server; else a caller-declared origin
     return changed
 
@@ -254,6 +258,65 @@ def _ingest_images(images: list, out: Path) -> str:
     return md
 
 
+def _log_error_tail(log: Path, n: int = 6) -> str:
+    """Mine a chain log for WHY it failed — traceback / API error / rate-limit / bad-JSON / assertion —
+    skipping the noisy litellm INFO chatter. Returns a compact one-line reason for the timeline + job.error."""
+    try:
+        lines = log.read_text(errors="ignore").splitlines()
+    except Exception:
+        return ""
+    keys = ("traceback", "error", "exception", "rate limit", "ratelimit", "429", "401", "403",
+            "invalid", "refus", "timeout", "timed out", "max retr", "empty response", "assert",
+            "not found", "connection", "unauthor", "quota", "overloaded")
+    noise = ("litellm completion()", "litellm:info", "- info -", "preprompt:", "scan complete")
+    hits = [l.strip() for l in lines[-160:]
+            if any(k in l.lower() for k in keys) and not any(nz in l.lower() for nz in noise)]
+    if hits:
+        return " · ".join(hits[-n:])[:400]
+    # No explicit error logged → a SILENT death (process killed by a signal: server restart / OOM /
+    # cancel), NOT a chain exception. Report the last real step it reached so it isn't a blank 'error'.
+    steps = [l.strip() for l in lines if l.strip().startswith("[phase") or " chapter " in l.lower()]
+    if steps:
+        return "no error logged — process was killed (restart/OOM/cancel) during: " + steps[-1][:180]
+    return (lines[-1].strip()[:200] if lines else "")
+
+
+def _lesson_complete(out: Path, log: Path):
+    """After an rc==0 run, verify the lesson is actually COMPLETE — all planned chapters authored, no
+    failed widgets, not a stub. Catches a chain that skipped a broken step and assembled a PARTIAL lesson
+    that would otherwise be served as 'ready'. Returns (ok: bool, reason: str)."""
+    try:
+        text = log.read_text(errors="ignore")
+    except Exception:
+        text = ""
+    m = re.search(r"authored\s+(\d+)\s*/\s*(\d+)\s+chapters", text)
+    if m and int(m.group(1)) < int(m.group(2)):
+        return False, f"only {m.group(1)}/{m.group(2)} chapters authored"
+    m2 = re.search(r"Total rendered:\s*(\d+)\s*/\s*(\d+)\s+widgets\s*\((\d+)\s+failed\)", text)
+    if m2 and int(m2.group(3)) > 0:
+        return False, f"{m2.group(3)} widget(s) failed to render"
+    try:
+        if (out / "lesson.html").stat().st_size < 5000:
+            return False, "lesson.html is a stub (<5 KB) — assemble produced almost nothing"
+    except Exception:
+        pass
+    return True, ""
+
+
+_FAILURES_FILE = STATE / "failures.jsonl"
+
+def _record_failure(job: dict, reason: str, kind: str = "error") -> None:
+    """Durable, queryable audit trail of every failure/incomplete → state/failures.jsonl. Lets us
+    identify what broke and flag it for rerun (kind: died | incomplete | error)."""
+    try:
+        with open(_FAILURES_FILE, "a") as f:
+            f.write(json.dumps({"ts": _now(), "slug": job.get("slug"), "id": job.get("id"),
+                                "domain": job.get("domain"), "depth": job.get("depth"),
+                                "kind": kind, "rc": job.get("rc"), "reason": (reason or "")[:400]}) + "\n")
+    except Exception:
+        pass
+
+
 def _run_job(job: dict) -> None:
     jid = job["id"]
     log = STATE / f"{jid}.log"
@@ -278,25 +341,45 @@ def _run_job(job: dict) -> None:
     if grounding.strip():
         (out / "_grounding.md").write_text(grounding)
 
-    env = {**os.environ, **res["env"], "CH_STAGE": job.get("stage", "all")}
+    # CH_SLUG: tell the chain the EXACT output slug the server will look for, so its self-computed slug
+    # can never diverge (the 5α-reductase '-drug' vs '-systematic' mismatch). Chains honor it if they read it.
+    env = {**os.environ, **res["env"], "CH_STAGE": job.get("stage", "all"), "CH_SLUG": res["slug"]}
     if grounding.strip():
         env["CH_GROUNDING"] = str(out / "_grounding.md")  # chain-dependent consumption
 
-    with open(log, "w") as lf:
-        p = subprocess.Popen([sys.executable, res["runpy"]], env=env,
-                             stdout=lf, stderr=subprocess.STDOUT)
-        job["pid"] = p.pid
-        _save()
-        rc = p.wait()
-
+    # AUTO-RETRY (3×): a dropped/failed step is re-run — the chain RESUMES from where it died (completed
+    # chapters are skipped), so each attempt makes progress. We recognize the failure signal (traceback /
+    # rate-limit / partial lesson / silent kill), record it, back off (longer on a rate-limit), and retry.
+    MAX_TRIES, last_err, rc = 3, "", -1
     lesson = out / "lesson.html"
-    if rc == 0 and lesson.exists():
-        _write_status(out, job, "staged")
-        _rebuild_catalog()
-        job.update(status="ready", rc=rc, lesson_url=f"/lessons/{res['slug']}/lesson.html")
-    else:
-        job.update(status="error", rc=rc)
-    job["finished"] = _now()
+    for attempt in range(1, MAX_TRIES + 1):
+        with open(log, "w" if attempt == 1 else "a") as lf:   # keep the log history across retries
+            if attempt > 1:
+                lf.write(f"\n=== AUTO-RETRY {attempt}/{MAX_TRIES} — resuming (prev: {last_err[:150]}) ===\n"); lf.flush()
+                _append_step(out, {"kind": "event", "event_type": "STEP_ERROR",
+                                   "step_instruction": f"↻ auto-retry {attempt}/{MAX_TRIES} (resuming): {last_err[:120]}"})
+            p = subprocess.Popen([sys.executable, res["runpy"]], env=env, stdout=lf, stderr=subprocess.STDOUT)
+            job.update(pid=p.pid, status="running", phase="running"); _save()
+            rc = p.wait()
+        ok, why = (_lesson_complete(out, log) if (rc == 0 and lesson.exists()) else (False, ""))
+        if rc == 0 and lesson.exists() and ok:
+            _write_status(out, job, "staged")
+            _rebuild_catalog()
+            job.update(status="ready", rc=rc, lesson_url=f"/lessons/{res['slug']}/lesson.html", error=None,
+                       finished=_now())
+            _save()
+            return
+        # failed this attempt — capture the REAL reason, record it durably, back off, and (if tries remain) resume
+        last_err = ("unfinished — " + why) if (rc == 0 and lesson.exists()) else \
+                   (_log_error_tail(log) or f"chain exited rc={rc}; no lesson.html produced")
+        _record_failure(job, last_err, kind=(("incomplete" if (rc == 0 and lesson.exists()) else "died") + f"/try{attempt}"))
+        if attempt < MAX_TRIES:
+            time.sleep(15 if ("rate" in last_err.lower() or "429" in last_err or "quota" in last_err.lower()) else 4)
+    # exhausted all retries → final failure, surfaced on the timeline + recorded
+    job.update(status="error", rc=rc, error=last_err, finished=_now())
+    _append_step(out, {"kind": "event", "event_type": "STEP_ERROR",
+                       "step_instruction": f"✗ failed after {MAX_TRIES} auto-retries — {last_err}",
+                       "metadata": {"error": last_err}})
     _save()
 
 
@@ -506,6 +589,60 @@ def _sunset_sqlite(slug: str) -> dict:
     return {"sunset": removed}
 
 
+_BAKE_TAG = "[chiron][audio-bake]"
+
+def _emit_bake_event(out: Path, line: str) -> "str | None":
+    """Turn one bake-subprocess line into a per-clip sub-chip on the 'Baking audio' timeline —
+    each section/clip shows its own status (reused · baking · baked · failed). Returns the TERMINAL
+    status ('reused'|'baked'|'failed') when a clip finishes (so the caller can count progress), else None."""
+    s = line.strip()
+    if _BAKE_TAG not in s:
+        return None
+    body = s.split(_BAKE_TAG, 1)[1].strip()
+    def _clip(name: str) -> str:
+        return name.split("/", 1)[1] if name.startswith("section/") else name
+    inst, status = None, None
+    try:
+        if body.startswith("reused "):
+            inst = "♻ " + _clip(body[7:].split(" ")[0]) + " — reused"; status = "reused"
+        elif body.startswith("FAILED "):
+            inst = "⚠ " + _clip(body[7:].split(":", 1)[0].strip()) + " — failed"; status = "failed"
+        elif ": segment " in body:
+            name, seg = body.split(": segment ", 1)
+            cur, _, tot = seg.split(" ")[0].partition("/")
+            if "produced by" in body and cur == tot:            # last segment → section done
+                inst = "✓ " + _clip(name) + " — baked"; status = "baked"
+            elif cur == "1" and "synth" in body:                # first segment → section started
+                inst = "🎙 " + _clip(name) + " — baking (" + (tot or "?") + " seg)"
+    except Exception:
+        return None
+    if inst:
+        _append_step(out, {"kind": "event", "phase": "Baking audio",
+                           "event_type": "CLIP", "step_instruction": inst})
+    return status
+
+
+_BAKE_RATE_FILE = STATE / "bake_rate.json"
+
+def _bake_rate() -> "float | None":
+    """Learned avg seconds to bake ONE clip (EMA over past bakes) — the ETA prior. None until we have data."""
+    try:
+        return float(json.loads(_BAKE_RATE_FILE.read_text()).get("sec_per_clip")) or None
+    except Exception:
+        return None
+
+def _update_bake_rate(sec_per_clip: float) -> None:
+    """Blend this bake's measured per-clip time into the running average (EMA, α=0.3) — sharpens the ETA."""
+    if sec_per_clip <= 0:
+        return
+    prev = _bake_rate()
+    new = sec_per_clip if prev is None else (0.3 * sec_per_clip + 0.7 * prev)
+    try:
+        _BAKE_RATE_FILE.write_text(json.dumps({"sec_per_clip": round(new, 1)}))
+    except Exception:
+        pass
+
+
 def _run_bake(job: dict, out: Path) -> None:
     """Phase 2 — bake audio into an already-written lesson (reuses done clips by hash). Non-fatal:
     the lesson stays viewable regardless; only the audio state changes."""
@@ -520,7 +657,7 @@ def _run_bake(job: dict, out: Path) -> None:
     persona = "lucrezia" if domain == "medical-italian" else (job.get("persona") or "pauls-tutor")
     cmd = ["node", str(SKILL / "scripts" / "bake-lesson-audio.mjs"), str(out),
            "--domain", bake_domain, "--persona", persona]
-    job.update(status="baking", phase="baking", started=_now())
+    job.update(status="baking", phase="baking", started=_now(), finished=None)  # finished=None: this job is RE-running, drop the old end time (else elapsed goes negative)
     _save()
     # announce the recovery into the timeline: what's reused vs what we bake (so we never redo text)
     rec = _recovery(job["slug"])
@@ -530,16 +667,46 @@ def _run_bake(job: dict, out: Path) -> None:
                  if rec["clips_total"] else " → baking audio")
     _append_step(out, {"kind": "event", "phase": "Baking audio", "event_type": "RECOVERY",
                        "step_instruction": recovered, "metadata": {**rec}})
+    # tqdm-style progress + ETA on the 'Baking audio' header: count clips done/total, estimate time
+    # left from the live pace blended with the learned per-clip rate (sharpens across bakes).
+    total = rec.get("clips_total") or 0
+    prior = _bake_rate()
+    t0 = datetime.now(timezone.utc).timestamp()
+    done, baked_n = 0, 0
+    def _eta_txt(sec: int) -> str:
+        return "" if sec <= 0 else (f"~{sec}s left" if sec < 60 else f"~{sec // 60}m left")
     try:
         with open(log, "w") as lf:
-            p = subprocess.Popen(cmd, env={**os.environ}, stdout=lf, stderr=subprocess.STDOUT)
+            # stream the bake output: tee to the log AND emit a per-clip sub-chip onto the timeline
+            p = subprocess.Popen(cmd, env={**os.environ}, stdout=subprocess.PIPE,
+                                 stderr=subprocess.STDOUT, text=True, bufsize=1)
             job["pid"] = p.pid
             _save()
+            for line in p.stdout:
+                lf.write(line); lf.flush()
+                st = _emit_bake_event(out, line)
+                if st in ("reused", "baked", "failed"):
+                    done += 1
+                    if st == "baked":
+                        baked_n += 1
+                    el = datetime.now(timezone.utc).timestamp() - t0
+                    per = el / done                                   # measured wall-clock per clip
+                    if prior and done < 3:                            # early on, lean on the learned prior
+                        per = (per + prior) / 2
+                    eta = round(per * max(0, total - done))
+                    job["bake_progress"] = {"done": done, "total": total, "eta_seconds": eta}
+                    prog_txt = f"{done}/{total} clips" + (f" · {_eta_txt(eta)}" if done < total and eta else "")
+                    _append_step(out, {"kind": "event", "phase": "Baking audio", "event_type": "PROGRESS",
+                                       "step_instruction": prog_txt,
+                                       "metadata": {"done": done, "total": total, "eta_seconds": eta}})
             rc = p.wait()
     except Exception as e:
         job.update(status="audio-failed", phase="error", error=str(e), finished=_now())
         _save()
         return
+    if baked_n and done:                                              # learn the pace ONLY from real bakes
+        _update_bake_rate((datetime.now(timezone.utc).timestamp() - t0) / done)
+    job.pop("bake_progress", None)
     # ready ONLY when the clips are actually complete — not merely "some mp3 exists". A partial
     # bake (e.g. 4/6 done, 2 failed) must stay re-bakeable, not false-ready. Use the same recovery
     # verdict the panel uses (needs_rebake = text ok but clips incomplete/failed).
@@ -580,6 +747,29 @@ app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], all
 _load()
 _reconcile()
 threading.Thread(target=_bake_worker, daemon=True).start()   # the single bake queue-worker
+
+
+def _resume_orphaned_bakes() -> None:
+    """A restart wipes the in-memory _BAKE_Q and kills any in-flight bake subprocess, leaving jobs
+    stuck in 'baking'/'queued' forever (zombies). On startup, re-enqueue those with viewable text so
+    they resume; mark the textless ones failed instead of leaving them a phantom 'baking'."""
+    seen = set()
+    for j in list(JOBS.values()):
+        sl = j.get("slug")
+        if not sl or j.get("status") not in ("baking", "queued"):
+            continue
+        if not (GEN / sl / "lesson.html").exists():
+            j.update(status="error", phase="interrupted (no text)")
+            continue
+        if sl in seen:
+            continue
+        seen.add(sl)
+        j.update(status="queued", phase="queued for bake", started=_now(), finished=None)
+        _BAKE_Q.put(sl)
+    _save()
+
+
+_resume_orphaned_bakes()   # recover bakes interrupted by the last restart
 
 
 def _slug_of(ref: str) -> str:
@@ -697,15 +887,45 @@ def bake(ref: str):
     out = GEN / slug
     if not (out / "lesson.html").exists():
         raise HTTPException(404, f"no viewable lesson for '{slug}' — generate the text first (stage=audio)")
-    # already queued or baking? don't double-enqueue THIS lesson (but many DIFFERENT lessons can queue)
-    infl = next((j for j in JOBS.values() if j.get("slug") == slug and j.get("status") in ("queued", "baking")), None)
+    # refuse only if ACTIVELY baking (don't interrupt). A stale 'queued' (worker never grabbed it — the
+    # in-memory queue was lost on a restart) is NOT a real duplicate → fall through and re-enqueue it.
+    infl = next((j for j in JOBS.values() if j.get("slug") == slug and j.get("status") == "baking"), None)
     if infl:
-        return {"job_id": infl["id"], "slug": slug, "status": infl.get("status"), "duplicate": True}
+        return {"job_id": infl["id"], "slug": slug, "status": "baking", "duplicate": True}
     job = _job_for_slug(slug)
-    job.update(status="queued", phase="queued for bake")
+    job.update(status="queued", phase="queued for bake", started=_now(), finished=None)
     _save()
     _BAKE_Q.put(slug)                       # a single worker bakes one at a time (Mac TTS can't take parallel)
     return {"job_id": job["id"], "slug": slug, "status": "queued", "queued": _BAKE_Q.qsize()}
+
+
+@app.post("/bake-all")
+def bake_all():
+    """Queue an audio bake for EVERY viewable-but-unbaked lesson (text done, audio incomplete) —
+    the batch backfill for quick-preview lessons. REFUSES while any TEXT generation is running, so
+    bakes never compete with generation for the Mac TTS. One-at-a-time via the shared bake queue."""
+    generating = [j for j in JOBS.values() if j.get("status") == "running"]
+    if generating:
+        return {"ok": False, "reason": "generation in progress — try again when text lessons finish",
+                "generating": len(generating)}
+    seen, queued = set(), []
+    for j in JOBS.values():
+        slug = j.get("slug")
+        if not slug or slug in seen or j.get("status") == "published":
+            continue
+        seen.add(slug)
+        if j.get("status") in ("queued", "baking") or slug in _CANCELLED:
+            continue                                   # already in flight
+        if not (GEN / slug / "lesson.html").exists():
+            continue                                   # no viewable text yet
+        rec = _recovery(slug)                          # non-blocking (ro, short timeout)
+        if rec.get("text") and rec.get("needs_rebake"):
+            job = _job_for_slug(slug)
+            job.update(status="queued", phase="queued for bake", started=_now(), finished=None)
+            _BAKE_Q.put(slug)
+            queued.append(slug)
+    _save()
+    return {"ok": True, "queued": len(queued), "slugs": queued, "pending": _BAKE_Q.qsize()}
 
 
 @app.get("/jobs/{ref}/steps")
