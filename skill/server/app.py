@@ -473,6 +473,46 @@ def _ems(v):   # sqlite epoch-ms int → aware datetime
     except Exception: return None
 
 
+# ── captured_items — the ONE store behind the unified learning protocol ─────────────────
+# ⭐ starred tutor answers · 🖉 highlighted term pills · 📌 SSM collected items all land here.
+# PROVENANCE IS THE VALUE: a bare term makes garbage cards; the term + the section it came from
+# + the answer that explained it makes a good one. So we store the context, never just the string.
+# PRD: prd/chiron_unified_learning_protocol_2026-07-17.md
+_CAPTURE_DDL = """
+create table if not exists captured_items (
+  id               bigserial primary key,
+  kind             text not null,              -- term | answer | note
+  text             text not null,              -- the handle (the term, or a short title)
+  question         text,                       -- what the learner asked (kind=answer)
+  source_answer    text,                       -- the explanation that taught it
+  surrounding_text text,                       -- the section text it was captured from
+  lesson_slug      text,
+  section_id       text,
+  concept          text,
+  model            text,
+  source           text,                       -- tutor | ssm-collect | …
+  created_at       timestamptz not null default now(),
+  processed_at     timestamptz                 -- null = unprocessed (drives the inbox count)
+);
+create index if not exists captured_items_slug_idx   on captured_items(lesson_slug);
+create index if not exists captured_items_unproc_idx on captured_items(processed_at) where processed_at is null;
+create index if not exists captured_items_fts_idx    on captured_items using gin(
+  to_tsvector('english', coalesce(text,'') || ' ' || coalesce(question,'') || ' ' || coalesce(source_answer,''))
+);
+"""
+_capture_ready = False
+
+def _ensure_capture_schema() -> None:
+    """Idempotent, self-healing: create captured_items on first use (the corpus schema was applied
+    out-of-band, so ship the DDL with the code rather than depending on a manual migration)."""
+    global _capture_ready
+    if _capture_ready:
+        return
+    with _pg() as pg:
+        pg.cursor().execute(_CAPTURE_DDL)
+    _capture_ready = True
+
+
 # per-lesson study tables → (pg upsert). counts returned for verify.
 def _migrate_lesson_to_corpus(slug: str) -> dict:
     import sqlite3
@@ -1156,6 +1196,74 @@ def corpus_sunset(ref: str):
     if not ver["verified"]:
         raise HTTPException(409, "migration not verified — refusing to sunset")
     return {"slug": slug, "verified": True, **_sunset_sqlite(slug)}
+
+
+class CaptureIn(BaseModel):
+    kind: str = "answer"                 # term | answer | note
+    text: str                            # the handle (the term, or a short title)
+    question: str | None = None
+    source_answer: str | None = None
+    surrounding_text: str | None = None  # PROVENANCE — the section it came from
+    lesson_slug: str | None = None
+    section_id: str | None = None
+    concept: str | None = None
+    model: str | None = None
+    source: str | None = "tutor"
+
+
+@app.post("/capture")
+def capture(c: CaptureIn):
+    """⭐/🖉 one-click capture → captured_items. Fire-and-forget from the lesson: must be fast and
+    must never interrupt study. Stores PROVENANCE (question + answer + section) so the downstream
+    card/MCQ/lesson generators have something worth generating from."""
+    if not (c.text or "").strip():
+        raise HTTPException(400, "empty capture")
+    _ensure_capture_schema()
+    with _pg() as pg:
+        cur = pg.cursor()
+        cur.execute("""insert into captured_items
+              (kind,text,question,source_answer,surrounding_text,lesson_slug,section_id,concept,model,source)
+              values (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s) returning id""",
+                    (c.kind, c.text.strip()[:400], c.question, c.source_answer,
+                     (c.surrounding_text or "")[:4000], c.lesson_slug, c.section_id,
+                     c.concept, c.model, c.source))
+        new_id = cur.fetchone()[0]
+        cur.execute("select count(*) from captured_items where processed_at is null")
+        unprocessed = cur.fetchone()[0]
+    return {"ok": True, "id": new_id, "unprocessed": unprocessed}
+
+
+@app.get("/captures")
+def captures(slug: str | None = None, q: str | None = None, unprocessed: bool = False, limit: int = 100):
+    """Browse/search everything ever flagged — the inbox. `q` = Postgres FTS across the term, the
+    question and the answer (so 'biliary vomiting' finds it months later)."""
+    _ensure_capture_schema()
+    where, args = [], []
+    if slug:
+        where.append("lesson_slug = %s"); args.append(slug)
+    if unprocessed:
+        where.append("processed_at is null")
+    if q:
+        where.append("to_tsvector('english', coalesce(text,'') || ' ' || coalesce(question,'') || ' ' "
+                     "|| coalesce(source_answer,'')) @@ plainto_tsquery('english', %s)")
+        args.append(q)
+    sql = ("select id,kind,text,question,lesson_slug,section_id,concept,source,"
+           "created_at,processed_at from captured_items"
+           + (" where " + " and ".join(where) if where else "")
+           + " order by created_at desc limit %s")
+    args.append(max(1, min(limit, 500)))
+    with _pg() as pg:
+        cur = pg.cursor()
+        cur.execute(sql, args)
+        cols = [d[0] for d in cur.description]
+        rows = [dict(zip(cols, r)) for r in cur.fetchall()]
+        cur.execute("select count(*) from captured_items where processed_at is null")
+        unproc = cur.fetchone()[0]
+    for r in rows:
+        for k in ("created_at", "processed_at"):
+            if r.get(k):
+                r[k] = r[k].isoformat()
+    return {"items": rows, "count": len(rows), "unprocessed": unproc}
 
 
 @app.get("/corpus/status")
