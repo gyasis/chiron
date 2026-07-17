@@ -47,6 +47,7 @@
   var sectionId = null;
   var sectionText = '';
   var lastQuestion = null; // most recent user turn — paired with the next assistant reply for capture
+  var mathBlocks = []; // per-render array of math→HTML fragments (sub/sup/frac), placeholder-swapped like codeBlocks (reset per mdToHtml call)
 
   var tab, scrim, drawer, head, badge, title, modelSel, modeBtn, penBtn, newChatBtn, gearBtn, closeBtn,
       scope, chips, msgs, dispatchBar, dispatchLabel, dispatchSpin, dispatchKeepBtn, dispatchCardsBtn,
@@ -1391,15 +1392,119 @@
   function texConv(inner) {   // LaTeX fragment → plain Unicode text (spacing/braces cleaned)
     return texCmds(inner).replace(/\\[,;!:> ]/g, ' ').replace(/[{}]/g, '').replace(/\s+/g, ' ').trim();
   }
+  // ── inline-HTML math (sub/sup/frac/sqrt) — tried BEFORE falling back to
+  // MathJax for any "complex" ($\^_$ or \frac etc.) fragment. The tutor
+  // sidebar is inline HTML and medical text is full of Na⁺, HCO₃⁻, PaCO₂,
+  // cm², dosing fractions — those render fine as plain markup without a
+  // MathJax round-trip. Returns null (→ caller falls back to \(…\)/\[…\]
+  // for MathJax) for constructs HTML can't do well: \int \sum \prod \lim
+  // \begin \matrix \binom \vec \hat, nested/complex \frac, or any
+  // unrecognized \command.
+  var TEX_HTML_DENY = /\\(int|sum|prod|lim|begin|matrix|binom|vec|hat)(?![a-zA-Z])/;
+
+  function findMatchingBrace(s, openIdx) { // s[openIdx] === '{' — returns index of its matching '}' or -1
+    var depth = 0;
+    for (var i = openIdx; i < s.length; i++) {
+      if (s[i] === '{') depth++;
+      else if (s[i] === '}') { depth--; if (depth === 0) return i; }
+    }
+    return -1;
+  }
+
+  function texToHtml(inner) {
+    if (TEX_HTML_DENY.test(inner)) return null;
+    var out = '', i = 0, n = inner.length, ok = true;
+    while (i < n && ok) {
+      var ch = inner[i];
+      if (ch === '\\') {
+        var rest = inner.slice(i);
+        var mf = /^\\frac\s*/.exec(rest);
+        if (mf) {
+          i += mf[0].length;
+          if (inner[i] !== '{') { ok = false; break; }
+          var closeA = findMatchingBrace(inner, i);
+          if (closeA === -1) { ok = false; break; }
+          var argA = inner.slice(i + 1, closeA);
+          i = closeA + 1;
+          while (inner[i] === ' ') i++;
+          if (inner[i] !== '{') { ok = false; break; }
+          var closeB = findMatchingBrace(inner, i);
+          if (closeB === -1) { ok = false; break; }
+          var argB = inner.slice(i + 1, closeB);
+          i = closeB + 1;
+          // nested/complex \frac (another \frac, sup/sub, or a deny-listed construct) → bail to MathJax
+          if (/\\frac|[\^_]/.test(argA) || /\\frac|[\^_]/.test(argB) ||
+              TEX_HTML_DENY.test(argA) || TEX_HTML_DENY.test(argB)) { ok = false; break; }
+          out += '<span class="ct-frac"><span class="ct-frac-n">' + texConv(argA) +
+                 '</span><span class="ct-frac-d">' + texConv(argB) + '</span></span>';
+          continue;
+        }
+        var ms = /^\\sqrt\s*/.exec(rest);
+        if (ms) {
+          i += ms[0].length;
+          if (inner[i] !== '{') { ok = false; break; }
+          var closeS = findMatchingBrace(inner, i);
+          if (closeS === -1) { ok = false; break; }
+          var argS = inner.slice(i + 1, closeS);
+          i = closeS + 1;
+          if (/\\frac|[\^_]/.test(argS) || TEX_HTML_DENY.test(argS)) { ok = false; break; }
+          out += '√<span class="ct-sqrt">' + texConv(argS) + '</span>';
+          continue;
+        }
+        var msp = /^\\[,;!:> ]/.exec(rest);
+        if (msp) { out += ' '; i += msp[0].length; continue; }
+        var mc = /^\\([a-zA-Z]+)/.exec(rest);
+        if (mc) {
+          if (Object.prototype.hasOwnProperty.call(TEX_UNI, mc[1])) {
+            out += TEX_UNI[mc[1]];
+            i += mc[0].length;
+            continue;
+          }
+          ok = false; break; // unrecognized \command — let MathJax try
+        }
+        ok = false; break; // lone backslash we don't understand
+      }
+      if (ch === '^' || ch === '_') {
+        i++;
+        var content;
+        if (inner[i] === '{') {
+          var close = findMatchingBrace(inner, i);
+          if (close === -1) { ok = false; break; }
+          content = inner.slice(i + 1, close);
+          i = close + 1;
+        } else if (i < n) {
+          content = inner[i]; i++;
+        } else { ok = false; break; }
+        if (/\\frac|\\sqrt/.test(content) || TEX_HTML_DENY.test(content)) { ok = false; break; }
+        out += (ch === '^' ? '<sup>' : '<sub>') + texConv(content) + (ch === '^' ? '</sup>' : '</sub>');
+        continue;
+      }
+      if (ch === '{' || ch === '}') { i++; continue; } // stray grouping braces — drop
+      out += ch; i++;
+    }
+    if (!ok) return null;
+    return out.replace(/\s+/g, ' ').trim();
+  }
+
+  // wraps a "complex" fragment: try inline-HTML first, else fall back to the MathJax delimiters
+  function mathOrHtml(inner, openDelim, closeDelim) {
+    var html = texToHtml(inner);
+    if (html === null) return openDelim + inner + closeDelim;
+    var idx = mathBlocks.length;
+    mathBlocks.push(html);
+    return '@@MJ' + idx + '@@';
+  }
+
   function latexToUnicode(text) {
     if (!text || text.indexOf('\\') === -1 && text.indexOf('$') === -1) return text;
     // display math $$…$$ and \[…\]
-    text = text.replace(/\$\$([\s\S]+?)\$\$/g, function (m, inner) { return TEX_COMPLEX.test(inner) ? '\\[' + inner + '\\]' : texConv(inner); });
-    text = text.replace(/\\\[([\s\S]+?)\\\]/g, function (m, inner) { return TEX_COMPLEX.test(inner) ? m : texConv(inner); });
-    // inline \(…\) — already MathJax-native; only downgrade to Unicode when simple
-    text = text.replace(/\\\(([\s\S]+?)\\\)/g, function (m, inner) { return TEX_COMPLEX.test(inner) ? m : texConv(inner); });
-    // inline $…$ — math ONLY if it holds a real \command (so "$5 and $10" is untouched)
-    text = text.replace(/\$([^$\n]*\\[a-zA-Z][^$\n]*)\$/g, function (m, inner) { return TEX_COMPLEX.test(inner) ? '\\(' + inner + '\\)' : texConv(inner); });
+    text = text.replace(/\$\$([\s\S]+?)\$\$/g, function (m, inner) { return TEX_COMPLEX.test(inner) ? mathOrHtml(inner, '\\[', '\\]') : texConv(inner); });
+    text = text.replace(/\\\[([\s\S]+?)\\\]/g, function (m, inner) { return TEX_COMPLEX.test(inner) ? mathOrHtml(inner, '\\[', '\\]') : texConv(inner); });
+    // inline \(…\) — already MathJax-native; only downgrade to Unicode/HTML when simple/renderable
+    text = text.replace(/\\\(([\s\S]+?)\\\)/g, function (m, inner) { return TEX_COMPLEX.test(inner) ? mathOrHtml(inner, '\\(', '\\)') : texConv(inner); });
+    // inline $…$ — math ONLY if it holds a real \command OR a bare ^/_ (sub/superscript,
+    // e.g. "Na$^+$"), so "$5 and $10" (no backslash, no ^/_) is left untouched
+    text = text.replace(/\$([^$\n]*(?:\\[a-zA-Z]|[\^_])[^$\n]*)\$/g, function (m, inner) { return TEX_COMPLEX.test(inner) ? mathOrHtml(inner, '\\(', '\\)') : texConv(inner); });
     // any stray bare \command outside delimiters (e.g. a lone \rightarrow)
     text = texCmds(text);
     return text;
@@ -1408,6 +1513,7 @@
   function mdToHtml(src) {
     if (!src) return '';
     var out = escapeHtml(src);
+    mathBlocks = []; // reset per-render (like codeBlocks below)
 
     // fenced code blocks → placeholders, so later rules can't mangle them
     var codeBlocks = [];
@@ -1488,6 +1594,7 @@
 
     var result = htmlParts.join('\n');
     result = result.replace(/@@CB(\d+)@@/g, function (m, idx) { return codeBlocks[idx]; });
+    result = result.replace(/@@MJ(\d+)@@/g, function (m, idx) { return mathBlocks[idx]; });
     return result;
   }
 
