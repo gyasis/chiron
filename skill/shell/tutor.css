@@ -24,7 +24,7 @@ html.chiron-tutor-pushed body {
 .chiron-tutor-tab {
   position: fixed; right: 0; top: 42%; transform: translateY(-50%);
   writing-mode: vertical-rl;
-  background: var(--color-accent);
+  background: var(--color-accent, #D94F30);
   color: #fff;
   font: 800 12px var(--font-display, sans-serif);
   padding: 12px 6px;
@@ -55,14 +55,14 @@ html.chiron-tutor-pushed body {
   width: var(--ct-width);
   max-width: 94vw;
   background: var(--color-surface, #fff);
-  border-left: 1px solid var(--color-border);
+  border-left: 1px solid var(--color-border, #E5DFD6);
   box-shadow: -10px 0 30px rgba(0,0,0,.16);
   z-index: 10000;
   transform: translateX(102%);
   transition: transform .28s ease;
   display: flex;
   flex-direction: column;
-  font-family: var(--font-body);
+  font-family: var(--font-body, 'DM Sans', -apple-system, sans-serif);
 }
 .chiron-tutor.open { transform: none; }
 
@@ -85,7 +85,7 @@ html.chiron-tutor-pushed body {
 .ct-head {
   display: flex; align-items: center; gap: 6px; flex-wrap: nowrap;
   padding: 10px 10px 10px 12px;
-  border-bottom: 1px solid var(--color-border);
+  border-bottom: 1px solid var(--color-border, #E5DFD6);
   flex: none;
 }
 .ct-badge {
@@ -94,38 +94,38 @@ html.chiron-tutor-pushed body {
   font-size: 13px;
 }
 .ct-title {
-  flex: none; font-family: var(--font-display); font-weight: 700; font-size: 14px;
-  color: var(--color-text);
+  flex: none; font-family: var(--font-display, 'Bricolage Grotesque', Georgia, serif); font-weight: 700; font-size: 14px;
+  color: var(--color-text, #2C2A28);
 }
 /* model select takes the flexible middle and SHRINKS (truncates) so the pinned
    mode/pen/close buttons on the right are never pushed off the edge */
 .ct-model {
   flex: 0 1 auto; min-width: 0; max-width: 150px;
-  font: 600 11px var(--font-body);
-  color: var(--color-text);
+  font: 600 11px var(--font-body, 'DM Sans', -apple-system, sans-serif);
+  color: var(--color-text, #2C2A28);
   background: var(--color-bg, transparent);
-  border: 1px solid var(--color-border);
+  border: 1px solid var(--color-border, #E5DFD6);
   border-radius: 999px;
   padding: 4px 8px;
   cursor: pointer;
 }
 .ct-mode {
   flex: none; margin-left: auto;   /* push mode/pen/close as a cluster to the right edge */
-  background: transparent; border: 1px solid var(--color-border);
+  background: transparent; border: 1px solid var(--color-border, #E5DFD6);
   border-radius: 999px; width: 26px; height: 26px; cursor: pointer; font-size: 13px;
 }
 .ct-pen {
-  flex: none; background: transparent; border: 1px solid var(--color-border);
+  flex: none; background: transparent; border: 1px solid var(--color-border, #E5DFD6);
   border-radius: 999px; width: 28px; height: 28px; cursor: pointer; font-size: 13px;
 }
 .ct-pen.on { background: #fde68a; color: #7a5b00; }
 .ct-gear {
-  flex: none; background: transparent; border: 1px solid var(--color-border);
+  flex: none; background: transparent; border: 1px solid var(--color-border, #E5DFD6);
   border-radius: 999px; width: 26px; height: 26px; cursor: pointer; font-size: 13px;
 }
 .ct-close {
   flex: none; background: transparent; border: 0; cursor: pointer;
-  font-size: 16px; color: var(--color-text-secondary); padding: 2px 4px;
+  font-size: 16px; color: var(--color-text-secondary, #6B6560); padding: 2px 4px;
 }
 
 /* Settings popover (⚙) — anchored under the header, inside the drawer */
@@ -134,7 +134,7 @@ html.chiron-tutor-pushed body {
   display: none;
   width: 200px;
   background: var(--color-surface, #fff);
-  border: 1px solid var(--color-border);
+  border: 1px solid var(--color-border, #E5DFD6);
   border-radius: 10px;
   box-shadow: 0 8px 24px rgba(0,0,0,.18);
   padding: 10px 12px;
@@ -147,11 +147,11 @@ html.chiron-tutor-pushed body {
 .ct-settings-row {
   display: flex; align-items: center; justify-content: space-between; gap: 10px;
 }
-.ct-settings-label { font-size: 12.5px; color: var(--color-text); }
+.ct-settings-label { font-size: 12.5px; color: var(--color-text, #2C2A28); }
 .ct-toggle {
   flex: none; width: 34px; height: 20px; padding: 0;
   border: 0; border-radius: 999px; cursor: pointer;
-  background: var(--color-border);
+  background: var(--color-border, #E5DFD6);
   position: relative;
   transition: background .18s ease;
 }
@@ -161,26 +161,26 @@ html.chiron-tutor-pushed body {
   box-shadow: 0 1px 3px rgba(0,0,0,.3);
   transition: transform .18s ease;
 }
-.ct-toggle.on { background: var(--color-accent); }
+.ct-toggle.on { background: var(--color-accent, #D94F30); }
 .ct-toggle.on .ct-toggle-knob { transform: translateX(14px); }
 
 /* "Live updates" transport switch — Stream (SSE) vs Poll */
 .ct-transport {
-  flex: none; display: inline-flex; border: 1px solid var(--color-border);
+  flex: none; display: inline-flex; border: 1px solid var(--color-border, #E5DFD6);
   border-radius: 999px; overflow: hidden;
 }
 .ct-transport-btn {
   border: 0; background: transparent; cursor: pointer;
-  font: 700 10.5px var(--font-body); padding: 3px 9px;
+  font: 700 10.5px var(--font-body, 'DM Sans', -apple-system, sans-serif); padding: 3px 9px;
   color: var(--color-text-secondary, #64748b);
 }
-.ct-transport-btn.on { background: var(--color-accent); color: #fff; }
+.ct-transport-btn.on { background: var(--color-accent, #D94F30); color: #fff; }
 
 .ct-scope {
   margin: 8px 12px 0;
   display: inline-flex; align-items: center; gap: 6px;
   font-size: 11px; font-weight: 600;
-  color: var(--color-accent);
+  color: var(--color-accent, #D94F30);
   background: var(--color-accent-light, rgba(217,79,48,.10));
   border-radius: 999px;
   padding: 4px 10px;
@@ -206,7 +206,7 @@ html.chiron-tutor-pushed body {
 }
 .ct-chip-num {
   flex: none; width: 15px; height: 15px; display: grid; place-items: center;
-  border-radius: 50%; background: var(--color-accent); color: #fff;
+  border-radius: 50%; background: var(--color-accent, #D94F30); color: #fff;
   font-size: 9px; font-weight: 800;
 }
 .ct-chip-text {
@@ -236,7 +236,7 @@ html.chiron-tutor-pushed body {
 }
 .ct-bub.u {
   align-self: flex-end;
-  background: var(--color-accent);
+  background: var(--color-accent, #D94F30);
   color: #fff;
   border-bottom-right-radius: 3px;
 }
@@ -267,7 +267,7 @@ html.chiron-tutor-pushed body {
 .ct-spin {
   flex: none; width: 10px; height: 10px;
   border: 2px solid rgba(0,0,0,.15);
-  border-top-color: var(--color-accent);
+  border-top-color: var(--color-accent, #D94F30);
   border-radius: 50%;
   animation: ct-spin .7s linear infinite;
 }
@@ -301,7 +301,7 @@ html.chiron-tutor-pushed body {
   overflow-wrap: anywhere;
 }
 .ct-bub.a pre code { background: transparent; padding: 0; white-space: inherit; }
-.ct-bub.a a { color: var(--color-accent); text-decoration: underline; }
+.ct-bub.a a { color: var(--color-accent, #D94F30); text-decoration: underline; }
 .ct-bub.a hr { border: 0; border-top: 1px solid rgba(0,0,0,.12); margin: .5em 0; }
 .ct-bub.a table {
   display: block;
@@ -336,9 +336,9 @@ html.chiron-tutor-pushed body {
   font-size: 11.5px;
   padding: 5px 10px;
   border-radius: 999px;
-  border: 1px solid var(--color-border);
+  border: 1px solid var(--color-border, #E5DFD6);
   background: var(--color-bg, transparent);
-  color: var(--color-accent);
+  color: var(--color-accent, #D94F30);
   cursor: pointer;
   text-align: left;
   line-height: 1.25;
@@ -350,7 +350,7 @@ html.chiron-tutor-pushed body {
   flex: none;
   display: flex; align-items: flex-end; gap: 8px;
   padding: 10px 12px;
-  border-top: 1px solid var(--color-border);
+  border-top: 1px solid var(--color-border, #E5DFD6);
 }
 .ct-input textarea {
   flex: 1;
@@ -358,18 +358,18 @@ html.chiron-tutor-pushed body {
   max-height: 120px;
   font: inherit;
   font-size: 13px;
-  color: var(--color-text);
+  color: var(--color-text, #2C2A28);
   background: var(--color-bg, transparent);
-  border: 1px solid var(--color-border);
+  border: 1px solid var(--color-border, #E5DFD6);
   border-radius: 12px;
   padding: 8px 10px;
 }
 .ct-send {
   flex: none; width: 34px; height: 34px; border-radius: 50%;
-  background: var(--color-accent); color: #fff; border: 0;
+  background: var(--color-accent, #D94F30); color: #fff; border: 0;
   cursor: pointer; font-size: 15px; display: grid; place-items: center;
 }
-.ct-send:hover { background: var(--color-accent-hover); }
+.ct-send:hover { background: var(--color-accent-hover, #C4432A); }
 
 @media (max-width: 640px) {
   .chiron-tutor {
@@ -378,7 +378,7 @@ html.chiron-tutor-pushed body {
     width: 100%;
     max-width: none;
     border-left: 0;
-    border-top: 1px solid var(--color-border);
+    border-top: 1px solid var(--color-border, #E5DFD6);
     border-radius: 16px 16px 0 0;
     transform: translateY(102%);
   }
