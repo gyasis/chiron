@@ -119,6 +119,11 @@ html.chiron-tutor-pushed body {
   border-radius: 999px; width: 28px; height: 28px; cursor: pointer; font-size: 13px;
 }
 .ct-pen.on { background: #fde68a; color: #7a5b00; }
+.ct-new {
+  flex: none; background: transparent; border: 1px solid var(--color-border, #E5DFD6);
+  border-radius: 999px; width: 26px; height: 26px; cursor: pointer; font-size: 13px;
+  color: var(--color-text-secondary, #6B6560);
+}
 .ct-gear {
   flex: none; background: transparent; border: 1px solid var(--color-border, #E5DFD6);
   border-radius: 999px; width: 26px; height: 26px; cursor: pointer; font-size: 13px;
@@ -212,6 +217,12 @@ html.chiron-tutor-pushed body {
 .ct-chip-text {
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 180px;
 }
+.ct-chip-star {
+  flex: none; background: transparent; border: 0; cursor: pointer;
+  font-size: 11px; color: #7c5a0a; line-height: 1; padding: 0 2px;
+}
+.ct-chip-star.saved { color: #f59e0b; }
+.ct-chip-star:disabled { cursor: default; }
 .ct-chip-x {
   flex: none; background: transparent; border: 0; cursor: pointer;
   font-size: 11px; color: #7c5a0a; line-height: 1; padding: 0 2px;
@@ -324,6 +335,22 @@ html.chiron-tutor-pushed body {
   font-size: 10.5px;
   color: #0d9488;
 }
+.ct-star {
+  display: block;
+  width: 100%;
+  margin-top: 5px;
+  padding: 0;
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+  font-size: 13px;
+  line-height: 1;
+  text-align: right;
+  color: var(--color-text-muted, #9E9790);
+}
+.ct-star:hover { color: var(--color-accent, #D94F30); }
+.ct-star.saved { color: #f59e0b; }
+.ct-star:disabled { cursor: default; }
 
 /* Follow-up suggestion pills — rendered under the latest assistant reply */
 .ct-sugg {
