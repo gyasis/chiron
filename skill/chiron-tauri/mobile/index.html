@@ -31,12 +31,35 @@ body{background:var(--bg);color:var(--fg);font-family:var(--fb);height:100vh;ove
 .search{display:flex;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--border);border-radius:99px;padding:11px 15px;color:var(--fg);font-size:14px;margin:12px 0 8px}
 .search input{border:none;background:none;flex:1;font:inherit;color:var(--fg);outline:none}
 .chips{display:flex;gap:7px;overflow-x:auto;padding-bottom:8px}.chips::-webkit-scrollbar{display:none}
-.chip{flex:0 0 auto;font-size:12.5px;padding:7px 14px;border-radius:99px;border:1px solid var(--border);background:var(--bg);color:var(--fg2);white-space:nowrap}
-.chip.on{background:var(--accent);color:#fff;border-color:var(--accent)}
+/* PILL RULE: solid fill, NO border, background never equals the app background (--bg) */
+.chip{flex:0 0 auto;font-size:12.5px;padding:7px 14px;border-radius:99px;border:none;background:var(--elevated);color:var(--fg2);white-space:nowrap}
+.chip.on{background:var(--accent);color:#fff}
 .sortrow{display:flex;align-items:center;gap:6px;margin:2px 0 6px;overflow-x:auto}
 .sortrow::-webkit-scrollbar{display:none}
 .sortlab{font-size:10.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-right:2px;flex:0 0 auto}
 .chip.sm{padding:5px 11px;font-size:12px}
+.ctrlsp{flex:1 0 8px}
+.chip.vt{padding:5px 10px;font-size:13px}.chip.hf.act{background:var(--medit);color:#fff}
+/* hide panel */
+.hidepanel{background:var(--surface);border-radius:14px;padding:10px 12px;margin:2px 0 10px}
+.hidepanel .hgh{display:flex;align-items:center;font-family:var(--fh);font-weight:700;font-size:10.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin:8px 2px 5px}
+.hidepanel .hgh:first-child{margin-top:2px}
+.hidepanel .hgh .un{margin-left:auto;font-size:10px;font-weight:700;color:var(--accent);text-transform:none;letter-spacing:0}
+.hidepanel .hgh .un.dim{opacity:.3}
+.hidepanel .hwrap{display:flex;flex-wrap:wrap;gap:6px}
+.hchip{font-size:12px;padding:6px 12px;border-radius:99px;background:var(--elevated);color:var(--fg2);display:inline-flex;align-items:center;gap:6px}
+.hchip .bx{width:13px;height:13px;border-radius:4px;background:var(--muted);flex:0 0 auto}
+.hchip.on .bx{background:var(--ok)}.hchip.off{opacity:.5}.hchip.off .hn{text-decoration:line-through}
+/* tiles */
+.tgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:8px}
+.tcard{background:var(--surface);border-radius:14px;overflow:hidden;display:flex;flex-direction:column}
+.tcard .tstrip{height:5px}.tcard.m .tstrip{background:var(--med)}.tcard.mi .tstrip{background:var(--medit)}.tcard.l .tstrip{background:var(--lang)}.tcard.q .tstrip{background:var(--border)}
+.tcard .tbd{padding:10px 11px 0;flex:1}
+.tcard .tt{font-family:var(--fh);font-weight:700;font-size:13px;line-height:1.25;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.tcard .tsub{font-size:10px;color:var(--muted);margin-top:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tcard .tbd .tag{margin-top:6px;display:inline-block}
+.tcard .tft{display:flex;align-items:center;gap:6px;padding:9px 11px 11px;margin-top:6px;flex-wrap:wrap}
+.tcard .tft .btn{padding:5px 10px;font-size:11px}
 .sec{display:flex;align-items:center;gap:8px;font-family:var(--fh);font-weight:700;font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin:18px 2px 8px}
 .sec .ct{font-size:11px;font-weight:700;color:#fff;background:var(--accent);border-radius:99px;padding:1px 8px;letter-spacing:0}
 .sec .note{margin-left:auto;font-weight:500;font-size:11px;letter-spacing:0;text-transform:none}
@@ -52,8 +75,8 @@ body{background:var(--bg);color:var(--fg);font-family:var(--fb);height:100vh;ove
 .tag.rev{background:var(--reviewbg);color:var(--reviewfg);font-weight:700}
 .clip{font-size:11px;color:var(--muted)}
 .act{flex:0 0 auto;display:flex;align-items:center;gap:9px}
-.btn{font-size:12px;font-weight:700;font-family:var(--fh);border-radius:99px;padding:7px 13px;border:1px solid var(--border);background:var(--bg);color:var(--accent);white-space:nowrap}
-.btn.dl{color:var(--ok);border-color:var(--ok)}.btn.gen{color:#fff;background:var(--accent);border-color:var(--accent)}.btn.acc{color:#fff;background:var(--ok);border-color:var(--ok)}
+.btn{font-size:12px;font-weight:700;font-family:var(--fh);border-radius:99px;padding:7px 13px;border:none;background:var(--elevated);color:var(--accent);white-space:nowrap}
+.btn.dl{color:#fff;background:var(--ok)}.btn.gen{color:#fff;background:var(--accent)}.btn.acc{color:#fff;background:var(--ok)}
 .chev{color:var(--muted);font-size:22px}
 .btn.spin{color:var(--accent);border-color:var(--accent);display:inline-flex;align-items:center;gap:6px}
 .spinc{width:13px;height:13px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin360 .7s linear infinite;flex:0 0 auto}
@@ -162,10 +185,10 @@ body{background:var(--bg);color:var(--fg);font-family:var(--fb);height:100vh;ove
 .acard.tapp{cursor:pointer}
 .acthead{font-family:var(--fh);font-weight:700;font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin:16px 2px 8px}
 .aacts{display:flex;gap:8px;margin-top:11px}
-.abtn{flex:0 0 auto;font-family:var(--fh);font-weight:700;font-size:12.5px;border-radius:99px;padding:8px 15px;border:1px solid var(--accent);background:var(--accent);color:#fff}
-.abtn.ghost{background:none;color:var(--accent)}
-.abtn.accept{background:var(--ok);border-color:var(--ok)}
-.abtn.retry{background:none;color:#dc2626;border-color:#dc2626}
+.abtn{flex:0 0 auto;font-family:var(--fh);font-weight:700;font-size:12.5px;border-radius:99px;padding:8px 15px;border:none;background:var(--accent);color:#fff}
+.abtn.ghost{background:var(--elevated);color:var(--accent)}
+.abtn.accept{background:var(--ok)}
+.abtn.retry{background:var(--elevated);color:#dc2626}
 </style></head>
 <body>
   <div class="pane" id="pane">
@@ -175,6 +198,7 @@ body{background:var(--bg);color:var(--fg);font-family:var(--fb);height:100vh;ove
       <div class="search">⌕ <input id="q" placeholder="Search lessons, diseases, systems…"></div>
       <div class="chips" id="chips"></div>
       <div class="sortrow" id="sortrow"></div>
+      <div class="hidepanel" id="hidepanel" style="display:none"></div>
       <div id="rows"><div class="empty">Connecting to your library…</div></div>
     </div></section>
     <!-- GENERATE -->
