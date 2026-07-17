@@ -329,6 +329,21 @@ html.chiron-tutor-pushed body {
   white-space: nowrap;
 }
 .ct-bub.a th { background: rgba(0,0,0,.04); }
+
+/* inline-HTML math (LaTeX sub/sup/frac/sqrt rendered without MathJax — see tutor.js texToHtml) */
+.chiron-tutor sup, .chiron-tutor sub { line-height: 0; }
+.ct-frac {
+  display: inline-flex;
+  flex-direction: column;
+  vertical-align: middle;
+  text-align: center;
+  font-size: .9em;
+  line-height: 1.05;
+  margin: 0 .12em;
+}
+.ct-frac-n { padding-bottom: .02em; }
+.ct-frac-d { border-top: 1px solid currentColor; padding-top: .02em; }
+.ct-sqrt { border-top: 1px solid currentColor; padding: 0 .15em; }
 .ct-grounded {
   display: block;
   margin-top: 6px;
