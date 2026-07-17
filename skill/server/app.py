@@ -513,6 +513,92 @@ def _ensure_capture_schema() -> None:
     _capture_ready = True
 
 
+# ── images — RETRIEVED visual assets (radiology / signs / pathways / ecg / algorithms) ──────
+# Bytes live content-addressed on disk (dedup by sha — the economy rule: never re-store the same
+# image); this row is the recapture INDEX + provenance (retrieved-from / license), sibling to
+# captured_items. We NEVER fabricate a medical image — only persist what hypersearch retrieved.
+IMG_STORE = GEN / "chiron-assets" / "images"
+
+_IMAGES_DDL = """
+create table if not exists images (
+  id            bigserial primary key,
+  sha           text not null unique,          -- content hash → the bytes on disk
+  ext           text,
+  kind          text,                          -- radiograph|derm-sign|ecg|pathway|mechanism|algorithm|figure
+  concept       text,                          -- what it illustrates
+  caption       text,
+  source_type   text not null default 'retrieved',  -- retrieved | generated
+  source_url    text,                          -- origin page (provenance)
+  source_domain text,
+  license       text,
+  engine        text,                          -- brave | openserp | …
+  width         int,
+  height        int,
+  bytes         int,
+  capture_id    bigint,                        -- the captured_items row it rode in on (nullable)
+  lesson_slug   text,                          -- set when copied into a lesson bundle (deferred use)
+  created_at    timestamptz not null default now()
+);
+create index if not exists images_concept_idx on images(concept);
+create index if not exists images_kind_idx    on images(kind);
+create index if not exists images_fts_idx     on images using gin(
+  to_tsvector('english', coalesce(concept,'') || ' ' || coalesce(caption,'') || ' ' || coalesce(source_domain,''))
+);
+"""
+_images_ready = False
+
+
+def _ensure_images_schema() -> None:
+    """Idempotent, self-healing: create images on first use + the on-disk asset store dir."""
+    global _images_ready
+    if _images_ready:
+        return
+    with _pg() as pg:
+        pg.cursor().execute(_IMAGES_DDL)
+    IMG_STORE.mkdir(parents=True, exist_ok=True)
+    _images_ready = True
+
+
+_IMG_EXT = {"image/jpeg": "jpg", "image/jpg": "jpg", "image/png": "png", "image/gif": "gif",
+            "image/webp": "webp", "image/svg+xml": "svg", "image/avif": "avif"}
+
+
+def _store_image(url: str, meta: dict | None = None) -> dict:
+    """Download a RETRIEVED image → content-addressed asset store (dedup by sha) + an images row.
+    meta carries concept/caption/kind/source_url/source_domain/license/engine/width/height/capture_id.
+    Returns {sha, path, id, deduped}. Never generates — only persists what was retrieved."""
+    import hashlib, urllib.request
+    meta = meta or {}
+    _ensure_images_schema()
+    req = urllib.request.Request(url, headers={"User-Agent": "chiron/1.0"})
+    with urllib.request.urlopen(req, timeout=20) as r:
+        ctype = (r.headers.get("Content-Type") or "").split(";")[0].strip().lower()
+        data = r.read(12 * 1024 * 1024)                     # 12 MB cap — bounded
+    if not data:
+        raise RuntimeError("empty image body")
+    sha = hashlib.sha256(data).hexdigest()
+    tail = url.rsplit("/", 1)[-1]
+    ext = _IMG_EXT.get(ctype) or (tail.rsplit(".", 1)[-1].split("?")[0][:4].lower() if "." in tail else "jpg")
+    path = IMG_STORE / f"{sha}.{ext}"
+    if not path.exists():
+        path.write_bytes(data)
+    with _pg() as pg:
+        cur = pg.cursor()
+        cur.execute("select id from images where sha=%s", (sha,))
+        row = cur.fetchone()
+        if row:
+            return {"sha": sha, "path": str(path), "id": row[0], "deduped": True}
+        cur.execute("""insert into images
+              (sha,ext,kind,concept,caption,source_type,source_url,source_domain,license,engine,width,height,bytes,capture_id,lesson_slug)
+              values (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s) returning id""",
+              (sha, ext, meta.get("kind"), meta.get("concept"), (meta.get("caption") or "")[:600],
+               meta.get("source_type", "retrieved"), meta.get("source_url") or url, meta.get("source_domain"),
+               meta.get("license"), meta.get("engine"), meta.get("width"), meta.get("height"),
+               len(data), meta.get("capture_id"), meta.get("lesson_slug")))
+        new_id = cur.fetchone()[0]
+    return {"sha": sha, "path": str(path), "id": new_id, "deduped": False}
+
+
 # per-lesson study tables → (pg upsert). counts returned for verify.
 def _migrate_lesson_to_corpus(slug: str) -> dict:
     import sqlite3
@@ -1196,6 +1282,74 @@ def corpus_sunset(ref: str):
     if not ver["verified"]:
         raise HTTPException(409, "migration not verified — refusing to sunset")
     return {"slug": slug, "verified": True, **_sunset_sqlite(slug)}
+
+
+class ImageIn(BaseModel):
+    url: str                              # the origin image URL (retrieved, never generated)
+    concept: str | None = None           # what it illustrates (the highlighted term)
+    caption: str | None = None
+    kind: str | None = None              # radiograph|derm-sign|ecg|pathway|mechanism|algorithm|figure
+    source_url: str | None = None        # origin page (provenance)
+    source_domain: str | None = None
+    license: str | None = None
+    engine: str | None = None
+    width: int | None = None
+    height: int | None = None
+
+
+class ImageKeepIn(BaseModel):
+    images: list[ImageIn]                 # the ones the learner ⭐-kept from the grid
+    lesson_slug: str | None = None
+    section_id: str | None = None
+
+
+@app.post("/images/keep")
+def images_keep(b: ImageKeepIn):
+    """⭐ Persist the images the learner kept from the highlight grid: each → content-addressed
+    asset store (dedup) + an images row (provenance) + a kind=image capture so it flows into the
+    Captures browser / decompose / train. Retrieved images only — nothing fabricated."""
+    if not b.images:
+        raise HTTPException(400, "no images")
+    _ensure_images_schema(); _ensure_capture_schema()
+    kept, errors = [], []
+    for im in b.images:
+        try:
+            cap_id = None
+            with _pg() as pg:
+                cur = pg.cursor()
+                cur.execute("""insert into captured_items
+                      (kind,text,question,source_answer,surrounding_text,lesson_slug,section_id,concept,model,source)
+                      values ('image',%s,%s,%s,%s,%s,%s,%s,%s,'tutor-image') returning id""",
+                    ((im.concept or im.caption or "image")[:400], None, (im.caption or ""),
+                     (im.source_url or im.url), b.lesson_slug, b.section_id, im.concept, im.engine))
+                cap_id = cur.fetchone()[0]
+            r = _store_image(im.url, {
+                "concept": im.concept, "caption": im.caption, "kind": im.kind,
+                "source_url": im.source_url or im.url, "source_domain": im.source_domain,
+                "license": im.license, "engine": im.engine, "width": im.width, "height": im.height,
+                "capture_id": cap_id})
+            kept.append({"sha": r["sha"], "id": r["id"], "capture_id": cap_id, "deduped": r["deduped"]})
+        except Exception as e:
+            errors.append({"url": im.url[:80], "error": str(e)})
+    unprocessed = 0
+    try:
+        with _pg() as pg:
+            cur = pg.cursor(); cur.execute("select count(*) from captured_items where processed_at is null")
+            unprocessed = cur.fetchone()[0]
+    except Exception:
+        pass
+    return {"ok": True, "kept": kept, "errors": errors, "unprocessed": unprocessed}
+
+
+@app.get("/images/{sha}")
+def image_bytes(sha: str):
+    """Serve a stored image by sha (the grid/lesson references bytes we already hold)."""
+    import glob
+    from fastapi.responses import FileResponse
+    hits = glob.glob(str(IMG_STORE / (sha + ".*")))
+    if not hits:
+        raise HTTPException(404, "not stored")
+    return FileResponse(hits[0])
 
 
 class CaptureIn(BaseModel):
