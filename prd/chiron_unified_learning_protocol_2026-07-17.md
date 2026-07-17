@@ -126,13 +126,22 @@ in one direction (`chiron.json: source=ssm, source_ref=ssm2017_111`).
 **A distractor is not noise — it IS the test.** A distractor exists because it is *plausible*; it catches
 the learner who pattern-matched instead of reasoned. Having just learned "volvulus = the classic
 bowel-obstruction emergency", ssm2018_121 dares you to over-apply it — the single most valuable encounter
-in the set. Role is **not** a relevance proxy. The only filter is **concept precision**:
+in the set. Role is **not** a relevance proxy: keep stem, correct-answer AND distractor hits.
+
+**Relevance is a TIER, not keep/drop** (user-corrected 2026-07-17 — my earlier "drop trisomy 18 ≠ 21"
+was ALSO too aggressive, the same mistake as wanting to drop distractors). A neighbouring concept is
+valuable precisely because the *discrimination* between neighbours is the exam skill:
 
 ```
-LEGITIMATE HIT — the CONCEPT genuinely appears, in ANY role → SHOW IT
-   stem · correct-answer · distractor   (all three are real encounters)
-NOT A HIT — a word match on a different entity (trisomy 18 ≠ trisomy 21) → drop
+DIRECT    the exact concept genuinely appears (any role)     bilious vomiting → ssm2017_017     → show, primary
+RELATED   same family / adjacent, a different member         trisomy 21 → a Patau or Turner Q   → show, secondary
+          (the two options that would be 'eliminated' ARE the learning: 21 vs 18 vs 13 vs Turner)
+UNRELATED a pure lexical collision with ZERO conceptual link                                    → the ONLY drop
 ```
+
+So the concept-verify CLASSIFIES (direct | related | unrelated); it keeps direct + related and drops
+only genuine word-collisions. Order direct first, related after. Never suppress the neighbourhood —
+that is where discrimination is trained.
 
 **NEVER label the role on the pill.** "Appears as a distractor" hands over the answer before it's opened.
 A neutral pill (`tested in ssm2018_121`) preserves the exercise — the uncertainty *is* the test. This also

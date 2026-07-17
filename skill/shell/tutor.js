@@ -24,6 +24,7 @@
   var LS_SCOPE = 'chiron.tutorscope';
   var LS_SUGGEST = 'chiron.tutorsuggest';
   var LS_TRANSPORT = 'chiron.tutortransport';
+  var LS_TESTED = 'chiron.tutortested';
   var LS_CHAT = 'chiron.tutorchat.';
   var CHAT_MAX_ENTRIES = 40;
   var CHAT_MAX_BYTES = 200000;
@@ -51,11 +52,12 @@
       scope, chips, msgs, dispatchBar, dispatchLabel, dispatchSpin, dispatchKeepBtn, dispatchCardsBtn,
       dispatchMcqsBtn, dispatchTrainBtn, dispatchLessonBtn,
       dispatchClearBtn, dispatchMsg, inputRow, textarea, sendBtn, tabPen, resizeHandle,
-      settingsPop, suggToggle, transportSseBtn, transportPollBtn;
+      settingsPop, suggToggle, transportSseBtn, transportPollBtn, testedToggle;
   var mode = 'med';
   var scopeMode = 'section'; // 'section' | 'lesson' | 'free' — cycled by clicking .ct-scope
   var suggestOn = true; // 'Suggestions' setting (settings popover) — default ON, persisted to LS_SUGGEST
   var transportMode = 'sse'; // 'sse' | 'poll' — 'Live updates' setting, default sse, persisted to LS_TRANSPORT
+  var testedOn = true; // 'Practice links' setting (settings popover) — default ON, persisted to LS_TESTED
 
   function deriveLessonSlug() {
     var parts = location.pathname.split('/').filter(Boolean);
@@ -230,7 +232,17 @@
     transportPollBtn.textContent = 'Poll';
     transSwitch.appendChild(transportSseBtn); transSwitch.appendChild(transportPollBtn);
     transRow.appendChild(transLabel); transRow.appendChild(transSwitch);
+    var testedRow = document.createElement('div'); testedRow.className = 'ct-settings-row';
+    var testedLabel = document.createElement('span');
+    testedLabel.className = 'ct-settings-label'; testedLabel.textContent = 'Practice links';
+    testedToggle = document.createElement('button');
+    testedToggle.type = 'button'; testedToggle.className = 'ct-toggle';
+    testedToggle.setAttribute('aria-label', 'Toggle practice-question links');
+    var testedToggleKnob = document.createElement('span'); testedToggleKnob.className = 'ct-toggle-knob';
+    testedToggle.appendChild(testedToggleKnob);
+    testedRow.appendChild(testedLabel); testedRow.appendChild(testedToggle);
     settingsPop.appendChild(settingsHead); settingsPop.appendChild(suggRow); settingsPop.appendChild(transRow);
+    settingsPop.appendChild(testedRow);
     settingsPop.addEventListener('click', function (e) { e.stopPropagation(); });
 
     scope = document.createElement('div'); scope.className = 'ct-scope';
@@ -306,6 +318,11 @@
     renderSuggestToggle();
     try { transportMode = localStorage.getItem(LS_TRANSPORT) || 'sse'; } catch (e) {}
     renderTransport();
+    try {
+      var savedTested = localStorage.getItem(LS_TESTED);
+      testedOn = savedTested === null ? true : savedTested === '1';
+    } catch (e) {}
+    renderTestedToggle();
 
     modelSel.addEventListener('change', function () {
       try { localStorage.setItem(LS_MODEL, modelSel.value); } catch (e) {}
@@ -339,6 +356,12 @@
       renderSuggestToggle();
       try { localStorage.setItem(LS_SUGGEST, suggestOn ? '1' : '0'); } catch (e) {}
       if (!suggestOn) clearSuggestions();
+    });
+    testedToggle.addEventListener('click', function () {
+      testedOn = !testedOn;
+      renderTestedToggle();
+      try { localStorage.setItem(LS_TESTED, testedOn ? '1' : '0'); } catch (e) {}
+      if (!testedOn) clearTested();
     });
     transportSseBtn.addEventListener('click', function () { setTransport('sse'); });
     transportPollBtn.addEventListener('click', function () { setTransport('poll'); });
@@ -484,6 +507,84 @@
     });
     msgs.appendChild(wrap);
     msgs.scrollTop = msgs.scrollHeight;
+  }
+
+  /* ── settings: "Practice links" toggle + "where it's tested" pills ──────
+     After an assistant reply, POST the concepts (highlight chips + the last
+     question) to the tutor service's /related endpoint and render whatever
+     {label, url, tier} rows come back as small deep-link pills. Chiron is
+     domain-blind here — it just renders what the backend returns. ─────── */
+  function renderTestedToggle() {
+    if (!testedToggle) return;
+    testedToggle.classList.toggle('on', testedOn);
+    testedToggle.setAttribute('aria-pressed', testedOn ? 'true' : 'false');
+  }
+
+  function clearTested() {
+    if (!msgs) return;
+    var old = msgs.querySelectorAll('.ct-tested');
+    for (var i = 0; i < old.length; i++) old[i].remove();
+  }
+
+  function renderTested(list) {
+    clearTested();
+    if (!testedOn || !list || !list.length) return;
+    var wrap = document.createElement('div');
+    wrap.className = 'ct-tested';
+    var label = document.createElement('div');
+    label.className = 'ct-tested-label';
+    label.textContent = 'Where it’s tested';
+    wrap.appendChild(label);
+    list.forEach(function (r) {
+      if (!r || !r.url || !r.label) return;
+      var pill = document.createElement('a');
+      pill.className = 'ct-tested-pill' + (r.tier === 'direct' ? ' direct' : '');
+      pill.href = ssmLink(r.url);
+      pill.target = '_blank';
+      pill.rel = 'noopener';
+      var text = String(r.label);
+      if (text.length > 55) text = text.slice(0, 54) + '…';
+      pill.textContent = text;
+      wrap.appendChild(pill);
+    });
+    msgs.appendChild(wrap);
+    msgs.scrollTop = msgs.scrollHeight;
+  }
+
+  // The library's SSM indicator holds the base address (shared localStorage, same origin).
+  // Rewrite the server-built ?qid= link's origin to it so pills open on THIS device's LAN
+  // address (never localhost / never a stale server default). Falls back to same-host:5191.
+  function ssmBase() {
+    var b = '';
+    try { b = localStorage.getItem('chiron.ssmBase') || ''; } catch (e) {}
+    if (b) return b.replace(/\/+$/, '');
+    return location.protocol + '//' + location.hostname + ':5191';
+  }
+  function ssmLink(url) {
+    try {
+      var u = new URL(url, location.href), base = new URL(ssmBase());
+      u.protocol = base.protocol; u.host = base.host;
+      return u.href;
+    } catch (e) { return url; }
+  }
+
+  function collectTestedConcepts() {
+    var fromHighlights = highlights.map(function (h) { return h.text; });
+    return fromHighlights.concat(lastQuestion ? [lastQuestion] : []).filter(Boolean).slice(0, 8);
+  }
+
+  function fetchTestedQuestions(concepts) {
+    if (!testedOn || !concepts || !concepts.length) return;
+    fetch('http://' + location.hostname + ':8912/related', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ concepts: concepts, k: 6 })
+    }).then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (data) {
+        if (!data || !data.related) return;
+        renderTested(data.related);
+      })
+      .catch(function () { /* tutor service offline or no match — no pills, no error shown */ });
   }
 
   /* ── pen toggle (shared by the edge tab AND the drawer-header button) ── */
@@ -1308,6 +1409,7 @@
     messages.push({ role: 'assistant', content: reply });
     attachAnswerStar(loadingBub, reply, lastQuestion);
     renderSuggestions(suggestOn && data ? data.suggestions : null);
+    fetchTestedQuestions(collectTestedConcepts());
     msgs.scrollTop = msgs.scrollHeight;
     saveChat();
   }

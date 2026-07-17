@@ -168,6 +168,31 @@ body,.topbar,.pills,.facets,.row,.rhead{transition:background .2s,color .2s,bord
 /* topbar actions */
 .genbtn{font:inherit;font-weight:700;font-size:13px;font-family:var(--font-h);border:none;border-radius:99px;background:var(--chiron-accent);color:#fff;padding:8px 15px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
 .genbtn:hover{filter:brightness(1.1)}
+/* SSM connection indicator (Specializzando) — icon badge + status dot */
+.ssmbadge{position:relative;width:36px;height:36px;border-radius:10px;border:none;padding:0;flex:0 0 auto;cursor:pointer;display:grid;place-items:center;color:#fff;background:linear-gradient(135deg,#10b981,#059669);box-shadow:0 1px 3px rgba(0,0,0,.16);transition:transform .12s,filter .12s}
+.ssmbadge:hover{transform:translateY(-1px);filter:brightness(1.05)}
+.ssmbadge svg{width:19px;height:19px}
+.ssmbadge.down,.ssmbadge.idle{background:var(--chiron-elevated);color:var(--chiron-muted);box-shadow:none}
+.ssmbadge .sdot{position:absolute;right:-3px;bottom:-3px;width:12px;height:12px;border-radius:50%;border:2.5px solid var(--chiron-surface)}
+.ssmbadge.ok .sdot{background:#10b981}
+.ssmbadge.down .sdot{background:#e11d48}
+.ssmbadge.idle .sdot{background:#94a3b8}
+.ssmpop{position:fixed;top:62px;right:14px;z-index:140;width:296px;background:var(--chiron-surface);border:1px solid var(--chiron-border);border-radius:13px;box-shadow:0 14px 40px rgba(0,0,0,.2);padding:15px;display:none;font-family:var(--font-b)}
+.ssmpop.open{display:block}
+.ssmpop h4{font-family:var(--font-h);font-size:13.5px;font-weight:700;margin:0 0 3px;display:flex;align-items:center;gap:7px;color:var(--chiron-fg)}
+.ssmpop h4 small{font-weight:500;font-size:10.5px;color:var(--chiron-muted);margin-left:auto}
+.ssmpop .ssmstate{font-size:11.5px;color:var(--chiron-fg-secondary);margin:0 0 12px}
+.ssmpop label{font-size:11px;font-family:var(--font-h);font-weight:600;color:var(--chiron-fg-secondary);display:block;margin-bottom:5px}
+.ssmpop label span{font-weight:500;color:var(--chiron-muted)}
+.ssmpop input{width:100%;font-family:var(--font-b);font-size:12.5px;padding:8px 9px;border:1px solid var(--chiron-border);border-radius:8px;background:var(--chiron-bg);color:var(--chiron-fg);margin-bottom:11px}
+.ssmpop .ssmrow{display:flex;gap:8px}
+.ssmpop .sbtn{flex:1;font-family:var(--font-h);font-weight:600;font-size:12px;border:1px solid var(--chiron-border);background:var(--chiron-surface);color:var(--chiron-fg);border-radius:8px;padding:8px 6px;cursor:pointer}
+.ssmpop .sbtn:hover{background:var(--chiron-elevated)}
+.ssmpop .sbtn.primary{background:#059669;color:#fff;border-color:#059669}
+.ssmpop .sbtn.primary:hover{filter:brightness(1.07);background:#059669}
+.ssmpop .ssmhint{font-size:10.5px;color:var(--chiron-muted);margin:11px 0 0;line-height:1.5}
+.ssmpop .ssmhint code{background:var(--chiron-elevated);padding:1px 4px;border-radius:4px}
+.ssmpop .ssmhint a{color:#059669;text-decoration:none}
 .themebtn{border:1px solid var(--chiron-border);background:var(--chiron-surface);color:var(--chiron-fg);border-radius:99px;width:36px;height:36px;font-size:15px;cursor:pointer;flex:0 0 auto}
 .themebtn:hover{border-color:var(--chiron-accent)}
 /* staging row actions */
@@ -224,9 +249,22 @@ body,.topbar,.pills,.facets,.row,.rhead{transition:background .2s,color .2s,bord
     <button class="genbtn" onclick="LIB.wizard(true)">✦ <span class="glbl">Generate</span></button>
     <button class="genbtn" onclick="LIB.jobs(true)" title="What's generating / recently generated" style="background:#0f766e">⚡ <span class="glbl">Jobs</span><span id="jobsdot" class="jobsdot" style="display:none"></span></button>
     <button class="genbtn" onclick="LIB.captures(true)" title="Everything you've flagged — review + turn into cards/quizzes/lessons" style="background:#7c3aed">📥 <span class="glbl">Captures</span><span id="capdot" class="jobsdot" style="display:none"></span></button>
+    <button class="ssmbadge idle" id="ssmbadge" onclick="LIB.ssm.pop(event)" title="Specializzando (SSM app) — connection + practice-link address"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4.8 2.3A2 2 0 0 0 3 4v5a5 5 0 0 0 10 0V4a2 2 0 0 0-1.8-1.7"/><path d="M3.5 2.3h1.3M11.2 2.3h1.3"/><circle cx="19" cy="17" r="2.4"/><path d="M8 14v2a5 5 0 0 0 10 0v-.6"/></svg><span class="sdot"></span></button>
     <button class="themebtn" id="themebtn" onclick="LIB.theme()" title="Toggle light / dark">🌙</button>
     <button class="themebtn" title="Import a .chiron lesson file (install offline)" onclick="document.getElementById('importfile').click()">⬆</button>
     <input id="importfile" type="file" accept=".chiron,.zip" hidden>
+  </div>
+  <div class="ssmpop" id="ssmpop">
+    <h4><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px;color:#059669"><path d="M4.8 2.3A2 2 0 0 0 3 4v5a5 5 0 0 0 10 0V4a2 2 0 0 0-1.8-1.7"/><path d="M3.5 2.3h1.3M11.2 2.3h1.3"/><circle cx="19" cy="17" r="2.4"/><path d="M8 14v2a5 5 0 0 0 10 0v-.6"/></svg> Specializzando <small id="ssm-auto"></small></h4>
+    <p class="ssmstate" id="ssm-state">…</p>
+    <label for="ssm-url">Base address <span>— LAN IP, builds your practice links</span></label>
+    <input id="ssm-url" placeholder="http://192.168.0.x:5191" spellcheck="false">
+    <div class="ssmrow">
+      <button class="sbtn" onclick="LIB.ssm.test()">↻ Test</button>
+      <button class="sbtn" onclick="LIB.ssm.save()">Save</button>
+      <button class="sbtn primary" onclick="LIB.ssm.open()">Open app ↗</button>
+    </div>
+    <p class="ssmhint">This address becomes the target for every <b>“where it’s tested”</b> pill the tutor shows — so questions open on this device, not <code>localhost</code>. <a href="#" onclick="LIB.ssm.clear();return false">Reset to auto</a>.</p>
   </div>
   <div class="pills" id="pills"></div>
   <div class="body">

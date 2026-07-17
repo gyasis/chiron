@@ -16,7 +16,7 @@ verdict, each search with its actual query, drafting, reconciling). TWO transpor
   GET  /tutor-models                   → {default, models:[{id,label}]}
   GET  /healthz
 """
-import asyncio, json, queue, threading, time
+import asyncio, json, os, queue, threading, time, urllib.request
 from http.server import ThreadingHTTPServer, BaseHTTPRequestHandler
 from tutor_chain import answer_turn, suggestions, decompose, cards, mcqs, train_path, MODELS, DEFAULT_MODEL
 
@@ -123,6 +123,18 @@ class H(BaseHTTPRequestHandler):
                 return self._json(out or {"topics": [], "discriminators": [], "error": "decompose failed"})
             except Exception as e:
                 return self._json({"topics": [], "discriminators": [], "error": str(e)}, 502)
+        if self.path.startswith("/related"):
+            # DOMAIN-BLIND passthrough: forward to whatever CHIRON_RELATED_URL points at (an SSM matcher,
+            # or nothing). Chiron never learns what "SSM" is (R-CH5) — it just renders {label,url} pills.
+            url = os.environ.get("CHIRON_RELATED_URL", "")
+            if not url:
+                return self._json({"related": []})
+            try:
+                raw = self.rfile.read(int(self.headers.get("Content-Length", 0)) or 0) or b"{}"
+                req = urllib.request.Request(url, data=raw, headers={"Content-Type": "application/json"})
+                return self._json(json.loads(urllib.request.urlopen(req, timeout=90).read()))
+            except Exception as e:
+                return self._json({"related": [], "error": str(e)}, 502)
         if self.path.startswith("/cards"):
             # 🎴 cards OFF THE SPINE — discriminators first, then per-topic mechanisms.
             try:
