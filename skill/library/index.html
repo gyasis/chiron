@@ -286,7 +286,7 @@ body,.topbar,.pills,.facets,.row,.rhead{transition:background .2s,color .2s,bord
 </div>
 <div id="jobsback" class="modal-back" onclick="if(event.target===this)LIB.jobs(false)">
  <div class="modal">
-  <div class="modal-h"><b>⚡ Generation activity</b><button class="x" onclick="LIB.jobs(false)">✕</button></div>
+  <div class="modal-h"><b>⚡ Generation activity</b><button class="jclearfail" id="jclearfail" onclick="LIB.clearFailed()" title="Remove all failed jobs from the list (doesn't delete any lesson)" style="display:none">🧹 Clear failed</button><button class="x" onclick="LIB.jobs(false)">✕</button></div>
   <div class="modal-b" id="jobslist"><div class="hint">Loading…</div></div>
  </div>
 </div>
@@ -310,6 +310,8 @@ body,.topbar,.pills,.facets,.row,.rhead{transition:background .2s,color .2s,bord
  #jobslist .jhead-row{display:flex;align-items:center;justify-content:space-between;gap:8px}
  #jobslist .jbakeall{background:#fdead0;color:#b5641a;border:0;border-radius:8px;padding:5px 11px;font:800 11px system-ui;cursor:pointer;white-space:nowrap;text-transform:none;letter-spacing:0}
  #jobslist .jbakeall:hover{background:#fbd9a8}
+ .modal-h .jclearfail{margin-left:auto;margin-right:8px;background:#fee2e2;color:#b91c1c;border:0;border-radius:8px;padding:5px 11px;font:800 11px system-ui;cursor:pointer;white-space:nowrap}
+ .modal-h .jclearfail:hover{background:#fecaca}
  #jobslist .jrow{display:flex;align-items:center;gap:10px;padding:9px 4px;border-top:1px solid rgba(148,163,184,.2)}
  #jobslist .jdot{width:9px;height:9px;border-radius:50%;background:#94a3b8;flex:none}
  #jobslist .jrow.gen .jdot{background:#f59e0b;animation:jp 1s infinite}

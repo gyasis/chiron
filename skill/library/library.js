@@ -397,6 +397,7 @@ const LIB = {
       .filter(x=>{ const dz=LIB._dismissed[x.slug||x.id]; return !dz || (x.started||'')>dz; })   // hide dismissed (a newer regen reappears)
       .sort((a,b)=>(b.started||'').localeCompare(a.started||'')).slice(0,30);
     const nr=recent.filter(x=>x.status==='ready').length, ne=recent.filter(x=>x.status==='error').length;
+    { const cf=document.getElementById('jclearfail'); if(cf) cf.style.display = hist.some(x=>x.status==='error'||x.status==='cancelled') ? '' : 'none'; }
     // "Bake all" — queue audio for every text-only lesson, but ONLY when nothing is generating text
     const nbake=recent.filter(x=>{const r=(LIB._rec||{})[x.slug||x.id]; return r&&r.text&&r.needs_rebake;}).length;
     const bakeAll=(active.length===0 && nbake>0)
@@ -496,6 +497,8 @@ const LIB = {
   // hide a dead/unwanted row from the activity (client-side; does NOT delete the lesson). A newer regen reappears.
   dismiss(sl, started){ LIB._dismissed=LIB._dismissed||{}; LIB._dismissed[sl]=started||new Date().toISOString();
     try{ localStorage.setItem('chiron.dismissed', JSON.stringify(LIB._dismissed)); }catch(e){} LIB._loadJobs(); },
+  async clearFailed(){ try{ const r=await (await fetch(API+'/jobs/clear-failed',{method:'POST'})).json();
+      LIB._loadJobs(); }catch(e){ alert('Clear failed: '+e.message); } },
   async acceptJob(sl){ try{ await fetch(API+'/accept/'+encodeURIComponent(sl),{method:'POST'}); if(LIB._rec)delete LIB._rec[sl]; LIB._loadJobs(); LIB.reload(); }catch(e){ alert('Accept failed: '+e.message); } },
   // re-bake ONLY the audio (reuses the clips already done) — never redoes the lesson text
   async rebake(sl){ try{ await fetch(API+'/bake/'+encodeURIComponent(sl),{method:'POST'}); if(LIB._rec)delete LIB._rec[sl]; (LIB._open=LIB._open||new Set()).add(sl); LIB._loadJobs(); }catch(e){ alert('Rebake failed: '+e.message); } },

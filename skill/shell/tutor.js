@@ -1362,6 +1362,49 @@
     return t.split('|').map(function (c) { return c.trim(); });
   }
 
+  // Deterministic LaTeX → Unicode. Lesson/tutor content comes from MANY models, so a prompt can't
+  // reliably stop LaTeX — we normalize at render instead. Simple symbols (arrows, α, ×, ≤ …) become
+  // real Unicode; genuine math (^ _ \frac …) is rewritten to MathJax's native \(…\)/\[…\] delimiters
+  // so the MathJax safety net actually typesets it (v3 does NOT read $…$ by default). $…$ is treated
+  // as math ONLY when it contains a real \command, so "$5 and $10" is left untouched.
+  var TEX_UNI = {
+    rightarrow:'→', to:'→', longrightarrow:'→', Rightarrow:'⇒', implies:'⇒', mapsto:'↦',
+    leftarrow:'←', Leftarrow:'⇐', leftrightarrow:'↔', Leftrightarrow:'⇔', iff:'⇔',
+    uparrow:'↑', downarrow:'↓', updownarrow:'↕', times:'×', cdot:'·', div:'÷', ast:'∗',
+    pm:'±', mp:'∓', leq:'≤', le:'≤', geq:'≥', ge:'≥', neq:'≠', ne:'≠', approx:'≈',
+    equiv:'≡', cong:'≅', sim:'∼', simeq:'≃', propto:'∝', ll:'≪', gg:'≫', infty:'∞',
+    partial:'∂', nabla:'∇', degree:'°', circ:'∘', bullet:'•', cdots:'⋯', ldots:'…', dots:'…',
+    alpha:'α', beta:'β', gamma:'γ', Gamma:'Γ', delta:'δ', Delta:'Δ', epsilon:'ε', varepsilon:'ε',
+    zeta:'ζ', eta:'η', theta:'θ', Theta:'Θ', iota:'ι', kappa:'κ', lambda:'λ', Lambda:'Λ',
+    mu:'μ', nu:'ν', xi:'ξ', pi:'π', Pi:'Π', rho:'ρ', sigma:'σ', Sigma:'Σ', tau:'τ',
+    upsilon:'υ', phi:'φ', varphi:'φ', Phi:'Φ', chi:'χ', psi:'ψ', Psi:'Ψ', omega:'ω', Omega:'Ω',
+    prime:'′', pm_:'±', in:'∈', notin:'∉', subset:'⊂', supset:'⊃', cup:'∪', cap:'∩',
+    forall:'∀', exists:'∃', emptyset:'∅', angle:'∠', perp:'⊥', parallel:'∥', therefore:'∴', because:'∵'
+  };
+  // real-math structure. Commands use a (?![a-zA-Z]) boundary so \right does NOT match \rightarrow etc.
+  var TEX_COMPLEX = /[\^_]|\\(frac|sqrt|sum|int|prod|lim|begin|matrix|left|right|over|binom|vec|hat)(?![a-zA-Z])/;
+  function texCmds(s) {
+    return s.replace(/\\([a-zA-Z]+)/g, function (m, name) {
+      return Object.prototype.hasOwnProperty.call(TEX_UNI, name) ? TEX_UNI[name] : m;
+    });
+  }
+  function texConv(inner) {   // LaTeX fragment → plain Unicode text (spacing/braces cleaned)
+    return texCmds(inner).replace(/\\[,;!:> ]/g, ' ').replace(/[{}]/g, '').replace(/\s+/g, ' ').trim();
+  }
+  function latexToUnicode(text) {
+    if (!text || text.indexOf('\\') === -1 && text.indexOf('$') === -1) return text;
+    // display math $$…$$ and \[…\]
+    text = text.replace(/\$\$([\s\S]+?)\$\$/g, function (m, inner) { return TEX_COMPLEX.test(inner) ? '\\[' + inner + '\\]' : texConv(inner); });
+    text = text.replace(/\\\[([\s\S]+?)\\\]/g, function (m, inner) { return TEX_COMPLEX.test(inner) ? m : texConv(inner); });
+    // inline \(…\) — already MathJax-native; only downgrade to Unicode when simple
+    text = text.replace(/\\\(([\s\S]+?)\\\)/g, function (m, inner) { return TEX_COMPLEX.test(inner) ? m : texConv(inner); });
+    // inline $…$ — math ONLY if it holds a real \command (so "$5 and $10" is untouched)
+    text = text.replace(/\$([^$\n]*\\[a-zA-Z][^$\n]*)\$/g, function (m, inner) { return TEX_COMPLEX.test(inner) ? '\\(' + inner + '\\)' : texConv(inner); });
+    // any stray bare \command outside delimiters (e.g. a lone \rightarrow)
+    text = texCmds(text);
+    return text;
+  }
+
   function mdToHtml(src) {
     if (!src) return '';
     var out = escapeHtml(src);
@@ -1373,6 +1416,8 @@
       codeBlocks.push('<pre><code>' + code.replace(/\n$/, '') + '</code></pre>');
       return '@@CB' + idx + '@@';
     });
+
+    out = latexToUnicode(out);   // normalize LaTeX (code already extracted above): simple → Unicode, complex → MathJax delims
 
     var lines = out.split('\n');
     var htmlParts = [];
