@@ -50,7 +50,7 @@
 
   var tab, scrim, drawer, head, badge, title, modelSel, modeBtn, penBtn, newChatBtn, gearBtn, closeBtn,
       scope, chips, msgs, dispatchBar, dispatchLabel, dispatchSpin, dispatchKeepBtn, dispatchCardsBtn,
-      dispatchMcqsBtn, dispatchTrainBtn, dispatchLessonBtn,
+      dispatchMcqsBtn, dispatchTrainBtn, dispatchLessonBtn, dispatchImagesBtn,
       dispatchClearBtn, dispatchMsg, inputRow, textarea, sendBtn, tabPen, resizeHandle,
       settingsPop, suggToggle, transportSseBtn, transportPollBtn, testedToggle;
   var mode = 'med';
@@ -270,6 +270,9 @@
     dispatchLessonBtn = document.createElement('button');
     dispatchLessonBtn.type = 'button'; dispatchLessonBtn.className = 'ct-dispatch-lesson';
     dispatchLessonBtn.textContent = '📚 Lesson';
+    dispatchImagesBtn = document.createElement('button');
+    dispatchImagesBtn.type = 'button'; dispatchImagesBtn.className = 'ct-dispatch-images';
+    dispatchImagesBtn.textContent = '🖼 Images';
     dispatchClearBtn = document.createElement('button');
     dispatchClearBtn.type = 'button'; dispatchClearBtn.className = 'ct-dispatch-clear';
     dispatchClearBtn.title = 'Clear selection';
@@ -283,6 +286,7 @@
     dispatchBar.appendChild(dispatchMcqsBtn);
     dispatchBar.appendChild(dispatchTrainBtn);
     dispatchBar.appendChild(dispatchLessonBtn);
+    dispatchBar.appendChild(dispatchImagesBtn);
     dispatchBar.appendChild(dispatchClearBtn);
     dispatchBar.appendChild(dispatchMsg);
 
@@ -379,6 +383,7 @@
     dispatchMcqsBtn.addEventListener('click', function () { dispatch('mcqs'); });
     dispatchTrainBtn.addEventListener('click', function () { dispatch('train'); });
     dispatchLessonBtn.addEventListener('click', function () { dispatch('lesson'); });
+    dispatchImagesBtn.addEventListener('click', openImagesForSelection);
     dispatchClearBtn.addEventListener('click', clearSelection);
 
     /* ── open / close ─────────────────────────────────────────────── */
@@ -1098,6 +1103,238 @@
     link.textContent = 'open jobs →';
     wrap.appendChild(link);
     appendResultBlock(wrap);
+  }
+
+  /* ── image-lookup widget (🖼 Images dispatch action) ────────────────────
+     Search REAL medical images for the selected highlight(s), render a paged
+     2×2 grid inline in the chat (sibling of .ct-tested/.ct-sugg — not a
+     .ct-bub, needs full width for the grid), let the user ⭐-select the good
+     ones, then POST the selection to the corpus. Images are RETRIEVED only,
+     never generated. Backend: GET :8912/images?q=&k= · POST /images/keep
+     (same-origin, relative — matches the existing /capture pattern). ────── */
+  var IMG_PAGE_SIZE = 4;
+
+  function openImagesForSelection() {
+    if (!selected.length) return;
+    var concept = selected.map(function (h) { return h.text; }).join(' ').trim();
+    if (!concept) return;
+    openImageWidget(concept);
+  }
+
+  function openImageWidget(concept) {
+    var wrap = document.createElement('div');
+    wrap.className = 'ct-imgwidget';
+    msgs.appendChild(wrap);
+    msgs.scrollTop = msgs.scrollHeight;
+    renderImageLoading(wrap, concept);
+    fetch('http://' + location.hostname + ':8912/images?q=' + encodeURIComponent(concept) + '&k=8')
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (data) { renderImageResults(wrap, concept, (data && data.images) || []); })
+      .catch(function () { renderImageResults(wrap, concept, []); });
+  }
+
+  function renderImageLoading(wrap, concept) {
+    wrap.innerHTML = '';
+    var loadHead = document.createElement('div');
+    loadHead.className = 'ct-imgwidget-head';
+    var spin = document.createElement('span'); spin.className = 'ct-spin';
+    var loadMsg = document.createElement('span');
+    loadMsg.className = 'ct-imgwidget-title';
+    loadMsg.textContent = '🔎 searching images for ' + concept + '…';
+    loadHead.appendChild(spin); loadHead.appendChild(loadMsg);
+    wrap.appendChild(loadHead);
+    msgs.scrollTop = msgs.scrollHeight;
+  }
+
+  function appendImageCloseRow(wrap) {
+    var row = document.createElement('div');
+    row.className = 'ct-imgsave';
+    var imgCloseBtn = document.createElement('button');
+    imgCloseBtn.type = 'button'; imgCloseBtn.className = 'ct-imgclose'; imgCloseBtn.textContent = '✕ Close';
+    imgCloseBtn.addEventListener('click', function () { wrap.remove(); });
+    row.appendChild(imgCloseBtn);
+    wrap.appendChild(row);
+  }
+
+  function renderImageResults(wrap, concept, images) {
+    wrap.innerHTML = '';
+    var state = { selectedUrls: {} };
+
+    var resHead = document.createElement('div');
+    resHead.className = 'ct-imgwidget-head';
+    var titleEl = document.createElement('span');
+    titleEl.className = 'ct-imgwidget-title';
+    titleEl.textContent = '🖼 ' + concept;
+    var countEl = document.createElement('span');
+    countEl.className = 'ct-imgwidget-count';
+    countEl.textContent = images.length + ' result' + (images.length === 1 ? '' : 's');
+    resHead.appendChild(titleEl); resHead.appendChild(countEl);
+    wrap.appendChild(resHead);
+
+    if (!images.length) {
+      var empty = document.createElement('div');
+      empty.className = 'ct-imgwidget-empty';
+      empty.textContent = 'No images found.';
+      wrap.appendChild(empty);
+      appendImageCloseRow(wrap);
+      msgs.scrollTop = msgs.scrollHeight;
+      return;
+    }
+
+    var sub = document.createElement('div');
+    sub.className = 'ct-imgwidget-sub';
+    sub.textContent = 'real images · pick the ⭐ ones to save';
+    wrap.appendChild(sub);
+
+    var grid = document.createElement('div');
+    grid.className = 'ct-imggrid';
+    wrap.appendChild(grid);
+
+    var pager = document.createElement('div');
+    pager.className = 'ct-imgpager';
+    wrap.appendChild(pager);
+
+    var footer = document.createElement('div');
+    footer.className = 'ct-imgsave';
+    var saveBtn = document.createElement('button');
+    saveBtn.type = 'button'; saveBtn.className = 'ct-imgsave-btn'; saveBtn.disabled = true;
+    saveBtn.textContent = '⭐ Save (0)';
+    var imgCloseBtn = document.createElement('button');
+    imgCloseBtn.type = 'button'; imgCloseBtn.className = 'ct-imgclose'; imgCloseBtn.textContent = '✕ Close';
+    imgCloseBtn.addEventListener('click', function () { wrap.remove(); });
+    footer.appendChild(saveBtn); footer.appendChild(imgCloseBtn);
+    wrap.appendChild(footer);
+
+    var page = 0;
+    var totalPages = Math.ceil(images.length / IMG_PAGE_SIZE);
+
+    function updateSaveBtn() {
+      var n = Object.keys(state.selectedUrls).length;
+      saveBtn.textContent = '⭐ Save (' + n + ')';
+      saveBtn.disabled = n === 0;
+    }
+
+    function renderPager() {
+      pager.innerHTML = '';
+      if (totalPages <= 1) return;
+      var prevBtn = document.createElement('button');
+      prevBtn.type = 'button'; prevBtn.className = 'ct-imgpager-btn'; prevBtn.textContent = '‹ Prev';
+      prevBtn.disabled = page === 0;
+      prevBtn.addEventListener('click', function () { page -= 1; renderPage(); });
+      var info = document.createElement('span');
+      info.className = 'ct-imgpager-info';
+      info.textContent = (page + 1) + ' / ' + totalPages;
+      var nextBtn = document.createElement('button');
+      nextBtn.type = 'button'; nextBtn.className = 'ct-imgpager-btn'; nextBtn.textContent = 'More ▾';
+      nextBtn.disabled = page >= totalPages - 1;
+      nextBtn.addEventListener('click', function () { page += 1; renderPage(); });
+      pager.appendChild(prevBtn); pager.appendChild(info); pager.appendChild(nextBtn);
+    }
+
+    function renderPage() {
+      grid.innerHTML = '';
+      var start = page * IMG_PAGE_SIZE;
+      images.slice(start, start + IMG_PAGE_SIZE).forEach(function (im) {
+        grid.appendChild(buildImageCell(im, state, updateSaveBtn));
+      });
+      renderPager();
+    }
+
+    saveBtn.addEventListener('click', function () {
+      var chosen = images.filter(function (im) { return state.selectedUrls[im.url]; });
+      if (!chosen.length) return;
+      saveBtn.disabled = true;
+      saveBtn.textContent = 'saving…';
+      var payloadImages = chosen.map(function (im) {
+        return {
+          url: im.url,
+          concept: concept,
+          caption: im.caption || null,
+          kind: im.kind || null,
+          source_url: im.page_url || im.url,
+          source_domain: im.source || null,
+          license: im.license || null,
+          engine: im.engine || null,
+          width: im.width || null,
+          height: im.height || null
+        };
+      });
+      fetch('/images/keep', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          images: payloadImages,
+          lesson_slug: deriveLessonSlug(),
+          section_id: sectionId
+        })
+      }).then(function (r) {
+        if (!r.ok) throw new Error('bad status ' + r.status);
+        return r.json();
+      }).then(function (data) {
+        var kept = (data && data.kept) || [];
+        var errs = (data && data.errors) || [];
+        footer.innerHTML = '';
+        var savedMsg = document.createElement('span');
+        savedMsg.className = 'ct-imgsave-msg';
+        savedMsg.textContent = '✓ saved ' + kept.length + ' image' + (kept.length === 1 ? '' : 's') + ' → Captures' +
+          (errs.length ? (' (' + errs.length + ' failed)') : '');
+        var doneCloseBtn = document.createElement('button');
+        doneCloseBtn.type = 'button'; doneCloseBtn.className = 'ct-imgclose'; doneCloseBtn.textContent = '✕ Close';
+        doneCloseBtn.addEventListener('click', function () { wrap.remove(); });
+        footer.appendChild(savedMsg); footer.appendChild(doneCloseBtn);
+      }).catch(function () {
+        saveBtn.disabled = false;
+        updateSaveBtn();
+        var errMsg = document.createElement('span');
+        errMsg.className = 'ct-imgsave-msg';
+        errMsg.textContent = '⚠ save failed — try again';
+        footer.insertBefore(errMsg, footer.firstChild);
+      });
+    });
+
+    renderPage();
+    msgs.scrollTop = msgs.scrollHeight;
+  }
+
+  function buildImageCell(im, state, onToggle) {
+    var cell = document.createElement('div');
+    cell.className = 'ct-imgcell';
+    var isSel = !!state.selectedUrls[im.url];
+    if (isSel) cell.classList.add('sel');
+
+    var img = document.createElement('img');
+    img.src = im.thumbnail || im.url;
+    img.loading = 'lazy';
+    img.alt = im.source || '';
+    img.addEventListener('error', function () { cell.classList.add('broken'); });
+    cell.appendChild(img);
+
+    var star = document.createElement('button');
+    star.type = 'button'; star.className = 'ct-imgcell-star';
+    star.textContent = isSel ? '★' : '☆';
+    star.setAttribute('aria-label', 'Select this image');
+    cell.appendChild(star);
+
+    var cap = document.createElement('div');
+    cap.className = 'ct-imgcell-cap';
+    var dims = (im.width && im.height) ? (im.width + '×' + im.height) : '';
+    cap.textContent = [im.source, dims].filter(Boolean).join(' · ');
+    cell.appendChild(cap);
+
+    function toggle() {
+      var nowSel = !state.selectedUrls[im.url];
+      if (nowSel) state.selectedUrls[im.url] = true; else delete state.selectedUrls[im.url];
+      cell.classList.toggle('sel', nowSel);
+      star.textContent = nowSel ? '★' : '☆';
+      onToggle();
+    }
+    cell.addEventListener('click', function (e) {
+      if (e.target === star) return; // star has its own handler below
+      toggle();
+    });
+    star.addEventListener('click', function (e) { e.stopPropagation(); toggle(); });
+
+    return cell;
   }
 
   /* ── compact, safe markdown → HTML (assistant bubbles only) ─────── */

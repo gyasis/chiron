@@ -103,6 +103,29 @@ class H(BaseHTTPRequestHandler):
         if self.path.startswith("/tutor-models"):
             return self._json({"default": DEFAULT_MODEL,
                                "models": [{"id": k, "label": v["label"]} for k, v in MODELS.items()]})
+        if self.path.startswith("/images"):                 # 🖼 highlight → real medical images (hypersearch)
+            from urllib.parse import urlparse, parse_qs
+            qs = parse_qs(urlparse(self.path).query)
+            q = (qs.get("q", [""])[0] or "").strip()
+            try:
+                k = max(2, min(int(qs.get("k", ["8"])[0] or 8), 12))
+            except Exception:
+                k = 8
+            if not q:
+                return self._json({"images": [], "q": ""})
+            try:
+                from hypersearch import search_images        # real images only — NEVER fabricated
+                es = search_images(q, count=k, no_stock=True)
+                ims = [{"url": im.url,
+                        "thumbnail": getattr(im, "thumbnail", None) or im.url,
+                        "page_url": getattr(im, "page_url", None),
+                        "source": getattr(im, "source", None),
+                        "width": getattr(im, "width", None),
+                        "height": getattr(im, "height", None),
+                        "engine": getattr(im, "engine", None)} for im in (es.images or [])]
+                return self._json({"images": ims, "q": q})
+            except Exception as e:
+                return self._json({"images": [], "q": q, "error": str(e)}, 502)
         if self.path.startswith("/tutor-status/"):          # transport B — poll
             rid = self.path.split("/tutor-status/", 1)[1].split("?")[0]
             with _SLOCK:
