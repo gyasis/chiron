@@ -1266,6 +1266,65 @@ def captures(slug: str | None = None, q: str | None = None, unprocessed: bool = 
     return {"items": rows, "count": len(rows), "unprocessed": unproc}
 
 
+TUTOR_URL = os.environ.get("CHIRON_TUTOR_URL", "http://127.0.0.1:8912")
+
+
+def _tutor_post(path: str, body: dict, timeout: int = 180) -> dict:
+    req = urllib.request.Request(TUTOR_URL.rstrip("/") + path, data=json.dumps(body).encode(),
+                                 headers={"Content-Type": "application/json"})
+    return json.loads(urllib.request.urlopen(req, timeout=timeout).read())
+
+
+@app.post("/captures/{cid}/cards")
+def captured_to_cards(cid: int):
+    """🎴 THE PAYOFF — a captured note → the spine (decompose) → cards → the lesson's REAL SR rotation.
+
+    This is what makes "I don't want to redo this session to remember it" actually true: the cards
+    re-surface on schedule. Cards encode the DISCRIMINATORS (the 'X excludes Y' boundaries), not the
+    prose. Marks the capture processed so the inbox drains."""
+    _ensure_capture_schema()
+    with _pg() as pg:
+        cur = pg.cursor()
+        cur.execute("select text,question,source_answer,concept,lesson_slug,section_id "
+                    "from captured_items where id=%s", (cid,))
+        row = cur.fetchone()
+    if not row:
+        raise HTTPException(404, f"capture {cid} not found")
+    text, question, answer, concept, slug, section_id = row
+    note = answer or text
+    spine = _tutor_post("/decompose", {"note": note, "question": question or "", "concept": concept or ""})
+    if not spine.get("topics"):
+        raise HTTPException(502, f"decompose produced nothing: {spine.get('error', '')}")
+    made = _tutor_post("/cards", {"topics": spine["topics"],
+                                  "discriminators": spine.get("discriminators") or [],
+                                  "concept": concept or ""})
+    made_cards = made.get("cards") or []
+    if not made_cards:
+        raise HTTPException(502, "card generation produced nothing")
+    written, db = 0, (GEN / (slug or "_") / ".chiron-state.db")
+    if slug and db.exists():
+        import sqlite3, time as _t
+        con = sqlite3.connect(str(db), timeout=5)
+        try:
+            now = int(_t.time() * 1000)
+            for c in made_cards:
+                con.execute(
+                    "insert into sr_cards(course_id,chapter_id,concept_id,card_type,front,back,tags,"
+                    "ease_factor,interval_days,repetitions,next_due_at,suspended) "
+                    "values (?,?,?,?,?,?,?,?,?,?,?,0)",
+                    (slug, section_id, c.get("concept_id"), c.get("card_type"), c["front"], c["back"],
+                     "tutor-capture", 2.5, 1, 0, now))
+                written += 1
+            con.commit()
+        finally:
+            con.close()
+    with _pg() as pg:
+        pg.cursor().execute("update captured_items set processed_at=now() where id=%s", (cid,))
+    return {"ok": True, "capture": cid, "topics": len(spine["topics"]),
+            "discriminators": len(spine.get("discriminators") or []),
+            "cards": made_cards, "written_to_sr": written, "sr_db": str(db) if written else None}
+
+
 @app.get("/corpus/status")
 def corpus_status():
     """Is the central corpus reachable + row counts (the unification health)."""
