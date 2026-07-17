@@ -6,7 +6,12 @@
    and drives its collapse/expand, rather than relying on a main.js-exposed
    global. Talks to a host-side tutor service at http://<host>:8912/tutor-chat
    (+ GET /tutor-models); degrades gracefully to an offline notice when that
-   service isn't running.
+   service isn't running. The conversation itself is persisted per-lesson in
+   localStorage under the `chiron.tutorchat.<slug>` key (restored on reopen;
+   the ↺ button clears it). Assistant answers and highlighted terms each get
+   a ☆/`.ct-star`/`.ct-chip-star` button that POSTs to the SAME-ORIGIN
+   `/capture` endpoint (served by this app, not the :8912 tutor service) to
+   flag the item for the corpus store.
    ─────────────────────────────────────────────────────────────────────── */
 (function () {
   'use strict';
@@ -19,6 +24,9 @@
   var LS_SCOPE = 'chiron.tutorscope';
   var LS_SUGGEST = 'chiron.tutorsuggest';
   var LS_TRANSPORT = 'chiron.tutortransport';
+  var LS_CHAT = 'chiron.tutorchat.';
+  var CHAT_MAX_ENTRIES = 40;
+  var CHAT_MAX_BYTES = 200000;
   var FALLBACK_MODELS = [
     { id: 'gemma4', label: 'Gemma 4 · cloud (fast)' },
     { id: 'gemini3', label: 'Gemini 3 Flash · cloud' },
@@ -36,8 +44,9 @@
   var hlCounter = 0;
   var sectionId = null;
   var sectionText = '';
+  var lastQuestion = null; // most recent user turn — paired with the next assistant reply for capture
 
-  var tab, scrim, drawer, head, badge, title, modelSel, modeBtn, penBtn, gearBtn, closeBtn,
+  var tab, scrim, drawer, head, badge, title, modelSel, modeBtn, penBtn, newChatBtn, gearBtn, closeBtn,
       scope, chips, msgs, inputRow, textarea, sendBtn, tabPen, resizeHandle,
       settingsPop, suggToggle, transportSseBtn, transportPollBtn;
   var mode = 'med';
@@ -177,6 +186,11 @@
     penBtn.type = 'button'; penBtn.className = 'ct-pen';
     penBtn.title = 'Highlighter — turn on, then select lesson text to mark';
     penBtn.textContent = '🖉'; // 🖉
+    newChatBtn = document.createElement('button');
+    newChatBtn.type = 'button'; newChatBtn.className = 'ct-new';
+    newChatBtn.title = "New chat — clears this lesson's conversation";
+    newChatBtn.setAttribute('aria-label', 'New chat');
+    newChatBtn.textContent = '↺'; // ↺
     gearBtn = document.createElement('button');
     gearBtn.type = 'button'; gearBtn.className = 'ct-gear'; gearBtn.title = 'Settings';
     gearBtn.setAttribute('aria-label', 'Settings');
@@ -185,7 +199,8 @@
     closeBtn.type = 'button'; closeBtn.className = 'ct-close'; closeBtn.setAttribute('aria-label', 'Close');
     closeBtn.textContent = '✕';
     head.appendChild(badge); head.appendChild(title); head.appendChild(modelSel);
-    head.appendChild(modeBtn); head.appendChild(penBtn); head.appendChild(gearBtn); head.appendChild(closeBtn);
+    head.appendChild(modeBtn); head.appendChild(penBtn); head.appendChild(newChatBtn);
+    head.appendChild(gearBtn); head.appendChild(closeBtn);
 
     /* ── settings popover (⚙) — small, extensible list of drawer settings ── */
     settingsPop = document.createElement('div'); settingsPop.className = 'ct-settings';
@@ -236,6 +251,9 @@
     drawer.appendChild(inputRow);
     document.body.appendChild(drawer);
 
+    /* ── restore any persisted conversation for THIS lesson ─────────── */
+    restoreChat();
+
     /* ── model list + persisted mode ──────────────────────────────── */
     loadModels();
     try { mode = localStorage.getItem(LS_MODE) || 'med'; } catch (e) {}
@@ -256,6 +274,14 @@
       mode = mode === 'ita' ? 'med' : 'ita';
       try { localStorage.setItem(LS_MODE, mode); } catch (e) {}
       renderMode();
+    });
+    newChatBtn.addEventListener('click', function (e) {
+      e.stopPropagation();
+      if (!window.confirm("Start a new chat? This clears this lesson's conversation.")) return;
+      messages = [];
+      lastQuestion = null;
+      msgs.innerHTML = '';
+      try { localStorage.removeItem(LS_CHAT + deriveLessonSlug()); } catch (err) {}
     });
 
     /* ── settings popover (⚙) — toggle + open/close ───────────────── */
@@ -562,10 +588,40 @@
     chip.dataset.hlNum = String(entry.num);
     var numEl = document.createElement('span'); numEl.className = 'ct-chip-num'; numEl.textContent = String(entry.num);
     var textEl = document.createElement('span'); textEl.className = 'ct-chip-text'; textEl.textContent = entry.text;
+    var starEl = document.createElement('button');
+    starEl.type = 'button'; starEl.className = 'ct-chip-star'; starEl.textContent = '☆';
+    starEl.title = 'Save this term to your captures';
+    starEl.setAttribute('aria-label', 'Save this term');
+    starEl.addEventListener('click', function (e) {
+      e.stopPropagation();
+      if (starEl.disabled) return;
+      starEl.disabled = true;
+      var qa = lastQA();
+      var payload = {
+        kind: 'term',
+        text: entry.text,
+        question: qa.question,
+        source_answer: qa.answer,
+        surrounding_text: sectionText,
+        lesson_slug: deriveLessonSlug(),
+        section_id: sectionId,
+        concept: entry.text,
+        model: modelSel ? modelSel.value : null,
+        source: 'tutor'
+      };
+      postCapture(payload, function () {
+        starEl.textContent = '★';
+        starEl.classList.add('saved');
+        starEl.title = 'Saved to your captures';
+      }, function () {
+        starEl.disabled = false;
+        starEl.title = 'Save failed — try again';
+      });
+    });
     var xEl = document.createElement('button');
     xEl.type = 'button'; xEl.className = 'ct-chip-x'; xEl.textContent = '✕';
     xEl.addEventListener('click', function (e) { e.stopPropagation(); removeHighlight(entry.num); });
-    chip.appendChild(numEl); chip.appendChild(textEl); chip.appendChild(xEl);
+    chip.appendChild(numEl); chip.appendChild(textEl); chip.appendChild(starEl); chip.appendChild(xEl);
     chip.addEventListener('click', function () { flashHighlight(entry.num); });
     chips.appendChild(chip);
   }
@@ -691,6 +747,117 @@
     } catch (e) {}
   }
 
+  /* ── chat persistence (per-lesson localStorage; capped, never throws) ── */
+  function saveChat() {
+    try {
+      var key = LS_CHAT + deriveLessonSlug();
+      var trimmed = messages.slice(-CHAT_MAX_ENTRIES);
+      var json = JSON.stringify(trimmed);
+      while (json.length > CHAT_MAX_BYTES && trimmed.length > 1) {
+        trimmed = trimmed.slice(1);
+        json = JSON.stringify(trimmed);
+      }
+      if (json.length > CHAT_MAX_BYTES) return; // a single giant turn — skip rather than throw
+      localStorage.setItem(key, json);
+    } catch (e) { /* quota / serialization failure — never break the tutor */ }
+  }
+
+  function restoreChat() {
+    try {
+      var key = LS_CHAT + deriveLessonSlug();
+      var raw = localStorage.getItem(key);
+      if (!raw) return;
+      var saved = JSON.parse(raw);
+      if (!saved || !saved.length) return;
+      messages = saved;
+      var pendingQuestion = null;
+      saved.forEach(function (m) {
+        if (!m || !m.role) return;
+        if (m.role === 'user') {
+          appendBubble('user', m.content);
+          pendingQuestion = m.content;
+          lastQuestion = m.content;
+        } else if (m.role === 'assistant') {
+          var b = appendBubble('assistant', m.content);
+          attachAnswerStar(b, m.content, pendingQuestion);
+        }
+      });
+      msgs.scrollTop = msgs.scrollHeight;
+    } catch (e) { /* corrupted storage — start fresh, never throw */ }
+  }
+
+  /* ── ⭐ capture (feeds the corpus store) ──────────────────────────── */
+  function extractHandle(text) {
+    if (!text) return '';
+    var lines = String(text).split('\n');
+    for (var i = 0; i < lines.length; i++) {
+      var l = lines[i].trim();
+      if (!l) continue;
+      var h = /^#{1,4}\s+(.*)$/.exec(l);
+      if (h) return h[1].slice(0, 120);
+      var s = /^(.*?[.!?])(\s|$)/.exec(l);
+      return (s ? s[1] : l).slice(0, 120);
+    }
+    return String(text).slice(0, 120);
+  }
+
+  function lastQA() {
+    var q = null, a = null;
+    for (var i = messages.length - 1; i >= 0 && (q === null || a === null); i--) {
+      if (q === null && messages[i].role === 'user') q = messages[i].content;
+      if (a === null && messages[i].role === 'assistant') a = messages[i].content;
+    }
+    return { question: q, answer: a };
+  }
+
+  function postCapture(payload, onOk, onFail) {
+    fetch('/capture', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    }).then(function (r) {
+      if (!r.ok) throw new Error('bad status ' + r.status);
+      return r.json();
+    }).then(function (data) { onOk(data); })
+      .catch(function (e) { onFail(e); });
+  }
+
+  function attachAnswerStar(bubEl, replyText, questionText) {
+    var starBtn = document.createElement('button');
+    starBtn.type = 'button';
+    starBtn.className = 'ct-star';
+    starBtn.title = 'Save this answer to your captures';
+    starBtn.setAttribute('aria-label', 'Save this answer');
+    starBtn.textContent = '☆';
+    starBtn.addEventListener('click', function (e) {
+      e.stopPropagation();
+      if (starBtn.disabled) return;
+      starBtn.disabled = true;
+      var payload = {
+        kind: 'answer',
+        text: extractHandle(replyText),
+        question: questionText || null,
+        source_answer: replyText,
+        surrounding_text: sectionText,
+        lesson_slug: deriveLessonSlug(),
+        section_id: sectionId,
+        concept: null,
+        model: modelSel ? modelSel.value : null,
+        source: 'tutor'
+      };
+      postCapture(payload, function () {
+        starBtn.textContent = '★';
+        starBtn.classList.add('saved');
+        starBtn.title = 'Saved to your captures';
+      }, function () {
+        starBtn.disabled = false;
+        starBtn.title = 'Save failed — try again';
+      });
+    });
+    bubEl.appendChild(starBtn);
+    return starBtn;
+  }
+
   /* ── chat ──────────────────────────────────────────────────────── */
   function appendBubble(role, text) {
     var b = document.createElement('div');
@@ -766,8 +933,10 @@
       loadingBub.appendChild(g);
     }
     messages.push({ role: 'assistant', content: reply });
+    attachAnswerStar(loadingBub, reply, lastQuestion);
     renderSuggestions(suggestOn && data ? data.suggestions : null);
     msgs.scrollTop = msgs.scrollHeight;
+    saveChat();
   }
 
   function failReply(loadingBub, statusRefs) {
@@ -775,6 +944,7 @@
     loadingBub.classList.remove('ct-loading');
     loadingBub.textContent = '⚠ Tutor service offline — start it on :8912 (host-side). Your highlights are saved.';
     msgs.scrollTop = msgs.scrollHeight;
+    saveChat();
   }
 
   /* ── transport A: SSE (/tutor-stream) — default ──────────────────── */
@@ -860,7 +1030,9 @@
     textarea.value = '';
     textarea.style.height = 'auto';
     messages.push({ role: 'user', content: text });
+    lastQuestion = text;
     appendBubble('user', text);
+    saveChat();
     var loadingBub = appendBubble('assistant', '');
     var statusRefs = buildStatusEl(loadingBub);
     startFiller(statusRefs);

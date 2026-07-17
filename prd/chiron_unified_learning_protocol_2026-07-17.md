@@ -98,7 +98,77 @@ Cards must encode ⑤-type **rules and "definitely-not-it" boundaries**, not the
 - **Cards land in** the per-lesson `.chiron-state.db` `sr_cards` (ease_factor / interval_days / next_due_at) → they enter the existing SR rotation and are ETL'd to the corpus on accept.
 - **Reuse, don't rebuild:** the SSM app's `CollectBar` / `NotesBrowser` / `NoteDetail`+`fireChiron` are the proven implementation of this workflow. Port the pattern; do not reinvent it.
 
-## 7. Non-goals
+## 7. Step 7 — "where is this tested?" pills (train → TEST → weakness → train)
+
+While being tutored, a concept should carry a superscript pill to the **real exam items** that test it; tapping it deep-links the consumer app straight to that question. This is what closes the loop into a university: teach → *test* → answer → weakness → teach.
+
+### 7.1 Feasibility — measured 2026-07-17, not assumed
+
+The SSM corpus is `data_pipeline/ssm_questions_bilingual.csv`: **1,259 MCQs**, 1.2 MB, columns
+`question_id, year, text_it, text_en, option_a..e_it/en, correct_answer, specialization, difficulty`.
+Tiny → FTS/in-memory is enough; **no embeddings needed for v1**. The lesson↔question link already exists
+in one direction (`chiron.json: source=ssm, source_ref=ssm2017_111`).
+
+### 7.2 What the data actually showed (a real session on bilious vomiting)
+
+| query | hit | role | verdict |
+|---|---|---|---|
+| `vomito biliare` | ssm2017_017 "3-day-old, delayed meconium, distension, **biliary vomiting**" | STEM | **gold** |
+| `vomito biliare` | ssm2021_059 neonate, delayed meconium >72h | STEM | **gold** |
+| `pilor` | ssm2018_021 "22-day-old, repeated **NON-BILIARY** jet-like vomiting" → ans pyloric stenosis | CORRECT-ANSWER | **the discriminator** — literally the contrast the tutor taught |
+| `volvul` | ssm2018_121 inguinal-hernia question, volvulus a wrong option | DISTRACTOR | **KEEP** — see 7.3 |
+| `trisom` | Turner's (Trisomy 18) / Patau (13) | mixed | **drop** — lexical collision, different concept |
+
+→ that one session maps to **~5 genuinely relevant questions**.
+
+### 7.3 The rule (user-corrected — the earlier "drop distractors" rule was WRONG)
+
+**A distractor is not noise — it IS the test.** A distractor exists because it is *plausible*; it catches
+the learner who pattern-matched instead of reasoned. Having just learned "volvulus = the classic
+bowel-obstruction emergency", ssm2018_121 dares you to over-apply it — the single most valuable encounter
+in the set. Role is **not** a relevance proxy. The only filter is **concept precision**:
+
+```
+LEGITIMATE HIT — the CONCEPT genuinely appears, in ANY role → SHOW IT
+   stem · correct-answer · distractor   (all three are real encounters)
+NOT A HIT — a word match on a different entity (trisomy 18 ≠ trisomy 21) → drop
+```
+
+**NEVER label the role on the pill.** "Appears as a distractor" hands over the answer before it's opened.
+A neutral pill (`tested in ssm2018_121`) preserves the exercise — the uncertainty *is* the test. This also
+dissolves the spoiler problem: it is not "hide correct-answer matches", it is "label nothing".
+(SR-deferring a question whose answer was just read remains a scheduling nicety, not a filter.)
+
+### 7.4 Search must be BILINGUAL, Italian-first
+
+`'vomito biliare'` → **2** hits; `'bilious'` → **1**. The corpus is Italian-original with English
+translations that drift ("biliary" vs "bilious"). English-only search **misses the single best match**
+(ssm2017_017). Query both `text_it` and `text_en` (+ all options), Italian term first.
+
+### 7.5 Signal worth surfacing: what the exam actually tests
+
+The tutor called midgut volvulus *the* classic neonatal emergency; SSM never tests it directly — it appears
+only as a distractor. The exam probes this axis through **bilious-vomiting stems**, not volvulus recall.
+Only the corpus can tell the learner that. Coverage sparsity is a **feature**: "tested in 1 question" is
+high-signal, and no pill at all is an honest answer.
+
+### 7.6 Architecture — chiron must NOT learn the word "SSM" (R-CH5)
+
+```
+chiron tutor ──POST {concepts}──▶ configured RELATED-ITEMS PROVIDER  (env CHIRON_RELATED_URL)
+             ◀──[{id, label, url}]──┘   SSM implements it over its 1,259 MCQs, returns its OWN deep-link
+```
+Chiron renders whatever comes back and links wherever the provider says — exactly as it already treats
+`source`/`source_ref` ("persists whatever the caller sent; knows no source names"). SSM stays a *consumer*.
+
+**Missing piece:** a deep-link route in Specializzando (`?qid=ssm2017_111` → jump to that question). Small,
+and it is what makes the pill magic rather than informational.
+
+**Honest risk:** matching is the feature; the plumbing is trivial. Naive keyword matching produced 2/2 false
+positives on `trisom`. Concept-level matching (the candidate set is 1–4 rows → a cheap LLM verify is
+affordable) is required before shipping, or the pills lose trust on first contact.
+
+## 8. Non-goals
 
 - No new indexer/vector store unless FTS demonstrably fails (economy-first).
 - Cards are **not** stripped into a central-only bank — lesson-bound questions stay with the lesson (assessment-engine PRD, concern #2).
