@@ -397,7 +397,11 @@ const LIB = {
       .filter(x=>{ const dz=LIB._dismissed[x.slug||x.id]; return !dz || (x.started||'')>dz; })   // hide dismissed (a newer regen reappears)
       .sort((a,b)=>(b.started||'').localeCompare(a.started||'')).slice(0,30);
     const nr=recent.filter(x=>x.status==='ready').length, ne=recent.filter(x=>x.status==='error').length;
-    h+=`<div class="jhead">Needs review · ${nr} to accept · ${ne} failed</div>`;
+    // "Bake all" — queue audio for every text-only lesson, but ONLY when nothing is generating text
+    const nbake=recent.filter(x=>{const r=(LIB._rec||{})[x.slug||x.id]; return r&&r.text&&r.needs_rebake;}).length;
+    const bakeAll=(active.length===0 && nbake>0)
+      ? `<button class="jbakeall" title="queue audio bakes for all ${nbake} viewable-but-unbaked lessons (one at a time)" onclick="LIB.bakeAll(${nbake})">🔥 Bake all (${nbake})</button>` : '';
+    h+=`<div class="jhead jhead-row"><span>Needs review · ${nr} to accept · ${ne} failed</span>${bakeAll}</div>`;
     LIB._rec = LIB._rec || {};
     for(const x of recent){ const sl=x.slug||x.id;
       const st=x.status; const r=LIB._rec[sl]||{};
@@ -458,14 +462,17 @@ const LIB = {
     return '<div class="tlrail">'+P.map(p=>{
       let subs='';
       if(p.status==='running' && p.events && p.events.length){
-        subs='<div class="tlsubs">'+p.events.slice(-6).map(ev=>{ const et=ev.event_type||'';
+        subs='<div class="tlsubs">'+p.events.filter(ev=>(ev.event_type||'')!=='PROGRESS').slice(-10).map(ev=>{ const et=ev.event_type||'';
           if(et.indexOf('MODEL_CALL')===0) return `<div class="tls"><span class="tchip mod">MODEL</span> ${esc(ev.model||'')} ${ev.tokens?`· <span class="tok">${ev.tokens} tok</span>`:''} ${et==='MODEL_CALL_END'?'✓':'<span class="tspin"></span>'}</div>`;
           if(et.indexOf('TOOL_CALL')===0) return `<div class="tls"><span class="tchip tool">TOOL</span> ${esc(ev.instruction||'')} ${et==='TOOL_CALL_END'?'✓':'<span class="tspin"></span>'}</div>`;
           if(et==='STEP_ERROR') return `<div class="tls err">⚠ ${esc(ev.instruction||ev.error||'')}</div>`;
+          if(et==='CLIP') return `<div class="tls ${/⚠/.test(ev.instruction||'')?'err':''}">${esc(ev.instruction||'')}</div>`;
           if(et==='RECOVERY') return `<div class="tls" style="color:var(--lang)">♻ ${esc(ev.instruction||'')}</div>`;
           return `<div class="tls">${esc(et)}</div>`; }).join('')+'</div>';
       }
-      const meta = p.status==='done'?'✓ '+secs(p.seconds) : p.status==='error'?'✗ failed' : p.status==='running'?('running'+(p.seconds?' · '+secs(p.seconds):'')+(p.events&&p.events.length?' · '+p.events.length+' events':'')):'pending';
+      // tqdm-style counter+ETA on a running phase header (Baking audio → "4/12 clips · ~3m left")
+      const prog=(p.events||[]).filter(ev=>(ev.event_type||'')==='PROGRESS').slice(-1)[0];
+      const meta = p.status==='done'?'✓ '+secs(p.seconds) : p.status==='error'?'✗ failed' : p.status==='running'?('running'+(p.seconds?' · '+secs(p.seconds):'')+((prog&&prog.instruction)?' · '+esc(prog.instruction):(p.events&&p.events.length?' · '+p.events.length+' events':''))):'pending';
       return `<div class="tln ${p.status}"><span class="tldot"></span><div class="tlnm">${esc(p.name)}</div><div class="tlm">${meta}</div>${subs}</div>`;
     }).join('')+'</div>';
   },
@@ -492,6 +499,14 @@ const LIB = {
   async acceptJob(sl){ try{ await fetch(API+'/accept/'+encodeURIComponent(sl),{method:'POST'}); if(LIB._rec)delete LIB._rec[sl]; LIB._loadJobs(); LIB.reload(); }catch(e){ alert('Accept failed: '+e.message); } },
   // re-bake ONLY the audio (reuses the clips already done) — never redoes the lesson text
   async rebake(sl){ try{ await fetch(API+'/bake/'+encodeURIComponent(sl),{method:'POST'}); if(LIB._rec)delete LIB._rec[sl]; (LIB._open=LIB._open||new Set()).add(sl); LIB._loadJobs(); }catch(e){ alert('Rebake failed: '+e.message); } },
+  // batch: queue audio for ALL text-only lessons — server refuses while text is still generating
+  async bakeAll(n){
+    if(!confirm(`Queue audio bakes for ${n} lesson${n===1?'':'s'} that have text but no audio yet? They'll bake one at a time.`)) return;
+    try{ const r=await (await fetch(API+'/bake-all',{method:'POST'})).json();
+      if(r && r.ok===false){ alert('Can’t bake now — '+(r.reason||'try again later')); return; }
+      if(r && r.slugs && LIB._rec) r.slugs.forEach(s=>delete LIB._rec[s]);
+      LIB._loadJobs();
+    }catch(e){ alert('Bake all failed: '+e.message); } },
   async _jobsHeartbeat(){
     try{ const d=await (await fetch(API+'/activity?'+Date.now())).json();
       const dot=document.getElementById('jobsdot'); if(dot) dot.style.display=(d.active&&d.active.length)?'inline-block':'none';

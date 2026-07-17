@@ -16,11 +16,19 @@
   var LS_MODEL = 'chiron.tutormodel';
   var LS_MODE = 'chiron.tutormode';
   var LS_WIDTH = 'chiron.tutorwidth';
+  var LS_SCOPE = 'chiron.tutorscope';
+  var LS_SUGGEST = 'chiron.tutorsuggest';
+  var LS_TRANSPORT = 'chiron.tutortransport';
   var FALLBACK_MODELS = [
     { id: 'gemma4', label: 'Gemma 4 · cloud (fast)' },
     { id: 'gemini3', label: 'Gemini 3 Flash · cloud' },
     { id: 'qwen_local', label: 'Qwen3 32B · Mac (local)' },
     { id: 'agent', label: 'Deep agent (Harrison’s, slower)' }
+  ];
+  var FILLER_WORDS = [
+    'percolating', 'consulting the tomes', 'thinking hard', 'chasing a pathway',
+    'cross-checking', 'rummaging in Harrison’s', 'connecting dots', 'brewing',
+    'pondering', 'untangling'
   ];
 
   var messages = [];   // { role: 'user'|'assistant', content }
@@ -29,9 +37,13 @@
   var sectionId = null;
   var sectionText = '';
 
-  var tab, scrim, drawer, head, badge, title, modelSel, modeBtn, penBtn, closeBtn,
-      scope, chips, msgs, inputRow, textarea, sendBtn, tabPen, resizeHandle;
+  var tab, scrim, drawer, head, badge, title, modelSel, modeBtn, penBtn, gearBtn, closeBtn,
+      scope, chips, msgs, inputRow, textarea, sendBtn, tabPen, resizeHandle,
+      settingsPop, suggToggle, transportSseBtn, transportPollBtn;
   var mode = 'med';
+  var scopeMode = 'section'; // 'section' | 'lesson' | 'free' — cycled by clicking .ct-scope
+  var suggestOn = true; // 'Suggestions' setting (settings popover) — default ON, persisted to LS_SUGGEST
+  var transportMode = 'sse'; // 'sse' | 'poll' — 'Live updates' setting, default sse, persisted to LS_TRANSPORT
 
   function deriveLessonSlug() {
     var parts = location.pathname.split('/').filter(Boolean);
@@ -165,13 +177,46 @@
     penBtn.type = 'button'; penBtn.className = 'ct-pen';
     penBtn.title = 'Highlighter — turn on, then select lesson text to mark';
     penBtn.textContent = '🖉'; // 🖉
+    gearBtn = document.createElement('button');
+    gearBtn.type = 'button'; gearBtn.className = 'ct-gear'; gearBtn.title = 'Settings';
+    gearBtn.setAttribute('aria-label', 'Settings');
+    gearBtn.textContent = '⚙'; // ⚙
     closeBtn = document.createElement('button');
     closeBtn.type = 'button'; closeBtn.className = 'ct-close'; closeBtn.setAttribute('aria-label', 'Close');
     closeBtn.textContent = '✕';
     head.appendChild(badge); head.appendChild(title); head.appendChild(modelSel);
-    head.appendChild(modeBtn); head.appendChild(penBtn); head.appendChild(closeBtn);
+    head.appendChild(modeBtn); head.appendChild(penBtn); head.appendChild(gearBtn); head.appendChild(closeBtn);
+
+    /* ── settings popover (⚙) — small, extensible list of drawer settings ── */
+    settingsPop = document.createElement('div'); settingsPop.className = 'ct-settings';
+    var settingsHead = document.createElement('div');
+    settingsHead.className = 'ct-settings-head'; settingsHead.textContent = 'Settings';
+    var suggRow = document.createElement('div'); suggRow.className = 'ct-settings-row';
+    var suggLabel = document.createElement('span');
+    suggLabel.className = 'ct-settings-label'; suggLabel.textContent = 'Suggestions';
+    suggToggle = document.createElement('button');
+    suggToggle.type = 'button'; suggToggle.className = 'ct-toggle';
+    suggToggle.setAttribute('aria-label', 'Toggle follow-up suggestions');
+    var suggToggleKnob = document.createElement('span'); suggToggleKnob.className = 'ct-toggle-knob';
+    suggToggle.appendChild(suggToggleKnob);
+    suggRow.appendChild(suggLabel); suggRow.appendChild(suggToggle);
+    var transRow = document.createElement('div'); transRow.className = 'ct-settings-row';
+    var transLabel = document.createElement('span');
+    transLabel.className = 'ct-settings-label'; transLabel.textContent = 'Live updates';
+    var transSwitch = document.createElement('div'); transSwitch.className = 'ct-transport';
+    transportSseBtn = document.createElement('button');
+    transportSseBtn.type = 'button'; transportSseBtn.className = 'ct-transport-btn';
+    transportSseBtn.textContent = 'Stream';
+    transportPollBtn = document.createElement('button');
+    transportPollBtn.type = 'button'; transportPollBtn.className = 'ct-transport-btn';
+    transportPollBtn.textContent = 'Poll';
+    transSwitch.appendChild(transportSseBtn); transSwitch.appendChild(transportPollBtn);
+    transRow.appendChild(transLabel); transRow.appendChild(transSwitch);
+    settingsPop.appendChild(settingsHead); settingsPop.appendChild(suggRow); settingsPop.appendChild(transRow);
+    settingsPop.addEventListener('click', function (e) { e.stopPropagation(); });
 
     scope = document.createElement('div'); scope.className = 'ct-scope';
+    scope.title = 'Click to change scope: this section → whole lesson → free';
     chips = document.createElement('div'); chips.className = 'ct-chips';
     msgs = document.createElement('div'); msgs.className = 'ct-msgs';
 
@@ -184,6 +229,7 @@
     inputRow.appendChild(textarea); inputRow.appendChild(sendBtn);
 
     drawer.appendChild(head);
+    drawer.appendChild(settingsPop);
     drawer.appendChild(scope);
     drawer.appendChild(chips);
     drawer.appendChild(msgs);
@@ -194,6 +240,14 @@
     loadModels();
     try { mode = localStorage.getItem(LS_MODE) || 'med'; } catch (e) {}
     renderMode();
+    try { scopeMode = localStorage.getItem(LS_SCOPE) || 'section'; } catch (e) {}
+    try {
+      var savedSuggest = localStorage.getItem(LS_SUGGEST);
+      suggestOn = savedSuggest === null ? true : savedSuggest === '1';
+    } catch (e) {}
+    renderSuggestToggle();
+    try { transportMode = localStorage.getItem(LS_TRANSPORT) || 'sse'; } catch (e) {}
+    renderTransport();
 
     modelSel.addEventListener('change', function () {
       try { localStorage.setItem(LS_MODEL, modelSel.value); } catch (e) {}
@@ -204,12 +258,43 @@
       renderMode();
     });
 
+    /* ── settings popover (⚙) — toggle + open/close ───────────────── */
+    gearBtn.addEventListener('click', function (e) {
+      e.stopPropagation();
+      settingsPop.classList.toggle('open');
+    });
+    document.addEventListener('click', function (e) {
+      if (!settingsPop.classList.contains('open')) return;
+      if (e.target.closest && (e.target.closest('.ct-settings') || e.target.closest('.ct-gear'))) return;
+      settingsPop.classList.remove('open');
+    });
+    suggToggle.addEventListener('click', function () {
+      suggestOn = !suggestOn;
+      renderSuggestToggle();
+      try { localStorage.setItem(LS_SUGGEST, suggestOn ? '1' : '0'); } catch (e) {}
+      if (!suggestOn) clearSuggestions();
+    });
+    transportSseBtn.addEventListener('click', function () { setTransport('sse'); });
+    transportPollBtn.addEventListener('click', function () { setTransport('poll'); });
+
+    /* ── scope pill — click cycles section → whole lesson → free ────── */
+    scope.addEventListener('click', function () {
+      scopeMode = scopeMode === 'section' ? 'lesson' : (scopeMode === 'lesson' ? 'free' : 'section');
+      try { localStorage.setItem(LS_SCOPE, scopeMode); } catch (e) {}
+      renderScopePill();
+    });
+
     /* ── open / close ─────────────────────────────────────────────── */
     tab.addEventListener('click', function () {
       if (drawer.classList.contains('open')) closeDrawer(); else openDrawer();
     });
     closeBtn.addEventListener('click', closeDrawer);
     scrim.addEventListener('click', closeDrawer);
+    document.addEventListener('keydown', function (e) {   // Escape always closes — belt-and-suspenders
+      if (e.key !== 'Escape') return;
+      if (settingsPop.classList.contains('open')) { settingsPop.classList.remove('open'); return; }
+      if (drawer.classList.contains('open')) closeDrawer();
+    });
 
     /* ── pen toggle ────────────────────────────────────────────────── */
     tabPen.addEventListener('click', togglePen);
@@ -281,6 +366,52 @@
     if (modeBtn) modeBtn.textContent = mode === 'ita' ? '🗣' : '🩺'; // 🗣 / 🩺
   }
 
+  /* ── settings: "Suggestions" toggle + follow-up pills ─────────────── */
+  function renderSuggestToggle() {
+    if (!suggToggle) return;
+    suggToggle.classList.toggle('on', suggestOn);
+    suggToggle.setAttribute('aria-pressed', suggestOn ? 'true' : 'false');
+  }
+
+  /* ── settings: "Live updates" transport switch (Stream/SSE vs Poll) ── */
+  function renderTransport() {
+    if (transportSseBtn) transportSseBtn.classList.toggle('on', transportMode === 'sse');
+    if (transportPollBtn) transportPollBtn.classList.toggle('on', transportMode === 'poll');
+  }
+
+  function setTransport(v) {
+    transportMode = v;
+    try { localStorage.setItem(LS_TRANSPORT, v); } catch (e) {}
+    renderTransport();
+  }
+
+  function clearSuggestions() {
+    if (!msgs) return;
+    var old = msgs.querySelectorAll('.ct-sugg');
+    for (var i = 0; i < old.length; i++) old[i].remove();
+  }
+
+  function renderSuggestions(list) {
+    clearSuggestions();
+    if (!suggestOn || !list || !list.length) return;
+    var wrap = document.createElement('div');
+    wrap.className = 'ct-sugg';
+    list.forEach(function (s) {
+      var pill = document.createElement('button');
+      pill.type = 'button';
+      pill.className = 'ct-sugg-pill';
+      pill.textContent = s;
+      pill.addEventListener('click', function () {
+        clearSuggestions();
+        textarea.value = s;
+        send();
+      });
+      wrap.appendChild(pill);
+    });
+    msgs.appendChild(wrap);
+    msgs.scrollTop = msgs.scrollHeight;
+  }
+
   /* ── pen toggle (shared by the edge tab AND the drawer-header button) ── */
   function togglePen(e) {
     if (e) e.stopPropagation();
@@ -310,7 +441,7 @@
     } else {
       scrim.classList.add('open');
     }
-    updateScope();
+    renderScopePill();
     textarea.focus();
   }
   function closeDrawer() {
@@ -335,12 +466,44 @@
 
   function updateScope() {
     var el = findCurrentSection();
-    if (!el) { scope.textContent = ''; sectionId = null; sectionText = ''; return; }
+    if (!el) {
+      sectionId = null; sectionText = '';
+      if (scopeMode === 'section') scope.textContent = '';
+      return;
+    }
     var h = el.querySelector('h1,h2,h3,[data-section-title]');
     var label = (h && h.textContent.trim()) || el.id || 'Section';
-    scope.textContent = '📌 On: ' + label; // 📌 On: ...
     sectionId = el.id || null;
     sectionText = (el.textContent || '').trim().slice(0, 4000);
+    // only overwrite the pill label in 'section' scope — don't clobber the
+    // 'Whole lesson' / 'Free' labels while the learner keeps scrolling
+    if (scopeMode === 'section') scope.textContent = '📌 On: ' + label; // 📌 On: ...
+  }
+
+  /* ── scope-pill label (all 3 states) ──────────────────────────────── */
+  function renderScopePill() {
+    if (scopeMode === 'lesson') { scope.textContent = '📖 Whole lesson'; return; } // 📖 Whole lesson
+    if (scopeMode === 'free') { scope.textContent = '🌐 Free — ask anything'; return; } // 🌐 Free — ask anything
+    updateScope();
+  }
+
+  /* ── whole-lesson text (excludes the tutor drawer itself — it's a <div>,
+     not a <section>, so it's never matched by this selector) ─────────── */
+  function computeLessonText() {
+    var sections = document.querySelectorAll('section.chapter, section[id]');
+    var parts = [];
+    sections.forEach(function (el) {
+      var t = (el.innerText || el.textContent || '').trim();
+      if (t) parts.push(t);
+    });
+    return parts.join('\n\n').trim().slice(0, 8000);
+  }
+
+  /* ── what to send as page context, per the current scope mode ───────── */
+  function computeScopePayload() {
+    if (scopeMode === 'free') return { section_id: '', section_text: '' };
+    if (scopeMode === 'lesson') return { section_id: '', section_text: computeLessonText() };
+    return { section_id: sectionId, section_text: sectionText };
   }
 
   /* ── highlighter helpers ────────────────────────────────────────── */
@@ -516,15 +679,179 @@
     return result;
   }
 
+  /* ── MathJax safety net — some replies still slip in LaTeX ($...$,
+     \alpha, \rightarrow) despite the system prompt asking for Unicode.
+     The lesson page already loads MathJax v3; typeset assistant bubbles
+     after render. Fully guarded — no-op if MathJax isn't present. ───── */
+  function typesetMath(el) {
+    try {
+      if (window.MathJax && window.MathJax.typesetPromise) {
+        window.MathJax.typesetPromise([el]).catch(function () {});
+      }
+    } catch (e) {}
+  }
+
   /* ── chat ──────────────────────────────────────────────────────── */
   function appendBubble(role, text) {
     var b = document.createElement('div');
     b.className = 'ct-bub ' + (role === 'user' ? 'u' : 'a');
-    if (role === 'assistant') b.innerHTML = mdToHtml(text);
+    if (role === 'assistant') { b.innerHTML = mdToHtml(text); typesetMath(b); }
     else b.textContent = text;
     msgs.appendChild(b);
     msgs.scrollTop = msgs.scrollHeight;
     return b;
+  }
+
+  /* ── live-progress status area (built inside the loading bubble) ──────
+     Two transports feed it: SSE (/tutor-stream) or POLL (/tutor-chat +
+     /tutor-status/<rid>). Both call setStatus() with the real status text;
+     a rotating whimsical filler + elapsed timer runs alongside so long
+     "agent" waits (2+ min) don't look dead. ─────────────────────────── */
+  function buildStatusEl(bubEl) {
+    bubEl.classList.add('ct-loading');
+    bubEl.innerHTML = '';
+    var wrap = document.createElement('div'); wrap.className = 'ct-status';
+    var spin = document.createElement('span'); spin.className = 'ct-spin';
+    var t = document.createElement('span'); t.className = 'ct-status-t'; t.textContent = 'Thinking…';
+    var w = document.createElement('span'); w.className = 'ct-status-w';
+    wrap.appendChild(spin); wrap.appendChild(t); wrap.appendChild(w);
+    bubEl.appendChild(wrap);
+    return { t: t, w: w, fillerTimer: null, tickTimer: null, startTime: Date.now(), currentWord: '' };
+  }
+
+  function setStatus(statusRefs, text) {
+    if (!statusRefs || !statusRefs.t || !text) return;
+    statusRefs.t.textContent = text;
+  }
+
+  function pickFillerWord(prev) {
+    if (FILLER_WORDS.length <= 1) return FILLER_WORDS[0];
+    var w;
+    do { w = FILLER_WORDS[Math.floor(Math.random() * FILLER_WORDS.length)]; } while (w === prev);
+    return w;
+  }
+
+  function startFiller(statusRefs) {
+    if (!statusRefs || !statusRefs.w) return;
+    statusRefs.currentWord = pickFillerWord(null);
+    var tick = function () {
+      var elapsed = Math.round((Date.now() - statusRefs.startTime) / 1000);
+      statusRefs.w.textContent = '(' + statusRefs.currentWord + ' · ' + elapsed + 's)';
+    };
+    tick();
+    statusRefs.tickTimer = setInterval(tick, 1000);
+    statusRefs.fillerTimer = setInterval(function () {
+      statusRefs.currentWord = pickFillerWord(statusRefs.currentWord);
+      tick();
+    }, 4000);
+  }
+
+  function stopFiller(statusRefs) {
+    if (!statusRefs) return;
+    if (statusRefs.fillerTimer) clearInterval(statusRefs.fillerTimer);
+    if (statusRefs.tickTimer) clearInterval(statusRefs.tickTimer);
+    statusRefs.fillerTimer = null; statusRefs.tickTimer = null;
+  }
+
+  function finalizeReply(loadingBub, statusRefs, data) {
+    stopFiller(statusRefs);
+    var reply = (data && data.reply) || '(no reply)';
+    loadingBub.classList.remove('ct-loading');
+    loadingBub.innerHTML = mdToHtml(reply);
+    typesetMath(loadingBub);
+    if (data && data.grounded) {
+      var g = document.createElement('span');
+      g.className = 'ct-grounded';
+      g.textContent = typeof data.grounded === 'string' ? data.grounded : '✓ grounded';
+      loadingBub.appendChild(g);
+    }
+    messages.push({ role: 'assistant', content: reply });
+    renderSuggestions(suggestOn && data ? data.suggestions : null);
+    msgs.scrollTop = msgs.scrollHeight;
+  }
+
+  function failReply(loadingBub, statusRefs) {
+    stopFiller(statusRefs);
+    loadingBub.classList.remove('ct-loading');
+    loadingBub.textContent = '⚠ Tutor service offline — start it on :8912 (host-side). Your highlights are saved.';
+    msgs.scrollTop = msgs.scrollHeight;
+  }
+
+  /* ── transport A: SSE (/tutor-stream) — default ──────────────────── */
+  function sendStream(payload, loadingBub, statusRefs) {
+    var finished = false;
+    fetch('http://' + location.hostname + ':8912/tutor-stream', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    }).then(function (r) {
+      if (!r.ok || !r.body) throw new Error('bad status ' + (r && r.status));
+      var reader = r.body.getReader();
+      var decoder = new TextDecoder();
+      var buf = '';
+      function handleEvent(line) {
+        if (finished || line.indexOf('data: ') !== 0) return; // ignore ": keepalive" comments etc
+        var evt;
+        try { evt = JSON.parse(line.slice(6)); } catch (e) { return; }
+        if (evt.type === 'status' && evt.text) {
+          setStatus(statusRefs, evt.text);
+        } else if (evt.type === 'final') {
+          finished = true;
+          finalizeReply(loadingBub, statusRefs, evt);
+        }
+      }
+      function pump() {
+        return reader.read().then(function (res) {
+          if (res.done) {
+            if (!finished) failReply(loadingBub, statusRefs);
+            return;
+          }
+          buf += decoder.decode(res.value, { stream: true });
+          var parts = buf.split('\n\n');
+          buf = parts.pop(); // keep the last (possibly incomplete) chunk buffered
+          for (var i = 0; i < parts.length && !finished; i++) {
+            var lines = parts[i].split('\n');
+            for (var j = 0; j < lines.length && !finished; j++) handleEvent(lines[j]);
+          }
+          if (finished) return;
+          return pump();
+        });
+      }
+      return pump();
+    }).catch(function () {
+      if (!finished) failReply(loadingBub, statusRefs);
+    });
+  }
+
+  /* ── transport B: POLL (/tutor-chat + GET /tutor-status/<rid>) ────── */
+  function sendPoll(payload, loadingBub, statusRefs) {
+    var rid = 'r' + Date.now() + Math.random().toString(36).slice(2);
+    payload.rid = rid;
+    var pollTimer = setInterval(function () {
+      fetch('http://' + location.hostname + ':8912/tutor-status/' + rid)
+        .then(function (r) { return r.ok ? r.json() : null; })
+        .then(function (data) {
+          if (!data || !data.events || !data.events.length) return;
+          var last = data.events[data.events.length - 1];
+          if (last && last.text) setStatus(statusRefs, last.text);
+        })
+        .catch(function () {});
+    }, 700);
+
+    fetch('http://' + location.hostname + ':8912/tutor-chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    }).then(function (r) {
+      clearInterval(pollTimer);
+      if (!r.ok) throw new Error('bad status ' + r.status);
+      return r.json();
+    }).then(function (data) {
+      finalizeReply(loadingBub, statusRefs, data);
+    }).catch(function () {
+      clearInterval(pollTimer);
+      failReply(loadingBub, statusRefs);
+    });
   }
 
   function send() {
@@ -534,41 +861,25 @@
     textarea.style.height = 'auto';
     messages.push({ role: 'user', content: text });
     appendBubble('user', text);
-    var loadingBub = appendBubble('assistant', '…');
+    var loadingBub = appendBubble('assistant', '');
+    var statusRefs = buildStatusEl(loadingBub);
+    startFiller(statusRefs);
 
+    var scopePayload = computeScopePayload();
     var payload = {
       lesson_slug: deriveLessonSlug(),
-      section_id: sectionId,
-      section_text: sectionText,
+      section_id: scopePayload.section_id,
+      section_text: scopePayload.section_text,
       selection: highlights.map(function (h) { return h.text; }).join(' | '),
       messages: messages.slice(),
       model: modelSel.value,
       mode: mode,
-      lang: mode === 'ita' ? 'it' : 'en'
+      lang: mode === 'ita' ? 'it' : 'en',
+      suggest: suggestOn
     };
 
-    fetch('http://' + location.hostname + ':8912/tutor-chat', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
-    }).then(function (r) {
-      if (!r.ok) throw new Error('bad status ' + r.status);
-      return r.json();
-    }).then(function (data) {
-      var reply = (data && data.reply) || '(no reply)';
-      loadingBub.innerHTML = mdToHtml(reply);
-      if (data && data.grounded) {
-        var g = document.createElement('span');
-        g.className = 'ct-grounded';
-        g.textContent = typeof data.grounded === 'string' ? data.grounded : '✓ grounded';
-        loadingBub.appendChild(g);
-      }
-      messages.push({ role: 'assistant', content: reply });
-      msgs.scrollTop = msgs.scrollHeight;
-    }).catch(function () {
-      loadingBub.textContent = '⚠ Tutor service offline — start it on :8912 (host-side). Your highlights are saved.';
-      msgs.scrollTop = msgs.scrollHeight;
-    });
+    if (transportMode === 'poll') sendPoll(payload, loadingBub, statusRefs);
+    else sendStream(payload, loadingBub, statusRefs);
   }
 
   function init() {

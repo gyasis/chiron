@@ -83,42 +83,98 @@ html.chiron-tutor-pushed body {
 .ct-scrim.open { display: block; }
 
 .ct-head {
-  display: flex; align-items: center; gap: 8px;
-  padding: 10px 12px;
+  display: flex; align-items: center; gap: 6px; flex-wrap: nowrap;
+  padding: 10px 10px 10px 12px;
   border-bottom: 1px solid var(--color-border);
   flex: none;
 }
 .ct-badge {
-  flex: none; width: 26px; height: 26px; display: grid; place-items: center;
+  flex: none; width: 24px; height: 24px; display: grid; place-items: center;
   border-radius: 7px; background: var(--color-accent-light, rgba(217,79,48,.12));
-  font-size: 14px;
+  font-size: 13px;
 }
 .ct-title {
-  font-family: var(--font-display); font-weight: 700; font-size: 14px;
-  color: var(--color-text); margin-right: auto;
+  flex: none; font-family: var(--font-display); font-weight: 700; font-size: 14px;
+  color: var(--color-text);
 }
+/* model select takes the flexible middle and SHRINKS (truncates) so the pinned
+   mode/pen/close buttons on the right are never pushed off the edge */
 .ct-model {
+  flex: 0 1 auto; min-width: 0; max-width: 150px;
   font: 600 11px var(--font-body);
   color: var(--color-text);
   background: var(--color-bg, transparent);
   border: 1px solid var(--color-border);
   border-radius: 999px;
-  padding: 4px 10px;
+  padding: 4px 8px;
   cursor: pointer;
 }
 .ct-mode {
-  flex: none; background: transparent; border: 1px solid var(--color-border);
-  border-radius: 999px; width: 28px; height: 28px; cursor: pointer; font-size: 13px;
+  flex: none; margin-left: auto;   /* push mode/pen/close as a cluster to the right edge */
+  background: transparent; border: 1px solid var(--color-border);
+  border-radius: 999px; width: 26px; height: 26px; cursor: pointer; font-size: 13px;
 }
 .ct-pen {
   flex: none; background: transparent; border: 1px solid var(--color-border);
   border-radius: 999px; width: 28px; height: 28px; cursor: pointer; font-size: 13px;
 }
 .ct-pen.on { background: #fde68a; color: #7a5b00; }
+.ct-gear {
+  flex: none; background: transparent; border: 1px solid var(--color-border);
+  border-radius: 999px; width: 26px; height: 26px; cursor: pointer; font-size: 13px;
+}
 .ct-close {
   flex: none; background: transparent; border: 0; cursor: pointer;
   font-size: 16px; color: var(--color-text-secondary); padding: 2px 4px;
 }
+
+/* Settings popover (⚙) — anchored under the header, inside the drawer */
+.ct-settings {
+  position: absolute; right: 10px; top: 44px; z-index: 3;
+  display: none;
+  width: 200px;
+  background: var(--color-surface, #fff);
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(0,0,0,.18);
+  padding: 10px 12px;
+}
+.ct-settings.open { display: block; }
+.ct-settings-head {
+  font-size: 10px; font-weight: 800; letter-spacing: .05em; text-transform: uppercase;
+  color: var(--color-text-secondary, #9E9790); margin-bottom: 8px;
+}
+.ct-settings-row {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+}
+.ct-settings-label { font-size: 12.5px; color: var(--color-text); }
+.ct-toggle {
+  flex: none; width: 34px; height: 20px; padding: 0;
+  border: 0; border-radius: 999px; cursor: pointer;
+  background: var(--color-border);
+  position: relative;
+  transition: background .18s ease;
+}
+.ct-toggle-knob {
+  position: absolute; top: 2px; left: 2px; width: 16px; height: 16px;
+  border-radius: 50%; background: #fff;
+  box-shadow: 0 1px 3px rgba(0,0,0,.3);
+  transition: transform .18s ease;
+}
+.ct-toggle.on { background: var(--color-accent); }
+.ct-toggle.on .ct-toggle-knob { transform: translateX(14px); }
+
+/* "Live updates" transport switch — Stream (SSE) vs Poll */
+.ct-transport {
+  flex: none; display: inline-flex; border: 1px solid var(--color-border);
+  border-radius: 999px; overflow: hidden;
+}
+.ct-transport-btn {
+  border: 0; background: transparent; cursor: pointer;
+  font: 700 10.5px var(--font-body); padding: 3px 9px;
+  color: var(--color-text-secondary, #64748b);
+}
+.ct-transport-btn.on { background: var(--color-accent); color: #fff; }
 
 .ct-scope {
   margin: 8px 12px 0;
@@ -130,7 +186,11 @@ html.chiron-tutor-pushed body {
   padding: 4px 10px;
   max-width: calc(100% - 24px);
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  cursor: pointer;
+  transition: opacity .15s ease;
 }
+.ct-scope:hover { opacity: .78; }
+.ct-scope:active { opacity: .6; }
 
 .ct-chips {
   display: flex; flex-wrap: wrap; gap: 6px;
@@ -186,6 +246,32 @@ html.chiron-tutor-pushed body {
   color: #0f172a;
   border-bottom-left-radius: 3px;
 }
+
+/* Live-progress status (rendered inside the loading bubble while a reply
+   is in flight — SSE or poll transport, see ct-transport). Must fit the
+   narrow drawer and never overflow. */
+.ct-bub.ct-loading { display: flex; }
+.ct-status {
+  display: flex; align-items: center; flex-wrap: wrap; gap: 5px 6px;
+  font-size: 12px; max-width: 100%;
+}
+.ct-status-t {
+  color: var(--color-text-secondary, #475569);
+  overflow-wrap: anywhere;
+}
+.ct-status-w {
+  font-size: 11px; font-style: italic;
+  color: var(--color-text-muted, #9E9790);
+  overflow-wrap: anywhere;
+}
+.ct-spin {
+  flex: none; width: 10px; height: 10px;
+  border: 2px solid rgba(0,0,0,.15);
+  border-top-color: var(--color-accent);
+  border-radius: 50%;
+  animation: ct-spin .7s linear infinite;
+}
+@keyframes ct-spin { to { transform: rotate(360deg); } }
 /* rendered-markdown elements — assistant bubbles only */
 .ct-bub.a h3, .ct-bub.a h4 {
   font-size: 1em; font-weight: 700; margin: .5em 0 .25em; line-height: 1.3;
@@ -238,6 +324,27 @@ html.chiron-tutor-pushed body {
   font-size: 10.5px;
   color: #0d9488;
 }
+
+/* Follow-up suggestion pills — rendered under the latest assistant reply */
+.ct-sugg {
+  align-self: flex-start;
+  max-width: 92%;
+  display: flex; flex-wrap: wrap; gap: 6px;
+  margin-top: 8px;
+}
+.ct-sugg-pill {
+  font-size: 11.5px;
+  padding: 5px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--color-border);
+  background: var(--color-bg, transparent);
+  color: var(--color-accent);
+  cursor: pointer;
+  text-align: left;
+  line-height: 1.25;
+  transition: background .15s ease;
+}
+.ct-sugg-pill:hover { background: var(--color-accent-light, rgba(217,79,48,.10)); }
 
 .ct-input {
   flex: none;
