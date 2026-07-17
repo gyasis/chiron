@@ -1031,6 +1031,21 @@ def generate(req: GenReq):
             return {"job_id": infl["id"], "slug": slug, "depth": res["depth"], "chain": res["chain_name"],
                     "status": infl.get("status", "running"), "duplicate": True,
                     "note": "already generating — joined the in-flight job"}
+        # 3) already FAILED (error/cancelled, no text) → REUSE that job IN PLACE, don't spawn a twin.
+        #    Flip it back to queued + re-enqueue, and collapse any duplicate failed rows for this slug
+        #    into it — so a retry never leaves both a 'failed' and a 'processing' entry for one lesson.
+        failed = [j for j in JOBS.values() if j.get("slug") == slug and j.get("status") in ("error", "cancelled")]
+        if failed:
+            failed.sort(key=lambda j: j.get("created", ""), reverse=True)
+            keep = failed[0]
+            for dup in failed[1:]:                       # drop duplicate failed rows for this slug
+                JOBS.pop(dup["id"], None)
+            keep.update(status="queued", phase="queued (retry)", error=None, started=None, finished=None)
+            _save()
+            _GEN_Q.put(keep)
+            return {"job_id": keep["id"], "slug": slug, "depth": res["depth"], "chain": res["chain_name"],
+                    "status": "queued", "duplicate": True, "queued_ahead": _GEN_Q.qsize(),
+                    "note": "retried the existing failed job in place (no duplicate)"}
     jid = uuid.uuid4().hex[:12]
     job = {"id": jid, "created": _now(), "status": "queued", "phase": "queued",
            **req.model_dump(), "slug": slug, "chain": res["chain_name"], "depth": res["depth"]}
@@ -1039,6 +1054,20 @@ def generate(req: GenReq):
     _GEN_Q.put(job)          # enqueue — the bounded worker pool runs it when a slot frees (Chiron owns concurrency)
     return {"job_id": jid, "slug": slug, "depth": res["depth"], "chain": res["chain_name"],
             "status": "queued", "queued_ahead": _GEN_Q.qsize()}
+
+
+@app.post("/jobs/clear-failed")
+def clear_failed():
+    """Tidy the Jobs list: drop every FAILED job (error/cancelled with no lesson text on disk). Keeps
+    audio-failed (those have viewable text) and anything already generated. Used by the 'Clear failed'
+    button after a retry-all — the reuse-on-retry path means live retries won't be swept."""
+    removed = [jid for jid, j in list(JOBS.items())
+               if j.get("status") in ("error", "cancelled")
+               and not (GEN / (j.get("slug") or "") / "lesson.html").exists()]
+    for jid in removed:
+        JOBS.pop(jid, None)
+    _save()
+    return {"ok": True, "removed": len(removed)}
 
 
 
