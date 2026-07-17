@@ -1266,6 +1266,34 @@ def captures(slug: str | None = None, q: str | None = None, unprocessed: bool = 
     return {"items": rows, "count": len(rows), "unprocessed": unproc}
 
 
+@app.get("/captures/{cid}")
+def capture_detail(cid: int):
+    """Full detail for the browser's expand view — the whole captured answer + its provenance."""
+    _ensure_capture_schema()
+    with _pg() as pg:
+        cur = pg.cursor()
+        cur.execute("select id,kind,text,question,source_answer,surrounding_text,lesson_slug,"
+                    "section_id,concept,model,source,created_at,processed_at from captured_items where id=%s", (cid,))
+        row = cur.fetchone()
+        if not row:
+            raise HTTPException(404, "not found")
+        cols = [d[0] for d in cur.description]
+    r = dict(zip(cols, row))
+    for k in ("created_at", "processed_at"):
+        if r.get(k):
+            r[k] = r[k].isoformat()
+    return r
+
+
+@app.delete("/captures/{cid}")
+def capture_delete(cid: int):
+    """Dismiss a capture (the inbox needs a delete or it can't be curated)."""
+    _ensure_capture_schema()
+    with _pg() as pg:
+        pg.cursor().execute("delete from captured_items where id=%s", (cid,))
+    return {"ok": True, "deleted": cid}
+
+
 TUTOR_URL = os.environ.get("CHIRON_TUTOR_URL", "http://127.0.0.1:8912")
 
 
