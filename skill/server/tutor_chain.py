@@ -170,6 +170,87 @@ def suggestions(question: str, answer: str, lang: str = "en", n: int = 4) -> lis
         return []
 
 
+DECOMPOSE_SPEC = os.environ.get("TUTOR_DECOMPOSE", "cloud:gemma4:31b")
+
+def decompose(note: str, question: str = "", concept: str = "", lang: str = "en") -> dict:
+    """🧬 THE SPINE — break a dense note at its REAL teaching seams, and name the discriminators.
+
+    Not arbitrary chunking: the seams are where the reasoning actually turns (e.g. a bilious-vomiting
+    note breaks into: the pylorus checkpoint → mechanical → functional → chemical → and the rule that
+    bilious EXCLUDES gastric outlet obstruction). Everything downstream hangs off this: cards per-topic
+    beat cards from a blob, MCQs can target ONE discriminator each, a lesson gets a real syllabus.
+
+    Discriminators are first-class: the "definitely-not-it" boundaries are what make recognition happen
+    under exam pressure — they matter more than the prose. Returns {} on any failure (never fatal)."""
+    if not (note or "").strip():
+        return {}
+    try:
+        sysc = (
+            "You break a dense medical explanation into its REAL teaching seams — the places where the "
+            "reasoning actually turns — not arbitrary chunks. Return ONLY JSON:\n"
+            '{"topics":[{"title":"<5-9 words>","seam":"<why this is its own teachable unit, 1 line>",'
+            '"key_facts":["<high-yield fact>", "..."]}],'
+            '"discriminators":[{"rule":"<the discriminating RULE, one line>",'
+            '"not_it":"<what it is definitively NOT, and why>"}]}\n'
+            "RULES: 3-6 topics. Order them so each builds on the last (anatomy/checkpoint first, then "
+            "mechanisms, then clinical). DISCRIMINATORS ARE THE POINT — extract every rule of the form "
+            "'X effectively excludes Y' or 'X means the lesion is above/below Z'; these are what make "
+            "recognition possible under exam pressure. Never invent facts absent from the note. "
+            + ("Write in Italian. " if lang == "it" else "")
+        )
+        usr = (f"Concept: {concept}\n" if concept else "") + \
+              (f"The learner asked: {question}\n\n" if question else "") + f"Explanation:\n{note[:6000]}"
+        raw = _call(DECOMPOSE_SPEC, sysc, [], usr).strip()
+        m = re.search(r"\{.*\}", raw, re.S)
+        d = json.loads(m.group(0)) if m else {}
+        d["topics"] = (d.get("topics") or [])[:6]
+        d["discriminators"] = (d.get("discriminators") or [])[:6]
+        return d if d.get("topics") else {}
+    except Exception:
+        return {}
+
+
+def cards(topics: list, discriminators: list, concept: str = "", lang: str = "en", n: int = 6) -> list:
+    """🎴 Cards OFF THE SPINE — the generator that actually stops you re-running the session.
+
+    Cards the RULES, not the essay. A card per discriminator (the 'X excludes Y' boundaries that make
+    recognition possible under exam pressure) comes FIRST; per-topic mechanism cards fill the rest.
+    Returns [{front, back, card_type, concept_id}] — [] on any failure (never fatal)."""
+    if not topics and not discriminators:
+        return []
+    try:
+        sysc = (
+            f"You write spaced-repetition cards for a doctor sitting a medical specialty exam. "
+            f"Return ONLY a JSON array of at most {n} cards: "
+            '[{"front":"<question>","back":"<answer>","card_type":"discriminator|mechanism|fact",'
+            '"concept_id":"<short slug>"}]\n'
+            "RULES — this is the whole point:\n"
+            "1. EVERY discriminator gets its OWN card first, card_type='discriminator'. Phrase it so the "
+            "learner must RECALL the boundary, e.g. front: 'Bilious vomiting — where is the obstruction, "
+            "and what does it exclude?'\n"
+            "2. Never card the prose. Card the rule, the mechanism, or the discriminating feature.\n"
+            "3. The front must be answerable from memory in one breath; the back is tight and high-yield.\n"
+            "4. No card may restate its own answer in the front. No trivia.\n"
+            + ("Write the cards in Italian. " if lang == "it" else "")
+        )
+        usr = (f"Concept: {concept}\n\nDISCRIMINATORS (one card each, first):\n"
+               + json.dumps(discriminators, ensure_ascii=False)
+               + "\n\nTOPICS:\n" + json.dumps(topics, ensure_ascii=False))
+        raw = _call(DECOMPOSE_SPEC, sysc, [], usr).strip()
+        m = re.search(r"\[.*\]", raw, re.S)
+        arr = json.loads(m.group(0)) if m else []
+        out = []
+        for c in arr[:n]:
+            f, b = str(c.get("front", "")).strip(), str(c.get("back", "")).strip()
+            if f and b:
+                out.append({"front": f[:400], "back": b[:1200],
+                            "card_type": (c.get("card_type") or "fact")[:24],
+                            "concept_id": (c.get("concept_id") or concept or "")[:80]})
+        return out
+    except Exception:
+        return []
+
+
 def _harrison(topic: str) -> str:
     try:
         out = subprocess.run(["harrison-search", "-q", topic, "--prose", "-n", "4", "--full"],
