@@ -223,6 +223,7 @@ body,.topbar,.pills,.facets,.row,.rhead{transition:background .2s,color .2s,bord
     <div class="sort"><span class="sl">Sort</span> <select id="sort"></select></div>
     <button class="genbtn" onclick="LIB.wizard(true)">✦ <span class="glbl">Generate</span></button>
     <button class="genbtn" onclick="LIB.jobs(true)" title="What's generating / recently generated" style="background:#0f766e">⚡ <span class="glbl">Jobs</span><span id="jobsdot" class="jobsdot" style="display:none"></span></button>
+    <button class="genbtn" onclick="LIB.captures(true)" title="Everything you've flagged — review + turn into cards/quizzes/lessons" style="background:#7c3aed">📥 <span class="glbl">Captures</span><span id="capdot" class="jobsdot" style="display:none"></span></button>
     <button class="themebtn" id="themebtn" onclick="LIB.theme()" title="Toggle light / dark">🌙</button>
     <button class="themebtn" title="Import a .chiron lesson file (install offline)" onclick="document.getElementById('importfile').click()">⬆</button>
     <input id="importfile" type="file" accept=".chiron,.zip" hidden>
@@ -249,6 +250,19 @@ body,.topbar,.pills,.facets,.row,.rhead{transition:background .2s,color .2s,bord
  <div class="modal">
   <div class="modal-h"><b>⚡ Generation activity</b><button class="x" onclick="LIB.jobs(false)">✕</button></div>
   <div class="modal-b" id="jobslist"><div class="hint">Loading…</div></div>
+ </div>
+</div>
+<div id="capback" class="modal-back" onclick="if(event.target===this)LIB.captures(false)">
+ <div class="modal cap-modal">
+  <div class="modal-h"><b>📥 Captures</b><span class="cap-summary" id="capsummary"></span><button class="x" onclick="LIB.captures(false)">✕</button></div>
+  <div class="modal-b cap-body">
+    <div class="cap-controls">
+      <input id="cap-q" class="fi" placeholder="Search captures…" oninput="LIB.capSearch()">
+      <label class="chk"><input type="checkbox" id="cap-unproc" onchange="LIB._loadCaptures()"> Unprocessed only</label>
+    </div>
+    <div id="caplist"><div class="hint">Loading…</div></div>
+  </div>
+  <div id="capdispatch" class="cap-dispatch" style="display:none"></div>
  </div>
 </div>
 <style>
@@ -308,6 +322,34 @@ body,.topbar,.pills,.facets,.row,.rhead{transition:background .2s,color .2s,bord
  #rawback .m{width:min(720px,96vw);max-height:84vh;background:#12100d;border-radius:12px;overflow:hidden;display:flex;flex-direction:column}
  #rawback .mh{display:flex;gap:8px;align-items:center;padding:10px 13px;color:#e5e0d8;font:700 12.5px system-ui;border-bottom:1px solid #2a251d}
  #rawback pre{margin:0;flex:1;overflow:auto;padding:11px 13px;color:#cfc9bd;font:400 11px ui-monospace,monospace;white-space:pre-wrap;overflow-wrap:anywhere}
+ /* ---- Captures browser ---- */
+ @media(min-width:900px){ #capback .cap-modal{max-width:min(720px,92vw)} }
+ .cap-modal{display:flex;flex-direction:column;max-height:86vh}
+ .cap-modal .modal-h b{flex:0 0 auto}
+ .cap-summary{font:600 12px system-ui;color:var(--chiron-muted);margin-left:10px;flex:1}
+ .cap-body{flex:1;overflow:auto;display:flex;flex-direction:column;min-height:0;padding:12px 16px}
+ .cap-controls{display:flex;align-items:center;gap:12px;margin-bottom:10px;flex:0 0 auto}
+ .cap-controls #cap-q{flex:1}
+ #caplist{flex:1;overflow:auto;display:flex;flex-direction:column;gap:6px}
+ .cap-row{display:flex;align-items:flex-start;gap:9px;padding:9px 10px;border-radius:9px;border:1px solid var(--chiron-border);background:var(--chiron-surface);cursor:default}
+ .cap-row.unproc{border-left:3px solid var(--chiron-accent)}
+ .cap-row.cap-sel{background:var(--chiron-elevated);border-color:var(--chiron-accent)}
+ .cap-row input[type=checkbox]{margin-top:3px;flex:0 0 auto;cursor:pointer}
+ .cap-main{flex:1;min-width:0;cursor:pointer}
+ .cap-row-top{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+ .cap-kind{font:700 9.5px system-ui;text-transform:uppercase;letter-spacing:.03em;padding:1px 8px;border-radius:99px;background:var(--chiron-elevated);color:var(--chiron-fg-secondary);flex:0 0 auto}
+ .cap-kind.answer{background:var(--medbg);color:var(--med)}.cap-kind.term{background:var(--langbg);color:var(--lang)}.cap-kind.note{background:var(--codebg);color:var(--code)}
+ .cap-text{font:600 13.5px system-ui;color:var(--chiron-fg);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+ .cap-done{color:var(--t-RISING);font-weight:700;margin-left:auto}
+ .cap-meta{font:500 11px system-ui;color:var(--chiron-muted);margin-top:3px}
+ .cap-expand{margin-top:8px;padding:9px 11px;background:var(--chiron-bg);border:1px solid var(--chiron-divider);border-radius:8px}
+ .cap-asked{font:600 12px system-ui;color:var(--chiron-fg-secondary);margin-bottom:6px}
+ .cap-answer{font:400 13px system-ui;color:var(--chiron-fg);white-space:pre-wrap;line-height:1.45}
+ .cap-expand .jdismiss{margin-top:9px;background:#fde2e2;color:#b91c1c;border-radius:8px;padding:5px 11px;font:700 11px system-ui}
+ .cap-expand .jdismiss:hover{background:#fecaca}
+ .cap-dispatch{display:none;align-items:center;gap:8px;padding:11px 16px;border-top:1px solid var(--chiron-divider);flex:0 0 auto;flex-wrap:wrap}
+ .cap-selcount{font:700 12px system-ui;color:var(--chiron-fg-secondary);margin-right:4px}
+ .cap-dispatch button:disabled{opacity:.5;cursor:default}
 </style>
 <div id="wizback" class="modal-back" onclick="if(event.target===this)LIB.wizard(false)">
  <div class="modal">
@@ -346,6 +388,6 @@ body,.topbar,.pills,.facets,.row,.rhead{transition:background .2s,color .2s,bord
  </div>
 </div>
 <script src="vendor/fflate.min.js"></script>
-<script src="library.js?v=20260717c"></script>
+<script src="library.js?v=20260718b"></script>
 <script>if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));}</script>
 </body></html>

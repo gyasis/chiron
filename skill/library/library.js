@@ -512,6 +512,107 @@ const LIB = {
       const dot=document.getElementById('jobsdot'); if(dot) dot.style.display=(d.active&&d.active.length)?'inline-block':'none';
     }catch(e){}
   },
+
+  /* ---- Captures browser — inbox for ⭐-flagged terms/answers/notes; select → dispatch into cards/mcqs/train/lesson ---- */
+  captures(open){
+    document.getElementById('capback').classList.toggle('show', open);
+    clearInterval(LIB._capTimer);
+    if(open){ LIB._capSel=LIB._capSel||new Set(); LIB._capOpen=LIB._capOpen||new Set();
+      LIB._loadCaptures(); LIB._capTimer=setInterval(()=>LIB._loadCaptures(), 8000); }
+  },
+  capSearch(){ clearTimeout(LIB._capSearchT); LIB._capSearchT=setTimeout(()=>LIB._loadCaptures(), 300); },
+  async _loadCaptures(){
+    const el=document.getElementById('caplist'); if(!el) return;
+    const q=(document.getElementById('cap-q')||{}).value||'';
+    const unproc=(document.getElementById('cap-unproc')||{}).checked;
+    let d;
+    try{ d=await (await fetch(API+'/captures?'+new URLSearchParams({q, unprocessed: unproc?'true':'false', limit:100}))).json(); }
+    catch(e){ el.innerHTML='<div class="hint">Server unreachable — is the Chiron server up?</div>'; return; }
+    const items=d.items||[];
+    LIB._capItems=new Map(items.map(x=>[x.id,x]));
+    LIB._capSel=LIB._capSel||new Set(); LIB._capOpen=LIB._capOpen||new Set();
+    [...LIB._capSel].forEach(id=>{ if(!LIB._capItems.has(id)) LIB._capSel.delete(id); });
+    const esc=s=>String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/'/g,'&#39;').replace(/"/g,'&quot;');
+    const when=s=>{ if(!s) return ''; const t=new Date(s); return isNaN(t)?'':t.toLocaleString([], {month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}); };
+    const summary=document.getElementById('capsummary'); if(summary) summary.textContent=`${d.count||0} total · ${d.unprocessed||0} unprocessed`;
+    const dot=document.getElementById('capdot'); if(dot) dot.style.display=d.unprocessed?'inline-block':'none';
+    if(!items.length){ el.innerHTML=`<div class="hint">No captures${unproc?' — everything is processed':''}.</div>`; LIB._renderCapDispatch(); return; }
+    el.innerHTML=items.map(x=>{
+      const unprocX=!x.processed_at, sel=LIB._capSel.has(x.id), expanded=LIB._capOpen.has(x.id);
+      return `<div class="cap-row ${unprocX?'unproc':''} ${sel?'cap-sel':''}" data-id="${x.id}">
+        <input type="checkbox" ${sel?'checked':''} onclick="event.stopPropagation();LIB.capToggleSel(${x.id})">
+        <div class="cap-main" onclick="LIB.capToggleExpand(${x.id})">
+          <div class="cap-row-top"><span class="cap-kind ${esc(x.kind)}">${esc(x.kind)}</span><b class="cap-text">${esc(x.text)}</b>${x.processed_at?'<span class="cap-done">✓</span>':''}</div>
+          <div class="cap-meta">${x.concept?esc(x.concept)+' · ':''}${x.lesson_slug?esc(x.lesson_slug)+' · ':''}${when(x.created_at)}</div>
+          ${expanded?`<div class="cap-expand" id="cap-exp-${x.id}"><div class="hint">Loading…</div></div>`:''}
+        </div>
+      </div>`;
+    }).join('');
+    LIB._renderCapDispatch();
+    LIB._capOpen.forEach(id=>LIB._fillCapExpand(id));
+  },
+  capToggleSel(id){
+    LIB._capSel=LIB._capSel||new Set(); LIB._capSel.has(id)?LIB._capSel.delete(id):LIB._capSel.add(id);
+    const row=document.querySelector(`.cap-row[data-id="${id}"]`);
+    if(row){ row.classList.toggle('cap-sel', LIB._capSel.has(id)); const cb=row.querySelector('input[type=checkbox]'); if(cb) cb.checked=LIB._capSel.has(id); }
+    LIB._renderCapDispatch();
+  },
+  capToggleExpand(id){
+    LIB._capOpen=LIB._capOpen||new Set();
+    LIB._capOpen.has(id) ? LIB._capOpen.delete(id) : LIB._capOpen.add(id);
+    LIB._loadCaptures();
+  },
+  async _fillCapExpand(id){
+    const el=document.getElementById('cap-exp-'+id); if(!el) return;
+    const esc=s=>String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;');
+    try{ const d=await (await fetch(API+'/captures/'+id)).json();
+      el.innerHTML=(d.question?`<div class="cap-asked">Asked: ${esc(d.question)}</div>`:'')
+        +`<div class="cap-answer">${esc(d.source_answer||d.text||'')}</div>`
+        +`<button class="jdismiss" onclick="event.stopPropagation();LIB.capDismiss(${id})">🗑 Dismiss</button>`;
+    }catch(e){ el.innerHTML='<div class="hint">Failed to load.</div>'; }
+  },
+  async capDismiss(id){
+    if(!confirm('Dismiss this capture? This deletes it permanently.')) return;
+    try{ await fetch(API+'/captures/'+id,{method:'DELETE'});
+      if(LIB._capSel) LIB._capSel.delete(id); if(LIB._capOpen) LIB._capOpen.delete(id);
+      LIB._loadCaptures();
+    }catch(e){ alert('Dismiss failed: '+e.message); }
+  },
+  _renderCapDispatch(){
+    const bar=document.getElementById('capdispatch'); if(!bar || LIB._capBusy) return;
+    const n=(LIB._capSel||new Set()).size;
+    if(!n){ bar.style.display='none'; bar.innerHTML=''; return; }
+    bar.style.display='flex';
+    bar.innerHTML=`<span class="cap-selcount">${n} selected</span>
+      <button class="jopen" onclick="LIB.capDispatch('cards')">🎴 Cards</button>
+      <button class="jopen" onclick="LIB.capDispatch('mcqs')">❓ MCQs</button>
+      <button class="jopen" onclick="LIB.capDispatch('train')">🎓 Train</button>
+      <button class="jopen" onclick="LIB.capDispatch('lesson')">📚 Lesson</button>
+      <button class="jretry" onclick="LIB.capClearSel()">✕ Clear</button>`;
+  },
+  capClearSel(){
+    LIB._capSel=new Set(); LIB._renderCapDispatch();
+    document.querySelectorAll('.cap-row.cap-sel').forEach(r=>r.classList.remove('cap-sel'));
+    document.querySelectorAll('#caplist input[type=checkbox]').forEach(cb=>cb.checked=false);
+  },
+  async capDispatch(kind){
+    const ids=[...(LIB._capSel||new Set())]; if(!ids.length) return;
+    LIB._capBusy=true;
+    const bar=document.getElementById('capdispatch');
+    const buttons=[...bar.querySelectorAll('button')]; buttons.forEach(b=>b.disabled=true);
+    const cc=bar.querySelector('.cap-selcount'); if(cc) cc.textContent='🧬 generating…';
+    try{
+      const r=await (await fetch(API+'/captures/cards',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({ids,kind})})).json();
+      let msg='✓ done';
+      if(kind==='cards') msg=`✓ ${(r.cards||[]).length||r.written_to_sr||0} cards → SR`;
+      else if(kind==='mcqs') msg=`✓ ${(r.mcqs||[]).length||0} practice questions`;
+      else if(kind==='train') msg=`✓ drill ready`;
+      else if(kind==='lesson') msg=`✓ lesson queued — ${(r.lesson_job&&r.lesson_job.slug)||''}`;
+      if(cc) cc.textContent=msg;
+    }catch(e){ if(cc) cc.textContent='⚠ '+e.message; }
+    buttons.forEach(b=>b.disabled=false);
+    setTimeout(()=>{ LIB._capBusy=false; LIB.capClearSel(); LIB._loadCaptures(); }, 6000);
+  },
 };
 window.LIB = LIB;
 LIB._jobsHeartbeat(); setInterval(()=>LIB._jobsHeartbeat(), 15000);   // light the ⚡Jobs dot when something's baking
