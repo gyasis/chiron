@@ -613,7 +613,44 @@ const LIB = {
     buttons.forEach(b=>b.disabled=false);
     setTimeout(()=>{ LIB._capBusy=false; LIB.capClearSel(); LIB._loadCaptures(); }, 6000);
   },
+
+  /* ---- SSM connection indicator: holds the Specializzando base address (LAN IP, never
+     localhost) so the tutor's ?qid= practice links build correctly, + shows reachability ---- */
+  ssm: {
+    _live:false,
+    base(){ try{ return localStorage.getItem('chiron.ssmBase')||''; }catch(e){ return ''; } },
+    isSet(){ return !!this.base(); },
+    // effective base: explicit override, else same host this page was loaded from on :5191
+    // (location.hostname is the real LAN IP when opened over the network — never localhost)
+    eff(){ const b=this.base(); return b ? b.replace(/\/+$/,'') : (location.protocol+'//'+location.hostname+':5191'); },
+    async init(){ this.render('idle'); await this.check(); setInterval(()=>this.check(), 30000); },
+    render(state){ const b=document.getElementById('ssmbadge'); if(!b) return;
+      b.classList.remove('ok','down','idle'); b.classList.add(state);
+      const t={ok:'SSM connected · '+this.eff(), down:'SSM offline · '+this.eff(), idle:'SSM address not set (using auto)'};
+      b.title=t[state]||''; },
+    async check(){ const url=this.eff(), c=new AbortController(), to=setTimeout(()=>c.abort(),3500);
+      try{ await fetch(url+'/?ping='+Date.now(), {mode:'no-cors', signal:c.signal}); clearTimeout(to); this._live=true; this.render('ok'); }
+      catch(e){ clearTimeout(to); this._live=false; this.render(this.isSet()?'down':'idle'); }
+      this._refresh(); return this._live; },
+    pop(ev){ if(ev) ev.stopPropagation(); const p=document.getElementById('ssmpop'); if(!p) return;
+      const open=p.classList.toggle('open');
+      if(open){ this._refresh(); const inp=document.getElementById('ssm-url'); if(inp) inp.value=this.base()||this.eff();
+        const off=(e)=>{ if(!p.contains(e.target) && (e.target.closest?!e.target.closest('#ssmbadge'):true)){ p.classList.remove('open'); document.removeEventListener('click',off); } };
+        setTimeout(()=>document.addEventListener('click',off),0); } },
+    _refresh(){ const st=document.getElementById('ssm-state');
+      if(st) st.textContent = this._live ? ('🟢 Connected · '+this.eff()) : (this.isSet()?('🔴 Unreachable · '+this.eff()):'⚪ Using auto address · '+this.eff());
+      const a=document.getElementById('ssm-auto'); if(a) a.textContent=this.isSet()?'override':('auto: '+location.hostname+':5191'); },
+    async test(){ const st=document.getElementById('ssm-state'); if(st) st.textContent='↻ testing…';
+      const ok=await this.check(); if(st) st.textContent = ok?('🟢 Reachable · '+this.eff()):('🔴 No response · '+this.eff()); },
+    save(){ const inp=document.getElementById('ssm-url'); if(!inp) return; let v=(inp.value||'').trim();
+      if(v){ if(!/^https?:\/\//.test(v)) v='http://'+v; try{ localStorage.setItem('chiron.ssmBase', v.replace(/\/+$/,'')); }catch(e){} }
+      else { try{ localStorage.removeItem('chiron.ssmBase'); }catch(e){} }
+      this.check(); },
+    clear(){ try{ localStorage.removeItem('chiron.ssmBase'); }catch(e){} const inp=document.getElementById('ssm-url'); if(inp) inp.value=this.eff(); this.check(); },
+    open(){ window.open(this.eff(), '_blank'); },
+  },
 };
 window.LIB = LIB;
+LIB.ssm.init();   // SSM connection indicator: discover base address + reachability
 LIB._jobsHeartbeat(); setInterval(()=>LIB._jobsHeartbeat(), 15000);   // light the ⚡Jobs dot when something's baking
 boot().catch(e=>{ document.getElementById('rows').innerHTML = `<div class="empty">Failed to load library: ${e.message}<br>Run the index builder + serve over http.</div>`; });

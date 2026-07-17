@@ -373,6 +373,42 @@ html.chiron-tutor-pushed body {
 }
 .ct-sugg-pill:hover { background: var(--color-accent-light, rgba(217,79,48,.10)); }
 
+/* "Where it's tested" practice-question pills — rendered under the latest
+   assistant reply, deep-linking to real exam questions that test the concept */
+.ct-tested {
+  align-self: flex-start;
+  max-width: 92%;
+  margin-top: 8px;
+}
+.ct-tested-label {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+  color: var(--color-text-muted, #9E9790);
+  margin-bottom: 5px;
+}
+.ct-tested-pill {
+  display: inline-block;
+  font-size: 11px;
+  padding: 4px 9px;
+  margin: 0 6px 6px 0;
+  border-radius: 999px;
+  border: 1px solid var(--color-border, #E5DFD6);
+  background: var(--color-bg, transparent);
+  color: var(--color-accent, #D94F30);
+  text-decoration: none;
+  line-height: 1.25;
+  transition: background .15s ease;
+}
+.ct-tested-pill:hover { background: var(--color-accent-light, rgba(217,79,48,.10)); }
+.ct-tested-pill.direct {
+  background: var(--color-accent-light, rgba(217,79,48,.12));
+  border-color: var(--color-accent, #D94F30);
+  font-weight: 700;
+}
+.ct-tested-pill.direct:hover { background: var(--color-accent-light, rgba(217,79,48,.20)); }
+
 /* Selectable / saved highlight-chip states (batch dispatch) */
 .ct-chip.selected {
   border-color: var(--color-accent, #D94F30);
