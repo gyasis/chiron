@@ -1,0 +1,4 @@
+deploy*.log
+smoke.log
+accept_test.mjs
+__pycache__/

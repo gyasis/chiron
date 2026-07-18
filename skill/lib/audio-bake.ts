@@ -21,9 +21,9 @@
 
 import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
-import { existsSync, mkdirSync, readFileSync, renameSync, rmSync, statSync, writeFileSync } from 'node:fs';
+import { copyFileSync, existsSync, mkdirSync, mkdtempSync, readFileSync, renameSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { dirname, join, resolve } from 'node:path';
+import { basename, dirname, join, resolve } from 'node:path';
 import Database from 'better-sqlite3';
 
 import { progress } from './progress.js';
@@ -105,6 +105,16 @@ export interface AudioBakeOptions {
    * Sections NOT in this map are allowed to be supplementary (04s teach-don't-read).
    */
   displayedText?: Record<string, string>;
+  /**
+   * Synthesis backend. 'mac' (default) = today's OmniVoice sidecar, one clip at a time — UNCHANGED.
+   * 'modal' = fan the whole lesson's SYNTH out to the Modal L4 lane (bucketed CUDA) up front, then
+   * every downstream step (normalize / manifest / splice / mp3 / status / QC) runs LOCALLY exactly as
+   * for a Mac bake → byte-identical output, only faster. Any Modal failure falls back to the Mac
+   * sidecar per-segment, so 'modal' can never produce a worse result than 'mac'.
+   */
+  engine?: 'mac' | 'modal';
+  /** Absolute path to modal_synth.py — required when engine='modal' (else it falls back to Mac). */
+  modalSynthScript?: string;
 }
 
 export type ClipStatus = 'done' | 'reused' | 'failed' | 'pending';
@@ -474,6 +484,44 @@ export async function bakeAudio(opts: AudioBakeOptions): Promise<AudioClipResult
     let reused = 0;
     let failed = 0;
 
+    // engine='modal': fan the WHOLE lesson's synth out to the Modal L4 lane (bucketed CUDA) up front.
+    // Writes raw per-segment WAVs to prefetch/<artifactHash>/<i>.wav; the loop below then copies those
+    // in instead of synthesizing (everything else — normalize/manifest/splice/mp3/QC — is unchanged).
+    // ANY failure leaves modalPrefetch=null and every segment falls back to the Mac sidecar.
+    let modalPrefetch: string | null = null;
+    if (opts.engine === 'modal' && opts.modalSynthScript) {
+      try {
+        const usedVoices = new Set<string>();
+        for (const art of ordered) for (const s of art.segments) usedVoices.add(s.voice);
+        const refs: Record<string, { wav: string; txt: string }> = {};
+        for (const v of usedVoices) {
+          const vr = opts.voices[v];
+          if (vr) refs[v] = { wav: basename(vr.refAudio), txt: vr.refText };
+        }
+        const sections: Record<string, Array<{ voice: string; lang: string; text: string }>> = {};
+        for (const art of ordered) {
+          sections[hashSegments(art.segments)] = art.segments.map((s) => ({ voice: s.voice, lang: s.lang, text: s.text }));
+        }
+        const job = { slug: opts.courseId, num_step: 48, bucket: 8, refs, sections };
+        const workRoot = mkdtempSync(join(tmpdir(), 'chiron-modal-'));
+        const jobPath = join(workRoot, 'job.json');
+        const prefDir = join(workRoot, 'prefetch');
+        writeFileSync(jobPath, JSON.stringify(job));
+        progress(STAGE, `engine=modal — fanning ${Object.keys(sections).length} artifacts to the Modal L4 lane…`);
+        const out = execFileSync('python3', [opts.modalSynthScript, jobPath, prefDir], {
+          encoding: 'utf8', timeout: 1_800_000, maxBuffer: 8 * 1024 * 1024,
+        });
+        const res = JSON.parse(out.trim().split('\n').pop() || '{}');
+        if (res.error) throw new Error(String(res.error));
+        modalPrefetch = prefDir;
+        progress(STAGE, `engine=modal — synthesized ${res.clips} clips on Modal in ${res.synth_s}s (splicing locally)`);
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : String(e);
+        progress(STAGE, `engine=modal FAILED (${msg.slice(0, 80)}) — falling back to the Mac sidecar`);
+        modalPrefetch = null;
+      }
+    }
+
     for (const art of ordered) {
       const sid = art.sectionId ?? '';
       const label = `${art.kind}${sid ? `/${sid}` : ''}`;
@@ -538,7 +586,18 @@ export async function bakeAudio(opts: AudioBakeOptions): Promise<AudioClipResult
          * apply a pitch-preserved atempo so the fallback keeps the slow reading.
          * Returns which engine actually produced the clip (for logging).
          */
-        const synthSegmentToWav = async (seg: LectureSegment, rawWav: string): Promise<SynthEngine> => {
+        const synthSegmentToWav = async (seg: LectureSegment, rawWav: string, prefetchWav?: string): Promise<SynthEngine> => {
+          // engine=modal: the raw synth already exists (from the Modal lane) → copy it in, skip synth.
+          // The slow-read atempo still applies locally, so slow passages match the Mac path exactly.
+          if (prefetchWav && existsSync(prefetchWav)) {
+            copyFileSync(prefetchWav, rawWav);
+            if (diaParams.speed < 1.0) {
+              const slowed = `${rawWav}.slow.wav`;
+              execFileSync('ffmpeg', ['-y', '-loglevel', 'error', '-i', rawWav, '-filter:a', `atempo=${diaParams.speed}`, slowed], { stdio: 'pipe' });
+              renameSync(slowed, rawWav);
+            }
+            return 'omni';
+          }
           if (useDia) {
             try {
               await synthDiaSegment(diaUrl, seg, diaParams, rawWav);
@@ -581,7 +640,8 @@ export async function bakeAudio(opts: AudioBakeOptions): Promise<AudioClipResult
           });
           const rawWav = join(work, `raw${i}.wav`);
           const segWav = join(work, `seg${i}.wav`);
-          const produced = await synthSegmentToWav(seg, rawWav);
+          const pfWav = modalPrefetch ? join(modalPrefetch, hash, `${i}.wav`) : undefined;
+          const produced = await synthSegmentToWav(seg, rawWav, pfWav);
           progress(STAGE, `${label}: segment ${i + 1}/${art.segments.length} produced by ${produced}`);
           execFileSync('tts-normalize', [rawWav, segWav, String(target)], { stdio: 'pipe' });
           const gap = i < art.segments.length - 1 ? seg.gapAfterMs : 0;
