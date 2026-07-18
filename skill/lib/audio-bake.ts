@@ -458,6 +458,7 @@ export async function bakeAudio(opts: AudioBakeOptions): Promise<AudioClipResult
       status=excluded.status, error=excluded.error, reuse_count=excluded.reuse_count,
       generated_at=excluded.generated_at`;
 
+  let modalRoot: string | null = null;   // hoisted so the finally can clean the Modal prefetch tree (F3-leak)
   try {
     const upsert = db.prepare(upsertSql);
     const findExisting = db.prepare(
@@ -488,34 +489,53 @@ export async function bakeAudio(opts: AudioBakeOptions): Promise<AudioClipResult
     // Writes raw per-segment WAVs to prefetch/<artifactHash>/<i>.wav; the loop below then copies those
     // in instead of synthesizing (everything else — normalize/manifest/splice/mp3/QC — is unchanged).
     // ANY failure leaves modalPrefetch=null and every segment falls back to the Mac sidecar.
-    let modalPrefetch: string | null = null;
+    let modalPrefetch: string | null = null;         // modalRoot is hoisted above the try (finally cleans it)
     if (opts.engine === 'modal' && opts.modalSynthScript) {
       try {
-        const usedVoices = new Set<string>();
-        for (const art of ordered) for (const s of art.segments) usedVoices.add(s.voice);
-        const refs: Record<string, { wav: string; txt: string }> = {};
-        for (const v of usedVoices) {
-          const vr = opts.voices[v];
-          if (vr) refs[v] = { wav: basename(vr.refAudio), txt: vr.refText };
-        }
-        const sections: Record<string, Array<{ voice: string; lang: string; text: string }>> = {};
-        for (const art of ordered) {
-          sections[hashSegments(art.segments)] = art.segments.map((s) => ({ voice: s.voice, lang: s.lang, text: s.text }));
-        }
-        const job = { slug: opts.courseId, num_step: 48, bucket: 8, refs, sections };
-        const workRoot = mkdtempSync(join(tmpdir(), 'chiron-modal-'));
-        const jobPath = join(workRoot, 'job.json');
-        const prefDir = join(workRoot, 'prefetch');
-        writeFileSync(jobPath, JSON.stringify(job));
-        progress(STAGE, `engine=modal — fanning ${Object.keys(sections).length} artifacts to the Modal L4 lane…`);
-        const out = execFileSync('python3', [opts.modalSynthScript, jobPath, prefDir], {
-          encoding: 'utf8', timeout: 1_800_000, maxBuffer: 8 * 1024 * 1024,
+        // Only fan out artifacts that will ACTUALLY be synthesized:
+        //  · F2 — skip reuse-hits (a clip whose script_hash matches an existing done mp3) → don't pay GPU
+        //          for clips that are free on the Mac path.
+        //  · F6 — skip Dia artifacts → they synthesize on the Dia sidecar; an OmniVoice prefetch would
+        //          hijack them (the prefetch-copy branch runs before the `if(useDia)` check).
+        const toBake = ordered.filter((art) => {
+          if (art.engine === 'dia') return false;
+          const ex = findExisting.get(opts.courseId, art.kind, art.sectionId ?? '') as
+            | { scriptHash: string; audioPath: string | null } | undefined;
+          const reuse = !!(ex && ex.scriptHash === hashSegments(art.segments) && ex.audioPath && existsSync(join(lessonDir, ex.audioPath)));
+          return !reuse;
         });
-        const res = JSON.parse(out.trim().split('\n').pop() || '{}');
-        if (res.error) throw new Error(String(res.error));
-        modalPrefetch = prefDir;
-        progress(STAGE, `engine=modal — synthesized ${res.clips} clips on Modal in ${res.synth_s}s (splicing locally)`);
+        if (toBake.length === 0) {
+          progress(STAGE, `engine=modal — nothing to synth (all reused) → skipping Modal`);
+        } else {
+          const usedVoices = new Set<string>();
+          for (const art of toBake) for (const s of art.segments) usedVoices.add(s.voice);
+          const refs: Record<string, { wav: string; txt: string }> = {};
+          for (const v of usedVoices) {
+            const vr = opts.voices[v];
+            if (!vr) throw new Error(`voice '${v}' not registered — cannot fast-bake on Modal`);   // F5: fail fast + clear
+            refs[v] = { wav: basename(vr.refAudio), txt: vr.refText };
+          }
+          const sections: Record<string, Array<{ voice: string; lang: string; text: string }>> = {};
+          for (const art of toBake) {
+            sections[hashSegments(art.segments)] = art.segments.map((s) => ({ voice: s.voice, lang: s.lang, text: s.text }));
+          }
+          const job = { slug: opts.courseId, num_step: 48, bucket: 8, refs, sections };
+          modalRoot = mkdtempSync(join(tmpdir(), 'chiron-modal-'));
+          const jobPath = join(modalRoot, 'job.json');
+          const prefDir = join(modalRoot, 'prefetch');
+          writeFileSync(jobPath, JSON.stringify(job));
+          progress(STAGE, `engine=modal — fanning ${toBake.length}/${ordered.length} artifacts to Modal L4 (${ordered.length - toBake.length} reused/Dia skipped)…`);
+          const out = execFileSync('python3', [opts.modalSynthScript, jobPath, prefDir], {
+            encoding: 'utf8', timeout: 1_800_000, maxBuffer: 8 * 1024 * 1024,
+          });
+          const res = JSON.parse(out.trim().split('\n').pop() || '{}');
+          if (res.error) throw new Error(String(res.error));
+          modalPrefetch = prefDir;
+          progress(STAGE, `engine=modal — synthesized ${res.clips} clips on Modal in ${res.synth_s}s (splicing locally)`);
+        }
       } catch (e) {
+        if (modalRoot) { try { rmSync(modalRoot, { recursive: true, force: true }); } catch { /* best-effort */ } }  // F3-leak
+        modalRoot = null;
         // A TOTAL fan-out failure (Modal down/unauthed) must NOT silently degrade the whole lesson onto
         // the single Mac sidecar — under a concurrent rebake-all that's 12 lessons stampeding one TTS
         // engine (F3), and it violates "Modal only on explicit selection". Fail cleanly instead; the
@@ -694,7 +714,13 @@ export async function bakeAudio(opts: AudioBakeOptions): Promise<AudioClipResult
           const expectedText = art.segments.map((s) => s.text).join(' ');
           progress(STAGE, `QC ${label} — checking with Gemini…`);
           const take1 = await qcAudioClip(absPath, expectedText);
-          if (!take1.clean && take1.defects.length > 0) {
+          if (!take1.clean && take1.defects.length > 0 && modalPrefetch) {
+            // F4: the take-2 re-bake (synthAndEncode) synthesizes on the single Mac sidecar — under a
+            // concurrent Modal rebake-all that's the exact stampede F3 prevents. For a Modal bake, keep
+            // take 1 and just LOG the defect (re-bakeable later), rather than contending the Mac.
+            progress(STAGE, `QC ${label}: defects on take 1 (${take1.defects.length}) — logged (Modal bake; no Mac re-bake)`);
+            finalQcDefects = take1.defects;
+          } else if (!take1.clean && take1.defects.length > 0) {
             progress(STAGE, `QC ${label}: defects on take 1 (${take1.defects.length}) — re-baking…`);
             try {
               await synthAndEncode();
@@ -760,6 +786,7 @@ export async function bakeAudio(opts: AudioBakeOptions): Promise<AudioClipResult
     progress(STAGE, `done — ${baked} baked, ${reused} reused, ${failed} failed of ${ordered.length}${qcSummary}`);
     return results;
   } finally {
+    if (modalRoot) { try { rmSync(modalRoot, { recursive: true, force: true }); } catch { /* best-effort */ } }  // F3-leak: clean the Modal prefetch WAV tree on every exit
     db.close();
   }
 }

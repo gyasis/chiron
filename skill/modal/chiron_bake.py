@@ -65,6 +65,9 @@ def bake_lesson(job: dict) -> dict:
         # ref keyed by the segment's VOICE (dialogues have persona-a/persona-b), falling back to lang
         # then en — so multi-voice lessons clone the right voice per clip.
         r = refs.get(seg.get("voice")) or refs.get(seg.get("lang")) or refs.get("en")
+        if not r:   # F5: clear error instead of a None["wav"] TypeError that kills the lesson mid-bucket
+            raise ValueError(f"no voice ref for voice={seg.get('voice')!r} lang={seg.get('lang')!r} "
+                             f"(available: {sorted(refs)})")
         return "/root/refs/" + r["wav"], r["txt"]
 
     t0 = time.perf_counter()
