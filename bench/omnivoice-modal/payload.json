@@ -1,0 +1,598 @@
+{
+ "source": "chiron-ssm-ssm2020-115 (representative SSM passage question)",
+ "params": {
+  "num_step": 48,
+  "guidance_scale": 2.0,
+  "class_temperature": 0.3,
+  "speed": 1.0
+ },
+ "ref_map": {
+  "en": {
+   "wav": "lucrezia_english_ref.wav",
+   "txt": "lucrezia_english_ref.txt"
+  },
+  "it": {
+   "wav": "lucrezia_italian_ref.wav",
+   "txt": "lucrezia_italian_ref.txt"
+  }
+ },
+ "total_segments": 115,
+ "total_chars": 4968,
+ "segments": [
+  {
+   "section": "breakdown",
+   "lang": "en",
+   "text": "Let's break down this clinical vignette phrase by phrase and pick up the medical Italian."
+  },
+  {
+   "section": "breakdown",
+   "lang": "en",
+   "text": "A sixty-six-year-old woman presents with about two days of"
+  },
+  {
+   "section": "breakdown",
+   "lang": "it",
+   "text": "nausea e vomito,"
+  },
+  {
+   "section": "breakdown",
+   "lang": "en",
+   "text": "nausea and vomiting."
+  },
+  {
+   "section": "breakdown",
+   "lang": "en",
+   "text": "Straightforward enough."
+  },
+  {
+   "section": "breakdown",
+   "lang": "en",
+   "text": "Then comes"
+  },
+  {
+   "section": "breakdown",
+   "lang": "it",
+   "text": "algie addominale diffusa,"
+  },
+  {
+   "section": "breakdown",
+   "lang": "en",
+   "text": "diffuse abdominal pain."
+  },
+  {
+   "section": "breakdown",
+   "lang": "en",
+   "text": "Notice the word"
+  },
+  {
+   "section": "breakdown",
+   "lang": "it",
+   "text": "algie"
+  },
+  {
+   "section": "breakdown",
+   "lang": "en",
+   "text": "— it comes from the Greek root for pain."
+  },
+  {
+   "section": "breakdown",
+   "lang": "en",
+   "text": "You'll see this root everywhere in medicine:"
+  },
+  {
+   "section": "breakdown",
+   "lang": "it",
+   "text": "neuralgia,"
+  },
+  {
+   "section": "breakdown",
+   "lang": "en",
+   "text": "nerve pain;"
+  },
+  {
+   "section": "breakdown",
+   "lang": "it",
+   "text": "mialgia,"
+  },
+  {
+   "section": "breakdown",
+   "lang": "en",
+   "text": "muscle pain;"
+  },
+  {
+   "section": "breakdown",
+   "lang": "it",
+   "text": "artralgia,"
+  },
+  {
+   "section": "breakdown",
+   "lang": "en",
+   "text": "joint pain."
+  },
+  {
+   "section": "breakdown",
+   "lang": "en",
+   "text": "The adjective"
+  },
+  {
+   "section": "breakdown",
+   "lang": "it",
+   "text": "diffusa"
+  },
+  {
+   "section": "breakdown",
+   "lang": "en",
+   "text": "tells you the pain isn't localized — it's everywhere, which is concerning."
+  },
+  {
+   "section": "breakdown",
+   "lang": "en",
+   "text": "Next:"
+  },
+  {
+   "section": "breakdown",
+   "lang": "it",
+   "text": "l'esame obiettivo"
+  },
+  {
+   "section": "breakdown",
+   "lang": "en",
+   "text": "— the physical examination — shows"
+  },
+  {
+   "section": "breakdown",
+   "lang": "it",
+   "text": "scarsi o assenti rumori intestinali,"
+  },
+  {
+   "section": "breakdown",
+   "lang": "en",
+   "text": "scarce or absent bowel sounds."
+  },
+  {
+   "section": "breakdown",
+   "lang": "en",
+   "text": "When you put your stethoscope on a silent abdomen, that's ominous."
+  },
+  {
+   "section": "breakdown",
+   "lang": "en",
+   "text": "The bowel has either stopped moving — or it's perforated."
+  },
+  {
+   "section": "breakdown",
+   "lang": "en",
+   "text": "So they order a"
+  },
+  {
+   "section": "breakdown",
+   "lang": "it",
+   "text": "radiografia diretta dell'addome,"
+  },
+  {
+   "section": "breakdown",
+   "lang": "en",
+   "text": "a plain X-ray of the abdomen — no contrast, just the film."
+  },
+  {
+   "section": "breakdown",
+   "lang": "en",
+   "text": "And the radiologist makes the diagnosis:"
+  },
+  {
+   "section": "breakdown",
+   "lang": "it",
+   "text": "perforazione intestinale,"
+  },
+  {
+   "section": "breakdown",
+   "lang": "en",
+   "text": "intestinal perforation."
+  },
+  {
+   "section": "breakdown",
+   "lang": "en",
+   "text": "Now the question asks for"
+  },
+  {
+   "section": "breakdown",
+   "lang": "it",
+   "text": "il segno radiografico tipico,"
+  },
+  {
+   "section": "breakdown",
+   "lang": "en",
+   "text": "the typical radiographic sign,"
+  },
+  {
+   "section": "breakdown",
+   "lang": "en",
+   "text": "on an X-ray taken"
+  },
+  {
+   "section": "breakdown",
+   "lang": "it",
+   "text": "in posizione eretta,"
+  },
+  {
+   "section": "breakdown",
+   "lang": "en",
+   "text": "in upright position."
+  },
+  {
+   "section": "breakdown",
+   "lang": "en",
+   "text": "That positional detail is the key to the whole question."
+  },
+  {
+   "section": "breakdown",
+   "lang": "en",
+   "text": "On a supine film, free air spreads out and can be invisible."
+  },
+  {
+   "section": "breakdown",
+   "lang": "en",
+   "text": "The erect position uses gravity to push the air where you can actually see it — under the diaphragm."
+  },
+  {
+   "section": "medicine",
+   "lang": "en",
+   "text": "Here's why this matters."
+  },
+  {
+   "section": "medicine",
+   "lang": "en",
+   "text": "When a hollow viscus — stomach, small bowel, or colon — perforates, air escapes into the peritoneal cavity."
+  },
+  {
+   "section": "medicine",
+   "lang": "en",
+   "text": "That's called"
+  },
+  {
+   "section": "medicine",
+   "lang": "it",
+   "text": "pneumoperitoneo,"
+  },
+  {
+   "section": "medicine",
+   "lang": "en",
+   "text": "pneumoperitoneum — free air where it shouldn't be."
+  },
+  {
+   "section": "medicine",
+   "lang": "en",
+   "text": "Think of it this way: the air is like a bubble that rises to the top of a fish tank."
+  },
+  {
+   "section": "medicine",
+   "lang": "en",
+   "text": "On an upright abdominal film, the top of the tank is right under the diaphragm."
+  },
+  {
+   "section": "medicine",
+   "lang": "en",
+   "text": "That's where you look."
+  },
+  {
+   "section": "medicine",
+   "lang": "en",
+   "text": "The air appears as a"
+  },
+  {
+   "section": "medicine",
+   "lang": "it",
+   "text": "falce d'aria sottodiaframmatica,"
+  },
+  {
+   "section": "medicine",
+   "lang": "en",
+   "text": "a crescent-shaped dark line between the diaphragm and the liver or stomach."
+  },
+  {
+   "section": "medicine",
+   "lang": "en",
+   "text": "Dark on X-ray means air — radiolucent."
+  },
+  {
+   "section": "medicine",
+   "lang": "en",
+   "text": "This is one of those must-not-miss diagnoses."
+  },
+  {
+   "section": "medicine",
+   "lang": "en",
+   "text": "A perforated bowel is a surgical emergency."
+  },
+  {
+   "section": "medicine",
+   "lang": "en",
+   "text": "If you see that crescent of air, you call the surgeon."
+  },
+  {
+   "section": "medicine",
+   "lang": "it",
+   "text": "Subito."
+  },
+  {
+   "section": "medicine",
+   "lang": "en",
+   "text": "Immediately. No waiting, no more tests."
+  },
+  {
+   "section": "medicine",
+   "lang": "en",
+   "text": "Now, why does the question specify"
+  },
+  {
+   "section": "medicine",
+   "lang": "it",
+   "text": "in posizione eretta?"
+  },
+  {
+   "section": "medicine",
+   "lang": "en",
+   "text": "On a supine film — the patient lying flat — air distributes evenly across the peritoneal cavity and may be completely invisible."
+  },
+  {
+   "section": "medicine",
+   "lang": "en",
+   "text": "It doesn't pool anywhere."
+  },
+  {
+   "section": "medicine",
+   "lang": "en",
+   "text": "The erect position uses gravity to collect the air at the highest point — right under the diaphragm — where it becomes visible as that crescent."
+  },
+  {
+   "section": "medicine",
+   "lang": "en",
+   "text": "That's why the positioning isn't a random detail — it's the condition that makes the sign visible."
+  },
+  {
+   "section": "question",
+   "lang": "en",
+   "text": "Let's walk through the answer choices."
+  },
+  {
+   "section": "question",
+   "lang": "en",
+   "text": "Option A:"
+  },
+  {
+   "section": "question",
+   "lang": "it",
+   "text": "presenza di falce d'aria sovradiaframmatica,"
+  },
+  {
+   "section": "question",
+   "lang": "en",
+   "text": "presence of a crescent of air above the diaphragm."
+  },
+  {
+   "section": "question",
+   "lang": "en",
+   "text": "The key word is"
+  },
+  {
+   "section": "question",
+   "lang": "it",
+   "text": "sovradiaframmatica"
+  },
+  {
+   "section": "question",
+   "lang": "it",
+   "text": "sopra"
+  },
+  {
+   "section": "question",
+   "lang": "en",
+   "text": "means above, so this means above the diaphragm."
+  },
+  {
+   "section": "question",
+   "lang": "en",
+   "text": "But that's where the lungs live."
+  },
+  {
+   "section": "question",
+   "lang": "en",
+   "text": "Free air from perforation collects below the diaphragm, not above."
+  },
+  {
+   "section": "question",
+   "lang": "en",
+   "text": "This option reverses the anatomy."
+  },
+  {
+   "section": "question",
+   "lang": "en",
+   "text": "Option B:"
+  },
+  {
+   "section": "question",
+   "lang": "it",
+   "text": "presenza di opacità epigastrica,"
+  },
+  {
+   "section": "question",
+   "lang": "en",
+   "text": "presence of epigastric opacity."
+  },
+  {
+   "section": "question",
+   "lang": "it",
+   "text": "Opacità"
+  },
+  {
+   "section": "question",
+   "lang": "en",
+   "text": "means opacity — whiteness on X-ray, which represents density."
+  },
+  {
+   "section": "question",
+   "lang": "en",
+   "text": "But perforation causes radiolucency — darkness — because air is dark on film."
+  },
+  {
+   "section": "question",
+   "lang": "en",
+   "text": "Opacity is the opposite of what you'd expect."
+  },
+  {
+   "section": "question",
+   "lang": "en",
+   "text": "Option C:"
+  },
+  {
+   "section": "question",
+   "lang": "it",
+   "text": "presenza di falce d'aria sottodiaframmatica,"
+  },
+  {
+   "section": "question",
+   "lang": "en",
+   "text": "presence of a crescent of air under the diaphragm."
+  },
+  {
+   "section": "question",
+   "lang": "en",
+   "text": "The key word is"
+  },
+  {
+   "section": "question",
+   "lang": "it",
+   "text": "sottodiaframmatica"
+  },
+  {
+   "section": "question",
+   "lang": "it",
+   "text": "sotto"
+  },
+  {
+   "section": "question",
+   "lang": "en",
+   "text": "means under."
+  },
+  {
+   "section": "question",
+   "lang": "en",
+   "text": "This is correct."
+  },
+  {
+   "section": "question",
+   "lang": "en",
+   "text": "Free air rises to the highest point on an upright film — under the diaphragm — creating that classic crescent-shaped radiolucency."
+  },
+  {
+   "section": "question",
+   "lang": "en",
+   "text": "This is the pathognomonic sign."
+  },
+  {
+   "section": "question",
+   "lang": "en",
+   "text": "Option D:"
+  },
+  {
+   "section": "question",
+   "lang": "it",
+   "text": "presenza di versamento pleurico,"
+  },
+  {
+   "section": "question",
+   "lang": "en",
+   "text": "presence of pleural effusion."
+  },
+  {
+   "section": "question",
+   "lang": "it",
+   "text": "Versamento pleurico"
+  },
+  {
+   "section": "question",
+   "lang": "en",
+   "text": "is fluid in the pleural space — a thoracic finding, not an abdominal one."
+  },
+  {
+   "section": "question",
+   "lang": "en",
+   "text": "It has nothing to do with intestinal perforation."
+  },
+  {
+   "section": "question",
+   "lang": "en",
+   "text": "Option E:"
+  },
+  {
+   "section": "question",
+   "lang": "it",
+   "text": "sovraslivellamento dell'emidiaframma sinistro,"
+  },
+  {
+   "section": "question",
+   "lang": "en",
+   "text": "elevation of the left hemidiaphragm."
+  },
+  {
+   "section": "question",
+   "lang": "en",
+   "text": "Non-specific — it could happen for many reasons, and it's not the classic sign of perforation."
+  },
+  {
+   "section": "question",
+   "lang": "en",
+   "text": "The answer is C."
+  },
+  {
+   "section": "question",
+   "lang": "it",
+   "text": "Falce d'aria sottodiaframmatica."
+  },
+  {
+   "section": "question",
+   "lang": "en",
+   "text": "Crescent of air below the diaphragm."
+  },
+  {
+   "section": "question",
+   "lang": "en",
+   "text": "See that crescent, call the surgeon."
+  },
+  {
+   "section": "question",
+   "lang": "it",
+   "text": "Subito."
+  },
+  {
+   "section": "question",
+   "lang": "en",
+   "text": "Immediately."
+  },
+  {
+   "section": "question",
+   "lang": "en",
+   "text": "Great work — see you next time."
+  },
+  {
+   "section": "overview",
+   "lang": "it",
+   "text": "Gyasi, bentornato! Sei sempre nel momento giusto — come il caffè al mattino. Oggi entriamo in corsia: un caso vero, una lastra che parla, e un segno che non puoi non conoscere. Andiamo, dottore. Oggi prendiamo un vero quesito SSM e lo apriamo parola per parola. Leggi prima tutto — il caso e le opzioni — poi te lo leggo io."
+  },
+  {
+   "section": "overview",
+   "lang": "en",
+   "text": "Gyasi, welcome back! You are always right on time — like morning coffee. Today we are walking into the ward: a real case, an X-ray that speaks, and a sign you absolutely need to know. Let us go, doctor. Today we take a real SSM item and open it word by word. Read it all first — the case and the options — then I'll read it to you."
+  },
+  {
+   "section": "closing",
+   "lang": "it",
+   "text": "Bravo, Gyasi. Sei stato attento — e si vede. Ora vai a riposare quel bel cervello. Io ti aspetto qui, come sempre. A presto."
+  },
+  {
+   "section": "closing",
+   "lang": "en",
+   "text": "Well done, Gyasi. You were paying attention — and it shows. Now go rest that beautiful mind of yours. I will be waiting for you here, as always. See you soon."
+  }
+ ]
+}
