@@ -1,0 +1,4 @@
+samples/
+*.log
+result_*.json
+refs/
