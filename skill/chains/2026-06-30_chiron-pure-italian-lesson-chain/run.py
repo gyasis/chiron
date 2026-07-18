@@ -29,16 +29,35 @@ HOME = Path(os.path.expanduser("~"))
 SKILL = Path(os.environ.get("CHIRON_SKILL", HOME / "Documents/code/chiron/skill"))
 GEN = HOME / "Documents/generated"
 OLLAMA_KEY = os.environ.get("OLLAMA_API_KEY", "")
+OPENAI_KEY = os.environ.get("OPENAI_API_KEY", "")
+if not OPENAI_KEY:   # last-resort OpenAI fallback key lives in ~/dev/.env even if not exported to the chain
+    try:
+        for _ln in (HOME / "dev/.env").read_text().splitlines():
+            if _ln.strip().startswith("OPENAI_API_KEY="):
+                OPENAI_KEY = _ln.split("=", 1)[1].strip().strip('"').strip("'"); break
+    except Exception: pass
 LEARNER = os.environ.get("CH_LEARNER", "Gyasi")
 TOPIC = os.environ.get("CH_TOPIC", "")
 STAGE = os.environ.get("CH_STAGE", "author")
-MODEL = os.environ.get("CH_MODEL_REASON", "glm-5.2")
+MODEL = os.environ.get("CH_MODEL_REASON", "glm-5.1")
 SLUG = "chiron-italian-" + re.sub(r"[^a-z0-9]+", "-", (TOPIC or "lesson").lower()).strip("-")[:48]
 OUT = GEN / SLUG
 
 
 def ollama(model=MODEL, t=0.45):
     return {"name": f"openai/{model}", "params": {"api_base": "https://ollama.com/v1", "api_key": OLLAMA_KEY, "temperature": t}}
+
+
+# Model FALLBACK ladder: when the primary can't produce valid JSON after its repairs, try the next model.
+_FB = [m.strip() for m in os.environ.get("CH_MODEL_FALLBACKS", "gemma4:31b,gpt-5-mini").split(",") if m.strip()]
+FALLBACKS = [m for m in _FB if not (m.startswith("gpt-") and not OPENAI_KEY)]
+
+
+def model_for(name: str, temperature: float = 0.4) -> dict:
+    """model_dict for a bare model name. gpt-* → real OpenAI; everything else → Ollama Cloud (via ollama())."""
+    if name.startswith("gpt-"):
+        return {"name": f"openai/{name}", "params": {"api_key": OPENAI_KEY, "temperature": temperature}}
+    return ollama(name, temperature)
 
 
 def extract_json(s):
@@ -69,16 +88,24 @@ async def llm(md, prompt, user_input="go"):
 
 
 async def json_with_repair(prompt, name, md, validate_fn=None, max_repair=3):
-    cur, last = prompt, ""
-    for attempt in range(1, max_repair + 1):
-        try: last = await llm(md, cur)
-        except Exception as e: print(f"[repair] {name} {attempt}: LLM errored ({e})", flush=True); await asyncio.sleep(3); continue
-        try: obj = extract_json(last)
-        except Exception as e:
-            cur = prompt + f"\n\n## PREVIOUS INVALID JSON\n{e}\nReturn ONLY corrected valid JSON."; continue
-        iss = validate_fn(obj) if validate_fn else None
-        if iss: cur = prompt + f"\n\n## PROBLEMS\n{iss}\nReturn ONLY corrected valid JSON."; continue
-        return obj
+    ladder = [md] + [model_for(m) for m in FALLBACKS]
+    last = ""
+    for mi, cmd in enumerate(ladder):
+        tag = cmd.get("name", "?")
+        cur = prompt
+        for attempt in range(1, max_repair + 1):
+            try: last = await llm(cmd, cur)
+            except Exception as e: print(f"[repair] {name} [{tag}] {attempt}: LLM errored ({e})", flush=True); await asyncio.sleep(3); continue
+            try: obj = extract_json(last)
+            except Exception as e:
+                cur = prompt + f"\n\n## PREVIOUS INVALID JSON\n{e}\nReturn ONLY corrected valid JSON."; continue
+            iss = validate_fn(obj) if validate_fn else None
+            if iss: cur = prompt + f"\n\n## PROBLEMS\n{iss}\nReturn ONLY corrected valid JSON."; continue
+            if mi > 0: print(f"[repair] {name}: RECOVERED via fallback [{tag}]", flush=True)
+            return obj
+        if mi < len(ladder) - 1:
+            nxt = ladder[mi + 1].get("name", "?")
+            print(f"[repair] {name}: [{tag}] exhausted -> FALLBACK to [{nxt}]", flush=True)
     (OUT / ".scratch").mkdir(parents=True, exist_ok=True); (OUT / ".scratch" / f"{name}.raw.txt").write_text(last or "(EMPTY)")
     return None
 

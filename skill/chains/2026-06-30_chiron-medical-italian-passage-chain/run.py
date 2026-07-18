@@ -43,6 +43,13 @@ CURRICULA = SKILL / "curricula"
 GEN = HOME / "Documents/generated"
 SSM_CSV = HOME / "Documents/code/ssm_essame/data_pipeline/ssm_questions_bilingual.csv"
 OLLAMA_KEY = os.environ.get("OLLAMA_API_KEY", "")
+OPENAI_KEY = os.environ.get("OPENAI_API_KEY", "")
+if not OPENAI_KEY:   # last-resort OpenAI fallback key lives in ~/dev/.env even if not exported to the chain
+    try:
+        for _ln in (HOME / "dev/.env").read_text().splitlines():
+            if _ln.strip().startswith("OPENAI_API_KEY="):
+                OPENAI_KEY = _ln.split("=", 1)[1].strip().strip('"').strip("'"); break
+    except Exception: pass
 
 # FIXED sub-mode — this chain is medical-language/passage only (no router).
 SUBMODE = "language-it-passage"
@@ -51,14 +58,28 @@ LEARNER = os.environ.get("CH_LEARNER", "Gyasi")
 SSM_QID = os.environ.get("SSM_QID", "")     # explicit item, else random
 STAGE = os.environ.get("CH_STAGE", "ingest")  # ingest | plan | author | assemble | audio | all
 
-# Models (same tier as the medicine chain; glm-5.2 strong default, max_tokens AUTOMATIC).
-MODEL_REASON = os.environ.get("CH_MODEL_REASON", "glm-5.2")
-MODEL_STRUCT = os.environ.get("CH_MODEL_STRUCT", "glm-5.2")
+# Models (glm-5.1 primary — glm-5.2 was flaky on Ollama Cloud; max_tokens AUTOMATIC).
+MODEL_REASON = os.environ.get("CH_MODEL_REASON", "glm-5.1")
+MODEL_STRUCT = os.environ.get("CH_MODEL_STRUCT", "glm-5.1")
 
 
 def ollama(model: str, temperature: float = 0.4) -> dict:
     return {"name": f"openai/{model}",
             "params": {"api_base": "https://ollama.com/v1", "api_key": OLLAMA_KEY, "temperature": temperature}}
+
+
+# Model FALLBACK ladder: when the primary can't produce valid JSON after its repairs, try the next model.
+# Default: gemma4:31b (Ollama Cloud, different family) → gpt-5-mini (OpenAI, reliable last resort).
+# Claude is intentionally absent (no Anthropic key on this box). gpt-* entries auto-dropped if no OpenAI key.
+_FB = [m.strip() for m in os.environ.get("CH_MODEL_FALLBACKS", "gemma4:31b,gpt-5-mini").split(",") if m.strip()]
+FALLBACKS = [m for m in _FB if not (m.startswith("gpt-") and not OPENAI_KEY)]
+
+
+def model_for(name: str, temperature: float = 0.4) -> dict:
+    """model_dict for a bare model name. gpt-* → real OpenAI; everything else → Ollama Cloud (via ollama())."""
+    if name.startswith("gpt-"):
+        return {"name": f"openai/{name}", "params": {"api_key": OPENAI_KEY, "temperature": temperature}}
+    return ollama(name, temperature)
 
 
 def load_prompt(name: str) -> str:
@@ -109,33 +130,46 @@ async def llm(model_dict: dict, prompt: str, user_input: str = "go") -> str:
 
 
 async def json_with_repair(prompt: str, name: str, model_dict: dict, validate_fn=None, max_repair: int = 3):
-    """Self-repair loop (pharos/medicine pattern): re-prompt on bad JSON / failed validate up to max_repair."""
-    cur, last_raw = prompt, ""
-    for attempt in range(1, max_repair + 1):
-        try:
-            last_raw = await llm(model_dict, cur)
-        except Exception as e:                       # transient LLM/network/provider error → retry, don't crash
-            print(f"[repair] {name} {attempt}/{max_repair}: LLM call errored ({e}) — retrying", flush=True)
-            await asyncio.sleep(3)
-            continue
-        try:
-            obj = extract_json(last_raw)
-        except Exception as e:
-            print(f"[repair] {name} {attempt}/{max_repair}: parse failed ({e}) — re-prompting", flush=True)
-            obs.error(f"{name} — JSON parse failed (repair {attempt}/{max_repair})", e)
-            cur = (prompt + f"\n\n## PREVIOUS OUTPUT WAS INVALID JSON\nError: {e}\nPrevious:\n{last_raw[:4000]}\n\n"
-                   "Return ONLY corrected valid JSON. Escape every \" and newline inside string values.")
-            continue
-        issues = validate_fn(obj) if validate_fn else None
-        if issues:
-            print(f"[repair] {name} {attempt}/{max_repair}: invalid ({issues[:2]}) — re-prompting", flush=True)
-            obs.error(f"{name} — validation failed (repair {attempt}/{max_repair})", str(issues[:2]))
-            cur = prompt + f"\n\n## PREVIOUS OUTPUT HAD PROBLEMS\n{issues}\nReturn ONLY corrected valid JSON fixing them."
-            continue
-        return obj
+    """Self-repair loop + MODEL FALLBACK: re-prompt the current model on bad JSON / failed validate up to
+    max_repair; if it STILL can't, fall back to the next model in the ladder (primary + CH_MODEL_FALLBACKS).
+    Only after every model is exhausted do we flag needs_review. Prevents one flaky model killing a lesson."""
+    ladder = [model_dict] + [model_for(m) for m in FALLBACKS]
+    last_raw = ""
+    for mi, md in enumerate(ladder):
+        tag = md.get("name", "?")
+        cur = prompt                                 # fresh prompt per model — don't carry another model's mangled context
+        for attempt in range(1, max_repair + 1):
+            try:
+                last_raw = await llm(md, cur)
+            except Exception as e:                   # transient LLM/network/provider error → retry same model, don't crash
+                print(f"[repair] {name} [{tag}] {attempt}/{max_repair}: LLM call errored ({e}) — retrying", flush=True)
+                await asyncio.sleep(3)
+                continue
+            try:
+                obj = extract_json(last_raw)
+            except Exception as e:
+                print(f"[repair] {name} [{tag}] {attempt}/{max_repair}: parse failed ({e}) — re-prompting", flush=True)
+                obs.error(f"{name} — JSON parse failed ([{tag}] repair {attempt}/{max_repair})", e)
+                cur = (prompt + f"\n\n## PREVIOUS OUTPUT WAS INVALID JSON\nError: {e}\nPrevious:\n{last_raw[:4000]}\n\n"
+                       "Return ONLY corrected valid JSON. Escape every \" and newline inside string values.")
+                continue
+            issues = validate_fn(obj) if validate_fn else None
+            if issues:
+                print(f"[repair] {name} [{tag}] {attempt}/{max_repair}: invalid ({issues[:2]}) — re-prompting", flush=True)
+                obs.error(f"{name} — validation failed ([{tag}] repair {attempt}/{max_repair})", str(issues[:2]))
+                cur = prompt + f"\n\n## PREVIOUS OUTPUT HAD PROBLEMS\n{issues}\nReturn ONLY corrected valid JSON fixing them."
+                continue
+            if mi > 0:
+                print(f"[repair] {name}: RECOVERED via fallback [{tag}]", flush=True)
+            return obj
+        # this model exhausted its repairs → advance to the next model in the ladder
+        if mi < len(ladder) - 1:
+            nxt = ladder[mi + 1].get("name", "?")
+            print(f"[repair] {name}: [{tag}] exhausted {max_repair} tries → FALLBACK to [{nxt}]", flush=True)
+            obs.error(f"{name} — [{tag}] exhausted, falling back to [{nxt}]", "")
     (OUT / ".scratch").mkdir(parents=True, exist_ok=True)
     (OUT / ".scratch" / f"{name}.raw.txt").write_text(last_raw or "(EMPTY)")
-    print(f"[repair] {name}: EXHAUSTED — flagging needs_review, continuing", flush=True)
+    print(f"[repair] {name}: ALL MODELS EXHAUSTED — flagging needs_review, continuing", flush=True)
     return None
 
 
