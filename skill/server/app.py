@@ -779,6 +779,11 @@ def _run_bake(job: dict, out: Path) -> None:
     """Phase 2 — bake audio into an already-written lesson (reuses done clips by hash). Non-fatal:
     the lesson stays viewable regardless; only the audio state changes."""
     jid = job["id"]
+    slug0 = job.get("slug") or ""
+    if slug0 in _CANCELLED:                    # F1: cancelled while queued (incl. in the Modal pool) → skip the spend
+        _CANCELLED.discard(slug0)
+        job.update(status="cancelled", phase="cancelled before start", finished=_now()); _save()
+        return
     log = STATE / f"{jid}.bake.log"
     domain = job.get("domain", "medical-italian")
     bake_domain = "language-it" if domain == "medical-italian" else "medicine"
@@ -814,8 +819,9 @@ def _run_bake(job: dict, out: Path) -> None:
         with open(log, "w") as lf:
             # stream the bake output: tee to the log AND emit a per-clip sub-chip onto the timeline
             p = subprocess.Popen(cmd, env=env, stdout=subprocess.PIPE,
-                                 stderr=subprocess.STDOUT, text=True, bufsize=1)
-            job["pid"] = p.pid
+                                 stderr=subprocess.STDOUT, text=True, bufsize=1,
+                                 start_new_session=True)   # F1: own process group → cancel can kill the
+            job["pid"] = p.pid                              #     Node orchestrator AND its python Modal-bridge child
             _save()
             for line in p.stdout:
                 lf.write(line); lf.flush()
@@ -1329,13 +1335,18 @@ def cancel(ref: str):
     if not job:
         return {"ok": False, "error": "no active job for that ref"}
     st, pid, killed = job.get("status"), job.get("pid"), False
-    if st in ("running", "baking") and pid:                 # a live subprocess → SIGTERM it
-        try:
-            os.kill(int(pid), signal.SIGTERM); killed = True
+    if st in ("running", "baking") and pid:                 # a live subprocess → SIGTERM its whole group
+        try:                                                # F1: killpg reaches the python Modal-bridge child too
+            os.killpg(os.getpgid(int(pid)), signal.SIGTERM); killed = True
         except (ProcessLookupError, ValueError):
             pass
         except Exception:
-            pass
+            try:
+                os.kill(int(pid), signal.SIGTERM); killed = True   # fallback: no process group
+            except Exception:
+                pass
+    # F1: also flag the slug cancelled so a Modal-pool worker that hasn't started yet skips it (see _run_bake)
+    _CANCELLED.add(job.get("slug") or slug)
     if st == "queued":                                      # sitting in the bake queue → worker skips it on pop
         _CANCELLED.add(job.get("slug") or slug)
     lesson = GEN / (job.get("slug") or slug) / "lesson.html"
