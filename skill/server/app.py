@@ -967,8 +967,9 @@ def _job_for_slug(slug: str) -> dict:
 def _enqueue_bake(job: dict, engine: str = "mac") -> None:
     """mac → the serial Mac bake queue (unchanged). modal → a concurrent pool of orchestrators,
     each fanning its lesson's synth to the Modal L4 lane (Modal auto-scales)."""
+    job["engine"] = engine   # UNCONDITIONAL: else a slug fast-baked on Modal stays 'modal' in JOBS and
+                             # a later 🐢 Mac bake silently re-runs on Modal (spends money) — the F1 bug.
     if engine == "modal":
-        job["engine"] = "modal"
         job.update(status="queued", phase="queued for fast bake", started=_now(), finished=None)
         _save()
         _MODAL_POOL.submit(_run_bake, job, GEN / job["slug"])
@@ -1166,10 +1167,12 @@ class BakeEstimateReq(BaseModel):
 
 
 # measured constants (bench/omnivoice-modal): Modal L4 synth ≈160s/lesson + ~120s local splice;
-# Mac serial synth ≈720s/lesson; Modal L4 ≈$0.80/hr.
-_MODAL_SYNTH_S = 160
-_MODAL_SPLICE_S = 120
-_MAC_S_PER_LESSON = 720
+# Per-CLIP measured rates (a lesson is 9–142 clips, so per-lesson flat rates are badly wrong on a
+# heterogeneous backlog — F2). Modal L4 synth ≈1.4s/clip (117 clips=156.6s); Mac MPS ≈6.3s/clip
+# (115=720s); local splice/normalize/mp3 ≈2s/clip (both engines). Modal L4 ≈$0.80/hr.
+_MODAL_S_PER_CLIP = 1.4
+_MAC_S_PER_CLIP = 6.3
+_SPLICE_S_PER_CLIP = 2.0
 _MODAL_HOURLY_USD = 0.80
 
 
@@ -1179,12 +1182,25 @@ def bake_estimate(req: BakeEstimateReq):
     before spending real money on Modal)."""
     import math
     n_lessons = len(req.slugs)
-    n_clips = sum(_recovery(slug).get("clips_total", 0) for slug in req.slugs)
-    est_usd = round(n_lessons * _MODAL_SYNTH_S / 3600 * _MODAL_HOURLY_USD, 2)
-    est_wall_min_modal = math.ceil(
-        math.ceil(n_lessons / max(1, _MODAL_CONC)) * (_MODAL_SYNTH_S + _MODAL_SPLICE_S) / 60
-    ) if n_lessons else 0
-    est_wall_min_mac = round(n_lessons * _MAC_S_PER_LESSON / 60) if n_lessons else 0
+    def _segs(slug: str) -> int:
+        # SEGMENTS are the synth unit (a section = many segments); clips_total counts sections, which
+        # undercounts synth cost ~10x. Count segments from audio-scripts.json.
+        try:
+            d = json.loads((GEN / slug / "audio-scripts.json").read_text())
+            n = sum(len(v) for v in (d.get("sections") or {}).values() if isinstance(v, list))
+            for k in ("summary", "shortened"):
+                if isinstance(d.get(k), list):
+                    n += len(d[k])
+            return n or 12
+        except Exception:
+            return (_recovery(slug).get("clips_total", 0) or 1) * 13   # ~13 segments/section fallback
+    n_clips = sum(_segs(slug) for slug in req.slugs)
+    conc = min(_MODAL_CONC, max(1, n_lessons))
+    est_usd = round(n_clips * _MODAL_S_PER_CLIP / 3600 * _MODAL_HOURLY_USD, 2)           # GPU-seconds → real $
+    # modal: total work (synth+splice) spread across `conc` concurrent orchestrators
+    est_wall_min_modal = math.ceil(n_clips * (_MODAL_S_PER_CLIP + _SPLICE_S_PER_CLIP) / conc / 60) if n_clips else 0
+    # mac: serial — one clip at a time on the single sidecar (+ local splice)
+    est_wall_min_mac = round(n_clips * (_MAC_S_PER_CLIP + _SPLICE_S_PER_CLIP) / 60) if n_clips else 0
     return {"n_lessons": n_lessons, "n_clips": n_clips, "est_usd": est_usd,
             "est_wall_min_mac": est_wall_min_mac, "est_wall_min_modal": est_wall_min_modal}
 

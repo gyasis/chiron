@@ -516,9 +516,14 @@ export async function bakeAudio(opts: AudioBakeOptions): Promise<AudioClipResult
         modalPrefetch = prefDir;
         progress(STAGE, `engine=modal — synthesized ${res.clips} clips on Modal in ${res.synth_s}s (splicing locally)`);
       } catch (e) {
+        // A TOTAL fan-out failure (Modal down/unauthed) must NOT silently degrade the whole lesson onto
+        // the single Mac sidecar — under a concurrent rebake-all that's 12 lessons stampeding one TTS
+        // engine (F3), and it violates "Modal only on explicit selection". Fail cleanly instead; the
+        // user retries or picks 🐢 Mac deliberately. (Per-segment prefetch misses below still fall back,
+        // but those are a handful of clips, not a whole batch.)
         const msg = e instanceof Error ? e.message : String(e);
-        progress(STAGE, `engine=modal FAILED (${msg.slice(0, 80)}) — falling back to the Mac sidecar`);
-        modalPrefetch = null;
+        progress(STAGE, `engine=modal FAILED (${msg.slice(0, 80)}) — NOT falling back to the Mac (avoids contention)`);
+        throw new Error(`Modal fast-bake unavailable (${msg.slice(0, 120)}). Nothing baked — retry, or use the 🐢 Mac option explicitly.`);
       }
     }
 
