@@ -488,6 +488,8 @@ const results = await bakeAudio({
   voices,
   displayedText,
   ...(noQc ? { qc: false } : {}),
+  engine: process.env.CH_BAKE_ENGINE === 'modal' ? 'modal' : 'mac',
+  modalSynthScript: fileURLToPath(new URL('../modal/modal_synth.py', import.meta.url)),
 });
 
 // ---------------------------------------------------------------------------

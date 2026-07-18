@@ -399,9 +399,12 @@ const LIB = {
     const nr=recent.filter(x=>x.status==='ready').length, ne=recent.filter(x=>x.status==='error').length;
     { const cf=document.getElementById('jclearfail'); if(cf) cf.style.display = hist.some(x=>x.status==='error'||x.status==='cancelled') ? '' : 'none'; }
     // "Bake all" — queue audio for every text-only lesson, but ONLY when nothing is generating text
-    const nbake=recent.filter(x=>{const r=(LIB._rec||{})[x.slug||x.id]; return r&&r.text&&r.needs_rebake;}).length;
+    const rebakeRows=recent.filter(x=>{const r=(LIB._rec||{})[x.slug||x.id]; return r&&r.text&&r.needs_rebake;});
+    const nbake=rebakeRows.length;
+    LIB._needsRebakeSlugs=rebakeRows.map(x=>x.slug||x.id);
     const bakeAll=(active.length===0 && nbake>0)
-      ? `<button class="jbakeall" title="queue audio bakes for all ${nbake} viewable-but-unbaked lessons (one at a time)" onclick="LIB.bakeAll(${nbake})">🔥 Bake all (${nbake})</button>` : '';
+      ? `<div class="jbakebtns"><button class="jbakeall" title="queue audio bakes for all ${nbake} viewable-but-unbaked lessons on the Mac (free, one at a time)" onclick="LIB.bakeAll(${nbake})">🐢 Bake all (Mac)</button>`
+        +`<button class="jbakefast" title="fast-bake all ${nbake} lessons on Modal L4 (cloud, concurrent, small $ cost)" onclick="LIB.bakeAllFast(${nbake})">⚡ Fast (Modal)</button></div>` : '';
     h+=`<div class="jhead jhead-row"><span>Needs review · ${nr} to accept · ${ne} failed</span>${bakeAll}</div>`;
     LIB._rec = LIB._rec || {};
     for(const x of recent){ const sl=x.slug||x.id;
@@ -502,14 +505,29 @@ const LIB = {
   async acceptJob(sl){ try{ await fetch(API+'/accept/'+encodeURIComponent(sl),{method:'POST'}); if(LIB._rec)delete LIB._rec[sl]; LIB._loadJobs(); LIB.reload(); }catch(e){ alert('Accept failed: '+e.message); } },
   // re-bake ONLY the audio (reuses the clips already done) — never redoes the lesson text
   async rebake(sl){ try{ await fetch(API+'/bake/'+encodeURIComponent(sl),{method:'POST'}); if(LIB._rec)delete LIB._rec[sl]; (LIB._open=LIB._open||new Set()).add(sl); LIB._loadJobs(); }catch(e){ alert('Rebake failed: '+e.message); } },
-  // batch: queue audio for ALL text-only lessons — server refuses while text is still generating
-  async bakeAll(n){
+  // batch: queue audio for ALL text-only lessons — server refuses while text is still generating (Mac path, default, free)
+  async bakeAll(n,engine='mac'){
     if(!confirm(`Queue audio bakes for ${n} lesson${n===1?'':'s'} that have text but no audio yet? They'll bake one at a time.`)) return;
-    try{ const r=await (await fetch(API+'/bake-all',{method:'POST'})).json();
+    try{ const r=await (await fetch(API+'/bake-all?engine='+engine,{method:'POST'})).json();
       if(r && r.ok===false){ alert('Can’t bake now — '+(r.reason||'try again later')); return; }
       if(r && r.slugs && LIB._rec) r.slugs.forEach(s=>delete LIB._rec[s]);
       LIB._loadJobs();
     }catch(e){ alert('Bake all failed: '+e.message); } },
+  // batch: fast-bake ALL text-only lessons on Modal L4 — concurrent, cloud, small $ cost. Cost-transparent: shows
+  // an estimate (from /bake-estimate) before spending real money, then fans out via /bake-batch.
+  async bakeAllFast(n){
+    const slugs=LIB._needsRebakeSlugs||[];
+    if(!slugs.length){ alert('Nothing to fast-bake right now.'); return; }
+    let est={};
+    try{ est=await (await fetch(API+'/bake-estimate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({slugs})})).json(); }
+    catch(e){ alert('Could not get a cost estimate: '+e.message); return; }
+    const usd=(est.est_usd||0).toFixed(2);
+    if(!confirm(`⚡ Fast rebake ${n} lesson${n===1?'':'s'} on Modal L4 ≈ ~$${usd}, ~${est.est_wall_min_modal||'?'} min (vs ~${est.est_wall_min_mac||'?'} min on the Mac, free). Continue?`)) return;
+    try{ const r=await (await fetch(API+'/bake-batch',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({slugs,engine:'modal'})})).json();
+      if(r && r.ok===false){ alert('Can’t fast-bake now — '+(r.reason||'try again later')); return; }
+      if(r && r.slugs && LIB._rec) r.slugs.forEach(s=>delete LIB._rec[s]);
+      LIB._loadJobs();
+    }catch(e){ alert('Fast bake failed: '+e.message); } },
   async _jobsHeartbeat(){
     try{ const d=await (await fetch(API+'/activity?'+Date.now())).json();
       const dot=document.getElementById('jobsdot'); if(dot) dot.style.display=(d.active&&d.active.length)?'inline-block':'none';
