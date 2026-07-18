@@ -425,11 +425,14 @@ async def main():
     issues_v = validate(syl)
     if issues_v and STAGE != "plan":
         print("[warn] validation issues (continuing):", issues_v)
-    if STAGE in ("chapters", "all"):
+    # 'audio' is the two-phase Phase-1 (viewable text + scripts, NO bake) — so it must also author
+    # chapters + assemble, else there's no lesson.html and the bake fails "lesson.html not found".
+    # Per-chapter RESUME (chapterN.json exists → skip) keeps this idempotent on retries.
+    if STAGE in ("chapters", "assemble", "audio", "all"):
         obs.phase("Authoring chapters", "start")
         await phase3(syl)
         obs.phase("Authoring chapters", "end")
-    if STAGE in ("assemble", "all"):
+    if STAGE in ("assemble", "audio", "all"):
         obs.phase("Assembling the page", "start")
         copy_shell_assets()
         try:
@@ -443,6 +446,7 @@ async def main():
         obs.phase("Writing narration scripts", "start")
         await phase_lecture_scripts()
         obs.phase("Writing narration scripts", "end")
+    if STAGE == "all":          # single-pass bakes inline; two-phase (stage=audio) stays viewable + bakes later via /bake
         obs.phase("Baking audio", "start")
         clips = bake_audio()
         obs.phase("Baking audio", "end")

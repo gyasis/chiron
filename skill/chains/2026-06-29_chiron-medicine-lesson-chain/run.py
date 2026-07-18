@@ -507,11 +507,14 @@ async def main():
         print("[abort] validation issues (v1 stops; Phase-2 retry loop is the next increment):", issues)
         obs.error("Writing the brief & syllabus", str(issues))
         return
-    if STAGE in ("chapters", "all"):
+    # 'audio' is the two-phase Phase-1 (viewable text + scripts, NO bake) — so it must also author
+    # chapters + assemble, else there's no lesson.html and the bake fails "lesson.html not found".
+    # Per-chapter RESUME (chapterN.json exists → skip) keeps this idempotent on retries.
+    if STAGE in ("chapters", "assemble", "audio", "all"):
         obs.phase("Authoring chapters", "start")
         await phase3(syl, source, avoid)
         obs.phase("Authoring chapters", "end")
-    if STAGE in ("assemble", "all"):
+    if STAGE in ("assemble", "audio", "all"):
         obs.phase("Assembling the page", "start")
         copy_shell_assets()   # Phase 3.9 — themes next to the lesson (styling)
         # Phase 3.95 — curated end-of-lesson glossary (grounded; the assembler renders glossary.json)
@@ -526,6 +529,7 @@ async def main():
         obs.phase("Writing narration scripts", "start")
         await phase_lecture_scripts()   # Phase 5.5 — lecture scripts → audio-scripts.json
         obs.phase("Writing narration scripts", "end")
+    if STAGE == "all":          # single-pass bakes inline; two-phase (stage=audio) stays viewable + bakes later via /bake
         obs.phase("Baking audio", "start")
         bake_audio()                    # Phase 6 — Atelier bake + QC
         obs.phase("Baking audio", "end")
