@@ -251,6 +251,7 @@ body,.topbar,.pills,.facets,.row,.rhead{transition:background .2s,color .2s,bord
     <button class="genbtn" onclick="LIB.captures(true)" title="Everything you've flagged — review + turn into cards/quizzes/lessons" style="background:#7c3aed">📥 <span class="glbl">Captures</span><span id="capdot" class="jobsdot" style="display:none"></span></button>
     <button class="ssmbadge idle" id="ssmbadge" onclick="LIB.ssm.pop(event)" title="Specializzando (SSM app) — connection + practice-link address"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4.8 2.3A2 2 0 0 0 3 4v5a5 5 0 0 0 10 0V4a2 2 0 0 0-1.8-1.7"/><path d="M3.5 2.3h1.3M11.2 2.3h1.3"/><circle cx="19" cy="17" r="2.4"/><path d="M8 14v2a5 5 0 0 0 10 0v-.6"/></svg><span class="sdot"></span></button>
     <button class="themebtn" id="themebtn" onclick="LIB.theme()" title="Toggle light / dark">🌙</button>
+    <button class="themebtn" title="Chains — what each lesson generator produces" onclick="window.open('chains-help.html','_blank')">❓</button>
     <button class="themebtn" title="Import a .chiron lesson file (install offline)" onclick="document.getElementById('importfile').click()">⬆</button>
     <input id="importfile" type="file" accept=".chiron,.zip" hidden>
   </div>
@@ -310,6 +311,9 @@ body,.topbar,.pills,.facets,.row,.rhead{transition:background .2s,color .2s,bord
  #jobslist .jhead-row{display:flex;align-items:center;justify-content:space-between;gap:8px}
  #jobslist .jbakeall{background:#fdead0;color:#b5641a;border:0;border-radius:8px;padding:5px 11px;font:800 11px system-ui;cursor:pointer;white-space:nowrap;text-transform:none;letter-spacing:0}
  #jobslist .jbakeall:hover{background:#fbd9a8}
+ #jobslist .jbakebtns{display:flex;gap:6px}
+ #jobslist .jbakefast{background:#d1fae5;color:#047857;border:0;border-radius:8px;padding:5px 11px;font:800 11px system-ui;cursor:pointer;white-space:nowrap;text-transform:none;letter-spacing:0}
+ #jobslist .jbakefast:hover{background:#a7f3d0}
  .modal-h .jclearfail{margin-left:auto;margin-right:8px;background:#fee2e2;color:#b91c1c;border:0;border-radius:8px;padding:5px 11px;font:800 11px system-ui;cursor:pointer;white-space:nowrap}
  .modal-h .jclearfail:hover{background:#fecaca}
  #jobslist .jrow{display:flex;align-items:center;gap:10px;padding:9px 4px;border-top:1px solid rgba(148,163,184,.2)}

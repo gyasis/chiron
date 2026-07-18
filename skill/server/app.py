@@ -44,6 +44,10 @@ GEN_CONC = int(os.environ.get("CHIRON_GEN_CONC", "2") or 2)  # not the client. C
 _CANCELLED: set = set()   # slugs cancelled while still queued → the bake worker skips them when popped
 LOCK = threading.Lock()
 
+from concurrent.futures import ThreadPoolExecutor
+_MODAL_CONC = int(os.environ.get("CHIRON_MODAL_CONC", "12") or 12)
+_MODAL_POOL = ThreadPoolExecutor(max_workers=_MODAL_CONC)
+
 
 def _now() -> str:
     return datetime.now(timezone.utc).isoformat()
@@ -803,10 +807,13 @@ def _run_bake(job: dict, out: Path) -> None:
     done, baked_n = 0, 0
     def _eta_txt(sec: int) -> str:
         return "" if sec <= 0 else (f"~{sec}s left" if sec < 60 else f"~{sec // 60}m left")
+    env = {**os.environ}
+    if job.get("engine") == "modal":
+        env["CH_BAKE_ENGINE"] = "modal"
     try:
         with open(log, "w") as lf:
             # stream the bake output: tee to the log AND emit a per-clip sub-chip onto the timeline
-            p = subprocess.Popen(cmd, env={**os.environ}, stdout=subprocess.PIPE,
+            p = subprocess.Popen(cmd, env=env, stdout=subprocess.PIPE,
                                  stderr=subprocess.STDOUT, text=True, bufsize=1)
             job["pid"] = p.pid
             _save()
@@ -957,6 +964,20 @@ def _job_for_slug(slug: str) -> dict:
     return job
 
 
+def _enqueue_bake(job: dict, engine: str = "mac") -> None:
+    """mac → the serial Mac bake queue (unchanged). modal → a concurrent pool of orchestrators,
+    each fanning its lesson's synth to the Modal L4 lane (Modal auto-scales)."""
+    if engine == "modal":
+        job["engine"] = "modal"
+        job.update(status="queued", phase="queued for fast bake", started=_now(), finished=None)
+        _save()
+        _MODAL_POOL.submit(_run_bake, job, GEN / job["slug"])
+    else:
+        job.update(status="queued", phase="queued for bake", started=_now(), finished=None)
+        _save()
+        _BAKE_Q.put(job["slug"])
+
+
 class GenReq(BaseModel):
     domain: str = "medicine"
     subject: str
@@ -1072,8 +1093,9 @@ def clear_failed():
 
 
 @app.post("/bake/{ref}")
-def bake(ref: str):
-    """Phase 2 of the 2-part flow: bake audio into an existing (viewable) lesson. `ref` = a job id or a slug."""
+def bake(ref: str, engine: str = "mac"):
+    """Phase 2 of the 2-part flow: bake audio into an existing (viewable) lesson. `ref` = a job id or a
+    slug. `engine`: 'mac' (default, serial, free) or 'modal' (concurrent, fast, cloud L4)."""
     slug = _slug_of(ref)
     out = GEN / slug
     if not (out / "lesson.html").exists():
@@ -1084,21 +1106,22 @@ def bake(ref: str):
     if infl:
         return {"job_id": infl["id"], "slug": slug, "status": "baking", "duplicate": True}
     job = _job_for_slug(slug)
-    job.update(status="queued", phase="queued for bake", started=_now(), finished=None)
-    _save()
-    _BAKE_Q.put(slug)                       # a single worker bakes one at a time (Mac TTS can't take parallel)
-    return {"job_id": job["id"], "slug": slug, "status": "queued", "queued": _BAKE_Q.qsize()}
+    _enqueue_bake(job, engine)
+    return {"job_id": job["id"], "slug": slug, "status": "queued", "engine": engine, "queued": _BAKE_Q.qsize()}
 
 
 @app.post("/bake-all")
-def bake_all():
+def bake_all(engine: str = "mac"):
     """Queue an audio bake for EVERY viewable-but-unbaked lesson (text done, audio incomplete) —
-    the batch backfill for quick-preview lessons. REFUSES while any TEXT generation is running, so
-    bakes never compete with generation for the Mac TTS. One-at-a-time via the shared bake queue."""
-    generating = [j for j in JOBS.values() if j.get("status") == "running"]
-    if generating:
-        return {"ok": False, "reason": "generation in progress — try again when text lessons finish",
-                "generating": len(generating)}
+    the batch backfill for quick-preview lessons. `engine='mac'` (default) REFUSES while any TEXT
+    generation is running, so bakes never compete with generation for the Mac TTS, and bakes go
+    one-at-a-time via the shared bake queue. `engine='modal'` skips that refusal (Modal is cloud —
+    it doesn't compete with the Mac) and fans bakes out concurrently."""
+    if engine != "modal":
+        generating = [j for j in JOBS.values() if j.get("status") == "running"]
+        if generating:
+            return {"ok": False, "reason": "generation in progress — try again when text lessons finish",
+                    "generating": len(generating)}
     seen, queued = set(), []
     for j in JOBS.values():
         slug = j.get("slug")
@@ -1112,11 +1135,58 @@ def bake_all():
         rec = _recovery(slug)                          # non-blocking (ro, short timeout)
         if rec.get("text") and rec.get("needs_rebake"):
             job = _job_for_slug(slug)
-            job.update(status="queued", phase="queued for bake", started=_now(), finished=None)
-            _BAKE_Q.put(slug)
+            _enqueue_bake(job, engine)
             queued.append(slug)
-    _save()
-    return {"ok": True, "queued": len(queued), "slugs": queued, "pending": _BAKE_Q.qsize()}
+    return {"ok": True, "queued": len(queued), "slugs": queued, "engine": engine, "pending": _BAKE_Q.qsize()}
+
+
+class BakeBatchReq(BaseModel):
+    slugs: list[str]
+    engine: str = "mac"
+
+
+@app.post("/bake-batch")
+def bake_batch(req: BakeBatchReq):
+    """Queue an audio bake for a caller-specified list of slugs (the rebake-all ⚡Fast/🐢Slow selector
+    posts here with its exact needs-rebake set + the chosen engine)."""
+    queued = []
+    for slug in req.slugs:
+        if not (GEN / slug / "lesson.html").exists():
+            continue                                   # no viewable text yet
+        if any(j.get("slug") == slug and j.get("status") in ("queued", "baking") for j in JOBS.values()):
+            continue                                   # already in flight
+        job = _job_for_slug(slug)
+        _enqueue_bake(job, req.engine)
+        queued.append(slug)
+    return {"ok": True, "queued": len(queued), "slugs": queued, "engine": req.engine}
+
+
+class BakeEstimateReq(BaseModel):
+    slugs: list[str]
+
+
+# measured constants (bench/omnivoice-modal): Modal L4 synth ≈160s/lesson + ~120s local splice;
+# Mac serial synth ≈720s/lesson; Modal L4 ≈$0.80/hr.
+_MODAL_SYNTH_S = 160
+_MODAL_SPLICE_S = 120
+_MAC_S_PER_LESSON = 720
+_MODAL_HOURLY_USD = 0.80
+
+
+@app.post("/bake-estimate")
+def bake_estimate(req: BakeEstimateReq):
+    """Cost/time estimate for baking `slugs` — powers the ⚡Fast confirm dialog (cost-transparent
+    before spending real money on Modal)."""
+    import math
+    n_lessons = len(req.slugs)
+    n_clips = sum(_recovery(slug).get("clips_total", 0) for slug in req.slugs)
+    est_usd = round(n_lessons * _MODAL_SYNTH_S / 3600 * _MODAL_HOURLY_USD, 2)
+    est_wall_min_modal = math.ceil(
+        math.ceil(n_lessons / max(1, _MODAL_CONC)) * (_MODAL_SYNTH_S + _MODAL_SPLICE_S) / 60
+    ) if n_lessons else 0
+    est_wall_min_mac = round(n_lessons * _MAC_S_PER_LESSON / 60) if n_lessons else 0
+    return {"n_lessons": n_lessons, "n_clips": n_clips, "est_usd": est_usd,
+            "est_wall_min_mac": est_wall_min_mac, "est_wall_min_modal": est_wall_min_modal}
 
 
 @app.get("/jobs/{ref}/steps")

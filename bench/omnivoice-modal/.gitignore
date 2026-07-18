@@ -2,3 +2,4 @@ samples/
 *.log
 result_*.json
 refs/
+../skill/modal/*.log
