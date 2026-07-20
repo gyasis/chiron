@@ -32,15 +32,27 @@ CHAIN = {
 DEFAULT_DEPTH = {"medicine": "primer", "medical-italian": "ward", "italian": "lesson"}
 
 
-def _atlas_systems():
+def _atlas_subjects():
+    """The EXACT set of subjects the atlas chain will accept — every system name PLUS its aliases,
+    lowercased. This MUST mirror the atlas chain's own match (`s['system']==SUBJECT or SUBJECT in
+    aliases`), so depth-routing and the atlas lookup never disagree."""
     try:
-        return [s["system"].lower() for s in json.loads(ATLAS.read_text())["systems"]]
+        out = set()
+        for s in json.loads(ATLAS.read_text())["systems"]:
+            out.add((s.get("system") or "").lower())
+            for a in (s.get("aliases") or []):
+                out.add((a or "").lower())
+        return out
     except Exception:
-        return []
+        return set()
 
 
 def detect_depth(subject, domain):
-    """Medicine only: cross-cutting(geriatrics)→primer, organ-system→atlas, else single-disease→systematic."""
+    """Medicine only: cross-cutting(geriatrics)→primer, an EXACT atlas system/alias→atlas, else→systematic.
+    'atlas' is chosen ONLY when the subject EXACTLY matches an atlas subject. The old code fuzzy-matched
+    (`k.split(' ')[0] in s`), so a disease-CLASS like 'Infectious Skin Diseases' matched the 'Infectious
+    Disease' SYSTEM → got atlas depth → then the atlas chain's exact lookup failed → hard abort. A
+    disease-class that merely shares a word with a system is a systematic deep-dive, never atlas."""
     if domain != "medicine":
         return None
     s = (subject or "").strip().lower()
@@ -48,7 +60,7 @@ def detect_depth(subject, domain):
         return None
     if "geriatr" in s:
         return "primer"
-    if any(s == k or (len(s) > 3 and (s in k or k.split(" ")[0] in s)) for k in _atlas_systems()):
+    if s in _atlas_subjects():
         return "atlas"
     return "systematic"
 

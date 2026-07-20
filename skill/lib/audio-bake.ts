@@ -19,7 +19,8 @@
  * Per CLAUDE.md: no console.log — progress → stderr, errors propagate as status.
  */
 
-import { execFileSync } from 'node:child_process';
+import { execFile, execFileSync } from 'node:child_process';
+import { promisify } from 'node:util';
 import { createHash } from 'node:crypto';
 import { copyFileSync, existsSync, mkdirSync, mkdtempSync, readFileSync, renameSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -28,6 +29,18 @@ import Database from 'better-sqlite3';
 
 import { progress } from './progress.js';
 import { qcAudioClip, qcAvailable } from './audio-qc.js';
+
+const execFileAsync = promisify(execFile);
+/** Bounded-concurrency async map — preserves order, runs at most `limit` tasks at once. */
+async function mapLimit<T, R>(items: T[], limit: number, fn: (item: T, i: number) => Promise<R>): Promise<R[]> {
+  const out: R[] = new Array(items.length);
+  let next = 0;
+  const n = Math.max(1, Math.min(limit, items.length || 1));
+  await Promise.all(Array.from({ length: n }, async () => {
+    for (let i = next++; i < items.length; i = next++) out[i] = await fn(items[i]!, i);
+  }));
+  return out;
+}
 
 export type SegLang = 'en' | 'it';
 
@@ -51,7 +64,7 @@ export type ArtifactKind =
   | 'story-verbatim' | 'story-description';
 
 /** Synthesis engine for an artifact — OmniVoice (default) or the Dia sidecar. */
-export type SynthEngine = 'omni' | 'dia';
+export type SynthEngine = 'omni' | 'dia' | 'modal';
 
 /** A bakeable lecture unit. `sectionId` set only for `kind: 'section'`. */
 export interface LectureArtifact {
@@ -485,6 +498,14 @@ export async function bakeAudio(opts: AudioBakeOptions): Promise<AudioClipResult
     let reused = 0;
     let failed = 0;
 
+    // ── ENGINE banner: make it unmistakable in the bake log WHICH backend is synthesizing this lesson ──
+    const _ovHost = opts.omnivoiceUrl || DEFAULT_OV;
+    if (opts.engine === 'modal') {
+      progress(STAGE, `════════ ENGINE: ⚡ MODAL fast-bake · app "chiron-bake" fn bake_lesson · L4 GPU (cloud, concurrent, paid ~per GPU-sec) ════════`);
+    } else {
+      progress(STAGE, `════════ ENGINE: 🐢 MAC · OmniVoice sidecar @ ${_ovHost} (Mac Studio, serial, free) ════════`);
+    }
+
     // engine='modal': fan the WHOLE lesson's synth out to the Modal L4 lane (bucketed CUDA) up front.
     // Writes raw per-segment WAVs to prefetch/<artifactHash>/<i>.wav; the loop below then copies those
     // in instead of synthesizing (everything else — normalize/manifest/splice/mp3/QC — is unchanged).
@@ -505,7 +526,7 @@ export async function bakeAudio(opts: AudioBakeOptions): Promise<AudioClipResult
           return !reuse;
         });
         if (toBake.length === 0) {
-          progress(STAGE, `engine=modal — nothing to synth (all reused) → skipping Modal`);
+          progress(STAGE, `[modal] nothing to synth — all ${ordered.length} artifacts reused (script unchanged) → skipping Modal entirely (no GPU, $0)`);
         } else {
           const usedVoices = new Set<string>();
           for (const art of toBake) for (const s of art.segments) usedVoices.add(s.voice);
@@ -524,14 +545,17 @@ export async function bakeAudio(opts: AudioBakeOptions): Promise<AudioClipResult
           const jobPath = join(modalRoot, 'job.json');
           const prefDir = join(modalRoot, 'prefetch');
           writeFileSync(jobPath, JSON.stringify(job));
-          progress(STAGE, `engine=modal — fanning ${toBake.length}/${ordered.length} artifacts to Modal L4 (${ordered.length - toBake.length} reused/Dia skipped)…`);
+          const _segCount = toBake.reduce((n, a) => n + a.segments.length, 0);
+          progress(STAGE, `[modal] connecting → Modal chiron-bake/bake_lesson (L4) · fanning ${toBake.length}/${ordered.length} artifacts, ${_segCount} segments (bucket=8; ${ordered.length - toBake.length} reused/Dia skipped, not sent)…`);
+          const _t0 = Date.now();
           const out = execFileSync('python3', [opts.modalSynthScript, jobPath, prefDir], {
             encoding: 'utf8', timeout: 1_800_000, maxBuffer: 8 * 1024 * 1024,
           });
           const res = JSON.parse(out.trim().split('\n').pop() || '{}');
           if (res.error) throw new Error(String(res.error));
           modalPrefetch = prefDir;
-          progress(STAGE, `engine=modal — synthesized ${res.clips} clips on Modal in ${res.synth_s}s (splicing locally)`);
+          const _wall = ((Date.now() - _t0) / 1000).toFixed(1);
+          progress(STAGE, `[modal] ⚡ L4 returned ${res.clips} clips · ${res.synth_s}s GPU-synth / ${_wall}s round-trip → prefetched, now splicing LOCALLY (normalize→splice→mp3, byte-identical to Mac)`);
         }
       } catch (e) {
         if (modalRoot) { try { rmSync(modalRoot, { recursive: true, force: true }); } catch { /* best-effort */ } }  // F3-leak
@@ -621,7 +645,7 @@ export async function bakeAudio(opts: AudioBakeOptions): Promise<AudioClipResult
               execFileSync('ffmpeg', ['-y', '-loglevel', 'error', '-i', rawWav, '-filter:a', `atempo=${diaParams.speed}`, slowed], { stdio: 'pipe' });
               renameSync(slowed, rawWav);
             }
-            return 'omni';
+            return 'modal';   // copied from the Modal L4 prefetch → report the true engine in the per-segment log
           }
           if (useDia) {
             try {
@@ -657,21 +681,41 @@ export async function bakeAudio(opts: AudioBakeOptions): Promise<AudioClipResult
           return 'omni';
         };
 
-        const manifestLines: string[] = [];
+        // 1) SYNTH each segment → rawWav, SERIAL: the Mac OmniVoice sidecar cannot take parallel requests;
+        //    on the modal path this is just a fast local copy of the prefetched clip.
         for (let i = 0; i < art.segments.length; i++) {
           const seg = art.segments[i]!;
-          progress(STAGE, `${label}: segment ${i + 1}/${art.segments.length} [${seg.lang}] synth (engine=${useDia ? 'dia' : 'omni'})`, {
+          const rawWav = join(work, `raw${i}.wav`);
+          const pfWav = modalPrefetch ? join(modalPrefetch, hash, `${i}.wav`) : undefined;
+          const willEng = (pfWav && existsSync(pfWav)) ? 'modal-L4' : (useDia ? 'dia' : 'omni-mac');
+          progress(STAGE, `${label}: segment ${i + 1}/${art.segments.length} [${seg.lang}] synth (engine=${willEng})`, {
             pct: Math.round((i / art.segments.length) * 100),
           });
-          const rawWav = join(work, `raw${i}.wav`);
-          const segWav = join(work, `seg${i}.wav`);
-          const pfWav = modalPrefetch ? join(modalPrefetch, hash, `${i}.wav`) : undefined;
           const produced = await synthSegmentToWav(seg, rawWav, pfWav);
           progress(STAGE, `${label}: segment ${i + 1}/${art.segments.length} produced by ${produced}`);
-          execFileSync('tts-normalize', [rawWav, segWav, String(target)], { stdio: 'pipe' });
-          const gap = i < art.segments.length - 1 ? seg.gapAfterMs : 0;
-          manifestLines.push(`${segWav}|${gap}${seg.gainDb != null ? `|${seg.gainDb}` : ''}`);
         }
+        // 2) NORMALIZE each rawWav → segWav. PARALLEL on the modal local pipeline (the sequential ffmpeg
+        //    normalize was the felt bottleneck on big lessons); serial on Mac. Per-clip output is byte-identical.
+        // Resilience: a synth can occasionally return an EMPTY clip (blank/whitespace segment, or a rare
+        // model miss). tts-normalize crashes on zero-size audio ("zero-size array to reduction maximum"),
+        // which would fail the ENTIRE lesson over one bad segment. Skip empties instead (a valid WAV is KBs;
+        // an empty one is a ~44-byte header or 0). This keeps one blank clip from sinking the whole bake.
+        const validIdx = art.segments.map((_s, i) => i).filter((i) => {
+          try { return existsSync(join(work, `raw${i}.wav`)) && statSync(join(work, `raw${i}.wav`)).size > 512; }
+          catch { return false; }
+        });
+        if (validIdx.length < art.segments.length) {
+          progress(STAGE, `${label}: ⚠ skipped ${art.segments.length - validIdx.length} empty/blank segment(s) (kept ${validIdx.length}/${art.segments.length})`);
+        }
+        const NORM_CONC = modalPrefetch ? Math.max(1, parseInt(process.env.CHIRON_SPLICE_CONC || '6', 10) || 6) : 1;
+        await mapLimit(validIdx, NORM_CONC, async (i) => {
+          await execFileAsync('tts-normalize', [join(work, `raw${i}.wav`), join(work, `seg${i}.wav`), String(target)]);
+        });
+        const manifestLines: string[] = validIdx.map((i, k) => {
+          const seg = art.segments[i]!;
+          const gap = k < validIdx.length - 1 ? seg.gapAfterMs : 0;   // no trailing gap after the last KEPT segment
+          return `${join(work, `seg${i}.wav`)}|${gap}${seg.gainDb != null ? `|${seg.gainDb}` : ''}`;
+        });
 
         const manifestPath = join(work, 'manifest.txt');
         writeFileSync(manifestPath, `${manifestLines.join('\n')}\n`);

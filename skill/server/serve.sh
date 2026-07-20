@@ -10,4 +10,9 @@ mkdir -p state
 # PromptChain + /v1 + litellm path — only the model name changes. Override-safe.
 export CH_MODEL_REASON="${CH_MODEL_REASON:-glm-5.1}"
 export CH_MODEL_STRUCT="${CH_MODEL_STRUCT:-glm-5.1}"
+# LOCAL generation option: route `local/<model>` through the Atelier governor (memory-governed Mac
+# ollama) for zero-cloud-token bakes. Neutral localhost default here (public repo); the real governor
+# host is supplied out-of-repo via a systemd drop-in (CH_LOCAL_BASE / CH_LOCAL_MODEL).
+export CH_LOCAL_BASE="${CH_LOCAL_BASE:-http://localhost:8799/llm/ollama/v1}"
+export CH_LOCAL_MODEL="${CH_LOCAL_MODEL:-qwen2.5:7b}"
 exec python3 app.py

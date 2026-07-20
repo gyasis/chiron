@@ -418,7 +418,10 @@
     {
       "system": "Gastrointestinal & Hepatobiliary",
       "aliases": [
+        "GI",
         "Gastroenterology",
+        "Gastrointestinal",
+        "Hepatobiliary",
         "Hepatology"
       ],
       "diseases": [
@@ -664,7 +667,10 @@
     {
       "system": "Renal, Urinary & Electrolyte/Acid-Base",
       "aliases": [
-        "Nephrology"
+        "Nephrology",
+        "Renal",
+        "Renal/Urinary",
+        "Urinary"
       ],
       "diseases": [
         {
@@ -830,7 +836,10 @@
     {
       "system": "Endocrine & Metabolic",
       "aliases": [
-        "Endocrinology"
+        "Endocrine",
+        "Endocrine/Metabolic",
+        "Endocrinology",
+        "Metabolic"
       ],
       "diseases": [
         {
@@ -1036,7 +1045,12 @@
     {
       "system": "Hematology & Oncology",
       "aliases": [
-        "Heme/Onc"
+        "Hematologic/Lymphatic",
+        "Hematology",
+        "Hematology/Oncology",
+        "Heme/Onc",
+        "Lymphatic",
+        "Oncology"
       ],
       "diseases": [
         {
@@ -1381,9 +1395,11 @@
     {
       "system": "Rheumatology & Musculoskeletal",
       "aliases": [
-        "Rheum",
         "MSK",
-        "Orthopedics"
+        "Musculoskeletal",
+        "Orthopedics",
+        "Rheum",
+        "Rheumatology"
       ],
       "diseases": [
         {
@@ -1550,7 +1566,11 @@
     {
       "system": "Neurology",
       "aliases": [
-        "Neuro"
+        "CNS",
+        "Nervous",
+        "Nervous/CNS",
+        "Neuro",
+        "Neurologic"
       ],
       "diseases": [
         {
@@ -1739,8 +1759,12 @@
     {
       "system": "Psychiatry & Behavioral",
       "aliases": [
+        "Behavioral",
+        "Mental Health",
         "Psych",
-        "Mental Health"
+        "Psychiatric",
+        "Psychiatric/Behavioral",
+        "Psychiatry"
       ],
       "diseases": [
         {
@@ -1885,7 +1909,10 @@
     {
       "system": "Dermatology",
       "aliases": [
-        "Derm"
+        "Derm",
+        "Integumentary",
+        "Skin",
+        "Skin/Integumentary"
       ],
       "diseases": [
         {
@@ -2151,6 +2178,7 @@
     {
       "system": "Male Reproductive & Urology",
       "aliases": [
+        "Reproductive",
         "Urology"
       ],
       "diseases": [
@@ -2727,7 +2755,10 @@
     {
       "system": "Immunology & Allergy",
       "aliases": [
-        "Allergy"
+        "Allergy",
+        "Immune",
+        "Immune/Rheumatologic",
+        "Immunology"
       ],
       "diseases": [
         {

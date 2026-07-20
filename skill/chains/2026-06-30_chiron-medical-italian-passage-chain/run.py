@@ -50,6 +50,17 @@ if not OPENAI_KEY:   # last-resort OpenAI fallback key lives in ~/dev/.env even 
             if _ln.strip().startswith("OPENAI_API_KEY="):
                 OPENAI_KEY = _ln.split("=", 1)[1].strip().strip('"').strip("'"); break
     except Exception: pass
+GEMINI_KEY = os.environ.get("GEMINI_API_KEY", "") or os.environ.get("GOOGLE_API_KEY", "")
+if not GEMINI_KEY:
+    try:
+        for _ln in (HOME / "dev/.env").read_text().splitlines():
+            _s = _ln.strip()
+            if _s.startswith("GEMINI_API_KEY=") or _s.startswith("GOOGLE_API_KEY="):
+                GEMINI_KEY = _s.split("=", 1)[1].strip().strip('"').strip("'")
+                if GEMINI_KEY:
+                    break
+    except Exception:
+        pass
 
 # FIXED sub-mode — this chain is medical-language/passage only (no router).
 SUBMODE = "language-it-passage"
@@ -71,14 +82,23 @@ def ollama(model: str, temperature: float = 0.4) -> dict:
 # Model FALLBACK ladder: when the primary can't produce valid JSON after its repairs, try the next model.
 # Default: gemma4:31b (Ollama Cloud, different family) → gpt-5-mini (OpenAI, reliable last resort).
 # Claude is intentionally absent (no Anthropic key on this box). gpt-* entries auto-dropped if no OpenAI key.
-_FB = [m.strip() for m in os.environ.get("CH_MODEL_FALLBACKS", "gemma4:31b,gpt-5-mini").split(",") if m.strip()]
-FALLBACKS = [m for m in _FB if not (m.startswith("gpt-") and not OPENAI_KEY)]
+_FB = [m.strip() for m in os.environ.get("CH_MODEL_FALLBACKS", "gemma4:31b,gemini/gemini-flash-latest,gpt-5-mini").split(",") if m.strip()]
+FALLBACKS = [m for m in _FB if not (m.startswith("gpt-") and not OPENAI_KEY) and not (m.startswith("gemini") and not GEMINI_KEY)]
 
 
 def model_for(name: str, temperature: float = 0.4) -> dict:
     """model_dict for a bare model name. gpt-* → real OpenAI; everything else → Ollama Cloud (via ollama())."""
+    if name.startswith("gemini"):
+        gm = name if name.startswith("gemini/") else f"gemini/{name}"
+        return {"name": gm, "params": {"api_key": GEMINI_KEY, "temperature": temperature}}
     if name.startswith("gpt-"):
-        return {"name": f"openai/{name}", "params": {"api_key": OPENAI_KEY, "temperature": temperature}}
+        # gpt-5 models only support temperature=1 (the default) — passing 0.4 → litellm UnsupportedParamsError.
+        return {"name": f"openai/{name}", "params": {"api_key": OPENAI_KEY}}
+    if name.startswith("local/"):
+        # local/<model> → the Atelier governor (memory-governed Mac ollama); base via env, neutral default (public repo)
+        lm = name.split("/", 1)[1]
+        base = os.environ.get("CH_LOCAL_BASE", "http://localhost:8799/llm/ollama/v1")
+        return {"name": f"openai/{lm}", "params": {"api_base": base, "api_key": "local", "temperature": temperature}}
     return ollama(name, temperature)
 
 
@@ -142,6 +162,10 @@ async def json_with_repair(prompt: str, name: str, model_dict: dict, validate_fn
             try:
                 last_raw = await llm(md, cur)
             except Exception as e:                   # transient LLM/network/provider error → retry same model, don't crash
+                _msg = str(e).lower()
+                if 'ratelimit' in _msg or '429' in _msg or 'usage limit' in _msg or 'rate limit' in _msg or 'resource_exhausted' in _msg or 'quota' in _msg:
+                    print(f"[repair] {name} [{tag}]: rate-limited (429) — skipping retries, falling to next model", flush=True)
+                    break   # advance the ladder to the next model immediately; don't hammer a capped provider
                 print(f"[repair] {name} [{tag}] {attempt}/{max_repair}: LLM call errored ({e}) — retrying", flush=True)
                 await asyncio.sleep(3)
                 continue
@@ -311,7 +335,7 @@ async def phase2_author(passage: dict, cur: dict) -> dict:
         return iss or None
 
     print(f"[phase 2] AUTHOR via {cur['promptOverride']} (domain={DOMAIN}, layers_on={[k for k,v in layers_on.items() if v]})…", flush=True)
-    bd = await json_with_repair(p, "breakdown", ollama(MODEL_STRUCT), validate_fn=ap_valid)
+    bd = await json_with_repair(p, "breakdown", model_for(MODEL_STRUCT), validate_fn=ap_valid)
     if bd is None:
         (OUT / "breakdown.NEEDS_REVIEW").write_text("04t breakdown failed validation after repair")
         print("[phase 2] breakdown NEEDS_REVIEW", flush=True)
@@ -381,7 +405,7 @@ async def phase_scenario(passage: dict) -> dict:
         m = o.get("messages") if isinstance(o, dict) else None
         return None if (isinstance(m, list) and len(m) >= 4) else ["need a group-chat-animation with >=4 messages"]
     print(f"[phase 2.6] CLINICAL SCENARIO — grounded (PACES {len(g_paces)}c + Harrison {len(g_harr)}c) → group-chat-animation…", flush=True)
-    sc = await json_with_repair(p, "scenario", ollama(MODEL_REASON), validate_fn=sc_valid)
+    sc = await json_with_repair(p, "scenario", model_for(MODEL_REASON), validate_fn=sc_valid)
     if sc is None:
         print("[phase 2.6] scenario failed — skipping (lesson continues)", flush=True)
         return bd
@@ -431,7 +455,7 @@ async def phase4_audio_scripts(passage: dict, cur: dict) -> dict:
           "not a fixed phrase — is prepended automatically to summary and shortened) — start straight into the content; "
           "sign off warmly. Return ONLY {\"artifacts\":[...]}.")
     print(f"[phase 4] AUDIO transcripts — 04s bilingual ({len(secs)} sections) + Veloce/Lenta reads…", flush=True)
-    res = await json_with_repair(p, "lecture-scripts", ollama(MODEL_REASON),
+    res = await json_with_repair(p, "lecture-scripts", model_for(MODEL_REASON),
                                  validate_fn=lambda o: None if (o.get("artifacts") or isinstance(o, list)) else ["no artifacts"])
     arts = (res or {}).get("artifacts", res if isinstance(res, list) else [])
     out = {"summary": [], "sections": {}}
@@ -512,9 +536,9 @@ async def main():
     obs.phase("Planning the passage", "start")
     chunks = phase1_chunk(passage)               # Phase 1 — PLAN
     obs.phase("Planning the passage", "end")
-    if STAGE in ("author", "scenario", "assemble", "audio", "all"):
+    if STAGE in ("scripts", "author", "scenario", "assemble", "audio", "all"):
         obs.phase("Writing the breakdown / scaffold", "start")
-        bd = await phase2_author(passage, cur)   # Phase 2 — 04t breakdown
+        bd = await phase2_author(passage, cur)   # Phase 2 — 04t breakdown (RESUMEs existing breakdown.json)
         if bd is None:
             print("=== stopped: breakdown failed (see breakdown.NEEDS_REVIEW).")
             obs.error("Writing the breakdown / scaffold", "breakdown failed — needs review"); return
@@ -543,7 +567,11 @@ async def main():
         if r.returncode != 0:
             print("=== stopped: assemble failed."); obs.error("Assembling the page", "assemble failed"); return
         obs.phase("Assembling the page", "end")
-    if STAGE in ("audio", "all"):
+    # 'scripts' = transcript-ONLY backfill: write audio-scripts.json and stop. It runs phase0/phase1 +
+    # phase2 (which RESUMEs the existing breakdown.json, no LLM) + phase4, but SKIPS the scenario re-run
+    # and the assemble step — so lesson.html and breakdown.json are NEVER rewritten, only the narration
+    # manifest (summary + shortened + passage readings) is added.
+    if STAGE in ("scripts", "audio", "all"):
         obs.phase("Writing narration scripts", "start")
         await phase4_audio_scripts(passage, cur)  # Phase 4 — 04s bilingual + Veloce/Lenta → audio-scripts.json
         obs.phase("Writing narration scripts", "end")

@@ -36,6 +36,17 @@ if not OPENAI_KEY:   # last-resort OpenAI fallback key lives in ~/dev/.env even 
             if _ln.strip().startswith("OPENAI_API_KEY="):
                 OPENAI_KEY = _ln.split("=", 1)[1].strip().strip('"').strip("'"); break
     except Exception: pass
+GEMINI_KEY = os.environ.get("GEMINI_API_KEY", "") or os.environ.get("GOOGLE_API_KEY", "")
+if not GEMINI_KEY:
+    try:
+        for _ln in (HOME / "dev/.env").read_text().splitlines():
+            _s = _ln.strip()
+            if _s.startswith("GEMINI_API_KEY=") or _s.startswith("GOOGLE_API_KEY="):
+                GEMINI_KEY = _s.split("=", 1)[1].strip().strip('"').strip("'")
+                if GEMINI_KEY:
+                    break
+    except Exception:
+        pass
 LEARNER = os.environ.get("CH_LEARNER", "Gyasi")
 TOPIC = os.environ.get("CH_TOPIC", "")
 STAGE = os.environ.get("CH_STAGE", "author")
@@ -49,14 +60,23 @@ def ollama(model=MODEL, t=0.45):
 
 
 # Model FALLBACK ladder: when the primary can't produce valid JSON after its repairs, try the next model.
-_FB = [m.strip() for m in os.environ.get("CH_MODEL_FALLBACKS", "gemma4:31b,gpt-5-mini").split(",") if m.strip()]
-FALLBACKS = [m for m in _FB if not (m.startswith("gpt-") and not OPENAI_KEY)]
+_FB = [m.strip() for m in os.environ.get("CH_MODEL_FALLBACKS", "gemma4:31b,gemini/gemini-flash-latest,gpt-5-mini").split(",") if m.strip()]
+FALLBACKS = [m for m in _FB if not (m.startswith("gpt-") and not OPENAI_KEY) and not (m.startswith("gemini") and not GEMINI_KEY)]
 
 
 def model_for(name: str, temperature: float = 0.4) -> dict:
     """model_dict for a bare model name. gpt-* → real OpenAI; everything else → Ollama Cloud (via ollama())."""
+    if name.startswith("gemini"):
+        gm = name if name.startswith("gemini/") else f"gemini/{name}"
+        return {"name": gm, "params": {"api_key": GEMINI_KEY, "temperature": temperature}}
     if name.startswith("gpt-"):
-        return {"name": f"openai/{name}", "params": {"api_key": OPENAI_KEY, "temperature": temperature}}
+        # gpt-5 models only support temperature=1 (the default) — passing 0.4 → litellm UnsupportedParamsError.
+        return {"name": f"openai/{name}", "params": {"api_key": OPENAI_KEY}}
+    if name.startswith("local/"):
+        # local/<model> → the Atelier governor (memory-governed Mac ollama); base via env, neutral default (public repo)
+        lm = name.split("/", 1)[1]
+        base = os.environ.get("CH_LOCAL_BASE", "http://localhost:8799/llm/ollama/v1")
+        return {"name": f"openai/{lm}", "params": {"api_base": base, "api_key": "local", "temperature": temperature}}
     return ollama(name, temperature)
 
 
@@ -95,7 +115,12 @@ async def json_with_repair(prompt, name, md, validate_fn=None, max_repair=3):
         cur = prompt
         for attempt in range(1, max_repair + 1):
             try: last = await llm(cmd, cur)
-            except Exception as e: print(f"[repair] {name} [{tag}] {attempt}: LLM errored ({e})", flush=True); await asyncio.sleep(3); continue
+            except Exception as e:
+                _msg = str(e).lower()
+                if 'ratelimit' in _msg or '429' in _msg or 'usage limit' in _msg or 'rate limit' in _msg or 'resource_exhausted' in _msg or 'quota' in _msg:
+                    print(f"[repair] {name} [{tag}]: rate-limited (429) — skipping retries, falling to next model", flush=True)
+                    break   # advance the ladder to the next model immediately; don't hammer a capped provider
+                print(f"[repair] {name} [{tag}] {attempt}: LLM errored ({e})", flush=True); await asyncio.sleep(3); continue
             try: obj = extract_json(last)
             except Exception as e:
                 cur = prompt + f"\n\n## PREVIOUS INVALID JSON\n{e}\nReturn ONLY corrected valid JSON."; continue

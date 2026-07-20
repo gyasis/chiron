@@ -40,7 +40,23 @@ JOBS: dict = {}
 import queue as _queuemod
 _BAKE_Q: "_queuemod.Queue" = _queuemod.Queue()   # rebakes queue here; one worker bakes them one at a time
 _GEN_Q: "_queuemod.Queue" = _queuemod.Queue()    # GENERATION queue — Chiron (the server) owns concurrency,
-GEN_CONC = int(os.environ.get("CHIRON_GEN_CONC", "2") or 2)  # not the client. Clients push all; N workers drain.
+GEN_CONC = int(os.environ.get("CHIRON_GEN_CONC", "6") or 6)  # not the client. Clients push all; N workers drain.
+# PARALLEL-PROVIDER SPREAD: round-robin each generation's PRIMARY across independent providers, so a big
+# batch uses Ollama + Google + OpenAI AT ONCE (no single provider gets hammered into a 429). Each lesson
+# still keeps its full fallback ladder (gemma4 → gemini-flash-latest → gpt-5-mini) if its primary hiccups.
+_PRIMARY_POOL = [m.strip() for m in os.environ.get(
+    "CH_PRIMARY_ROTATION", "glm-5.1,gemini/gemini-flash-latest,gpt-5-mini").split(",") if m.strip()]
+_PRIMARY_I = [0]
+# LOCAL option: `local/<model>` routes through the Atelier governor (Mac ollama, zero cloud tokens).
+# Surfaced to the UI (a "🏠 Local" pill) so a batch can be steered fully local. Base+model via env
+# (CH_LOCAL_BASE / CH_LOCAL_MODEL), set out-of-repo; the chains' model_for() resolves the base.
+_LOCAL_MODEL = "local/" + os.environ.get("CH_LOCAL_MODEL", "qwen2.5:7b").strip()
+_PRIMARY_LOCK = threading.Lock()
+_SUBMIT_LOCK = threading.Lock()   # serialize /generate insert+recheck so concurrent identical requests can't twin (F6)
+def _next_primary() -> str:
+    with _PRIMARY_LOCK:
+        m = _PRIMARY_POOL[_PRIMARY_I[0] % len(_PRIMARY_POOL)]; _PRIMARY_I[0] += 1; return m
+_GEN_PAUSED = False   # when True, gen workers hold (finish in-flight, start nothing new); queue is preserved
 _CANCELLED: set = set()   # slugs cancelled while still queued → the bake worker skips them when popped
 LOCK = threading.Lock()
 
@@ -55,7 +71,13 @@ def _now() -> str:
 
 def _save() -> None:
     with LOCK:
-        JOBS_FILE.write_text(json.dumps(list(JOBS.values()), indent=2))
+        payload = json.dumps(list(JOBS.values()), indent=2)
+        # ATOMIC: write a temp file then os.replace() it in. A crash/kill leaves EITHER the old file OR
+        # the new one — never a half-written/empty jobs.json. (A direct write_text() truncates first, so a
+        # kill mid-write wiped the whole job tracker — the 2026-07-20 incident.)
+        tmp = STATE / "jobs.json.tmp"
+        tmp.write_text(payload)
+        os.replace(str(tmp), str(JOBS_FILE))
 
 
 def _load() -> None:
@@ -350,6 +372,9 @@ def _run_job(job: dict) -> None:
     # CH_SLUG: tell the chain the EXACT output slug the server will look for, so its self-computed slug
     # can never diverge (the 5α-reductase '-drug' vs '-systematic' mismatch). Chains honor it if they read it.
     env = {**os.environ, **res["env"], "CH_STAGE": job.get("stage", "all"), "CH_SLUG": res["slug"]}
+    _pm = _next_primary()                                    # round-robin the primary across providers
+    env["CH_MODEL_REASON"] = _pm; env["CH_MODEL_STRUCT"] = _pm   # FORCE it — override any inherited value so the rotation actually takes
+    job["primary"] = _pm                                     # surface which provider this lesson started on
     if grounding.strip():
         env["CH_GROUNDING"] = str(out / "_grounding.md")  # chain-dependent consumption
 
@@ -369,10 +394,19 @@ def _run_job(job: dict) -> None:
             rc = p.wait()
         ok, why = (_lesson_complete(out, log) if (rc == 0 and lesson.exists()) else (False, ""))
         if rc == 0 and lesson.exists() and ok:
-            _write_status(out, job, "staged")
+            # Preserve PUBLISHED — regenerating a lesson that was already accepted must not silently demote
+            # it to 'staged'/Needs-Review (same guard as _run_bake). Only stamp 'staged' if not published.
+            _pj = "staged"
+            _pjp = out / "chiron.json"
+            if _pjp.exists():
+                try:
+                    _pj = json.loads(_pjp.read_text()).get("status") or "staged"
+                except Exception:
+                    _pj = "staged"
+            _write_status(out, job, "published" if _pj == "published" else "staged")
             _rebuild_catalog()
-            job.update(status="ready", rc=rc, lesson_url=f"/lessons/{res['slug']}/lesson.html", error=None,
-                       finished=_now())
+            job.update(status=("published" if _pj == "published" else "ready"), rc=rc,
+                       lesson_url=f"/lessons/{res['slug']}/lesson.html", error=None, finished=_now())
             _save()
             return
         # failed this attempt — capture the REAL reason, record it durably, back off, and (if tries remain) resume
@@ -451,7 +485,10 @@ def _bake_worker() -> None:
                              phase="cancelled", finished=_now())
                     _save()
                 continue
-            _run_bake(_job_for_slug(slug), GEN / slug)
+            job = _job_for_slug(slug)
+            if job.get("status") != "queued":            # superseded/duplicate queue entry (a prior pop
+                continue                                  # already baked it) → don't re-bake. Mirrors _gen_worker.
+            _run_bake(job, GEN / slug)
         except Exception:
             pass
         finally:
@@ -786,16 +823,42 @@ def _run_bake(job: dict, out: Path) -> None:
         return
     log = STATE / f"{jid}.bake.log"
     domain = job.get("domain", "medical-italian")
-    bake_domain = "language-it" if domain == "medical-italian" else "medicine"
+    # Italian lessons — medical-italian AND the SSM/passage format (domain 'language'/'language-it') — bake
+    # with the language-it baker + the Lucrezia voice. Only true 'medicine' uses pauls-tutor. The old check
+    # matched ONLY 'medical-italian', so SSM lessons (domain 'language') got pauls-tutor → every Italian
+    # segment failed 'no voice ref registered for lucrezia_italian'.
+    _italian = domain in ("medical-italian", "language", "language-it")
+    bake_domain = "language-it" if _italian else "medicine"
     # persona MUST match what the generation chain used, else opts.voices (filtered to the persona's
     # declared voice ids) won't contain the segments' voice → "no voice ref registered". Medicine =
     # 'pauls-tutor' (HYPHEN — the pack dir id; every medicine chain passes --persona pauls-tutor;
     # activePersonaFor('medicine') is unset in active.json so it must be explicit). NOT 'pauls_tutor'.
-    persona = "lucrezia" if domain == "medical-italian" else (job.get("persona") or "pauls-tutor")
+    persona = "lucrezia" if _italian else (job.get("persona") or "pauls-tutor")
     cmd = ["node", str(SKILL / "scripts" / "bake-lesson-audio.mjs"), str(out),
            "--domain", bake_domain, "--persona", persona]
     job.update(status="baking", phase="baking", started=_now(), finished=None)  # finished=None: this job is RE-running, drop the old end time (else elapsed goes negative)
     _save()
+    # TRANSCRIPT FALLBACK (medicine): the baker synthesizes from audio-scripts.json (the LLM narration).
+    # If it's MISSING — e.g. the lesson was authored at stage=assemble, which skips the transcript phase —
+    # write it FIRST via the chain's 'audio' stage (RESUME text + write scripts), so a bake can never
+    # silently produce 0 clips for want of transcripts. (Italian/passage lessons bake from story-/dlg-
+    # elements in the HTML — a different source — so this only applies to medicine.)
+    if bake_domain == "medicine" and not (out / "audio-scripts.json").exists():
+        subj = job.get("subject")
+        if not subj:
+            try:
+                subj = json.loads((out / "chiron.json").read_text()).get("subject")
+            except Exception:
+                subj = None
+        if subj:
+            try:
+                res = dispatch.resolve(domain, job.get("depth"), subj, job.get("subject_type"), job.get("extra") or {})
+                tenv = {**os.environ, **res["env"], "CH_STAGE": "audio", "CH_SLUG": slug0}
+                _append_step(out, {"kind": "event", "phase": "Baking audio", "event_type": "TRANSCRIPTS",
+                                   "step_instruction": "no narration scripts found — writing them first (audio stage)"})
+                subprocess.run([sys.executable, res["runpy"]], env=tenv, timeout=1800, check=False)
+            except Exception as e:
+                print(f"[bake] transcript fallback failed for {slug0}: {e}", flush=True)
     # announce the recovery into the timeline: what's reused vs what we bake (so we never redo text)
     rec = _recovery(job["slug"])
     _append_step(out, {"kind": "phase", "name": "Baking audio", "status": "start"})
@@ -859,7 +922,34 @@ def _run_bake(job: dict, out: Path) -> None:
         # lesson is still viewable — the bake just didn't finish; leave it re-bakeable
         job.update(status="audio-failed", phase="error", rc=rc)
     _append_step(out, {"kind": "phase", "name": "Baking audio", "status": "end"})
-    _write_status(out, job, "staged")
+    # Preserve PUBLISHED — rebaking audio on an already-accepted lesson (text-first, audio later) must NOT
+    # silently demote it back to 'staged'/Needs-Review. Only stamp 'staged' if it wasn't already published.
+    _prev = "staged"
+    _cjp = out / "chiron.json"
+    if _cjp.exists():
+        try:
+            _prev = json.loads(_cjp.read_text()).get("status") or "staged"
+        except Exception:
+            _prev = "staged"
+    if _prev == "published":
+        _write_status(out, job, "published")     # disk stays published — a bake NEVER un-publishes a lesson
+        job["status"] = "published"              # job row stays published (success OR failure) so a failed
+        if complete:                             # rebake is not mis-shown as a broken lesson in "Needs review"
+            job.pop("audio_error", None)
+        else:
+            job["audio_error"] = True            # …the audio failure surfaces via the card's 'needs rebaking' pill
+    else:
+        _write_status(out, job, "staged")
+    # Keep the catalog's audio badge in lockstep with the live clip count (else a fully re-baked, already
+    # published lesson keeps showing a stale "Bake audio" / wrong count). Merge clips_done into chiron.json.
+    try:
+        _cjp2 = out / "chiron.json"
+        if _cjp2.exists():
+            _cj2 = json.loads(_cjp2.read_text())
+            _cj2["audioClips"] = int(post.get("clips_done", 0))
+            _cjp2.write_text(json.dumps(_cj2, indent=2))
+    except Exception:
+        pass
     _rebuild_catalog()
     job["finished"] = _now()
     _save()
@@ -873,12 +963,17 @@ def _get(jid: str) -> dict:
 
 
 def _reconcile() -> None:
-    """On startup, a job left 'running' (server died) is resolved by checking disk truth."""
+    """Resolve a text-gen job that FINISHED right before the restart: status 'running' with lesson.html
+    already on disk → 'ready'. It must NOT enqueue anything — everything still incomplete is re-queued
+    EXACTLY ONCE by the dedicated resumers (_resume_queued_generations for text, _resume_orphaned_bakes
+    for audio). An earlier version enqueued here too, which double-loaded _GEN_Q (2 entries per job → the
+    same job ran on two workers concurrently). Bakes use status 'baking', never 'running', so a 'running'
+    job is always text-gen — no lane check needed here."""
     for j in JOBS.values():
         if j.get("status") == "running":
-            lesson = GEN / (j.get("slug") or "") / "lesson.html"
-            j["status"] = "ready" if lesson.exists() else "error"
-            j.setdefault("finished", _now())
+            sl = j.get("slug") or ""
+            if sl and (GEN / sl / "lesson.html").exists():
+                j.update(status="ready", finished=j.get("finished") or _now())
     _save()
 
 
@@ -897,7 +992,11 @@ def _resume_orphaned_bakes() -> None:
     seen = set()
     for j in list(JOBS.values()):
         sl = j.get("slug")
-        if not sl or j.get("status") not in ("baking", "queued"):
+        # Only ACTUAL bakes. Discriminate by the EXPLICIT lane field (set at enqueue), NOT a phase
+        # substring — a text-gen log can contain "bake" (e.g. "[phase 5] BAKE skipped"), which would
+        # wrongly claim a text-gen job. Legacy jobs (no lane) fall back to status 'baking' = definitely a bake.
+        is_bake = j.get("lane") == "bake" or (j.get("lane") is None and j.get("status") == "baking")
+        if not sl or not is_bake or j.get("status") not in ("baking", "queued"):
             continue
         if not (GEN / sl / "lesson.html").exists():
             j.update(status="error", phase="interrupted (no text)")
@@ -905,19 +1004,117 @@ def _resume_orphaned_bakes() -> None:
         if sl in seen:
             continue
         seen.add(sl)
-        j.update(status="queued", phase="queued for bake", started=_now(), finished=None)
-        _BAKE_Q.put(sl)
+        # Resume on the SAME engine it was interrupted on — a modal bake goes back to the concurrent Modal
+        # pool, NOT demoted onto the serial Mac queue (which also made /activity double-count it as both
+        # mac_queued and modal_pending). Mac bakes go to the serial _BAKE_Q as before.
+        if j.get("engine") == "modal":
+            j.update(status="queued", phase="queued for fast bake", started=_now(), finished=None)
+            _MODAL_POOL.submit(_run_bake, j, GEN / sl)
+        else:
+            j.update(status="queued", phase="queued for bake", started=_now(), finished=None)
+            _BAKE_Q.put(sl)
     _save()
 
 
 _resume_orphaned_bakes()   # recover bakes interrupted by the last restart
 
 
+def _collapse_slug(slug: str) -> None:
+    """After a slug reaches a GOOD state, delete its stale error/cancelled rows so they can never
+    resurface (in counts, rails, dedup edge cases). One lesson = one slug; extra rows are just old
+    attempts. Cheap, targeted — call it whenever a job for `slug` succeeds."""
+    if not slug:
+        return
+    js = [j for j in JOBS.values() if j.get("slug") == slug]
+    good = {"queued", "running", "baking", "ready", "published", "audio-failed"}
+    if any(x.get("status") in good for x in js):
+        for x in js:
+            if x.get("status") in ("error", "cancelled"):
+                JOBS.pop(x["id"], None)
+
+
+def _reap_stale() -> int:
+    """Sweep ALL jobs: for each slug, if any row reached a good state, drop its error/cancelled rows;
+    for a truly-failed slug (only error/cancelled), keep just the NEWEST. This is the ROOT fix for
+    'stale errors that keep popping up' — the noise is purged from jobs.json, not merely hidden in the UI."""
+    from collections import defaultdict
+    by = defaultdict(list)
+    for j in list(JOBS.values()):
+        if j.get("slug"):
+            by[j["slug"]].append(j)
+    good = {"queued", "running", "baking", "ready", "published", "audio-failed"}
+    drop = []
+    for sl, js in by.items():
+        if any(x.get("status") in good for x in js):
+            drop += [x["id"] for x in js if x.get("status") in ("error", "cancelled")]
+        else:
+            js.sort(key=lambda z: z.get("created", ""), reverse=True)
+            drop += [x["id"] for x in js[1:]]   # keep only the newest failed row
+    for jid in drop:
+        JOBS.pop(jid, None)
+    if drop:
+        _save()
+    return len(drop)
+
+
+def _migrate_assemble_stage() -> int:
+    """A queued TEXT-GEN job with stage='assemble' produces the page but SKIPS the narration-transcript
+    phase (audio-scripts.json), so it can never be audio-baked later. The real 'text-first, bake-later'
+    stage is 'audio' (page + transcripts, no synth). Upgrade any still-queued 'assemble' job to 'audio'
+    so held work becomes bakeable. (New jobs come in as 'audio' from the UI.)"""
+    n = 0
+    for j in JOBS.values():
+        if j.get("status") in ("queued", "running") and (j.get("lane") or "text") != "bake" \
+                and j.get("stage") == "assemble":
+            j["stage"] = "audio"
+            n += 1
+    if n:
+        _save()
+    return n
+
+
+def _migrate_bad_atlas() -> int:
+    """A queued job with depth='atlas' whose subject ISN'T a real atlas system/alias will hard-abort in
+    the atlas chain (a disease-class mis-routed to atlas by the OLD fuzzy detect_depth). Re-route it to
+    'systematic' (re-resolve → new slug/chain) so it GENERATES instead of failing. New jobs route
+    correctly at the source (dispatch.detect_depth now requires an exact atlas match); this catches
+    leftovers already sitting in the queue."""
+    n = 0
+    try:
+        valid = dispatch._atlas_subjects()
+    except Exception:
+        return 0
+    for j in list(JOBS.values()):
+        if j.get("status") in ("queued", "running") and j.get("depth") == "atlas":
+            subj = (j.get("subject") or "").strip().lower()
+            if subj and subj not in valid:
+                try:
+                    res = dispatch.resolve(j.get("domain", "medicine"), "systematic",
+                                           j["subject"], j.get("subject_type"), j.get("extra") or {})
+                    j["depth"] = "systematic"; j["slug"] = res["slug"]; j["chain"] = res["chain_name"]
+                    n += 1
+                except Exception:
+                    pass
+    if n:
+        _save()
+    return n
+
+
+_migrate_assemble_stage()   # held 'assemble' jobs → 'audio' so their transcripts get written (bakeable)
+_migrate_bad_atlas()        # queued disease-class-tagged-as-atlas jobs → 'systematic' (else they hard-abort)
+_reap_stale()   # purge stale/superseded rows left over from prior runs
+
+
 def _gen_worker() -> None:
     """Drain the generation queue. A bounded pool of these (GEN_CONC) is the whole point: clients
     push as many lessons as they want, Chiron runs only GEN_CONC at a time and queues the rest."""
     while True:
-        job = _GEN_Q.get()
+        if _GEN_PAUSED:
+            time.sleep(1); continue
+        try:
+            job = _GEN_Q.get(timeout=2)
+        except Exception:          # queue.Empty — re-check the pause flag periodically
+            continue
         try:
             if job.get("status") == "queued":          # skip cancelled/already-resolved jobs
                 _run_job(job)
@@ -975,6 +1172,10 @@ def _enqueue_bake(job: dict, engine: str = "mac") -> None:
     each fanning its lesson's synth to the Modal L4 lane (Modal auto-scales)."""
     job["engine"] = engine   # UNCONDITIONAL: else a slug fast-baked on Modal stays 'modal' in JOBS and
                              # a later 🐢 Mac bake silently re-runs on Modal (spends money) — the F1 bug.
+    job["lane"] = "bake"     # explicit lane so restart-resume routes this to _BAKE_Q, never _GEN_Q
+    _CANCELLED.discard(job.get("slug"))   # clear any STALE cancel flag — else this fresh bake would be
+                                          # skipped by the worker's _CANCELLED check (F4: a cancelled slug's
+                                          # next legitimate bake got silently eaten)
     if engine == "modal":
         job.update(status="queued", phase="queued for fast bake", started=_now(), finished=None)
         _save()
@@ -1039,6 +1240,17 @@ def generate(req: GenReq):
     except SystemExit as e:
         raise HTTPException(400, str(e))
     slug = res["slug"]
+    # ATLAS PRE-VALIDATION: if depth resolved to 'atlas' but the subject isn't an actual atlas
+    # system/alias, the atlas chain would HARD-ABORT (the disease-class-tagged-as-atlas bug). Rather than
+    # queue a doomed job, tell the caller so the UI can offer to switch to a systematic deep-dive. (Auto
+    # depth-detection no longer mis-routes here — this only fires on an EXPLICIT depth=atlas request.)
+    if res["depth"] == "atlas" and (req.subject or "").strip().lower() not in dispatch._atlas_subjects() \
+            and not (req.extra or {}).get("force_atlas"):
+        return {"ok": False, "needs_switch": True, "subject": req.subject,
+                "current_depth": "atlas", "suggested_depth": "systematic",
+                "reason": f"'{req.subject}' isn't in the disease-atlas — it's not an organ-system overview, "
+                          f"so an atlas lesson can't be built. Generate it as a systematic deep-dive instead?",
+                "note": "Re-POST with depth='systematic' to switch, or extra.force_atlas=true to override."}
     # DEDUP by slug (= subject + type/depth). Same subject at a DIFFERENT type has a different slug
     # → allowed (atrial-fib amboss ≠ atrial-fib systematic). Same subject+type is a duplicate.
     if not (req.extra or {}).get("force"):
@@ -1068,18 +1280,28 @@ def generate(req: GenReq):
             keep = failed[0]
             for dup in failed[1:]:                       # drop duplicate failed rows for this slug
                 JOBS.pop(dup["id"], None)
-            keep.update(status="queued", phase="queued (retry)", error=None, started=None, finished=None)
+            keep.update(status="queued", phase="queued (retry)", error=None, started=None, finished=None, lane="text")
             _save()
             _GEN_Q.put(keep)
             return {"job_id": keep["id"], "slug": slug, "depth": res["depth"], "chain": res["chain_name"],
                     "status": "queued", "duplicate": True, "queued_ahead": _GEN_Q.qsize(),
                     "note": "retried the existing failed job in place (no duplicate)"}
-    jid = uuid.uuid4().hex[:12]
-    job = {"id": jid, "created": _now(), "status": "queued", "phase": "queued",
-           **req.model_dump(), "slug": slug, "chain": res["chain_name"], "depth": res["depth"]}
-    JOBS[jid] = job
-    _save()
-    _GEN_Q.put(job)          # enqueue — the bounded worker pool runs it when a slot frees (Chiron owns concurrency)
+    # Serialize insert + a final re-check under the lock so two concurrent identical /generate for a
+    # brand-new slug can't BOTH spawn a job (TOCTOU, F6) — the 2nd re-checks and joins the 1st instead.
+    with _SUBMIT_LOCK:
+        if not (req.extra or {}).get("force"):
+            twin = next((j for j in JOBS.values() if j.get("slug") == slug
+                         and j.get("status") in ("queued", "running")), None)
+            if twin:
+                return {"job_id": twin["id"], "slug": slug, "depth": res["depth"], "chain": res["chain_name"],
+                        "status": twin.get("status", "queued"), "duplicate": True,
+                        "note": "already generating — joined the in-flight job (race-guarded)"}
+        jid = uuid.uuid4().hex[:12]
+        job = {"id": jid, "created": _now(), "status": "queued", "phase": "queued", "lane": "text",
+               **req.model_dump(), "slug": slug, "chain": res["chain_name"], "depth": res["depth"]}
+        JOBS[jid] = job
+        _save()
+        _GEN_Q.put(job)      # enqueue — the bounded worker pool runs it when a slot frees (Chiron owns concurrency)
     return {"job_id": jid, "slug": slug, "depth": res["depth"], "chain": res["chain_name"],
             "status": "queued", "queued_ahead": _GEN_Q.qsize()}
 
@@ -1098,6 +1320,13 @@ def clear_failed():
     return {"ok": True, "removed": len(removed)}
 
 
+@app.post("/jobs/reap")
+def jobs_reap():
+    """Purge stale/superseded rows so per-lesson state is unambiguous (the root fix for 'stale errors
+    that keep popping up'). The UI calls this on jobs-tray open; it also runs at startup."""
+    return {"ok": True, "reaped": _reap_stale()}
+
+
 
 @app.post("/bake/{ref}")
 def bake(ref: str, engine: str = "mac"):
@@ -1107,11 +1336,13 @@ def bake(ref: str, engine: str = "mac"):
     out = GEN / slug
     if not (out / "lesson.html").exists():
         raise HTTPException(404, f"no viewable lesson for '{slug}' — generate the text first (stage=audio)")
-    # refuse only if ACTIVELY baking (don't interrupt). A stale 'queued' (worker never grabbed it — the
-    # in-memory queue was lost on a restart) is NOT a real duplicate → fall through and re-enqueue it.
-    infl = next((j for j in JOBS.values() if j.get("slug") == slug and j.get("status") == "baking"), None)
+    # refuse if a bake for this slug is already ACTIVE OR QUEUED — two fast clicks must not double-enqueue
+    # (which spent Mac time / Modal $ twice). A stale queued job from a lost in-memory queue is re-enqueued
+    # by _resume_orphaned_bakes on restart, so we no longer need to let a live 'queued' fall through here.
+    infl = next((j for j in JOBS.values() if j.get("slug") == slug
+                 and j.get("status") in ("baking", "queued") and j.get("lane") == "bake"), None)
     if infl:
-        return {"job_id": infl["id"], "slug": slug, "status": "baking", "duplicate": True}
+        return {"job_id": infl["id"], "slug": slug, "status": infl.get("status"), "duplicate": True}
     job = _job_for_slug(slug)
     _enqueue_bake(job, engine)
     return {"job_id": job["id"], "slug": slug, "status": "queued", "engine": engine, "queued": _BAKE_Q.qsize()}
@@ -1295,9 +1526,79 @@ def activity(limit: int = 100):
     history = [j for j in items if j.get("status") not in ("queued", "running", "baking")]
     # NOTE: recovery (text?/clips) is fetched LAZILY per-row by the client via /jobs/{slug}/recovery —
     # NOT here, so /activity stays fast (was hanging on 24 SQLite reads/poll when a db was mid-bake locked).
-    return {"active": active, "history": history,
-            "counts": {"active": len(active), "done": len([j for j in history if j.get("status") in ("ready", "published")]),
-                       "error": len([j for j in history if j.get("status") == "error"])}}
+    # REBAKE LANE — its own queue/worker (independent of text-gen's _GEN_Q). Surfaced separately so the UI
+    # can show the second lane. Counted over ALL JOBS (not the 100-item window) so depth is authoritative.
+    # Count from JOB status/lane (NOT _BAKE_Q.qsize(), which still counts a cancelled-but-not-yet-popped
+    # slug → overcount, F7). A bake is lane=='bake'; mac vs modal by engine; only 'queued' is pending.
+    _baking = [j for j in JOBS.values() if j.get("status") == "baking"]
+    _mac_q = [j for j in JOBS.values() if j.get("lane") == "bake"
+              and j.get("engine") != "modal" and j.get("status") == "queued"]
+    _modal_pending = [j for j in JOBS.values() if j.get("lane") == "bake"
+                      and j.get("engine") == "modal" and j.get("status") == "queued"]
+    bake = {"mac_queued": len(_mac_q),
+            "modal_pending": len(_modal_pending),
+            "running": [{"slug": j.get("slug"), "engine": j.get("engine", "mac")} for j in _baking]}
+    # TRUE per-LESSON counts (dedup by slug): a lesson only counts as "failed" if NO row for it ever
+    # reached a better state. A stale 'error' row left over from an attempt that later succeeded on retry
+    # must NOT inflate the failure count (that made "3 real failures" read as "23 failing").
+    _rk = {"published": 6, "ready": 5, "running": 4, "baking": 4, "queued": 3, "audio-failed": 2, "cancelled": 1, "error": 0}
+    _best = {}
+    for j in JOBS.values():
+        sl = j.get("slug")
+        if not sl:
+            continue
+        r = _rk.get(j.get("status"), 0)
+        if sl not in _best or r > _best[sl]:
+            _best[sl] = r
+    _true_err = sum(1 for r in _best.values() if r == 0)
+    _true_done = sum(1 for r in _best.values() if r >= 5)   # ready or published
+    return {"active": active, "history": history, "paused": _GEN_PAUSED, "pool": list(_PRIMARY_POOL),
+            "local_model": _LOCAL_MODEL, "bake": bake,
+            "counts": {"active": len(active), "done": _true_done, "error": _true_err}}
+
+
+@app.post("/gen/pause")
+def gen_pause():
+    global _GEN_PAUSED
+    _GEN_PAUSED = True
+    return {"paused": True, "queued": _GEN_Q.qsize()}
+
+
+@app.post("/gen/resume")
+def gen_resume():
+    global _GEN_PAUSED
+    _GEN_PAUSED = False
+    return {"paused": False, "queued": _GEN_Q.qsize()}
+
+
+@app.get("/gen/status")
+def gen_status():
+    return {"paused": _GEN_PAUSED, "queued": _GEN_Q.qsize(), "pool": list(_PRIMARY_POOL),
+            "conc": GEN_CONC, "local_model": _LOCAL_MODEL}
+
+
+class RotationReq(BaseModel):
+    pool: list[str]
+
+
+@app.get("/gen/rotation")
+def gen_rotation():
+    """Current provider-rotation pool the round-robin primary picks from (R-PROVIDER-OVERRIDE)."""
+    return {"pool": list(_PRIMARY_POOL), "conc": GEN_CONC}
+
+
+@app.post("/gen/rotation")
+def set_rotation(req: RotationReq):
+    """Runtime override of the primary-provider rotation pool — lets the operator pin generation to a
+    subset of models (e.g. drop the paid gpt-5-mini) without restarting the server. Mutates _PRIMARY_POOL
+    IN PLACE (list is captured by closure in _next_primary) and resets the round-robin index to 0."""
+    pool = [m.strip() for m in (req.pool or []) if m and m.strip()]
+    if not pool:
+        raise HTTPException(400, "pool must have at least one model")
+    with _PRIMARY_LOCK:
+        _PRIMARY_POOL[:] = pool
+        _PRIMARY_I[0] = 0
+    return {"pool": list(_PRIMARY_POOL), "conc": GEN_CONC}
 
 
 @app.post("/retry/{jid}")
