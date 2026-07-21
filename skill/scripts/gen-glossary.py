@@ -6,7 +6,7 @@ from pathlib import Path
 
 OUT = Path(sys.argv[1]).expanduser()
 KEY = os.environ.get("OLLAMA_API_KEY", "")
-MODEL = os.environ.get("CH_MODEL_STRUCT", "glm-5.2")
+MODEL = os.environ.get("CH_MODEL_STRUCT", "glm-5.1")   # glm-5.2 has a silent-stop regression on Ollama Cloud; glm-5.1 is reliable
 
 def strip(html): return re.sub(r"\s+", " ", re.sub(r"<[^>]+>", " ", html or "")).strip()
 
@@ -26,18 +26,32 @@ prompt = (f"From this medical lesson on '{subject}', extract a GLOSSARY of the 1
           '[{"term":"...","definition":"..."}], alphabetized by term.\n\nLESSON:\n' + content)
 
 def ollama(prompt):
-    import urllib.request
+    import urllib.request, time
     body = json.dumps({"model": MODEL, "messages": [{"role": "user", "content": prompt}],
                        "temperature": 0.2}).encode()
-    req = urllib.request.Request("https://ollama.com/v1/chat/completions", data=body,
-                                 headers={"Authorization": f"Bearer {KEY}", "Content-Type": "application/json"})
-    with urllib.request.urlopen(req, timeout=180) as r:
-        return json.loads(r.read())["choices"][0]["message"]["content"]
+    last = None
+    for attempt in range(3):   # Ollama Cloud models flap (transient 404/5xx) — retry before giving up
+        try:
+            req = urllib.request.Request("https://ollama.com/v1/chat/completions", data=body,
+                                         headers={"Authorization": f"Bearer {KEY}", "Content-Type": "application/json"})
+            with urllib.request.urlopen(req, timeout=180) as r:
+                return json.loads(r.read())["choices"][0]["message"]["content"]
+        except Exception as e:
+            last = e
+            time.sleep(2 * (attempt + 1))
+    raise last
 
-raw = ollama(prompt)
-m = re.search(r"\[.*\]", re.sub(r"^```(?:json)?|```$", "", raw.strip(), flags=re.M), re.S)
-entries = json.loads(m.group(0))
-entries = [e for e in entries if e.get("term") and e.get("definition")]
-entries.sort(key=lambda e: e["term"].lower())
-(OUT / "glossary.json").write_text(json.dumps(entries, indent=2))
-print(f"[gen-glossary] {len(entries)} terms → {OUT.name}/glossary.json")
+# The curated glossary is a NICE-TO-HAVE: if it fails, the assembler falls back to widget-derived terms.
+# So NEVER let a glossary hiccup throw a traceback that looks like the whole lesson broke — skip gracefully.
+try:
+    raw = ollama(prompt)
+    m = re.search(r"\[.*\]", re.sub(r"^```(?:json)?|```$", "", raw.strip(), flags=re.M), re.S)
+    entries = json.loads(m.group(0))
+    entries = [e for e in entries if e.get("term") and e.get("definition")]
+    entries.sort(key=lambda e: e["term"].lower())
+    (OUT / "glossary.json").write_text(json.dumps(entries, indent=2))
+    print(f"[gen-glossary] {len(entries)} terms → {OUT.name}/glossary.json")
+except Exception as e:
+    print(f"[gen-glossary] SKIPPED (glossary model unavailable — {type(e).__name__}: {str(e)[:120]}); "
+          "assembler will use widget-derived terms — lesson is unaffected")
+    sys.exit(0)
