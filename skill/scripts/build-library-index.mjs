@@ -179,13 +179,24 @@ const SYS_LABEL = {
 let queued = [], systemLessons = [];
 try {
   const tax = JSON.parse(readFileSync(TAX, 'utf8'));
-  const haveSubjects = new Set(lessons.filter(l => l.subject).map(l => l.subject.toLowerCase()));
+  // A generated subject-lesson has subject="General" but its TITLE (and slug) carries the real subject
+  // (e.g. title "Biostatistics & Clinical Research", id "chiron-biostatistics-clinical-research-systematic").
+  // Match on a normalized key across subject + title + depth-stripped id, or we emit a phantom
+  // "to-generate" twin for every already-generated subject (the "says not generated" bug).
+  const norm = s => (s || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+  const stripDepth = k => k.replace(/^chiron-/, '').replace(/-(systematic|atlas|primer|amboss|deep-dive|clinical)$/, '');
+  const haveKeys = new Set();
+  for (const l of lessons) {
+    if (l.subject) haveKeys.add(norm(l.subject));
+    if (l.title)   haveKeys.add(norm(l.title));
+    if (l.id)      haveKeys.add(stripDepth(norm(l.id)));
+  }
   const corpusTotal = tax.reduce((s, c) => s + (c.total_q || 0), 0) || 1;
   for (const c of tax) {
     const subject = (c.disease_class || '').replace(/ and /g, ' & ');
     const system = c.system || 'Emergency';
     if (!subject) continue;
-    if (haveSubjects.has(subject.toLowerCase())) continue;  // already a generated lesson
+    if (haveKeys.has(norm(subject))) continue;  // already a generated lesson (matched by title/slug, not the mis-tagged subject field)
     queued.push({
       id: 'queued:' + subject, title: subject, path: null, domain: 'medicine',
       system, subject, topic: null, level: null, scope: 'subject',
@@ -204,9 +215,16 @@ try {
     g.classes.push({ name: c.disease_class, q: c.total_q || 0 });
     for (const m of (c.members || [])) g.members.push({ concept: m.concept, count: m.count || 0 });
   }
-  const haveSystems = new Set(lessons.filter(l => l.scope === 'system' && l.system).map(l => l.system.toLowerCase()));
+  // same normalization for organ-system overviews: a generated "<System> — Atlas" (id
+  // chiron-<system>-atlas) fills the system slot, but its `system`/`scope` may not match — so also
+  // key on the depth-stripped slug (chiron-gastrointestinal-atlas → gastrointestinal).
+  const haveSys = new Set();
+  for (const l of lessons) {
+    if (l.system) haveSys.add(norm(l.system));
+    if (l.id)     haveSys.add(stripDepth(norm(l.id)));
+  }
   for (const [sys, g] of Object.entries(bySys)) {
-    if (haveSystems.has(sys.toLowerCase())) continue;
+    if (haveSys.has(norm(sys))) continue;
     const label = SYS_LABEL[sys] || sys;
     systemLessons.push({
       id: 'system:' + sys, title: label, path: null, domain: 'medicine',
