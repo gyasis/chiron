@@ -61,7 +61,7 @@ _CANCELLED: set = set()   # slugs cancelled while still queued → the bake work
 LOCK = threading.Lock()
 
 from concurrent.futures import ThreadPoolExecutor
-_MODAL_CONC = int(os.environ.get("CHIRON_MODAL_CONC", "12") or 12)
+_MODAL_CONC = int(os.environ.get("CHIRON_MODAL_CONC", "10") or 10)   # Modal row = 10 GPUs at a time; never exceed the account's concurrent-GPU quota
 _MODAL_POOL = ThreadPoolExecutor(max_workers=_MODAL_CONC)
 
 
@@ -209,7 +209,7 @@ _CLASSIFY_PROMPT = (
     'Rules: a drug / drug-class / pharmacology page → medicine, drug (subject = the drug or class, e.g. "Alpha-1 blockers"). '
     'A single disease → medicine, systematic. An organ-system overview → medicine, atlas. Several related conditions / a '
     'broad topic → medicine, primer. A multiple-choice EXAM question (options A–E) in Italian → medical-italian, passage. '
-    'An Italian clinical/ward scenario → medical-italian, ward. General Italian language text → italian, lesson.\nSOURCE:\n')
+    'An Italian clinical/ward scenario → medical-italian, ward. General Italian language text → language-it, lesson.\nSOURCE:\n')
 
 
 def _ocr_image(path: str) -> str:
@@ -823,11 +823,11 @@ def _run_bake(job: dict, out: Path) -> None:
         return
     log = STATE / f"{jid}.bake.log"
     domain = job.get("domain", "medical-italian")
-    # Italian lessons — medical-italian AND the SSM/passage format (domain 'language'/'language-it') — bake
-    # with the language-it baker + the Lucrezia voice. Only true 'medicine' uses pauls-tutor. The old check
-    # matched ONLY 'medical-italian', so SSM lessons (domain 'language') got pauls-tutor → every Italian
-    # segment failed 'no voice ref registered for lucrezia_italian'.
-    _italian = domain in ("medical-italian", "language", "language-it")
+    # Italian lessons — medical-italian, the SSM/passage format (domain 'language'/'language-it'), AND the
+    # pure-Italian chain (domain 'italian') — bake with the language-it baker + the Lucrezia voice. Only true
+    # 'medicine' uses pauls-tutor. The old check matched ONLY 'medical-italian'/'language', so pure-Italian
+    # lessons (domain 'italian') fell through to pauls-tutor/medicine → wrong voice ('lucrezia_italian' unmatched).
+    _italian = domain in ("italian", "medical-italian", "language", "language-it")
     bake_domain = "language-it" if _italian else "medicine"
     # persona MUST match what the generation chain used, else opts.voices (filtered to the persona's
     # declared voice ids) won't contain the segments' voice → "no voice ref registered". Medicine =
@@ -1537,7 +1537,11 @@ def activity(limit: int = 100):
                       and j.get("engine") == "modal" and j.get("status") == "queued"]
     bake = {"mac_queued": len(_mac_q),
             "modal_pending": len(_modal_pending),
-            "running": [{"slug": j.get("slug"), "engine": j.get("engine", "mac")} for j in _baking]}
+            "running": [{"slug": j.get("slug"), "engine": j.get("engine", "mac")} for j in _baking],
+            # FULL list of every queued bake (over ALL jobs, NOT the 100-item window) so the UI can LIST them
+            # instead of hiding N behind a bare count — a queued lesson must always be visible + actionable.
+            "queued": [{"id": j.get("id"), "slug": j.get("slug"), "engine": j.get("engine", "mac"),
+                        "domain": j.get("domain"), "subject": j.get("subject")} for j in (_mac_q + _modal_pending)]}
     # TRUE per-LESSON counts (dedup by slug): a lesson only counts as "failed" if NO row for it ever
     # reached a better state. A stale 'error' row left over from an attempt that later succeeded on retry
     # must NOT inflate the failure count (that made "3 real failures" read as "23 failing").

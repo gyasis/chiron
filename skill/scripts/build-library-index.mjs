@@ -100,12 +100,12 @@ const OVERRIDE = {
   'chiron-sarcoma-of-the-chest': { dom: 'medicine', sys: 'Hematology/Oncology', subj: 'Soft-tissue Sarcoma', scope: 'disease' },
   'chiron-passage-aneurisma': { dom: 'medical-italian', sys: 'Cardiovascular', subj: 'Vascular & Aortic Disease', level: 'B1' },
   'chiron-ssm-fattore-v': { dom: 'medical-italian', sys: 'Cardiovascular', subj: 'Vascular & Aortic Disease', level: 'B1' },
-  'chiron-italian-cafe': { dom: 'italian', topic: 'Everyday', level: 'A2' },
-  'chiron-italian-lesson': { dom: 'italian', topic: 'Everyday', level: 'A2' },
-  'chiron-italian-past-future': { dom: 'italian', topic: 'Grammar', level: 'B1' },
+  'chiron-italian-cafe': { dom: 'language-it', topic: 'Everyday', level: 'A2' },
+  'chiron-italian-lesson': { dom: 'language-it', topic: 'Everyday', level: 'A2' },
+  'chiron-italian-past-future': { dom: 'language-it', topic: 'Grammar', level: 'B1' },
   'patologie/pericardite-acuta': { dom: 'medical-italian', sys: 'Cardiovascular', subj: 'Pericardial Disease', level: 'B1' },
   'patologie/diabete-tipo-2': { dom: 'medical-italian', sys: 'Endocrine', subj: 'Diabetes', level: 'B1' },
-  'grammatica/fasi-azione': { dom: 'italian', topic: 'Grammar', level: 'B1' },
+  'grammatica/fasi-azione': { dom: 'language-it', topic: 'Grammar', level: 'B1' },
 };
 const WARD_SYS = { cardiologia: 'Cardiovascular', 'pronto-soccorso': 'Emergency', 'medicina-interna': 'Emergency', chirurgia: 'Emergency', pediatria: 'Emergency', radiologia: 'Emergency', 'terapia-intensiva': 'Emergency', ambulatorio: 'Emergency' };
 
@@ -138,7 +138,7 @@ for (const d of dirs) {
       const ward = (rel.match(/wards\/([a-z-]+)/) || [])[1];
       if (ward) tags = { dom: 'medical-italian', sys: WARD_SYS[ward] || 'Emergency', subj: 'Ward Italian', level: 'B1' };
       else if (/patologie/.test(rel)) { const subj = subjFor(title, ''); tags = { dom: 'medical-italian', sys: sysFor(subj), subj, level: 'B1' }; }
-      else tags = { dom: 'italian', topic: topicFor(title), level: 'A2' };
+      else tags = { dom: 'language-it', topic: topicFor(title), level: 'A2' };
     }
   }
   const mtime = statSync(join(d, 'lesson.html')).mtimeMs;

@@ -27,9 +27,9 @@ CHAIN = {
     ("medicine", "drug"):          "2026-07-06_chiron-medicine-systematic-chain",   # same chain, CH_TEMPLATE=drug
     ("medical-italian", "passage"): "2026-06-30_chiron-medical-italian-passage-chain",
     ("medical-italian", "ward"):    "2026-06-30_chiron-wards-lesson-chain",
-    ("italian", "lesson"):          "2026-06-30_chiron-pure-italian-lesson-chain",
+    ("language-it", "lesson"):      "2026-06-30_chiron-pure-italian-lesson-chain",
 }
-DEFAULT_DEPTH = {"medicine": "primer", "medical-italian": "ward", "italian": "lesson"}
+DEFAULT_DEPTH = {"medicine": "primer", "medical-italian": "ward", "language-it": "lesson"}
 
 
 def _atlas_subjects():
@@ -79,6 +79,7 @@ def _slug(domain, depth, subject):
 def resolve(domain, depth=None, subject="", subject_type=None, extra=None):
     """Return the routing decision: {runpy, chain_name, env, depth, domain, slug}."""
     domain = (domain or "medicine").lower()
+    if domain == "italian": domain = "language-it"   # back-compat: legacy routing token → canonical language-it
     extra = extra or {}
     if not depth:
         depth = {"system": "atlas", "disease": "systematic", "cross-cutting": "primer"}.get(subject_type)
@@ -105,7 +106,7 @@ def resolve(domain, depth=None, subject="", subject_type=None, extra=None):
         env["CH_TOPIC"] = subject
         if extra.get("setting"):
             env["CH_SETTING"] = extra["setting"]
-    elif domain == "italian":
+    elif domain == "language-it":
         env["CH_TOPIC"] = subject
     return {"runpy": str(chain / "run.py"), "chain_name": chain.name, "env": env,
             "depth": depth, "domain": domain, "slug": _slug(domain, depth, subject)}

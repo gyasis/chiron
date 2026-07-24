@@ -1373,6 +1373,7 @@
       if (!c.sectionId) return;
       var el = document.getElementById(c.sectionId);
       if (!el) return;
+      if (el.querySelector('.chiron-play-inline')) return;   // idempotent: a second player (donor shell) already added one
       var btn = document.createElement('button');
       btn.type = 'button'; btn.className = 'chiron-play-inline'; btn.title = 'Ascolta'; btn.setAttribute('aria-label', 'Play audio');
       var ico = document.createElement('span'); ico.className = 'ico'; ico.textContent = '▶'; btn.appendChild(ico);

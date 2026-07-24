@@ -167,7 +167,9 @@ const scripts = sIdx > 0 ? ref.slice(sIdx) : ref.slice(ref.indexOf('</main>') + 
 let shellEngine = '';
 try { shellEngine = `\n  <script>\n${readFileSync(resolve(SKILL, 'shell/main.js'), 'utf8')}\n  </script>\n`; } catch {}
 
-writeFileSync(resolve(OUT, 'lesson.html'), `${head}\n<body>\n${body}\n${shellEngine}\n  ${scripts}`);
+// donor scripts FIRST (they add the inline audio buttons + reveal-EN + theme), then shell/main.js —
+// so main.js's idempotent wireInline sees the donor's buttons already present and skips them (no double ▶).
+writeFileSync(resolve(OUT, 'lesson.html'), `${head}\n<body>\n${body}\n  ${scripts}\n${shellEngine}`);
 
 // assets
 const td = resolve(OUT, 'themes'); mkdirSync(td, { recursive: true });

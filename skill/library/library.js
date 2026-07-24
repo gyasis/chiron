@@ -30,7 +30,7 @@ const API = (location.port === '8911') ? '' : 'http://127.0.0.1:8911';   // same
 const DEPTHS = {
   medicine: [['','Auto (detect from subject)'],['primer','Primer — quick, grouped'],['atlas','Atlas — organ-system survey'],['systematic','Systematic — 11-section deep-dive'],['amboss','AMBOSS — clinical']],
   'medical-italian': [['ward','Ward — clinical scene'],['passage','Passage — SSM question']],
-  italian: [['lesson','Lesson']],
+  'language-it': [['lesson','Lesson']],
 };
 const ATLAS_SYSTEMS = ['cardiovascular','respiratory','gastrointestinal','renal','genitourinary','endocrine','metabolic','hematolog','oncolog','neurolog','psychiatr','musculoskeletal','rheumatolog','dermatolog','infectious','immunolog','ent','ophthalmolog','reproductive','obstetric','gynaecolog','gynecolog','geriatric'];
 function detectDepthHint(subject, domain){
@@ -117,7 +117,7 @@ function renderPills(){
 }
 /* ---- W1 hide-rail: domain + system, click a row to gray it out & drop it from the wall ---- */
 const CHK = '<span class="box"><svg viewBox="0 0 12 12"><path d="M2 6l3 3 5-6"/></svg></span>';
-const domCode = d => ({medicine:'m','medical-italian':'mi',italian:'l',code:'l'}[d] || 'm');
+const domCode = d => ({medicine:'m','medical-italian':'mi','language-it':'l',italian:'l',code:'l'}[d] || 'm');
 function railSystems(){ const L=LESSONS.filter(l=>F.showSSM||!isSSM(l)); return [...new Set(L.map(l=>l.system).filter(Boolean))]
   .map(s=>[s, L.filter(l=>l.system===s).length]).sort((a,b)=>b[1]-a[1]); }
 function renderFacets(){                                        // (id="facets" kept; now the hide-rail)
@@ -523,6 +523,22 @@ const LIB = {
     h+=`<div class="jhead jbakelane ${bkBusy?'busy':'idle'}" title="Audio rebake runs in a SEPARATE queue from text generation — the two lanes don't block each other.">`
       +`<span>🔊 Rebake lane · ${bkBusy?`${bkRun.length} baking${bkQ?` · ${bkQ} queued`:''}`:'idle'}</span>`
       +`<span class="blchips">${bkChips}</span></div>`;
+    // LIST the active bakes so they're actually visible — not just a count. Each running bake = a row;
+    // then a one-line "+N more queued". This is why the panel looked empty: 100 bakes hid behind one summary line.
+    for(const r of bkRun){
+      const nm=(r.slug||'').replace(/^chiron-/,'').replace(/-/g,' ');
+      h+=`<div class="jrow ${r.engine==='modal'?'gen':'genq'}"><span class="jdot"></span><div class="jmeta"><b>${esc(nm)}</b><span class="jsub">🔊 baking audio · ${r.engine==='modal'?'⚡ Modal (fast)':'🐢 Mac'}</span></div></div>`;
+    }
+    // LIST every queued bake (server now sends the full list) — a queued lesson must always be visible, never hidden behind a count.
+    for(const q of (bk.queued||[])){
+      const nm=(q.slug||'').replace(/^chiron-/,'').replace(/-/g,' ');
+      h+=`<div class="jrow genq"><span class="jdot"></span><div class="jmeta"><b>${esc(nm)}</b><span class="jsub">🔊 queued for audio · ${q.engine==='modal'?'⚡ Modal (fast)':'🐢 Mac'}</span></div>`
+        +`<button class="jrebake" title="bake now — pick ⚡Fast / 🐢Mac when you click" onclick="LIB.rebake('${q.slug}')">🔥 Rebake</button>`
+        +(q.id?`<button class="jcancel" title="remove from the bake queue (keeps the lesson text)" onclick="LIB.cancel('${q.id}')">✕ Cancel</button>`:'')
+        +`</div>`;
+    }
+    // fallback for an old server that only sent a count (no list yet)
+    if(bkQ && !(bk.queued||[]).length) h+=`<div class="jrow genq"><span class="jdot"></span><div class="jmeta"><span class="jsub" style="color:#94a3b8">… + ${bkQ} more queued for audio bake (update server to list them)</span></div></div>`;
     const ids=new Set(active.map(a=>a.id));
     const activeSlugs=new Set(active.map(a=>a.slug));   // slugs currently queued/running/baking
     // Accepted/promoted lessons live in the library → drop them from the activity list. Keep the
