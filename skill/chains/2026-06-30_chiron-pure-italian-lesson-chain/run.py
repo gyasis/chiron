@@ -158,24 +158,38 @@ async def phase2_author():
         "{\n"
         '  "title":"<Italian title>", "subtitle":"<one EN sentence>", "langName":"Italiano", "cefr":"A2-B1",\n'
         '  "coldOpen":{"it":"<Lucrezia greets Gyasi by name, frames the topic, in Italian>","en":"<EN translation>"},\n'
-        '  "sections":[   // 3-4 content sections that FIT THE TOPIC. ids: "chapter-1","chapter-2","chapter-3"[,"chapter-4"].\n'
-        '    {"id":"chapter-1","title":"1 <Italian title>","introHtml":"<short IT intro>",\n'
-        '       "vocab":[{"slug":"<kebab>","it":"<IT word/phrase>","en":"<EN>","note":"<short note, may use <em>example</em>>"}, ...5-8],\n'
-        '       "pearls":[{"slug":"<kebab>","it":"<Italian grammar/usage pearl>","en":"<EN explanation>"}],\n'
-        '       "dialogue":{"id":"chapter-1","turns":[{"who":"a","label":"<IT speaker>","text":"<IT>"},\n'
-        '                   {"who":"learner","label":"Tu","text":"<Gyasi\'s line, IT — NEVER voiced>"}, ...]},\n'
+        '  "sections":[   // EXACTLY 8 content sections that FIT THE TOPIC. ids: "chapter-1"..."chapter-8". A DEEP, LONG lesson.\n'
+        '    {"id":"chapter-1","title":"1 <Italian title>","titleEn":"<English of the title>","introHtml":"<IT intro, 4-6 sentences that TEACH the point>","introEn":"<English translation of introHtml>",\n'
+        '       "vocab":[{"slug":"<kebab>","it":"<IT word/phrase>","en":"<EN>","note":"<short note, may use <em>example</em>>"}, ...8-10],\n'
+        '       "pearls":[{"slug":"<kebab>","it":"<Italian grammar/usage pearl>","en":"<EN explanation, 2-3 full sentences WITH examples>"}, ...2-3 pearls],\n'
+        '       "dialogue":{"id":"chapter-1","turns":[{"who":"a","label":"<IT speaker>","text":"<IT>","en":"<EN>"},\n'
+        '                   {"who":"learner","label":"Tu","text":"<Gyasi\'s line, IT — NEVER voiced>","en":"<EN>"}, ...]},\n'
         '       "stories":[{"id":"chapter-1","it":"<short IT story/example paragraph>","en":"<EN gloss>"}]},\n'
         '    ... (each section uses whichever of vocab/pearls/dialogue/stories fit) ],\n'
-        '  "srCards":[{"front":"<IT>","back":"<EN>"}, ...6-8],\n'
-        '  "closingHtml":"<short IT riepilogo paragraph>"\n'
+        '  "matchMadness":{"pairs":[{"a":"<IT term>","b":"<EN>"}, ...8-10 pairs]},\n'
+        '  "scenario":{"title":"<short IT situation title>","framing":"<one EN line: the everyday scene>",\n'
+        '     "messages":[{"sender":"lucrezia","senderLabel":"Lucrezia","avatarChar":"L","body":"<IT chat line that USES the target grammar>","bodyEn":"<EN>"},\n'
+        '        {"sender":"you","senderLabel":"Gyasi","avatarChar":"G","body":"<IT reply that USES the grammar>","bodyEn":"<EN>"}, ...8-12 turns, natural back-and-forth]},\n'
+        '  "srCards":[{"front":"<IT>","back":"<EN>"}, ...12-16],\n'
+        '  "closingHtml":"<short IT riepilogo paragraph>","closingEn":"<English translation of closingHtml>"\n'
         "}\n\n"
         "RULES: natural, correct Italian. In any dialogue the OTHER speaker is `who:\"a\"` (voiced), the learner (Gyasi) is\n"
-        "`who:\"learner\"` (NEVER voiced). slugs kebab-case + unique. Real, idiomatic examples. Return ONLY the JSON."
+        "`who:\"learner\"` (NEVER voiced). slugs kebab-case + unique. Real, idiomatic examples.\n"
+        "BILINGUAL — supply English ONLY for the parts that lack it: `titleEn`, `introEn`, an `en` on EVERY dialogue turn, and\n"
+        "`closingEn`. Do NOT add extra English to vocab/pearls/stories/coldOpen/scenario — they ALREADY carry their English.\n"
+        "ALWAYS include BOTH `matchMadness` (8-10 pairs) AND `scenario` (a lively everyday-life chat, 8-12 turns, that puts the\n"
+        "target grammar to work in a real situation — Lucrezia + Gyasi, warm and fond; EVERY message has `bodyEn` for the EN toggle).\n"
+        "DEPTH IS REQUIRED (validator-enforced): 8 full sections; each with a 4-6 sentence introHtml that TEACHES the point, 8-10\n"
+        "vocab, and AT LEAST 2 grammar pearls (3 preferred) — each pearl 2-3 sentences WITH a concrete worked example. A section\n"
+        "with only 1 pearl WILL BE REJECTED. Add a dialogue OR a story per section. Explain generously — the learner wants to\n"
+        "UNDERSTAND, not skim. Return ONLY the JSON."
     )
     def valid(o):
         secs = o.get("sections") or []
-        if len(secs) < 2: return ["need >=2 sections"]
+        if len(secs) < 6: return ["need >=6 sections (deep lesson)"]
         if not any(s.get("vocab") for s in secs): return ["no vocab"]
+        thin = [s.get("id") for s in secs if len(s.get("pearls") or []) < 2]
+        if thin: return [f"each section needs >=2 grammar pearls; too thin: {thin}"]
         return None
     print(f"[phase 2] AUTHOR pure-Italian content.json for '{TOPIC}'…", flush=True)
     content = await json_with_repair(p, "content", ollama(), validate_fn=valid)

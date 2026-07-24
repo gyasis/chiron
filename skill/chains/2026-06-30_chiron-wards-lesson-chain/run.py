@@ -215,12 +215,16 @@ async def phase2_author():
         '          {"who":"a","label":"Paziente","text":"<patient asks/says, IT>"},\n'
         '          {"who":"learner","label":"Tu (il medico)","text":"<the DOCTOR=Gyasi answers, IT — NEVER voiced>"}, ...6-8 turns]}}\n'
         "  ],\n"
+        '  "scenario": {"title":"<short IT clinical-scene title>","framing":"<one EN line: the bedside/ward situation>",\n'
+        '     "messages":[{"sender":"paziente","senderLabel":"Il paziente","avatarChar":"P","body":"<patient speaks, IT>","bodyEn":"<EN>"},\n'
+        '        {"sender":"you","senderLabel":"Tu (il medico)","avatarChar":"G","body":"<Gyasi the doctor replies, IT — clinically accurate>","bodyEn":"<EN>"}, ...8-12 turns, a realistic bedside encounter]},\n'
         '  "srCards": [{"front":"<IT term>","back":"<EN>"}, ... 8 cards],\n'
         '  "closingHtml": "<short IT riepilogo paragraph>"\n'
         "}\n\n"
         "RULES: clinically accurate Italian; vocab `it` = the Italian medical term, `en` = English. In the dialogue, the\n"
         "PATIENT is `who:\"a\"` (voiced) and the DOCTOR (Gyasi) is `who:\"learner\"` (NEVER voiced — his lines to speak).\n"
-        "slugs kebab-case + unique. Return ONLY the JSON."
+        "Include a `scenario` — a realistic bedside/ward CLINICAL chat (8-12 turns, patient ↔ Gyasi-the-doctor, every claim\n"
+        "accurate to the grounding; each message has `bodyEn` for the EN toggle). slugs kebab-case + unique. Return ONLY the JSON."
     )
 
     def valid(o):
