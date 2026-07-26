@@ -2,7 +2,7 @@
  * Adding a facet to library.yaml → rebuild → it appears here. Lessons open their own lesson.html
  * (served over http, where audio + nav work). */
 'use strict';
-const FIELD = { system:'system', subject:'subject', topic:'topic', trend:'trend', lang_level:'level', source:'source' }; // facet → lesson field
+const FIELD = { system:'system', subject:'subject', series:'subject', topic:'topic', trend:'trend', lang_level:'level', source:'source' }; // facet → lesson field (series reuses the subject field = the series name)
 let CONFIG, LESSONS;
 const F = { q:'', sort:'priority', domain:new Set(), facets:{}, hiddenDom:new Set(), hiddenSys:new Set(), selectMode:false, selected:new Set(), showSSM:false };
 /* stable selection key for a lesson (ready lessons have id; to-generate slots keyed by domain+descriptor) */
