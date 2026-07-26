@@ -55,8 +55,9 @@ function dialogue(d) {
     const learner = t.who === 'learner';
     const cls = learner ? 'turn persona-b' : 'turn persona-a';
     const dl = learner ? ' data-learner="true"' : '';
+    const en = t.en ? ` data-en="${esc(t.en)}"` : '';   // reveal-EN toggle per turn (only when an EN gloss is authored)
     // baker extracts the persona-a Italian from `.what > span.it` — match that structure exactly
-    return `      <div class="${cls}"${dl}><span class="speaker">${esc(t.label)}</span><div class="what"><span class="it">${esc(t.text)}</span></div></div>`;
+    return `      <div class="${cls}"${dl}${en}><span class="speaker">${esc(t.label)}</span><div class="what"><span class="it">${esc(t.text)}</span></div></div>`;
   }).join('\n');
   return `<div class="dialogue" id="dlg-${esc(d.id)}">\n${turns}\n      </div>`;
 }
@@ -68,8 +69,8 @@ function stories(list = []) {
 }
 function section(s) {
   return `    <section class="lesson-section" id="${esc(s.id)}">\n` +
-    `      <h2 class="section-h">${esc(s.title)}</h2>\n` +
-    (s.introHtml ? `      <div class="sec-intro">${s.introHtml}</div>\n` : '') +
+    `      <h2 class="section-h">${esc(s.title)}${s.titleEn ? ` <span class="section-h-en" style="font-weight:400;opacity:.6;font-size:.72em">— ${esc(s.titleEn)}</span>` : ''}</h2>\n` +
+    (s.introHtml ? `      <div class="sec-intro"${s.introEn ? ` data-en="${esc(s.introEn)}"` : ''}>${s.introHtml}</div>\n` : '') +
     (s.vocab ? `      ${vTable(s.vocab)}\n` : '') +
     (s.pearls ? `      ${pearls(s.pearls)}\n` : '') +
     (s.dialogue ? `      ${dialogue(s.dialogue)}\n` : '') +
@@ -78,13 +79,45 @@ function section(s) {
 }
 
 // match-madness + sr deck via renderWidget (shared widgets)
-const mmHtml = c.matchMadness ? render({ type: 'match-madness', id: 'mm', ...c.matchMadness }) : '';
+// normalize the simple authored {pairs:[{a,b}]} into the full match-madness widget spec
+// (widget-picker principle: fix a field-shape mismatch with a normalizer, not prompt gymnastics)
+function mmNormalize(mm) {
+  if (!mm) return null;
+  if (Array.isArray(mm.sets)) return { type: 'match-madness', lessonId: 'lesson', domain: 'language-it', ...mm };
+  const pairs = (mm.pairs || [])
+    .map((p, i) => ({ id: `p${i + 1}`, left: p.a ?? p.left ?? p.it, right: p.b ?? p.right ?? p.en }))
+    .filter(p => p.left && p.right);
+  if (pairs.length < 5) return null;   // widget requires >=5 pairs
+  return {
+    type: 'match-madness', lessonId: 'lesson', domain: 'language-it', title: mm.title || 'Match Madness',
+    defaults: { timerSec: 105, wrongLockMs: 1500, accessibilityModeAllowed: true, keyboardShortcuts: true, visualSpeedUp: {} },
+    sets: [{ id: 'set-1', index: 1, title: mm.title || 'Abbina', mode: 'vocab-pair', rounds: 1, pairs }],
+    unlockAccuracyThreshold: 0.6, superSetUnlockAfterNSetsCompleted: 3,
+  };
+}
+const mmSpec = mmNormalize(c.matchMadness);
+const mmHtml = mmSpec ? render(mmSpec) : '';
 const srHtml = c.srCards ? render({ type: 'language-flashcard-deck', id: 'srdeck', title: 'Flashcards', verbs: [], nouns: [], idioms: [], cards: c.srCards }) : '';
+// everyday-conversation CHAT — rendered NATIVELY as visible language dialogue bubbles (linguistic theme + EN toggle),
+// NOT the medical group-chat-animation (which shows an empty step-through box). Gated on c.scenario.
+function scenarioChat(sc) {
+  if (!sc || !Array.isArray(sc.messages)) return '';
+  const turns = sc.messages.map(m => {
+    const learner = /^(you|gyasi|tu)\b/i.test(String(m.sender || m.senderLabel || ''));
+    const cls = learner ? 'turn persona-b' : 'turn persona-a';
+    const dl = learner ? ' data-learner="true"' : '';
+    const en = m.bodyEn ? ` data-en="${esc(m.bodyEn)}"` : '';
+    return `      <div class="${cls}"${dl}${en}><span class="speaker">${esc(m.senderLabel || m.sender)}</span><div class="what"><span class="it">${esc(m.body)}</span></div></div>`;
+  }).join('\n');
+  return `<div class="dialogue chat-scenario" id="dlg-scenario">\n${turns}\n      </div>`;
+}
+const scHtml = c.scenario ? scenarioChat(c.scenario) : '';
 
 const contentSections = (c.sections || []).map(section).join('\n');
 const tocLinks = (c.sections || []).map((s, i) =>
   `      <a class="toc-link" href="#${esc(s.id)}" data-toc-target="${esc(s.id)}"><span class="toc-num">${i}.</span><span class="toc-title">${esc(s.title)}</span></a>`
 ).join('\n')
+  + (c.scenario ? `\n      <a class="toc-link" href="#scenario" data-toc-target="scenario"><span class="toc-num">💬</span><span class="toc-title">${esc(c.scenario.title || 'La situazione')}</span></a>` : '')
   + (c.matchMadness ? `\n      <a class="toc-link" href="#match-madness" data-toc-target="match-madness"><span class="toc-num">✦</span><span class="toc-title">Match Madness</span></a>` : '')
   + `\n      <a class="toc-link" href="#closing" data-toc-target="closing"><span class="toc-num">✦</span><span class="toc-title">Riepilogo</span></a>`;
 
@@ -115,20 +148,28 @@ ${tocLinks}
     </header>
     ${c.coldOpen ? `<div class="cold-open" data-en="${esc(c.coldOpen.en)}"><span class="it">${esc(c.coldOpen.it)}</span></div>` : ''}
 ${contentSections}
+    ${scHtml ? `<section class="lesson-section" id="scenario"><h2 class="section-h">💬 ${esc(c.scenario.title || 'La situazione')}</h2>${c.scenario.framing ? `<p class="section-lead">${esc(c.scenario.framing)}</p>` : ''}${scHtml}</section>` : ''}
     ${mmHtml ? `<section class="lesson-section" id="match-madness"><h2 class="section-h">✦ Match Madness</h2>${mmHtml}</section>` : ''}
-    <section class="lesson-section" id="closing"><h2 class="section-h">✦ Riepilogo</h2>${srHtml}${c.closingHtml || ''}</section>
+    <section class="lesson-section" id="closing"><h2 class="section-h">✦ Riepilogo</h2>${srHtml}${c.closingHtml ? `<div class="closing-text"${c.closingEn ? ` data-en="${esc(c.closingEn)}"` : ''}>${c.closingHtml}</div>` : ''}</section>
     <footer class="lesson-footer">Chiron · ${esc(c.langName || 'Italiano')} · Lucrezia</footer>
   </div></main>`;
 
 // shell donor: appunto head (CSS) + trailing scripts (audio player, scroll-spy, reveal-en, theme switcher)
 const ref = readFileSync(REF, 'utf8');
-const head = ref.slice(0, ref.indexOf('</head>') + 7).replace(/<title>[\s\S]*?<\/title>/, `<title>Chiron · ${esc(c.title)}</title>`);
+let head = ref.slice(0, ref.indexOf('</head>') + 7).replace(/<title>[\s\S]*?<\/title>/, `<title>Chiron · ${esc(c.title)}</title>`);
+// the group-chat-animation + match-madness widgets need clinical-widgets.css (copied into the lesson dir);
+// the appunto donor head doesn't link it, so inject the link when those widgets are present (else the chat renders unstyled)
+if (mmHtml && !head.includes('clinical-widgets.css')) {
+  head = head.replace('</head>', '  <link rel="stylesheet" href="clinical-widgets.css">\n</head>');
+}
 const sIdx = ref.indexOf('<!-- ', ref.indexOf('</main>'));
 const scripts = sIdx > 0 ? ref.slice(sIdx) : ref.slice(ref.indexOf('</main>') + 7);
 let shellEngine = '';
 try { shellEngine = `\n  <script>\n${readFileSync(resolve(SKILL, 'shell/main.js'), 'utf8')}\n  </script>\n`; } catch {}
 
-writeFileSync(resolve(OUT, 'lesson.html'), `${head}\n<body>\n${body}\n${shellEngine}\n  ${scripts}`);
+// donor scripts FIRST (they add the inline audio buttons + reveal-EN + theme), then shell/main.js —
+// so main.js's idempotent wireInline sees the donor's buttons already present and skips them (no double ▶).
+writeFileSync(resolve(OUT, 'lesson.html'), `${head}\n<body>\n${body}\n  ${scripts}\n${shellEngine}`);
 
 // assets
 const td = resolve(OUT, 'themes'); mkdirSync(td, { recursive: true });

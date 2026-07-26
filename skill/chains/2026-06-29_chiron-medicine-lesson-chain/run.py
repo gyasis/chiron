@@ -50,6 +50,17 @@ if not OPENAI_KEY:   # last-resort OpenAI fallback key lives in ~/dev/.env even 
             if _ln.strip().startswith("OPENAI_API_KEY="):
                 OPENAI_KEY = _ln.split("=", 1)[1].strip().strip('"').strip("'"); break
     except Exception: pass
+GEMINI_KEY = os.environ.get("GEMINI_API_KEY", "") or os.environ.get("GOOGLE_API_KEY", "")
+if not GEMINI_KEY:
+    try:
+        for _ln in (HOME / "dev/.env").read_text().splitlines():
+            _s = _ln.strip()
+            if _s.startswith("GEMINI_API_KEY=") or _s.startswith("GOOGLE_API_KEY="):
+                GEMINI_KEY = _s.split("=", 1)[1].strip().strip('"').strip("'")
+                if GEMINI_KEY:
+                    break
+    except Exception:
+        pass
 
 SUBJECT = os.environ.get("CH_SUBJECT", "").strip()
 if __name__ == "__main__" and not SUBJECT:
@@ -76,14 +87,23 @@ def ollama(model: str, temperature: float = 0.4) -> dict:
 
 
 # Model FALLBACK ladder: when the primary can't produce valid JSON after its repairs, try the next model.
-_FB = [m.strip() for m in os.environ.get("CH_MODEL_FALLBACKS", "gemma4:31b,gpt-5-mini").split(",") if m.strip()]
-FALLBACKS = [m for m in _FB if not (m.startswith("gpt-") and not OPENAI_KEY)]
+_FB = [m.strip() for m in os.environ.get("CH_MODEL_FALLBACKS", "gemma4:31b,gemini/gemini-flash-latest,gpt-5-mini").split(",") if m.strip()]
+FALLBACKS = [m for m in _FB if not (m.startswith("gpt-") and not OPENAI_KEY) and not (m.startswith("gemini") and not GEMINI_KEY)]
 
 
 def model_for(name: str, temperature: float = 0.4) -> dict:
     """model_dict for a bare model name. gpt-* → real OpenAI; everything else → Ollama Cloud (via ollama())."""
+    if name.startswith("gemini"):
+        gm = name if name.startswith("gemini/") else f"gemini/{name}"
+        return {"name": gm, "params": {"api_key": GEMINI_KEY, "temperature": temperature}}
     if name.startswith("gpt-"):
-        return {"name": f"openai/{name}", "params": {"api_key": OPENAI_KEY, "temperature": temperature}}
+        # gpt-5 models only support temperature=1 (the default) — passing 0.4 → litellm UnsupportedParamsError.
+        return {"name": f"openai/{name}", "params": {"api_key": OPENAI_KEY}}
+    if name.startswith("local/"):
+        # local/<model> → the Atelier governor (memory-governed Mac ollama); base via env, neutral default (public repo)
+        lm = name.split("/", 1)[1]
+        base = os.environ.get("CH_LOCAL_BASE", "http://localhost:8799/llm/ollama/v1")
+        return {"name": f"openai/{lm}", "params": {"api_base": base, "api_key": "local", "temperature": temperature}}
     return ollama(name, temperature)
 
 
@@ -134,7 +154,7 @@ async def llm(model_dict: dict, prompt: str, user_input: str = "go") -> str:
 async def infer_system(subject: str) -> str:
     """Derive the medical system/specialty for ANY subject (the model knows them all — NOT a hardcoded list)."""
     try:
-        r = await llm(ollama(MODEL_REASON),
+        r = await llm(model_for(MODEL_REASON),
             "You are a medical curriculum router. Name the SINGLE best medical system/specialty that contains the topic. "
             "Reply with ONLY the specialty name — e.g. Immunology, Dermatology, Radiology, Cardiovascular, Neurology, Endocrine, "
             "Hematology/Oncology, Infectious Disease, Nephrology, Gastroenterology, Respiratory, Musculoskeletal, Psychiatry, "
@@ -171,7 +191,16 @@ async def json_with_repair(prompt: str, name: str, model_dict: dict, validate_fn
         tag = md.get("name", "?")
         cur = prompt
         for attempt in range(1, max_repair + 1):
-            last_raw = await call_engine(cur, md)
+            try:
+                last_raw = await call_engine(cur, md)
+            except Exception as e:                   # transient LLM/network/provider error → retry same model, don't crash
+                _msg = str(e).lower()
+                if 'ratelimit' in _msg or '429' in _msg or 'usage limit' in _msg or 'rate limit' in _msg or 'resource_exhausted' in _msg or 'quota' in _msg:
+                    print(f"[repair] {name} [{tag}]: rate-limited (429) — skipping retries, falling to next model", flush=True)
+                    break   # advance the ladder to the next model immediately; don't hammer a capped provider
+                print(f"[repair] {name} [{tag}] attempt {attempt}/{max_repair}: LLM call errored ({e}) — retrying", flush=True)
+                await asyncio.sleep(3)
+                continue
             try:
                 obj = extract_json(last_raw)
             except Exception as e:
@@ -300,7 +329,7 @@ async def phase1(source: str, avoid: dict):
     # escape quotes/backslashes in a 12K blob → invalid JSON. Leave it empty; we inject it after.
     brief_p += '\n\nIMPORTANT: in your output JSON, set "extractedText" to "" (empty string). Do NOT echo the source text.'
     print("[phase 1] brief…", flush=True)
-    brief = await json_with_repair(brief_p, "brief", ollama(MODEL_REASON))
+    brief = await json_with_repair(brief_p, "brief", model_for(MODEL_REASON))
     if brief is None:
         raise RuntimeError("[chiron] phase-1 brief: the reasoning model returned unusable JSON after 3 repair attempts — try regenerating (usually transient).")
     brief["extractedText"] = source            # inject the real source deterministically
@@ -315,7 +344,7 @@ async def phase1(source: str, avoid: dict):
               "Each: {chapterId, chapterNumber, title, narrative (150-400w arc), keyConcepts[], "
               "widgets:[{type}]} — medicine chapters MUST include a 'mcq-clinical-vignette' widget.")
     print("[phase 1] syllabus…", flush=True)
-    syl = await json_with_repair(syl_p, "syllabus", ollama(MODEL_REASON))
+    syl = await json_with_repair(syl_p, "syllabus", model_for(MODEL_REASON))
     if syl is None:
         raise RuntimeError("[chiron] phase-1 syllabus: unusable JSON after 3 repair attempts — try regenerating.")
     if isinstance(syl, dict):
@@ -381,7 +410,7 @@ async def author_chapter(chapter, source: str, avoid: dict, idx: int):
         if not any(w.get("type") == "mcq-clinical-vignette" for w in widgets):
             iss.append("missing the mandatory mcq-clinical-vignette widget")
         return iss or None
-    ch = await json_with_repair(p, f"chapter{n}", ollama(MODEL_STRUCT), validate_fn=ch_valid)
+    ch = await json_with_repair(p, f"chapter{n}", model_for(MODEL_STRUCT), validate_fn=ch_valid)
     if ch is None:
         (OUT / f"chapter{n}.NEEDS_REVIEW").write_text(f"chapter {n} ({condition}) failed validation after repair attempts")
         print(f"[phase 3] chapter {n} — NEEDS_REVIEW (kept lesson running)", flush=True)
@@ -472,7 +501,7 @@ async def phase_lecture_scripts():
     p += ("\n\n## MEDICAL-TTS SAFETY (BLOCKING): this is SPOKEN audio. Write every electrolyte/clinical "
           "term as plain English 'low/high X' BEFORE any Latin (the TTS reverses hypo-/hyper- prefixes). "
           "Return ONLY the JSON object {\"artifacts\":[...]}.")
-    res = await json_with_repair(p, "lecture-scripts", ollama(MODEL_REASON)) or {}
+    res = await json_with_repair(p, "lecture-scripts", model_for(MODEL_REASON)) or {}
     arts = res.get("artifacts", res if isinstance(res, list) else [])
     # transform artifacts -> audio-scripts.json {summary, shortened, sections:{id:segments}}
     out = {"summary": [], "sections": {}}

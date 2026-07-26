@@ -2,12 +2,18 @@
  * Adding a facet to library.yaml → rebuild → it appears here. Lessons open their own lesson.html
  * (served over http, where audio + nav work). */
 'use strict';
-const FIELD = { system:'system', subject:'subject', topic:'topic', trend:'trend', lang_level:'level', source:'source' }; // facet → lesson field
+const FIELD = { system:'system', subject:'subject', series:'subject', topic:'topic', trend:'trend', lang_level:'level', source:'source' }; // facet → lesson field (series reuses the subject field = the series name)
 let CONFIG, LESSONS;
-const F = { q:'', sort:'priority', domain:new Set(), facets:{}, hiddenDom:new Set(), hiddenSys:new Set() };
+const F = { q:'', sort:'priority', domain:new Set(), facets:{}, hiddenDom:new Set(), hiddenSys:new Set(), selectMode:false, selected:new Set(), showSSM:false };
+/* stable selection key for a lesson (ready lessons have id; to-generate slots keyed by domain+descriptor) */
+function keyOf(l){ return l.id || (l.domain+'::'+(l.subject||l.system||l.topic||l.title)); }
 /* ---- W1 hide-filters: persist which domains/systems are hidden across reloads ---- */
 try{ const H=JSON.parse(localStorage.getItem('chiron.hide')||'{}'); (H.dom||[]).forEach(d=>F.hiddenDom.add(d)); (H.sys||[]).forEach(s=>F.hiddenSys.add(s)); }catch(e){}
 const saveHide = () => { try{ localStorage.setItem('chiron.hide', JSON.stringify({dom:[...F.hiddenDom], sys:[...F.hiddenSys]})); }catch(e){} };
+/* ---- SSM exam questions default OUT of the corpus (they flood the important Chiron subjects); a sidebar switch filters them in ---- */
+try{ F.showSSM = JSON.parse(localStorage.getItem('chiron.showSSM')||'false'); }catch(e){}
+const saveSSM = () => { try{ localStorage.setItem('chiron.showSSM', JSON.stringify(F.showSSM)); }catch(e){} };
+const isSSM = l => l.source==='ssm';
 /* ---- offline engine (lifted from the player): Download → cache, Remove → local-only ---- */
 const LCACHE = 'chiron-lib-lessons-v1';
 const DL = JSON.parse(localStorage.getItem('chiron.dl') || '{}');   // slug → {id, entry}
@@ -24,7 +30,7 @@ const API = (location.port === '8911') ? '' : 'http://127.0.0.1:8911';   // same
 const DEPTHS = {
   medicine: [['','Auto (detect from subject)'],['primer','Primer — quick, grouped'],['atlas','Atlas — organ-system survey'],['systematic','Systematic — 11-section deep-dive'],['amboss','AMBOSS — clinical']],
   'medical-italian': [['ward','Ward — clinical scene'],['passage','Passage — SSM question']],
-  italian: [['lesson','Lesson']],
+  'language-it': [['lesson','Lesson']],
 };
 const ATLAS_SYSTEMS = ['cardiovascular','respiratory','gastrointestinal','renal','genitourinary','endocrine','metabolic','hematolog','oncolog','neurolog','psychiatr','musculoskeletal','rheumatolog','dermatolog','infectious','immunolog','ent','ophthalmolog','reproductive','obstetric','gynaecolog','gynecolog','geriatric'];
 function detectDepthHint(subject, domain){
@@ -64,9 +70,11 @@ async function boot(){
 }
 const domCls = d => 'dom-'+d;
 const domLabel = d => (CONFIG.domains[d]||{}).label || d;
-const count = pred => LESSONS.filter(pred).length;
+const count = pred => LESSONS.filter(l => (F.showSSM || !isSSM(l)) && pred(l)).length;
 
 function match(l){
+  // SSM exam questions are OUT by default (they'd bury the curated Chiron subjects) — the sidebar switch flips them in.
+  if (isSSM(l) && !F.showSSM) return false;
   // W1 hide-filters take precedence — a hidden domain/system is removed everywhere, incl. search.
   if (F.hiddenDom.has(l.domain)) return false;
   if (l.system && F.hiddenSys.has(l.system)) return false;
@@ -109,14 +117,20 @@ function renderPills(){
 }
 /* ---- W1 hide-rail: domain + system, click a row to gray it out & drop it from the wall ---- */
 const CHK = '<span class="box"><svg viewBox="0 0 12 12"><path d="M2 6l3 3 5-6"/></svg></span>';
-const domCode = d => ({medicine:'m','medical-italian':'mi',italian:'l',code:'l'}[d] || 'm');
-function railSystems(){ return [...new Set(LESSONS.map(l=>l.system).filter(Boolean))]
-  .map(s=>[s, LESSONS.filter(l=>l.system===s).length]).sort((a,b)=>b[1]-a[1]); }
+const domCode = d => ({medicine:'m','medical-italian':'mi','language-it':'l',italian:'l',code:'l'}[d] || 'm');
+function railSystems(){ const L=LESSONS.filter(l=>F.showSSM||!isSSM(l)); return [...new Set(L.map(l=>l.system).filter(Boolean))]
+  .map(s=>[s, L.filter(l=>l.system===s).length]).sort((a,b)=>b[1]-a[1]); }
 function renderFacets(){                                        // (id="facets" kept; now the hide-rail)
   const doms = Object.keys(CONFIG.domains).map(d=>[d, count(l=>l.domain===d)]).filter(([,n])=>n);
   const anyDomHidden = [...F.hiddenDom].some(d=>doms.some(([k])=>k===d));
   const anySysHidden = F.hiddenSys.size>0;
-  let h = `<div class="hgrp">Domain <span class="unhide ${anyDomHidden?'':'dim'}" onclick="LIB.unhideDoms()">Unhide all</span></div>`;
+  const nssm = LESSONS.filter(isSSM).length;
+  let h = `<div class="hgrp">SSM exam questions</div>`
+    + `<div class="ssmrow ${F.showSSM?'on':''}" onclick="LIB.toggleSSM()" title="${F.showSSM?'Hide':'Show'} the ${nssm} SSM exam-question lessons">`
+      + `<span class="ssmsw"><span class="ssmknob"></span></span><span class="hn">🎯 SSM questions</span><span class="hc">${nssm}</span></div>`
+    + `<div class="fhint" style="padding:2px 16px 6px">${F.showSSM?'Shown — mixed in with their subjects.':'Hidden by default so they don’t bury the other Chiron subjects.'}</div>`
+    + `<a class="ssmgen" href="${location.protocol}//${location.hostname}:5191" target="_blank" rel="noopener" title="SSM questions are generated in the SSM app → Batch Lessons → 📝 Exam (they land here as SSM lessons)">＋ Generate SSM questions →</a>`
+    + `<div class="hgrp">Domain <span class="unhide ${anyDomHidden?'':'dim'}" onclick="LIB.unhideDoms()">Unhide all</span></div>`;
   for (const [d,n] of doms){ const c=domCode(d), off=F.hiddenDom.has(d);
     h += `<div class="hrow ${c} ${off?'off':'vis'}" onclick="LIB.hideDom('${d}')" title="${off?'Show':'Hide'} ${domLabel(d)}">${CHK}<span class="hn">${domLabel(d)}</span><span class="hc">${n}</span></div>`; }
   h += `<div class="hgrp">System <span class="unhide ${anySysHidden?'':'dim'}" onclick="LIB.unhideSys()">Unhide all</span></div>`;
@@ -149,8 +163,10 @@ function tileHtml(l){
   const isPhone = matchMedia('(max-width:760px)').matches;
   const dl = slug && DL[slug];
   const staged = l.ready && l.status==='staged';
+  const selectable = (F.selectMode && !l.ready) || (F.bakeMode && l.ready && (l.clips||0)===0);
+  const isSel = selectable && F.selected.has(keyOf(l));
   let action;
-  if(!l.ready) action = `<span class="taction gen" onclick="event.stopPropagation();LIB.genFor('${cssq(l.subject||l.system||l.topic||l.title)}','${l.domain}')">✦ Generate</span>`;
+  if(!l.ready) action = selectable ? '' : `<span class="taction gen" onclick="event.stopPropagation();LIB.genFor('${cssq(l.subject||l.system||l.topic||l.title)}','${l.domain}')">✦ Generate</span>`;
   else if(staged) action = `<span class="taction open">👁 Preview</span><span class="taction acc" onclick="event.stopPropagation();LIB.accept('${slug}')">✓ Accept</span>`;
   else if(isPhone) action = dl ? `<span class="taction dl">✓ offline</span>`
       : (l.bundle ? `<span class="taction dl" onclick="event.stopPropagation();LIB.download('${slug}')">⬇ Get</span>`
@@ -159,10 +175,12 @@ function tileHtml(l){
               + `<span class="taction open">Open →</span>`;
   const badges = (staged?`<span class="treview">🟡 REVIEW</span>`:'') + (l.bankable>0?`<span class="tbank">💰 ${l.bankable}</span>`:'')
     + (l.scope==='system'?`<span class="tag sys">organ system</span>`:'');
-  const onclick = l.ready ? ` onclick="LIB.open('${slug}')"` : '';
-  return `<div class="tcard ${l.domain}${l.ready?'':' queued'}${l.bankable>0?' bankq':''}"${onclick}>
+  const onclick = selectable ? ` onclick="LIB.togSel('${cssq(keyOf(l))}')"` : (l.ready ? ` onclick="LIB.open('${slug}')"` : '');
+  const selCls = selectable ? ' selectable' + (isSel?' selected':'') : '';
+  return `<div class="tcard ${l.domain}${l.ready?'':' queued'}${l.bankable>0?' bankq':''}${selCls}"${onclick}>
+    ${selectable?`<span class="selmark${isSel?' on':''}">${isSel?'✓':''}</span>`:''}
     <div class="tb"><div class="tt">${l.title}</div><div class="ts">${subtagOf(l)}</div>${badges?`<div class="tbadges">${badges}</div>`:''}</div>
-    <div class="tf"><span class="db">${domLabel(l.domain)}</span>${l.ready?`<span class="tclips">🔊 ${l.clips||0}</span>`:'<span class="tclips">not generated</span>'}${action}</div>
+    <div class="tf"><span class="db">${domLabel(l.domain)}</span>${l.ready?(l.clips>0?`<span class="tclips baked" title="audio baked (${l.clips} clips) · click to re-bake (⚡Fast / 🐢Mac)" onclick="event.stopPropagation();LIB.rebake('${slug}')">🔊 ${l.clips}</span>`:`<button class="tbake" title="text-only — bake the audio now (⚡Fast / 🐢Mac)" onclick="event.stopPropagation();LIB.rebake('${slug}')">🔊 Bake audio</button>`):'<span class="tclips">not generated</span>'}${action}</div>
   </div>`;
 }
 function renderRows(){
@@ -175,16 +193,50 @@ function renderRows(){
   const staged = list.filter(l=>l.ready && l.status==='staged');
   const ready  = list.filter(l=>l.ready && l.status!=='staged');
   const queued = list.filter(l=>!l.ready);
-  const ordered = [...staged, ...ready, ...queued];
+  // Bake-audio mode: generated lessons that have NO audio yet (text-only), so you can batch-bake them.
+  const bakeable = [...staged, ...ready].filter(l=>(l.clips||0)===0);
+  // Select mode shows ONLY the to-generate cards; Bake mode shows ONLY generated lessons without audio.
+  const ordered = F.selectMode ? queued : F.bakeMode ? bakeable : [...staged, ...ready, ...queued];
   const parts = [ hideChips() ];
-  if (staged.length) parts.push(`<div class="reviewband">🟡 Needs Review — ${staged.length} newly generated lesson${staged.length===1?'':'s'}, not yet published. Open to review, then Accept to publish.</div>`);
+  if (F.selectMode) parts.push(`<div class="selband">☑ <b>Select mode</b> — tap the specific lessons you want to generate (text only). <b>${F.selected.size}</b> selected · showing the ${queued.length} still to generate. Then hit <b>Generate</b> in the bar at the bottom.</div>`);
+  else if (F.bakeMode) parts.push(`<div class="selband bake">🔊 <b>Bake-audio mode</b> — tap the generated lessons you want to add AUDIO to (text-only, no audio baked yet). <b>${F.selected.size}</b> selected · ${bakeable.length} still need audio. Then hit <b>Bake audio</b> (⚡Fast / 🐢Mac) in the bar at the bottom.</div>`);
+  else if (staged.length) parts.push(`<div class="reviewband">🟡 Needs Review — ${staged.length} newly generated lesson${staged.length===1?'':'s'}, not yet published. Open to review, then Accept to publish.</div>`);
   parts.push(ordered.length
     ? `<div class="twall"><div class="tgrid">${ordered.slice(0,800).map(tileHtml).join('')}</div></div>`
     : `<div class="empty">No lessons match — ${F.hiddenDom.size||F.hiddenSys.size?'unhide a facet in the sidebar':'try a different search'}.</div>`);
   document.getElementById('rows').innerHTML = parts.join('');
+  // ---- select-mode: reflect the toggle + render the floating batch bar ----
+  const sb=document.getElementById('selbtn'); if(sb) sb.classList.toggle('on', F.selectMode);
+  const kb=document.getElementById('bakebtn'); if(kb) kb.classList.toggle('on', F.bakeMode);
+  let bb=document.getElementById('batchbar');
+  if(F.selectMode || F.bakeMode){
+    if(!bb){ bb=document.createElement('div'); bb.id='batchbar'; bb.className='batchbar'; document.body.appendChild(bb); }
+    const nsel=F.selected.size;
+    if(F.selectMode){
+      bb.innerHTML=`<span>${nsel} selected</span>`
+        +`<button class="ball" onclick="LIB.selectAllVisible()">Select all visible (${queued.length})</button>`
+        +`<button class="bclr" onclick="LIB.clearSel()">Clear</button>`
+        +`<button class="bgen" ${nsel?'':'disabled'} onclick="LIB.genBatch()">✦ Generate ${nsel} → (text only)</button>`
+        +`<button class="bclr" onclick="LIB.toggleSelectMode()">✕ Exit</button>`;
+    } else {
+      bb.innerHTML=`<span>${nsel} selected · no audio yet</span>`
+        +`<button class="ball" onclick="LIB.selectAllVisibleBake()">Select all visible (${bakeable.length})</button>`
+        +`<button class="bclr" onclick="LIB.clearSel()">Clear</button>`
+        +`<button class="bgen" ${nsel?'':'disabled'} onclick="LIB.bakeBatch()">🔊 Bake audio ${nsel} → (⚡Fast / 🐢Mac)</button>`
+        +`<button class="bclr" onclick="LIB.toggleBakeMode()">✕ Exit</button>`;
+    }
+  } else if(bb){ bb.remove(); }
 }
 function renderAll(){ renderPills(); renderFacets(); renderRows(); }
 const LIB = {
+  // Provider-rotation toggle labels for the jobs-panel override (R-PROVIDER-OVERRIDE) — value must
+  // match a model string the server's CH_PRIMARY_ROTATION / _PRIMARY_POOL understands.
+  PROVIDERS: [
+    {label:'🏠 Local (Mac)', value:'local/qwen2.5:7b', title:'Mac governor — ZERO cloud tokens (slower). Value auto-syncs to the server\'s CH_LOCAL_MODEL.'},
+    {label:'🐢 Ollama Cloud', value:'glm-5.1', title:'Ollama Cloud (glm-5.1) — free tier'},
+    {label:'⚡ Gemini', value:'gemini/gemini-flash-latest', title:'Gemini flash — cheap'},
+    {label:'💲 GPT-5-mini', value:'gpt-5-mini', title:'paid — untick to save tokens'},
+  ],
   togDom(d){ F.domain.has(d)?F.domain.delete(d):F.domain.add(d); renderAll(); },
   /* ---- W1 hide-filters ---- */
   hideDom(d){ F.hiddenDom.has(d)?F.hiddenDom.delete(d):F.hiddenDom.add(d); saveHide(); renderAll(); },
@@ -193,6 +245,7 @@ const LIB = {
   unhideSys(){ F.hiddenSys.clear(); saveHide(); renderAll(); },
   unhideOne(t,k){ (t==='dom'?F.hiddenDom:F.hiddenSys).delete(k); saveHide(); renderAll(); },
   unhideAll(){ F.hiddenDom.clear(); F.hiddenSys.clear(); saveHide(); renderAll(); },
+  toggleSSM(){ F.showSSM=!F.showSSM; saveSSM(); if(!F.showSSM){ F.selected.clear(); } renderAll(); },
   tog(k,v){ const s=F.facets[k]; s.has(v)?s.delete(v):s.add(v);
     // deselecting a parent clears its nested children
     const child=childFacetOf(k); if(child && !s.has(v)){ const map=CONFIG.facets[child].valuesBySystem?.[v]||[]; map.forEach(sv=>F.facets[child].delete(sv)); }
@@ -238,6 +291,46 @@ const LIB = {
     const ov=document.getElementById('lessonOverlay'); if(!ov) return;
     ov.classList.remove('show'); ov.querySelector('.lov-frame').src='about:blank';
     if(!fromPop){ try{ history.back(); }catch(e){} }   // keep history in sync when closed via the button
+  },
+  // ---- batch generation: multi-select OR "generate next N" → push TEXT-ONLY jobs (audio baked later) ----
+  toggleSelectMode(){ F.selectMode=!F.selectMode; F.bakeMode=false; if(!F.selectMode) F.selected.clear(); renderAll(); },
+  toggleBakeMode(){ F.bakeMode=!F.bakeMode; F.selectMode=false; F.selected.clear(); renderAll(); },
+  togSel(k){ F.selected.has(k)?F.selected.delete(k):F.selected.add(k); renderRows(); },
+  selectAllVisible(){ sortLessons(LESSONS.filter(match)).filter(l=>!l.ready).forEach(l=>F.selected.add(keyOf(l))); renderRows(); },
+  selectAllVisibleBake(){ sortLessons(LESSONS.filter(match)).filter(l=>l.ready && (l.clips||0)===0).forEach(l=>F.selected.add(keyOf(l))); renderRows(); },
+  // Batch-bake AUDIO for the selected generated-but-audio-less lessons (⚡Fast / 🐢Mac at click time).
+  async bakeBatch(){
+    const sel=LESSONS.filter(l=>l.ready && (l.clips||0)===0 && F.selected.has(keyOf(l)));
+    if(!sel.length){ alert('Pick at least one generated lesson that has no audio yet.'); return; }
+    const slugs=sel.map(l=>slugOf(l.id));
+    const engine=await this._chooseEngine(`Bake audio for ${slugs.length} lesson${slugs.length===1?'':'s'} — pick an engine:`, slugs);
+    if(!engine) return;
+    try{ const r=await (await fetch(API+'/bake-batch',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({slugs,engine})})).json();
+      if(r&&r.ok===false){ alert('Can’t bake now — '+(r.reason||'try again later')); return; }
+      if(r&&r.slugs&&LIB._rec) r.slugs.forEach(s=>delete LIB._rec[s]);
+      const n=(r&&r.queued!=null)?r.queued:slugs.length;
+      alert(`Queued audio bake for ${n} lesson${n===1?'':'s'} on ${engine==='modal'?'⚡ Modal (fast)':'🐢 Mac'}. Watch the 🔊 Rebake lane in the Jobs tray.`);
+      F.selected.clear(); F.bakeMode=false; renderAll(); if(LIB._loadJobs) LIB._loadJobs();
+    }catch(e){ alert('Bake failed: '+e.message); } },
+  clearSel(){ F.selected.clear(); renderRows(); },
+  genBatch(){ const sel=LESSONS.filter(l=>!l.ready && F.selected.has(keyOf(l))); LIB._pushGen(sel); },
+  genNext(){ const n=Math.max(1,parseInt(document.getElementById('gennextN').value)||10);
+    const list=sortLessons(LESSONS.filter(match)).filter(l=>!l.ready).slice(0,n); LIB._pushGen(list); },
+  async _pushGen(lessons){
+    if(!lessons.length){ alert('Nothing to generate here.'); return; }
+    const n=lessons.length;
+    if(!confirm(`Queue ${n} lesson${n===1?'':'s'} for TEXT generation?\n\nThey run 2 at a time; audio is NOT baked (rebake later from the jobs tray — ⚡Fast or 🐢Mac). Large batches take a while.`)) return;
+    const rc=document.getElementById('rcount'); let ok=0, fail=0;
+    for(const l of lessons){
+      const subject=l.subject||l.system||l.topic||l.title, domain=l.domain;
+      try{ const r=await (await fetch(API+'/generate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({domain,subject,depth:null,stage:'audio'})})).json();  // 'audio' = text page + narration TRANSCRIPTS (no synth) → bakeable later. 'assemble' skips the transcript phase.
+        (r&&r.job_id)?ok++:fail++;
+      }catch(e){ fail++; }
+      if(rc) rc.textContent=`queuing… ${ok+fail}/${n}`;
+    }
+    alert(`Queued ${ok}/${n} for text generation${fail?` (${fail} failed)`:''}.\nThey generate 2 at a time — watch the Jobs tray. Bake audio later with the ⚡/🐢 rebake buttons.`);
+    F.selected.clear(); F.selectMode=false; renderAll();
+    if(LIB._loadJobs) LIB._loadJobs();
   },
   genFor(subject,domain){ LIB.wizard(true);
     document.getElementById('w-subject').value=subject||'';
@@ -310,15 +403,22 @@ const LIB = {
     const domain=document.getElementById('w-domain').value;
     const depth=document.getElementById('w-depth').value || null;
     const grounding=document.getElementById('w-grounding').value.trim() || null;
-    const stage=document.getElementById('w-nobake').checked?'assemble':'all';
+    const stage=document.getElementById('w-nobake').checked?'audio':'all';  // 'audio' = page + transcripts, no synth (bakeable later); NOT 'assemble' (which skips the transcript phase)
     const btn=document.querySelector('.btn-gen'); btn.disabled=true; btn.textContent='Starting…';
     try{
       let images=null;
       if(WIZ_IMAGES.length){ const fd=new FormData(); WIZ_IMAGES.forEach((f,i)=>fd.append('files',f,f.name||`page-${i+1}.jpg`));
         images=(await (await fetch(API+'/upload',{method:'POST',body:fd})).json()).paths; }
-      const r=await (await fetch(API+'/generate',{method:'POST',headers:{'Content-Type':'application/json'},
+      let r=await (await fetch(API+'/generate',{method:'POST',headers:{'Content-Type':'application/json'},
         body:JSON.stringify({domain,subject,depth,grounding,images,stage})})).json();
-      if(!r.job_id) throw new Error(r.detail||'generate failed');
+      // Atlas pre-validation: the subject isn't an organ-system overview → offer to switch to systematic.
+      if(r && r.needs_switch){
+        if(confirm(`${r.reason}`)){
+          r=await (await fetch(API+'/generate',{method:'POST',headers:{'Content-Type':'application/json'},
+            body:JSON.stringify({domain,subject,depth:r.suggested_depth||'systematic',grounding,images,stage})})).json();
+        } else { btn.disabled=false; btn.textContent='✦ Generate'; return; }
+      }
+      if(!r.job_id) throw new Error(r.detail||r.reason||'generate failed');
       GENJOB=r.job_id; LIB._showProg(r); LIB._poll(r.job_id);
     }catch(e){ alert('Generate failed: '+e.message); }
     btn.disabled=false; btn.textContent='✦ Generate';
@@ -360,13 +460,21 @@ const LIB = {
   jobs(open){
     document.getElementById('jobsback').classList.toggle('show', open);
     clearInterval(LIB._jobsTimer);
-    if(open){ LIB._loadJobs(); LIB._jobsTimer=setInterval(()=>LIB._loadJobs(), 4000); }
+    if(open){ fetch(API+'/jobs/reap',{method:'POST'}).catch(()=>{}).finally(()=>LIB._loadJobs()); LIB._jobsTimer=setInterval(()=>LIB._loadJobs(), 4000); }
   },
   async _loadJobs(){
     const el=document.getElementById('jobslist'); if(!el) return;
-    let d; try{ d=await (await fetch(API+'/activity?'+Date.now())).json(); }
-    catch(e){ el.innerHTML='<div class="hint">Server unreachable — is the Chiron server up?</div>'; return; }
+    const seq=(LIB._jobsSeq=(LIB._jobsSeq||0)+1);   // A6: newest-poll-wins — drop a stale response that
+    let d; try{ d=await (await fetch(API+'/activity?'+Date.now())).json(); }   // resolves after a newer poll started
+    catch(e){ if(seq===LIB._jobsSeq) el.innerHTML='<div class="hint">Server unreachable — is the Chiron server up?</div>'; return; }
+    if(seq!==LIB._jobsSeq) return;                  // a fresher _loadJobs already ran → this response is stale
     const active=d.active||[];
+    LIB._genPaused=!!d.paused;
+    LIB._genPool=d.pool||[];
+    LIB._bake=d.bake||{};   // rebake lane: {mac_queued, modal_pending, running:[{slug,engine}]}
+    // Keep the "🏠 Local (Mac)" pill's value in lockstep with the server's CH_LOCAL_MODEL (e.g. if the
+    // governor model is bumped) so toggling it posts a model the server's rotation actually understands.
+    if(d.local_model){ const lp=LIB.PROVIDERS.find(p=>p.value.startsWith('local/')); if(lp) lp.value=d.local_model; }
     const hist=(d.history||[]).slice().sort((a,b)=>(b.started||'').localeCompare(a.started||''));
     const esc=s=>String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/'/g,'&#39;').replace(/"/g,'&quot;');
     const lbl=x=> esc(x.domain==='medical-italian' ? (x.source_ref||x.subject) : x.subject);
@@ -375,20 +483,73 @@ const LIB = {
     const when=s=>{ if(!s) return ''; const t=new Date(s); return isNaN(t)?'':t.toLocaleString([], {month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}); };
     LIB._open = LIB._open || new Set();
     let h='';
-    if(active.length){
-      h+='<div class="jhead">🔴 Generating now · '+active.length+'</div>';
-      for(const x of active){ const sl=x.slug||x.id; LIB._open.add(sl);   // active is always expanded
-        h+=`<div class="jrow gen"><span class="jdot"></span><div class="jmeta"><b>${lbl(x)}</b>${x.depth?`<span class="jdepth ${x.domain||''}">${esc(x.depth)}</span>`:''}<span class="jsub">${esc(x.phase||x.status)} · ${mins(x)}${eta(x)}</span></div>
+    const pauseBtn=LIB._genPaused
+      ? `<button class="jpause resumed" title="new lessons stay queued until you resume" onclick="LIB.resumeGen()">▶ Resume generation</button>`
+      : `<button class="jpause" title="finish in-flight lessons, hold everything else in the queue" onclick="LIB.pauseGen()">⏸ Pause generation</button>`;
+    const provPills=LIB.PROVIDERS.map(p=>`<button class="provpill ${LIB._genPool.includes(p.value)?'on':''}" title="${esc(p.title)}" onclick="LIB.togProvider('${p.value}')">${p.label}</button>`).join('');
+    const provBtns=`<span class="jprov" title="which models the batch rotates across — untick the paid ones to save tokens">${provPills}</span>`;
+    // "Generating now" is TEXT generation only. Audio bakes also live in active (status queued/baking) but
+    // belong to the Rebake lane below — never render them here (they showed as phantom "generating" rows).
+    const activeGen=active.filter(x=>(x.lane||'text')!=='bake');
+    const nRun=activeGen.filter(x=>x.status==='running').length, nHeld=activeGen.length-nRun;
+    if(activeGen.length){
+      // Honest header: only RUNNING jobs are "generating"; the rest are queued/held (esp. while paused).
+      const head = LIB._genPaused
+        ? `⏸ Paused · ${nRun} finishing · ${nHeld} held — hit Resume to run`
+        : `🔴 Generating now · ${nRun}${nHeld?` · ${nHeld} queued`:''}`;
+      h+=`<div class="jhead jhead-row"><span>${head}</span><span class="jbakebtns">${provBtns}${pauseBtn}</span></div>`;
+      for(const x of activeGen){ const sl=x.slug||x.id; const isRun=x.status==='running';
+        if(isRun) LIB._open.add(sl);   // expand ONLY a RUNNING job's LIVE steps. A queued/held job's rail shows
+                                       // OLD steps from a prior attempt (the red "✗ failed" that looked like current
+                                       // failures) — keep it collapsed; it's history, the job just hasn't re-run yet.
+        const sub = isRun ? `${esc(x.phase||x.status)} · ${mins(x)}${eta(x)}`
+                          : `${LIB._genPaused?'⏸ held — resumes when you hit Resume':'queued — waiting for a slot'} · ${mins(x)}`;
+        h+=`<div class="jrow ${isRun?'gen':'genq'}"><span class="jdot"></span><div class="jmeta"><b>${lbl(x)}</b>${x.depth?`<span class="jdepth ${x.domain||''}">${esc(x.depth)}</span>`:''}<span class="jsub">${sub}</span></div>
              <button class="jexp" title="full live event stream" onclick="LIB.rawSteps('${sl}')">⤢</button><button class="jcancel" title="stop this job (keeps the lesson text)" onclick="LIB.cancel('${x.id}')">✕ Cancel</button></div>
-           <div class="rail" data-slug="${sl}"></div>`; }
-    } else h+='<div class="jhead">Nothing generating right now</div>';
+           <div class="rail" data-slug="${sl}" ${isRun?'':'style="display:none"'}></div>`; }
+    } else h+=`<div class="jhead jhead-row"><span>Nothing generating right now</span><span class="jbakebtns">${provBtns}${pauseBtn}</span></div>`;
+    // REBAKE LANE — its own queue/worker, independent of text generation above. Always shown so the
+    // two-lane setup is visible; muted when idle.
+    const bk=LIB._bake||{}, bkRun=bk.running||[];
+    const bkMac=bkRun.filter(r=>r.engine!=='modal').length, bkModal=bkRun.filter(r=>r.engine==='modal').length;
+    const bkQ=(bk.mac_queued||0)+(bk.modal_pending||0);
+    const bkBusy=bkRun.length||bkQ;
+    const bkChips=[
+      bkModal?`<span class="blchip modal" title="baking on Modal cloud GPU (fast)">⚡ ${bkModal}</span>`:'',
+      bkMac?`<span class="blchip mac" title="baking on the Mac TTS sidecar (serial)">🐢 ${bkMac}</span>`:'',
+      bk.mac_queued?`<span class="blchip q" title="waiting in the serial Mac bake queue">🐢 queue ${bk.mac_queued}</span>`:'',
+      bk.modal_pending?`<span class="blchip q" title="submitted to the Modal pool, not started">⚡ queue ${bk.modal_pending}</span>`:'',
+    ].join('');
+    h+=`<div class="jhead jbakelane ${bkBusy?'busy':'idle'}" title="Audio rebake runs in a SEPARATE queue from text generation — the two lanes don't block each other.">`
+      +`<span>🔊 Rebake lane · ${bkBusy?`${bkRun.length} baking${bkQ?` · ${bkQ} queued`:''}`:'idle'}</span>`
+      +`<span class="blchips">${bkChips}</span></div>`;
+    // LIST the active bakes so they're actually visible — not just a count. Each running bake = a row;
+    // then a one-line "+N more queued". This is why the panel looked empty: 100 bakes hid behind one summary line.
+    for(const r of bkRun){
+      const nm=(r.slug||'').replace(/^chiron-/,'').replace(/-/g,' ');
+      h+=`<div class="jrow ${r.engine==='modal'?'gen':'genq'}"><span class="jdot"></span><div class="jmeta"><b>${esc(nm)}</b><span class="jsub">🔊 baking audio · ${r.engine==='modal'?'⚡ Modal (fast)':'🐢 Mac'}</span></div></div>`;
+    }
+    // LIST every queued bake (server now sends the full list) — a queued lesson must always be visible, never hidden behind a count.
+    for(const q of (bk.queued||[])){
+      const nm=(q.slug||'').replace(/^chiron-/,'').replace(/-/g,' ');
+      h+=`<div class="jrow genq"><span class="jdot"></span><div class="jmeta"><b>${esc(nm)}</b><span class="jsub">🔊 queued for audio · ${q.engine==='modal'?'⚡ Modal (fast)':'🐢 Mac'}</span></div>`
+        +`<button class="jrebake" title="bake now — pick ⚡Fast / 🐢Mac when you click" onclick="LIB.rebake('${q.slug}')">🔥 Rebake</button>`
+        +(q.id?`<button class="jcancel" title="remove from the bake queue (keeps the lesson text)" onclick="LIB.cancel('${q.id}')">✕ Cancel</button>`:'')
+        +`</div>`;
+    }
+    // fallback for an old server that only sent a count (no list yet)
+    if(bkQ && !(bk.queued||[]).length) h+=`<div class="jrow genq"><span class="jdot"></span><div class="jmeta"><span class="jsub" style="color:#94a3b8">… + ${bkQ} more queued for audio bake (update server to list them)</span></div></div>`;
     const ids=new Set(active.map(a=>a.id));
+    const activeSlugs=new Set(active.map(a=>a.slug));   // slugs currently queued/running/baking
     // Accepted/promoted lessons live in the library → drop them from the activity list. Keep the
     // un-accepted (staged 'ready') + failed ones here, so you can review/accept or retry them.
     // ONE row per lesson (dedupe the retry/rebake duplicates); drop accepted; prefer ready > audio-failed > error, newest
     const _rank=s=> s==='ready'?3 : s==='audio-failed'?2 : s==='error'?1 : 0;
     const _bySlug=new Map();
-    for(const x of hist){ if(ids.has(x.id) || x.status==='published') continue;
+    // Suppress a STALE terminal row (a past error/failure) whenever that slug is ACTIVELY being re-run —
+    // otherwise the tray shows "✗ failed" for a lesson that is right now regenerating ("says error but
+    // goes through everything"). The live active row is the truth; the old terminal row is history.
+    for(const x of hist){ if(ids.has(x.id) || activeSlugs.has(x.slug) || x.status==='published') continue;
       const sl=x.slug||x.id; const p=_bySlug.get(sl);
       if(!p || _rank(x.status)>_rank(p.status) || (_rank(x.status)===_rank(p.status) && (x.started||'')>(p.started||''))) _bySlug.set(sl,x);
     }
@@ -402,35 +563,38 @@ const LIB = {
     const rebakeRows=recent.filter(x=>{const r=(LIB._rec||{})[x.slug||x.id]; return r&&r.text&&r.needs_rebake;});
     const nbake=rebakeRows.length;
     LIB._needsRebakeSlugs=rebakeRows.map(x=>x.slug||x.id);
-    const canRebake=nbake>0 || recent.some(x=>x.status==='audio-failed'||x.status==='error');
-    const engineTog=canRebake?LIB._engineToggle():'';
-    const bakeAll=(active.length===0 && nbake>0)
-      ? `<button class="jbakeall" title="rebake all ${nbake} viewable-but-unbaked lessons using the selected engine (🐢/⚡ toggle)" onclick="LIB.bakeAll(${nbake})">Bake all (${nbake})</button>` : '';
-    h+=`<div class="jhead jhead-row"><span>Needs review · ${nr} to accept · ${ne} failed</span><span class="jbakebtns">${engineTog}${bakeAll}</span></div>`;
+    const bakeAll=(activeGen.length===0 && nbake>0)
+      ? `<button class="jbakeall" title="rebake all ${nbake} viewable-but-unbaked lessons — pick ⚡Fast / 🐢Mac when you click" onclick="LIB.bakeAll(${nbake})">Bake all (${nbake})</button>` : '';
+    h+=`<div class="jhead jhead-row"><span>Needs review · ${nr} to accept · ${ne} failed</span><span class="jbakebtns">${bakeAll}</span></div>`;
     LIB._rec = LIB._rec || {};
     for(const x of recent){ const sl=x.slug||x.id;
       const st=x.status; const r=LIB._rec[sl]||{};
       const missTip=`text ${r.text?'✓':'✗'}${r.clips_total?` · ${r.clips_done}/${r.clips_total} clips${(r.missing&&r.missing.length)?' · missing: '+r.missing.join(', '):''}`:''}`;
       let pill='';
-      if(r.needs_rebake && r.text) pill=`<span class="jpill rebake" title="${missTip}">🔥 needs rebaking</span>`;
+      // 🔥 "needs rebaking" ONLY when audio was actually baked (clips_total>0) and came out incomplete.
+      // A text-first / never-baked lesson (clips_total==0) is NOT broken — it just hasn't been baked yet,
+      // so show a calm "audio not baked" pill (not the alarming 🔥) but STILL offer a Bake button below.
+      if(r.needs_rebake && r.text && r.clips_total>0) pill=`<span class="jpill rebake" title="${missTip}">🔥 needs rebaking</span>`;
+      else if(st==='ready' && r.text && (r.clips_total||0)===0) pill=`<span class="jpill pending" title="text ready — audio not baked yet">🔊 audio not baked</span>`;
       else if(st==='error') pill=`<span class="jpill fail">✗ failed</span>`;
       let act='';
       if(st==='ready'){
         if(x.lesson_url){ const u=(location.port==='8911'?API:'')+x.lesson_url; act+=`<button class="jopen" onclick="LIB._overlay('${u}','${lbl(x)}')">Open →</button>`; }
-        if(r.needs_rebake) act+=`<button class="jrebake" title="reuse ${r.clips_done}/${r.clips_total} clips, bake the rest — engine = the 🐢/⚡ toggle above" onclick="LIB.rebake('${sl}')">🔥 Rebake</button>`;
+        if(r.needs_rebake && r.clips_total>0) act+=`<button class="jrebake" title="reuse ${r.clips_done}/${r.clips_total} clips, bake the rest — pick ⚡Fast / 🐢Mac when you click" onclick="LIB.rebake('${sl}')">🔥 Rebake</button>`;
+        else if((r.clips_total||0)===0) act+=`<button class="jrebake" title="text-only — bake the audio now (⚡Fast / 🐢Mac)" onclick="LIB.rebake('${sl}')">🔊 Bake audio</button>`;   // never baked → offer the FIRST bake
         act+=`<button class="jaccept" onclick="LIB.acceptJob('${sl}')">✓ Accept</button>`;   // promote → into the library, removes it from here
       }
       // smart retry: if the text already exists, only re-bake the audio (never redo the lesson)
-      else if(st==='error'||st==='audio-failed'){
+      else if(st==='error'||st==='audio-failed'||st==='cancelled'){
         if(r.text){   // text exists → let it be OPENED (see the lesson + hear the clips already baked)
           const u=(location.port==='8911'?API:'')+'/lessons/'+sl+'/lesson.html';
           act=`<button class="jopen" onclick="LIB._overlay('${u}','${lbl(x).replace(/'/g,'')}')">Open →</button>`
-             +`<button class="jrebake" title="${missTip} — bake the rest, engine = the 🐢/⚡ toggle above" onclick="LIB.rebake('${sl}')">🔥 Rebake audio</button>`;
+             +`<button class="jrebake" title="${missTip} — bake the rest, pick ⚡Fast / 🐢Mac when you click" onclick="LIB.rebake('${sl}')">🔥 Rebake audio</button>`;
         } else act=`<button class="jretry" onclick="LIB.retry('${x.id}')">↻ Retry (full)</button>`;
       }
       const open=LIB._open.has(sl);
       const depth=x.depth?`<span class="jdepth ${x.domain||''}">${esc(x.depth)}</span>`:'';
-      const dismiss=(st==='error'||st==='audio-failed')?`<button class="jdismiss" title="dismiss — remove from the list (doesn't delete the lesson)" onclick="LIB.dismiss('${sl}','${x.started||''}')">✕</button>`:'';
+      const dismiss=(st==='error'||st==='audio-failed'||st==='cancelled')?`<button class="jdismiss" title="dismiss — remove from the list (doesn't delete the lesson)" onclick="LIB.dismiss('${sl}','${x.started||''}')">✕</button>`:'';
       h+=`<div class="jrow ${st}"><span class="jdot"></span><div class="jmeta"><b>${lbl(x)}</b>${depth}${pill}<span class="jsub">${st} · ${when(x.started)}${r.clips_total?` · ${r.clips_done}/${r.clips_total} clips`:''}</span></div>
            <button class="jexp" onclick="LIB.toggleSteps('${sl}')">${open?'▾':'▸'} steps</button>${act}${dismiss}</div>
            <div class="rail" data-slug="${sl}" ${open?'':'style="display:none"'}></div>`;
@@ -445,11 +609,14 @@ const LIB = {
     let got=false;
     for(const x of (recent||[])){ const sl=x.slug||x.id;
       if(!['ready','error','audio-failed'].includes(x.status)) continue;
-      if(LIB._rec[sl]) continue;
-      try{ LIB._rec[sl]=await (await fetch(API+'/jobs/'+encodeURIComponent(sl)+'/recovery?'+Date.now())).json(); got=true; }
-      catch(e){ LIB._rec[sl]={}; }
+      const cached=LIB._rec[sl];
+      if(cached && !cached.needs_rebake) continue;   // settled → cache forever; keep re-polling ONLY flagged rows
+      try{ const fresh=await (await fetch(API+'/jobs/'+encodeURIComponent(sl)+'/recovery?'+Date.now())).json();
+           const changed = !cached || cached.needs_rebake!==fresh.needs_rebake || cached.clips_done!==fresh.clips_done;
+           LIB._rec[sl]=fresh; if(changed) got=true; }   // re-render only on real change → no tight poll loop
+      catch(e){ if(!cached) LIB._rec[sl]={}; }
     }
-    if(got) LIB._loadJobs();   // re-render with the now-cached recovery (cached → no re-fetch loop)
+    if(got) LIB._loadJobs();   // re-render with fresh recovery (only when something actually changed)
   },
   toggleSteps(sl){ LIB._open=LIB._open||new Set(); LIB._open.has(sl)?LIB._open.delete(sl):LIB._open.add(sl); LIB._loadJobs(); },
   async _fillRails(){
@@ -492,6 +659,19 @@ const LIB = {
     }catch(e){ document.getElementById('rawpre').textContent='unavailable'; }
   },
   closeRaw(){ document.getElementById('rawback').classList.remove('show'); },
+  async pauseGen(){ try{ await fetch(API+'/gen/pause',{method:'POST'}); LIB._loadJobs(); }catch(e){ alert('Pause failed: '+e.message); } },
+  async resumeGen(){ try{ await fetch(API+'/gen/resume',{method:'POST'}); LIB._loadJobs(); }catch(e){ alert('Resume failed: '+e.message); } },
+  async togProvider(value){
+    // Toggle one provider in/out of the primary-rotation pool (runtime override, no restart — R-PROVIDER-OVERRIDE).
+    // Always leave at least one on, so generation never has zero providers to round-robin across.
+    const cur=LIB._genPool||[];
+    const pool=cur.includes(value) ? cur.filter(v=>v!==value) : [...cur, value];
+    if(pool.length===0) return;   // refuse to empty the pool
+    LIB._genPool=pool;   // optimistic render
+    try{ await fetch(API+'/gen/rotation',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({pool})}); }
+    catch(e){ alert('Provider update failed: '+e.message); }
+    LIB._loadJobs();
+  },
   async retry(id){ try{ await fetch(API+'/retry/'+id,{method:'POST'}); LIB._loadJobs(); }catch(e){ alert('Retry failed: '+e.message); } },
   // stop a queued/baking/generating job — kills the subprocess (or de-queues it); lesson TEXT is kept → still viewable + rebakeable
   async cancel(id){ if(!confirm('Cancel this job? The lesson text is kept — you can rebake the audio later.')) return;
@@ -504,36 +684,48 @@ const LIB = {
   async clearFailed(){ try{ const r=await (await fetch(API+'/jobs/clear-failed',{method:'POST'})).json();
       LIB._loadJobs(); }catch(e){ alert('Clear failed: '+e.message); } },
   async acceptJob(sl){ try{ await fetch(API+'/accept/'+encodeURIComponent(sl),{method:'POST'}); if(LIB._rec)delete LIB._rec[sl]; LIB._loadJobs(); LIB.reload(); }catch(e){ alert('Accept failed: '+e.message); } },
-  // ---- ONE engine selector governs every rebake (single + all): 🐢 Mac (free/slow) | ⚡ Fast (Modal cloud) ----
-  _bakeEngine(){ if(this.__eng==null){ try{ this.__eng=localStorage.getItem('chiron.bakeEngine')||'mac'; }catch{ this.__eng='mac'; } } return this.__eng; },
-  setEngine(e){ this.__eng=e; try{ localStorage.setItem('chiron.bakeEngine',e); }catch{} this._loadJobs(); },
-  _engineToggle(){ const e=this._bakeEngine();
-    return `<span class="bakemode" title="Engine for rebakes — 🐢 Mac (free, slow, serial) · ⚡ Fast (Modal cloud, ~min, small $)">`
-      +`<button class="bm ${e==='mac'?'on':''}" onclick="LIB.setEngine('mac')">🐢 Mac</button>`
-      +`<button class="bm fast ${e==='modal'?'on':''}" onclick="LIB.setEngine('modal')">⚡ Fast</button></span>`; },
-  // re-bake ONLY the audio (reuses clips already done) — engine follows the toggle; Modal shows a cost confirm first
-  async rebake(sl){ const engine=this._bakeEngine();
-    if(engine==='modal'){
-      let est=null; try{ est=await (await fetch(API+'/bake-estimate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({slugs:[sl]})})).json(); }catch(e){}
-      const usd=est&&est.est_usd!=null?('~$'+Number(est.est_usd).toFixed(2)):'a few cents';
-      if(!confirm(`⚡ Fast-rebake this lesson on Modal L4 ≈ ${usd} (cloud). Continue?`)) return;
-    }
+  // ---- CLICK-TIME engine chooser: pops ⚡ Fast / 🐢 Mac (with live cost) THE MOMENT you click Rebake ----
+  // Returns 'modal' | 'mac' | null (cancel). Fetches a cost estimate first so the choice is informed.
+  async _chooseEngine(title, slugs){
+    let est=null; try{ est=await (await fetch(API+'/bake-estimate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({slugs})})).json(); }catch(e){}
+    const usd=est&&est.est_usd!=null?('~$'+Number(est.est_usd).toFixed(2)):'small $';
+    const fm=est&&est.est_wall_min_modal?('~'+est.est_wall_min_modal+' min'):'~min';
+    const mm=est&&est.est_wall_min_mac?('~'+est.est_wall_min_mac+' min'):'slow';
+    return new Promise(resolve=>{
+      const ov=document.createElement('div'); ov.className='engchoose';
+      ov.innerHTML=`<div class="ecbox"><div class="ectitle">${title}</div>
+        <div class="ecbtns">
+          <button class="ecbtn ecfast">⚡ Fast — Modal<small>${usd} · ${fm} · cloud</small></button>
+          <button class="ecbtn ecmac">🐢 Mac<small>free · ${mm}</small></button>
+        </div><button class="eccancel">Cancel</button></div>`;
+      document.body.appendChild(ov);
+      const done=v=>{ ov.remove(); document.removeEventListener('keydown',onKey); resolve(v); };
+      const onKey=e=>{ if(e.key==='Escape') done(null); };
+      document.addEventListener('keydown',onKey);
+      ov.querySelector('.ecfast').onclick=()=>done('modal');
+      ov.querySelector('.ecmac').onclick=()=>done('mac');
+      ov.querySelector('.eccancel').onclick=()=>done(null);
+      ov.onclick=e=>{ if(e.target===ov) done(null); };
+    });
+  },
+  // re-bake ONLY the audio (reuses clips already done) — asks Fast/Mac at click time, then runs the chosen engine
+  async rebake(sl){
+    const engine=await this._chooseEngine('Rebake this lesson — pick an engine:',[sl]);
+    if(!engine) return;
     try{ await fetch(API+'/bake/'+encodeURIComponent(sl)+'?engine='+engine,{method:'POST'}); if(LIB._rec)delete LIB._rec[sl]; (LIB._open=LIB._open||new Set()).add(sl); LIB._loadJobs(); }catch(e){ alert('Rebake failed: '+e.message); } },
-  // batch rebake — engine follows the toggle. Mac → /bake-all (server-scanned, refuses during text-gen). Modal → /bake-batch w/ cost confirm.
-  async bakeAll(n){ const engine=this._bakeEngine();
+  // batch rebake — asks Fast/Mac at click time. Mac → /bake-all (server-scanned, refuses during text-gen). Modal → /bake-batch.
+  async bakeAll(n){
+    const slugs=LIB._needsRebakeSlugs||[];
+    const engine=await this._chooseEngine(`Rebake all ${n} lesson${n===1?'':'s'} — pick an engine:`, slugs);
+    if(!engine) return;
     if(engine==='modal'){
-      const slugs=LIB._needsRebakeSlugs||[]; if(!slugs.length){ alert('Nothing to rebake right now.'); return; }
-      let est={}; try{ est=await (await fetch(API+'/bake-estimate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({slugs})})).json(); }
-      catch(e){ alert('Could not get a cost estimate: '+e.message); return; }
-      const usd=(est.est_usd||0).toFixed(2);
-      if(!confirm(`⚡ Fast rebake ${n} lesson${n===1?'':'s'} on Modal L4 ≈ ~$${usd}, ~${est.est_wall_min_modal||'?'} min (vs ~${est.est_wall_min_mac||'?'} min on the Mac, free). Continue?`)) return;
+      if(!slugs.length){ alert('Nothing to rebake right now.'); return; }
       try{ const r=await (await fetch(API+'/bake-batch',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({slugs,engine:'modal'})})).json();
         if(r && r.ok===false){ alert('Can’t fast-bake now — '+(r.reason||'try again later')); return; }
         if(r && r.slugs && LIB._rec) r.slugs.forEach(s=>delete LIB._rec[s]); LIB._loadJobs();
       }catch(e){ alert('Fast bake failed: '+e.message); }
       return;
     }
-    if(!confirm(`Queue audio bakes for ${n} lesson${n===1?'':'s'} on the Mac (free, one at a time)?`)) return;
     try{ const r=await (await fetch(API+'/bake-all?engine=mac',{method:'POST'})).json();
       if(r && r.ok===false){ alert('Can’t bake now — '+(r.reason||'try again later')); return; }
       if(r && r.slugs && LIB._rec) r.slugs.forEach(s=>delete LIB._rec[s]); LIB._loadJobs();

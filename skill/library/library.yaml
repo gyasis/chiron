@@ -7,7 +7,8 @@ version: 1
 domains:
   medicine:        { label: Medicine,        color: "#1e6fbf", facets: [system, subject, trend, difficulty, exam_freq] }
   medical-italian: { label: Medical-Italian, color: "#b3522e", facets: [system, subject, lang_level, trend] }
-  italian:         { label: Italian,         color: "#6b8e4e", facets: [topic, lang_level] }
+  language-it:     { label: Italian,         color: "#6b8e4e", facets: [topic, lang_level] }   # domain KEY must match the lessons' domain (builder emits 'language-it', not 'italian')
+  video-it:        { label: "Italian · Video", color: "#8a5a83", facets: [series, lang_level] }   # video-episode lessons, grouped by series
   code:            { label: Code,            color: "#6d28d9", facets: [stack, difficulty] }   # future domain, same machinery
 
 facets:
@@ -38,14 +39,20 @@ facets:
   topic:
     label: Language topic
     type: rail
-    appliesTo: [italian]
+    appliesTo: [language-it]
     source: ai-controlled       # generator picks from this controlled vocab
     values: [Everyday, Grammar, Conversation, Travel, Workplace]
   lang_level:
     label: CEFR level
     type: pills
-    appliesTo: [medical-italian, italian]
+    appliesTo: [medical-italian, language-it, video-it]
     values: [A1, A2, B1, B2, C1]
+  series:
+    label: Series
+    type: rail
+    appliesTo: [video-it]
+    source: derived            # series names come from the lessons themselves (subject field) — Baby, …
+
   trend:
     label: Trend
     type: pills

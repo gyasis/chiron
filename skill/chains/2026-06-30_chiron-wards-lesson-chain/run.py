@@ -44,6 +44,17 @@ if not OPENAI_KEY:   # last-resort OpenAI fallback key lives in ~/dev/.env even 
             if _ln.strip().startswith("OPENAI_API_KEY="):
                 OPENAI_KEY = _ln.split("=", 1)[1].strip().strip('"').strip("'"); break
     except Exception: pass
+GEMINI_KEY = os.environ.get("GEMINI_API_KEY", "") or os.environ.get("GOOGLE_API_KEY", "")
+if not GEMINI_KEY:
+    try:
+        for _ln in (HOME / "dev/.env").read_text().splitlines():
+            _s = _ln.strip()
+            if _s.startswith("GEMINI_API_KEY=") or _s.startswith("GOOGLE_API_KEY="):
+                GEMINI_KEY = _s.split("=", 1)[1].strip().strip('"').strip("'")
+                if GEMINI_KEY:
+                    break
+    except Exception:
+        pass
 
 DOMAIN = "medicine"
 LEARNER = os.environ.get("CH_LEARNER", "Gyasi")
@@ -61,14 +72,23 @@ def ollama(model=MODEL, temperature=0.4):
 
 
 # Model FALLBACK ladder: when the primary can't produce valid JSON after its repairs, try the next model.
-_FB = [m.strip() for m in os.environ.get("CH_MODEL_FALLBACKS", "gemma4:31b,gpt-5-mini").split(",") if m.strip()]
-FALLBACKS = [m for m in _FB if not (m.startswith("gpt-") and not OPENAI_KEY)]
+_FB = [m.strip() for m in os.environ.get("CH_MODEL_FALLBACKS", "gemma4:31b,gemini/gemini-flash-latest,gpt-5-mini").split(",") if m.strip()]
+FALLBACKS = [m for m in _FB if not (m.startswith("gpt-") and not OPENAI_KEY) and not (m.startswith("gemini") and not GEMINI_KEY)]
 
 
 def model_for(name: str, temperature: float = 0.4) -> dict:
     """model_dict for a bare model name. gpt-* → real OpenAI; everything else → Ollama Cloud (via ollama())."""
+    if name.startswith("gemini"):
+        gm = name if name.startswith("gemini/") else f"gemini/{name}"
+        return {"name": gm, "params": {"api_key": GEMINI_KEY, "temperature": temperature}}
     if name.startswith("gpt-"):
-        return {"name": f"openai/{name}", "params": {"api_key": OPENAI_KEY, "temperature": temperature}}
+        # gpt-5 models only support temperature=1 (the default) — passing 0.4 → litellm UnsupportedParamsError.
+        return {"name": f"openai/{name}", "params": {"api_key": OPENAI_KEY}}
+    if name.startswith("local/"):
+        # local/<model> → the Atelier governor (memory-governed Mac ollama); base via env, neutral default (public repo)
+        lm = name.split("/", 1)[1]
+        base = os.environ.get("CH_LOCAL_BASE", "http://localhost:8799/llm/ollama/v1")
+        return {"name": f"openai/{lm}", "params": {"api_base": base, "api_key": "local", "temperature": temperature}}
     return ollama(name, temperature)
 
 
@@ -114,6 +134,10 @@ async def json_with_repair(prompt, name, model_dict, validate_fn=None, max_repai
             try:
                 last = await llm(md, cur)
             except Exception as e:
+                _msg = str(e).lower()
+                if 'ratelimit' in _msg or '429' in _msg or 'usage limit' in _msg or 'rate limit' in _msg or 'resource_exhausted' in _msg or 'quota' in _msg:
+                    print(f"[repair] {name} [{tag}]: rate-limited (429) — skipping retries, falling to next model", flush=True)
+                    break   # advance the ladder to the next model immediately; don't hammer a capped provider
                 print(f"[repair] {name} [{tag}] {attempt}: LLM errored ({e}) — retry", flush=True)
                 await asyncio.sleep(3); continue
             try:
@@ -191,12 +215,16 @@ async def phase2_author():
         '          {"who":"a","label":"Paziente","text":"<patient asks/says, IT>"},\n'
         '          {"who":"learner","label":"Tu (il medico)","text":"<the DOCTOR=Gyasi answers, IT — NEVER voiced>"}, ...6-8 turns]}}\n'
         "  ],\n"
+        '  "scenario": {"title":"<short IT clinical-scene title>","framing":"<one EN line: the bedside/ward situation>",\n'
+        '     "messages":[{"sender":"paziente","senderLabel":"Il paziente","avatarChar":"P","body":"<patient speaks, IT>","bodyEn":"<EN>"},\n'
+        '        {"sender":"you","senderLabel":"Tu (il medico)","avatarChar":"G","body":"<Gyasi the doctor replies, IT — clinically accurate>","bodyEn":"<EN>"}, ...8-12 turns, a realistic bedside encounter]},\n'
         '  "srCards": [{"front":"<IT term>","back":"<EN>"}, ... 8 cards],\n'
         '  "closingHtml": "<short IT riepilogo paragraph>"\n'
         "}\n\n"
         "RULES: clinically accurate Italian; vocab `it` = the Italian medical term, `en` = English. In the dialogue, the\n"
         "PATIENT is `who:\"a\"` (voiced) and the DOCTOR (Gyasi) is `who:\"learner\"` (NEVER voiced — his lines to speak).\n"
-        "slugs kebab-case + unique. Return ONLY the JSON."
+        "Include a `scenario` — a realistic bedside/ward CLINICAL chat (8-12 turns, patient ↔ Gyasi-the-doctor, every claim\n"
+        "accurate to the grounding; each message has `bodyEn` for the EN toggle). slugs kebab-case + unique. Return ONLY the JSON."
     )
 
     def valid(o):

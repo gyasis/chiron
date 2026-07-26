@@ -27,20 +27,32 @@ CHAIN = {
     ("medicine", "drug"):          "2026-07-06_chiron-medicine-systematic-chain",   # same chain, CH_TEMPLATE=drug
     ("medical-italian", "passage"): "2026-06-30_chiron-medical-italian-passage-chain",
     ("medical-italian", "ward"):    "2026-06-30_chiron-wards-lesson-chain",
-    ("italian", "lesson"):          "2026-06-30_chiron-pure-italian-lesson-chain",
+    ("language-it", "lesson"):      "2026-06-30_chiron-pure-italian-lesson-chain",
 }
-DEFAULT_DEPTH = {"medicine": "primer", "medical-italian": "ward", "italian": "lesson"}
+DEFAULT_DEPTH = {"medicine": "primer", "medical-italian": "ward", "language-it": "lesson"}
 
 
-def _atlas_systems():
+def _atlas_subjects():
+    """The EXACT set of subjects the atlas chain will accept — every system name PLUS its aliases,
+    lowercased. This MUST mirror the atlas chain's own match (`s['system']==SUBJECT or SUBJECT in
+    aliases`), so depth-routing and the atlas lookup never disagree."""
     try:
-        return [s["system"].lower() for s in json.loads(ATLAS.read_text())["systems"]]
+        out = set()
+        for s in json.loads(ATLAS.read_text())["systems"]:
+            out.add((s.get("system") or "").lower())
+            for a in (s.get("aliases") or []):
+                out.add((a or "").lower())
+        return out
     except Exception:
-        return []
+        return set()
 
 
 def detect_depth(subject, domain):
-    """Medicine only: cross-cutting(geriatrics)→primer, organ-system→atlas, else single-disease→systematic."""
+    """Medicine only: cross-cutting(geriatrics)→primer, an EXACT atlas system/alias→atlas, else→systematic.
+    'atlas' is chosen ONLY when the subject EXACTLY matches an atlas subject. The old code fuzzy-matched
+    (`k.split(' ')[0] in s`), so a disease-CLASS like 'Infectious Skin Diseases' matched the 'Infectious
+    Disease' SYSTEM → got atlas depth → then the atlas chain's exact lookup failed → hard abort. A
+    disease-class that merely shares a word with a system is a systematic deep-dive, never atlas."""
     if domain != "medicine":
         return None
     s = (subject or "").strip().lower()
@@ -48,7 +60,7 @@ def detect_depth(subject, domain):
         return None
     if "geriatr" in s:
         return "primer"
-    if any(s == k or (len(s) > 3 and (s in k or k.split(" ")[0] in s)) for k in _atlas_systems()):
+    if s in _atlas_subjects():
         return "atlas"
     return "systematic"
 
@@ -67,6 +79,7 @@ def _slug(domain, depth, subject):
 def resolve(domain, depth=None, subject="", subject_type=None, extra=None):
     """Return the routing decision: {runpy, chain_name, env, depth, domain, slug}."""
     domain = (domain or "medicine").lower()
+    if domain == "italian": domain = "language-it"   # back-compat: legacy routing token → canonical language-it
     extra = extra or {}
     if not depth:
         depth = {"system": "atlas", "disease": "systematic", "cross-cutting": "primer"}.get(subject_type)
@@ -93,7 +106,7 @@ def resolve(domain, depth=None, subject="", subject_type=None, extra=None):
         env["CH_TOPIC"] = subject
         if extra.get("setting"):
             env["CH_SETTING"] = extra["setting"]
-    elif domain == "italian":
+    elif domain == "language-it":
         env["CH_TOPIC"] = subject
     return {"runpy": str(chain / "run.py"), "chain_name": chain.name, "env": env,
             "depth": depth, "domain": domain, "slug": _slug(domain, depth, subject)}

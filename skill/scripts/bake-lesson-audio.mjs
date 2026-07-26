@@ -15,6 +15,7 @@
  *                      concepts | research-paper (default: 'language-it')
  *   --no-stories       Skip story-verbatim and story-description artifacts
  *   --no-dialogues     Skip dialogue artifacts
+ *   --no-passage       Skip the annotated-passage whole-passage listen (passage-fast/passage-slow)
  *   --no-qc            Disable Gemini audio QC (default: on when GEMINI_API_KEY/GOOGLE_API_KEY set)
  *   --dry-run          Parse + print the artifact plan; do NOT call bakeAudio
  */
@@ -52,6 +53,7 @@ let personaIdArg = null;
 let domainArg = null;
 let skipStories = false;
 let skipDialogues = false;
+let skipPassage = false;
 let dryRun = false;
 let noQc = false;
 
@@ -60,6 +62,7 @@ for (let i = 1; i < argv.length; i++) {
   if (argv[i] === '--domain' && argv[i + 1]) { domainArg = argv[++i]; continue; }
   if (argv[i] === '--no-stories') { skipStories = true; continue; }
   if (argv[i] === '--no-dialogues') { skipDialogues = true; continue; }
+  if (argv[i] === '--no-passage') { skipPassage = true; continue; }
   if (argv[i] === '--no-qc') { noQc = true; continue; }
   if (argv[i] === '--dry-run') { dryRun = true; continue; }
 }
@@ -410,6 +413,60 @@ if (fs.existsSync(introPath)) {
 }
 
 // ---------------------------------------------------------------------------
+// 2g — Passage whole-reading (SSM/language-it `passage` sub-mode)
+//
+// A `passage` lesson (annotated-passage widget, no story-/dlg- anchors) has a
+// `.passage-listen` widget in lesson.html with `data-src="audio/section/<name>.mp3"`
+// buttons (typically passage-fast + passage-slow — see curricula/language-it-passage.json
+// `passageReadings`). The passage TEXT lives in breakdown.json's `annotated-passage`
+// widget(s) (`widgets[].sentences[].text`, idx-ordered) — NOT in the per-sentence
+// audioId (that's unused metadata; the player only ever requests the two whole-
+// passage clips). Emit one `kind:'section'` artifact per required clip name; the
+// "slow" variant gets `speed:0.8` so audio-bake.ts applies its existing
+// pitch-preserved atempo (the same mechanism used for the Dia slow-read fallback —
+// see audio-bake.ts ~line 674, "language-it passage slow-reads use omni+atempo").
+// ---------------------------------------------------------------------------
+const passageArtifacts = [];
+if (!skipPassage) {
+  // Ground truth: which section clip names does the PAGE actually request?
+  const requiredNames = new Set();
+  const plBtnRe = /<button[^>]*\bclass="pl-btn"[^>]*\bdata-src="audio\/section\/([\w-]+)\.mp3"[^>]*>/gi;
+  let pm;
+  while ((pm = plBtnRe.exec(html)) !== null) requiredNames.add(pm[1]);
+
+  if (requiredNames.size > 0) {
+    const breakdownPath = path.join(lessonDir, 'breakdown.json');
+    let passageSentences = [];
+    if (fs.existsSync(breakdownPath)) {
+      try {
+        const bd = JSON.parse(fs.readFileSync(breakdownPath, 'utf8'));
+        const apWidgets = (bd.widgets || []).filter((w) => w.type === 'annotated-passage');
+        for (const w of apWidgets) {
+          const sentences = [...(w.sentences || [])].sort((a, b) => (a.idx ?? 0) - (b.idx ?? 0));
+          for (const s of sentences) {
+            if (s.text) passageSentences.push(s.text);
+          }
+        }
+      } catch (e) {
+        process.stderr.write(`[bake-lesson-audio] WARNING: could not parse breakdown.json: ${e.message}\n`);
+      }
+    }
+
+    if (passageSentences.length === 0) {
+      process.stderr.write(`[bake-lesson-audio] passage-listen widget requests ${[...requiredNames].join(', ')} but no annotated-passage sentences found in breakdown.json — skipping\n`);
+    } else {
+      for (const name of requiredNames) {
+        const segments = passageSentences.map((text) => ({ lang: 'it', text, gapAfter: 'sentence' }));
+        const art = { kind: 'section', sectionId: name, segments };
+        if (/slow/i.test(name)) art.speed = 0.8; // slow & enunciated — omni + pitch-preserved atempo
+        passageArtifacts.push(art);
+      }
+      process.stderr.write(`[bake-lesson-audio] passage: ${passageSentences.length} sentence(s) → clips [${[...requiredNames].join(', ')}]\n`);
+    }
+  }
+}
+
+// ---------------------------------------------------------------------------
 // Step 3 — Resolve and assemble artifacts
 // ---------------------------------------------------------------------------
 
@@ -419,6 +476,7 @@ const toResolve = [
   ...pearlArtifacts,
   ...storyArtifacts,
   ...lectureArtifacts,
+  ...passageArtifacts,
 ];
 
 let resolvedArtifacts = [];

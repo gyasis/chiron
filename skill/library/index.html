@@ -49,6 +49,40 @@ body{margin:0;font-family:var(--font-b);background:var(--chiron-bg);color:var(--
 .rcount{font-family:var(--font-h);font-size:13px;color:var(--chiron-fg-secondary);font-weight:600}
 .crumb{font-size:12px;color:var(--chiron-muted)}.crumb b{color:var(--chiron-accent)}
 .clr{font-size:12px;color:var(--chiron-accent);cursor:pointer;margin-left:auto}
+.rhead .rhactions{margin-left:auto;display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:flex-end}
+.rhead .rhactions .clr{margin-left:0}
+.rhead .selbtn{font-size:12px;color:var(--chiron-accent);cursor:pointer;border:1px solid var(--chiron-accent);border-radius:7px;padding:3px 9px;font-weight:600;white-space:nowrap}
+.rhead .selbtn.on{background:var(--chiron-accent);color:#fff}
+.rhead .bakebtn{font-size:12px;color:#0e7490;cursor:pointer;border:1px solid #0e7490;border-radius:7px;padding:3px 9px;font-weight:600;white-space:nowrap}
+.rhead .bakebtn.on{background:#0e7490;color:#fff}
+.rhead .gennext{display:inline-flex;align-items:center;gap:5px;font-size:12px;color:var(--chiron-muted);white-space:nowrap}
+.rhead .gennext input{width:50px;padding:3px 6px;border:1px solid var(--chiron-border);border-radius:6px;font:600 12px system-ui;background:var(--chiron-surface);color:var(--chiron-fg)}
+.rhead .gennext button{border:0;background:var(--chiron-elevated);color:var(--chiron-accent);border-radius:6px;padding:4px 9px;font:600 12px system-ui;cursor:pointer;white-space:nowrap}
+.tcard{position:relative}
+.tcard.selectable{cursor:pointer}
+.tcard.selectable:hover{outline:2px solid var(--chiron-accent);outline-offset:-2px}
+.tcard.selected{outline:2px solid var(--chiron-accent);outline-offset:-2px;background:color-mix(in oklch, var(--chiron-accent) 12%, var(--chiron-surface))}
+.tcard .selmark{position:absolute;top:8px;right:8px;width:22px;height:22px;border-radius:50%;border:2px solid var(--chiron-accent);background:var(--chiron-surface);color:#fff;display:flex;align-items:center;justify-content:center;font:800 13px system-ui;z-index:2}
+.tcard .selmark.on{background:var(--chiron-accent);border-color:var(--chiron-accent)}
+.selband{background:color-mix(in oklch, var(--chiron-accent) 14%, var(--chiron-surface));border:1px solid var(--chiron-accent);color:var(--chiron-fg);border-radius:10px;padding:9px 13px;margin:0 0 12px;font-size:12.5px}
+.selband b{color:var(--chiron-accent)}
+.batchbar{position:fixed;left:50%;transform:translateX(-50%);bottom:18px;background:var(--chiron-surface);color:var(--chiron-fg);border:1px solid var(--chiron-border);border-radius:14px;padding:9px 12px;display:flex;align-items:center;gap:10px;box-shadow:0 8px 30px rgba(0,0,0,.28);z-index:50;font:600 13px system-ui;max-width:94vw;flex-wrap:wrap}
+.batchbar button{border:0;border-radius:9px;padding:7px 12px;font:700 12px system-ui;cursor:pointer}
+.batchbar .bgen{background:var(--chiron-accent);color:#fff}
+.batchbar .bgen:disabled{opacity:.4;cursor:not-allowed}
+.batchbar .ball{background:var(--chiron-elevated);color:var(--chiron-fg)}
+.batchbar .bclr{background:none;color:var(--chiron-muted);padding:6px 8px}
+#facets .ssmrow{display:flex;align-items:center;gap:9px;padding:8px 16px;cursor:pointer;border-bottom:1px solid var(--chiron-divider)}
+#facets .ssmrow:hover{background:var(--chiron-surface)}
+#facets .ssmrow .hn{flex:1;font-size:13px;font-weight:600;color:var(--chiron-fg-secondary)}
+#facets .ssmrow.on .hn{color:var(--chiron-accent)}
+#facets .ssmrow .hc{font-size:11px;color:var(--chiron-muted);background:var(--chiron-elevated);border-radius:99px;padding:1px 7px}
+#facets .ssmsw{width:34px;height:19px;border-radius:99px;background:var(--chiron-border);position:relative;transition:background .15s;flex:0 0 auto}
+#facets .ssmrow.on .ssmsw{background:var(--chiron-accent)}
+#facets .ssmsw .ssmknob{position:absolute;top:2px;left:2px;width:15px;height:15px;border-radius:50%;background:#fff;transition:left .15s;box-shadow:0 1px 2px rgba(0,0,0,.3)}
+#facets .ssmrow.on .ssmsw .ssmknob{left:17px}
+#facets .ssmgen{display:block;margin:0 16px 10px;padding:6px 10px;font-size:11.5px;font-weight:700;color:var(--chiron-accent);background:var(--chiron-elevated);border-radius:8px;text-decoration:none;text-align:center}
+#facets .ssmgen:hover{background:var(--chiron-surface);filter:brightness(1.05)}
 .row{display:flex;align-items:center;gap:12px;padding:9px 18px;border-bottom:1px solid var(--chiron-divider);cursor:pointer;text-decoration:none;color:inherit}
 .row:hover{background:var(--chiron-surface)}
 .row.bank{background:rgba(200,163,63,.06)}
@@ -118,6 +152,9 @@ body{margin:0;font-family:var(--font-b);background:var(--chiron-bg);color:var(--
 .tcard.medicine{background:var(--medbg)}.tcard.medical-italian{background:var(--meditbg)}.tcard.italian{background:var(--langbg)}.tcard.code{background:var(--codebg)}
 .tcard.medicine .db{background:var(--med);color:#fff}.tcard.medical-italian .db{background:var(--medit);color:#fff}.tcard.italian .db{background:var(--lang);color:#fff}.tcard.code .db{background:var(--code);color:#fff}
 .tcard .tclips{font-size:10px;color:var(--chiron-muted)}
+.tcard .tclips.baked{cursor:pointer}.tcard .tclips.baked:hover{color:var(--chiron-accent)}
+.tcard .tbake{font:700 10px system-ui;color:#047857;background:#d1fae5;border:0;border-radius:7px;padding:3px 8px;cursor:pointer;white-space:nowrap}
+.tcard .tbake:hover{background:#a7f3d0}
 .tcard .taction{margin-left:auto;font-size:10.5px;font-weight:700;border-radius:99px;padding:4px 11px;white-space:nowrap}
 .tcard .taction.open{color:var(--chiron-accent);border:1px solid var(--chiron-border)}
 .tcard .taction.open:hover{background:var(--chiron-accent);color:#fff}
@@ -271,7 +308,7 @@ body,.topbar,.pills,.facets,.row,.rhead{transition:background .2s,color .2s,bord
   <div class="body">
     <div class="facets" id="facets"></div>
     <div class="results">
-      <div class="rhead"><span class="rcount" id="rcount">…</span><span class="crumb" id="crumb"></span><span class="clr" onclick="LIB.clearAll()">Clear all</span></div>
+      <div class="rhead"><span class="rcount" id="rcount">…</span><span class="crumb" id="crumb"></span><span class="rhactions"><span class="selbtn" id="selbtn" onclick="LIB.toggleSelectMode()" title="Select multiple to-generate lessons, then batch-generate (text only)">☑ Select</span><span class="bakebtn" id="bakebtn" onclick="LIB.toggleBakeMode()" title="Pick generated lessons that have no audio yet, then batch-bake their audio (⚡Fast / 🐢Mac)">🔊 Bake audio</span><span class="gennext">next <input id="gennextN" type="number" min="1" max="200" value="10"><button onclick="LIB.genNext()" title="Queue the next N to-generate lessons in this filter (text only)">✦ Generate →</button></span><span class="clr" onclick="LIB.clearAll()">Clear all</span></span></div>
       <div id="rows"></div>
     </div>
   </div>
@@ -314,6 +351,26 @@ body,.topbar,.pills,.facets,.row,.rhead{transition:background .2s,color .2s,bord
  #jobslist .jbakebtns{display:flex;gap:6px}
  #jobslist .jbakefast{background:#d1fae5;color:#047857;border:0;border-radius:8px;padding:5px 11px;font:800 11px system-ui;cursor:pointer;white-space:nowrap;text-transform:none;letter-spacing:0}
  #jobslist .jbakefast:hover{background:#a7f3d0}
+ #jobslist .jpause{background:#e2e8f0;color:#334155;border:0;border-radius:8px;padding:5px 11px;font:800 11px system-ui;cursor:pointer;white-space:nowrap;text-transform:none;letter-spacing:0}
+ #jobslist .jpause:hover{background:#cbd5e1}
+ #jobslist .jpause.resumed{background:#fee2e2;color:#b91c1c}
+ #jobslist .jpause.resumed:hover{background:#fecaca}
+ #jobslist .jprov{display:flex;gap:4px;align-items:center}
+ #jobslist .provpill{background:#f1f5f9;color:#94a3b8;border:1px solid #e2e8f0;border-radius:99px;padding:4px 9px;font:700 11px system-ui;cursor:pointer;white-space:nowrap}
+ #jobslist .provpill:hover{border-color:#94a3b8}
+ #jobslist .provpill.on{background:#334155;color:#fff;border-color:#334155}
+ #jobslist .jbakelane{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:5px 9px;border-radius:9px;border:1px dashed #e2e8f0;background:#f8fafc}
+ #jobslist .jbakelane.idle{color:#94a3b8;border-color:#eef2f6}
+ #jobslist .jbakelane.busy{color:#0f766e;border-color:#99f6e4;background:#f0fdfa}
+ #jobslist .jbakelane .blchips{display:flex;gap:4px;text-transform:none;letter-spacing:0}
+ #jobslist .blchip{border-radius:99px;padding:2px 8px;font:800 10px system-ui;white-space:nowrap}
+ #jobslist .blchip.modal{background:#ecfeff;color:#0e7490;border:1px solid #a5f3fc}
+ #jobslist .blchip.mac{background:#f1f5f9;color:#475569;border:1px solid #e2e8f0}
+ #jobslist .blchip.q{background:#fff7ed;color:#c2410c;border:1px solid #fed7aa}
+ /* Full-page panel is a flex column — stop the rebake-lane bar + its chips stretching to full height (the vertical-strip bug). */
+ #jobslist .jbakelane{flex:0 0 auto;align-items:center}
+ #jobslist .jbakelane .blchips{align-self:center;flex:0 0 auto}
+ #jobslist .blchip{align-self:center;height:-moz-fit-content;height:fit-content}
  .modal-h .jclearfail{margin-left:auto;margin-right:8px;background:#fee2e2;color:#b91c1c;border:0;border-radius:8px;padding:5px 11px;font:800 11px system-ui;cursor:pointer;white-space:nowrap}
  .modal-h .jclearfail:hover{background:#fecaca}
  #jobslist .jrow{display:flex;align-items:center;gap:10px;padding:9px 4px;border-top:1px solid rgba(148,163,184,.2)}
@@ -321,6 +378,10 @@ body,.topbar,.pills,.facets,.row,.rhead{transition:background .2s,color .2s,bord
  #jobslist .jrow.gen .jdot{background:#f59e0b;animation:jp 1s infinite}
  #jobslist .jrow.ready .jdot{background:#10b981}
  #jobslist .jrow.error .jdot{background:#ef4444}
+ #jobslist .jrow.audio-failed .jdot{background:#f97316}
+ #jobslist .jrow.cancelled .jdot{background:#94a3b8;opacity:.5}
+ #jobslist .jrow.genq .jdot{background:#cbd5e1}   /* queued/held (NOT running) — static grey, not the animated red */
+ #jobslist .jrow.genq .jsub{color:#94a3b8}
  @keyframes jp{50%{opacity:.3}}
  #jobslist .jmeta{flex:1;min-width:0;display:flex;flex-direction:column}
  #jobslist .jmeta b{font:600 13px system-ui;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -330,11 +391,24 @@ body,.topbar,.pills,.facets,.row,.rhead{transition:background .2s,color .2s,bord
  #jobslist .jretry{background:#fee2e2;color:#b91c1c}
  #jobslist .jaccept{background:#dff3e6;color:#1f7a44;border:0;border-radius:8px;padding:5px 11px;font:700 11px system-ui;cursor:pointer;white-space:nowrap}
  #jobslist .jrebake{background:#fdead0;color:#b5641a;border:0;border-radius:8px;padding:5px 11px;font:700 11px system-ui;cursor:pointer;white-space:nowrap}
- #jobslist .bakemode{display:inline-flex;border-radius:8px;overflow:hidden;border:1px solid #e5d3b8;vertical-align:middle}
- #jobslist .bakemode .bm{background:#faf6ef;color:#9a7b52;border:0;padding:5px 9px;font:700 11px system-ui;cursor:pointer;white-space:nowrap}
- #jobslist .bakemode .bm.on{background:#fdead0;color:#b5641a}
- #jobslist .bakemode .bm.fast.on{background:#d1fae5;color:#047857}
- @media(min-width:900px){ #jobsback .modal{max-width:min(860px,92vw)} }   /* wide on desktop; phone keeps the narrow 520 */
+ .engchoose{position:fixed;inset:0;background:rgba(20,14,6,.45);display:flex;align-items:center;justify-content:center;z-index:9999}
+ .engchoose .ecbox{background:#fffdf8;border-radius:16px;padding:20px;max-width:min(420px,92vw);box-shadow:0 12px 40px rgba(0,0,0,.25);text-align:center}
+ .engchoose .ectitle{font:700 15px system-ui;color:#4a3b28;margin-bottom:14px}
+ .engchoose .ecbtns{display:flex;gap:10px;margin-bottom:10px}
+ .engchoose .ecbtn{flex:1;display:flex;flex-direction:column;gap:3px;align-items:center;border:0;border-radius:12px;padding:14px 10px;font:800 15px system-ui;cursor:pointer}
+ .engchoose .ecbtn small{font:600 11px system-ui;opacity:.85}
+ .engchoose .ecfast{background:#d1fae5;color:#047857}
+ .engchoose .ecfast:hover{background:#a7f3d0}
+ .engchoose .ecmac{background:#fdead0;color:#b5641a}
+ .engchoose .ecmac:hover{background:#fbd9a8}
+ .engchoose .eccancel{background:none;border:0;color:#9a7b52;font:600 12px system-ui;cursor:pointer;padding:6px}
+ @media(max-width:520px){ .engchoose .ecbtns{flex-direction:column} }
+ /* Generation activity = FULL PAGE (wide + full height, list scrolls inside) — was a small modal. */
+ /* NB: `> .modal` (direct child) so this does NOT also hit the `.blchip.modal` engine chip — a `.modal` class collision made the chip 828px tall. */
+ #jobsback{padding:16px}
+ #jobsback > .modal{width:100%;max-width:min(1200px,97vw);height:calc(100vh - 32px);max-height:calc(100vh - 32px);display:flex;flex-direction:column}
+ #jobsback .modal-b{flex:1;overflow:auto}
+ @media(min-width:900px){ #jobsback > .modal{max-width:min(1200px,97vw)} }
  .jdepth{font:700 8.5px ui-monospace,monospace;padding:1px 6px;border-radius:5px;background:var(--chiron-elevated);color:var(--chiron-fg-secondary);margin-left:6px;text-transform:uppercase;letter-spacing:.03em;white-space:nowrap}
  .jdepth.medicine{background:#eef4fb;color:#1e6fbf}.jdepth.medical-italian{background:#f3e9d8;color:#b3522e}.jdepth.italian{background:#eef3e6;color:#6b8e4e}
  #jobslist .jdismiss{background:transparent;border:0;color:var(--chiron-muted);cursor:pointer;font-size:15px;line-height:1;padding:3px 6px;border-radius:6px}
@@ -347,6 +421,7 @@ body,.topbar,.pills,.facets,.row,.rhead{transition:background .2s,color .2s,bord
  .jpill.rebake{background:#fdead0;color:#b5641a}   /* 🔥 needs rebaking */
  .jpill.viewable{background:#e6f0fb;color:#1e6fbf} /* 📖 readable, audio pending */
  .jpill.fail{background:#fde2e2;color:#b91c1c}     /* real failure */
+ .jpill.pending{background:#e0f2fe;color:#0369a1}  /* 🔊 text ready, audio not baked yet (calm, not an error) */
  /* timeline rail (per-lesson generation observability) */
  #jobslist .rail{margin:2px 0 10px 6px}
  .tlrail{position:relative;padding-left:20px}
