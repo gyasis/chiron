@@ -24,7 +24,7 @@ loop with a rich validator + a whole-lesson QC judge.
 Run:  cd ~/Documents/PromptChain && CH_TOPIC="how to use the word appunto" CH_STAGE=assemble \
         bash scripts/observe.sh runs/2026-06-30_chiron-pure-italian-lesson-chain
 Env:  OLLAMA_API_KEY ; CH_TOPIC (required) ; CH_STAGE (author|assemble|audio|all) ;
-      CH_AUTHOR_LADDER (glm-5.1,claude,gemini/gemini-flash-latest) ; CH_MODEL_REASON/STRUCT/QC ; CH_QC_ROUNDS ; CH_FORCE.
+      CH_AUTHOR_LADDER (glm-5.1,claude,deepseek-v4-flash) ; CH_MODEL_REASON/STRUCT/QC ; CH_QC_ROUNDS ; CH_FORCE.
 """
 from promptchain.observability import init_mlflow
 init_mlflow()
@@ -69,7 +69,7 @@ STAGE = os.environ.get("CH_STAGE", "author")
 # (gemini-flash) so the judge doesn't share the author's blind spots. max_tokens AUTOMATIC.
 MODEL_REASON = os.environ.get("CH_MODEL_REASON", "glm-5.1")     # Phase 1 plan
 MODEL_STRUCT = os.environ.get("CH_MODEL_STRUCT", "glm-5.1")     # Phase 2 per-section author
-MODEL_QC = os.environ.get("CH_MODEL_QC", "gemini/gemini-flash-latest")  # Phase 2.5 judge (different family)
+MODEL_QC = os.environ.get("CH_MODEL_QC", "deepseek-v4-flash")  # Phase 2.5 judge (different family, Ollama Cloud)
 # Section authoring is governed by AUTHOR_LADDER (below), not a single engine — CH_AUTHOR_LADDER overrides it.
 QC_ROUNDS = int(os.environ.get("CH_QC_ROUNDS", "0"))   # 0 = lean (Phase-2 validator + assemble gate suffice, like the medicine chain); set 1 to add the LLM QC re-author pass
 N_SECTIONS = int(os.environ.get("CH_SECTIONS", "8"))
@@ -83,13 +83,13 @@ def ollama(model=MODEL_STRUCT, t=0.45):
 
 
 # Model FALLBACK ladder: when the primary can't produce valid JSON after its repairs, try the next model.
-_FB = [m.strip() for m in os.environ.get("CH_MODEL_FALLBACKS", "gemma4:31b,gemini/gemini-flash-latest,gpt-5-mini").split(",") if m.strip()]
-FALLBACKS = [m for m in _FB if not (m.startswith("gpt-") and not OPENAI_KEY) and not (m.startswith("gemini") and not GEMINI_KEY)]
+_FB = [m.strip() for m in os.environ.get("CH_MODEL_FALLBACKS", "local/gemma4:12b,deepseek-v4-flash,gpt-5-mini").split(",") if m.strip()]
+FALLBACKS = [m for m in _FB if not (m.startswith("gpt-") and not OPENAI_KEY) and not (m.startswith("gemini") and not GEMINI_KEY) and not (m.startswith("local/") and not os.environ.get("CH_LOCAL_BASE"))]
 
 # AUTHOR engine ladder (Phase-2 section authoring ONLY): glm (primary) -> claude (headless CLI) -> gemini-flash.
 # glm authors first (fast, its 3 repairs); only if it CAN'T produce valid output do we fall to claude, then gemini.
 # "claude" = the claude -p CLI (always available, not a litellm key); everything else routes through model_for/llm.
-_AL = [m.strip() for m in os.environ.get("CH_AUTHOR_LADDER", "glm-5.1,claude,gemini/gemini-flash-latest").split(",") if m.strip()]
+_AL = [m.strip() for m in os.environ.get("CH_AUTHOR_LADDER", "glm-5.1,claude,deepseek-v4-flash").split(",") if m.strip()]
 AUTHOR_LADDER = [m for m in _AL if m == "claude" or (not (m.startswith("gpt-") and not OPENAI_KEY) and not (m.startswith("gemini") and not GEMINI_KEY))]
 
 
@@ -154,8 +154,8 @@ async def json_with_repair(prompt, name, md, validate_fn=None, max_repair=3, via
     """Self-repair loop + MODEL FALLBACK (medicine/passage pattern). Re-prompt the current model on bad
     JSON / failed validate up to max_repair (feeding validate_fn's issues into a ## PROBLEMS re-prompt);
     if it STILL can't, fall back to the next model in the ladder. Returns None on total exhaustion (caller
-    flags needs_review + KEEPS GOING). via_engine=True uses the AUTHOR_LADDER (glm->claude->gemini-flash)."""
-    # Section authoring uses the AUTHOR_LADDER (glm -> claude -> gemini-flash); plan/extras/QC use the litellm FALLBACKS ladder.
+    flags needs_review + KEEPS GOING). via_engine=True uses the AUTHOR_LADDER (glm->claude->deepseek)."""
+    # Section authoring uses the AUTHOR_LADDER (glm -> claude -> deepseek); plan/extras/QC use the litellm FALLBACKS ladder.
     ladder = [_author_item(m) for m in AUTHOR_LADDER] if via_engine else ([md] + [model_for(m) for m in FALLBACKS])
     last = ""
     for mi, cmd in enumerate(ladder):
@@ -339,7 +339,15 @@ async def phase1_plan(avoid: dict):
 
 # ── Phase 2 — PER-SECTION AUTHOR (author-ladder + over_worklist) ────────────────────
 def _strip_tags(h): return re.sub(r"<[^>]+>", " ", h or "")
-BARE_QUOTE_RE = re.compile(r"[A-Za-z]\s'[a-zà-ùéèìòùé]{2,}'", re.I)
+BARE_QUOTE_RE = re.compile(r"[A-Za-z]\s'([a-zà-ùéèìòùé]{2,})'", re.I)   # capture the quoted word so we can tell an ITALIAN citation from an ENGLISH gloss
+# English gloss / function words that legitimately appear single-quoted (a translation, e.g. <em>appena</em> means 'just').
+# The rule targets BARE ITALIAN cited without <em>; an English gloss is NOT that. Keep to unambiguous English (avoids Italian look-alikes like 'a','in','no','me','so','e','la').
+_EN_GLOSS = {"just", "already", "yet", "still", "never", "ever", "anymore", "always", "sometimes", "often",
+             "means", "mean", "meaning", "roughly", "literally", "about", "like", "here", "there",
+             "this", "that", "these", "those", "more", "most", "very", "when", "where", "why", "what",
+             "which", "they", "them", "their", "your", "our", "his", "her", "its", "been", "being",
+             "were", "was", "are", "will", "would", "some", "each", "with", "from", "into", "than",
+             "then", "over", "under", "again", "once", "used", "use", "same", "also", "both", "only"}
 
 
 def _rich_blob(sec: dict) -> str:
@@ -367,7 +375,7 @@ def sec_valid(s):
         iss.append(f"need >=6 <em>-wrapped Italian citations in this section (have {n_em}) — wrap EVERY cited Italian word in <em>")
     if "<strong>" not in (s.get("introHtml") or ""):
         iss.append("introHtml must <strong>-define the section's key term on first mention")
-    bare = BARE_QUOTE_RE.findall(blob)
+    bare = [w for w in BARE_QUOTE_RE.findall(blob) if w.lower() not in _EN_GLOSS]   # ignore English glosses (translations), flag only bare ITALIAN citations
     if len(bare) > 2:
         iss.append(f"bare-quoted Italian in English prose ({bare[:3]}) — wrap Italian in <em>…</em>, not '…'")
     short_notes = [v.get("slug") or v.get("it") for v in vocab
