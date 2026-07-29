@@ -117,7 +117,7 @@ function renderPills(){
 }
 /* ---- W1 hide-rail: domain + system, click a row to gray it out & drop it from the wall ---- */
 const CHK = '<span class="box"><svg viewBox="0 0 12 12"><path d="M2 6l3 3 5-6"/></svg></span>';
-const domCode = d => ({medicine:'m','medical-italian':'mi','language-it':'l',italian:'l',code:'l'}[d] || 'm');
+const domCode = d => ({medicine:'m','medical-italian':'mi','language-it':'l',italian:'l','video-it':'l',code:'l'}[d] || 'm');
 function railSystems(){ const L=LESSONS.filter(l=>F.showSSM||!isSSM(l)); return [...new Set(L.map(l=>l.system).filter(Boolean))]
   .map(s=>[s, L.filter(l=>l.system===s).length]).sort((a,b)=>b[1]-a[1]); }
 function renderFacets(){                                        // (id="facets" kept; now the hide-rail)

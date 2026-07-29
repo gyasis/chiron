@@ -19,7 +19,9 @@ const index = JSON.parse(readFileSync(join(OUT, 'library.index.json'), 'utf8'));
 const onlyIdx = process.argv.indexOf('--only');
 const only = onlyIdx >= 0 ? process.argv[onlyIdx + 1] : null;   // bundle ONE slug (the server calls this on accept)
 const ready = index.lessons.filter((l) => l.ready && (!only || l.id.replace(/[\/]/g, '-') === only));
-const DOMAP = { medicine: 'medicine', 'medical-italian': 'language-it', 'language-it': 'language-it', italian: 'language-it', 'video-it': 'language-it' };
+// Pass the REAL category domain to the bundler (identity) — NOT a theme remap. The bundler now preserves
+// an existing domain anyway (bundle-lesson.sh), so this only seeds a first bundle; it must be the true domain.
+const DOMAP = { medicine: 'medicine', 'medical-italian': 'medical-italian', 'language-it': 'language-it', italian: 'language-it', 'video-it': 'video-it' };
 const catalog = [];
 let ok = 0, fail = 0;
 for (const l of ready) {
