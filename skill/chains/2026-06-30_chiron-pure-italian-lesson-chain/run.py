@@ -549,8 +549,9 @@ def merge_content() -> dict:
     ex = json.loads((OUT / "extras.json").read_text()) if (OUT / "extras.json").exists() else {}
     cold = ex.get("coldOpen") or {"it": "", "en": ""}
     content = {
-        "title": TOPIC.strip().capitalize() if TOPIC else "Lezione",
+        "title": TOPIC.strip().capitalize() if TOPIC else "Lezione",   # the LESSON title = the topic (NOT chapter-1's heading)
         "subtitle": "", "langName": "Italiano", "cefr": "A2-B1",
+        "domain": "language-it",   # explicit domain so the catalog/library NEVER has to guess or default (this is a language-it lesson)
         "coldOpen": {"it": cold.get("it", ""), "en": cold.get("en", "")},
         "sections": load_sections(),
         "matchMadness": ex.get("matchMadness") or {"pairs": []},
@@ -561,10 +562,6 @@ def merge_content() -> dict:
     }
     if content["scenario"] is None:
         content.pop("scenario")
-    # title from section 1's plan/title if available (nicer than the raw topic)
-    if content["sections"]:
-        t0 = content["sections"][0].get("title", "")
-        content["title"] = re.sub(r"^\d+\s+", "", t0) or content["title"]
     (OUT / "content.json").write_text(json.dumps(content, ensure_ascii=False, indent=2))
     return content
 

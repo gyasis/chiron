@@ -131,7 +131,10 @@ for (const d of dirs) {
   // tags: prefer chiron.json.tags (future), else override map, else infer
   let tags = cj.tags || OVERRIDE[rel] || OVERRIDE[rel.replace(/^chiron-medicina-italiana\//, '')] || null;
   if (!tags) {
-    const rawDom = cj.domain || (/medicina-italiana/.test(rel) ? 'language-it' : 'medicine');
+    // SLUG is authoritative for the chiron naming convention — a stored cj.domain can be a stale wrong default
+    // (top-level `chiron-italian-*` lessons were being mis-stamped 'medicine'). Italian slug ALWAYS wins.
+    const rawDom = /^chiron-italian-/.test(rel) ? 'language-it'
+                 : cj.domain || (/medicina-italiana/.test(rel) ? 'language-it' : 'medicine');
     if (rawDom === 'medicine') {
       const subj = subjFor(title, ''); tags = { dom: 'medicine', sys: sysFor(subj), subj };
     } else { // language-it → medical-italian (wards/patologie) vs italian (general)

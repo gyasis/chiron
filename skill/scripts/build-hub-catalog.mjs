@@ -19,7 +19,7 @@ const index = JSON.parse(readFileSync(join(OUT, 'library.index.json'), 'utf8'));
 const onlyIdx = process.argv.indexOf('--only');
 const only = onlyIdx >= 0 ? process.argv[onlyIdx + 1] : null;   // bundle ONE slug (the server calls this on accept)
 const ready = index.lessons.filter((l) => l.ready && (!only || l.id.replace(/[\/]/g, '-') === only));
-const DOMAP = { medicine: 'medicine', 'medical-italian': 'language-it', italian: 'language-it' };
+const DOMAP = { medicine: 'medicine', 'medical-italian': 'language-it', 'language-it': 'language-it', italian: 'language-it', 'video-it': 'language-it' };
 const catalog = [];
 let ok = 0, fail = 0;
 for (const l of ready) {
