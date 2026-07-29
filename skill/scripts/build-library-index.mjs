@@ -131,11 +131,17 @@ for (const d of dirs) {
   // tags: prefer chiron.json.tags (future), else override map, else infer
   let tags = cj.tags || OVERRIDE[rel] || OVERRIDE[rel.replace(/^chiron-medicina-italiana\//, '')] || null;
   if (!tags) {
-    // SLUG is authoritative for the chiron naming convention — a stored cj.domain can be a stale wrong default
-    // (top-level `chiron-italian-*` lessons were being mis-stamped 'medicine'). Italian slug ALWAYS wins.
-    const rawDom = /^chiron-italian-/.test(rel) ? 'language-it'
-                 : cj.domain || (/medicina-italiana/.test(rel) ? 'language-it' : 'medicine');
-    if (rawDom === 'medicine') {
+    // cj.domain is AUTHORITATIVE (the bundler now preserves it verbatim). Slug is only a corrective:
+    // a `chiron-italian-*` slug stamped 'medicine' is residue of the old reset bug → heal it to language-it.
+    // Every real category (incl. video-it) is emitted verbatim — the old else-branch collapsed everything
+    // non-medicine into language-it/medical-italian, which is why video-it could NEVER survive re-indexing.
+    let rawDom = cj.domain
+              || (/^chiron-italian-/.test(rel) ? 'language-it'
+              : /medicina-italiana/.test(rel) ? 'language-it' : 'medicine');
+    if (rawDom === 'medicine' && /^chiron-italian-/.test(rel)) rawDom = 'language-it';   // heal legacy mis-stamp
+    if (rawDom === 'video-it') {
+      tags = { dom: 'video-it', subj: cj.subject || subjFor(title, ''), level: cj.level || 'B1', scope: 'episode' };
+    } else if (rawDom === 'medicine') {
       const subj = subjFor(title, ''); tags = { dom: 'medicine', sys: sysFor(subj), subj };
     } else { // language-it → medical-italian (wards/patologie) vs italian (general)
       const ward = (rel.match(/wards\/([a-z-]+)/) || [])[1];
