@@ -490,6 +490,43 @@ const preResolvedDialogues = dialogueArtifacts.map(({ _preResolved, _voiced, _sk
 const allArtifacts = [...resolvedArtifacts, ...preResolvedDialogues];
 
 // ---------------------------------------------------------------------------
+// One-pass collapse: merge adjacent SAME-VOICE segments into a single synth call.
+// When every segment of an artifact resolves to one voice there is no voice-switch to splice across,
+// and OmniVoice handles EN+IT code-switching in one pass (verified: full-section one-pass == spliced
+// quality). This drops the splice + halves synth calls for single-voice personas (lucrezia, pauls-tutor)
+// while multi-voice artifacts (patient/learner dialogues) keep their boundaries so each voice is synth'd
+// separately. A char cap keeps a pathologically long section chunked (2-3 calls) instead of one giant synth.
+const ONEPASS_MAX_CHARS = 1200;
+// Dialogue keeps its per-turn structure (turn-taking pauses are meaningful); everything else is narration
+// and reads better as one flowing pass (verified: full-section one-pass == spliced quality).
+const NO_COLLAPSE_KINDS = new Set(['dialogue']);
+function collapseSameVoice(segments) {
+  if (!Array.isArray(segments) || segments.length <= 1) return segments;
+  const out = [];
+  for (const s of segments) {
+    const prev = out[out.length - 1];
+    if (prev && prev.voice === s.voice && (prev.text.length + (s.text?.length ?? 0) + 1) <= ONEPASS_MAX_CHARS) {
+      prev.text = `${prev.text} ${s.text ?? ''}`.trim();
+      if (s.gapAfterMs != null) prev.gapAfterMs = s.gapAfterMs;   // keep the LAST segment's trailing gap
+      if (s.gapAfter != null) prev.gapAfter = s.gapAfter;
+    } else {
+      out.push({ ...s, text: (s.text ?? '').trim() });
+    }
+  }
+  return out;
+}
+let _cFrom = 0, _cTo = 0;
+for (const art of allArtifacts) {
+  if (NO_COLLAPSE_KINDS.has(art.kind)) continue;   // dialogues keep turn boundaries (multi-voice OR meaningful pauses)
+  const before = art.segments.length;
+  art.segments = collapseSameVoice(art.segments);
+  _cFrom += before; _cTo += art.segments.length;
+}
+if (_cTo < _cFrom) {
+  process.stderr.write(`[bake-lesson-audio] one-pass collapse: ${_cFrom} segments → ${_cTo} synth calls (narration merged same-voice; dialogues kept per-turn)\n`);
+}
+
+// ---------------------------------------------------------------------------
 // Dry-run: print plan and exit
 // ---------------------------------------------------------------------------
 if (dryRun) {

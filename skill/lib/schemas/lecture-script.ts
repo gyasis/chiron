@@ -89,7 +89,7 @@ export type LectureDomain = 'code' | 'medicine' | 'language-it' | 'research-pape
  * and fall back to `lucrezia_italian` for any Italian span.
  */
 export function voiceFor(lang: 'en' | 'it', domain: LectureDomain): string {
-  if (domain === 'language-it') return lang === 'it' ? 'lucrezia_italian' : 'lucrezia_english';
+  if (domain === 'language-it') return 'lucrezia_italian';   // en + it BOTH → her Italian voice: she code-switches EN/IT in one voice (verified one-pass == spliced). lucrezia_english retired (kept on disk, unused).
   return lang === 'it' ? 'lucrezia_italian' : 'pauls_tutor';
 }
 

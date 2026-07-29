@@ -92,7 +92,7 @@ def smoke():
     """Quick deploy smoke-test on a tiny synthetic lesson."""
     job = {"slug": "smoke", "num_step": 48,
            "refs": {"it": {"wav": "lucrezia_italian_ref.wav", "txt": "Ciao a tutti"},
-                    "en": {"wav": "lucrezia_english_ref.wav", "txt": "Hi everyone"}},
+                    "en": {"wav": "lucrezia_italian_ref.wav", "txt": "Ciao a tutti"}},   # en retired → her Italian voice (she code-switches EN/IT in one voice)
            "sections": {"s1": [{"lang": "en", "text": "Hello, this is a test."},
                                {"lang": "it", "text": "Questo è un test."}]}}
     r = bake_lesson.remote(job)
