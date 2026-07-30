@@ -739,6 +739,17 @@ html.chiron-tutor-pushed body {
   cursor: pointer; font-size: 15px; display: grid; place-items: center;
 }
 .ct-send:hover { background: var(--color-accent-hover, #C4432A); }
+.ct-mic {
+  flex: none; width: 34px; height: 34px; border-radius: 50%;
+  background: var(--color-surface-2, #f0efe9); color: var(--color-text-2, #6b6b6b);
+  border: 1px solid var(--color-border, #e2e2e2); cursor: pointer; display: grid; place-items: center;
+}
+.ct-mic:hover { color: var(--color-accent, #D94F30); border-color: var(--color-accent, #D94F30); }
+.ct-mic.listening {
+  background: var(--color-accent, #D94F30); color: #fff; border-color: var(--color-accent, #D94F30);
+  animation: ct-mic-pulse 1.2s ease-in-out infinite;
+}
+@keyframes ct-mic-pulse { 0%,100% { box-shadow: 0 0 0 0 rgba(217,79,48,.45); } 50% { box-shadow: 0 0 0 5px rgba(217,79,48,0); } }
 
 @media (max-width: 640px) {
   .chiron-tutor {

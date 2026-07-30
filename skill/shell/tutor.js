@@ -294,10 +294,36 @@
     inputRow = document.createElement('div'); inputRow.className = 'ct-input';
     textarea = document.createElement('textarea');
     textarea.rows = 1; textarea.placeholder = 'Ask the tutor…';
+    // ── Mic: browser-native speech-to-text via the Web Speech API (no server). Ported from acolyte/src/widget.ts.
+    var micBtn = document.createElement('button');
+    micBtn.type = 'button'; micBtn.className = 'ct-mic'; micBtn.title = 'Voice input (Web Speech API)'; micBtn.setAttribute('aria-label', 'Voice input');
+    micBtn.innerHTML = '<svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor" aria-hidden="true"><path d="M12 15a3 3 0 0 0 3-3V6a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.92V21h2v-2.08A7 7 0 0 0 19 12h-2z"/></svg>';
+    (function () {
+      var voiceRec = null, voiceActive = false, voiceBaseline = '';
+      micBtn.addEventListener('click', function () {
+        var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (!SR) { micBtn.style.opacity = '0.4'; micBtn.title = 'Voice input not supported here (try Chrome / Edge / Safari / Android)'; return; }
+        if (voiceActive && voiceRec) { try { voiceRec.stop(); } catch (e) {} return; }
+        var rec = new SR(); rec.continuous = true; rec.interimResults = true; rec.lang = navigator.language || 'en-US';
+        voiceBaseline = (textarea.value || '').replace(/\s+$/, '');
+        rec.onstart = function () { voiceActive = true; micBtn.classList.add('listening'); micBtn.title = 'Listening… click to stop'; };
+        rec.onresult = function (ev) {
+          var fin = '', intm = '';
+          for (var i = ev.resultIndex; i < ev.results.length; i++) { var r = ev.results[i]; if (r.isFinal) fin += r[0].transcript; else intm += r[0].transcript; }
+          if (fin) voiceBaseline = (voiceBaseline ? voiceBaseline + ' ' : '') + fin.trim();
+          textarea.value = voiceBaseline + (intm ? (voiceBaseline ? ' ' : '') + intm : '');
+          textarea.dispatchEvent(new Event('input', { bubbles: true })); // keep autosize/state in sync
+          textarea.scrollTop = textarea.scrollHeight;
+        };
+        rec.onerror = function (e) { if (e.error === 'not-allowed' || e.error === 'service-not-allowed') micBtn.title = 'Mic permission denied — allow it in the address bar'; };
+        rec.onend = function () { voiceActive = false; micBtn.classList.remove('listening'); micBtn.title = 'Voice input (Web Speech API)'; };
+        voiceRec = rec; try { rec.start(); } catch (e) {}
+      });
+    })();
     sendBtn = document.createElement('button');
     sendBtn.type = 'button'; sendBtn.className = 'ct-send'; sendBtn.setAttribute('aria-label', 'Send');
     sendBtn.innerHTML = '<svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor" aria-hidden="true"><path d="M2 21l21-9L2 3v7l15 2-15 2z"/></svg>';
-    inputRow.appendChild(textarea); inputRow.appendChild(sendBtn);
+    inputRow.appendChild(micBtn); inputRow.appendChild(textarea); inputRow.appendChild(sendBtn);
 
     drawer.appendChild(head);
     drawer.appendChild(settingsPop);
