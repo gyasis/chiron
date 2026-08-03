@@ -103,10 +103,12 @@ export interface AudioBakeOptions {
   /** target playback LUFS, default −30. */
   playbackTarget?: number;
   /**
-   * Enable Gemini audio QC after each clip is written.
-   * Default: true when GEMINI_API_KEY or GOOGLE_API_KEY is set AND
-   *          CHIRON_AUDIO_QC env var is not "0".
-   * Pass false to force-disable regardless of env.
+   * Enable PAID Gemini audio QC after each clip is written.
+   * Default: OFF — opt in with CHIRON_AUDIO_QC=1 (and a GEMINI_API_KEY/GOOGLE_API_KEY).
+   * The LOCAL gates (loudness meter + whisper re-ASR) always run regardless.
+   * Rationale: a bulk bake uploads one mp3 per surviving clip — the 2026-07-20
+   * batch issued ~3,000 audio-QC calls in a single day. Sample-QC, don't blanket-QC.
+   * Pass true to force-enable regardless of env.
    */
   qc?: boolean;
   /**
@@ -446,10 +448,10 @@ export async function bakeAudio(opts: AudioBakeOptions): Promise<AudioClipResult
   const url = opts.omnivoiceUrl ?? DEFAULT_OV;
   const diaUrl = opts.diaUrl ?? DEFAULT_DIA;
   const target = opts.playbackTarget ?? DEFAULT_TARGET;
-  // QC is on by default when a key exists and CHIRON_AUDIO_QC is not "0".
+  // QC is OPT-IN: paid Gemini audio QC only when CHIRON_AUDIO_QC=1 (local whisper+loudness gates always run).
   const qcEnabled = opts.qc !== undefined
     ? opts.qc
-    : qcAvailable() && process.env['CHIRON_AUDIO_QC'] !== '0';
+    : qcAvailable() && process.env['CHIRON_AUDIO_QC'] === '1';
   const db = new Database(join(lessonDir, '.chiron-state.db'));
   const results: AudioClipResult[] = [];
   // Accumulate QC results for the final report.
