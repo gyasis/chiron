@@ -17,6 +17,7 @@ const isSSM = l => l.source==='ssm';
 /* ---- offline engine (lifted from the player): Download → cache, Remove → local-only ---- */
 const LCACHE = 'chiron-lib-lessons-v1';
 const DL = JSON.parse(localStorage.getItem('chiron.dl') || '{}');   // slug → {id, entry}
+const DLPROG = {};   // slug → percent while a download is in flight (-1 = unzipping/caching). Not persisted.
 const LMAP = {};                                                     // slug → lesson (ready only)
 const saveDL = () => localStorage.setItem('chiron.dl', JSON.stringify(DL));
 const slugOf = id => id.replace(/\//g, '-');
@@ -26,7 +27,33 @@ function pickEntry(rel){ return rel.find(n=>n==='lesson.html') || rel.find(n=>n.
 const unzip = u8 => new Promise((res,rej)=> fflate.unzip(u8,(e,f)=> e?rej(e):res(f)));
 
 /* ---- Phase 2: the generate-server (:8911) — Wizard + Staging wiring ---- */
-const API = (location.port === '8911') ? '' : 'http://127.0.0.1:8911';   // same-origin when served by the server, else cross-origin (CORS on)
+const APP_VERSION = '1.1';   // ← bump on every user-facing fix so you can confirm the phone has the latest (shown on the ⚙ button)
+// Configurable SERVER ADDRESS (the "⚙ Server" setting). An INSTALLED PWA loads its shell from cache but
+// its data fetches resolve to the INSTALL origin — which breaks when the box's LAN IP changes (DHCP).
+// Setting a HOST (e.g. http://192.168.0.146:8911) redirects every data/asset fetch to the current box.
+const HOST = (localStorage.getItem('chiron.host') || '').replace(/\/+$/, '');
+const U = p => HOST ? HOST + '/' + String(p).replace(/^\/+/, '') : p;   // prefix a relative path with HOST (no-op when unset)
+const API = HOST || ((location.port === '8911') ? '' : 'http://127.0.0.1:8911');   // same-origin when served by the box; else HOST or localhost (CORS on)
+// The ⚙ Server prompt — set/clear the address, then reload so every fetch re-targets it.
+window.chironSetServer = function () {
+  const cur = HOST || (location.origin.includes('8911') ? location.origin : '');
+  const v = prompt('Chiron server address\n(e.g. http://192.168.0.146:8911 — the box’s current LAN IP).\nLeave blank to use this page’s own address.', cur);
+  if (v === null) return;
+  const clean = v.trim().replace(/\/+$/, '');
+  try { if (clean) localStorage.setItem('chiron.host', clean); else localStorage.removeItem('chiron.host'); } catch (e) {}
+  location.reload();
+};
+// Always-present ⚙ button (bottom-right) so you can set the address EVEN IF the library failed to load —
+// which is exactly when the box's IP changed. Added on DOMContentLoaded, independent of any data fetch.
+addEventListener('DOMContentLoaded', () => {
+  if (document.getElementById('chiron-server-btn')) return;
+  const b = document.createElement('button');
+  b.id = 'chiron-server-btn'; b.innerHTML = '⚙<span style="display:block;font-size:8px;line-height:1;margin-top:1px;opacity:.7">v' + APP_VERSION + '</span>';
+  b.title = 'Chiron v' + APP_VERSION + ' — set server address' + (HOST ? ' (now ' + HOST + ')' : '');
+  b.setAttribute('style', 'position:fixed;right:10px;bottom:10px;z-index:99999;width:44px;height:44px;border-radius:50%;border:1px solid #ccc;background:#fff;color:#333;font-size:17px;box-shadow:0 2px 8px rgba(0,0,0,.25);cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center');
+  b.onclick = window.chironSetServer;
+  document.body.appendChild(b);
+});
 const DEPTHS = {
   medicine: [['','Auto (detect from subject)'],['primer','Primer — quick, grouped'],['atlas','Atlas — organ-system survey'],['systematic','Systematic — 11-section deep-dive'],['amboss','AMBOSS — clinical']],
   'medical-italian': [['ward','Ward — clinical scene'],['passage','Passage — SSM question']],
@@ -49,8 +76,20 @@ function wizRenderImgs(){
 }
 
 async function boot(){
-  CONFIG = await (await fetch('library.config.json')).json();
-  LESSONS = (await (await fetch('library.index.json')).json()).lessons;
+  try {
+    CONFIG = await (await fetch(U('library.config.json'))).json();
+    LESSONS = (await (await fetch(U('library.index.json?'+Date.now()))).json()).lessons;
+  } catch (e) {
+    // Can't reach the server (most often: the box's LAN IP changed). Tell the user + point at ⚙ Server.
+    const where = HOST || location.origin;
+    document.body.insertAdjacentHTML('afterbegin',
+      '<div style="margin:14vh auto 0;max-width:340px;text-align:center;font-family:system-ui,sans-serif;color:#333;padding:0 20px">'
+      + '<div style="font-size:40px">📡</div><h2 style="margin:8px 0">Can’t reach the library</h2>'
+      + '<p style="color:#666;line-height:1.5">Tried <b>' + where + '</b>. The box’s address probably changed.</p>'
+      + '<button onclick="window.chironSetServer()" style="margin-top:6px;padding:11px 20px;border:0;border-radius:10px;background:#D94F30;color:#fff;font-size:15px;cursor:pointer">⚙ Set server address</button>'
+      + '<p style="color:#999;font-size:12px;margin-top:14px">e.g. http://192.168.0.146:8911<br>Chiron v' + APP_VERSION + '</p></div>');
+    return;
+  }
   LESSONS.forEach(l => { if (l.ready) LMAP[slugOf(l.id)] = l; });
   F.sort = (CONFIG.sorts[0]||{key:'priority'}).key;
   for (const k of Object.keys(CONFIG.facets)) F.facets[k] = new Set();
@@ -143,7 +182,11 @@ function renderFacets(){                                        // (id="facets" 
   document.getElementById('facets').innerHTML = h;
 }
 function childFacetOf(parentKey){ for (const [k,f] of Object.entries(CONFIG.facets)) if (f.nestUnder===parentKey) return k; return null; }
-const cssq = s => String(s).replace(/'/g,"\\'");
+// escape ANY free text for a single-quoted JS arg inside a double-quoted onclick="" attr.
+// order matters: backslash first, then ' -> \' (survives HTML-attr decoding, unlike &#39;),
+// " -> &quot; (else it closes the attr), < -> &lt;, newlines -> space. Apostrophes are KEPT
+// (Italian l'/c'/un' etc. display correctly) — never stripped. Used for EVERY onclick free-text arg.
+const cssq = s => String(s==null?'':s).replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/[\r\n]+/g,' ');
 function crumb(){ const p=[];
   if (F.domain.size) p.push([...F.domain].map(domLabel).join('/'));
   for (const [k,set] of Object.entries(F.facets)){ if(!set.size) continue; const t=[...set].join('/'); p.push(k==='subject'?'<b>'+t+'</b>':t); }
@@ -169,8 +212,10 @@ function tileHtml(l){
   if(!l.ready) action = selectable ? '' : `<span class="taction gen" onclick="event.stopPropagation();LIB.genFor('${cssq(l.subject||l.system||l.topic||l.title)}','${l.domain}')">✦ Generate</span>`;
   else if(staged) action = `<span class="taction open">👁 Preview</span><span class="taction acc" onclick="event.stopPropagation();LIB.accept('${slug}')">✓ Accept</span>`;
   else if(isPhone) action = dl ? `<span class="taction dl">✓ offline</span>`
-      : (l.bundle ? `<span class="taction dl" onclick="event.stopPropagation();LIB.download('${slug}')">⬇ Get</span>`
-                  : `<span class="taction open" onclick="event.stopPropagation();LIB.open('${slug}')">Open →</span>`);
+      : (DLPROG[slug]!==undefined
+          ? `<span class="taction dling" data-dlprog="${slug}">⏳ ${DLPROG[slug]<0?'unzipping…':(DLPROG[slug]+'%')}</span>`
+          : (l.bundle ? `<span class="taction dl" onclick="event.stopPropagation();LIB.download('${slug}')">⬇ Get</span>`
+                      : `<span class="taction open" onclick="event.stopPropagation();LIB.open('${slug}')">Open →</span>`));
   else action = (l.bundle ? `<span class="taction dl" title="download .chiron bundle" onclick="event.stopPropagation();LIB.dlfile('${slug}')">⬇</span>` : '')
               + `<span class="taction open">Open →</span>`;
   const badges = (staged?`<span class="treview">🟡 REVIEW</span>`:'') + (l.bankable>0?`<span class="tbank">💰 ${l.bankable}</span>`:'')
@@ -257,7 +302,7 @@ const LIB = {
     if(dl){ url='lessons/'+dl.id+'/'+dl.entry; }                                     // offline cache (SW)
     else { const entry=(l.path||'lesson.html').split('/').pop();
       // served by the generate-server → its /lessons mount (=generated/); else ../ (page sits in generated/chiron-library)
-      url=(location.port==='8911') ? (API+'/lessons/'+l.id+'/'+entry) : ('../'+l.path); }
+      url=(API || location.port==='8911') ? (API+'/lessons/'+l.id+'/'+entry) : ('../'+l.path); }   // API=HOST when the ⚙ Server address is set
     LIB._overlay(url, l.title || slug); },
   // open a lesson INSIDE the library (iframe overlay) with a persistent "← Library" bar, so you can
   // always get home — works for every existing lesson + on the phone (no browser chrome needed).
@@ -283,7 +328,9 @@ const LIB = {
     }
     ov.querySelector('.lov-title').textContent = title || '';
     ov.querySelector('.lov-ext').href = url;
-    ov.querySelector('.lov-frame').src = url;
+    // CACHE-BUST every lesson open: a unique ?ts= means Safari/iOS can never serve a stale cached lesson page
+    // (the recurring "works on desktop, stale on the phone" bug — no-cache headers don't reach an already-cached copy).
+    ov.querySelector('.lov-frame').src = url + (url.includes('?') ? '&' : '?') + 'ts=' + Date.now();
     ov.classList.add('show');
     try{ history.pushState({lov:1}, ''); }catch(e){}   // so hardware/browser Back closes the lesson, not the app
   },
@@ -338,17 +385,31 @@ const LIB = {
     LIB.wizHint(); },
   dlfile(slug){ const a=document.createElement('a'); a.href='lessons/'+slug+'.chiron'; a.download=slug+'.chiron';
     document.body.appendChild(a); a.click(); a.remove(); },
-  async download(slug){ const l=LMAP[slug]; if(!l || DL[slug]) return;
+  async download(slug){ const l=LMAP[slug]; if(!l || DL[slug] || DLPROG[slug]!==undefined) return;
+    // live progress (these bundles are big — video + audio), so it never looks like a flat freeze.
+    DLPROG[slug]=0; renderRows();
+    const setPct=(p)=>{ DLPROG[slug]=p; const el=document.querySelector('[data-dlprog="'+slug+'"]');
+      if(el) el.textContent = '⏳ ' + (p<0?'unzipping…':(p+'%')); };
     try{
-      const u8 = new Uint8Array(await (await fetch('lessons/'+slug+'.chiron')).arrayBuffer());
+      const resp = await fetch(U('lessons/'+slug+'.chiron'));
+      if(!resp.ok) throw new Error('HTTP '+resp.status);
+      const total = +(resp.headers.get('Content-Length')||0);
+      let u8;
+      if(resp.body && resp.body.getReader && total){          // stream → real % as bytes arrive
+        const reader=resp.body.getReader(); const chunks=[]; let recv=0;
+        for(;;){ const {done,value}=await reader.read(); if(done) break; chunks.push(value); recv+=value.length; setPct(Math.min(99, Math.floor(recv/total*100))); }
+        u8=new Uint8Array(recv); let o=0; for(const c of chunks){ u8.set(c,o); o+=c.length; }
+      } else { u8=new Uint8Array(await resp.arrayBuffer()); }  // fallback: no stream/length → indeterminate
+      setPct(-1);                                              // downloaded → unzipping + caching
       const files = await unzip(u8);
       const names = Object.keys(files).filter(n=>!n.endsWith('/') && !n.includes('__MACOSX'));
       const prefix = commonPrefix(names), rel = n => prefix && n.startsWith(prefix) ? n.slice(prefix.length) : n;
       const id = 'dl-'+slug, cache = await caches.open(LCACHE);
       for(const n of names){ const path=rel(n), bytes=files[n];
         await cache.put(new Request(new URL('lessons/'+id+'/'+path, location.href)), new Response(bytes, {headers:{'Content-Type':mimeFor(path)}})); }
+      delete DLPROG[slug];
       DL[slug] = { id, entry: pickEntry(names.map(rel)) }; saveDL(); renderRows();
-    } catch(e){ alert('Download failed: '+e.message); } },
+    } catch(e){ delete DLPROG[slug]; renderRows(); alert('Download failed: '+e.message); } },
   async remove(slug){ const dl=DL[slug]; if(!dl) return; const cache=await caches.open(LCACHE);
     const keys=await cache.keys();
     await Promise.all(keys.filter(r=>new URL(r.url).pathname.includes('/lessons/'+dl.id+'/')).map(r=>cache.delete(r)));
@@ -447,7 +508,7 @@ const LIB = {
     }catch(e){ setTimeout(()=>LIB._poll(jid), 4000); } },
 
   /* ---- Staging: accept → publish, send-back → regenerate ---- */
-  async reload(){ try{ LESSONS=(await (await fetch('library.index.json?'+Date.now())).json()).lessons;
+  async reload(){ try{ LESSONS=(await (await fetch(U('library.index.json?'+Date.now()))).json()).lessons;
     Object.keys(LMAP).forEach(k=>delete LMAP[k]); LESSONS.forEach(l=>{ if(l.ready) LMAP[slugOf(l.id)]=l; }); renderAll(); }catch(e){} },
   async accept(slug){ try{ const r=await (await fetch(API+'/accept/'+slug,{method:'POST'})).json();
     if(r.ok) LIB.reload(); else alert('Accept failed'); }catch(e){ alert('Accept failed: '+e.message); } },
@@ -579,7 +640,7 @@ const LIB = {
       else if(st==='error') pill=`<span class="jpill fail">✗ failed</span>`;
       let act='';
       if(st==='ready'){
-        if(x.lesson_url){ const u=(location.port==='8911'?API:'')+x.lesson_url; act+=`<button class="jopen" onclick="LIB._overlay('${u}','${lbl(x)}')">Open →</button>`; }
+        if(x.lesson_url){ const u=(location.port==='8911'?API:'')+x.lesson_url; act+=`<button class="jopen" onclick="LIB._overlay('${u}','${cssq(x.subject||x.source_ref||x.slug||"")}')">Open →</button>`; }
         if(r.needs_rebake && r.clips_total>0) act+=`<button class="jrebake" title="reuse ${r.clips_done}/${r.clips_total} clips, bake the rest — pick ⚡Fast / 🐢Mac when you click" onclick="LIB.rebake('${sl}')">🔥 Rebake</button>`;
         else if((r.clips_total||0)===0) act+=`<button class="jrebake" title="text-only — bake the audio now (⚡Fast / 🐢Mac)" onclick="LIB.rebake('${sl}')">🔊 Bake audio</button>`;   // never baked → offer the FIRST bake
         act+=`<button class="jaccept" onclick="LIB.acceptJob('${sl}')">✓ Accept</button>`;   // promote → into the library, removes it from here
@@ -588,7 +649,7 @@ const LIB = {
       else if(st==='error'||st==='audio-failed'||st==='cancelled'){
         if(r.text){   // text exists → let it be OPENED (see the lesson + hear the clips already baked)
           const u=(location.port==='8911'?API:'')+'/lessons/'+sl+'/lesson.html';
-          act=`<button class="jopen" onclick="LIB._overlay('${u}','${lbl(x).replace(/'/g,'')}')">Open →</button>`
+          act=`<button class="jopen" onclick="LIB._overlay('${u}','${cssq(x.subject||x.source_ref||x.slug||"")}')">Open →</button>`
              +`<button class="jrebake" title="${missTip} — bake the rest, pick ⚡Fast / 🐢Mac when you click" onclick="LIB.rebake('${sl}')">🔥 Rebake audio</button>`;
         } else act=`<button class="jretry" onclick="LIB.retry('${x.id}')">↻ Retry (full)</button>`;
       }
