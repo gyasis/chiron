@@ -5,7 +5,7 @@
 const TAURI = !!(window.__TAURI__ && window.__TAURI__.core);
 const invoke = TAURI ? window.__TAURI__.core.invoke : null;
 const isAndroid = /android/i.test(navigator.userAgent);
-const DEFAULT_LIB = 'http://192.168.0.112:8911';
+const DEFAULT_LIB = 'http://192.168.0.146:8911';
 let LIB = localStorage.getItem('chiron.lib') || (location.port === '8911' ? location.origin : DEFAULT_LIB);
 const idxUrl = () => LIB + '/library/library.index.json';
 const catUrl = () => LIB + '/library/lessons';           // server_lessons(catUrl) + <catUrl>/<file>.chiron
@@ -85,7 +85,7 @@ function sortLessons(arr) { const a = [...arr];
   else if (F.sort === 'synced') a.sort((x, y) => ((DL_TIME[slugOf(y.id)] || 0) - (DL_TIME[slugOf(x.id)] || 0)) || (y.mtime || 0) - (x.mtime || 0));  // most-recently downloaded first
   else a.sort((x, y) => (x.domain || '').localeCompare(y.domain || '') || (x.title || '').localeCompare(y.title || ''));  // by domain, then title
   return a; }
-const DOMS = [['', 'All'], ['medicine', 'Medicine'], ['medical-italian', 'Med-Italian'], ['italian', 'Italian']];
+const DOMS = [['', 'All'], ['medicine', 'Medicine'], ['medical-italian', 'Med-Italian'], ['language-it', 'Italian'], ['video-it', 'Italian · Video']];
 function domCls(d) { return d === 'medicine' ? 'm' : d === 'medical-italian' ? 'mi' : 'l'; }
 function renderChips() {
   document.getElementById('chips').innerHTML = DOMS.map(([v, l]) =>

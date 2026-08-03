@@ -41,11 +41,13 @@ import queue as _queuemod
 _BAKE_Q: "_queuemod.Queue" = _queuemod.Queue()   # rebakes queue here; one worker bakes them one at a time
 _GEN_Q: "_queuemod.Queue" = _queuemod.Queue()    # GENERATION queue — Chiron (the server) owns concurrency,
 GEN_CONC = int(os.environ.get("CHIRON_GEN_CONC", "6") or 6)  # not the client. Clients push all; N workers drain.
-# PARALLEL-PROVIDER SPREAD: round-robin each generation's PRIMARY across independent providers, so a big
-# batch uses Ollama + Google + OpenAI AT ONCE (no single provider gets hammered into a 429). Each lesson
-# still keeps its full fallback ladder (gemma4 → gemini-flash-latest → gpt-5-mini) if its primary hiccups.
+# PARALLEL-PROVIDER SPREAD: round-robin each generation's PRIMARY across providers so a big batch doesn't
+# hammer one into a 429. Each lesson keeps its full fallback ladder (local/gemma4:12b → deepseek-v4-flash →
+# gpt-5-mini) if its primary hiccups. NO GEMINI here (cost, 2026-07-27): gemini/gemini-flash-latest was the
+# rung-2 primary → ~1/3 of a batch generated entirely on paid Gemini. Removed. Set CH_PRIMARY_ROTATION to
+# re-add it deliberately, or to steer fully local (e.g. "local/gemma4:12b,glm-5.1,deepseek-v4-flash").
 _PRIMARY_POOL = [m.strip() for m in os.environ.get(
-    "CH_PRIMARY_ROTATION", "glm-5.1,gemini/gemini-flash-latest,gpt-5-mini").split(",") if m.strip()]
+    "CH_PRIMARY_ROTATION", "glm-5.1,deepseek-v4-flash,gpt-5-mini").split(",") if m.strip()]
 _PRIMARY_I = [0]
 # LOCAL option: `local/<model>` routes through the Atelier governor (Mac ollama, zero cloud tokens).
 # Surfaced to the UI (a "🏠 Local" pill) so a batch can be steered fully local. Base+model via env
@@ -980,6 +982,25 @@ def _reconcile() -> None:
 app = FastAPI(title="Chiron generate-server")
 # 127.0.0.1-only server; allow the library app to call it whichever local origin it's served from.
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
+
+
+@app.middleware("http")
+async def _lesson_html_no_cache(request, call_next):
+    """A lesson's HTML/JS/CSS must ALWAYS revalidate so a re-rendered fix (e.g. the video preload=none
+    crash fix) reaches the phone on the next open instead of the WebView serving a stale cached copy —
+    the recurring 'I cleared cache but it's still the old broken one' complaint. Big immutable media
+    (mp3/mp4) stay cacheable so we never re-download a 300 MB episode. 'no-cache' still allows a cheap
+    304, so this is revalidation, not re-download."""
+    resp = await call_next(request)
+    p = request.url.path
+    # /library/ too: the faceted app (library.js) + its catalog (library.index.json/config) must ALWAYS
+    # revalidate, else the browser serves a stale UI/index and fixes (e.g. a corrected lesson title) never
+    # show. Big immutable media (icons/*.png, *.mp3/*.mp4) stay cacheable — only text/markup revalidates.
+    if (p.startswith("/lessons/") or p.startswith("/library/")) and p.rsplit(".", 1)[-1].lower() in ("html", "js", "css", "json", "webmanifest"):
+        resp.headers["Cache-Control"] = "no-cache, must-revalidate"
+    return resp
+
+
 _load()
 _reconcile()
 threading.Thread(target=_bake_worker, daemon=True).start()   # the single bake queue-worker
@@ -1004,6 +1025,16 @@ def _resume_orphaned_bakes() -> None:
         if sl in seen:
             continue
         seen.add(sl)
+        # A bake merely 'queued' (never started) that SURVIVES a restart must NOT be auto-re-enqueued:
+        # a big parked batch (e.g. the SSM backfill) would flood the phone's "Generating" band AND
+        # re-bake on every single restart — nothing on the phone is pushing it, this resumer is. PARK
+        # those as an explicit needs-rebake list the user drains DELIBERATELY from the box (the Rebake-all
+        # ⚡Fast/🐢Slow selector → POST /bake-batch, or POST /bake-all). Only a bake that was actually
+        # IN FLIGHT ('baking') when the server died is real crash-recovery worth auto-resuming (~1 at a time).
+        if j.get("status") == "queued":
+            j.update(status="rebake-pending", phase="parked — needs rebake (trigger from the box)",
+                     needs_rebake=True, finished=j.get("finished") or _now())
+            continue
         # Resume on the SAME engine it was interrupted on — a modal bake goes back to the concurrent Modal
         # pool, NOT demoted onto the serial Mac queue (which also made /activity double-count it as both
         # mac_queued and modal_pending). Mac bakes go to the serial _BAKE_Q as before.
@@ -1709,8 +1740,14 @@ def accept(ref: str):
             cj = {}
     cj.update(status="published", accepted=_now())
     cj.setdefault("subject", slug)
-    for k in ("source", "source_ref"):   # preserve provenance the bundler dropped
+    for k in ("source", "source_ref"):   # provenance the bundler DROPS (empty on cj) → fill from prior
         if prior.get(k) and not cj.get(k):
+            cj[k] = prior[k]
+    # classification the bundler REGENERATES to a default ('medicine') → prior MUST win here, not just
+    # fill-if-empty. Without this, publishing an episode reset domain 'italian' → 'medicine', so the
+    # Italian video lessons dropped out of the app's Italian chip and into the 300+ medicine pile.
+    for k in ("domain", "tags", "level"):
+        if prior.get(k):
             cj[k] = prior[k]
     p.write_text(json.dumps(cj, indent=2))
     _rebuild_catalog()     # re-index → picks up published status + bundle=true/sizeMB from disk

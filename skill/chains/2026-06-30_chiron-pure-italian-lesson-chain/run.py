@@ -311,7 +311,11 @@ async def phase1_plan(avoid: dict):
         + USER_CTX +
         f"Design EXACTLY {N_SECTIONS} content sections that build a coherent learning arc for this topic "
         "(from foundations → nuance → real-world use). Return ONLY JSON:\n"
-        '{ "sections": [\n'
+        '{ "title":"<a clean concise Italian lesson title a textbook would use, 4-8 words: DISTILL it from '
+        'the topic and FIX every spelling mistake. Do NOT echo the raw request and do NOT begin with '
+        'Give-me-a-lesson-on or Dammi-una-lezione>",\n'
+        '  "titleEn":"<the natural English of that title>",\n'
+        '  "sections": [\n'
         '  {"id":"chapter-1","title":"1 <Italian section title>","titleEn":"<English of the title>",\n'
         '   "teachingGoal":"<one sentence: what the learner can DO after this section>",\n'
         '   "targetStructures":["<grammar point / phrase / word to teach>", ...2-4],\n'
@@ -332,6 +336,10 @@ async def phase1_plan(avoid: dict):
     if plan is None:
         raise RuntimeError("[chiron] phase-1 plan: unusable JSON after 3x all repairs/fallbacks — transient, re-run.")
     secs = plan.get("sections") if isinstance(plan, dict) else plan
+    # persist the DISTILLED lesson title (typo-fixed, not the raw prompt) for merge_content() to use
+    _lt = (plan.get("title") if isinstance(plan, dict) else None) or (TOPIC.strip().capitalize() if TOPIC else "Lezione")
+    _lte = (plan.get("titleEn") if isinstance(plan, dict) else None) or ""
+    (OUT / "lesson_meta.json").write_text(json.dumps({"title": str(_lt).strip(), "titleEn": str(_lte).strip()}, ensure_ascii=False))
     (OUT / "syllabus.json").write_text(json.dumps(secs, ensure_ascii=False, indent=2))
     print(f"[phase 1] syllabus: {len(secs)} sections → {[s.get('title') for s in secs]}", flush=True)
     return secs
@@ -547,10 +555,12 @@ def load_sections() -> list:
 def merge_content() -> dict:
     """Build the exact content.json shape assemble-language.mjs consumes (compat constraint)."""
     ex = json.loads((OUT / "extras.json").read_text()) if (OUT / "extras.json").exists() else {}
+    meta = json.loads((OUT / "lesson_meta.json").read_text()) if (OUT / "lesson_meta.json").exists() else {}
     cold = ex.get("coldOpen") or {"it": "", "en": ""}
     content = {
-        "title": TOPIC.strip().capitalize() if TOPIC else "Lezione",   # the LESSON title = the topic (NOT chapter-1's heading)
-        "subtitle": "", "langName": "Italiano", "cefr": "A2-B1",
+        # the DISTILLED lesson title (phase-1, typo-fixed) — NOT the raw user prompt; fall back only if missing
+        "title": (meta.get("title") or "").strip() or (TOPIC.strip().capitalize() if TOPIC else "Lezione"),
+        "subtitle": (meta.get("titleEn") or "").strip(), "langName": "Italiano", "cefr": "A2-B1",
         "domain": "language-it",   # explicit domain so the catalog/library NEVER has to guess or default (this is a language-it lesson)
         "coldOpen": {"it": cold.get("it", ""), "en": cold.get("en", "")},
         "sections": load_sections(),

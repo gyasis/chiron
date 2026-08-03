@@ -142,6 +142,10 @@ PY
 rm -f "${OUT}"
 cd "${LESSON_DIR}"
 zip -r -q "${OUT}" . \
+  -x 'episode.mp4' \
+  -x '*.orig.mp4' \
+  -x 'audio/**/*.wav' \
+  -x '*.log' \
   -x '.chiron-state.db*' \
   -x 'source/*' \
   -x 'modules/*' \
