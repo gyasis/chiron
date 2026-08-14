@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Chiron · Ask</title>
+<meta name="theme-color" content="#1e3a5f">
+<script>try{var _t=localStorage.getItem('chiron.theme');if(_t)document.documentElement.setAttribute('data-theme',_t);}catch(e){}</script>
+<style>
+:root{
+  --chiron-bg:#faf8f5;--chiron-surface:#fff;--chiron-elevated:#f0ebe4;
+  --chiron-fg:#1a1a1a;--chiron-fg-secondary:#4a4a4a;--chiron-muted:#7a7a7a;
+  --chiron-accent:#1e3a5f;--chiron-border:#e5e0d8;--chiron-divider:#ede8df;
+  --med:#1e6fbf;--medit:#b3522e;--lang:#6b8e4e;--vid:#8a5a83;--code:#6d28d9;
+  --font-h:'Inter',system-ui,sans-serif;--font-b:'Source Sans 3','Inter',system-ui,sans-serif;
+}
+[data-theme="dark"]{
+  --chiron-bg:#14171c;--chiron-surface:#1b1f26;--chiron-elevated:#232830;
+  --chiron-fg:#e9e6e1;--chiron-fg-secondary:#bdb8b1;--chiron-muted:#8b8781;
+  --chiron-accent:#7fb0e8;--chiron-border:#2c323b;--chiron-divider:#242931;
+}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{font-family:var(--font-b);background:var(--chiron-bg);color:var(--chiron-fg);display:flex;overflow:hidden}
+button{font:inherit;cursor:pointer}
+
+/* ── left rail (Chiron chrome; acolyte owns everything right of it) ── */
+.rail{flex:0 0 258px;background:var(--chiron-surface);border-right:1px solid var(--chiron-border);display:flex;flex-direction:column;min-height:0}
+.rail .brand{display:flex;align-items:center;gap:9px;font-family:var(--font-h);font-weight:800;color:var(--chiron-accent);font-size:15px;padding:15px 16px 12px}
+.rail .brand .mk{width:28px;height:28px;border-radius:8px;background:var(--chiron-accent);color:var(--chiron-surface);display:grid;place-items:center;font-size:14px;flex:0 0 auto}
+.newchat{margin:0 12px 12px;padding:9px 12px;border:1px solid var(--chiron-border);background:var(--chiron-bg);color:var(--chiron-fg);border-radius:10px;font-size:13.5px;font-weight:600;width:calc(100% - 24px);text-align:left}
+.newchat:hover{border-color:var(--chiron-accent);color:var(--chiron-accent)}
+.scope{margin:0 12px 14px;padding:10px 11px;background:var(--chiron-bg);border:1px solid var(--chiron-border);border-radius:10px}
+.scope .lbl{font-family:var(--font-h);font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--chiron-muted);margin-bottom:7px}
+.scope select{width:100%;font:inherit;font-size:13px;padding:6px 8px;border:1px solid var(--chiron-border);border-radius:8px;background:var(--chiron-surface);color:var(--chiron-fg)}
+.scope .hint{font-size:11.5px;color:var(--chiron-muted);margin-top:7px;line-height:1.4}
+.rail h4{font-family:var(--font-h);font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--chiron-muted);margin:6px 16px 5px;font-weight:700}
+.threads{flex:1;overflow:auto;padding-bottom:10px}
+.th{display:block;width:calc(100% - 16px);margin:1px 8px;padding:8px 10px;border:0;background:none;border-radius:8px;text-align:left;color:var(--chiron-fg-secondary);font-size:13px;line-height:1.35;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.th:hover{background:var(--chiron-elevated)}
+.th.on{background:var(--chiron-elevated);color:var(--chiron-fg);font-weight:600}
+.th .dot{display:inline-block;width:6px;height:6px;border-radius:50%;margin-right:7px;vertical-align:middle}
+.d-medicine{background:var(--med)}.d-medical-italian{background:var(--medit)}
+.d-language-it{background:var(--lang)}.d-video-it{background:var(--vid)}.d-all{background:var(--chiron-muted)}
+.railfoot{border-top:1px solid var(--chiron-border);padding:9px 12px;display:flex;align-items:center;gap:6px;font-size:12px;color:var(--chiron-muted)}
+.railfoot button{border:0;background:none;color:var(--chiron-muted);padding:4px 6px;border-radius:6px}
+.railfoot button:hover{background:var(--chiron-elevated);color:var(--chiron-fg)}
+.railfoot .sp{margin-left:auto;font-size:11px}
+
+/* ── acolyte host: un-float the panel so it lives INSIDE our layout ──
+   Acolyte ships .acolyte-panel as position:fixed covering the viewport (it is
+   normally an overlay on someone else's page). Here it IS the page, so the host
+   flattens it into a flex child. Host-side layout override — no fork. */
+#host{flex:1;display:flex;min-width:0;min-height:0;position:relative}
+#host .acolyte-panel{position:static;width:auto!important;max-width:none;flex:1;border-left:0;box-shadow:none;min-width:0}
+#host .acolyte-fab{display:none!important}
+#host .acolyte-messages{max-width:820px;margin:0 auto;width:100%}
+#host .acolyte-input-row{max-width:820px;margin:0 auto;width:100%}
+
+.boot{flex:1;display:grid;place-items:center;color:var(--chiron-muted);font-size:14px}
+.boot .err{max-width:520px;text-align:center;line-height:1.6}
+.boot code{background:var(--chiron-elevated);padding:2px 6px;border-radius:5px;font-size:12.5px}
+@media(max-width:860px){.rail{display:none}}
+</style></head>
+<body>
+
+<aside class="rail">
+  <div class="brand"><div class="mk">◈</div> Chiron · Ask</div>
+  <button class="newchat" onclick="chironAsk.newThread()">＋ New question</button>
+
+  <div class="scope">
+    <div class="lbl">Ask across</div>
+    <select id="scope"></select>
+    <div class="hint" id="scopehint">Loading the corpus…</div>
+  </div>
+
+  <h4>Recent</h4>
+  <div class="threads" id="threads"></div>
+
+  <div class="railfoot">
+    <button onclick="chironAsk.theme()">◐ Theme</button>
+    <a class="th" style="width:auto;margin:0;padding:4px 6px;text-decoration:none" href="/library/">📚 Library</a>
+    <span class="sp" id="ver"></span>
+  </div>
+</aside>
+
+<main id="host"><div class="boot" id="boot">Starting Chiron · Ask…</div></main>
+
+<script type="module" src="./ask.js"></script>
+</body></html>

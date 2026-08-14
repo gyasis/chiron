@@ -20,7 +20,8 @@ import base64, json, os, re, signal, subprocess, sys, threading, time, urllib.re
 from datetime import datetime, timezone
 from pathlib import Path
 
-from fastapi import FastAPI, File, HTTPException, UploadFile
+import httpx
+from fastapi import FastAPI, File, HTTPException, Request, Response, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
@@ -2187,6 +2188,70 @@ def _lesson_with_tutor(slug: str):
         html = html.replace("</body>", tags + "</body>", 1) if "</body>" in html else html + tags
     return HTMLResponse(html)
 
+
+# ── Chiron · Ask (tier 1 of the acolyte model, PRD §8) ────────────────────────
+# The page is static; the only server piece is a SAME-ORIGIN passthrough to the
+# model endpoint. Two reasons it is a proxy and not a direct browser call:
+#   1. the Atelier governor answers no CORS preflight, so the browser can't call
+#      it cross-origin at all;
+#   2. the endpoint is a LAN address, and LAN addresses must never be committed
+#      to this repo (R-GIT3) — so it is read at runtime, never hardcoded.
+# Resolution order: CHIRON_ASK_LLM_URL → ~/.chiron/ask.json → local ollama.
+# Default is the local LiteLLM gateway (:37400, OpenAI-compatible) because it is
+# reachable with nothing switched on. Point at the Atelier governor instead with
+# {"provider":"ollama","llm_url":"http://<mac>:8799/llm/ollama"} in ~/.chiron/ask.json.
+def _ask_cfg() -> dict:
+    cfg = {"provider": "openai-compatible", "llm_url": "http://127.0.0.1:37400/v1", "model": "cloud-glm"}
+    f = Path.home() / ".chiron" / "ask.json"
+    if f.exists():
+        try:
+            cfg.update({k: v for k, v in json.loads(f.read_text()).items() if v})
+        except Exception:
+            pass
+    for env, key in (("CHIRON_ASK_LLM_URL", "llm_url"), ("CHIRON_ASK_MODEL", "model"),
+                     ("CHIRON_ASK_PROVIDER", "provider")):
+        if os.environ.get(env):
+            cfg[key] = os.environ[env]
+    return cfg
+
+
+@app.get("/ask/config.json")
+def ask_config():
+    """What the page needs to mount acolyte. `base` is OUR proxy, never the upstream —
+    the real endpoint stays server-side so it is neither committed nor exposed to the page."""
+    c = _ask_cfg()
+    models = []
+    if c["provider"] == "openai-compatible":
+        try:
+            r = httpx.get(f"{c['llm_url'].rstrip('/')}/models", timeout=4.0)
+            models = sorted(m["id"] for m in r.json().get("data", []))
+        except Exception:
+            pass
+    return {"provider": c["provider"], "base": "/ask/llm", "model": c["model"], "models": models}
+
+
+@app.api_route("/ask/llm/{path:path}", methods=["GET", "POST"])
+async def ask_llm_proxy(path: str, request: Request):
+    """Passthrough to the configured ollama-compatible endpoint (governor by default).
+
+    Split timeout on purpose: a short connect fails fast on a dead/wrong URL, while a
+    generous read survives a cold model load. A single flat budget forces a bad choice
+    between the two (atelier-governor.md R-AG7)."""
+    base = _ask_cfg()["llm_url"].rstrip("/")
+    body = await request.body()
+    try:
+        async with httpx.AsyncClient(timeout=httpx.Timeout(connect=3.0, read=180.0, write=30.0, pool=5.0)) as cx:
+            r = await cx.request(request.method, f"{base}/{path}", content=body or None,
+                                 headers={"content-type": request.headers.get("content-type", "application/json")})
+            return Response(content=r.content, status_code=r.status_code,
+                            media_type=r.headers.get("content-type", "application/json"))
+    except httpx.ConnectError:
+        raise HTTPException(502, f"model endpoint unreachable — set CHIRON_ASK_LLM_URL or ~/.chiron/ask.json")
+    except httpx.ReadTimeout:
+        raise HTTPException(504, "model endpoint timed out (cold load or a wedged governor lane — see R-AG7)")
+
+
+app.mount("/ask", StaticFiles(directory=str(SKILL / "ask"), html=True), name="ask")
 
 # static: open a generated lesson, or the faceted library, straight from the app
 app.mount("/lessons", StaticFiles(directory=str(GEN)), name="lessons")
