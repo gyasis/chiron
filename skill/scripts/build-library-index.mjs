@@ -9,6 +9,7 @@
  * otherwise inferred here from path/title (seed for the already-generated lessons).
  */
 import { readFileSync, writeFileSync, existsSync, mkdirSync, readdirSync, statSync, copyFileSync } from 'node:fs';
+import { spawnSync } from 'node:child_process';
 import { join, resolve, relative, dirname } from 'node:path';
 import { homedir } from 'node:os';
 import { fileURLToPath } from 'node:url';
@@ -264,3 +265,15 @@ for (const dir of ['icons', 'vendor']) {
 console.log(`Library built → ${OUT}`);
 console.log(`  ready lessons: ${lessons.length}   organ-system overviews: ${systemLessons.length}   queued classes: ${queued.length}`);
 console.log(`  config: library.config.json   index: library.index.json`);
+
+// ---------- 5. corpus (the retrieval body behind the Ask page) ----------
+// Hooked HERE rather than at the server's _rebuild_catalog() because the chains and
+// episode_pipeline.py call this script directly too — one seam, every caller covered.
+// Incremental: unchanged lessons are reused from .corpus-cache.json, so this adds
+// ~5 s to a rebuild and only parses what actually changed. Non-fatal by design —
+// a corpus failure must never take the library down with it.
+if (!process.env.CHIRON_SKIP_CORPUS) {
+  const r = spawnSync(process.execPath, [join(__dirname, 'build-library-corpus.mjs')], { cwd: SKILL, encoding: 'utf8' });
+  if (r.status === 0) process.stdout.write(r.stdout);
+  else process.stderr.write(`corpus build skipped (exit ${r.status}): ${(r.stderr || '').trim().slice(0, 300)}\n`);
+}
