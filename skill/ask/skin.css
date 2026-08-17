@@ -1,0 +1,192 @@
+/* Chiron skin for acolyte — the pilot look, applied to the shipped widget.
+ *
+ * COLOUR lives in ask.js (ui.theme → acolyte's own tokens). This file is only
+ * the STRUCTURAL half the tokens can't express: the message shapes, the
+ * assistant avatar, the composer pill, and the citation row.
+ *
+ * Everything is scoped under #host so it can never leak into a lesson page that
+ * also embeds acolyte. Kept deliberately short — if a rule here starts fighting
+ * acolyte rather than dressing it, that rule belongs upstream as a token.
+ */
+
+#host { flex: 1; display: flex; min-width: 0; min-height: 0; }
+#host .acolyte-panel { flex: 1; min-width: 0; background: var(--chiron-bg); }
+
+/* ── header → a slim topbar, matching the pilot's 52px strip ── */
+#host .acolyte-header {
+  height: 52px; padding: 0 18px; gap: 9px;
+  border-bottom: 1px solid var(--chiron-border);
+  background: var(--chiron-bg);
+}
+#host .acolyte-brand { background: var(--chiron-accent); color: var(--chiron-surface); border-radius: 8px; }
+#host .acolyte-model-picker {
+  font-family: var(--font-b, inherit); font-size: 12.5px; font-weight: 500;
+  border-radius: 99px; padding: 5px 26px 5px 12px; max-width: 220px;
+  background: var(--chiron-surface); border: 1px solid var(--chiron-border); color: var(--chiron-fg-secondary);
+}
+#host .acolyte-header .acolyte-iconbtn { border-radius: 8px; }
+
+/* ── message column ── */
+#host .acolyte-messages { padding: 26px 22px 8px; }
+#host .acolyte-msg { margin: 0 0 24px; }
+
+/* assistant: no bubble, an accent mark in the gutter — the pilot's ◈ avatar.
+   Acolyte renders no avatar element, so it is drawn with ::before.
+
+   GRID, not flex. An assistant message's children are siblings — body, speak
+   button AND the sources block — so a flex row lays them out side by side and
+   the sources steal the width until the prose wraps one character per line.
+   Grid puts the avatar in column 1 and stacks every real child in column 2. */
+#host .acolyte-msg.assistant {
+  display: grid; grid-template-columns: 30px minmax(0, 1fr); column-gap: 13px;
+  align-items: start; background: none; border: 0; padding: 0;
+}
+#host .acolyte-msg.assistant::before {
+  content: '◈';
+  grid-column: 1; grid-row: 1;
+  width: 30px; height: 30px; margin-top: 2px;
+  border-radius: 9px; background: var(--chiron-accent); color: var(--chiron-surface);
+  display: grid; place-items: center; font-size: 14px;
+}
+#host .acolyte-msg.assistant > * { grid-column: 2; min-width: 0; }
+#host .acolyte-msg.assistant > .acolyte-msg-speak { justify-self: start; }
+#host .acolyte-msg-body { font-size: 15px; line-height: 1.68; color: var(--chiron-fg); }
+#host .acolyte-msg-body p { margin: 0 0 12px; }
+#host .acolyte-msg-body ul, #host .acolyte-msg-body ol { margin: 0 0 12px; padding-left: 20px; }
+#host .acolyte-msg-body li { margin-bottom: 5px; }
+#host .acolyte-msg-body strong { color: var(--chiron-fg); }
+#host .acolyte-msg-body em { color: var(--medit); font-style: italic; }
+
+/* user: right-aligned quiet pill with the pilot's asymmetric corner */
+#host .acolyte-msg.user {
+  display: flex; justify-content: flex-end; background: none; border: 0; padding: 0;
+}
+#host .acolyte-msg.user > .acolyte-msg-body {
+  background: var(--chiron-elevated); color: var(--chiron-fg);
+  border-radius: 16px 16px 4px 16px; padding: 10px 15px;
+  max-width: 80%; font-size: 15px; line-height: 1.55;
+}
+
+#host .acolyte-msg-speak {
+  border: 0; background: none; color: var(--chiron-muted); font-size: 13px; padding: 2px 5px;
+}
+#host .acolyte-msg-speak:hover { color: var(--chiron-accent); }
+
+/* ── citations: the pilot's "FROM YOUR LESSONS" chip row ── */
+#host .acolyte-sources {
+  margin-top: 14px; border: 0; border-top: 1px solid var(--chiron-divider);
+  padding-top: 11px; background: none; border-radius: 0;
+}
+#host .src-head {
+  background: none; border: 0; padding: 0 0 8px; gap: 7px;
+  font-family: var(--font-h, inherit); font-size: 10.5px; font-weight: 700;
+  letter-spacing: .08em; text-transform: uppercase; color: var(--chiron-muted);
+}
+#host .src-tag { background: none; padding: 0; color: inherit; font: inherit; }
+#host .src-count {
+  background: var(--chiron-elevated); color: var(--chiron-muted);
+  border-radius: 99px; padding: 1px 7px; font-size: 10.5px; font-weight: 800;
+}
+/* A wrap-row looks right but is fragile: acolyte's cards resolve to their
+   max-width, so two 320px chips never fit a 616px column and every one lands on
+   its own line. An auto-fill grid packs them by measurement instead. */
+#host .src-body {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+  gap: 8px; padding: 0;
+}
+#host .src-card {
+  display: flex; align-items: center; gap: 8px;
+  border: 1px solid var(--chiron-border); background: var(--chiron-surface);
+  border-radius: 9px; padding: 7px 11px; margin: 0;
+  font-size: 12.5px; color: var(--chiron-fg-secondary); text-align: left;
+  width: auto; max-width: none; min-width: 0;
+}
+#host .src-card:hover { border-color: var(--chiron-accent); color: var(--chiron-accent); }
+#host .src-card-head { display: flex; align-items: center; gap: 8px; min-width: 0; }
+#host .src-num {
+  flex: 0 0 18px; width: 18px; height: 18px; border-radius: 5px;
+  background: var(--chiron-elevated); color: var(--chiron-muted);
+  display: grid; place-items: center; font-size: 10.5px; font-weight: 800;
+}
+#host .src-title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#host .src-score { display: none; }          /* a raw BM25 number teaches the reader nothing */
+#host .src-text { display: none; }           /* the chip is the summary; the jump is the detail */
+
+/* ── recent strip ── */
+#host .acolyte-recent-strip {
+  border-top: 1px solid var(--chiron-divider); background: none; padding: 9px 22px;
+}
+#host .ars-label {
+  font-family: var(--font-h, inherit); font-size: 10.5px; letter-spacing: .08em;
+  text-transform: uppercase; color: var(--chiron-muted);
+}
+#host .ars-chip {
+  border-radius: 99px; font-size: 12px; padding: 4px 12px;
+  border: 1px solid var(--chiron-border); background: var(--chiron-bg); color: var(--chiron-fg-secondary);
+}
+#host .ars-chip.current { background: var(--chiron-accent); border-color: var(--chiron-accent); color: var(--chiron-surface); }
+
+/* ── composer: the ROW is the pill; mic and send sit inside it ──
+   Acolyte's row is [mic][textarea][send]. Rather than three separate boxes,
+   the row itself becomes the bordered pill and the textarea goes transparent,
+   which is the pilot's single-control composer. */
+#host .acolyte-input-row {
+  margin: 0 auto 18px; padding: 8px 9px 8px 15px;
+  border: 1px solid var(--chiron-border); border-radius: 18px;
+  background: var(--chiron-surface); box-shadow: 0 2px 10px rgba(0, 0, 0, .05);
+  align-items: flex-end; gap: 9px;
+  width: calc(100% - 44px);
+}
+#host .acolyte-input-row:focus-within {
+  border-color: var(--chiron-accent);
+  box-shadow: 0 0 0 3px color-mix(in oklch, var(--chiron-accent) 16%, transparent);
+}
+#host .acolyte-input {
+  flex: 1; border: 0; background: none; box-shadow: none; outline: none;
+  padding: 6px 0; font-size: 15px; line-height: 1.5; color: var(--chiron-fg);
+  resize: none; max-height: 170px;
+}
+#host .acolyte-input:focus { outline: none; box-shadow: none; border: 0; }
+#host .acolyte-mic, #host .acolyte-send {
+  flex: 0 0 auto; width: 34px; height: 34px; padding: 0;
+  border-radius: 10px; display: grid; place-items: center; font-size: 15px;
+}
+#host .acolyte-mic {
+  background: var(--chiron-elevated); border: 0; color: var(--chiron-fg-secondary);
+}
+#host .acolyte-mic:hover { color: var(--chiron-accent); }
+#host .acolyte-send {
+  border: 0; background: var(--chiron-accent); color: var(--chiron-surface);
+  font-size: 0;                       /* hide the "Send" word, keep the button */
+}
+#host .acolyte-send::after { content: '↑'; font-size: 16px; font-weight: 700; }
+#host .acolyte-send:hover { filter: brightness(1.12); }
+
+/* ── empty state: the pilot's centred hero + suggestion cards ── */
+#host .ask-hero { padding: 64px 0 18px; text-align: center; }
+#host .ask-hero .mk {
+  width: 54px; height: 54px; border-radius: 16px; margin: 0 auto 16px;
+  background: var(--chiron-accent); color: var(--chiron-surface);
+  display: grid; place-items: center; font-size: 26px;
+}
+#host .ask-hero h1 {
+  font-family: var(--font-h, inherit); font-size: 26px; font-weight: 800; margin: 0 0 7px;
+}
+#host .ask-hero p { margin: 0; color: var(--chiron-muted); font-size: 14.5px; }
+#host .ask-hero .sugg {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 26px; text-align: left;
+}
+#host .ask-hero .sg {
+  border: 1px solid var(--chiron-border); background: var(--chiron-surface);
+  border-radius: 12px; padding: 12px 14px; color: var(--chiron-fg); cursor: pointer; font: inherit;
+}
+#host .ask-hero .sg:hover { border-color: var(--chiron-accent); }
+#host .ask-hero .sg b {
+  display: block; font-family: var(--font-h, inherit); font-size: 13px; margin-bottom: 3px;
+}
+#host .ask-hero .sg span { font-size: 12.5px; color: var(--chiron-muted); line-height: 1.4; }
+@media (max-width: 700px) { #host .ask-hero .sugg { grid-template-columns: 1fr; } }
+
+/* the message area shares the page ground — acolyte's own surface reads as a
+   panel pasted onto the layout, which is exactly what made it look bolted-on */
+#host .acolyte-messages, #host .acolyte-panel { background: var(--chiron-bg); }
