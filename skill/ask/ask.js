@@ -78,11 +78,12 @@ function tokens() {
 /* ─── boot ─── */
 
 async function boot() {
-  let cfg, index;
+  let cfg, index, stats = null;
   try {
-    [cfg, index] = await Promise.all([
+    [cfg, index, stats] = await Promise.all([
       fetch('/ask/config.json').then(r => r.json()),
       fetch('/library/library.index.json').then(r => r.json()),
+      fetch('/library/library.corpus.stats.json').then(r => r.ok ? r.json() : null).catch(() => null),
     ]);
   } catch (e) {
     return fail('Could not reach the Chiron server.', 'Start it with <code>skill/server/serve.sh</code>, then reload.');
@@ -91,9 +92,8 @@ async function boot() {
   const counts = {};
   for (const l of index.lessons || []) if (l.ready && l.path) counts[l.domain] = (counts[l.domain] || 0) + 1;
 
-  buildScopeSelector(counts);
+  buildScopeSelector(counts, stats);
   renderThreads();
-  $('#ver').textContent = cfg.model || '';
 
   const scope = localStorage.getItem(LS_SCOPE) || 'all';
   $('#scope').value = scope;
@@ -123,7 +123,9 @@ async function boot() {
         // a fixed drawer. Without this the host has to undo position:fixed with
         // !important, which re-breaks on every acolyte layout change.
         layout: 'inline',
-        contentWidth: '760px',
+        // 760 was the pilot's mockup width; real answers carry tables and code,
+        // and at 760 the table columns crush. 880 reads fine and fits them.
+        contentWidth: '880px',
         autoInjectCss: true,
         // Chiron's palette, straight into acolyte's tokens. Everything acolyte
         // paints is tokenised, so this is the whole reskin — no CSS overrides
@@ -137,6 +139,7 @@ async function boot() {
 
   $('#boot')?.remove();
   renderHero(handle);   // inline panels open themselves — no handle.open() here
+  adoptControls(handle, stats);
 
   $('#scope').addEventListener('change', () => {
     const s = $('#scope').value;
@@ -146,6 +149,7 @@ async function boot() {
     // sourceUrl, so a scope change silently reloaded the previous corpus.
     handle.configure({ rag: { sourceUrl: corpusUrl(s) } });
     setHint(s);
+    setGrounded(stats, s);
   });
   setHint(scope);
 
@@ -159,6 +163,88 @@ async function boot() {
       try { localStorage.setItem('chiron.theme', next); } catch {}
     },
   };
+}
+
+/* ─── adopt acolyte's controls into the pilot's chrome ───
+ * The pilot puts the model picker under the composer, settings in the rail, and
+ * a title + scope line in the topbar — not acolyte's header strip. Rather than
+ * reimplement those controls (and inherit the bugs), the real elements are MOVED
+ * into place: they keep every handler acolyte wired to them. */
+function adoptControls(handle, stats) {
+  const panel = document.querySelector('#host .acolyte-panel');
+  if (!panel) return;
+
+  // model picker → the composer meta row
+  const picker = panel.querySelector('.acolyte-model-picker');
+  if (picker) $('#cmeta').prepend(picker);
+
+  // persona picker is ours — acolyte has no UI for it
+  const persona = document.createElement('select');
+  persona.title = 'Who answers';
+  persona.innerHTML = '<option>Chiron · study companion</option>';
+  persona.disabled = true;           // one persona for now; a real switcher is step 2
+  picker?.after(persona);
+
+  // settings gear → the rail footer, where the pilot put it
+  const gear = panel.querySelector('.acolyte-header .acolyte-iconbtn[title^="Settings"]');
+  if (gear) { gear.textContent = '⚙ Settings'; $('#settingsslot').appendChild(gear); }
+
+  // "New question" in the rail drives acolyte's own clear-conversation button,
+  // so history and state are cleared properly instead of by reloading the page.
+  const plus = panel.querySelector('.acolyte-header .acolyte-iconbtn[title^="New"]');
+  document.querySelector('.newchat').addEventListener('click', e => {
+    e.preventDefault();
+    plus?.click();
+    setTitle('New question');
+    renderHero(handle);
+  });
+
+  // voice-out chip
+  const vb = $('#voicebtn');
+  vb.addEventListener('click', () => {
+    const on = vb.classList.toggle('on');
+    handle.configure({ voice: { enabled: on } });
+  });
+
+  // "Open in lesson" follows the top citation of the latest answer
+  const open = $('#openlesson');
+  new MutationObserver(() => {
+    const first = panel.querySelector('.acolyte-msg:last-of-type .src-card');
+    open.disabled = !first;
+    open.onclick = first ? () => first.click() : null;
+    const lastUser = [...panel.querySelectorAll('.acolyte-msg.user')].pop();
+    if (lastUser) setTitle(lastUser.textContent.trim());
+  }).observe(panel.querySelector('.acolyte-messages'), { childList: true, subtree: true });
+
+  autogrow(panel.querySelector('.acolyte-input'));
+  setGrounded(stats, localStorage.getItem(LS_SCOPE) || 'all');
+}
+
+/** The composer is one line tall and grows to fit, like the pilot. acolyte's own
+ *  textarea is a fixed 40–140px scroll box, which reads as dead space at rest
+ *  and hides the start of a long question once it fills. */
+function autogrow(ta) {
+  if (!ta) return;
+  ta.rows = 1;                        // acolyte ships rows=2 — that is the dead space
+  const fit = () => { ta.style.height = 'auto'; ta.style.height = Math.min(ta.scrollHeight, 170) + 'px'; };
+  ta.addEventListener('input', fit);
+  // acolyte clears the field itself on send, which fires no input event
+  new MutationObserver(fit).observe(ta, { attributes: true, attributeFilter: ['value'] });
+  ta.form?.addEventListener('submit', () => setTimeout(fit, 0));
+  ta.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey) setTimeout(fit, 0); });
+  fit();
+}
+
+function setTitle(t) {
+  $('#ttl').textContent = t.length > 60 ? t.slice(0, 60) + '…' : t;
+}
+
+/** State what is actually being searched. A lesson count is the wrong unit —
+ *  retrieval returns passages, so that is the number worth showing. */
+function setGrounded(stats, scope) {
+  if (!stats) return;
+  const n = scope === 'all' ? stats.total : (stats.byDomain?.[scope] ?? 0);
+  $('#grounded').textContent = `Grounded · ${n.toLocaleString()} passages indexed`;
 }
 
 /* ─── the empty state ───
@@ -206,12 +292,20 @@ function renderHero(handle) {
 
 /* ─── chrome ─── */
 
-function buildScopeSelector(counts) {
+/** Label each scope by PASSAGES, not lessons — a passage is what retrieval
+ *  actually returns, and the two numbers differ by ~60×. Falls back to lesson
+ *  counts if the corpus stats file hasn't been built yet. */
+function buildScopeSelector(counts, stats) {
   const sel = $('#scope');
-  const total = Object.values(counts).reduce((a, b) => a + b, 0);
-  const opts = [`<option value="all">Everything · ${total} lessons</option>`];
+  const unit = (dom) => {
+    const p = dom === 'all' ? stats?.total : stats?.byDomain?.[dom];
+    if (p != null) return `${p.toLocaleString()} passages`;
+    const l = dom === 'all' ? Object.values(counts).reduce((a, b) => a + b, 0) : counts[dom];
+    return `${l} lessons`;
+  };
+  const opts = [`<option value="all">Everything in the library · ${unit('all')}</option>`];
   for (const [dom, n] of Object.entries(counts).sort((a, b) => b[1] - a[1])) {
-    opts.push(`<option value="${dom}">${DOMAIN_LABEL[dom] || dom} · ${n} lessons</option>`);
+    opts.push(`<option value="${dom}">${DOMAIN_LABEL[dom] || dom} · ${unit(dom)}</option>`);
   }
   sel.innerHTML = opts.join('');
 }
