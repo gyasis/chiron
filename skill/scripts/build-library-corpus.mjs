@@ -274,6 +274,14 @@ for (const [dom, ps] of Object.entries(shards)) {
   shardLines.push(`    ${dom.padEnd(16)} ${String(ps.length).padStart(6)} passages  ${(statSync(f).size / 1048576).toFixed(1)} MB`);
 }
 
+// Passage counts, so the UI can state what it is actually searching rather than
+// counting lessons (a lesson is not a retrieval unit — a passage is).
+writeFileSync(join(OUT, 'library.corpus.stats.json'), JSON.stringify({
+  total: corpus.length,
+  byDomain: Object.fromEntries(Object.entries(shards).map(([d, ps]) => [d, ps.length])),
+  lessons: lessons.length,
+}));
+
 const mb = (statSync(CORPUS).size / 1048576).toFixed(1);
 console.log(`Corpus built → ${CORPUS}`);
 console.log(`  lessons: ${lessons.length} (parsed ${parsed}, cached ${reused}, missing html ${missing})`);
