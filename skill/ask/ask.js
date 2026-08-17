@@ -36,12 +36,44 @@ const PERSONA = {
   tone: 'concise',
   grounding: 'permissive',
   speakStyle: 'verbatim',
-  greeting: 'Ask me anything from your library — I\'ll cite the lessons it came from.',
+  // Empty string opts out of acolyte's greeting message — the host renders its
+  // own hero instead (below), which teaches what the page is FOR.
+  greeting: '',
   extras:
     'Always prefer the learner\'s own lessons over general knowledge, and cite them. If the answer is ' +
     'NOT in the retrieved passages, say so in one sentence before answering from general knowledge. ' +
     'Keep Italian terms in italics with a short English gloss the first time they appear.',
 };
+
+/** Read Chiron's own CSS variables and hand them to acolyte as theme tokens, so
+ *  the widget inherits the library's palette instead of duplicating hex codes —
+ *  and follows the light/dark switch for free. */
+function tokens() {
+  const v = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+  return {
+    bg: v('--chiron-bg'),
+    fg: v('--chiron-fg'),
+    'fg-muted': v('--chiron-fg-secondary'),
+    'fg-faint': v('--chiron-muted'),
+    surface: v('--chiron-surface'),
+    'surface-alt': v('--chiron-elevated'),
+    border: v('--chiron-border'),
+    'border-soft': v('--chiron-divider'),
+    'border-strong': v('--chiron-border'),
+    accent: v('--chiron-accent'),
+    'accent-light': v('--chiron-elevated'),
+    'accent-contrast': v('--chiron-surface'),
+    // The pilot's user bubble is a quiet grey pill, NOT an accent-filled one —
+    // the accent is reserved for the send button and citation chrome.
+    'msg-user-bg': v('--chiron-elevated'),
+    'msg-user-fg': v('--chiron-fg'),
+    radius: '10px',
+    'radius-lg': '14px',
+    font: "'Source Sans 3','Inter',system-ui,sans-serif",
+    'font-size': '15px',
+    shadow: 'none',
+  };
+}
 
 /* ─── boot ─── */
 
@@ -87,10 +119,16 @@ async function boot() {
       storage: { namespace: 'chiron-ask' },
       ui: {
         targetSelector: '#host',
-        defaultWidth: 'full',
-        autoMount: true,
-        accent: getComputedStyle(document.documentElement).getPropertyValue('--chiron-accent').trim(),
+        // The panel IS the page here, so it lays out as a flex child instead of
+        // a fixed drawer. Without this the host has to undo position:fixed with
+        // !important, which re-breaks on every acolyte layout change.
+        layout: 'inline',
+        contentWidth: '760px',
         autoInjectCss: true,
+        // Chiron's palette, straight into acolyte's tokens. Everything acolyte
+        // paints is tokenised, so this is the whole reskin — no CSS overrides
+        // for colour, only for the few structural touches in skin.css.
+        theme: tokens(),
       },
     });
   } catch (e) {
@@ -98,7 +136,7 @@ async function boot() {
   }
 
   $('#boot')?.remove();
-  handle.open();
+  renderHero(handle);   // inline panels open themselves — no handle.open() here
 
   $('#scope').addEventListener('change', () => {
     const s = $('#scope').value;
@@ -121,6 +159,49 @@ async function boot() {
       try { localStorage.setItem('chiron.theme', next); } catch {}
     },
   };
+}
+
+/* ─── the empty state ───
+ * Acolyte's greeting is one chat bubble; the pilot's empty state is a hero with
+ * four cards, and those cards are the only thing on the page that TEACHES what
+ * it can do — ask about something half-remembered, turn it into practice, ask
+ * about your own progress, send it to the generator. Worth keeping. */
+
+const SUGGESTIONS = [
+  ['Ask about something you half-remember', 'Che differenza c\'è tra affanno e dispnea?',
+   'Che differenza c\'è tra <i>affanno</i> e <i>dispnea</i>?'],
+  ['Turn it into practice', 'Interrogami sulle frasi da reparto per il dolore toracico.',
+   'Quiz me on the chest-pain ward phrases.'],
+  ['Ask about your own progress', 'Cosa non ho ancora studiato in cardiologia?',
+   'What haven\'t I covered in cardiology?'],
+  ['Send it to the generator', 'Fai una lezione da reparto sull\'iperkaliemia.',
+   'Make a ward lesson on hyperkalemia.'],
+];
+
+function renderHero(handle) {
+  const box = document.querySelector('#host .acolyte-messages');
+  if (!box || box.childElementCount) return;
+
+  const hero = document.createElement('div');
+  hero.className = 'ask-hero';
+  hero.innerHTML = `
+    <div class="mk">◈</div>
+    <h1>What do you want to work on?</h1>
+    <p>Ask anything. Answers are grounded in your own lessons — and cite them.</p>
+    <div class="sugg">${SUGGESTIONS.map(([t, q, sub], i) =>
+      `<button class="sg" data-i="${i}"><b>${escapeHtml(t)}</b><span>${sub}</span></button>`).join('')}</div>`;
+  box.appendChild(hero);
+
+  hero.querySelectorAll('.sg').forEach(btn => btn.addEventListener('click', () => {
+    const q = SUGGESTIONS[+btn.dataset.i][1];
+    hero.remove();
+    handle.send(q);
+  }));
+
+  // Any real message replaces the hero — including one the user types.
+  new MutationObserver((_, obs) => {
+    if (box.querySelector('.acolyte-msg')) { hero.remove(); obs.disconnect(); }
+  }).observe(box, { childList: true });
 }
 
 /* ─── chrome ─── */
