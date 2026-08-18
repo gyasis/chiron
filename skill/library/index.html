@@ -205,6 +205,9 @@ body,.topbar,.pills,.facets,.row,.rhead{transition:background .2s,color .2s,bord
 /* topbar actions */
 .genbtn{font:inherit;font-weight:700;font-size:13px;font-family:var(--font-h);border:none;border-radius:99px;background:var(--chiron-accent);color:#fff;padding:8px 15px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
 .genbtn:hover{filter:brightness(1.1)}
+/* Ask lives beside Generate: the two things you DO with the library. An anchor,
+   not a button, so middle-click/new-tab work like any other link. */
+.askbtn{text-decoration:none;background:#0f172a}
 /* SSM connection indicator (Specializzando) — icon badge + status dot */
 .ssmbadge{position:relative;width:36px;height:36px;border-radius:10px;border:none;padding:0;flex:0 0 auto;cursor:pointer;display:grid;place-items:center;color:#fff;background:linear-gradient(135deg,#10b981,#059669);box-shadow:0 1px 3px rgba(0,0,0,.16);transition:transform .12s,filter .12s}
 .ssmbadge:hover{transform:translateY(-1px);filter:brightness(1.05)}
@@ -283,6 +286,7 @@ body,.topbar,.pills,.facets,.row,.rhead{transition:background .2s,color .2s,bord
     <div class="brand"><span class="mk">C</span><span class="lbl">Chiron Library</span></div>
     <div class="search"><span class="mag">⌕</span><input id="q" placeholder="Search lessons, diseases, systems, subjects, topics…"></div>
     <div class="sort"><span class="sl">Sort</span> <select id="sort"></select></div>
+    <a class="genbtn askbtn" href="/ask/" title="Ask across everything you've studied — grounded, with citations">◈ <span class="glbl">Ask</span></a>
     <button class="genbtn" onclick="LIB.wizard(true)">✦ <span class="glbl">Generate</span></button>
     <button class="genbtn" onclick="LIB.jobs(true)" title="What's generating / recently generated" style="background:#0f766e">⚡ <span class="glbl">Jobs</span><span id="jobsdot" class="jobsdot" style="display:none"></span></button>
     <button class="genbtn" onclick="LIB.captures(true)" title="Everything you've flagged — review + turn into cards/quizzes/lessons" style="background:#7c3aed">📥 <span class="glbl">Captures</span><span id="capdot" class="jobsdot" style="display:none"></span></button>
