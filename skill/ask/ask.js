@@ -375,6 +375,7 @@ function wireDispatch(handle, panel) {
       box.querySelectorAll('.acolyte-msg.assistant:not([data-acts])').forEach(msg => {
         if (!msg.querySelector('.acolyte-msg-body')?.textContent.trim()) return;
         msg.dataset.acts = '1';
+        dressSources(msg);
         msg.appendChild(buildActs(handle, panel, msg));
       });
     }, DISPATCH_DEBOUNCE);
@@ -506,3 +507,74 @@ async function post(path, body) {
 }
 
 const esc = escapeHtml;
+
+/* ─── citations: grouped by lesson, behind a collapsed receipt ───
+ * Acolyte emits one card per PASSAGE. Retrieval routinely returns several
+ * passages from the same lesson — and sometimes from the same section — so a
+ * flat list repeats itself and buries the question actually worth answering:
+ * which of my lessons taught me this?
+ *
+ * So the passages are regrouped by lesson (B) inside a one-line summary that
+ * stays shut until asked (D). The original cards are kept in the DOM and
+ * hidden: every pill delegates its click to the card it came from, so acolyte
+ * keeps owning navigation and this cannot rot when its routing changes.
+ */
+function dressSources(msg) {
+  const wrap = msg.querySelector('.acolyte-sources');
+  if (!wrap || wrap.dataset.dressed) return;
+  const cards = [...wrap.querySelectorAll('.src-card')];
+  if (!cards.length) return;
+  wrap.dataset.dressed = '1';
+
+  const groups = new Map();
+  for (const el of cards) {
+    let s = {}; try { s = JSON.parse(el.dataset.acolyteSource || '{}'); } catch {}
+    const m = s.meta || {};
+    const key = m.lessonId || m.lesson || s.title || 'source';
+    const g = groups.get(key) || { lesson: m.lesson || s.title || 'Source', domain: m.domain, n: 0, secs: [] };
+    g.n++;
+    // Titles are "<lesson> — <heading>"; the lesson name is already the row
+    // heading, so the pill should carry only the part that differs.
+    const head = (s.title || '').startsWith(g.lesson + ' — ')
+      ? (s.title || '').slice(g.lesson.length + 3) : (m.section || 'section');
+    if (!g.secs.some(x => x.label === head)) g.secs.push({ label: head, t: m.t, el });
+    groups.set(key, g);
+  }
+  const gs = [...groups.values()];
+
+  const list = document.createElement('div');
+  list.className = 'ask-srcs';
+  list.innerHTML = gs.map(g => `
+    <div class="asrc">
+      <div class="asrc-bar" data-dom="${escapeHtml(g.domain || '')}"></div>
+      <div class="asrc-main">
+        <div class="asrc-t">${escapeHtml(g.lesson)}
+          ${g.domain ? `<span class="asrc-dm" data-dom="${escapeHtml(g.domain)}">${escapeHtml(DOMAIN_LABEL[g.domain] || g.domain)}</span>` : ''}
+          ${g.n > g.secs.length ? `<span class="asrc-n">${g.n} passages</span>` : ''}
+        </div>
+        <div class="asrc-secs">${g.secs.map((s, i) =>
+          `<button class="asrc-sec" data-g="${gs.indexOf(g)}" data-s="${i}">${
+            s.t != null ? `▶ ${fmtTime(s.t)} · ` : ''}${escapeHtml(s.label)}</button>`).join('')}</div>
+      </div>
+    </div>`).join('');
+
+  list.addEventListener('click', e => {
+    const b = e.target.closest('.asrc-sec');
+    if (b) gs[+b.dataset.g].secs[+b.dataset.s].el.click();   // acolyte still navigates
+  });
+  wrap.appendChild(list);
+
+  // The strip: coverage first. Counting DISTINCT lessons is why this is script
+  // and not a stylesheet — CSS cannot dedupe.
+  const summary = wrap.querySelector('.src-summary');
+  if (summary) {
+    summary.innerHTML = `<span class="asrc-dots">${gs.map(g =>
+      `<span class="asrc-dot" data-dom="${escapeHtml(g.domain || '')}"></span>`).join('')}</span>`
+      + `Sourced from <b>${cards.length}</b> passage${cards.length === 1 ? '' : 's'} across `
+      + `<b>${gs.length}</b> lesson${gs.length === 1 ? '' : 's'}`;
+  }
+  const count = wrap.querySelector('.src-count');
+  if (count) count.remove();          // the sentence already says the number
+}
+
+const fmtTime = s => `${Math.floor(s / 60)}:${String(Math.round(s % 60)).padStart(2, '0')}`;
