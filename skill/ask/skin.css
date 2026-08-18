@@ -87,35 +87,71 @@
   font-family: var(--font-h, inherit); font-size: 10.5px; font-weight: 700;
   letter-spacing: .08em; text-transform: uppercase; color: var(--chiron-muted);
 }
-#host .src-tag { background: none; padding: 0; color: inherit; font: inherit; }
+/* the sentence already says 'Sourced from…' — the 📚 SOURCES tag beside it is
+   the same word twice. Keep the icon, drop the label. */
+#host .src-tag { background: none; padding: 0; color: inherit; font: inherit; font-size: 0; }
+#host .src-tag::before { content: '📚'; font-size: 13px; }
 #host .src-count {
   background: var(--chiron-elevated); color: var(--chiron-muted);
   border-radius: 99px; padding: 1px 7px; font-size: 10.5px; font-weight: 800;
 }
-/* A wrap-row looks right but is fragile: acolyte's cards resolve to their
-   max-width, so two 320px chips never fit a 616px column and every one lands on
-   its own line. An auto-fill grid packs them by measurement instead. */
-#host .src-body {
-  display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
-  gap: 8px; padding: 0;
+/* Citations: B (grouped by lesson) inside D (a collapsed receipt).
+   The per-passage cards acolyte emits are kept in the DOM but hidden — every
+   pill delegates its click to its card, so acolyte keeps owning navigation.
+   The grouping itself is built in ask.js: counting DISTINCT lessons is a dedupe,
+   and CSS cannot dedupe. */
+#host .src-body { display: none !important; }
+
+/* the strip */
+#host .src-head {
+  display: flex; align-items: center; gap: 9px; width: 100%;
+  background: var(--chiron-bg); border: 1px solid var(--chiron-border);
+  border-radius: 10px; padding: 8px 12px; margin: 0;
+  font-family: var(--font-b, inherit); font-size: 12.5px; font-weight: 400;
+  letter-spacing: normal; text-transform: none; color: var(--chiron-fg-secondary);
 }
-#host .src-card {
-  display: flex; align-items: center; gap: 8px;
-  border: 1px solid var(--chiron-border); background: var(--chiron-surface);
-  border-radius: 9px; padding: 7px 11px; margin: 0;
-  font-size: 12.5px; color: var(--chiron-fg-secondary); text-align: left;
-  width: auto; max-width: none; min-width: 0;
+#host .src-head:hover { border-color: var(--chiron-accent); }
+/* the sentence already says 'Sourced from…' — the 📚 SOURCES tag beside it is
+   the same word twice. Keep the icon, drop the label. */
+#host .src-tag { background: none; padding: 0; color: inherit; font: inherit; font-size: 0; }
+#host .src-tag::before { content: '📚'; font-size: 13px; }
+#host .src-summary { flex: 1; text-align: left; white-space: normal; }
+#host .src-summary b { color: var(--chiron-fg); }
+#host .src-arrow { order: 9; margin-left: auto; color: var(--chiron-muted); font-size: 11px; transition: transform .15s; }
+#host .acolyte-sources.expanded .src-arrow { transform: rotate(90deg); }
+#host .asrc-dots { display: inline-flex; gap: 3px; margin-right: 7px; vertical-align: middle; }
+#host .asrc-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--chiron-border); }
+
+/* the grouped list — only once opened */
+#host .ask-srcs { display: none; margin-top: 8px; }
+#host .acolyte-sources.expanded .ask-srcs { display: block; }
+#host .asrc { display: flex; gap: 10px; padding: 9px 0; border-bottom: 1px solid var(--chiron-divider); }
+#host .asrc:last-child { border-bottom: 0; }
+#host .asrc-bar { flex: 0 0 3px; border-radius: 2px; background: var(--chiron-border); }
+#host .asrc-main { flex: 1; min-width: 0; }
+#host .asrc-t {
+  font-weight: 600; font-size: 13.5px; color: var(--chiron-fg);
+  display: flex; align-items: center; gap: 7px; flex-wrap: wrap;
 }
-#host .src-card:hover { border-color: var(--chiron-accent); color: var(--chiron-accent); }
-#host .src-card-head { display: flex; align-items: center; gap: 8px; min-width: 0; }
-#host .src-num {
-  flex: 0 0 18px; width: 18px; height: 18px; border-radius: 5px;
-  background: var(--chiron-elevated); color: var(--chiron-muted);
-  display: grid; place-items: center; font-size: 10.5px; font-weight: 800;
+#host .asrc-dm { font-size: 9.5px; font-weight: 800; padding: 1px 6px; border-radius: 99px; white-space: nowrap; }
+#host .asrc-n { font-size: 11px; color: var(--chiron-muted); font-weight: 400; }
+#host .asrc-secs { display: flex; gap: 5px; flex-wrap: wrap; margin-top: 5px; }
+#host .asrc-sec {
+  font: inherit; font-size: 11.5px; border: 1px solid var(--chiron-border); border-radius: 99px;
+  padding: 2px 9px; color: var(--chiron-muted); background: var(--chiron-bg); cursor: pointer;
+  max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
-#host .src-title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-#host .src-score { display: none; }          /* a raw BM25 number teaches the reader nothing */
-#host .src-text { display: none; }           /* the chip is the summary; the jump is the detail */
+#host .asrc-sec:hover { border-color: var(--chiron-accent); color: var(--chiron-accent); }
+
+/* domain colour, one source of truth for bar / badge / dot */
+#host [data-dom="medicine"].asrc-bar, #host [data-dom="medicine"].asrc-dot { background: var(--med); }
+#host [data-dom="medical-italian"].asrc-bar, #host [data-dom="medical-italian"].asrc-dot { background: var(--medit); }
+#host [data-dom="language-it"].asrc-bar, #host [data-dom="language-it"].asrc-dot { background: var(--lang); }
+#host [data-dom="video-it"].asrc-bar, #host [data-dom="video-it"].asrc-dot { background: var(--vid); }
+#host [data-dom="medicine"].asrc-dm { background: var(--medbg); color: var(--med); }
+#host [data-dom="medical-italian"].asrc-dm { background: var(--meditbg); color: var(--medit); }
+#host [data-dom="language-it"].asrc-dm { background: var(--langbg); color: var(--lang); }
+#host [data-dom="video-it"].asrc-dm { background: var(--vidbg); color: var(--vid); }
 
 /* ── recent strip ── */
 #host .acolyte-recent-strip {
