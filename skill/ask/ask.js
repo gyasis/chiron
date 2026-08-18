@@ -153,6 +153,14 @@ async function boot() {
   });
   setHint(scope);
 
+  // Acolyte asks the host before navigating. Handle it: open the cited lesson in
+  // a new tab so the conversation (and any playing audio) is not thrown away —
+  // the citation was a reference, not a request to leave.
+  document.addEventListener('acolyte:navigate', ev => {
+    ev.preventDefault();
+    window.open(ev.detail.url, '_blank', 'noopener');
+  });
+
   window.chironAsk = {
     handle,
     newThread() { handle.configure({}); location.reload(); },
@@ -217,6 +225,7 @@ function adoptControls(handle, stats) {
   }).observe(panel.querySelector('.acolyte-messages'), { childList: true, subtree: true });
 
   autogrow(panel.querySelector('.acolyte-input'));
+  wireDispatch(handle, panel);
   setGrounded(stats, localStorage.getItem(LS_SCOPE) || 'all');
 }
 
@@ -341,3 +350,159 @@ function fail(title, detail) {
 }
 
 boot();
+
+/* ─── dispatch: turn an answer into work ───
+ * The row under each answer is the thing a general chat cannot do — every button
+ * hands off to a real Chiron endpoint that already exists, rather than a new
+ * parallel mechanism:
+ *   Listen  → acolyte's own per-message TTS
+ *   Card    → POST /capture  →  POST /captures/{id}/cards   (the real SR rotation)
+ *   Lesson  → POST /generate                                 (the real generator)
+ *   Simpler → re-ask, in the same thread
+ */
+
+const DISPATCH_DEBOUNCE = 900;
+
+function wireDispatch(handle, panel) {
+  const box = panel.querySelector('.acolyte-messages');
+  if (!box) return;
+  let timer;
+  new MutationObserver(() => {
+    clearTimeout(timer);
+    // An answer streams in token by token; wait for it to settle rather than
+    // rebuilding the row on every chunk.
+    timer = setTimeout(() => {
+      box.querySelectorAll('.acolyte-msg.assistant:not([data-acts])').forEach(msg => {
+        if (!msg.querySelector('.acolyte-msg-body')?.textContent.trim()) return;
+        msg.dataset.acts = '1';
+        msg.appendChild(buildActs(handle, panel, msg));
+      });
+    }, DISPATCH_DEBOUNCE);
+  }).observe(box, { childList: true, subtree: true, characterData: true });
+}
+
+/** What this answer was about — the question, the answer, and where it came from. */
+function answerContext(panel, msg) {
+  const answer = msg.querySelector('.acolyte-msg-body')?.innerText.trim() || '';
+  let q = '';
+  for (let el = msg.previousElementSibling; el; el = el.previousElementSibling) {
+    if (el.classList?.contains('acolyte-msg') && el.classList.contains('user')) { q = el.innerText.trim(); break; }
+  }
+  const sources = [...msg.querySelectorAll('.src-card')].map(c => {
+    try { return JSON.parse(c.dataset.acolyteSource || '{}'); } catch { return {}; }
+  }).filter(s => s.meta);
+  return { question: q, answer, sources, top: sources[0]?.meta || {} };
+}
+
+function buildActs(handle, panel, msg) {
+  const row = document.createElement('div');
+  row.className = 'ask-acts';
+  const add = (label, cls, fn) => {
+    const b = document.createElement('button');
+    b.className = 'act' + (cls ? ' ' + cls : '');
+    b.textContent = label;
+    b.addEventListener('click', () => fn(b, row));
+    row.appendChild(b);
+    return b;
+  };
+
+  // Listen — acolyte already renders a per-message speak button; surface it here
+  // rather than starting a second TTS path that could talk over the first.
+  const speak = msg.querySelector('.acolyte-msg-speak');
+  if (speak) add('🎧 Listen', '', () => speak.click());
+
+  add('➕ Add as a card', '', (b, r) => makeCard(panel, msg, b, r));
+  add('📘 Make a lesson from this', '', (b, r) => lessonForm(panel, msg, r));
+  add('↻ Again, simpler', 'ghost', () =>
+    handle.send('Explain that again, simpler and shorter. Same language as before.'));
+  return row;
+}
+
+function say(row, text, kind) {
+  let n = row.querySelector('.act-note');
+  if (!n) { n = document.createElement('div'); n.className = 'act-note'; row.appendChild(n); }
+  n.className = 'act-note' + (kind ? ' ' + kind : '');
+  n.innerHTML = text;
+  return n;
+}
+
+async function makeCard(panel, msg, btn, row) {
+  const c = answerContext(panel, msg);
+  btn.disabled = true; say(row, 'Capturing…');
+  try {
+    // Provenance matters more than the text: the card generator writes better
+    // cards when it knows the question, the answer AND the lesson section.
+    const cap = await post('/capture', {
+      kind: 'answer',
+      text: (c.question || c.answer).slice(0, 200),
+      question: c.question,
+      source_answer: c.answer,
+      surrounding_text: c.sources.map(s => `${s.title}\n${s.meta?.section || ''}`).join('\n\n'),
+      lesson_slug: c.top.lessonId || null,
+      section_id: c.top.section || null,
+      concept: c.top.subject || c.top.lesson || null,
+      source: 'ask',
+    });
+    say(row, 'Captured — generating cards…');
+    const res = await post(`/captures/${cap.id}/cards`, {});
+    // /captures/{id}/cards returns the card objects themselves, not a count —
+    // reading it as a number printed "[object Object]" to the learner.
+    const arr = [res.cards, res.created, res.items].find(Array.isArray);
+    const n = arr ? arr.length : (typeof res.count === 'number' ? res.count : null);
+    say(row, n != null
+      ? `✓ ${n} card${n === 1 ? '' : 's'} added to the review rotation.`
+      : '✓ Sent to the card spine.', 'ok');
+  } catch (e) {
+    // Fail loud and name the fix — a silent no-op here would mean believing a
+    // card exists when it does not, and only finding out at review time.
+    say(row, `Could not add a card — ${esc(e.message)}`, 'err');
+    btn.disabled = false;
+  }
+}
+
+function lessonForm(panel, msg, row) {
+  if (row.querySelector('.act-form')) return;
+  const c = answerContext(panel, msg);
+  const f = document.createElement('form');
+  f.className = 'act-form';
+  const suggested = (c.top.lesson || c.question || '').replace(/\?+$/, '').slice(0, 80);
+  f.innerHTML = `
+    <input name="subject" value="${esc(suggested)}" placeholder="Lesson subject" required>
+    <select name="domain">${['medicine','medical-italian','language-it','code']
+      .map(d => `<option value="${d}"${d === (c.top.domain || 'medicine') ? ' selected' : ''}>${DOMAIN_LABEL[d] || d}</option>`).join('')}</select>
+    <button type="submit">Generate</button>`;
+  row.appendChild(f);
+  f.addEventListener('submit', async e => {
+    e.preventDefault();
+    const fd = new FormData(f);
+    f.querySelector('button').disabled = true;
+    say(row, 'Queueing…');
+    try {
+      const r = await post('/generate', {
+        domain: fd.get('domain'), subject: fd.get('subject'),
+        source: 'Chiron · Ask', extra: { from_question: c.question },
+      });
+      if (r.needs_switch) { say(row, esc(r.reason), 'err'); f.querySelector('button').disabled = false; return; }
+      f.remove();
+      const ref = r.job_id || r.id || r.slug;
+      say(row, `✓ Queued${r.slug ? ` — <b>${esc(r.slug)}</b>` : ''}. `
+        + `<a href="/library/" target="_blank">Watch it in the library ↗</a>`
+        + (ref ? ` <span class="dim">(${esc(String(ref))})</span>` : ''), 'ok');
+    } catch (err) {
+      say(row, `Could not queue — ${esc(err.message)}`, 'err');
+      f.querySelector('button').disabled = false;
+    }
+  });
+}
+
+async function post(path, body) {
+  const r = await fetch(path, {
+    method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body),
+  });
+  const txt = await r.text();
+  let data; try { data = JSON.parse(txt); } catch { data = { detail: txt.slice(0, 200) }; }
+  if (!r.ok) throw new Error(data.detail || `${r.status} ${r.statusText}`);
+  return data;
+}
+
+const esc = escapeHtml;

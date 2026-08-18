@@ -24,7 +24,8 @@ button{font:inherit;cursor:pointer}
 
 /* ── left rail (Chiron chrome; acolyte owns everything right of it) ── */
 .rail{flex:0 0 258px;background:var(--chiron-surface);border-right:1px solid var(--chiron-border);display:flex;flex-direction:column;min-height:0}
-.rail .brand{display:flex;align-items:center;gap:9px;font-family:var(--font-h);font-weight:800;color:var(--chiron-accent);font-size:15px;padding:15px 16px 12px}
+.rail .brand{text-decoration:none;display:flex;align-items:center;gap:9px;font-family:var(--font-h);font-weight:800;color:var(--chiron-accent);font-size:15px;padding:15px 16px 12px}
+.rail .brand:hover{background:var(--chiron-elevated)}
 .rail .brand .mk{width:28px;height:28px;border-radius:8px;background:var(--chiron-accent);color:var(--chiron-surface);display:grid;place-items:center;font-size:14px;flex:0 0 auto}
 .newchat{margin:0 12px 12px;padding:9px 12px;border:1px solid var(--chiron-border);background:var(--chiron-bg);color:var(--chiron-fg);border-radius:10px;font-size:13.5px;font-weight:600;width:calc(100% - 24px);text-align:left}
 .newchat:hover{border-color:var(--chiron-accent);color:var(--chiron-accent)}
@@ -80,7 +81,7 @@ button{font:inherit;cursor:pointer}
 <body>
 
 <aside class="rail">
-  <div class="brand"><div class="mk">◈</div> Chiron · Ask</div>
+  <a class="brand" href="/library/" title="Back to the library"><div class="mk">◈</div> Chiron · Ask</a>
   <button class="newchat" onclick="chironAsk.newThread()">＋ New question</button>
 
   <div class="scope">
@@ -96,6 +97,7 @@ button{font:inherit;cursor:pointer}
     <button onclick="chironAsk.theme()">◐ Theme</button>
     <span id="settingsslot"></span>
     <a class="railfoot-link" href="/library/">📚 Library</a>
+    <a class="railfoot-link" href="/library/?generate=1">✦ Generate</a>
     <span class="sp" id="ver"></span>
   </div>
 </aside>
