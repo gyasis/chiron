@@ -997,7 +997,15 @@ async def _lesson_html_no_cache(request, call_next):
     # /library/ too: the faceted app (library.js) + its catalog (library.index.json/config) must ALWAYS
     # revalidate, else the browser serves a stale UI/index and fixes (e.g. a corrected lesson title) never
     # show. Big immutable media (icons/*.png, *.mp3/*.mp4) stay cacheable — only text/markup revalidates.
-    if (p.startswith("/lessons/") or p.startswith("/library/")) and p.rsplit(".", 1)[-1].lower() in ("html", "js", "css", "json", "webmanifest"):
+    # /ask/ too: it is a served app like the library, and it shipped WITHOUT this —
+    # so a fixed ask.js/skin.css never reached an already-open browser and the page
+    # kept rendering the previous build ("why doesn't it look like the fix?").
+    # The vendored acolyte bundle is included: it changes on every acolyte release.
+    if (p.startswith("/lessons/") or p.startswith("/library/") or p.startswith("/ask/")) \
+            and p.rsplit(".", 1)[-1].lower() in ("html", "js", "css", "json", "webmanifest"):
+        resp.headers["Cache-Control"] = "no-cache, must-revalidate"
+    # a bare directory URL ("/ask/") has no extension but is served index.html
+    elif p.rstrip("/") in ("/ask", "/library"):
         resp.headers["Cache-Control"] = "no-cache, must-revalidate"
     return resp
 
