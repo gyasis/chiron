@@ -11,7 +11,6 @@
 import { mount } from './vendor/acolyte.js';
 
 const $ = s => document.querySelector(s);
-const LS_THREADS = 'chiron.ask.threads';
 const LS_SCOPE = 'chiron.ask.scope';
 
 const DOMAIN_LABEL = {
@@ -93,7 +92,6 @@ async function boot() {
   for (const l of index.lessons || []) if (l.ready && l.path) counts[l.domain] = (counts[l.domain] || 0) + 1;
 
   buildScopeSelector(counts, stats);
-  renderThreads();
 
   const scope = localStorage.getItem(LS_SCOPE) || 'all';
   $('#scope').value = scope;
@@ -116,7 +114,10 @@ async function boot() {
         crossPageReferences: false,   // the corpus IS every page — no need to crawl
       },
       voice: { enabled: true },
-      storage: { namespace: 'chiron-ask' },
+      // dbName, NOT namespace — StorageConfig has no `namespace`, so the old
+      // key was silently ignored and this instance shared the default
+      // IndexedDB with any other acolyte mounted on the same origin.
+      storage: { dbName: 'chiron-ask', historyEnabled: true },
       ui: {
         targetSelector: '#host',
         // The panel IS the page here, so it lays out as a flex child instead of
@@ -202,7 +203,7 @@ function adoptControls(handle, stats) {
   const plus = panel.querySelector('.acolyte-header .acolyte-iconbtn[title^="New"]');
   document.querySelector('.newchat').addEventListener('click', e => {
     e.preventDefault();
-    plus?.click();
+    handle.history.start();        // keeps the stored threads, starts a new one
     setTitle('New question');
     renderHero(handle);
   });
@@ -226,6 +227,7 @@ function adoptControls(handle, stats) {
 
   autogrow(panel.querySelector('.acolyte-input'));
   wireDispatch(handle, panel);
+  wireThreads(handle);
   setGrounded(stats, localStorage.getItem(LS_SCOPE) || 'all');
 }
 
@@ -323,21 +325,14 @@ function setHint(scope) {
   $('#scopehint').textContent = scope === 'all'
     ? 'Retrieval runs over every baked lesson and every section in it.'
     : `Only ${DOMAIN_LABEL[scope] || scope}. Faster, and it cannot drift into another subject.`;
+  // The topbar states the scope too, and was left on its hardcoded default —
+  // so a restored "Medical Italian" session still claimed to search everything.
+  // Two places saying different things about what is being searched is worse
+  // than either one alone.
+  $('#tsub').textContent = `Scope: ${scope === 'all' ? 'everything' : (DOMAIN_LABEL[scope] || scope)}`
+    + ' · grounded in your library';
 }
 
-function renderThreads() {
-  let threads = [];
-  try { threads = JSON.parse(localStorage.getItem(LS_THREADS) || '[]'); } catch {}
-  const box = $('#threads');
-  if (!threads.length) {
-    box.innerHTML = '<div style="padding:6px 16px;font-size:12px;color:var(--chiron-muted);line-height:1.5">'
-      + 'Your questions will collect here.</div>';
-    return;
-  }
-  box.innerHTML = threads.slice(0, 40).map((t, i) =>
-    `<button class="th${i === 0 ? ' on' : ''}"><span class="dot d-${t.scope || 'all'}"></span>${escapeHtml(t.q)}</button>`
-  ).join('');
-}
 
 function escapeHtml(s) {
   return String(s == null ? '' : s).replace(/[&<>"']/g, c =>
@@ -578,3 +573,83 @@ function dressSources(msg) {
 }
 
 const fmtTime = s => `${Math.floor(s / 60)}:${String(Math.round(s % 60)).padStart(2, '0')}`;
+
+/* ─── thread history ───
+ * Acolyte already persists every exchange to IndexedDB. The rail renders THAT,
+ * via handle.history — not a parallel list of its own, which would drift from
+ * the real conversation the moment either side changed.
+ *
+ * The one thing acolyte cannot know is which SCOPE a thread was asked under, so
+ * that is kept here, keyed by conversation id, and used for the domain dot.
+ */
+const LS_TSCOPE = 'chiron.ask.thread-scope';
+
+const scopeMap = () => { try { return JSON.parse(localStorage.getItem(LS_TSCOPE) || '{}'); } catch { return {}; } };
+const rememberScope = (id, scope) => {
+  if (!id) return;
+  const m = scopeMap();
+  if (m[id] === scope) return;
+  m[id] = scope;
+  try { localStorage.setItem(LS_TSCOPE, JSON.stringify(m)); } catch {}
+};
+
+function wireThreads(handle) {
+  const paint = () => renderThreads(handle);
+  handle.history.onChange(() => {
+    rememberScope(handle.history.currentId(), $('#scope').value);
+    paint();
+  });
+  paint();
+}
+
+/** Today / Earlier, newest first — the grouping the pilot used, because a bare
+ *  list of 40 titles gives you no sense of when you were working on something. */
+function bucket(ts) {
+  const d = new Date(ts), now = new Date();
+  const midnight = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+  if (d.getTime() >= midnight) return 'Today';
+  if (d.getTime() >= midnight - 6 * 864e5) return 'Earlier this week';
+  return 'Older';
+}
+
+async function renderThreads(handle) {
+  const box = $('#threads');
+  let convos = [];
+  try { convos = await handle.history.list(40); } catch { /* storage disabled or blocked */ }
+
+  if (!convos.length) {
+    box.innerHTML = '<div class="thempty">Your questions will collect here.</div>';
+    return;
+  }
+  const cur = handle.history.currentId();
+  const scopes = scopeMap();
+  let html = '', seen = '';
+  for (const c of convos) {
+    const b = bucket(c.updatedAt);
+    if (b !== seen) { html += `<h4>${b}</h4>`; seen = b; }
+    const dom = scopes[c.id] || 'all';
+    html += `<div class="throw${c.id === cur ? ' on' : ''}">
+      <button class="th" data-id="${c.id}" title="${escapeHtml(new Date(c.updatedAt).toLocaleString())}">
+        <span class="dot d-${escapeHtml(dom)}"></span>${escapeHtml(c.title || '…')}
+      </button>
+      <button class="thx" data-del="${c.id}" title="Delete this thread">×</button>
+    </div>`;
+  }
+  box.innerHTML = html;
+
+  box.onclick = async e => {
+    const del = e.target.closest('[data-del]');
+    if (del) {
+      // No confirm dialog: acolyte keeps the conversation until this point, and
+      // a thread is cheap to re-ask. A modal for every delete is worse friction
+      // than the rare mistaken click.
+      await handle.history.remove(+del.dataset.del);
+      return;
+    }
+    const open = e.target.closest('.th[data-id]');
+    if (open) {
+      document.querySelector('#host .ask-hero')?.remove();
+      await handle.history.open(+open.dataset.id);
+    }
+  };
+}
