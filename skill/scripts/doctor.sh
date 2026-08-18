@@ -176,6 +176,32 @@ hint "Italian native-speaker dialog emits <audio> tags but no MP3 until a provid
 hint "Decision PRD: ~/dev/prd/scratch/chiron_tts_provider_selection_2026-04-29.md (or carry it to this machine)"
 warn "Browser safety hardening: most of T162–T165 landed; don't open lessons in a browser holding sensitive creds"
 
+# ─── Ask page: the vendored acolyte bundle ────────────────────────────────────────
+section "Ask page (vendored acolyte)"
+# The Ask page runs a BUILT copy of acolyte, so it drifts silently in two ways: it
+# goes stale (an upstream fix "didn't work"), or it loses the code-split chunk and
+# the page hangs at boot with no console error at all. Both are cheap to detect
+# and invisible if nobody looks — exactly what a doctor check is for.
+if [ -x "$SKILL_DIR/scripts/vendor-acolyte.sh" ]; then
+  if VOUT="$("$SKILL_DIR/scripts/vendor-acolyte.sh" --check 2>&1)"; then
+    ok "vendored acolyte bundle is present, complete and current"
+  else
+    case "$VOUT" in
+      *"CHUNK MISSING"*)
+        fail "vendored acolyte is missing a code-split chunk — the Ask page will hang at boot"
+        hint "bash skill/scripts/vendor-acolyte.sh" ;;
+      *STALE*)
+        warn "vendored acolyte is older than the acolyte repo — upstream fixes are not live"
+        hint "bash skill/scripts/vendor-acolyte.sh" ;;
+      *)
+        warn "could not verify the vendored acolyte bundle"
+        hint "bash skill/scripts/vendor-acolyte.sh --check" ;;
+    esac
+  fi
+else
+  warn "skill/scripts/vendor-acolyte.sh missing — cannot verify the Ask page bundle"
+fi
+
 # ─── Verdict ──────────────────────────────────────────────────────────────────────
 section "Verdict"
 if [ "$FAILS" -eq 0 ]; then
