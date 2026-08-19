@@ -163,6 +163,30 @@ async function boot() {
   renderHero(handle);   // inline panels open themselves — no handle.open() here
   adoptControls(handle, stats);
 
+  /* DENSE-ONLY when the vectors are healthy; BM25 when they are not.
+   *
+   * Measured over 29 hand-written medicine questions (bge-m3, 1024d):
+   *     dense 41.4%   hybrid 31.0%   bm25 20.7%
+   * and on the control questions that DO contain the real term, dense ties BM25
+   * at 75% — so dense gives up nothing and roughly doubles overall accuracy.
+   * Hybrid is WORSE than dense alone because RRF rewards agreement, and
+   * agreeing with a weaker channel is not a virtue. So the two do not blend:
+   * whichever is trustworthy answers alone.
+   *
+   * acolyte's own BM25 stays configured, and is re-enabled the moment the dense
+   * channel cannot serve (no sidecar, embedder down, scope 'all') — the page is
+   * never left with no retrieval at all. */
+  const pickChannel = async () => {
+    const dense = await semantic.ready($('#scope').value);
+    handle.configure({ rag: { enabled: !dense } });
+    const st = semantic.status();
+    $('#grounded').title = dense
+      ? `semantic · ${st.detail}`
+      : `keyword search — ${st.detail || 'no vectors for this scope'}`;
+    return dense;
+  };
+  pickChannel().then(d => console.info('[chiron] retrieval:', d ? 'dense (bge-m3)' : 'bm25'));
+
   $('#scope').addEventListener('change', () => {
     const s = $('#scope').value;
     localStorage.setItem(LS_SCOPE, s);
@@ -171,6 +195,7 @@ async function boot() {
     // sourceUrl, so a scope change silently reloaded the previous corpus.
     handle.configure({ rag: { sourceUrl: corpusUrl(s) } });
     corpusCache = null; primeCorpus();
+    pickChannel();
     setHint(s);
     setGrounded(stats, s);
   });
