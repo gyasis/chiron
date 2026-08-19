@@ -2259,6 +2259,32 @@ async def ask_llm_proxy(path: str, request: Request):
         raise HTTPException(504, "model endpoint timed out (cold load or a wedged governor lane — see R-AG7)")
 
 
+@app.post("/ask/embed")
+async def ask_embed(request: Request):
+    """Same-origin passthrough for QUERY embeddings.
+
+    The corpus vectors are built offline; this is only the per-question embed.
+    It is a proxy for the same two reasons as /ask/llm: the embedder is a LAN
+    address that must not be committed (R-GIT3), and the browser cannot reach it
+    cross-origin. Resolution mirrors the corpus builder so query and corpus use
+    the SAME endpoint by default — embedder parity is not optional, a mismatch
+    makes similarity meaningless rather than merely worse."""
+    base = (os.environ.get("CHIRON_EMBED_URL") or "http://127.0.0.1:11434").rstrip("/")
+    body = await request.body()
+    try:
+        async with httpx.AsyncClient(timeout=httpx.Timeout(connect=3.0, read=60.0, write=30.0, pool=5.0)) as cx:
+            r = await cx.post(f"{base}/api/embed", content=body,
+                              headers={"content-type": "application/json"})
+            return Response(content=r.content, status_code=r.status_code,
+                            media_type=r.headers.get("content-type", "application/json"))
+    except httpx.ConnectError:
+        # 503, not 500: the page treats this as "semantics unavailable" and falls
+        # back to BM25 rather than showing the user an error.
+        raise HTTPException(503, "embedder unreachable — Ask falls back to keyword search")
+    except httpx.ReadTimeout:
+        raise HTTPException(504, "embedder timed out")
+
+
 app.mount("/ask", StaticFiles(directory=str(SKILL / "ask"), html=True), name="ask")
 
 # static: open a generated lesson, or the faceted library, straight from the app

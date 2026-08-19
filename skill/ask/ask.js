@@ -9,6 +9,7 @@
  * acolyte, not here.
  */
 import { mount } from './vendor/acolyte.js';
+import { createSemanticSource } from './semantic.js';
 
 const $ = s => document.querySelector(s);
 const LS_SCOPE = 'chiron.ask.scope';
@@ -101,6 +102,22 @@ async function boot() {
     ? { provider: 'ollama', host: cfg.base, model: cfg.model }
     : { provider: 'openai-compatible', baseUrl: cfg.base, model: cfg.model, apiKey: 'proxied' };
 
+  let corpusCache = null;
+  const semantic = createSemanticSource({
+    scope: () => $('#scope').value,
+    corpusById: id => corpusCache?.get(id),
+    embedUrl: '/ask/embed',
+  });
+  // The semantic source needs passage bodies to return; fetch the shard lazily
+  // so a BM25-only session never pays for it.
+  const primeCorpus = async () => {
+    const s2 = $('#scope').value;
+    if (s2 === 'all') return;
+    const r = await fetch(corpusUrl(s2)).catch(() => null);
+    if (r?.ok) corpusCache = new Map((await r.json()).map(p => [p.id, p]));
+  };
+  primeCorpus();
+
   let handle;
   try {
     handle = mount({
@@ -113,6 +130,10 @@ async function boot() {
         sourcesStyle: 'cards',
         crossPageReferences: false,   // the corpus IS every page — no need to crawl
       },
+      // The semantic channel. Acolyte fuses it with its own BM25 via RRF; this
+      // only supplies cosine-scored passages, and returns nothing at all when
+      // the sidecar is missing, partial, or the embedder is down.
+      plugins: [semantic.plugin],
       voice: { enabled: true },
       // dbName, NOT namespace — StorageConfig has no `namespace`, so the old
       // key was silently ignored and this instance shared the default
@@ -149,6 +170,7 @@ async function boot() {
     // — before that, configure({rag}) cleared the index and re-fetched the OLD
     // sourceUrl, so a scope change silently reloaded the previous corpus.
     handle.configure({ rag: { sourceUrl: corpusUrl(s) } });
+    corpusCache = null; primeCorpus();
     setHint(s);
     setGrounded(stats, s);
   });

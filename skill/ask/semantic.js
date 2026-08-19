@@ -1,0 +1,177 @@
+/*
+ * Chiron semantic retrieval — the dense half of the hybrid.
+ *
+ * BM25 cannot match "shortness of breath" to "dispnea"; they share no tokens.
+ * This adds a cosine channel over the precomputed vector sidecar so the two
+ * can be fused.
+ *
+ * IT DOES NOT IMPLEMENT FUSION. Acolyte already fuses a pre-scored plugin
+ * source with its own BM25 hits using Reciprocal Rank Fusion at K=60
+ * (widget.ts buildContextBlock) — the same algorithm paperlake uses. A source
+ * whose sections all carry `meta.score` is treated as pre-ranked and trusted,
+ * rather than being re-ranked lexically. So this file's whole job is: embed the
+ * query, dot-product it against the shard, and hand back scored passages.
+ *
+ * DEGRADES, NEVER BREAKS. If the sidecar is missing, the manifest's model does
+ * not match the query embedder, or the embed endpoint is down, fetch() returns
+ * [] and the page runs on BM25 alone — which is exactly the state it shipped in.
+ */
+
+const VEC = dom => `/library/library.corpus.vec.${dom}.bin`;
+const IDS = dom => `/library/library.corpus.vec.${dom}.ids.json`;
+const MANIFEST = '/library/library.corpus.vec.manifest.json';
+
+/* Below this fraction of a shard embedded, the semantic channel STAYS SILENT.
+ * Measured the hard way: with 24 of 229 passages vectorised, fusion scored 0%
+ * where dense alone scored 25% — three passages that happened to appear in both
+ * top-6 lists accumulated ~0.032 under RRF and outranked the correct answer
+ * sitting at 0.0156 from a single list. Reciprocal Rank Fusion rewards
+ * AGREEMENT, so a channel that can only see part of the corpus does not merely
+ * contribute less, it actively displaces the other channel's good hits. Partial
+ * coverage is worse than no coverage. */
+const MIN_COVERAGE = 0.95;
+
+export function createSemanticSource({ scope, corpusById, embedUrl, topK = 8 }) {
+  let loaded = null;      // { dom, dim, rows, ids, q }  — q is the Int8Array block
+  let manifest = null;
+  let disabled = false;   // set once we know this scope can never work
+  const state = { status: 'idle', detail: '' };
+
+  async function loadManifest() {
+    if (manifest !== null) return manifest;
+    try {
+      const r = await fetch(MANIFEST);
+      manifest = r.ok ? await r.json() : false;
+    } catch { manifest = false; }
+    return manifest;
+  }
+
+  async function load(dom) {
+    if (loaded && loaded.dom === dom) return loaded;
+    const m = await loadManifest();
+    if (!m || !m.domains?.[dom]) {
+      state.status = 'no-vectors';
+      state.detail = `no sidecar for ${dom}`;
+      return null;
+    }
+    const [binRes, idsRes] = await Promise.all([fetch(VEC(dom)), fetch(IDS(dom))]);
+    if (!binRes.ok || !idsRes.ok) { state.status = 'no-vectors'; return null; }
+    const buf = new Int8Array(await binRes.arrayBuffer());
+    const ids = await idsRes.json();
+    const dim = m.dim;
+    if (buf.length !== ids.length * dim) {
+      // A truncated or half-written sidecar would silently mis-align every row
+      // with the wrong passage — worse than having no vectors at all.
+      state.status = 'corrupt';
+      state.detail = `${buf.length} bytes ≠ ${ids.length} × ${dim}`;
+      return null;
+    }
+    const cov = m.domains[dom].rows / m.domains[dom].of;
+    if (cov < MIN_COVERAGE) {
+      state.status = 'partial-coverage';
+      state.detail = `${m.domains[dom].rows}/${m.domains[dom].of} embedded `
+        + `(${(cov * 100).toFixed(0)}%) — staying silent; partial fusion is worse than none`;
+      return null;
+    }
+    loaded = { dom, dim, rows: ids.length, ids, q: buf };
+    state.status = 'ready';
+    state.detail = `${ids.length} vectors · ${m.model} · ${dim}d`;
+    return loaded;
+  }
+
+  /** Embed the query with the SAME model the corpus was built with. A mismatch
+   *  is not a degradation, it is nonsense: the two vector spaces do not align,
+   *  so similarity becomes noise. Refuse rather than return garbage. */
+  async function embedQuery(text, model) {
+    const r = await fetch(embedUrl, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ model, input: [text] }),
+    });
+    if (!r.ok) throw new Error(`embed ${r.status}`);
+    const d = await r.json();
+    const v = (d.embeddings || [])[0];
+    if (!v) throw new Error('no embedding returned');
+    let n = 0;
+    for (const x of v) n += x * x;
+    n = Math.sqrt(n) || 1;
+    return Float32Array.from(v, x => x / n);
+  }
+
+  async function fetchSections({ query }) {
+    if (disabled || !query || query.length < 3) return [];
+    const dom = scope();
+    if (dom === 'all') {
+      // The full corpus is ~21 MB of vectors; loading it to answer one question
+      // is the wrong trade on a phone. Scoped asks get semantics; "everything"
+      // stays lexical until this is proven worth the payload.
+      state.status = 'skipped-all-scope';
+      return [];
+    }
+    const L = await load(dom);
+    if (!L) return [];
+
+    let qv;
+    try {
+      qv = await embedQuery(query, manifest.model);
+    } catch (e) {
+      state.status = 'embedder-down';
+      state.detail = String(e.message || e);
+      return [];                       // BM25 carries the answer instead
+    }
+    if (qv.length !== L.dim) {
+      state.status = 'dim-mismatch';
+      state.detail = `query ${qv.length}d vs corpus ${L.dim}d — embedder parity broken`;
+      disabled = true;
+      return [];
+    }
+
+    // Brute force. At ~21k vectors this is tens of milliseconds and needs no
+    // ANN index; an index would add a dependency and a build step to save time
+    // nobody can perceive.
+    const { q, dim, rows, ids } = L;
+    const best = [];
+    for (let i = 0; i < rows; i++) {
+      let dot = 0;
+      const off = i * dim;
+      for (let d = 0; d < dim; d++) dot += qv[d] * q[off + d];
+      dot /= 127;                      // int8 was stored as round(v * 127)
+      if (best.length < topK) {
+        best.push({ i, dot });
+        if (best.length === topK) best.sort((a, b) => a.dot - b.dot);
+      } else if (dot > best[0].dot) {
+        best[0] = { i, dot };
+        best.sort((a, b) => a.dot - b.dot);
+      }
+    }
+    best.sort((a, b) => b.dot - a.dot);
+
+    state.status = 'ready';
+    return best.map(({ i, dot }) => {
+      const p = corpusById(ids[i]);
+      if (!p) return null;
+      return {
+        id: p.id,
+        title: p.title,
+        text: p.text,
+        // `score` is what marks this source pre-ranked, so acolyte trusts the
+        // cosine instead of re-running BM25 over it.
+        meta: { ...p.meta, score: dot },
+      };
+    }).filter(Boolean);
+  }
+
+  return {
+    status: () => ({ ...state }),
+    plugin: {
+      name: 'chiron-semantic',
+      version: '1.0.0',
+      ragSources: [{
+        name: 'Your lessons (semantic)',
+        perQuery: true,
+        fetch: fetchSections,
+        pageUrl: s => s.meta?.href,
+      }],
+    },
+  };
+}
