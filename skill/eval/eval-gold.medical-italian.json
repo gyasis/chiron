@@ -1,0 +1,212 @@
+[
+ {
+  "q": "Why does this lesson teach a whole disease instead of a single ward?",
+  "ids": [
+   "chiron-medicina-italiana/patologie/diabete-tipo-2#overview"
+  ],
+  "kind": "cross"
+ },
+ {
+  "q": "Which everyday Italian words do I need to talk about diabetes with colleagues?",
+  "ids": [
+   "chiron-medicina-italiana/patologie/diabete-tipo-2#malattia-1"
+  ],
+  "kind": "cross"
+ },
+ {
+  "q": "How do I explain polyuria to a patient in plain language?",
+  "ids": [
+   "chiron-medicina-italiana/patologie/diabete-tipo-2#malattia-2"
+  ],
+  "kind": "syn"
+ },
+ {
+  "q": "Quali organi vengono danneggiati dal diabete nel corso degli anni?",
+  "ids": [
+   "chiron-medicina-italiana/patologie/diabete-tipo-2#malattia-3"
+  ],
+  "kind": "para"
+ },
+ {
+  "q": "C'è un racconto di un camionista che si alzava di notte per urinare?",
+  "ids": [
+   "chiron-medicina-italiana/patologie/diabete-tipo-2#malattia-4"
+  ],
+  "kind": "para"
+ },
+ {
+  "q": "Voglio esercitarmi sul meccanismo di base e sui sintomi",
+  "ids": [
+   "chiron-medicina-italiana/patologie/diabete-tipo-2#malattia-5"
+  ],
+  "kind": "para"
+ },
+ {
+  "q": "What blood sugar number confirms the diagnosis?",
+  "ids": [
+   "chiron-medicina-italiana/patologie/diabete-tipo-2#diagnosi-1"
+  ],
+  "kind": "cross"
+ },
+ {
+  "q": "Come comunico i risultati degli esami al paziente?",
+  "ids": [
+   "chiron-medicina-italiana/patologie/diabete-tipo-2#diagnosi-2"
+  ],
+  "kind": "para"
+ },
+ {
+  "q": "Show me a case where an older woman receives a new diagnosis",
+  "ids": [
+   "chiron-medicina-italiana/patologie/diabete-tipo-2#diagnosi-3"
+  ],
+  "kind": "cross"
+ },
+ {
+  "q": "Voglio praticare il dialogo in cui do la diagnosi",
+  "ids": [
+   "chiron-medicina-italiana/patologie/diabete-tipo-2#diagnosi-4"
+  ],
+  "kind": "para"
+ },
+ {
+  "q": "What do I answer when someone asks whether they will need insulin?",
+  "ids": [
+   "chiron-medicina-italiana/patologie/diabete-tipo-2#diagnosi-5"
+  ],
+  "kind": "syn"
+ },
+ {
+  "q": "Esercizi sui valori di soglia per la diagnosi",
+  "ids": [
+   "chiron-medicina-italiana/patologie/diabete-tipo-2#diagnosi-6"
+  ],
+  "kind": "para"
+ },
+ {
+  "q": "How do I give clear medication instructions in Italian?",
+  "ids": [
+   "chiron-medicina-italiana/patologie/diabete-tipo-2#terapia-1"
+  ],
+  "kind": "cross"
+ },
+ {
+  "q": "Qual è la differenza fra «dovrebbe» e «deve» quando do un consiglio?",
+  "ids": [
+   "chiron-medicina-italiana/patologie/diabete-tipo-2#terapia-2"
+  ],
+  "kind": "para"
+ },
+ {
+  "q": "There is a case about years of poor control and burning feet — find it",
+  "ids": [
+   "chiron-medicina-italiana/patologie/diabete-tipo-2#terapia-3"
+  ],
+  "kind": "cross"
+ },
+ {
+  "q": "Esercizi sul farmaco di prima linea e sull'apparecchio per misurare a casa",
+  "ids": [
+   "chiron-medicina-italiana/patologie/diabete-tipo-2#terapia-4"
+  ],
+  "kind": "syn"
+ },
+ {
+  "q": "How do I tell someone they have diabetes kindly, without jargon?",
+  "ids": [
+   "chiron-medicina-italiana/patologie/diabete-tipo-2#paziente-1"
+  ],
+  "kind": "cross"
+ },
+ {
+  "q": "Il paziente chiede se dovrà prendere la pastiglia per sempre — cosa rispondo?",
+  "ids": [
+   "chiron-medicina-italiana/patologie/diabete-tipo-2#paziente-2"
+  ],
+  "kind": "para"
+ },
+ {
+  "q": "When and how often should the patient measure sugar at home?",
+  "ids": [
+   "chiron-medicina-italiana/patologie/diabete-tipo-2#paziente-3"
+  ],
+  "kind": "cross"
+ },
+ {
+  "q": "Esercizi su come spiegare la malattia con parole semplici",
+  "ids": [
+   "chiron-medicina-italiana/patologie/diabete-tipo-2#paziente-4"
+  ],
+  "kind": "para"
+ },
+ {
+  "q": "Riassunto finale della lezione sul diabete",
+  "ids": [
+   "chiron-medicina-italiana/patologie/diabete-tipo-2#closing-1"
+  ],
+  "kind": "para"
+ },
+ {
+  "q": "What disease does the next lesson cover?",
+  "ids": [
+   "chiron-medicina-italiana/patologie/diabete-tipo-2#closing-2"
+  ],
+  "kind": "cross"
+ },
+ {
+  "q": "Presentami il caso del ragazzo con dolore al petto che cambia con la posizione",
+  "ids": [
+   "chiron-medicina-italiana/patologie/pericardite-acuta#overview"
+  ],
+  "kind": "para"
+ },
+ {
+  "q": "Give me the quick three-sentence orientation before the case",
+  "ids": [
+   "chiron-medicina-italiana/patologie/pericardite-acuta#fondamenti-1"
+  ],
+  "kind": "cross"
+ },
+ {
+  "q": "Che cos'è la pericardite, in breve?",
+  "ids": [
+   "chiron-medicina-italiana/patologie/pericardite-acuta#fondamenti-2"
+  ],
+  "kind": "para"
+ },
+ {
+  "q": "Vocabolario italiano per descrivere la presentazione clinica",
+  "ids": [
+   "chiron-medicina-italiana/patologie/pericardite-acuta#presentazione-1"
+  ],
+  "kind": "para"
+ },
+ {
+  "q": "Racconto clinico del paziente con dolore irradiato alla spalla sinistra",
+  "ids": [
+   "chiron-medicina-italiana/patologie/pericardite-acuta#presentazione-2"
+  ],
+  "kind": "para"
+ },
+ {
+  "q": "Which questions should I ask a chest-pain patient in Italian?",
+  "ids": [
+   "chiron-medicina-italiana/patologie/pericardite-acuta#presentazione-3"
+  ],
+  "kind": "cross"
+ },
+ {
+  "q": "Come si chiama la posizione che il paziente assume per alleviare il dolore?",
+  "ids": [
+   "chiron-medicina-italiana/patologie/pericardite-acuta#presentazione-4"
+  ],
+  "kind": "syn"
+ },
+ {
+  "q": "What do I hear on auscultation and see on the ECG?",
+  "ids": [
+   "chiron-medicina-italiana/patologie/pericardite-acuta#esame-ecg-1"
+  ],
+  "kind": "cross"
+ }
+]
