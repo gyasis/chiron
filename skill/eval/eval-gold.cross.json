@@ -1,0 +1,278 @@
+[
+ {
+  "q": "lactic acidosis caused by metformin",
+  "ids": [
+   "chiron-ssm-ssm2018-092#medicine-1",
+   "chiron-ssm-ssm2018-092#medicine-2",
+   "chiron-ssm-ssm2018-092#medicine-3",
+   "chiron-ssm-ssm2018-092#medicine-4"
+  ],
+  "kind": "cross",
+  "lesson": "ssm2018-092"
+ },
+ {
+  "q": "scombroid fish poisoning after eating tuna",
+  "ids": [
+   "chiron-ssm-ssm2017-111#medicine-1",
+   "chiron-ssm-ssm2017-111#medicine-2",
+   "chiron-ssm-ssm2017-111#medicine-3",
+   "chiron-ssm-ssm2017-111#medicine-4",
+   "chiron-ssm-ssm2017-111#medicine-5"
+  ],
+  "kind": "cross",
+  "lesson": "ssm2017-111"
+ },
+ {
+  "q": "spontaneous bacterial peritonitis in cirrhosis",
+  "ids": [
+   "chiron-ssm-ssm2017-077#medicine-1",
+   "chiron-ssm-ssm2017-077#medicine-2"
+  ],
+  "kind": "cross",
+  "lesson": "ssm2017-077"
+ },
+ {
+  "q": "farmer's lung hypersensitivity pneumonitis",
+  "ids": [
+   "chiron-ssm-ssm2020-137#medicine-1",
+   "chiron-ssm-ssm2020-137#medicine-2",
+   "chiron-ssm-ssm2020-137#medicine-3",
+   "chiron-ssm-ssm2020-137#medicine-4"
+  ],
+  "kind": "cross",
+  "lesson": "ssm2020-137"
+ },
+ {
+  "q": "lead nephropathy from chronic exposure",
+  "ids": [
+   "chiron-ssm-ssm2020-136#medicine-1",
+   "chiron-ssm-ssm2020-136#medicine-2",
+   "chiron-ssm-ssm2020-136#medicine-3",
+   "chiron-ssm-ssm2020-136#medicine-4",
+   "chiron-ssm-ssm2020-136#medicine-5",
+   "chiron-ssm-ssm2020-136#medicine-6"
+  ],
+  "kind": "cross",
+  "lesson": "ssm2020-136"
+ },
+ {
+  "q": "intermittent claudication and peripheral arterial disease",
+  "ids": [
+   "chiron-ssm-ssm2020-101#medicine-1",
+   "chiron-ssm-ssm2020-101#medicine-2",
+   "chiron-ssm-ssm2020-101#medicine-3",
+   "chiron-ssm-ssm2020-101#medicine-4",
+   "chiron-ssm-ssm2020-101#medicine-5"
+  ],
+  "kind": "cross",
+  "lesson": "ssm2020-101"
+ },
+ {
+  "q": "aortic dissection presentation and management",
+  "ids": [
+   "chiron-ssm-ssm2022-110#medicine-1",
+   "chiron-ssm-ssm2022-110#medicine-2",
+   "chiron-ssm-ssm2022-110#medicine-3",
+   "chiron-ssm-ssm2022-110#medicine-4"
+  ],
+  "kind": "cross",
+  "lesson": "ssm2022-110"
+ },
+ {
+  "q": "left bundle branch block on the ECG",
+  "ids": [
+   "chiron-ssm-ssm2021-029#medicine-1",
+   "chiron-ssm-ssm2021-029#medicine-2",
+   "chiron-ssm-ssm2021-029#medicine-3",
+   "chiron-ssm-ssm2021-029#medicine-4"
+  ],
+  "kind": "cross",
+  "lesson": "ssm2021-029"
+ },
+ {
+  "q": "cholinergic urticaria triggered by heat",
+  "ids": [
+   "chiron-ssm-ssm2018-076#medicine-1",
+   "chiron-ssm-ssm2018-076#medicine-2",
+   "chiron-ssm-ssm2018-076#medicine-3",
+   "chiron-ssm-ssm2018-076#medicine-4",
+   "chiron-ssm-ssm2018-076#medicine-5",
+   "chiron-ssm-ssm2018-076#medicine-6"
+  ],
+  "kind": "cross",
+  "lesson": "ssm2018-076"
+ },
+ {
+  "q": "primary amenorrhoea caused by an imperforate hymen",
+  "ids": [
+   "chiron-ssm-ssm2023-029#medicine-1",
+   "chiron-ssm-ssm2023-029#medicine-2",
+   "chiron-ssm-ssm2023-029#medicine-3",
+   "chiron-ssm-ssm2023-029#medicine-4",
+   "chiron-ssm-ssm2023-029#medicine-5"
+  ],
+  "kind": "cross",
+  "lesson": "ssm2023-029"
+ },
+ {
+  "q": "phenylketonuria newborn screening",
+  "ids": [
+   "chiron-ssm-ssm2023-117#medicine-1",
+   "chiron-ssm-ssm2023-117#medicine-2",
+   "chiron-ssm-ssm2023-117#medicine-3",
+   "chiron-ssm-ssm2023-117#medicine-4",
+   "chiron-ssm-ssm2023-117#medicine-5"
+  ],
+  "kind": "cross",
+  "lesson": "ssm2023-117"
+ },
+ {
+  "q": "giant cell tumour of bone",
+  "ids": [
+   "chiron-ssm-ssm2022-100#medicine-1",
+   "chiron-ssm-ssm2022-100#medicine-2",
+   "chiron-ssm-ssm2022-100#medicine-3",
+   "chiron-ssm-ssm2022-100#medicine-4",
+   "chiron-ssm-ssm2022-100#medicine-5"
+  ],
+  "kind": "cross",
+  "lesson": "ssm2022-100"
+ },
+ {
+  "q": "essential tremor in a neurology consult",
+  "ids": [
+   "chiron-ssm-ssm2025-085#medicine-1",
+   "chiron-ssm-ssm2025-085#medicine-2",
+   "chiron-ssm-ssm2025-085#medicine-3",
+   "chiron-ssm-ssm2025-085#medicine-4",
+   "chiron-ssm-ssm2025-085#medicine-5"
+  ],
+  "kind": "cross",
+  "lesson": "ssm2025-085"
+ },
+ {
+  "q": "malignant hyperthermia under anaesthesia",
+  "ids": [
+   "chiron-ssm-ssm2025-114#medicine-1",
+   "chiron-ssm-ssm2025-114#medicine-2"
+  ],
+  "kind": "cross",
+  "lesson": "ssm2025-114"
+ },
+ {
+  "q": "testicular tumour vignette",
+  "ids": [
+   "chiron-ssm-ssm2025-106#medicine-1",
+   "chiron-ssm-ssm2025-106#medicine-2",
+   "chiron-ssm-ssm2025-106#medicine-3",
+   "chiron-ssm-ssm2025-106#medicine-4",
+   "chiron-ssm-ssm2025-106#medicine-5"
+  ],
+  "kind": "cross",
+  "lesson": "ssm2025-106"
+ },
+ {
+  "q": "acute limb ischaemia",
+  "ids": [
+   "chiron-ssm-ssm2024-112#medicine-1",
+   "chiron-ssm-ssm2024-112#medicine-2",
+   "chiron-ssm-ssm2024-112#medicine-3",
+   "chiron-ssm-ssm2024-112#medicine-4",
+   "chiron-ssm-ssm2024-112#medicine-5",
+   "chiron-ssm-ssm2024-112#medicine-6",
+   "chiron-ssm-ssm2024-112#medicine-7"
+  ],
+  "kind": "cross",
+  "lesson": "ssm2024-112"
+ },
+ {
+  "q": "renal colic from a ureteric stone",
+  "ids": [
+   "chiron-ssm-ssm2019-136#medicine-1",
+   "chiron-ssm-ssm2019-136#medicine-2",
+   "chiron-ssm-ssm2019-136#medicine-3"
+  ],
+  "kind": "cross",
+  "lesson": "ssm2019-136"
+ },
+ {
+  "q": "inguinal hernia repair",
+  "ids": [
+   "chiron-ssm-ssm2019-050#medicine-1",
+   "chiron-ssm-ssm2019-050#medicine-2",
+   "chiron-ssm-ssm2019-050#medicine-3",
+   "chiron-ssm-ssm2019-050#medicine-4",
+   "chiron-ssm-ssm2019-050#medicine-5",
+   "chiron-ssm-ssm2019-050#medicine-6",
+   "chiron-ssm-ssm2019-050#medicine-7"
+  ],
+  "kind": "cross",
+  "lesson": "ssm2019-050"
+ },
+ {
+  "q": "pleural mesothelioma and asbestos",
+  "ids": [
+   "chiron-ssm-ssm2021-077#medicine-1",
+   "chiron-ssm-ssm2021-077#medicine-2",
+   "chiron-ssm-ssm2021-077#medicine-3",
+   "chiron-ssm-ssm2021-077#medicine-4",
+   "chiron-ssm-ssm2021-077#medicine-5"
+  ],
+  "kind": "cross",
+  "lesson": "ssm2021-077"
+ },
+ {
+  "q": "CURB-65 score for pneumonia severity",
+  "ids": [
+   "chiron-ssm-ssm2021-064#medicine-1",
+   "chiron-ssm-ssm2021-064#medicine-2",
+   "chiron-ssm-ssm2021-064#medicine-3",
+   "chiron-ssm-ssm2021-064#medicine-4"
+  ],
+  "kind": "cross",
+  "lesson": "ssm2021-064"
+ },
+ {
+  "q": "modified Duke criteria for infective endocarditis",
+  "ids": [
+   "chiron-ssm-ssm2023-074#medicine-1",
+   "chiron-ssm-ssm2023-074#medicine-2",
+   "chiron-ssm-ssm2023-074#medicine-3"
+  ],
+  "kind": "cross",
+  "lesson": "ssm2023-074"
+ },
+ {
+  "q": "macrocytic anaemia from B12 deficiency",
+  "ids": [
+   "chiron-ssm-ssm2025-132#medicine-1",
+   "chiron-ssm-ssm2025-132#medicine-2",
+   "chiron-ssm-ssm2025-132#medicine-3",
+   "chiron-ssm-ssm2025-132#medicine-4",
+   "chiron-ssm-ssm2025-132#medicine-5"
+  ],
+  "kind": "cross",
+  "lesson": "ssm2025-132"
+ },
+ {
+  "q": "functional residual capacity during pregnancy",
+  "ids": [
+   "chiron-ssm-ssm2019-044#medicine-1",
+   "chiron-ssm-ssm2019-044#medicine-2",
+   "chiron-ssm-ssm2019-044#medicine-3",
+   "chiron-ssm-ssm2019-044#medicine-4"
+  ],
+  "kind": "cross",
+  "lesson": "ssm2019-044"
+ },
+ {
+  "q": "medulloblastoma histology in a child",
+  "ids": [
+   "chiron-ssm-ssm2022-054#medicine-1",
+   "chiron-ssm-ssm2022-054#medicine-2",
+   "chiron-ssm-ssm2022-054#medicine-3"
+  ],
+  "kind": "cross",
+  "lesson": "ssm2022-054"
+ }
+]

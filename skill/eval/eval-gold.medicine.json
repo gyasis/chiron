@@ -191,14 +191,19 @@
  {
   "q": "SSM question about diagnosing a paediatric brain tumour",
   "ids": [
-   "chiron-ssm-ssm2022-054#overview-1"
+   "chiron-ssm-ssm2022-054#medicine-1",
+   "chiron-ssm-ssm2022-054#medicine-2",
+   "chiron-ssm-ssm2022-054#medicine-3"
   ],
   "kind": "cross"
  },
  {
   "q": "SSM item about lung volumes in pregnancy",
   "ids": [
-   "chiron-ssm-ssm2019-044#breakdown-1"
+   "chiron-ssm-ssm2019-044#medicine-1",
+   "chiron-ssm-ssm2019-044#medicine-2",
+   "chiron-ssm-ssm2019-044#medicine-3",
+   "chiron-ssm-ssm2019-044#medicine-4"
   ],
   "kind": "cross"
  }
