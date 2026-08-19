@@ -35,7 +35,12 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const GEN = join(homedir(), 'Documents', 'generated');
 const OUT = join(GEN, 'chiron-library');
 const CORPUS = join(OUT, 'library.corpus.json');
-const CACHE = join(OUT, '.vector-cache.json');
+// Artifacts are MODEL-SCOPED. Two embedders can then be built and compared
+// side by side, and a long overnight build of a better model never destroys the
+// working index a page is currently serving. Without this, switching models
+// wipes the cache by design (parity) — correct, but it means you are blind
+// while the new one builds.
+const slug = m => m.replace(/[^a-z0-9]+/gi, '-').toLowerCase().replace(/^-|-$/g, '');
 
 const argv = process.argv.slice(2);
 const flag = (n, d = null) => { const i = argv.indexOf(n); return i >= 0 ? (argv[i + 1] ?? true) : d; };
@@ -46,6 +51,8 @@ const DOMAIN = flag('--domain', null);
 
 const BASE = (process.env.CHIRON_EMBED_URL || 'http://127.0.0.1:11434').replace(/\/$/, '');
 const MODEL = process.env.CHIRON_EMBED_MODEL || 'bge-m3';
+const SLUG = slug(MODEL);
+const CACHE = join(OUT, `.vector-cache.${SLUG}.json`);
 const BATCH = Number(process.env.CHIRON_EMBED_BATCH || 16);
 
 const sha = s => createHash('sha256').update(s).digest('hex').slice(0, 16);
@@ -56,7 +63,9 @@ async function embed(texts) {
   const r = await fetch(`${BASE}/api/embed`, {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({ model: MODEL, input: texts }),
+    // input_type matters for E5-family models, which want a "passage: "
+    // prefix on documents and "query: " on questions. Ignored by BGE.
+    body: JSON.stringify({ model: MODEL, input: texts, input_type: 'passage' }),
   });
   if (!r.ok) throw new Error(`${r.status} ${r.statusText} — ${(await r.text()).slice(0, 160)}`);
   const d = await r.json();
@@ -167,13 +176,23 @@ for (const [dom, ps] of Object.entries(byDomain)) {
   if (!rows.length) continue;
   const buf = Buffer.alloc(rows.length * cache.dim);
   rows.forEach((p, i) => Buffer.from(Int8Array.from(vecs[sha(p.text)]).buffer).copy(buf, i * cache.dim));
-  writeFileSync(join(OUT, `library.corpus.vec.${dom}.bin`), buf);
+  writeFileSync(join(OUT, `library.corpus.vec.${SLUG}.${dom}.bin`), buf);
   // ids, so the client can map row -> passage without re-deriving hashes
-  writeFileSync(join(OUT, `library.corpus.vec.${dom}.ids.json`), JSON.stringify(rows.map(p => p.id)));
+  writeFileSync(join(OUT, `library.corpus.vec.${SLUG}.${dom}.ids.json`), JSON.stringify(rows.map(p => p.id)));
   manifest.domains[dom] = { rows: rows.length, of: ps.length, bytes: buf.length };
   wrote += rows.length;
 }
-writeFileSync(join(OUT, 'library.corpus.vec.manifest.json'), JSON.stringify(manifest, null, 2));
+writeFileSync(join(OUT, `library.corpus.vec.${SLUG}.manifest.json`), JSON.stringify(manifest, null, 2));
+// A pointer file names which model the PAGE should serve. Building a new model
+// does not switch the page over — flipping this does, once its eval justifies it.
+const ptr = join(OUT, 'library.corpus.vec.manifest.json');
+if (!existsSync(ptr) || process.env.CHIRON_EMBED_ACTIVATE === '1') {
+  writeFileSync(ptr, JSON.stringify({ ...manifest, slug: SLUG, active: true }, null, 2));
+  console.log(`  ACTIVE: the page will use ${MODEL}`);
+} else {
+  console.log(`  built but NOT activated — page still serves the previous model.`);
+  console.log(`  activate with: CHIRON_EMBED_ACTIVATE=1 (after its eval justifies it)`);
+}
 
 console.log(`\nvectors → ${OUT}`);
 console.log(`  model ${MODEL} · ${cache.dim} dims · int8 (l2-normalised)`);

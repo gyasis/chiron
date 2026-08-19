@@ -29,7 +29,10 @@ import { homedir } from 'node:os';
 
 const OUT = join(homedir(), 'Documents', 'generated', 'chiron-library');
 const CORPUS = join(OUT, 'library.corpus.json');
-const VCACHE = join(OUT, '.vector-cache.json');
+// Vector caches are model-scoped so two embedders can be compared without one
+// destroying the other. --vmodel picks which to score; default is whatever the
+// page currently serves.
+const slugify = m => m.replace(/[^a-z0-9]+/gi, '-').toLowerCase().replace(/^-|-$/g, '');
 
 const argv = process.argv.slice(2);
 const flag = (n, d = null) => { const i = argv.indexOf(n); return i >= 0 ? (argv[i + 1] ?? true) : d; };
@@ -39,6 +42,10 @@ const DOMAIN = flag('--domain', 'medical-italian');
 const N = Number(flag('--n', 40));
 const MAKE = argv.includes('--make-gold');
 const K = Number(flag('--k', 6));
+const VMODEL = flag('--vmodel', null);
+const VCACHE = VMODEL
+  ? join(OUT, `.vector-cache.${slugify(VMODEL)}.json`)
+  : join(OUT, '.vector-cache.json');
 
 const EMBED_URL = process.env.CHIRON_EMBED_URL || 'http://127.0.0.1:11434';
 
@@ -110,7 +117,12 @@ function loadVectors() {
 async function embed(text, model) {
   const r = await fetch(`${EMBED_URL}/api/embed`, {
     method: 'POST', headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({ model, input: [text] }),
+    // input_type: 'query' is REQUIRED for E5-family models. Without it the
+    // service applies the default "passage: " prefix to a question, which is the
+    // wrong side of an asymmetrically-trained model — it does not error, it just
+    // retrieves worse. Measured: this alone moved dense from 10.3% to the number
+    // below. An eval that gets this wrong will wrongly condemn the model.
+    body: JSON.stringify({ model, input: [text], input_type: 'query' }),
   });
   if (!r.ok) throw new Error(`${r.status}`);
   const v = (await r.json()).embeddings[0];

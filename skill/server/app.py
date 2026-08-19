@@ -2269,10 +2269,22 @@ async def ask_embed(request: Request):
     cross-origin. Resolution mirrors the corpus builder so query and corpus use
     the SAME endpoint by default — embedder parity is not optional, a mismatch
     makes similarity meaningless rather than merely worse."""
-    base = (os.environ.get("CHIRON_EMBED_URL") or "http://127.0.0.1:11434").rstrip("/")
+    # The GPU embed service, NOT ollama: ollama's llama.cpp CUDA backend emits
+    # NaN for bge-m3 and silently falls back to CPU. Corpus and query must also
+    # share one embedder — parity is what makes cosine mean anything.
+    base = (os.environ.get("CHIRON_EMBED_URL") or "http://127.0.0.1:8913").rstrip("/")
     body = await request.body()
     try:
         async with httpx.AsyncClient(timeout=httpx.Timeout(connect=3.0, read=60.0, write=30.0, pool=5.0)) as cx:
+            # Mark this as a QUERY, not a document. E5-family models are trained
+            # asymmetrically and silently retrieve worse if a question is embedded
+            # with the passage prefix. Harmless for BGE.
+            try:
+                j = json.loads(body or b"{}")
+                j.setdefault("input_type", "query")
+                body = json.dumps(j).encode()
+            except Exception:
+                pass
             r = await cx.post(f"{base}/api/embed", content=body,
                               headers={"content-type": "application/json"})
             return Response(content=r.content, status_code=r.status_code,

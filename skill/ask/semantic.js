@@ -17,9 +17,13 @@
  * [] and the page runs on BM25 alone — which is exactly the state it shipped in.
  */
 
-const VEC = dom => `/library/library.corpus.vec.${dom}.bin`;
-const IDS = dom => `/library/library.corpus.vec.${dom}.ids.json`;
+// The manifest is a POINTER: it names which model the page serves. Sidecars are
+// model-scoped, so a better embedder can be built alongside the live one and
+// only becomes active when its eval justifies the switch — never because it
+// happened to finish last.
 const MANIFEST = '/library/library.corpus.vec.manifest.json';
+const VEC = (slug, dom) => `/library/library.corpus.vec.${slug}.${dom}.bin`;
+const IDS = (slug, dom) => `/library/library.corpus.vec.${slug}.${dom}.ids.json`;
 
 /* Below this fraction of a shard embedded, the semantic channel STAYS SILENT.
  * Measured the hard way: with 24 of 229 passages vectorised, fusion scored 0%
@@ -54,7 +58,8 @@ export function createSemanticSource({ scope, corpusById, embedUrl, topK = 8 }) 
       state.detail = `no sidecar for ${dom}`;
       return null;
     }
-    const [binRes, idsRes] = await Promise.all([fetch(VEC(dom)), fetch(IDS(dom))]);
+    const slug = m.slug || '';
+    const [binRes, idsRes] = await Promise.all([fetch(VEC(slug, dom)), fetch(IDS(slug, dom))]);
     if (!binRes.ok || !idsRes.ok) { state.status = 'no-vectors'; return null; }
     const buf = new Int8Array(await binRes.arrayBuffer());
     const ids = await idsRes.json();
@@ -161,8 +166,19 @@ export function createSemanticSource({ scope, corpusById, embedUrl, topK = 8 }) 
     }).filter(Boolean);
   }
 
+  /** Is the dense channel actually usable for this scope? The host uses this to
+   *  decide whether to run dense-ONLY or fall back to BM25. Measured on 29
+   *  questions: dense 41.4% vs hybrid 31.0% vs bm25 20.7% — fusing a strong
+   *  channel with a weaker one DRAGS IT DOWN, because RRF rewards agreement.
+   *  So when dense is healthy it should answer alone, not be blended. */
+  async function ready(dom) {
+    if (dom === 'all') return false;
+    return !!(await load(dom));
+  }
+
   return {
     status: () => ({ ...state }),
+    ready,
     plugin: {
       name: 'chiron-semantic',
       version: '1.0.0',
