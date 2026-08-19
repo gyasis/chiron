@@ -67,3 +67,43 @@ Writing this set surfaced NEAR-DUPLICATE lessons — e.g.
 `rheumatology-inflammatory-arthropathies-systematic` both cover citrullination.
 Near-identical passages compete in retrieval and split the ranking between them.
 Worth an audit independent of any retrieval change.
+
+
+## cross — 24 questions, English question -> Italian SSM lesson
+
+The cross-lingual set. English clinical terms against Italian-titled SSM
+lessons, with every `medicine-*` section of the right lesson accepted: the
+clinical explanation is split across them, so pinning one is arbitrary.
+
+    bm25   hit@6 45.8%   MRR 0.251
+    dense  hit@6 87.5%   MRR 0.611     <- bge-m3
+    hybrid hit@6 87.5%   MRR 0.433
+
+Dense finds the right lesson 7 times in 8, and ranks it far higher (MRR 0.611 vs
+0.251). Hybrid ties on hit@6 but loses half the MRR, because RRF drags a
+correct top-1 down to blend with a worse ranking.
+
+### The "cross-lingual is 0%" result was a LABELLING BUG, not a retrieval one
+
+For a long time this row read 0% on n=2, and it was reported that way. Both gold
+targets were wrong:
+
+  * `ssm2022-054#overview-1` — Lucrezia's greeting ("Buongiorno, Gyasi — guarda
+    chi e tornato"), not medulloblastoma content.
+  * `ssm2019-044#breakdown-1` — ENGLISH meta-text about the grammar widget
+    ("The stem, dissected. Toggle the layers"). Nothing about lung volumes.
+
+No retriever passes those. Both are corrected to the `medicine-*` sections.
+
+**The lesson: n=2 is not a measurement.** It was flagged as untested every time
+it was quoted, and it should not have been quoted at all until the labels were
+inspected. A tiny slice with a bad key looks exactly like a real failure — and
+it survived several reports before anyone looked at what it was actually asking.
+
+SSM lesson anatomy, for anyone writing gold against them:
+
+    overview-*    the exam stem + Lucrezia framing
+    breakdown-*   word-by-word Italian grammar (mostly NOT clinical content)
+    medicine-*    the clinical explanation   <- target these
+    question      the answer options
+    closing       sign-off
