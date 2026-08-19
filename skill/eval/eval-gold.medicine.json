@@ -1,0 +1,205 @@
+[
+ {
+  "q": "A newborn is throwing up green — how quickly does this need surgery?",
+  "ids": [
+   "chiron-bilious-vomiting-systematic#treatment-10"
+  ],
+  "kind": "sem"
+ },
+ {
+  "q": "What chemical change to a protein makes the immune system start attacking joints?",
+  "ids": [
+   "chiron-inflammatory-arthropathies-systematic#epidemiology-etiology-6"
+  ],
+  "kind": "sem"
+ },
+ {
+  "q": "Why do two different vitamin shortages both end up making red cells too big?",
+  "ids": [
+   "chiron-anemias-bone-marrow-failure-systematic#pathophysiology-8"
+  ],
+  "kind": "sem"
+ },
+ {
+  "q": "A child is sitting forward, drooling, and breathing noisily — what does that mean?",
+  "ids": [
+   "chiron-otolaryngology-systematic#capstone-2"
+  ],
+  "kind": "sem"
+ },
+ {
+  "q": "When should I reach for a drug that builds bone instead of one that just stops loss?",
+  "ids": [
+   "chiron-metabolic-degenerative-bone-disease-systematic#sr-deck-14"
+  ],
+  "kind": "sem"
+ },
+ {
+  "q": "Does it matter how early in pregnancy the mother caught the rash illness?",
+  "ids": [
+   "chiron-congenital-pregnancy-related-infections-systematic#sr-deck-3"
+  ],
+  "kind": "sem"
+ },
+ {
+  "q": "High blood pressure together with low potassium — what am I missing?",
+  "ids": [
+   "chiron-hypertension-preventive-cardiology-systematic#differential-diagnosis-4"
+  ],
+  "kind": "sem"
+ },
+ {
+  "q": "If I cannot get the artery opened in time, what is the fallback and how fast?",
+  "ids": [
+   "chiron-cardiovascular-atlas#sr-deck-2"
+  ],
+  "kind": "sem"
+ },
+ {
+  "q": "Breathing muscles are getting weaker — how do I decide about the airway?",
+  "ids": [
+   "chiron-neuromuscular-peripheral-nerve-systematic#complications-7"
+  ],
+  "kind": "sem"
+ },
+ {
+  "q": "Kidneys shrink and scar after years of untreated pressure — what is that called?",
+  "ids": [
+   "chiron-renovascular-genetic-kidney-diseases-systematic#glossary-4"
+  ],
+  "kind": "sem"
+ },
+ {
+  "q": "The patient had trouble on one bone drug — is a different one in the same family safe?",
+  "ids": [
+   "chiron-metabolic-degenerative-bone-disease-systematic#sr-deck-15"
+  ],
+  "kind": "sem"
+ },
+ {
+  "q": "Swollen glands and odd granulomas after being scratched by a pet",
+  "ids": [
+   "chiron-spleen-lymph-node-pathology-systematic#capstone-10"
+  ],
+  "kind": "sem"
+ },
+ {
+  "q": "Does the eye injection used for wet macular degeneration also help a cloudy lens?",
+  "ids": [
+   "chiron-ophthalmology-atlas#cataract-16"
+  ],
+  "kind": "sem"
+ },
+ {
+  "q": "First things to do to bring down the pressure inside the skull",
+  "ids": [
+   "chiron-neurotrauma-acute-care-systematic#treatment-4"
+  ],
+  "kind": "sem"
+ },
+ {
+  "q": "Why are young women so much more prone to bladder infections?",
+  "ids": [
+   "chiron-urinary-tract-infections-obstruction-systematic#epidemiology-etiology-2"
+  ],
+  "kind": "sem"
+ },
+ {
+  "q": "Does taking the pill raise or lower the risk of ovarian cancer?",
+  "ids": [
+   "chiron-gynaecological-oncology-systematic#epidemiology-etiology-10"
+  ],
+  "kind": "sem"
+ },
+ {
+  "q": "Kidney function falling over weeks with blood in the urine — how do I narrow it down?",
+  "ids": [
+   "chiron-glomerular-tubulointerstitial-diseases-systematic#epidemiology-etiology-8"
+  ],
+  "kind": "sem"
+ },
+ {
+  "q": "Healthy adult with pneumonia who does not need admission — what do I prescribe?",
+  "ids": [
+   "chiron-antibiotics-amboss#fluoroquinolones-antifolates-misc-regimens-7"
+  ],
+  "kind": "sem"
+ },
+ {
+  "q": "Giving sex hormones to protect bone in a teenager whose puberty never started",
+  "ids": [
+   "chiron-pediatric-reproductive-endocrinology-systematic#prognosis-2"
+  ],
+  "kind": "sem"
+ },
+ {
+  "q": "A limping child with hip pain — what am I choosing between?",
+  "ids": [
+   "chiron-pediatric-orthopedics-systematic#pathophysiology-7"
+  ],
+  "kind": "sem"
+ },
+ {
+  "q": "Blood turning acidic because the sugar is out of control — the protocol",
+  "ids": [
+   "chiron-endocrine-metabolic-primer#acute-diabetic-and-glycemic-emergencies-17"
+  ],
+  "kind": "sem"
+ },
+ {
+  "q": "How do I tell apart a fast irregular rhythm on the tracing?",
+  "ids": [
+   "chiron-atrial-fibrillation-amboss#af-pathophysiology-and-diagnosis-16"
+  ],
+  "kind": "sem"
+ },
+ {
+  "q": "Working up a growth in the chest that might be cancer",
+  "ids": [
+   "chiron-thoracic-oncology-systematic#overview-6"
+  ],
+  "kind": "sem"
+ },
+ {
+  "q": "What are the protective factors in gynaecological oncology?",
+  "ids": [
+   "chiron-gynaecological-oncology-systematic#epidemiology-etiology-10"
+  ],
+  "kind": "term"
+ },
+ {
+  "q": "DKA management protocol",
+  "ids": [
+   "chiron-endocrine-metabolic-primer#acute-diabetic-and-glycemic-emergencies-17"
+  ],
+  "kind": "term"
+ },
+ {
+  "q": "Dual antiplatelet therapy in ACS",
+  "ids": [
+   "chiron-cardiovascular-atlas#sr-deck-2"
+  ],
+  "kind": "term"
+ },
+ {
+  "q": "Why do I care about complications after neurotrauma?",
+  "ids": [
+   "chiron-neurotrauma-acute-care-systematic#complications-5"
+  ],
+  "kind": "term"
+ },
+ {
+  "q": "SSM question about diagnosing a paediatric brain tumour",
+  "ids": [
+   "chiron-ssm-ssm2022-054#overview-1"
+  ],
+  "kind": "cross"
+ },
+ {
+  "q": "SSM item about lung volumes in pregnancy",
+  "ids": [
+   "chiron-ssm-ssm2019-044#breakdown-1"
+  ],
+  "kind": "cross"
+ }
+]
