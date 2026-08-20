@@ -1,0 +1,26 @@
+[Unit]
+Description=Chiron embed service (:8913) — GPU bge-m3 vectors for Ask
+Documentation=https://github.com/gyasis/chiron skill/server/embed_server.py
+After=graphical-session.target
+
+[Service]
+Type=simple
+# bge-m3 on the GPU. NOT ollama: its llama.cpp CUDA backend emits NaN for this
+# model and then silently falls back to CPU (0.65/sec vs 23/sec), while still
+# logging that it offloaded every layer to the GPU.
+# /usr/bin/python3 has no torch — it lives in the miniconda env. A systemd unit
+# gets no shell profile, so the interpreter must be absolute and explicit.
+ExecStart=/home/gyasis/miniconda3/bin/python3 %h/Documents/code/chiron/skill/server/embed_server.py --model BAAI/bge-m3 --dtype float16 --batch 32
+Environment=TOKENIZERS_PARALLELISM=false
+Environment=HF_HOME=%h/.cache/huggingface
+
+Restart=on-failure
+RestartSec=10
+# Give up after 3 failures in 2 min rather than looping forever. The ollama unit
+# on this box crash-looped 38,000 times because RestartSec=3 against a 5-in-10s
+# limit could never trip it — a service that fails LOUDLY gets noticed.
+StartLimitIntervalSec=120
+StartLimitBurst=3
+
+[Install]
+WantedBy=default.target
