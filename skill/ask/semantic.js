@@ -107,11 +107,31 @@ export function createSemanticSource({ scope, corpusById, embedUrl, topK = 8 }) 
     if (disabled || !query || query.length < 3) return [];
     const dom = scope();
     if (dom === 'all') {
-      // The full corpus is ~21 MB of vectors; loading it to answer one question
-      // is the wrong trade on a phone. Scoped asks get semantics; "everything"
-      // stays lexical until this is proven worth the payload.
-      state.status = 'skipped-all-scope';
-      return [];
+      // "Everything" cannot search locally — 21.8 MB of vectors is too much to
+      // ship for one question. It used to fall back to keyword search, which is
+      // the worst place for a fallback because it is the DEFAULT scope: asking
+      // "give me 5 irregular verbs" returned clitic lessons, and the model then
+      // stated the irregular-verb lessons did not exist. They did — dense ranks
+      // them 1 through 5. `irregular` is just not the token `irregolari`.
+      // So the search happens where the vectors already are. Nothing is shipped.
+      try {
+        const r = await fetch('/ask/search', {
+          method: 'POST', headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ query, scope: 'all', k: topK }),
+        });
+        if (!r.ok) throw new Error(`search ${r.status}`);
+        const { hits } = await r.json();
+        state.status = 'ready'; state.detail = `whole corpus · server-side`;
+        // The server sends the text with the hit — the client has no corpus
+        // loaded for 'all', and downloading 29 MB to resolve ids would defeat
+        // the point of searching server-side in the first place.
+        return hits.filter(h => h.text).map(h => ({
+          id: h.id, title: h.title, text: h.text, meta: { ...(h.meta || {}), score: h.score },
+        }));
+      } catch (e) {
+        state.status = 'search-down'; state.detail = String(e.message || e);
+        return [];                      // BM25 carries it
+      }
     }
     const L = await load(dom);
     if (!L) return [];
@@ -172,7 +192,20 @@ export function createSemanticSource({ scope, corpusById, embedUrl, topK = 8 }) 
    *  channel with a weaker one DRAGS IT DOWN, because RRF rewards agreement.
    *  So when dense is healthy it should answer alone, not be blended. */
   async function ready(dom) {
-    if (dom === 'all') return false;
+    if (dom === 'all') {
+      // Ready when the SERVER can search — the browser holds nothing for this
+      // scope. Probing health is cheap and avoids claiming dense is live when
+      // the service is down.
+      try {
+        const r = await fetch('/ask/search', {
+          method: 'POST', headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ query: 'probe', scope: 'all', k: 1 }),
+        });
+        if (r.ok) { state.status = 'ready'; state.detail = 'whole corpus · server-side'; return true; }
+      } catch { /* fall through */ }
+      state.status = 'search-down';
+      return false;
+    }
     return !!(await load(dom));
   }
 

@@ -2297,6 +2297,31 @@ async def ask_embed(request: Request):
         raise HTTPException(504, "embedder timed out")
 
 
+@app.post("/ask/search")
+async def ask_search(request: Request):
+    """Whole-corpus dense search, done where the vectors already live.
+
+    The browser searches a single DOMAIN shard locally. It cannot do that for
+    "Everything" — 21.8 MB of vectors is too much to ship for one question — so
+    that scope used to fall back to keyword search, which is the WORST place for
+    a fallback because it is the default. A first question like "give me 5
+    irregular verbs" returned clitic lessons and the model then said the
+    irregular-verb lessons did not exist. They did; dense ranks them 1-5.
+    `irregular` is simply not the token `irregolari`."""
+    base = (os.environ.get("CHIRON_EMBED_URL") or "http://127.0.0.1:8913").rstrip("/")
+    body = await request.body()
+    try:
+        async with httpx.AsyncClient(timeout=httpx.Timeout(connect=3.0, read=60.0, write=30.0, pool=5.0)) as cx:
+            r = await cx.post(f"{base}/api/search", content=body,
+                              headers={"content-type": "application/json"})
+            return Response(content=r.content, status_code=r.status_code,
+                            media_type=r.headers.get("content-type", "application/json"))
+    except httpx.ConnectError:
+        raise HTTPException(503, "search unavailable — Ask falls back to keyword search")
+    except httpx.ReadTimeout:
+        raise HTTPException(504, "search timed out")
+
+
 app.mount("/ask", StaticFiles(directory=str(SKILL / "ask"), html=True), name="ask")
 
 # static: open a generated lesson, or the faceted library, straight from the app
