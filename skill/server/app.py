@@ -2297,6 +2297,86 @@ async def ask_embed(request: Request):
         raise HTTPException(504, "embedder timed out")
 
 
+# ── Anki cards ──────────────────────────────────────────────────────────────
+# Chiron studies the REAL collection; Anki keeps the scheduling. Chiron owns SR
+# only for the cards it generates itself (.chiron-state.db). For a card that
+# already lives in Anki, a review taken here must advance Anki's scheduler or
+# the two quietly disagree about one memory — so if the write cannot happen,
+# the card is not shown at all.
+
+@app.get("/cards/status")
+async def cards_status():
+    """Is studying possible right now, and over what."""
+    import anki, cards as cardsearch
+    up = anki.reachable()
+    return {"anki": up, "url_configured": bool(os.environ.get("CHIRON_ANKI_URL")),
+            **cardsearch.status(),
+            "blocked_reason": None if up else
+            "Anki is not reachable — open Anki on the MacBook. Studying is blocked "
+            "because a review taken here could not be written back."}
+
+
+@app.post("/cards/relevant")
+async def cards_relevant(request: Request):
+    """Cards that belong with a question. Semantic, not keyword.
+
+    Anki's own search is literal: `paziente` returns "she is not patient", the
+    adjective. "shortness of breath" has to reach `la dispnea` with no shared
+    token, which only an embedder does."""
+    import anki, cards as cardsearch
+    req = await request.json()
+    q = (req.get("query") or "").strip()
+    if not q:
+        raise HTTPException(400, "query required")
+    # Refuse BEFORE returning cards, not after grading them.
+    if not anki.reachable():
+        raise HTTPException(503, "Anki unreachable — studying is blocked")
+    try:
+        hits = cardsearch.relevant(q, k=int(req.get("k", 6)),
+                                   deck_prefix=req.get("deck") or None,
+                                   balance=bool(req.get("balance", True)))
+    except Exception as e:
+        raise HTTPException(500, f"{type(e).__name__}: {e}")
+    return {"query": q, "cards": hits, "count": len(hits)}
+
+
+@app.post("/cards/answer")
+async def cards_answer(request: Request):
+    """Write reviews back to Anki. This is the point of the whole feature."""
+    import anki
+    req = await request.json()
+    reviews = req.get("reviews") or []
+    if not reviews:
+        raise HTTPException(400, "reviews required")
+    try:
+        return anki.answer(reviews)
+    except anki.AnkiUnavailable as e:
+        # Reviews are NOT queued: the user chose to block rather than diverge,
+        # and a queue silently re-applying old grades is its own kind of drift.
+        raise HTTPException(503, f"Anki went away before the reviews were written: {e}")
+    except Exception as e:
+        raise HTTPException(500, f"{type(e).__name__}: {e}")
+
+
+@app.get("/cards/media/{filename}")
+async def cards_media(filename: str):
+    """Card audio, straight from Anki's media folder on the MacBook."""
+    import anki
+    if "/" in filename or ".." in filename:
+        raise HTTPException(400, "bad filename")
+    try:
+        data = anki.media(filename)
+    except Exception as e:
+        raise HTTPException(503, f"{type(e).__name__}: {e}")
+    if not data:
+        raise HTTPException(404, "no such media")
+    ext = filename.rsplit(".", 1)[-1].lower()
+    mime = {"mp3": "audio/mpeg", "ogg": "audio/ogg", "wav": "audio/wav",
+            "m4a": "audio/mp4", "opus": "audio/opus"}.get(ext, "application/octet-stream")
+    return Response(content=data, media_type=mime,
+                    headers={"cache-control": "public, max-age=86400"})
+
+
 @app.post("/ask/search")
 async def ask_search(request: Request):
     """Whole-corpus dense search, done where the vectors already live.

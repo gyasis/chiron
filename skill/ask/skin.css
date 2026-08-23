@@ -322,3 +322,52 @@
 #host .ask-clip.done .ask-clip-t::after { content: ' · scene ends'; font-weight: 400; opacity: .7; }
 #host .asrc-sec.playing { border-color: var(--ck-accent, #2e7d32);
   box-shadow: inset 0 0 0 1px var(--ck-accent, #2e7d32); }
+
+/* ─── Anki card session, inline in the answer ───
+   An element attached to the message, not an overlay: the answer stays readable
+   while you drill, and the session stays in the transcript afterwards. */
+#host .ask-cards {
+  border: 1px solid var(--chiron-accent); border-radius: 13px; overflow: hidden;
+  margin: 12px 0 0; background: var(--chiron-surface);
+}
+#host .ac-h { display: flex; align-items: center; gap: 9px; padding: 9px 13px;
+  background: var(--chiron-elevated); font-size: 12.5px; color: var(--chiron-fg-secondary); }
+#host .ac-h b { font: 700 12.5px var(--font-h); }
+#host .ac-deck { color: var(--chiron-muted); min-width: 0; overflow: hidden;
+  text-overflow: ellipsis; white-space: nowrap; }
+#host .ac-x { margin-left: auto; border: 0; background: none; cursor: pointer;
+  color: var(--chiron-muted); font-size: 14px; padding: 0 2px; }
+#host .ac-x:hover { color: var(--chiron-fg); }
+#host .ac-bar { height: 3px; background: var(--chiron-divider); }
+#host .ac-bar i { display: block; height: 100%; background: var(--chiron-accent); transition: width .25s; }
+#host .ac-face { padding: 26px 20px; text-align: center; display: grid; gap: 11px;
+  align-content: center; min-height: 150px; }
+#host .ac-front { font: 600 20px/1.35 var(--font-h); }
+#host .ac-back { font-size: 15.5px; color: var(--chiron-fg-secondary); }
+#host .ac-audio { justify-self: center; border: 1px solid var(--chiron-border);
+  background: var(--chiron-surface); border-radius: 99px; padding: 4px 13px;
+  font-size: 12.5px; color: var(--chiron-fg-secondary); cursor: pointer; }
+#host .ac-audio:hover { border-color: var(--chiron-accent); color: var(--chiron-accent); }
+#host .ac-prov { display: flex; gap: 7px; justify-content: center; flex-wrap: wrap; font-size: 11.5px; }
+#host .ac-p { border-radius: 99px; padding: 3px 10px; background: var(--chiron-elevated);
+  color: var(--chiron-fg-secondary); }
+/* Which side of the consultation — production and comprehension are different
+   jobs, so they do not look alike. */
+#host .ac-p.you { background: var(--medbg); color: var(--med); font-weight: 600; }
+#host .ac-p.them { background: var(--meditbg); color: var(--medit); font-weight: 600; }
+#host .ac-reveal { margin: 0 13px 13px; padding: 10px; border: 0; border-radius: 9px;
+  background: var(--chiron-accent); color: var(--chiron-surface);
+  font: 600 13.5px var(--font-b); cursor: pointer; width: calc(100% - 26px); }
+#host .ac-grades { display: grid; grid-template-columns: repeat(4, 1fr); gap: 7px; padding: 0 13px 13px; }
+#host .ac-g { border: 1px solid var(--chiron-border); background: var(--chiron-surface);
+  border-radius: 9px; padding: 8px 3px; font: 600 12px var(--font-b); cursor: pointer;
+  display: grid; gap: 1px; }
+#host .ac-g small { font-weight: 400; font-size: 10px; color: var(--chiron-muted); }
+#host .ac-g:hover { border-color: var(--chiron-accent); }
+#host .ac-done { padding: 20px; text-align: center; display: grid; gap: 9px; }
+#host .ac-tally { display: flex; gap: 6px; justify-content: center; flex-wrap: wrap; }
+#host .ac-tally span { font-size: 11.5px; border-radius: 99px; padding: 3px 9px;
+  background: var(--chiron-elevated); }
+#host .ac-sync { font-size: 12.5px; font-weight: 600; color: #2e7d32; }
+#host .ac-sync.bad { color: #a33; }
+#host .ask-cards .ac-hide { display: none !important; }

@@ -10,6 +10,7 @@
  */
 import { mount } from './vendor/acolyte.js';
 import { createSemanticSource } from './semantic.js';
+import * as cards from './cards.js';
 
 const $ = s => document.querySelector(s);
 const LS_SCOPE = 'chiron.ask.scope';
@@ -608,6 +609,40 @@ function deriveFocus(panel, msg) {
   return { lessons: entries.map(([id]) => id), label };
 }
 
+
+/** Ask the collection whether this answer has cards behind it, and offer them.
+ *
+ *  The deck scope follows the answer's own domain: a medical-Italian answer
+ *  draws on Medical Italian rather than the general Italian decks, or a
+ *  conjugation drill turns up in the middle of a chest-pain session. */
+async function offerCards(handle, panel, msg, row) {
+  const { question, answer, sources } = answerContext(panel, msg);
+  if (!question) return;
+  const domains = new Set(sources.map(s => s.meta?.domain).filter(Boolean));
+  const deck = domains.has('medical-italian') ? 'Medical Italian'
+    : (domains.has('language-it') || domains.has('video-it')) ? null   // any Italian deck
+    : domains.has('medicine') ? 'Medical Italian'
+    : null;
+
+  // Search on the question AND the answer's opening — the question alone is
+  // often too short to place ("how do I ask that?"), while the answer carries
+  // the actual vocabulary.
+  const q = `${question}\n${(answer || '').slice(0, 400)}`;
+  let hits = [];
+  try { hits = await cards.relevant(q, { k: 6, deck }); } catch { return; }
+  if (!hits.length) return;
+
+  const b = document.createElement('button');
+  b.className = 'act cards';
+  b.innerHTML = `🎴 Drill these <span class="pip">${hits.length}</span>`;
+  b.title = deck ? `From ${deck}` : 'From your Italian decks';
+  b.addEventListener('click', () => {
+    b.disabled = true;
+    cards.drill(msg, hits, { onClose: () => { b.disabled = false; } });
+  });
+  row.appendChild(b);
+}
+
 function buildActs(handle, panel, msg) {
   const row = document.createElement('div');
   row.className = 'ask-acts';
@@ -626,6 +661,12 @@ function buildActs(handle, panel, msg) {
   if (speak) add('🎧 Listen', '', () => speak.click());
 
   add('➕ Add as a card', '', (b, r) => makeCard(panel, msg, b, r));
+
+  // 🎴 Drill — offered ONLY when the collection actually has matching cards, so
+  // the button never promises a session it cannot fill. The lookup is async, so
+  // the button is inserted when the answer comes back rather than reserving a
+  // slot that may stay empty.
+  offerCards(handle, panel, msg, row);
   add('📘 Make a lesson from this', '', (b, r) => lessonForm(panel, msg, r));
 
   // Go deeper — narrow the thread to the lessons THIS answer stood on. Offered
