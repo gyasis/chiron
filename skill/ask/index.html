@@ -66,13 +66,23 @@ button{font:inherit;cursor:pointer}
         border-bottom:1px solid var(--chiron-border);background:var(--chiron-bg)}
 .topbar .tt{min-width:0}
 .ttl{font-family:var(--font-h);font-weight:700;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:52vw}
-.tsub{font-size:12px;color:var(--chiron-muted)}
+/* nowrap+ellipsis like .ttl above: the topbar is a FIXED 52px, so any element
+   added to the row (the focus chip) squeezes .tt and a wrapping subtitle spills
+   out of the bar instead of truncating. */
+.tsub{font-size:12px;color:var(--chiron-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:52vw}
 .tools{margin-left:auto;display:flex;align-items:center;gap:7px;flex:0 0 auto}
 .chip{border:1px solid var(--chiron-border);background:var(--chiron-surface);color:var(--chiron-fg-secondary);
       border-radius:99px;padding:5px 11px;font-size:12.5px;display:inline-flex;align-items:center;gap:6px}
 .chip:hover:not(:disabled){border-color:var(--chiron-accent);color:var(--chiron-accent)}
 .chip.on{background:var(--chiron-accent);border-color:var(--chiron-accent);color:var(--chiron-surface)}
 .chip:disabled{opacity:.45;cursor:default}
+/* The focus chip states an ACTIVE CONSTRAINT on retrieval, so it reuses .chip.on
+   (accent-filled) rather than introducing a second pill vocabulary, and sits in
+   the topbar row — stacking it under .tsub would overflow the fixed 52px. */
+.chip.focus-chip{cursor:pointer;flex:0 0 auto;max-width:34vw}
+.chip.focus-chip .af-t{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.chip.focus-chip .af-x{opacity:.7;font-size:11px;margin-left:1px}
+.chip.focus-chip:hover .af-x{opacity:1}
 #host{flex:1;display:flex;min-width:0;min-height:0}
 
 /* the composer's meta strip — model, persona, and what is actually indexed */

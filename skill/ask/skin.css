@@ -271,3 +271,7 @@
   background: var(--chiron-accent); color: var(--chiron-surface);
 }
 #host .act-form button:disabled { opacity: .5; }
+
+/* (Focus chip lives in the topbar, which is Chiron chrome OUTSIDE #host —
+   its style is in index.html beside the other .chip controls.) */
+#host .act-note.warn { color: #8a5a00; }

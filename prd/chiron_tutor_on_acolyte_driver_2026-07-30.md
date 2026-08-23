@@ -139,3 +139,55 @@ library build down with it.
 `~/Documents/generated/chiron-ask-prototype.html` — rail with thread history + scope selector,
 760px conversation column, grounded answer with source chips, dispatch action row, composer with
 mic + model + persona pickers.
+
+---
+
+## 9. Amendment 2026-08-23 — tier 1 answered §8.3's open question; tier 3's facet is not usable as designed
+
+### 9.1 Tier 1 retrieval is SERVER-SIDE (closes §8.3 "Open:")
+
+§8.3 deferred *"whether the full corpus is viable client-side on a phone at all, or whether
+tier 1 needs server-side retrieval — decide from step 1's measurements."* Step 1 has now run in
+anger and the answer is **server-side**, forced by a real failure rather than a size estimate.
+
+Per-domain shards are searched in the browser. All four at once is 21.8 MB of int8 vectors, so
+"Everything" — **the default scope** — fell back to BM25. Asked *"give me 5 irregular verbs to
+train on"*, Ask cited the clitic-pronoun lessons and then asserted the irregular-verb lessons
+did not exist. They do; dense ranks them 1-2-3-4-5. `irregular` is not the token `irregolari`.
+
+The fallback was in the one place a fallback could not be tolerated. Fix: `embed_server`
+(`:8913`) gained `POST /api/search`, proxied at `:8911/ask/search` — it already holds the
+vectors, so it answers with one dot product per domain and ships nothing. It refuses to serve
+if the sidecars were built by a model other than the one embedding queries (embedder parity as
+a runtime guard, not a convention). Results carry their own text; the browser holds no corpus
+for this scope. Shipped in chiron#62.
+
+Corollary found while verifying: acolyte dropped `meta` on any **pre-scored** plugin source, so
+every semantically-retrieved citation lost its lesson href and domain badge while BM25 ones kept
+them — the same citation, silently poorer, depending only on which channel found it. Fixed
+upstream (acolyte#13) rather than patched in Chiron, per the standing preference that the fix
+lands where the next site also benefits.
+
+### 9.2 Tier 3's spawn path 1 is BLOCKED by metadata, not by code
+
+§8's tier 3 spawns from a **library subject facet**. Measured against the actual corpus, that
+facet does not carry the library:
+
+| | |
+|---|---|
+| lessons labelled `subject: "General"` | **242** |
+| lessons under the other 32 subjects | 96 |
+| passages under `system: "Emergency"` | 15,593 of 21,312 |
+
+A picker over this yields one bucket holding 72% of the library and 32 slivers. The largest real
+subject is `Ward Italian` at 8 lessons. So **spawn path 1 is deferred**, not built — building it
+would ship a control that looks like scoping and is not.
+
+**Spawn path 2 is built instead**, and is the better affordance anyway: scope narrows to *the
+lessons an answer actually cited* (plus the subject those lessons share, when they share a real
+one). That is derived from retrieval, so it is correct regardless of how a lesson was labelled,
+and it degrades to "these three lessons" rather than to a lie.
+
+Fixing the labels is a separate piece of work — the generator should assign a subject at
+authoring time, and 242 existing lessons need a backfill pass. Tracked here so tier 3 can be
+completed as designed once the data supports it.
