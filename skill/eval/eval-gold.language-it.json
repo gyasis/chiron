@@ -1,0 +1,212 @@
+[
+  {
+    "q": "Why might a passport control officer feel disrespected if a diplomat addressed them with 'tu' verb forms instead of 'Lei'?",
+    "ids": [
+      "chiron-italian-fsi-01-at-the-airport-i#step-9"
+    ],
+    "kind": "sem"
+  },
+  {
+    "q": "What Italian phrase from the airport lesson's supplementary vocabulary means 'in the vicinity of'?",
+    "ids": [
+      "chiron-italian-fsi-01-at-the-airport-i#step-10"
+    ],
+    "kind": "term"
+  },
+  {
+    "q": "At a currency exchange office, why is it more polite to say you would like to change money rather than bluntly saying you want to?",
+    "ids": [
+      "chiron-italian-fsi-03-at-the-exchange-office#step-9"
+    ],
+    "kind": "sem"
+  },
+  {
+    "q": "According to the currency-exchange lesson, would you typically get a better exchange rate at an embassy or at a hotel in Italy?",
+    "ids": [
+      "chiron-italian-fsi-03-at-the-exchange-office#step-1"
+    ],
+    "kind": "sem"
+  },
+  {
+    "q": "In the FSI dialogue about telling time, what is the time difference between Boston and Rome?",
+    "ids": [
+      "chiron-italian-fsi-04-getting-the-local-time#step-3-2"
+    ],
+    "kind": "term"
+  },
+  {
+    "q": "If a hairdresser's waiting room is packed with customers, does Italian grammar treat 'people' as a singular or plural noun?",
+    "ids": [
+      "chiron-italian-fsi-09-going-by-taxi#step-9"
+    ],
+    "kind": "sem"
+  },
+  {
+    "q": "Why does the taxi lesson suggest taking an airport bus instead of a taxi for a long ride like Rome to Fiumicino Airport?",
+    "ids": [
+      "chiron-italian-fsi-09-going-by-taxi#step-1"
+    ],
+    "kind": "sem"
+  },
+  {
+    "q": "If a friend jokingly asks whether you won the lottery and you didn't, what single Italian word lets you say you wish you had?",
+    "ids": [
+      "chiron-italian-the-word-magari#chapter-1"
+    ],
+    "kind": "sem"
+  },
+  {
+    "q": "How would an Italian use the word 'magari' to express surprise that someone ate way more pizza than expected?",
+    "ids": [
+      "chiron-italian-the-word-magari#chapter-4-1"
+    ],
+    "kind": "sem"
+  },
+  {
+    "q": "Is the Italian noun 'appunto' (a written note) masculine or feminine, and is it singular or plural in the base form?",
+    "ids": [
+      "chiron-italian-appunto#chapter-1-2"
+    ],
+    "kind": "term"
+  },
+  {
+    "q": "When an Italian professor makes 'un appunto' about a student's report, is the tone meant to be harsh or constructive?",
+    "ids": [
+      "chiron-italian-appunto#chapter-2-2"
+    ],
+    "kind": "sem"
+  },
+  {
+    "q": "What single Italian word would you exclaim to mean 'you've just proved my point' when a friend confirms something you were already thinking?",
+    "ids": [
+      "chiron-italian-appunto#chapter-3-3"
+    ],
+    "kind": "sem"
+  },
+  {
+    "q": "Why would ordering a cappuccino after a big Italian lunch mark you as a tourist?",
+    "ids": [
+      "chiron-italian-cafe#al-bar-1"
+    ],
+    "kind": "sem"
+  },
+  {
+    "q": "Why might standing at the counter save you money compared to sitting at a table in an Italian bar?",
+    "ids": [
+      "chiron-italian-cafe#al-bar-3"
+    ],
+    "kind": "sem"
+  },
+  {
+    "q": "In an Italian restaurant, why is it considered rude to snap your fingers or shout to get a waiter's attention?",
+    "ids": [
+      "chiron-italian-cafe#il-conto-2"
+    ],
+    "kind": "sem"
+  },
+  {
+    "q": "When two combined pronouns attach to an infinitive verb, like offering to explain something to someone, do they merge onto the end of the verb?",
+    "ids": [
+      "chiron-italian-give-me-a-lesson-on-choe-clitics-like-ti-an-li-n#chapter-1-2"
+    ],
+    "kind": "sem"
+  },
+  {
+    "q": "How would you say 'I'm giving it to her' in Italian if the 'it' refers to a cake rather than a book?",
+    "ids": [
+      "chiron-italian-give-me-a-lesson-on-choe-clitics-like-ti-an-li-n#chapter-2-3"
+    ],
+    "kind": "term"
+  },
+  {
+    "q": "Why does Italian still include 'mi' in 'mi chiamo Gyasi' even though the verb ending already shows who is speaking?",
+    "ids": [
+      "chiron-italian-io-vs-mi-and-ti-subject-pronoun-vs-clitic-object#chapter-1-2"
+    ],
+    "kind": "sem"
+  },
+  {
+    "q": "If a friend can't make it to the supermarket and you want to volunteer to go instead, with emphasis that it will be YOU and not someone else, where should the subject pronoun go relative to the verb?",
+    "ids": [
+      "chiron-italian-io-vs-mi-and-ti-subject-pronoun-vs-clitic-object#chapter-3-2"
+    ],
+    "kind": "sem"
+  },
+  {
+    "q": "Why might the Italian verb 'correre' take a different auxiliary depending on whether you're running toward a destination or just running for exercise?",
+    "ids": [
+      "chiron-italian-verbi-irregolari-parte-1-i-23-fondamentali#chapter-1-3"
+    ],
+    "kind": "sem"
+  },
+  {
+    "q": "Why would it sound odd to an Italian if you said you were doing well using 'essere' instead of 'stare'?",
+    "ids": [
+      "chiron-italian-verbi-irregolari-parte-1-i-23-fondamentali#chapter-2-3"
+    ],
+    "kind": "sem"
+  },
+  {
+    "q": "How do Italians distinguish in writing between the verb form meaning 'he/she gives' and the preposition meaning 'from', since the two sound identical?",
+    "ids": [
+      "chiron-italian-verbi-irregolari-parte-1-i-23-fondamentali#chapter-5-2"
+    ],
+    "kind": "sem"
+  },
+  {
+    "q": "For the Italian verb 'spegnere' (to turn off), which persons besides io and loro keep the regular stem without the extra 'g'?",
+    "ids": [
+      "chiron-italian-verbi-irregolari-parte-2-altri-20#chapter-7-2"
+    ],
+    "kind": "term"
+  },
+  {
+    "q": "Why does the Italian verb 'scendere' sometimes take 'avere' and sometimes take 'essere' in the past tense?",
+    "ids": [
+      "chiron-italian-verbi-irregolari-parte-2-altri-20#chapter-3-3"
+    ],
+    "kind": "sem"
+  },
+  {
+    "q": "What Italian idiom, literally meaning 'battle horse', describes the passato prossimo as the reliable tense you use every day?",
+    "ids": [
+      "chiron-italian-italian-past-tense-in-detail-passato-prossimo-im#chapter-1-2"
+    ],
+    "kind": "term"
+  },
+  {
+    "q": "What English mnemonic phrase does Lucrezia teach for remembering which Italian verbs take 'essere' in the passato prossimo?",
+    "ids": [
+      "chiron-italian-past-future#passato-prossimo-4"
+    ],
+    "kind": "term"
+  },
+  {
+    "q": "When describing a patient who had a fever and felt tired before suddenly getting chest pain and going to the ER, which past tense covers the ongoing background state and which covers the sudden event?",
+    "ids": [
+      "chiron-italian-past-future#imperfetto-4"
+    ],
+    "kind": "sem"
+  },
+  {
+    "q": "How can Italian express a guess like 'she's probably tired' using only the future tense, without adding a separate word for 'probably'?",
+    "ids": [
+      "chiron-italian-past-future#futuro-semplice-4"
+    ],
+    "kind": "sem"
+  },
+  {
+    "q": "When telling a patient to quit smoking, does Italian frame it as reaching a natural conclusion or as an interruption of a habit?",
+    "ids": [
+      "chiron-medicina-italiana/grammatica/fasi-azione#fine-3"
+    ],
+    "kind": "sem"
+  },
+  {
+    "q": "Are 'iniziare a' and 'cominciare a' different Italian verbs with different shades of meaning, or exact interchangeable synonyms?",
+    "ids": [
+      "chiron-medicina-italiana/grammatica/fasi-azione#inizio-1"
+    ],
+    "kind": "term"
+  }
+]

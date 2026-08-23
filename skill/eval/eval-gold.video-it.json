@@ -1,0 +1,82 @@
+[
+  {
+    "q": "When Chiara turns down her stepfather's offer of a smoothie because she's in a hurry, what colloquial expression does she use meaning she needs to rush off?",
+    "ids": ["chiron-baby-s01e01#scene-1"],
+    "kind": "sem"
+  },
+  {
+    "q": "What Roman slang word does a family friend use as an informal greeting, even though the word's literal dictionary meaning is 'beautiful'?",
+    "ids": ["chiron-baby-s01e01#scene-8"],
+    "kind": "term"
+  },
+  {
+    "q": "What phrase does Damiano's stepmother use to describe how exhausted she was that morning, using a verb that literally means to physically collapse?",
+    "ids": ["chiron-baby-s01e01#scene-3"],
+    "kind": "term"
+  },
+  {
+    "q": "What expression leaves someone too astonished to respond, built from the image of a mouth hanging open?",
+    "ids": ["chiron-baby-s01e02#scene-9"],
+    "kind": "sem"
+  },
+  {
+    "q": "When a bartender in the show gives someone a free drink, what set phrase tells the customer it doesn't need to be paid for?",
+    "ids": ["chiron-baby-s01e02#scene-8"],
+    "kind": "term"
+  },
+  {
+    "q": "When Fabio wants to shut down a suggestion completely, as not even worth discussing, what phrase does he use?",
+    "ids": ["chiron-baby-s01e02#scene-2"],
+    "kind": "sem"
+  },
+  {
+    "q": "What phrase would Ludovica's boyfriend use to tell her that a gift looks good on her?",
+    "ids": ["chiron-baby-s01e03#scene-2"],
+    "kind": "sem"
+  },
+  {
+    "q": "What Roman coach's phrase uses the impersonal 'si' construction to mean 'you don't show up late for a race'?",
+    "ids": ["chiron-baby-s01e03#scene-5"],
+    "kind": "term"
+  },
+  {
+    "q": "What phrase would a Roman teen use to call out a friend's hypocrisy, pointing out the friend is guilty of exactly what they're criticizing?",
+    "ids": ["chiron-baby-s01e03#scene-6"],
+    "kind": "sem"
+  },
+  {
+    "q": "What Italian idiom, equivalent to the English 'it takes two to tango', does Chiara use when calling out a double standard in how boys and girls are judged?",
+    "ids": ["chiron-baby-s01e04#scene-2"],
+    "kind": "term"
+  },
+  {
+    "q": "What phrase would you use in Italian to reassure someone that you don't want to pull them into your problems?",
+    "ids": ["chiron-baby-s01e04#scene-7"],
+    "kind": "sem"
+  },
+  {
+    "q": "What Roman slang word for '100 euros' does the local thug use when demanding Damiano pay back what he owes?",
+    "ids": ["chiron-baby-s01e04#scene-4"],
+    "kind": "term"
+  },
+  {
+    "q": "When Chiara says 'ti ho chiamata' instead of 'ti ho chiamato' to a female friend, why does the past participle change its ending?",
+    "ids": ["chiron-baby-s01e05#scene-1"],
+    "kind": "sem"
+  },
+  {
+    "q": "What Italian slang verb, which literally means 'to inflate', is used to mean 'beat someone up' when Fiore attacks Brando?",
+    "ids": ["chiron-baby-s01e05#scene-9"],
+    "kind": "term"
+  },
+  {
+    "q": "What Italian verb form lets you guess that someone 'must have taken' something, without knowing for sure, using a future-based construction?",
+    "ids": ["chiron-baby-s01e06#scene-4"],
+    "kind": "sem"
+  },
+  {
+    "q": "What phrase would the school principal's guest use to tell someone to stop talking nonsense?",
+    "ids": ["chiron-baby-s01e06#scene-7"],
+    "kind": "sem"
+  }
+]

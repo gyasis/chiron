@@ -107,3 +107,52 @@ SSM lesson anatomy, for anyone writing gold against them:
     medicine-*    the clinical explanation   <- target these
     question      the answer options
     closing       sign-off
+
+---
+
+## 2026-08-23 — coverage extended to all four domains (83 → 129 questions)
+
+`language-it` (748 passages) and `video-it` (166) had **no eval at all**. That was the
+real gap, not the question count: `language-it` is the domain where the production
+failure happened — Ask claimed the irregular-verb lessons did not exist — and nothing
+in the harness would have caught it.
+
+| domain | n | bm25 hit@6 | dense hit@6 | hybrid hit@6 |
+|---|---|---|---|---|
+| medicine | 29 | 20.7% | 41.4% | 31.0% |
+| medical-italian | 30 | see above | — | — |
+| cross-lingual | 24 | — | 87.5% | — |
+| **language-it** | **30** | **56.7%** | **93.3%** | 80.0% |
+| **video-it** | **16** | **56.3%** | 68.8% | **75.0%** |
+
+Two things worth reading carefully:
+
+- **language-it independently corroborates that hybrid drags a strong channel down.**
+  Dense 93.3% → hybrid 80.0%. That was first measured on medicine and could have been a
+  quirk of one domain; it is not. RRF rewards agreement, so fusing a strong channel with
+  a weak one costs points. The page is dense-only-with-BM25-fallback for this reason.
+- **video-it is the one domain where hybrid WINS** (75.0% vs dense 68.8%). At n=16 a
+  single question is 6.25 points, so this is a lead to test, **not** a finding to act on.
+  Plausible mechanism: scene passages are short and idiom-dense, which is the regime
+  where lexical matching contributes something dense misses. Needs ~40 questions before
+  anyone changes routing over it.
+
+### Two harness traps fixed while running this
+
+1. **The default embed URL pointed at ollama `:11434`.** ollama cannot serve bge-m3 on
+   this GPU (NaN → silent CPU fallback), which is why `:8913` exists. Left as it was,
+   the harness failed all 30 queries and printed `dense 0%` — which reads as a verdict
+   on the model rather than a wiring mistake. Default is now `:8913`.
+2. **`--vmodel` silently picked a different sidecar.** Both `bge-m3` and
+   `multilingual-e5-small` sidecars exist; without `--vmodel` the harness loaded the
+   384-dim e5 vectors while the service served 1024-dim bge-m3. Pass
+   `--vmodel BAAI/bge-m3` (or whatever the pointer manifest names) explicitly.
+
+### Gold quality
+
+All 46 new labels were machine-checked (ids resolve, no duplicates, no placeholders) and
+a sample was read against the passage text. **One was wrong** and was corrected: the
+spegnere-conjugation question pointed at a past-participle passage
+(`…parte-2-altri-20#chapter-3-2`) instead of the `-g-` rule at `#chapter-7-2`. This is
+the same failure that once produced a fake cross-lingual 0% — a bad label is
+indistinguishable from a retrieval miss, so labels get verified, not trusted.
