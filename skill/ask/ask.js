@@ -105,6 +105,7 @@ async function boot() {
   let corpusCache = null;
   const semantic = createSemanticSource({
     scope: () => $('#scope').value,
+    focus: () => FOCUS,
     corpusById: id => corpusCache?.get(id),
     embedUrl: '/ask/embed',
   });
@@ -178,6 +179,7 @@ async function boot() {
    * never left with no retrieval at all. */
   const pickChannel = async () => {
     const dense = await semantic.ready($('#scope').value);
+    DENSE = dense;
     handle.configure({ rag: { enabled: !dense } });
     const st = semantic.status();
     $('#grounded').title = dense
@@ -368,6 +370,48 @@ function buildScopeSelector(counts, stats) {
   sel.innerHTML = opts.join('');
 }
 
+/* ─── focus: "go deeper" without a subject facet ───
+ * The PRD's tier 3 spawns a narrower tutor from a library SUBJECT. Measured
+ * against the real corpus that facet cannot carry it: 242 of 338 lessons are
+ * labelled "General", so a subject picker would be one bucket holding 72% of
+ * the library and 32 slivers.
+ *
+ * So the narrowing is derived from RETRIEVAL instead — the lessons this answer
+ * actually cited. That is correct however a lesson was labelled, and when it is
+ * wrong it degrades to "these three lessons" rather than to a false claim about
+ * a subject. Strict scope is only tolerable with a visible way out, so the chip
+ * is always present and always clearable.
+ */
+let FOCUS = null;                       // { lessons: [lessonId], label }
+// A focus is honoured by the DENSE channel only — acolyte's BM25 indexes the
+// whole shard and has no lesson filter. Rather than let the chip claim a
+// narrowing that is not happening, the action refuses when BM25 is answering.
+let DENSE = false;
+
+function setFocus(f) {
+  FOCUS = f;
+  let chip = document.querySelector('.ask-focus');
+  // Refresh the scope line in BOTH directions. Setting a focus used to leave the
+  // topbar saying "Scope: everything" while retrieval was pinned to two lessons.
+  setHint($('#scope').value);
+  // The grounding pill's tooltip is written by pickChannel, which only runs on a
+  // scope change — so after focusing it still read "whole corpus". Same class of
+  // bug as the topbar above: a control describing a search that is not happening.
+  const g = $('#grounded');
+  if (g && DENSE) g.title = f
+    ? `semantic · ${f.lessons.length} lesson${f.lessons.length === 1 ? '' : 's'} · server-side`
+    : 'semantic · whole corpus · server-side';
+  if (!f) { chip?.remove(); return; }
+  if (!chip) {
+    chip = document.createElement('button');
+    chip.className = 'chip on focus-chip ask-focus';
+    chip.title = 'Searching only these lessons — click to search the whole library again';
+    chip.addEventListener('click', () => setFocus(null));
+    document.querySelector('.topbar .tt').after(chip);
+  }
+  chip.innerHTML = `<span class="af-t">🎓 ${escapeHtml(f.label)}</span><span class="af-x">✕</span>`;
+}
+
 function setHint(scope) {
   $('#scopehint').textContent = scope === 'all'
     ? 'Retrieval runs over every baked lesson and every section in it.'
@@ -376,8 +420,10 @@ function setHint(scope) {
   // so a restored "Medical Italian" session still claimed to search everything.
   // Two places saying different things about what is being searched is worse
   // than either one alone.
-  $('#tsub').textContent = `Scope: ${scope === 'all' ? 'everything' : (DOMAIN_LABEL[scope] || scope)}`
-    + ' · grounded in your library';
+  $('#tsub').textContent = FOCUS
+    ? `Scope: ${FOCUS.lessons.length} lesson${FOCUS.lessons.length === 1 ? '' : 's'} · grounded in your library`
+    : `Scope: ${scope === 'all' ? 'everything' : (DOMAIN_LABEL[scope] || scope)}`
+      + ' · grounded in your library';
 }
 
 
@@ -437,6 +483,44 @@ function answerContext(panel, msg) {
   return { question: q, answer, sources, top: sources[0]?.meta || {} };
 }
 
+/** The lessons an answer STOOD ON — the basis for "go deeper".
+ *
+ *  Not every lesson it cited. Measured on real answers, a typical one draws 7
+ *  passages from 5 lessons, so a rule like "offer this when at most 4 lessons
+ *  were cited" never fires. The tail of a citation list is incidental — asking
+ *  about Italian irregular verbs pulled in two SSM medicine sections at the
+ *  bottom — while the HEAD is what the answer was actually built from.
+ *
+ *  So: take the lessons behind the top-ranked passages (acolyte renders source
+ *  cards in fused-score order), and cap at three. Returns null only when even
+ *  the head is scattered, which is the honest signal that there is no single
+ *  thing to go deeper into.
+ */
+const FOCUS_HEAD = 4;                   // how many top passages define the topic
+const FOCUS_MAX_LESSONS = 3;
+
+function deriveFocus(panel, msg) {
+  const { sources } = answerContext(panel, msg);
+  const head = sources.slice(0, FOCUS_HEAD);
+  const seen = new Map();
+  for (const s of head) {
+    const id = s.meta?.lessonId;
+    if (!id || seen.has(id)) continue;
+    seen.set(id, { name: s.meta.lesson || s.title, subject: s.meta.subject });
+  }
+  if (!seen.size || seen.size > FOCUS_MAX_LESSONS) return null;
+
+  // A shared REAL subject is the better label when every cited lesson agrees on
+  // one. "General" is excluded — it is the unset value for 242 of 338 lessons,
+  // so it says nothing about what this answer was about.
+  const subs = new Set([...seen.values()].map(v => v.subject).filter(x => x && x !== 'General'));
+  const entries = [...seen.entries()];
+  const label = subs.size === 1 ? [...subs][0]
+    : entries.length === 1 ? entries[0][1].name
+    : `${entries.length} lessons`;
+  return { lessons: entries.map(([id]) => id), label };
+}
+
 function buildActs(handle, panel, msg) {
   const row = document.createElement('div');
   row.className = 'ask-acts';
@@ -456,6 +540,19 @@ function buildActs(handle, panel, msg) {
 
   add('➕ Add as a card', '', (b, r) => makeCard(panel, msg, b, r));
   add('📘 Make a lesson from this', '', (b, r) => lessonForm(panel, msg, r));
+
+  // Go deeper — narrow the thread to the lessons THIS answer stood on. Offered
+  // only when the sources actually concentrate: if an answer drew on six
+  // unrelated lessons there is no "deeper" to go, and a button that narrows to
+  // six lessons is just the library with extra steps.
+  const focusable = deriveFocus(panel, msg);
+  if (focusable) add(`🎓 Go deeper: ${focusable.label}`, '', (b, r) => {
+    if (!DENSE) return say(r, 'Focus needs semantic search, which is not available for this '
+      + 'scope right now — the answer above came from keyword search.', 'warn');
+    setFocus(focusable);
+    say(r, `Now searching only <b>${escapeHtml(focusable.label)}</b>. `
+         + `Ask a follow-up — or clear the focus chip to widen again.`, 'ok');
+  });
   add('↻ Again, simpler', 'ghost', () =>
     handle.send('Explain that again, simpler and shorter. Same language as before.'));
   return row;

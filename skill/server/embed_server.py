@@ -191,6 +191,11 @@ class H(BaseHTTPRequestHandler):
                     return self._send(503, {"error": "no vector shards loaded"})
                 scope = req.get("scope") or "all"
                 k = int(req.get("k", 8))
+                # A FOCUS narrows the search to specific lessons — how "go deeper"
+                # is implemented. It is derived from what an answer actually cited,
+                # so it works regardless of how a lesson was labelled; the subject
+                # facet cannot carry this (242 of 338 lessons are "General").
+                focus = set(req.get("lessons") or [])
                 doms = list(SHARDS) if scope == "all" else [scope]
                 doms = [d for d in doms if d in SHARDS]
                 if not doms:
@@ -200,15 +205,28 @@ class H(BaseHTTPRequestHandler):
                 for d in doms:
                     ids, mat = SHARDS[d]
                     sims = mat @ qv           # vectors are L2-normalised -> cosine
-                    top = np.argpartition(-sims, min(k, len(ids) - 1))[:k]
+                    if focus:
+                        # Score everything, then mask. Masking by -inf keeps the
+                        # row indices aligned with `ids`, which slicing would not.
+                        keep = np.fromiter(
+                            (PASSAGES.get(i, {}).get("meta", {}).get("lessonId") in focus for i in ids),
+                            dtype=bool, count=len(ids))
+                        if not keep.any():
+                            continue
+                        sims = np.where(keep, sims, -np.inf)
+                    n = int(min(k, max(1, (sims > -np.inf).sum())))
+                    top = np.argpartition(-sims, min(n, len(ids) - 1))[:n]
                     for i in top:
+                        if sims[int(i)] == -np.inf:
+                            continue
                         pid = ids[int(i)]
                         rec = PASSAGES.get(pid, {})
                         hits.append({"id": pid, "score": float(sims[int(i)]), "domain": d,
                                      "title": rec.get("title", ""), "text": rec.get("text", ""),
                                      "meta": rec.get("meta", {})})
                 hits.sort(key=lambda h: -h["score"])
-                return self._send(200, {"hits": hits[:k], "scope": scope, "searched": doms})
+                return self._send(200, {"hits": hits[:k], "scope": scope, "searched": doms,
+                                        "focused": sorted(focus) if focus else None})
             except Exception as e:
                 return self._send(500, {"error": f"{type(e).__name__}: {e}"})
         if not self.path.startswith("/api/embed"):

@@ -35,7 +35,7 @@ const IDS = (slug, dom) => `/library/library.corpus.vec.${slug}.${dom}.ids.json`
  * coverage is worse than no coverage. */
 const MIN_COVERAGE = 0.95;
 
-export function createSemanticSource({ scope, corpusById, embedUrl, topK = 8 }) {
+export function createSemanticSource({ scope, corpusById, embedUrl, topK = 8, focus = () => null }) {
   let loaded = null;      // { dom, dim, rows, ids, q }  — q is the Int8Array block
   let manifest = null;
   let disabled = false;   // set once we know this scope can never work
@@ -117,11 +117,14 @@ export function createSemanticSource({ scope, corpusById, embedUrl, topK = 8 }) 
       try {
         const r = await fetch('/ask/search', {
           method: 'POST', headers: { 'content-type': 'application/json' },
-          body: JSON.stringify({ query, scope: 'all', k: topK }),
+          body: JSON.stringify({ query, scope: 'all', k: topK, lessons: focus()?.lessons || null }),
         });
         if (!r.ok) throw new Error(`search ${r.status}`);
         const { hits } = await r.json();
-        state.status = 'ready'; state.detail = `whole corpus · server-side`;
+        const f = focus();
+        state.status = 'ready';
+        state.detail = f ? `${f.lessons.length} lesson${f.lessons.length === 1 ? '' : 's'} · server-side`
+                         : 'whole corpus · server-side';
         // The server sends the text with the hit — the client has no corpus
         // loaded for 'all', and downloading 29 MB to resolve ids would defeat
         // the point of searching server-side in the first place.
@@ -155,8 +158,14 @@ export function createSemanticSource({ scope, corpusById, embedUrl, topK = 8 }) 
     // ANN index; an index would add a dependency and a build step to save time
     // nobody can perceive.
     const { q, dim, rows, ids } = L;
+    // A focus restricts the search to specific lessons. Ids are
+    // "<lessonId>#<section>", so membership is a prefix test — no second index.
+    const f = focus();
+    const keep = f ? new Set(f.lessons) : null;
+    const inFocus = i => !keep || keep.has(String(ids[i]).split('#')[0]);
     const best = [];
     for (let i = 0; i < rows; i++) {
+      if (!inFocus(i)) continue;
       let dot = 0;
       const off = i * dim;
       for (let d = 0; d < dim; d++) dot += qv[d] * q[off + d];
@@ -172,6 +181,7 @@ export function createSemanticSource({ scope, corpusById, embedUrl, topK = 8 }) 
     best.sort((a, b) => b.dot - a.dot);
 
     state.status = 'ready';
+    if (f) state.detail = `${f.lessons.length} lesson${f.lessons.length === 1 ? '' : 's'}`;
     return best.map(({ i, dot }) => {
       const p = corpusById(ids[i]);
       if (!p) return null;
