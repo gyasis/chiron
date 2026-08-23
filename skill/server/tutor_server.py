@@ -15,10 +15,20 @@ verdict, each search with its actual query, drafting, reconciling). TWO transpor
   GET  /tutor-status/<rid>             → {events:[{t,text}], done}
   GET  /tutor-models                   → {default, models:[{id,label}]}
   GET  /healthz
+
+OPENAI FACE (additive — every route above is unchanged):
+  POST /v1/chat/completions  {model, messages, stream?, chiron?:{lesson_slug,section_id,section_text,
+                              selection,mode,lang}}  → OpenAI chat-completion shape
+  GET  /v1/models                      → OpenAI model-list shape
+This exists so acolyte can drive the tutor as `provider:'openai-compatible'` instead of Chiron
+teaching acolyte a bespoke contract — the adapter belongs on the service, not in the reusable
+widget. Grounding that has no OpenAI equivalent rides in the optional `chiron` object; a plain
+OpenAI client that omits it still gets a working answer from the messages alone.
 """
 import asyncio, json, os, queue, threading, time, urllib.request
 from http.server import ThreadingHTTPServer, BaseHTTPRequestHandler
-from tutor_chain import answer_turn, suggestions, decompose, cards, mcqs, train_path, MODELS, DEFAULT_MODEL
+from tutor_chain import (answer_turn, suggestions, decompose, cards, mcqs, train_path,
+                         MODELS, DEFAULT_MODEL, LAST_ERRORS)
 
 PORT = 8912
 
@@ -100,6 +110,12 @@ class H(BaseHTTPRequestHandler):
     def do_GET(self):
         if self.path.startswith("/healthz"):
             return self._json({"ok": True, "port": PORT})
+        if self.path.startswith("/v1/models"):
+            # MODELS is a dict keyed by id, not a list of records.
+            return self._json({"object": "list", "data": [
+                {"id": mid, "object": "model", "owned_by": "chiron",
+                 "created": 0, "name": (m or {}).get("label", mid)}
+                for mid, m in MODELS.items()]})
         if self.path.startswith("/tutor-models"):
             return self._json({"default": DEFAULT_MODEL,
                                "models": [{"id": k, "label": v["label"]} for k, v in MODELS.items()]})
@@ -181,6 +197,8 @@ class H(BaseHTTPRequestHandler):
                 return self._json(out or {"steps": [], "error": "train produced nothing"})
             except Exception as e:
                 return self._json({"steps": [], "error": str(e)}, 502)
+        if self.path.startswith("/v1/chat/completions"):
+            return self._openai_chat()
         if not self.path.startswith("/tutor-chat"):
             return self._json({"error": "not found"}, 404)
         rid = None
@@ -194,6 +212,77 @@ class H(BaseHTTPRequestHandler):
         except Exception as e:
             _status_done(rid)
             return self._json({"reply": "", "error": str(e)}, 502)
+
+    def _openai_chat(self):
+        """OpenAI chat-completions over the same answer path /tutor-chat uses.
+
+        NOT token streaming. `answer_turn` is a multi-step chain (route → search →
+        draft → reconcile), so there is no token stream to forward; when a client
+        asks for `stream`, the finished answer is sent as one delta. Emitting fake
+        incremental chunks would misrepresent how long the answer took to exist.
+        """
+        try:
+            body = self._body()
+            msgs = body.get("messages") or []
+            if not msgs:
+                return self._json({"error": {"message": "messages required", "type": "invalid_request_error"}}, 400)
+            # Grounding with no OpenAI equivalent rides here; absent, the messages
+            # carry it (acolyte puts its retrieved context in the prompt itself).
+            g = body.get("chiron") or {}
+            out = _run_answer({
+                "messages": msgs,
+                "section_text": g.get("section_text", ""),
+                "selection": g.get("selection", ""),
+                "section_id": g.get("section_id", ""),
+                "lesson_slug": g.get("lesson_slug", ""),
+                "lang": g.get("lang", "en"),
+                "mode": g.get("mode", "med"),
+                "model": body.get("model") or g.get("model"),
+            })
+            reply = out.get("reply", "")
+            model = out.get("model") or body.get("model") or DEFAULT_MODEL
+            if body.get("stream"):
+                return self._openai_stream(reply, model)
+            return self._json({
+                "id": f"chatcmpl-chiron-{int(time.time()*1000)}",
+                "object": "chat.completion", "created": int(time.time()), "model": model,
+                "choices": [{"index": 0, "finish_reason": "stop",
+                             "message": {"role": "assistant", "content": reply}}],
+                # Chiron's own signal, kept OUT of the standard fields so a strict
+                # client ignores it and the lesson UI can still show grounding.
+                "chiron": {"depth": out.get("depth"), "grounded": out.get("grounded"),
+                           "source": out.get("source"),
+                           # Only when the answer IS the fallback string — so a
+                           # failure says which provider failed and why instead
+                           # of "check the model / keys" and nothing else.
+                           **({"errors": [{"spec": sp, "error": er} for sp, er in LAST_ERRORS]}
+                              if reply.startswith("(the tutor is unavailable") else {})},
+            })
+        except Exception as e:
+            return self._json({"error": {"message": str(e), "type": "server_error"}}, 502)
+
+    def _openai_stream(self, reply: str, model: str):
+        cid = f"chatcmpl-chiron-{int(time.time()*1000)}"
+        self.send_response(200)
+        self.send_header("content-type", "text/event-stream")
+        self.send_header("cache-control", "no-cache")
+        self.send_header("access-control-allow-origin", "*")
+        self.end_headers()
+
+        def frame(delta, finish=None):
+            return ("data: " + json.dumps({
+                "id": cid, "object": "chat.completion.chunk", "created": int(time.time()),
+                "model": model,
+                "choices": [{"index": 0, "delta": delta, "finish_reason": finish}],
+            }) + "\n\n").encode()
+
+        try:
+            self.wfile.write(frame({"role": "assistant", "content": reply}))
+            self.wfile.write(frame({}, "stop"))
+            self.wfile.write(b"data: [DONE]\n\n")
+            self.wfile.flush()
+        except (BrokenPipeError, ConnectionResetError):
+            pass                       # client navigated away mid-answer
 
     def _stream(self):
         """Transport A — SSE: emit each REAL status event as it happens, then the final answer."""
