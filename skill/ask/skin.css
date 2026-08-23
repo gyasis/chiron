@@ -210,7 +210,15 @@
   border: 0; background: var(--chiron-accent); color: var(--chiron-surface);
   font-size: 0;                       /* hide the "Send" word, keep the button */
 }
-#host .acolyte-send::after { content: '↑'; font-size: 16px; font-weight: 700; }
+/* The send glyph is the app's paper plane — the same path the lesson tutor has
+   always used (shell/tutor.js) — so the two send buttons in Chiron are one
+   icon, not an arrow here and a plane there. A MASK rather than an <img>, so it
+   takes the button's own colour and follows the theme. */
+#host .acolyte-send::after {
+  content: ''; width: 15px; height: 15px; background: currentColor;
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M2 21l21-9L2 3v7l15 2-15 2z'/%3E%3C/svg%3E") center / contain no-repeat;
+          mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M2 21l21-9L2 3v7l15 2-15 2z'/%3E%3C/svg%3E") center / contain no-repeat;
+}
 #host .acolyte-send:hover { filter: brightness(1.12); }
 
 /* ── empty state: the pilot's centred hero + suggestion cards ── */

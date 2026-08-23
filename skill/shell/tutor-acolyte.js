@@ -18,6 +18,41 @@
  * through its OpenAI-compatible face. Acolyte stays a generic widget; the
  * adapter lives on the service, which is what lets the next site reuse it.
  */
+/** Chiron's palette as acolyte tokens.
+ *
+ *  Duplicated from the Ask page's mapper rather than imported: a lesson is a
+ *  self-contained .chiron bundle, so it cannot reach /ask/ask.js — an up-tree
+ *  import 404s the moment the lesson is served from anywhere else.
+ *
+ *  Every value carries a fallback so a lesson built before a token existed
+ *  still renders a real colour instead of an empty custom property.
+ */
+function token() {
+  const v = (name, fallback) => `var(${name}, ${fallback})`;
+  return {
+    bg:                v('--chiron-bg', '#ffffff'),
+    fg:                v('--chiron-fg', '#0f1f33'),
+    'fg-muted':        v('--chiron-fg-secondary', '#334155'),
+    'fg-faint':        v('--chiron-muted', '#64748b'),
+    surface:           v('--chiron-surface', '#f8fafc'),
+    'surface-alt':     v('--chiron-elevated', '#eef4fb'),
+    border:            v('--chiron-border', '#d8e3f0'),
+    'border-soft':     v('--chiron-divider', '#e6eef7'),
+    'border-strong':   v('--chiron-border', '#d8e3f0'),
+    accent:            v('--chiron-accent', '#1e6fbf'),
+    'accent-light':    v('--chiron-elevated', '#eef4fb'),
+    'accent-contrast': v('--chiron-surface', '#ffffff'),
+    // The accent is reserved for send and citation chrome; the reader's own
+    // bubble stays a quiet pill, as on the Ask page.
+    'msg-user-bg':     v('--chiron-elevated', '#eef4fb'),
+    'msg-user-fg':     v('--chiron-fg', '#0f1f33'),
+    font:              v('--chiron-font-body', "system-ui, sans-serif"),
+    radius: '10px',
+    'radius-lg': '14px',
+    'font-size': '15px',
+  };
+}
+
 (async function () {
   const HOST = location.hostname || '127.0.0.1';
   const TUTOR = `http://${HOST}:8912`;
@@ -71,6 +106,15 @@
       position: 'right',
       fabIcon: '🎓',
       defaultWidth: 'narrow',
+      // Chiron's palette, straight into acolyte's tokens — without this the
+      // sidebar paints in acolyte's own green while the lesson around it is
+      // clinical blue or linguistic warm, and the widget reads as bolted on.
+      //
+      // These are var() REFERENCES, not resolved values. Every lesson carries
+      // its own theme (clinical / linguistic / …) and can toggle light-dark at
+      // runtime, so a snapshot of the computed colours goes stale the moment
+      // the reader flips it. A reference re-resolves on its own.
+      theme: token(),
     },
     storage: { dbName: `chiron-tutor-${slug || 'lesson'}` },   // per-lesson thread
   });

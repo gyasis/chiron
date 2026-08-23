@@ -24,3 +24,13 @@
    answer. Acolyte owns the panel's layout, so this only pins the order. */
 .acolyte-panel { display: flex; flex-direction: column; }
 .acolyte-panel > .chiron-tutor-out { order: 999; flex: 0 0 auto; }
+
+/* Send is the app's paper plane, matching shell/tutor.js's icon so Chiron has
+   ONE send glyph. Acolyte's own default stays a plain arrow — this is the skin,
+   not the widget. Scoped under .acolyte-panel to outrank acolyte's own rule
+   whichever order the runtime-injected stylesheet lands in. */
+.acolyte-panel .acolyte-send::after {
+  content: ''; width: 15px; height: 15px; background: currentColor;
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M2 21l21-9L2 3v7l15 2-15 2z'/%3E%3C/svg%3E") center / contain no-repeat;
+          mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M2 21l21-9L2 3v7l15 2-15 2z'/%3E%3C/svg%3E") center / contain no-repeat;
+}
