@@ -715,11 +715,19 @@ async function makeCard(panel, msg, btn, row) {
     const res = await post(`/captures/${cap.id}/cards`, {});
     // /captures/{id}/cards returns the card objects themselves, not a count —
     // reading it as a number printed "[object Object]" to the learner.
-    const arr = [res.cards, res.created, res.items].find(Array.isArray);
-    const n = arr ? arr.length : (typeof res.count === 'number' ? res.count : null);
-    say(row, n != null
-      ? `✓ ${n} card${n === 1 ? '' : 's'} added to the review rotation.`
-      : '✓ Sent to the card spine.', 'ok');
+    // Report what ANKI did, not what the generator produced — those differ when
+    // a card already exists, and "3 cards added" for one new card is the same
+    // class of lie as claiming reviews were written when they were not.
+    const a = res.anki;
+    if (a) {
+      const bits = [`✓ ${a.added} card${a.added === 1 ? '' : 's'} added to Anki · ${esc(a.deck)}`];
+      if (a.duplicates) bits.push(`${a.duplicates} already there`);
+      say(row, bits.join(' · '), a.added ? 'ok' : 'warn');
+    } else {
+      const arr = [res.cards, res.created, res.items].find(Array.isArray);
+      const n = arr ? arr.length : (typeof res.count === 'number' ? res.count : null);
+      say(row, n != null ? `✓ ${n} card${n === 1 ? '' : 's'} generated.` : '✓ Sent.', 'ok');
+    }
   } catch (e) {
     // Fail loud and name the fix — a silent no-op here would mean believing a
     // card exists when it does not, and only finding out at review time.

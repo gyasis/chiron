@@ -210,3 +210,81 @@ def answer(reviews: list[dict]) -> dict:
          f"did not apply. The usual cause is the deck's new-cards/day limit being "
          f"spent; raise it in Anki's deck options, or study the rest tomorrow."),
     }
+
+
+# ── creating ───────────────────────────────────────────────────────────────
+
+# Cards Chiron writes go to their OWN deck. Dropping them into the curated
+# Medical Italian tree would mix generated cards into decks the user built by
+# hand, and there would be no way to tell them apart later or study them
+# separately. One deck, tagged with where each came from.
+CHIRON_DECK = os.environ.get("CHIRON_ANKI_DECK", "Chiron")
+
+
+def add_notes(cards: list[dict], deck: str | None = None,
+              tags: list[str] | None = None) -> dict:
+    """Create notes from generated cards. `cards` = [{front, back, ...}].
+
+    Duplicates are REFUSED rather than allowed: capturing the same answer twice
+    should not produce two identical cards competing in the same rotation.
+    AnkiConnect returns a null id for each note it declined, so the caller is
+    told how many were new versus already present.
+    """
+    deck = deck or CHIRON_DECK
+    invoke("createDeck", deck=deck)
+    notes = []
+    for c in cards:
+        front, back = (c.get("front") or "").strip(), (c.get("back") or "").strip()
+        if not front or not back:
+            continue
+        notes.append({
+            "deckName": deck,
+            "modelName": "Basic",
+            "fields": {"Front": front, "Back": back},
+            "tags": ["chiron"] + list(tags or []),
+            "options": {"allowDuplicate": False,
+                        "duplicateScope": "deck",
+                        "duplicateScopeOptions": {"deckName": deck, "checkChildren": True}},
+        })
+    if not notes:
+        return {"ok": False, "added": 0, "of": 0, "deck": deck,
+                "detail": "the generator produced no usable front/back pairs"}
+
+    # PARTITION FIRST. addNotes raises for the WHOLE batch when any one note is
+    # a duplicate — measured: "cannot create note because it is a duplicate" —
+    # so a capture with four new cards and one repeat would lose all five.
+    # canAddNotes reports per-note, so the new ones still land.
+    try:
+        can = invoke("canAddNotes", notes=notes) or []
+    except Exception:
+        can = [True] * len(notes)          # older AnkiConnect: try them all
+    fresh = [n for n, ok in zip(notes, list(can) + [True] * len(notes)) if ok]
+    dupes = len(notes) - len(fresh)
+
+    added: list = []
+    if fresh:
+        try:
+            added = [i for i in (invoke("addNotes", notes=fresh) or []) if i]
+        except Exception as e:
+            # A duplicate that slipped past canAddNotes (a race, or a scope
+            # difference) must not take the rest down with it.
+            for n in fresh:
+                try:
+                    got = invoke("addNote", note=n)
+                    if got:
+                        added.append(got)
+                except Exception:
+                    dupes += 1
+            if not added:
+                raise RuntimeError(f"no cards could be added: {e}") from e
+
+    return {
+        "ok": bool(added),
+        "added": len(added),
+        "of": len(notes),
+        "duplicates": dupes,
+        "deck": deck,
+        "noteIds": added,
+        "detail": None if not dupes else
+        f"{dupes} already existed in {deck} and were not added again.",
+    }

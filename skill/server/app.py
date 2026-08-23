@@ -1982,20 +1982,30 @@ def _spine_dispatch(note, question, concept, slug, section_id, ids, kind="cards"
         made = _tutor_post("/cards", payload); made_cards = made.get("cards") or []
         if not made_cards:
             raise HTTPException(502, "card generation produced nothing")
-        db = GEN / (slug or "_") / ".chiron-state.db"
-        if slug and db.exists():
-            import sqlite3, time as _t
-            con = sqlite3.connect(str(db), timeout=5)
-            try:
-                now = int(_t.time()*1000)
-                for c in made_cards:
-                    con.execute("insert into sr_cards(course_id,chapter_id,concept_id,card_type,front,back,tags,"
-                                "ease_factor,interval_days,repetitions,next_due_at,suspended) values (?,?,?,?,?,?,?,?,?,?,?,0)",
-                                (slug, section_id, c.get("concept_id"), c.get("card_type"), c["front"], c["back"],
-                                 "tutor-capture", 2.5, 1, 0, now)); written += 1
-                con.commit()
-            finally: con.close()
-        result = {"cards": made_cards}
+        # ONE memory system. These used to land in the lesson's own SQLite
+        # rotation, which meant a card made from an answer was scheduled by
+        # Chiron while every other Italian card the user owns is scheduled by
+        # Anki — two schedulers, and no way to see a day's real workload in one
+        # place. Generated cards now go to Anki like the rest.
+        import anki as _anki
+        tags = ["ask"]
+        if slug:
+            tags.append(f"lesson:{slug}")
+        if section_id:
+            tags.append(f"section:{section_id}")
+        # NO concept: tag. It comes from the cited lesson's `subject` facet, and
+        # that facet is unreliable — 242 of 338 lessons are labelled "General",
+        # and a question about torace vs petto got tagged
+        # concept:vascular-aortic-disease from a tangential citation. A wrong
+        # tag is worse than none: it is searchable, so it actively misleads.
+        try:
+            wrote = _anki.add_notes(made_cards, tags=tags)
+        except _anki.AnkiUnavailable as e:
+            # Loud, not silent. A card the learner believes exists but does not
+            # is worse than a refused capture — they find out at review time.
+            raise HTTPException(503, f"Anki is not reachable, so the card was not saved: {e}")
+        written = wrote.get("added", 0)
+        result = {"cards": made_cards, "anki": wrote}
     elif kind == "mcqs":
         result = {"mcqs": (_tutor_post("/mcqs", payload).get("mcqs") or [])}
         if not result["mcqs"]: raise HTTPException(502, "mcq generation produced nothing")
