@@ -68,7 +68,8 @@ def _run_answer(body: dict, on_status=None) -> dict:
         section_text=body.get("section_text", ""), selection=body.get("selection", ""),
         section_id=body.get("section_id", ""), lesson_slug=body.get("lesson_slug", ""),
         messages=msgs, lang=body.get("lang", "en"), model=body.get("model"),
-        mode=body.get("mode", "med"), on_status=on_status))
+        mode=body.get("mode", "med"), on_status=on_status,
+        client_system=body.get("client_system")))
     if body.get("suggest") and out.get("reply"):
         q = next((m.get("content", "") for m in reversed(msgs) if m.get("role") == "user"), "")
         if on_status:
@@ -85,7 +86,12 @@ class H(BaseHTTPRequestHandler):
 
     def _cors(self):
         self.send_header("Access-Control-Allow-Origin", "*")
-        self.send_header("Access-Control-Allow-Headers", "Content-Type")
+        # Authorization must be allowed or the OpenAI face is unusable from a
+        # browser: any OpenAI client sends a Bearer header, and the preflight
+        # rejects the whole request over the header alone — which surfaces as a
+        # CORS error, not as an auth error, so it reads like a server misconfig.
+        # The service is LAN-local and unauthenticated; the header is ignored.
+        self.send_header("Access-Control-Allow-Headers", "Content-Type, Authorization")
         self.send_header("Access-Control-Allow-Methods", "POST, GET, OPTIONS")
 
     def _json(self, obj, code=200):
@@ -229,8 +235,12 @@ class H(BaseHTTPRequestHandler):
             # Grounding with no OpenAI equivalent rides here; absent, the messages
             # carry it (acolyte puts its retrieved context in the prompt itself).
             g = body.get("chiron") or {}
+            # System messages are the caller's contract; pass them through rather
+            # than letting the service's own tutor prompt silently replace them.
+            sysmsgs = "\n\n".join(m.get("content", "") for m in msgs if m.get("role") == "system")
             out = _run_answer({
                 "messages": msgs,
+                "client_system": sysmsgs,
                 "section_text": g.get("section_text", ""),
                 "selection": g.get("selection", ""),
                 "section_id": g.get("section_id", ""),
