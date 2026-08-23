@@ -78,6 +78,59 @@ E5 = "e5" in args.model.lower()
 PREFIX = {"query": "query: ", "passage": "passage: "} if E5 else {"query": "", "passage": ""}
 sys.stderr.write(f"prefixes: {'e5-style (query:/passage:)' if E5 else 'none (bge-style)'}\n")
 
+# ── whole-corpus search, server-side ────────────────────────────────────────
+# The browser searches a DOMAIN shard locally (fast, no round trip). It cannot
+# do that for "Everything": that is 21.8 MB of vectors, too much to ship for one
+# question — so that scope used to fall back to keyword search.
+#
+# That was the worst possible place for a fallback, because "Everything" is the
+# DEFAULT. A first question like "give me 5 irregular verbs" returned clitic
+# lessons and the model then said the irregular-verb lessons did not exist —
+# they did, and dense retrieval ranks them 1-2-3-4-5. `irregular` simply is not
+# the token `irregolari`.
+#
+# So the search moves to where the vectors already are. Nothing is shipped.
+import glob as _glob
+CORPUS_DIR = os.path.expanduser("~/Documents/generated/chiron-library")
+SHARDS = {}                      # domain -> (ids, int8 matrix)
+
+PASSAGES = {}                    # id -> {title, text, meta} for search results
+
+def _load_shards():
+    import numpy as np
+    man_p = os.path.join(CORPUS_DIR, "library.corpus.vec.manifest.json")
+    if not os.path.exists(man_p):
+        return
+    man = json.load(open(man_p))
+    slug, dim = man.get("slug", ""), man["dim"]
+    if man.get("model") != args.model:
+        # Serving a query embedder that did not build these vectors would return
+        # confident nonsense. Refuse the shortcut rather than mis-answer.
+        sys.stderr.write(f"search DISABLED: sidecars built with {man.get('model')}, serving {args.model}\n")
+        return
+    for dom in man.get("domains", {}):
+        b = os.path.join(CORPUS_DIR, f"library.corpus.vec.{slug}.{dom}.bin")
+        i = os.path.join(CORPUS_DIR, f"library.corpus.vec.{slug}.{dom}.ids.json")
+        if not (os.path.exists(b) and os.path.exists(i)):
+            continue
+        ids = json.load(open(i))
+        m = np.fromfile(b, dtype=np.int8)
+        if m.size != len(ids) * dim:
+            sys.stderr.write(f"search: {dom} sidecar size mismatch, skipping\n")
+            continue
+        SHARDS[dom] = (ids, m.reshape(len(ids), dim).astype(np.float32) / 127.0)
+    # Results carry their own text. The browser cannot resolve ids for the
+    # whole corpus without downloading all 29 MB of it — which is the cost this
+    # endpoint exists to avoid.
+    cp = os.path.join(CORPUS_DIR, "library.corpus.json")
+    if os.path.exists(cp):
+        for p in json.load(open(cp)):
+            PASSAGES[p["id"]] = {"title": p.get("title", ""), "text": p.get("text", ""),
+                                 "meta": p.get("meta", {})}
+    if SHARDS:
+        sys.stderr.write(f"search ready: {sum(len(v[0]) for v in SHARDS.values()):,} vectors "
+                         f"across {len(SHARDS)} domains · {len(PASSAGES):,} passages\n")
+
 LOCK = threading.Lock()          # one GPU, one batch at a time
 STATS = {"requests": 0, "vectors": 0, "nan_rejected": 0}
 
@@ -119,12 +172,45 @@ class H(BaseHTTPRequestHandler):
                 "ok": True, "model": args.model, "dim": DIM, "device": args.device, "dtype": args.dtype,
                 "cuda_in_use": args.device == "cuda" and torch.cuda.is_available(),
                 "prefixes": PREFIX,
+                "search_domains": {d: len(v[0]) for d, v in SHARDS.items()},
                 "vram_mib": round(torch.cuda.max_memory_allocated() / 2**20) if torch.cuda.is_available() else 0,
                 **STATS,
             })
         self._send(404, {"error": "not found"})
 
     def do_POST(self):
+        if self.path.startswith("/api/search"):
+            try:
+                import numpy as np
+                n = int(self.headers.get("content-length", 0))
+                req = json.loads(self.rfile.read(n) or b"{}")
+                q = (req.get("query") or "").strip()
+                if not q:
+                    return self._send(400, {"error": "no query"})
+                if not SHARDS:
+                    return self._send(503, {"error": "no vector shards loaded"})
+                scope = req.get("scope") or "all"
+                k = int(req.get("k", 8))
+                doms = list(SHARDS) if scope == "all" else [scope]
+                doms = [d for d in doms if d in SHARDS]
+                if not doms:
+                    return self._send(404, {"error": f"no vectors for scope {scope}"})
+                qv = np.asarray(embed([q], "query")[0], dtype=np.float32)
+                hits = []
+                for d in doms:
+                    ids, mat = SHARDS[d]
+                    sims = mat @ qv           # vectors are L2-normalised -> cosine
+                    top = np.argpartition(-sims, min(k, len(ids) - 1))[:k]
+                    for i in top:
+                        pid = ids[int(i)]
+                        rec = PASSAGES.get(pid, {})
+                        hits.append({"id": pid, "score": float(sims[int(i)]), "domain": d,
+                                     "title": rec.get("title", ""), "text": rec.get("text", ""),
+                                     "meta": rec.get("meta", {})})
+                hits.sort(key=lambda h: -h["score"])
+                return self._send(200, {"hits": hits[:k], "scope": scope, "searched": doms})
+            except Exception as e:
+                return self._send(500, {"error": f"{type(e).__name__}: {e}"})
         if not self.path.startswith("/api/embed"):
             return self._send(404, {"error": "not found"})
         try:
@@ -150,6 +236,11 @@ class H(BaseHTTPRequestHandler):
     def log_message(self, *a):
         pass                      # the access log is noise; /healthz has the counters
 
+
+try:
+    _load_shards()
+except Exception as e:
+    sys.stderr.write(f"search unavailable ({type(e).__name__}: {e}) — /api/embed still works\n")
 
 srv = ThreadingHTTPServer(("127.0.0.1", args.port), H)
 sys.stderr.write(f"listening on http://127.0.0.1:{args.port}  (POST /api/embed, GET /healthz)\n")
