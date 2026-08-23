@@ -15,6 +15,7 @@ Runs HOST-side (needs harrison-search + keys + the governor; the Docker backend 
 Static orchestration — a Callable/classifier decides control flow, never the answering model. (R-PC1)
 """
 from __future__ import annotations
+import sys
 import json, os, re, subprocess, urllib.request
 from promptchain.utils.promptchaining import PromptChain
 from promptchain.utils.agentic_step_processor import AgenticStepProcessor
@@ -98,13 +99,31 @@ def _call(spec: str, system: str, history: list[dict], user: str) -> str:
     if prov == "governor": return _ollama_chat(GOVERNOR + "/api/chat", model or "gemma3:27b", {}, system, history, user)
     return _gemini(system, history, user)
 
+# The last thing that went wrong on the answer path, per provider spec. The
+# fallback chain used to swallow every exception and return a generic string, so
+# "the tutor is unavailable" was unfalsifiable: a timeout, a rotated key and an
+# oversized payload all looked identical, and nothing was logged. That is the
+# opposite of the project's observability rule, and it is what made the deep/web
+# path undiagnosable — it fails while the quick/page path answers fine.
+LAST_ERRORS: list[tuple[str, str]] = []
+
+
 def _answer(spec: str, system: str, history: list[dict], user: str) -> str:
+    errs: list[tuple[str, str]] = []
     for s in [spec] + [f for f in FALLBACKS if f != spec]:
         try:
             r = _call(s, system, history, user)
-            if r: return r
-        except Exception:
-            continue
+            if r:
+                return r
+            errs.append((s, "empty response"))
+        except Exception as e:
+            errs.append((s, f"{type(e).__name__}: {e}"))
+    LAST_ERRORS[:] = errs
+    for s, e in errs:
+        sys.stderr.write(f"[tutor] {s} failed — {e}\n")
+    sys.stderr.flush()
+    # Same user-facing text; the detail goes to the log and to LAST_ERRORS so the
+    # caller can surface WHICH provider failed and why.
     return "(the tutor is unavailable right now — check the model / keys)"
 
 # HARD = a question one lookup can't satisfy: multi-hop, cross-domain, or a full biochemical/physiologic
