@@ -47,7 +47,13 @@ const VCACHE = VMODEL
   ? join(OUT, `.vector-cache.${slugify(VMODEL)}.json`)
   : join(OUT, '.vector-cache.json');
 
-const EMBED_URL = process.env.CHIRON_EMBED_URL || 'http://127.0.0.1:11434';
+// Default to the CHIRON EMBED SERVICE (:8913), not ollama (:11434). ollama
+// cannot serve bge-m3 on this GPU — it emits NaN and silently falls back to
+// CPU — which is why the service exists. Left pointing at ollama, this harness
+// failed all 30 queries and printed "dense 0%", which reads as a model verdict
+// rather than a wiring mistake. A default that manufactures a false negative is
+// worse than no default.
+const EMBED_URL = process.env.CHIRON_EMBED_URL || 'http://127.0.0.1:8913';
 
 const corpus = JSON.parse(readFileSync(CORPUS, 'utf8'));
 const scoped = corpus.filter(p => p.meta.domain === DOMAIN);
