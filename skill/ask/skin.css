@@ -213,11 +213,27 @@
 /* The send glyph is the app's paper plane — the same path the lesson tutor has
    always used (shell/tutor.js) — so the two send buttons in Chiron are one
    icon, not an arrow here and a plane there. A MASK rather than an <img>, so it
-   takes the button's own colour and follows the theme. */
+   takes the button's own colour and follows the theme.
+
+   The viewBox is tight to the INK (measured getBBox: x2 y3 w21 h18), not the
+   usual 0 0 24 24. `contain` centres the VIEWBOX, so with the artwork's own
+   asymmetric padding inside it — 2 units left against 1 right — the glyph
+   landed visibly off-centre in the button. Cropping to the ink makes centring
+   mean what it looks like it means. */
+#host .acolyte-send { position: relative; }
 #host .acolyte-send::after {
-  content: ''; width: 15px; height: 15px; background: currentColor;
-  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M2 21l21-9L2 3v7l15 2-15 2z'/%3E%3C/svg%3E") center / contain no-repeat;
-          mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M2 21l21-9L2 3v7l15 2-15 2z'/%3E%3C/svg%3E") center / contain no-repeat;
+  /* ABSOLUTE, not a grid item. The button is display:grid and still holds its
+     "Send" text node (hidden with font-size:0), so ::after was the SECOND grid
+     item — the glyph centred itself in the bottom row rather than the button.
+     Measured: 20px of space above it against 2px below. Taking it out of flow
+     leaves exactly one centring step, over the whole button. */
+  content: ''; position: absolute; inset: 0;
+  background: currentColor;
+  /* The glyph is centred by the MASK against the full button box, not by
+     placing a small pseudo-element and hoping the two centres agree. One
+     centring step instead of two, so it cannot drift. */
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='2 3 21 18'%3E%3Cpath d='M2 21l21-9L2 3v7l15 2-15 2z'/%3E%3C/svg%3E") center / 14px auto no-repeat;
+          mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='2 3 21 18'%3E%3Cpath d='M2 21l21-9L2 3v7l15 2-15 2z'/%3E%3C/svg%3E") center / 14px auto no-repeat;
 }
 #host .acolyte-send:hover { filter: brightness(1.12); }
 
