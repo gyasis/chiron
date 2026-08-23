@@ -483,6 +483,77 @@ function answerContext(panel, msg) {
   return { question: q, answer, sources, top: sources[0]?.meta || {} };
 }
 
+/* ─── watch the scene, in the answer ───
+ * Every video-it passage carries the moment it came from (meta.t, 166 of 166),
+ * and :8911 serves the episode with byte ranges — so the browser seeks straight
+ * into a 138 MB file instead of downloading it. That is the whole trick: the
+ * citation stops being a link out of Ask and becomes the clip itself.
+ *
+ * The clip STOPS at the next scene. Without a bound, "show me that line" plays
+ * the rest of the episode, which is not what was asked for.
+ */
+let SCENES = null;                      // lessonId -> sorted [t]; loaded once, on demand
+
+async function sceneBounds(lessonId, t) {
+  if (!SCENES) {
+    SCENES = new Map();
+    try {
+      const r = await fetch('/library/library.corpus.video-it.json');
+      if (r.ok) for (const p of await r.json()) {
+        const m = p.meta || {};
+        if (m.lessonId && m.t != null) {
+          if (!SCENES.has(m.lessonId)) SCENES.set(m.lessonId, []);
+          SCENES.get(m.lessonId).push(m.t);
+        }
+      }
+      for (const v of SCENES.values()) v.sort((a, b) => a - b);
+    } catch { /* no bound is still playable */ }
+  }
+  const ts = SCENES.get(lessonId) || [];
+  return ts.find(x => x > t + 0.5) ?? null;   // null = play to the end of the file
+}
+
+async function playScene(list, g, sec, btn) {
+  const open = list.querySelector('.ask-clip');
+  if (open && open.dataset.key === `${g.lessonId}:${sec.t}`) {   // same pill again = close
+    open.remove(); btn.classList.remove('playing'); return;
+  }
+  open?.remove();
+  list.querySelectorAll('.asrc-sec.playing').forEach(x => x.classList.remove('playing'));
+  btn.classList.add('playing');
+
+  const box = document.createElement('div');
+  box.className = 'ask-clip';
+  box.dataset.key = `${g.lessonId}:${sec.t}`;
+  // The media fragment starts playback at the scene without waiting for
+  // metadata; the mobile encode is the one with faststart, so it begins quickly.
+  const src = `/lessons/${encodeURIComponent(g.lessonId)}/episode.mobile.mp4#t=${sec.t}`;
+  box.innerHTML = `
+    <video class="ask-clip-v" controls playsinline preload="metadata" src="${escapeHtml(src)}"></video>
+    <div class="ask-clip-m">
+      <span class="ask-clip-t">▶ ${fmtTime(sec.t)}</span>
+      <span class="ask-clip-l">${escapeHtml(g.lesson)} — ${escapeHtml(sec.label)}</span>
+      <button class="ask-clip-x" title="Close">✕</button>
+      <a class="ask-clip-o" href="/lessons/${encodeURIComponent(g.lessonId)}/lesson.html#t=${Math.round(sec.t)}">open the lesson ↗</a>
+    </div>`;
+  btn.closest('.asrc').after(box);
+  box.querySelector('.ask-clip-x').addEventListener('click', () => {
+    box.remove(); btn.classList.remove('playing');
+  });
+
+  const v = box.querySelector('video');
+  // play() inside the click gesture — a later programmatic call is blocked on
+  // mobile, which is the same trap the episode viewer hit (R-CH6).
+  v.play().catch(() => { /* the controls are right there */ });
+
+  const end = await sceneBounds(g.lessonId, sec.t);
+  if (end != null) {
+    v.addEventListener('timeupdate', () => {
+      if (v.currentTime >= end) { v.pause(); box.classList.add('done'); }
+    });
+  }
+}
+
 /** The lessons an answer STOOD ON — the basis for "go deeper".
  *
  *  Not every lesson it cited. Measured on real answers, a typical one draws 7
@@ -670,7 +741,8 @@ function dressSources(msg) {
     let s = {}; try { s = JSON.parse(el.dataset.acolyteSource || '{}'); } catch {}
     const m = s.meta || {};
     const key = m.lessonId || m.lesson || s.title || 'source';
-    const g = groups.get(key) || { lesson: m.lesson || s.title || 'Source', domain: m.domain, n: 0, secs: [] };
+    const g = groups.get(key) || { lesson: m.lesson || s.title || 'Source', domain: m.domain,
+                                   lessonId: m.lessonId, n: 0, secs: [] };
     g.n++;
     // Titles are "<lesson> — <heading>"; the lesson name is already the row
     // heading, so the pill should carry only the part that differs.
@@ -699,7 +771,16 @@ function dressSources(msg) {
 
   list.addEventListener('click', e => {
     const b = e.target.closest('.asrc-sec');
-    if (b) gs[+b.dataset.g].secs[+b.dataset.s].el.click();   // acolyte still navigates
+    if (!b) return;
+    const g = gs[+b.dataset.g], sec = g.secs[+b.dataset.s];
+    // A video citation is a MOMENT, not a page. Sending you to the lesson to
+    // find it again is the wrong move when the answer is "watch how they say
+    // it" — so the scene plays in place, and only non-video sources navigate.
+    if (g.domain === 'video-it' && sec.t != null && g.lessonId) {
+      playScene(list, g, sec, b);
+      return;
+    }
+    sec.el.click();                                          // acolyte still navigates
   });
   wrap.appendChild(list);
 
