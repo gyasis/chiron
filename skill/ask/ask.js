@@ -11,6 +11,7 @@
 import { mount } from './vendor/acolyte.js';
 import { createSemanticSource } from './semantic.js';
 import * as cards from './cards.js';
+import * as steps from './steps.js';
 
 const $ = s => document.querySelector(s);
 const LS_SCOPE = 'chiron.ask.scope';
@@ -468,9 +469,76 @@ boot();
 
 const DISPATCH_DEBOUNCE = 900;
 
+
+/* ─── the steps panel, driven by the real pipeline ───
+ * A user message appearing IS the send — catching it here covers every path
+ * (button, Enter, a starter chip, a dispatch re-ask) without wrapping any of
+ * acolyte's own handlers.
+ *
+ * The panel is created immediately and parked in the message list, then moved
+ * into the assistant message once acolyte renders it, so the steps end up
+ * attached to the answer they belong to rather than floating above it.
+ */
+function wireSteps(box) {
+  let live = null;
+
+  const attach = () => {
+    if (!live) return;
+    const msgs = [...box.querySelectorAll('.acolyte-msg.assistant')];
+    const last = msgs[msgs.length - 1];
+    const body = last?.querySelector('.acolyte-msg-body');
+    if (!body || live.el.parentElement === body.parentElement) return;
+    // Above the answer text, inside the assistant message.
+    body.parentElement.insertBefore(live.el, body);
+  };
+
+  new MutationObserver(muts => {
+    for (const m of muts) {
+      for (const n of m.addedNodes) {
+        if (!(n instanceof HTMLElement)) continue;
+
+        if (n.classList?.contains('acolyte-msg') && n.classList.contains('user')) {
+          // Acolyte re-renders the message list, so a user-message node can be
+          // ADDED AGAIN mid-turn. Treating that as a new send created a second
+          // panel near the end of the turn, which then reported "Worked for
+          // 0.1s" for a ten-second answer. One panel per turn; it is cleared
+          // when the answer lands.
+          if (live && performance.now() - live.born < 180000) continue;
+          live?.finish();
+          live = steps.panel();
+          box.appendChild(live.el);
+          continue;
+        }
+
+        if (n.classList?.contains('acolyte-msg') && n.classList.contains('assistant')) attach();
+      }
+    }
+
+    // Done when THE ANSWER THIS PANEL IS ATTACHED TO has text.
+    //
+    // Counting assistant messages did not work: acolyte restores the previous
+    // thread from IndexedDB and then re-renders the list, so a baseline taken
+    // at send time was already stale — the count went DOWN and the panel hung
+    // at "Working…" for a turn that had finished 100s earlier. The panel lives
+    // inside its own answer, so that answer is the only thing worth asking.
+    if (live) {
+      attach();
+      const own = live.el.closest('.acolyte-msg.assistant');
+      const body = own?.querySelector('.acolyte-msg-body');
+      if (body && body.textContent.trim().length > 2) {
+        steps.emit('draft', 'end');
+        const done = live;
+        live = null;
+        done.finish();
+      }
+    }
+  }).observe(box, { childList: true, subtree: true, characterData: true });
+}
+
 function wireDispatch(handle, panel) {
   const box = panel.querySelector('.acolyte-messages');
   if (!box) return;
+  wireSteps(box);
   let timer;
   new MutationObserver(() => {
     clearTimeout(timer);

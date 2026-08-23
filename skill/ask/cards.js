@@ -14,6 +14,8 @@
  * because both schedulers then believe different things about one memory.
  */
 
+import { emit } from './steps.js';
+
 const EASE = [
   ['Again', 'again', '<1 m'],
   ['Hard', 'hard', '6 m'],
@@ -44,17 +46,20 @@ export async function status() {
 export async function relevant(query, { k = 6, deck = null } = {}) {
   const st = await status();
   if (!st.anki || !st.indexed) return [];
+  emit('cards', 'start', st.indexed.toLocaleString() + ' indexed');
   try {
     const r = await fetch('/cards/relevant', {
       method: 'POST', headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ query, k, deck }),
     });
-    if (!r.ok) return [];
+    if (!r.ok) { emit('cards', 'end', `unavailable (${r.status})`); return []; }
     const d = await r.json();
     // Below this the "match" is noise — a session of unrelated cards is worse
     // than no button, because it teaches you to distrust the button.
-    return (d.cards || []).filter(c => c.score >= 0.42);
-  } catch { return []; }
+    const out = (d.cards || []).filter(c => c.score >= 0.42);
+    emit('cards', 'end', out.length ? `${out.length} matched` : 'nothing close enough');
+    return out;
+  } catch (e) { emit('cards', 'end', `failed — ${e.message}`); return []; }
 }
 
 /** Open a session under `msg`. `cards` come from relevant(). */
