@@ -474,14 +474,23 @@ def _static_synth(spec: str, question: str, history: list[dict], sysprompt: str,
 
 async def answer_turn(section_text: str, selection: str, section_id: str, lesson_slug: str,
                       messages: list[dict], lang: str, model: str | None = None, mode: str = "med",
-                      on_status=None) -> dict:
+                      on_status=None, client_system: str | None = None) -> dict:
     """`on_status(text)` (optional) receives REAL live progress — the router's verdict, each actual search
     with its query, drafting/reconciling — so the UI can narrate the wait instead of showing a dead spinner."""
     spec = MODELS.get(model or DEFAULT_MODEL, MODELS[DEFAULT_MODEL])["spec"]
     hist = _window([m for m in messages if m.get("role") in ("user", "assistant")])
     user = next((m.get("content", "").strip() for m in reversed(hist) if m.get("role") == "user"), "")
     if hist and hist[-1].get("role") == "user": hist = hist[:-1]
-    sysprompt = _sys(lang, mode, section_text or "", selection or "", section_id or "")
+    # An OpenAI client (acolyte) sends its OWN system prompt carrying its persona,
+    # its grounding policy and the passages it retrieved. Dropping that and
+    # substituting the medical tutor prompt is how a page about Italian irregular
+    # verbs got answered with atrial fibrillation and an AV block: the model was
+    # told it was a medical tutor and given no page text at all.
+    # So when a caller supplies a system message, it GOVERNS. That is what the
+    # OpenAI contract promises, and honouring it is what makes the per-lesson
+    # tutor page-scoped rather than decorative.
+    sysprompt = client_system.strip() if (client_system or "").strip() \
+        else _sys(lang, mode, section_text or "", selection or "", section_id or "")
     topic_hint = (section_id or "").replace("-", " ")
     # 🗣 Italiano coach — one fast shot with the language prompt, NO Harrison
     if mode == "ita":

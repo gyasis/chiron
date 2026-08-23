@@ -1,0 +1,26 @@
+/* Chiron lesson tutor — the small amount of chrome acolyte does not own.
+   Acolyte is themed from the lesson's own CSS variables, so this file styles
+   only the hand-up link, which is Chiron's concept and not acolyte's. */
+
+.chiron-tutor-out {
+  display: block;
+  margin: 0;
+  padding: .55rem .9rem;
+  font: inherit;
+  font-size: .78rem;
+  text-align: center;
+  text-decoration: none;
+  color: var(--chiron-muted, #6b6862);
+  background: var(--chiron-surface, #faf8f3);
+  border-top: 1px solid var(--chiron-border, #e2ddd2);
+}
+.chiron-tutor-out:hover {
+  color: var(--chiron-accent, #2e7d32);
+  text-decoration: underline;
+}
+
+/* The panel is a column; the hand-up belongs at its foot, under the composer,
+   where it reads as "and if this isn't here…" rather than competing with the
+   answer. Acolyte owns the panel's layout, so this only pins the order. */
+.acolyte-panel { display: flex; flex-direction: column; }
+.acolyte-panel > .chiron-tutor-out { order: 999; flex: 0 0 auto; }

@@ -277,6 +277,22 @@ function adoptControls(handle, stats) {
   autogrow(panel.querySelector('.acolyte-input'));
   wireDispatch(handle, panel);
   wireThreads(handle);
+
+  // ?q= — the hand-up from a lesson's strict page tutor. The PRD calls this the
+  // reverse leg: a per-page tutor that refuses out-of-scope questions is only
+  // tolerable if there is somewhere to send them. It PREFILLS rather than
+  // auto-sends, so the question arriving from another page is still yours to
+  // edit or discard.
+  const q0 = new URLSearchParams(location.search).get('q');
+  if (q0) {
+    const ta = document.querySelector('#host textarea, .acolyte-input textarea, textarea');
+    if (ta) {
+      ta.value = q0;
+      ta.dispatchEvent(new Event('input', { bubbles: true }));
+      ta.focus();
+      try { ta.setSelectionRange(q0.length, q0.length); } catch {}
+    }
+  }
   setGrounded(stats, localStorage.getItem(LS_SCOPE) || 'all');
 }
 
