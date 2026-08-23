@@ -371,3 +371,31 @@
 #host .ac-sync { font-size: 12.5px; font-weight: 600; color: #2e7d32; }
 #host .ac-sync.bad { color: #a33; }
 #host .ask-cards .ac-hide { display: none !important; }
+
+/* ─── steps: what the pipeline is doing, while it does it ───
+   Collapsed once the answer lands. The detail is there when a slow turn makes
+   you want it, and out of the way when it does not. */
+#host .ask-steps {
+  border: 1px solid var(--chiron-border); border-radius: 11px;
+  background: var(--chiron-surface); overflow: hidden; margin: 0 0 12px;
+}
+#host .as-h { display: flex; align-items: center; gap: 8px; padding: 8px 12px;
+  font-size: 12.5px; color: var(--chiron-fg-secondary); cursor: pointer; }
+#host .as-caret { transition: transform .2s; font-size: 10px; }
+#host .ask-steps.closed .as-caret { transform: rotate(-90deg); }
+#host .ask-steps.closed .as-b { display: none; }
+#host .as-label { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#host .as-el { margin-left: auto; font-variant-numeric: tabular-nums;
+  color: var(--chiron-muted); font-size: 12px; }
+#host .as-b { padding: 0 10px 10px; display: grid; gap: 5px; }
+#host .as-st { display: flex; align-items: center; gap: 9px; font-size: 13px;
+  padding: 6px 10px; border-radius: 8px; background: var(--chiron-elevated);
+  color: var(--chiron-fg-secondary); }
+#host .as-t { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#host .as-st em { margin-left: auto; font-style: normal; font-size: 11.5px;
+  color: var(--chiron-muted); font-variant-numeric: tabular-nums; }
+#host .as-dot { width: 7px; height: 7px; border-radius: 50%; background: #2e7d32; flex: 0 0 auto; }
+/* Running: the one step currently doing work. */
+#host .as-st.run { background: var(--medbg); color: var(--med); }
+#host .as-st.run .as-dot { background: var(--med); animation: as-pulse 1.1s ease-in-out infinite; }
+@keyframes as-pulse { 0%, 100% { opacity: 1 } 50% { opacity: .25 } }

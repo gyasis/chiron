@@ -21,6 +21,8 @@
 // model-scoped, so a better embedder can be built alongside the live one and
 // only becomes active when its eval justifies the switch — never because it
 // happened to finish last.
+import { emit } from './steps.js';
+
 const MANIFEST = '/library/library.corpus.vec.manifest.json';
 const VEC = (slug, dom) => `/library/library.corpus.vec.${slug}.${dom}.bin`;
 const IDS = (slug, dom) => `/library/library.corpus.vec.${slug}.${dom}.ids.json`;
@@ -114,6 +116,7 @@ export function createSemanticSource({ scope, corpusById, embedUrl, topK = 8, fo
       // stated the irregular-verb lessons did not exist. They did — dense ranks
       // them 1 through 5. `irregular` is just not the token `irregolari`.
       // So the search happens where the vectors already are. Nothing is shipped.
+      emit('search', 'start', 'whole corpus');
       try {
         const r = await fetch('/ask/search', {
           method: 'POST', headers: { 'content-type': 'application/json' },
@@ -128,21 +131,30 @@ export function createSemanticSource({ scope, corpusById, embedUrl, topK = 8, fo
         // The server sends the text with the hit — the client has no corpus
         // loaded for 'all', and downloading 29 MB to resolve ids would defeat
         // the point of searching server-side in the first place.
-        return hits.filter(h => h.text).map(h => ({
+        const out = hits.filter(h => h.text).map(h => ({
           id: h.id, title: h.title, text: h.text, meta: { ...(h.meta || {}), score: h.score },
         }));
+        // Report what came BACK, not just that it ran — "4 passages" is the
+        // number that tells you whether the answer had anything to stand on.
+        emit('search', 'end', `${out.length} passage${out.length === 1 ? '' : 's'} · whole corpus`);
+        return out;
       } catch (e) {
         state.status = 'search-down'; state.detail = String(e.message || e);
+        emit('search', 'end', `unavailable — ${e.message}`);
         return [];                      // BM25 carries it
       }
     }
     const L = await load(dom);
     if (!L) return [];
+    emit('search', 'start', dom);
 
     let qv;
+    emit('embed', 'start', manifest.model);
     try {
       qv = await embedQuery(query, manifest.model);
+      emit('embed', 'end', manifest.model);
     } catch (e) {
+      emit('embed', 'end', `failed — ${e.message}`);
       state.status = 'embedder-down';
       state.detail = String(e.message || e);
       return [];                       // BM25 carries the answer instead
@@ -182,6 +194,7 @@ export function createSemanticSource({ scope, corpusById, embedUrl, topK = 8, fo
 
     state.status = 'ready';
     if (f) state.detail = `${f.lessons.length} lesson${f.lessons.length === 1 ? '' : 's'}`;
+    emit('search', 'end', `${best.length} passage${best.length === 1 ? '' : 's'} · ${dom}`);
     return best.map(({ i, dot }) => {
       const p = corpusById(ids[i]);
       if (!p) return null;
@@ -206,6 +219,7 @@ export function createSemanticSource({ scope, corpusById, embedUrl, topK = 8, fo
       // Ready when the SERVER can search — the browser holds nothing for this
       // scope. Probing health is cheap and avoids claiming dense is live when
       // the service is down.
+      emit('search', 'start', 'whole corpus');
       try {
         const r = await fetch('/ask/search', {
           method: 'POST', headers: { 'content-type': 'application/json' },
