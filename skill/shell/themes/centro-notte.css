@@ -1,0 +1,31 @@
+/*
+ * Centro Notte — the dark half of Centro.
+ * Not an inversion: the accent lifts to a lighter blue so it still reads on a
+ * dark ground, and the neutrals keep the same faint cool bias.
+ */
+[data-theme="centro-notte"] {
+  --chiron-bg: #14171a;
+  --chiron-surface: #1c2024;
+  --chiron-elevated: #1e2e38;
+
+  --chiron-fg: #e7e6e1;
+  --chiron-fg-secondary: #9ba1a8;
+  --chiron-muted: #7c838a;
+
+  --chiron-accent: #7fb8d6;
+  --chiron-accent-light: #a3cde3;
+  --chiron-warm-accent: #e0897b;
+
+  --chiron-success: #7fb08a;
+  --chiron-warning: #d9a441;
+  --chiron-error: #e0897b;
+  --chiron-info: #7fb8d6;
+
+  --chiron-border: #2c3237;
+  --chiron-divider: #262b30;
+
+  --chiron-font-heading: system-ui, -apple-system, 'SF Pro Display', 'Helvetica Neue', 'Segoe UI', Roboto, sans-serif;
+  --chiron-font-body: system-ui, -apple-system, 'SF Pro Text', 'Helvetica Neue', 'Segoe UI', Roboto, sans-serif;
+
+  --chiron-is-dark: 1;
+}

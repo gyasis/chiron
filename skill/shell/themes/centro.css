@@ -1,0 +1,32 @@
+/*
+ * Centro — the "il centro di italia" reference theme.
+ * A cool bone ground with a single deep teal-blue accent and a system sans face.
+ * Built for reading: quiet neutrals, one accent, corrections in a muted brick red.
+ * Light half of the pair; see centro-notte.css for the dark half.
+ */
+[data-theme="centro"] {
+  --chiron-bg: #f1f0ec;              /* bone — a grey with a faint green bias */
+  --chiron-surface: #fbfaf7;
+  --chiron-elevated: #e2eaef;
+
+  --chiron-fg: #16191b;
+  --chiron-fg-secondary: #6b7076;
+  --chiron-muted: #8e9298;
+
+  --chiron-accent: #1d4e6b;          /* deep teal-blue — signage, not decoration */
+  --chiron-accent-light: #2f6e92;
+  --chiron-warm-accent: #a8382b;     /* brick — reserved for corrections/traps */
+
+  --chiron-success: #3f6b4a;
+  --chiron-warning: #8a5a1e;
+  --chiron-error: #a8382b;
+  --chiron-info: #1d4e6b;
+
+  --chiron-border: #d6d5cf;
+  --chiron-divider: #e1e0da;
+
+  --chiron-font-heading: system-ui, -apple-system, 'SF Pro Display', 'Helvetica Neue', 'Segoe UI', Roboto, sans-serif;
+  --chiron-font-body: system-ui, -apple-system, 'SF Pro Text', 'Helvetica Neue', 'Segoe UI', Roboto, sans-serif;
+
+  --chiron-is-dark: 0;
+}
