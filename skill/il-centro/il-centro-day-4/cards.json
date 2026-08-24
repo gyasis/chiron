@@ -1,0 +1,338 @@
+[
+ {
+  "clip": "d4-reg-01",
+  "chapter": "I regolari — radice + desinenza",
+  "sectionId": "sec-regolari",
+  "it": "mi sveglio",
+  "en": "I wake up",
+  "note": "svegli- + -o. Her «+» marks exactly that seam: the stem never moves, the ending does."
+ },
+ {
+  "clip": "d4-reg-02",
+  "chapter": "I regolari — radice + desinenza",
+  "sectionId": "sec-regolari",
+  "it": "ti svegli",
+  "en": "you wake up",
+  "note": "Same stem, ending -i. This is the whole regular pattern in two words."
+ },
+ {
+  "clip": "d4-reg-03",
+  "chapter": "I regolari — radice + desinenza",
+  "sectionId": "sec-regolari",
+  "it": "mi lavo",
+  "en": "I wash",
+  "note": "lav- + -o. From the worksheet: «mi lavo la faccia con acqua fredda»."
+ },
+ {
+  "clip": "d4-reg-04",
+  "chapter": "I regolari — radice + desinenza",
+  "sectionId": "sec-regolari",
+  "it": "mi rilasso",
+  "en": "I relax",
+  "note": "rilass- + -o."
+ },
+ {
+  "clip": "d4-reg-05",
+  "chapter": "I regolari — radice + desinenza",
+  "sectionId": "sec-regolari",
+  "it": "ti organizzi",
+  "en": "you get organised",
+  "note": "organizz- + -i. Long stem, same two endings."
+ },
+ {
+  "clip": "d4-reg-06",
+  "chapter": "I regolari — radice + desinenza",
+  "sectionId": "sec-regolari",
+  "it": "mi metto una camicia",
+  "en": "I put on a shirt",
+  "note": "mettersi — an -ere verb, but the endings are just as regular: mett- + -o."
+ },
+ {
+  "clip": "d4-reg-07",
+  "chapter": "I regolari — radice + desinenza",
+  "sectionId": "sec-regolari",
+  "it": "l'errore",
+  "en": "the mistake",
+  "note": "l'errore → gli errori. What this whole lesson is about."
+ },
+ {
+  "clip": "d4-irr-01",
+  "chapter": "Gli irregolari — uscire, andare",
+  "sectionId": "sec-irregolari",
+  "it": "esco",
+  "en": "I go out",
+  "note": "USCIRE is irregular: the stem itself changes, usc- → esc-. You cannot build it."
+ },
+ {
+  "clip": "d4-irr-02",
+  "chapter": "Gli irregolari — uscire, andare",
+  "sectionId": "sec-irregolari",
+  "it": "tu esci",
+  "en": "you go out",
+  "note": "esc- again — still not usc-."
+ },
+ {
+  "clip": "d4-irr-03",
+  "chapter": "Gli irregolari — uscire, andare",
+  "sectionId": "sec-irregolari",
+  "it": "lei esce, lui esce",
+  "en": "she goes out, he goes out",
+  "note": "One form for lei AND lui. Italian doesn't mark the gender in the verb."
+ },
+ {
+  "clip": "d4-irr-04",
+  "chapter": "Gli irregolari — uscire, andare",
+  "sectionId": "sec-irregolari",
+  "it": "noi usciamo la sera",
+  "en": "we go out in the evening",
+  "note": "And here the stem SNAPS BACK: usc-iamo. Irregular in the singular, regular in noi/voi."
+ },
+ {
+  "clip": "d4-irr-05",
+  "chapter": "Gli irregolari — uscire, andare",
+  "sectionId": "sec-irregolari",
+  "it": "voi uscite la sera?",
+  "en": "do you (pl) go out evenings?",
+  "note": "usc-ite. Same snap-back."
+ },
+ {
+  "clip": "d4-irr-06",
+  "chapter": "Gli irregolari — uscire, andare",
+  "sectionId": "sec-irregolari",
+  "it": "vado",
+  "en": "I go",
+  "note": "ANDARE: and- → vad-. Another stem you memorise."
+ },
+ {
+  "clip": "d4-irr-07",
+  "chapter": "Gli irregolari — uscire, andare",
+  "sectionId": "sec-irregolari",
+  "it": "tu vai",
+  "en": "you go",
+  "note": ""
+ },
+ {
+  "clip": "d4-irr-08",
+  "chapter": "Gli irregolari — uscire, andare",
+  "sectionId": "sec-irregolari",
+  "it": "loro vanno",
+  "en": "they go",
+  "note": "vanno, not «vadono». On the tape you reached for the regular form first."
+ },
+ {
+  "clip": "d4-irr-09",
+  "chapter": "Gli irregolari — uscire, andare",
+  "sectionId": "sec-irregolari",
+  "it": "io faccio molte domande",
+  "en": "I ask a lot of questions",
+  "note": "FARE: fac-cio. And it's <b>fare</b> una domanda — you MAKE a question, not ask one."
+ },
+ {
+  "clip": "d4-lei-01",
+  "chapter": "Lei — il formale",
+  "sectionId": "sec-lei",
+  "it": "Lei esce oggi?",
+  "en": "Are you going out today? (formal)",
+  "note": "Formal you takes the THIRD person form — identical to lei/lui esce."
+ },
+ {
+  "clip": "d4-lei-02",
+  "chapter": "Lei — il formale",
+  "sectionId": "sec-lei",
+  "it": "Lei è canadese?",
+  "en": "Are you Canadian? (formal)",
+  "note": ""
+ },
+ {
+  "clip": "d4-lei-03",
+  "chapter": "Lei — il formale",
+  "sectionId": "sec-lei",
+  "it": "No, sono statunitense",
+  "en": "No, I'm American",
+  "note": "<b>statunitense</b> is the precise word. <i>Americano</i> covers two continents."
+ },
+ {
+  "clip": "d4-lei-04",
+  "chapter": "Lei — il formale",
+  "sectionId": "sec-lei",
+  "it": "Lei è il medico di base?",
+  "en": "Are you the GP? (formal)",
+  "note": "<b>il medico di base</b> = the family doctor, the GP."
+ },
+ {
+  "clip": "d4-lei-05",
+  "chapter": "Lei — il formale",
+  "sectionId": "sec-lei",
+  "it": "preferisco parlare con sua madre",
+  "en": "I prefer to speak with her mother",
+  "note": "<b>sua</b> = his/her. <i>Tua</i> would be YOUR mother — the correction you got on the tape."
+ },
+ {
+  "clip": "d4-mod-01",
+  "chapter": "Voglio, devo, posso + infinito",
+  "sectionId": "sec-modali",
+  "it": "voglio uscire la sera",
+  "en": "I want to go out in the evening",
+  "note": "Modal + bare infinitive. Her «+» again: voglio + uscire."
+ },
+ {
+  "clip": "d4-mod-02",
+  "chapter": "Voglio, devo, posso + infinito",
+  "sectionId": "sec-modali",
+  "it": "ma non posso, perché devo studiare",
+  "en": "but I can't, because I have to study",
+  "note": "Three modals in one breath."
+ },
+ {
+  "clip": "d4-mod-03",
+  "chapter": "Voglio, devo, posso + infinito",
+  "sectionId": "sec-modali",
+  "it": "voglio imparare",
+  "en": "I want to learn",
+  "note": ""
+ },
+ {
+  "clip": "d4-mod-04",
+  "chapter": "Voglio, devo, posso + infinito",
+  "sectionId": "sec-modali",
+  "it": "devo parlare in italiano con lei",
+  "en": "I have to speak Italian with her",
+  "note": ""
+ },
+ {
+  "clip": "d4-mod-05",
+  "chapter": "Voglio, devo, posso + infinito",
+  "sectionId": "sec-modali",
+  "it": "non voglio parlare con mia moglie",
+  "en": "I don't want to speak with my wife",
+  "note": "<b>mia moglie</b> — no article before a single family member. Day 1's rule."
+ },
+ {
+  "clip": "d4-mod-06",
+  "chapter": "Voglio, devo, posso + infinito",
+  "sectionId": "sec-modali",
+  "it": "voglio lavorare nella medicina",
+  "en": "I want to work in medicine",
+  "note": "in + la = nella."
+ },
+ {
+  "clip": "d4-mod-07",
+  "chapter": "Voglio, devo, posso + infinito",
+  "sectionId": "sec-modali",
+  "it": "restiamo a casa",
+  "en": "we stay at home",
+  "note": "<b>a casa</b>, no article — a fixed phrase."
+ },
+ {
+  "clip": "d4-mod-08",
+  "chapter": "Voglio, devo, posso + infinito",
+  "sectionId": "sec-modali",
+  "it": "il fine settimana",
+  "en": "the weekend",
+  "note": "Masculine and invariable: i fine settimana."
+ },
+ {
+  "clip": "d4-lav-01",
+  "chapter": "La presentazione",
+  "sectionId": "sec-lavoro",
+  "it": "oggi ho una presentazione",
+  "en": "today I have a presentation",
+  "note": ""
+ },
+ {
+  "clip": "d4-lav-02",
+  "chapter": "La presentazione",
+  "sectionId": "sec-lavoro",
+  "it": "fra 5 ore",
+  "en": "in 5 hours",
+  "note": "<b>fra</b> (or <i>tra</i>) for time ahead. Not <i>in</i>."
+ },
+ {
+  "clip": "d4-lav-03",
+  "chapter": "La presentazione",
+  "sectionId": "sec-lavoro",
+  "it": "ci sono 6 persone nella riunione",
+  "en": "there are 6 people in the meeting",
+  "note": "<b>ci sono</b> + plural — Day 2."
+ },
+ {
+  "clip": "d4-lav-04",
+  "chapter": "La presentazione",
+  "sectionId": "sec-lavoro",
+  "it": "spiegare i dati",
+  "en": "to explain the data",
+  "note": "<b>i dati</b> is plural in Italian: i dati sono, never «the data is»."
+ },
+ {
+  "clip": "d4-lav-05",
+  "chapter": "La presentazione",
+  "sectionId": "sec-lavoro",
+  "it": "i numeri cambiano",
+  "en": "the numbers change",
+  "note": ""
+ },
+ {
+  "clip": "d4-lav-06",
+  "chapter": "La presentazione",
+  "sectionId": "sec-lavoro",
+  "it": "fare un compromesso",
+  "en": "to make a compromise",
+  "note": "<b>fare</b> again — Italian makes compromises, questions, breakfast."
+ },
+ {
+  "clip": "d4-lav-07",
+  "chapter": "La presentazione",
+  "sectionId": "sec-lavoro",
+  "it": "la reputazione",
+  "en": "the reputation",
+  "note": ""
+ },
+ {
+  "clip": "d4-lav-08",
+  "chapter": "La presentazione",
+  "sectionId": "sec-lavoro",
+  "it": "la voce",
+  "en": "the voice",
+  "note": "From the tape — you said «la voz». It is <b>la voce</b>."
+ },
+ {
+  "clip": "d4-ask-01",
+  "chapter": "Parole chieste",
+  "sectionId": "sec-chieste",
+  "it": "basso",
+  "en": "low",
+  "note": "You asked at 13:20 on Day 3. Also: in basso = down below."
+ },
+ {
+  "clip": "d4-ask-02",
+  "chapter": "Parole chieste",
+  "sectionId": "sec-chieste",
+  "it": "il divano",
+  "en": "the couch",
+  "note": "Asked at 27:42, Day 3 — and it turned up again in ci sediamo sul divano."
+ },
+ {
+  "clip": "d4-ask-03",
+  "chapter": "Parole chieste",
+  "sectionId": "sec-chieste",
+  "it": "il trucco",
+  "en": "the make-up",
+  "note": "Asked at 7:30, Day 4. The verb is truccarsi — non mi trucco."
+ },
+ {
+  "clip": "d4-ask-04",
+  "chapter": "Parole chieste",
+  "sectionId": "sec-chieste",
+  "it": "finito",
+  "en": "finished, complete",
+  "note": "Asked at 27:38, Day 4. Ho finito = I've finished; è finita = it's over."
+ },
+ {
+  "clip": "d4-ask-05",
+  "chapter": "Parole chieste",
+  "sectionId": "sec-chieste",
+  "it": "formale",
+  "en": "formal",
+  "note": "Asked at 13:49, Day 4 — the register behind Lei."
+ }
+]

@@ -1,0 +1,151 @@
+[
+ {
+  "phrase": "Faccio stretching",
+  "mentions": 2,
+  "turns": [
+   {
+    "t": 157.6,
+    "who": "Barbara",
+    "text": "Faccio un po' di stretching."
+   },
+   {
+    "t": 372.9,
+    "who": "Barbara",
+    "text": "It's the same like faccio body stretching. Faccio, faccio, faccio. Faccio."
+   }
+  ]
+ },
+ {
+  "phrase": "Faccio colazione",
+  "mentions": 0,
+  "turns": []
+ },
+ {
+  "phrase": "Mi addormento",
+  "mentions": 0,
+  "turns": []
+ },
+ {
+  "phrase": "Mi lavo la faccia con acqua fredda",
+  "mentions": 1,
+  "turns": [
+   {
+    "t": 98.7,
+    "who": "Gyasi",
+    "text": "Mi lavorso la faccia con il..."
+   }
+  ]
+ },
+ {
+  "phrase": "Mi lavo",
+  "mentions": 27,
+  "turns": [
+   {
+    "t": 98.7,
+    "who": "Gyasi",
+    "text": "Mi lavorso la faccia con il..."
+   },
+   {
+    "t": 101.2,
+    "who": "Barbara",
+    "text": "E che mi lavo."
+   },
+   {
+    "t": 112.4,
+    "who": "Barbara",
+    "text": "Mi lavo."
+   }
+  ]
+ },
+ {
+  "phrase": "Mi metto i vestiti e le scarpe da corsa",
+  "mentions": 1,
+  "turns": [
+   {
+    "t": 225.2,
+    "who": "Barbara",
+    "text": "Ok. Metto i vestiti, faccio, si si si. It's about Alessandro."
+   }
+  ]
+ },
+ {
+  "phrase": "Mi rilasso",
+  "mentions": 4,
+  "turns": [
+   {
+    "t": 532.5,
+    "who": "Barbara",
+    "text": "Rilasso."
+   },
+   {
+    "t": 537.7,
+    "who": "Barbara",
+    "text": "Rilasso."
+   },
+   {
+    "t": 539.7,
+    "who": "Barbara",
+    "text": "You cut again, mi rilasso."
+   }
+  ]
+ },
+ {
+  "phrase": "Mi sveglio in tempo",
+  "mentions": 0,
+  "turns": []
+ },
+ {
+  "phrase": "Mi sveglio presto",
+  "mentions": 1,
+  "turns": [
+   {
+    "t": 426.6,
+    "who": "Gyasi",
+    "text": "Sveglio, presto."
+   }
+  ]
+ },
+ {
+  "phrase": "Non mi trucco",
+  "mentions": 1,
+  "turns": [
+   {
+    "t": 450.5,
+    "who": "Gyasi",
+    "text": "Trucco, come si dice? Trucco."
+   }
+  ]
+ },
+ {
+  "phrase": "Prendo il treno",
+  "mentions": 1,
+  "turns": [
+   {
+    "t": 519.7,
+    "who": "Gyasi",
+    "text": "Io prendo il treno, finalmente sul treno."
+   }
+  ]
+ },
+ {
+  "phrase": "Sono stanco",
+  "mentions": 0,
+  "turns": []
+ },
+ {
+  "phrase": "Vado alla stazione in bicicletta",
+  "mentions": 0,
+  "turns": []
+ },
+ {
+  "phrase": "Vado a correre al parco",
+  "mentions": 1,
+  "turns": [
+   {
+    "t": 251.6,
+    "who": "Gyasi",
+    "text": "Vado subito a correre al parco."
+   }
+  ]
+ }
+]

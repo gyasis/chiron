@@ -1,0 +1,72 @@
+{
+ "recording": "/tmp/il-centro-asr/day-6/Day_6.m4a",
+ "series": "il-centro",
+ "expected_speakers": 2,
+ "found_speakers": 2,
+ "model": "large-v3",
+ "turns": 965,
+ "speech_s": 2916.4,
+ "lang_split": {
+  "it": 768,
+  "en": 197
+ },
+ "clusters": [
+  {
+   "speaker": "SPEAKER_00",
+   "turns": 620,
+   "talk_s": 1714.5,
+   "italian_pct": 88,
+   "proposed": "Barbara",
+   "confidence": 0.908,
+   "snippets": [
+    {
+     "file": "snippets/SPEAKER_00-0.mp3",
+     "t": 30.4,
+     "text": "Controlli, controllo, feedback, noti tecniche."
+    },
+    {
+     "file": "snippets/SPEAKER_00-1.mp3",
+     "t": 37.0,
+     "text": "Check up, when you check something, check up."
+    },
+    {
+     "file": "snippets/SPEAKER_00-2.mp3",
+     "t": 70.6,
+     "text": "controllo generale capisci dal contesto medico in questo caso è"
+    }
+   ]
+  },
+  {
+   "speaker": "SPEAKER_01",
+   "turns": 345,
+   "talk_s": 1201.9,
+   "italian_pct": 65,
+   "proposed": "Gyasi",
+   "confidence": 0.836,
+   "snippets": [
+    {
+     "file": "snippets/SPEAKER_01-0.mp3",
+     "t": 178.0,
+     "text": "and then um the return of my miami um"
+    },
+    {
+     "file": "snippets/SPEAKER_01-1.mp3",
+     "t": 186.8,
+     "text": "Non Luna Di Martina, ma Dominica..."
+    },
+    {
+     "file": "snippets/SPEAKER_01-2.mp3",
+     "t": 208.7,
+     "text": "So, one, two, three, four, five, six, seven, eight, nine, ten."
+    }
+   ]
+  }
+ ],
+ "confirmed": true,
+ "speaker_names": {
+  "SPEAKER_00": "Barbara",
+  "SPEAKER_01": "Gyasi"
+ },
+ "engine": "modal",
+ "asr_s": 872.1
+}

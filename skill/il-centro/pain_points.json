@@ -1,0 +1,410 @@
+[
+ {
+  "day": "day6",
+  "turns": 345,
+  "asked": [
+   {
+    "t": 7.0,
+    "text": "Okay, so, aspetta, io sento questo parola controllo molto ora? Is that right? Many times? How do I say it?  Molte volte.  Molte volte. Molte volte you said this. What does this word mean again, exactly?  Because I see it."
+   },
+   {
+    "t": 119.3,
+    "text": "Sì, mi dispiace, ieri, perché, come si dice, ok, io arrivo in Stati Uniti."
+   },
+   {
+    "t": 213.9,
+    "text": "Dopo, come si dice, how would I say, I set my alarm?"
+   },
+   {
+    "t": 347.4,
+    "text": "Sì, quindi Fort Lauderdale, come si dice, 45 minuti fa."
+   },
+   {
+    "t": 370.6,
+    "text": "Come si dice?"
+   },
+   {
+    "t": 376.4,
+    "text": "Abiti? How do I say depends on where you live?"
+   },
+   {
+    "t": 500.2,
+    "text": "No, perché non è umido vicino all'acqua, ma... come si dice... interiore, centro."
+   },
+   {
+    "t": 526.9,
+    "text": "Sì, sì, perché in New Orleans il specialista, come si dice, la cheeta..."
+   },
+   {
+    "t": 579.1,
+    "text": "How do you say bowl?"
+   },
+   {
+    "t": 654.0,
+    "text": "So, the air is, uh, como se dice, how do you say air?  The air is, um."
+   },
+   {
+    "t": 733.1,
+    "text": "Sì, esatto, in Napoli questo guardare il particolare perché, come si dice..."
+   },
+   {
+    "t": 791.9,
+    "text": "Non... come si dice? Non persone... come si dice?  Come si dice? Fix?  Vuoi fissare il problema?"
+   },
+   {
+    "t": 995.1,
+    "text": "Sì, ma dove tu abitui? In centrocittà o come si dice?  Non so."
+   },
+   {
+    "t": 1043.4,
+    "text": "Ma come si dice, do you live like high or low?"
+   },
+   {
+    "t": 1088.0,
+    "text": "Tu senti, come si dice, ho dimenticato tutte le mie parole, i bambini, senti i bambini e i suoni di notte e non la macchina."
+   },
+   {
+    "t": 1145.3,
+    "text": "rimanere in mi casa quando ascoltare come si dice siren"
+   },
+   {
+    "t": 1270.4,
+    "text": "How do you say? How do you say funny? Is it divertamente?"
+   },
+   {
+    "t": 1403.3,
+    "text": "But I like to have a lot of vacancies or visits in, how do you say, not busy?"
+   },
+   {
+    "t": 1644.7,
+    "text": "Ma come si dice, estends la vita forte.  Sì, sì, molto."
+   },
+   {
+    "t": 1679.0,
+    "text": "Or, no, how do I say younger?  When he was younger, did he do that?"
+   },
+   {
+    "t": 1745.0,
+    "text": "Molto, come si dice, la persona italiana in Florida, Fort Lauderdale, Miami."
+   },
+   {
+    "t": 1764.5,
+    "text": "There are Italians who work in tourism...  No, no. Vivare? How do you say live?  Vivano.  Vivano.  Yes, yes."
+   },
+   {
+    "t": 1799.4,
+    "text": "Sì, sì, sì, capito bene. Perché in New York, certo, ma non, come si dice,  I was surprised to see that many...  Ero sorpreso."
+   },
+   {
+    "t": 1814.8,
+    "text": "Sì, perché non, I did not know this until my wife, before we got married, she came down a lot and she started thinking about working, come si dice, aspetta, mi..."
+   },
+   {
+    "t": 1839.6,
+    "text": "Sì, sì. No, no, in Stati Uniti. Perché, come si dice, dopo..."
+   },
+   {
+    "t": 1846.0,
+    "text": "Dopo io ho il mio come si dice..."
+   },
+   {
+    "t": 1854.6,
+    "text": "Diploma? How do you say diploma again?"
+   },
+   {
+    "t": 1891.6,
+    "text": "parli um la persona and so lay um how do you say discovered"
+   },
+   {
+    "t": 1912.7,
+    "text": "How do I say this?"
+   },
+   {
+    "t": 2014.6,
+    "text": "Sì, sì, non capito perché una televisione per la Covid, la professore, la, come si dice, expert, surname italiano, surname italiano, sì."
+   },
+   {
+    "t": 2150.2,
+    "text": "Come si dice? Come si dice che abbiamo parlato di questo prima?"
+   },
+   {
+    "t": 2164.7,
+    "text": "Sì, ma in ospedale, come si dice, il medico, il signore, non, come si dice, non, they don't want to train the young doctors."
+   },
+   {
+    "t": 2475.3,
+    "text": "Adesso il medicina come si dice, il weight loss, molto bene."
+   },
+   {
+    "t": 2808.7,
+    "text": "Sì, ma comunque il giovane, come si dice, giovane femminile..."
+   },
+   {
+    "t": 2830.1,
+    "text": "what is the the word in i can't think of the word puberty um puberty uh pu pu jovi capito puberty"
+   },
+   {
+    "t": 2977.8,
+    "text": "Sì, ho capito bene perché non mi piacciono molto i medici, ho capito bene.  C'è un... come si dice? Compressi per questo, un presso per questo, 20 pressi."
+   },
+   {
+    "t": 3119.3,
+    "text": "Più medicina, come si dice, non è più specifica, più sintomi fissi, ma poi altri problemi, come un altro problema, se ho capito."
+   },
+   {
+    "t": 3221.3,
+    "text": "No, non ho tempo perché per la prima lavoro, come si dice, tre rapporti e poi dopo io devo studiare l'italiano.  Quindi non bevo vino, non bevo birra, non discoteco, non guardo."
+   },
+   {
+    "t": 3254.4,
+    "text": "Sì, sì, sì. Ascoltare due, ma non leggere. Non ascoltare, non leggere. Solo ascoltare. Dopo ascoltare e scrivere.  So domani I'll have come si dice, il lesione, how do you say filled out?"
+   }
+  ],
+  "fell_back": [
+   {
+    "t": 213.9,
+    "text": "Dopo, come si dice, how would I say, I set my alarm?"
+   },
+   {
+    "t": 1814.8,
+    "text": "Sì, perché non, I did not know this until my wife, before we got married, she came down a lot and she started thinking about working, come si dice, aspetta, mi..."
+   },
+   {
+    "t": 2164.7,
+    "text": "Sì, ma in ospedale, come si dice, il medico, il signore, non, come si dice, non, they don't want to train the young doctors."
+   },
+   {
+    "t": 3254.4,
+    "text": "Sì, sì, sì. Ascoltare due, ma non leggere. Non ascoltare, non leggere. Solo ascoltare. Dopo ascoltare e scrivere.  So domani I'll have come si dice, il lesione, how do you say filled out?"
+   }
+  ],
+  "stalled": [
+   {
+    "t": 7.0,
+    "text": "Okay, so, aspetta, io sento questo parola controllo molto ora? Is that right? Many times? How do I say it?  Molte volte.  Molte volte. Molte volte you said this. What does this word mean again, exactly?  Because I see it."
+   },
+   {
+    "t": 87.3,
+    "text": "Um, let's see, what time is it now, um, quattordici, um, undici, quattordici ora, undici minuti, capito?"
+   },
+   {
+    "t": 101.8,
+    "text": "No, no, no, 14, no, mi dispiace, 4, 4 mattina."
+   },
+   {
+    "t": 178.0,
+    "text": "and then um the return of my miami um"
+   },
+   {
+    "t": 185.3,
+    "text": "No, no, no, um..."
+   },
+   {
+    "t": 192.1,
+    "text": "uh retardo no uh retardo um note like very late how would i say very late"
+   },
+   {
+    "t": 296.1,
+    "text": "no it's uh oh wow um aspetta let me uh translate this but this so um"
+   },
+   {
+    "t": 338.0,
+    "text": "Qua... Qua... Qua... Qua... Qua... La Fury."
+   },
+   {
+    "t": 372.0,
+    "text": "uh the pendare um to"
+   },
+   {
+    "t": 582.4,
+    "text": "No, no, no, no, no."
+   },
+   {
+    "t": 654.0,
+    "text": "So, the air is, uh, como se dice, how do you say air?  The air is, um."
+   },
+   {
+    "t": 744.6,
+    "text": "Uh, we clean, um..."
+   },
+   {
+    "t": 791.9,
+    "text": "Non... come si dice? Non persone... come si dice?  Come si dice? Fix?  Vuoi fissare il problema?"
+   },
+   {
+    "t": 833.0,
+    "text": "Sì, perché questo è... mi piace la bresa.  Ho bisogno della bresa perché non la bresa, perché mi muoio molto, non l'asma, ma l'allergia."
+   },
+   {
+    "t": 1126.9,
+    "text": "the two recording see uh perky um"
+   },
+   {
+    "t": 1373.4,
+    "text": "You cannot enjoy the sights or seeing the the buildings because there's just people like everywhere"
+   },
+   {
+    "t": 1605.9,
+    "text": "Sì, sì, no, no, no, um..."
+   },
+   {
+    "t": 1758.0,
+    "text": "No, no, no, no, no, just, uh, no, no, no, um, um,"
+   },
+   {
+    "t": 1799.4,
+    "text": "Sì, sì, sì, capito bene. Perché in New York, certo, ma non, come si dice,  I was surprised to see that many...  Ero sorpreso."
+   },
+   {
+    "t": 1863.0,
+    "text": "In Stati Uniti per un anno, un anno e mezzo, quando pensare, ok, lavoro in Stati Uniti, lavoro a Napoli.  Quando il mio fidanzato è arrivato con me negli Stati Uniti, lei..."
+   },
+   {
+    "t": 1891.6,
+    "text": "parli um la persona and so lay um how do you say discovered"
+   },
+   {
+    "t": 1909.0,
+    "text": "Um, in, uh..."
+   },
+   {
+    "t": 2134.9,
+    "text": "I understand, I understand, yes, yes, yes, because this, I heard, I listened to it."
+   },
+   {
+    "t": 2183.7,
+    "text": "ma ma ma ma perché competizione because uh they get paid the same uh per case"
+   },
+   {
+    "t": 2362.2,
+    "text": "Sì, sì, esatto.  Sì, è un classico, un classico o un soldi.  Se non lo hai..."
+   },
+   {
+    "t": 2402.0,
+    "text": "Sì, molto pari... pari... pari... paristi? Parasites?  Sì, parasiti."
+   },
+   {
+    "t": 2486.0,
+    "text": "So our lawmakers want to push the weight loss drugs for insurances to be able for everyone  to use it.  So it became from like, oh, let's just have some of the rich people use it, to now it's  just like, oh, let's give it to everyone.  It's money.  It's money."
+   },
+   {
+    "t": 2754.2,
+    "text": "No, no, no, to, to, uh, to a very, um..."
+   },
+   {
+    "t": 2830.1,
+    "text": "what is the the word in i can't think of the word puberty um puberty uh pu pu jovi capito puberty"
+   },
+   {
+    "t": 2840.1,
+    "text": "Sì, sì, sì. Sono nove, no, ma nove, dieci.  Alle ragazzine?  Sì, sì. Adesso qui, so."
+   },
+   {
+    "t": 3116.5,
+    "text": "See, um, molto, uh, come se dice, um..."
+   },
+   {
+    "t": 3119.3,
+    "text": "Più medicina, come si dice, non è più specifica, più sintomi fissi, ma poi altri problemi, come un altro problema, se ho capito."
+   },
+   {
+    "t": 3211.3,
+    "text": "No, no, no, non ho tempo per questo.  E non per questo no?  Sì, sì.  Come?"
+   },
+   {
+    "t": 3221.3,
+    "text": "No, non ho tempo perché per la prima lavoro, come si dice, tre rapporti e poi dopo io devo studiare l'italiano.  Quindi non bevo vino, non bevo birra, non discoteco, non guardo."
+   },
+   {
+    "t": 3254.4,
+    "text": "Sì, sì, sì. Ascoltare due, ma non leggere. Non ascoltare, non leggere. Solo ascoltare. Dopo ascoltare e scrivere.  So domani I'll have come si dice, il lesione, how do you say filled out?"
+   }
+  ],
+  "corrected": [
+   {
+    "t": 101.8,
+    "mine": "No, no, no, 14, no, mi dispiace, 4, 4 mattina.",
+    "hers": "mi dispiace, quattro",
+    "ov": 0.4
+   },
+   {
+    "t": 192.1,
+    "mine": "uh retardo no uh retardo um note like very late how would i say very late",
+    "hers": "Now what did I say very late?  Ritorno late, tardi di notte, late in the night, tardi di notte.",
+    "ov": 0.18
+   },
+   {
+    "t": 376.4,
+    "mine": "Abiti? How do I say depends on where you live?",
+    "hers": "Dipende dove abiti, it depends, dipende dove abiti.",
+    "ov": 0.15
+   },
+   {
+    "t": 1160.2,
+    "mine": "Esatto, la reazione, l'adrenalina ritorna.",
+    "hers": "si la ragiona, si la adrenalina ritorna",
+    "ov": 0.25
+   },
+   {
+    "t": 1290.3,
+    "mine": "See where there is a",
+    "hers": "Where there is a lot of mess, confusion, music.",
+    "ov": 0.4
+   },
+   {
+    "t": 1570.6,
+    "mine": "Non sta bene.",
+    "hers": "Sta bene, è molto attivo.",
+    "ov": 0.33
+   },
+   {
+    "t": 1644.7,
+    "mine": "Ma come si dice, estends la vita forte.  Sì, sì, molto.",
+    "hers": "Sì, è molto resiliente.",
+    "ov": 0.17
+   },
+   {
+    "t": 1927.3,
+    "mine": "c'è una comunità",
+    "hers": "Una comunità di italiani in Florida.",
+    "ov": 0.29
+   },
+   {
+    "t": 1965.2,
+    "mine": "sì sì  durante il corso",
+    "hers": "durante il Covid",
+    "ov": 0.4
+   },
+   {
+    "t": 2190.9,
+    "mine": "e sono",
+    "hers": "E sono il medico del futuro, quindi...",
+    "ov": 0.29
+   },
+   {
+    "t": 2343.2,
+    "mine": "Sì, no, è simile all'Africa.  Sì, no, è no.",
+    "hers": "Sì, è uno scandalo.",
+    "ov": 0.29
+   },
+   {
+    "t": 2840.1,
+    "mine": "Sì, sì, sì. Sono nove, no, ma nove, dieci.  Alle ragazzine?  Sì, sì. Adesso qui, so.",
+    "hers": "So no.",
+    "ov": 0.18
+   },
+   {
+    "t": 3022.3,
+    "mine": "Sì, esatto.",
+    "hers": "Sì.",
+    "ov": 0.5
+   },
+   {
+    "t": 3043.2,
+    "mine": "Dove comprare?",
+    "hers": "dove",
+    "ov": 0.5
+   }
+  ]
+ }
+]

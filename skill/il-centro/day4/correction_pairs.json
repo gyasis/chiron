@@ -1,0 +1,74 @@
+[
+ {
+  "t": 431.2,
+  "attempt": "La Voz.",
+  "correction": "La voce.",
+  "ov": 0.33
+ },
+ {
+  "t": 442.4,
+  "attempt": "Yesi, mi proparo.",
+  "correction": "Ciao. Mi preparo.",
+  "ov": 0.2
+ },
+ {
+  "t": 581.0,
+  "attempt": "Ok, speriamo che ti sveliarsi, no, sveli in tempo.",
+  "correction": "Bene, perché è stile, bene.",
+  "ov": 0.0
+ },
+ {
+  "t": 746.2,
+  "attempt": "What's plural they? Loro. Loro a vetri?",
+  "correction": "Loro vanno.",
+  "ov": 0.17
+ },
+ {
+  "t": 1240.0,
+  "attempt": "Quando non lavoro...",
+  "correction": "Fine settimana lavoro all'ospedale.",
+  "ov": 0.17
+ },
+ {
+  "t": 1246.6,
+  "attempt": "Quando fino a la settimana non lavoro, io voglio esco il ristorante, il bar.",
+  "correction": "Ristorante, bar.",
+  "ov": 0.17
+ },
+ {
+  "t": 1439.3,
+  "attempt": "No, no, lei questo adesso.",
+  "correction": "L'ha ascoltata. Attenzione, io non sono responsabile. Non grazie.",
+  "ov": 0.0
+ },
+ {
+  "t": 1465.0,
+  "attempt": "Tua madre.",
+  "correction": "Sua madre.",
+  "ov": 0.33
+ },
+ {
+  "t": 1482.9,
+  "attempt": "So her mom says the same thing.",
+  "correction": "This is the same thing.",
+  "ov": 0.33
+ },
+ {
+  "t": 1546.1,
+  "attempt": "No, a Napoli.",
+  "correction": "A Napoli, fluentemente penso.",
+  "ov": 0.25
+ },
+ {
+  "t": 1550.2,
+  "attempt": "We need to...",
+  "correction": "A Milano sì, perché è una città internazionale.",
+  "ov": 0.0
+ },
+ {
+  "t": 1565.2,
+  "attempt": "Ma in centro d'istorico Napoli ha inglese per l'hotel, per i turisti, sì, sì, restauranti, sì, ma non...",
+  "correction": "Per i turisti.",
+  "ov": 0.15
+ }
+]

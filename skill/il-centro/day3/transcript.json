@@ -1,0 +1,4909 @@
+[
+ {
+  "start": 3.1,
+  "end": 4.4,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "I don't know what just happened here."
+ },
+ {
+  "start": 9.21,
+  "end": 10.51,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "What just happened?"
+ },
+ {
+  "start": 31.62,
+  "end": 35.72,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "Scusi Barbara, I got kicked off for some reason, I apologize."
+ },
+ {
+  "start": 35.13,
+  "end": 38.71,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Sì, improvvisamente, giovedì, non è..."
+ },
+ {
+  "start": 39.1,
+  "end": 39.79,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "Mi dispiace."
+ },
+ {
+  "start": 40.65,
+  "end": 42.37,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Adesso va bene, sì, può stare."
+ },
+ {
+  "start": 46.44,
+  "end": 50.62,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Quindi secondo, alternativa presente, apro."
+ },
+ {
+  "start": 51.63,
+  "end": 54.06,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Il pc, il mio computer."
+ },
+ {
+  "start": 56.23,
+  "end": 59.36,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Ho passato o ho aperto, anche va bene."
+ },
+ {
+  "start": 64.39,
+  "end": 65.45,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "Okay, pause it."
+ },
+ {
+  "start": 68.02,
+  "end": 68.64,
+  "speaker": "SPEAKER_01",
+  "lang": "es",
+  "text": "Pero..."
+ },
+ {
+  "start": 69.13,
+  "end": 72.8,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "La lezione di italiano, lezione female."
+ },
+ {
+  "start": 73.32,
+  "end": 74.79,
+  "speaker": "SPEAKER_01",
+  "lang": "es",
+  "text": "La lección es..."
+ },
+ {
+  "start": 77.1,
+  "end": 77.93,
+  "speaker": "SPEAKER_01",
+  "lang": "pt",
+  "text": "Italiano."
+ },
+ {
+  "start": 78.38,
+  "end": 79.28,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "Oh, okay."
+ },
+ {
+  "start": 79.56,
+  "end": 80.59,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "This one I did it."
+ },
+ {
+  "start": 81.72,
+  "end": 82.38,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "Um..."
+ },
+ {
+  "start": 82.87,
+  "end": 88.98,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "Can you say...so non agitivo and noun, it's always..."
+ },
+ {
+  "start": 89.99,
+  "end": 91.36,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "The noun..."
+ },
+ {
+  "start": 91.71,
+  "end": 92.72,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "And then, oh."
+ },
+ {
+  "start": 92.2,
+  "end": 93.05,
+  "speaker": "SPEAKER_01",
+  "lang": "pt",
+  "text": "Exato, sim."
+ },
+ {
+  "start": 93.27,
+  "end": 95.41,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Esatto, prima la lezione offre."
+ },
+ {
+  "start": 96.13,
+  "end": 102.58,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Non c'è Italian lesson, we say the lesson of Italian, la lezione di medicina, you have to put the..."
+ },
+ {
+  "start": 103.0,
+  "end": 105.14,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "Plus the noun, plus the topic."
+ },
+ {
+  "start": 106.16,
+  "end": 106.98,
+  "speaker": "SPEAKER_01",
+  "lang": "es",
+  "text": "Sí."
+ },
+ {
+  "start": 109.28,
+  "end": 110.11,
+  "speaker": "SPEAKER_01",
+  "lang": "es",
+  "text": "¿Por qué?"
+ },
+ {
+  "start": 111.88,
+  "end": 113.5,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Ascoltare le parole."
+ },
+ {
+  "start": 116.7,
+  "end": 117.33,
+  "speaker": "SPEAKER_01",
+  "lang": "tr",
+  "text": "KORON!"
+ },
+ {
+  "start": 116.72,
+  "end": 137.58,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "Queres el clip? So, because... So, I was trying to say in Inglés... I opened my computer for the lesson in Italian because I have... I can listen on my computer the Italian lingua."
+ },
+ {
+  "start": 137.76,
+  "end": 138.46,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "Capito."
+ },
+ {
+  "start": 139.57,
+  "end": 141.04,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Ah, perché ascolto..."
+ },
+ {
+  "start": 141.51,
+  "end": 149.78,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Le parole? Sì, sì, so, like in, ascolte, parola, lezione per la..."
+ },
+ {
+  "start": 150.03,
+  "end": 151.64,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "Italian."
+ },
+ {
+  "start": 152.02,
+  "end": 152.65,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "Um..."
+ },
+ {
+  "start": 152.77,
+  "end": 155.43,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Ma una registrazione, io la ricordo."
+ },
+ {
+  "start": 152.82,
+  "end": 153.83,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Ma una registrazione."
+ },
+ {
+  "start": 154.56,
+  "end": 159.85,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "No, no, no, no, no. Let me, uh, uh, aspetta. Let me..."
+ },
+ {
+  "start": 161.42,
+  "end": 162.38,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "Let me... Yeah, this..."
+ },
+ {
+  "start": 163.03,
+  "end": 173.13,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "Yes, yes, yes, see, I'll show you really quick, because it may, because you can tell me if..."
+ },
+ {
+  "start": 174.7,
+  "end": 176.83,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "If I'm doing this okay."
+ },
+ {
+  "start": 177.44,
+  "end": 178.33,
+  "speaker": "SPEAKER_00",
+  "lang": "pt",
+  "text": "Como é uma"
+ },
+ {
+  "start": 177.56,
+  "end": 178.28,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Come una..."
+ },
+ {
+  "start": 179.6,
+  "end": 183.8,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "Let's see, I'm going to share my screen really quick."
+ },
+ {
+  "start": 184.85,
+  "end": 185.64,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Apera!"
+ },
+ {
+  "start": 186.06,
+  "end": 187.85,
+  "speaker": "SPEAKER_00",
+  "lang": "es",
+  "text": "Sí, sí, espérate."
+ },
+ {
+  "start": 190.23,
+  "end": 190.94,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "If I can."
+ },
+ {
+  "start": 192.17,
+  "end": 197.25,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "C'è una voce, The Risen Voice, una voce con una parola italiana e io ripeto."
+ },
+ {
+  "start": 197.2,
+  "end": 198.67,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "Exact."
+ },
+ {
+  "start": 198.53,
+  "end": 201.42,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "Listen and repeat. Keep listening and keep repeating."
+ },
+ {
+  "start": 200.93,
+  "end": 202.56,
+  "speaker": "SPEAKER_00",
+  "lang": "pt",
+  "text": "Sim, sim, exato."
+ },
+ {
+  "start": 203.16,
+  "end": 204.0,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "Twin."
+ },
+ {
+  "start": 203.61,
+  "end": 206.94,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Per migliorare la pronuncia."
+ },
+ {
+  "start": 207.12,
+  "end": 213.8,
+  "speaker": "SPEAKER_00",
+  "lang": "la",
+  "text": "Pronuncia ma alzo io penso"
+ },
+ {
+  "start": 213.92,
+  "end": 219.79,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Quando non guardare la scena."
+ },
+ {
+  "start": 214.33,
+  "end": 214.97,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "Memorizando."
+ },
+ {
+  "start": 220.18,
+  "end": 220.87,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "Um..."
+ },
+ {
+  "start": 221.43,
+  "end": 223.22,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "Come se dice forced?"
+ },
+ {
+  "start": 224.57,
+  "end": 233.63,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Obbligare. Obbligare il parole separato per le sentenze. Quando ascolto le sentenze."
+ },
+ {
+  "start": 234.26,
+  "end": 235.98,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Quindi ascolto."
+ },
+ {
+  "start": 235.98,
+  "end": 237.33,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Senza leggere."
+ },
+ {
+  "start": 237.33,
+  "end": 238.58,
+  "speaker": "SPEAKER_00",
+  "lang": "es",
+  "text": "Sí, sí, sí."
+ },
+ {
+  "start": 238.63,
+  "end": 239.67,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "So, uh..."
+ },
+ {
+  "start": 239.28,
+  "end": 240.33,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Preferisco."
+ },
+ {
+  "start": 240.33,
+  "end": 241.36,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Ascoltare."
+ },
+ {
+  "start": 240.65,
+  "end": 241.43,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Ascoltare."
+ },
+ {
+  "start": 241.38,
+  "end": 255.59,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "So I listen to some small sentences. What I do is I take some of the things that you have and I'll play the sentence out and try if I can understand the..."
+ },
+ {
+  "start": 256.38,
+  "end": 260.28,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "La separación entre palabras. Y luego voy a tomar algunas otras..."
+ },
+ {
+  "start": 259.81,
+  "end": 262.2,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "What kind of student are you?"
+ },
+ {
+  "start": 262.64,
+  "end": 271.23,
+  "speaker": "SPEAKER_01",
+  "lang": "es",
+  "text": "Algunos estudiantes prefieren escuchar y memorizar, otros prefieren escribir, o escuchar y memorizar."
+ },
+ {
+  "start": 270.05,
+  "end": 275.79,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "Si si capito, capito. So I'm Tutti, so for me"
+ },
+ {
+  "start": 276.56,
+  "end": 279.51,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "I like to read because reading..."
+ },
+ {
+  "start": 280.26,
+  "end": 281.66,
+  "speaker": "SPEAKER_00",
+  "lang": "fr",
+  "text": "Comment ça dit-il ?"
+ },
+ {
+  "start": 283.01,
+  "end": 283.73,
+  "speaker": "SPEAKER_00",
+  "lang": "es",
+  "text": "Memoriza."
+ },
+ {
+  "start": 283.23,
+  "end": 287.04,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Memorizzo, quando leggo memorizzo la... Sì."
+ },
+ {
+  "start": 286.5,
+  "end": 291.26,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "See, my reading helps me understand the structure."
+ },
+ {
+  "start": 291.68,
+  "end": 292.8,
+  "speaker": "SPEAKER_00",
+  "lang": "pt",
+  "text": "Ah, exatamente."
+ },
+ {
+  "start": 292.22,
+  "end": 298.13,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Ah, esatto, so come costruisci la frase."
+ },
+ {
+  "start": 298.13,
+  "end": 336.16,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "Let's see, so in Italia, I can read signs, I can read books, I can read documents. So I have the recognition, but if I go out and you speak to me, I don't always understand what you say. So it's kind of like, you know on the phone when you talk to somebody and they may be delayed because they may not understand everything. So you'll say a couple of words and then I'll understand and then you'll say more, but my mind is still processing the first words, so I can't keep up."
+ },
+ {
+  "start": 325.48,
+  "end": 326.44,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "I understand everything."
+ },
+ {
+  "start": 335.64,
+  "end": 340.91,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "When you read, you don't process because you keep reading and you are following like a stream."
+ },
+ {
+  "start": 341.02,
+  "end": 341.94,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "Exactly."
+ },
+ {
+  "start": 341.85,
+  "end": 344.87,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "When you listen, maybe there is a pause."
+ },
+ {
+  "start": 345.67,
+  "end": 350.88,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "E stai parlando di quello che diceva il ragazzo e nel frattempo il ragazzo parla."
+ },
+ {
+  "start": 348.77,
+  "end": 349.44,
+  "speaker": "SPEAKER_00",
+  "lang": "pt",
+  "text": "Exato."
+ },
+ {
+  "start": 351.17,
+  "end": 354.76,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "Quando le luci, il tuo cervello segue..."
+ },
+ {
+  "start": 355.12,
+  "end": 357.8,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "The sequence, you have time to..."
+ },
+ {
+  "start": 358.2,
+  "end": 362.69,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "To recognize each structure and you are able to memorize and you..."
+ },
+ {
+  "start": 363.08,
+  "end": 365.85,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "You understand more or less the meaning."
+ },
+ {
+  "start": 366.32,
+  "end": 367.11,
+  "speaker": "SPEAKER_00",
+  "lang": "es",
+  "text": "Sí, sí."
+ },
+ {
+  "start": 367.03,
+  "end": 369.66,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "E si ascoltare, qui gli italiani parlano."
+ },
+ {
+  "start": 370.64,
+  "end": 371.33,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "Esa tu."
+ },
+ {
+  "start": 371.3,
+  "end": 373.61,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Come il film anche, come vedere un film."
+ },
+ {
+  "start": 373.78,
+  "end": 392.96,
+  "speaker": "SPEAKER_00",
+  "lang": "es",
+  "text": "Exacto, es como Netflix con series al escotar, porque por esto, tú has separado la parola por la capiz. Capiz."
+ },
+ {
+  "start": 392.96,
+  "end": 393.89,
+  "speaker": "SPEAKER_01",
+  "lang": "pt",
+  "text": "Fica aqui aí."
+ },
+ {
+  "start": 394.54,
+  "end": 396.81,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Se devi separare o fai pausa."
+ },
+ {
+  "start": 397.2,
+  "end": 399.02,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Vedi la traduzione."
+ },
+ {
+  "start": 399.73,
+  "end": 402.2,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Puoi fare anche esercizio."
+ },
+ {
+  "start": 402.62,
+  "end": 405.33,
+  "speaker": "SPEAKER_01",
+  "lang": "es",
+  "text": "Cuando escuchas, al mismo tiempo estás leyendo."
+ },
+ {
+  "start": 405.45,
+  "end": 406.97,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "Reading, Terence."
+ },
+ {
+  "start": 407.36,
+  "end": 411.32,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Per studiare, per imparare, perché io ormai, perché normalmente..."
+ },
+ {
+  "start": 411.61,
+  "end": 415.36,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Ascoltare è una scelta e leggere è un'altra scelta."
+ },
+ {
+  "start": 415.71,
+  "end": 423.49,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Bisogna combinare, sincronizzare, sincronizzare non è facile, perché la velocità, perché gli italiani parlano veloce."
+ },
+ {
+  "start": 423.86,
+  "end": 432.05,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "Ah, si capito. So, tu suggestivi... Tu consigli, suggesti, tu consigli."
+ },
+ {
+  "start": 432.18,
+  "end": 437.53,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "Per la beneficina."
+ },
+ {
+  "start": 437.53,
+  "end": 439.54,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Improva, per migliorare."
+ },
+ {
+  "start": 440.44,
+  "end": 450.34,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "Si, con guardare il series perché ascoltare e perché scrivenare the captions."
+ },
+ {
+  "start": 450.68,
+  "end": 455.01,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Prima sei esposto alla lingua."
+ },
+ {
+  "start": 455.56,
+  "end": 458.22,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Però è meglio, per esempio, short cut."
+ },
+ {
+  "start": 458.39,
+  "end": 459.79,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Il film è corto."
+ },
+ {
+  "start": 461.12,
+  "end": 463.93,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Cortometraggio, perché film lungo."
+ },
+ {
+  "start": 464.48,
+  "end": 466.08,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "È difficile."
+ },
+ {
+  "start": 466.69,
+  "end": 473.32,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "È difficile avere attenzione, è difficile, you can't focus."
+ },
+ {
+  "start": 474.34,
+  "end": 479.1,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Invece un film corto o sketch, un piccolo, si dice cortometraggio."
+ },
+ {
+  "start": 485.8,
+  "end": 486.69,
+  "speaker": "SPEAKER_01",
+  "lang": "fr",
+  "text": "Oh, c'est tout ?"
+ },
+ {
+  "start": 487.06,
+  "end": 490.84,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Conosci la storia, io non deploto, si conosce la storia."
+ },
+ {
+  "start": 491.33,
+  "end": 492.44,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Vedi film."
+ },
+ {
+  "start": 493.56,
+  "end": 494.59,
+  "speaker": "SPEAKER_01",
+  "lang": "es",
+  "text": "Y, piano piano,"
+ },
+ {
+  "start": 494.94,
+  "end": 497.73,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Riconosci le scene."
+ },
+ {
+  "start": 501.49,
+  "end": 502.86,
+  "speaker": "SPEAKER_01",
+  "lang": "pl",
+  "text": "Otec opcjonę."
+ },
+ {
+  "start": 503.24,
+  "end": 504.15,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Per esempio..."
+ },
+ {
+  "start": 504.54,
+  "end": 505.64,
+  "speaker": "SPEAKER_01",
+  "lang": "pt",
+  "text": "Faz topa."
+ },
+ {
+  "start": 506.87,
+  "end": 507.85,
+  "speaker": "SPEAKER_01",
+  "lang": "es",
+  "text": "Con la escena."
+ },
+ {
+  "start": 508.41,
+  "end": 510.92,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Fai un rewind e vedi la..."
+ },
+ {
+  "start": 511.23,
+  "end": 512.58,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "The phrase, la frase."
+ },
+ {
+  "start": 514.03,
+  "end": 519.31,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "E ascolti la frase ancora e ancora, è come brainwash, ascolti una, due, tre."
+ },
+ {
+  "start": 520.02,
+  "end": 522.36,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Quindi ascolti e vedi."
+ },
+ {
+  "start": 522.77,
+  "end": 523.88,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "Ok. At the same time."
+ },
+ {
+  "start": 524.3,
+  "end": 528.81,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Può essere, per me così funziona, ascolto."
+ },
+ {
+  "start": 530.97,
+  "end": 534.9,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Per esempio, molti studenti studiano"
+ },
+ {
+  "start": 535.58,
+  "end": 536.84,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "I like hearing songs."
+ },
+ {
+  "start": 537.01,
+  "end": 540.22,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Per me no, mi dispiace, io voglio vedere le parole."
+ },
+ {
+  "start": 541.77,
+  "end": 554.63,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Non capisco, voglio ascoltare, o che la prima volta ascolto, va bene, musica. Seconda volta voglio vedere le parole perché il mio cervello non è, I don't recognize, voglio vedere parole e ascolto."
+ },
+ {
+  "start": 543.03,
+  "end": 544.45,
+  "speaker": "SPEAKER_00",
+  "lang": "es",
+  "text": "Sí, sí, todo el creature."
+ },
+ {
+  "start": 554.66,
+  "end": 557.85,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Il mio cervello è sincronizzato così, mi dispiace."
+ },
+ {
+  "start": 557.92,
+  "end": 564.99,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "No, no, no, capito, perché non la gente, come si dice, o sempre sing."
+ },
+ {
+  "start": 565.01,
+  "end": 566.68,
+  "speaker": "SPEAKER_00",
+  "lang": "pt",
+  "text": "Sim, sim."
+ },
+ {
+  "start": 567.67,
+  "end": 571.4,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Perché ci sono cantanti che cantano in modo chiaro."
+ },
+ {
+  "start": 572.51,
+  "end": 576.58,
+  "speaker": "SPEAKER_01",
+  "lang": "es",
+  "text": "Por ejemplo, yo cuando siento Bruce Springsteen no capisco ni..."
+ },
+ {
+  "start": 578.03,
+  "end": 580.53,
+  "speaker": "SPEAKER_01",
+  "lang": "fr",
+  "text": "Pourquoi pas, non ?"
+ },
+ {
+  "start": 581.63,
+  "end": 584.85,
+  "speaker": "SPEAKER_01",
+  "lang": "pl",
+  "text": "Widzimy, że w West Coast, East Coast,"
+ },
+ {
+  "start": 583.25,
+  "end": 584.02,
+  "speaker": "SPEAKER_00",
+  "lang": "es",
+  "text": "Sí, sí."
+ },
+ {
+  "start": 584.87,
+  "end": 593.39,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Non centrale, non East Coast, come si dice? Midway East Coast. Esatto."
+ },
+ {
+  "start": 591.1,
+  "end": 591.92,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "We glazed them."
+ },
+ {
+  "start": 594.77,
+  "end": 595.89,
+  "speaker": "SPEAKER_01",
+  "lang": "zh",
+  "text": "MS Cruiser"
+ },
+ {
+  "start": 596.38,
+  "end": 600.38,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Quando ho le parole della canzone dico wow, wow, facile."
+ },
+ {
+  "start": 600.66,
+  "end": 603.84,
+  "speaker": "SPEAKER_01",
+  "lang": "es",
+  "text": "Cuando oscoto, la rueda, como la guau, guau, guau."
+ },
+ {
+  "start": 602.89,
+  "end": 604.05,
+  "speaker": "SPEAKER_00",
+  "lang": "zh",
+  "text": "uding to a mental mental mental mental mental mental mental mental mental mental mental mental mental mental mental mental mental mental mental mental mental mental mental mental mental mental mental mental mental mental mental mental mental mental mental mental mental mental mental mental mental mental mental mental mental mental mental mental mental mental mental mental mental mental mental mental mental mental mental mental mental mental mental mental mental mental mental mental mental mental mental mental mental mental mental mental mental mental mental mental mental mental mental mental mental mental mental mental mental mental mental mental mental mental mental mental mental mental mental mental mental mental mental mental mental mental mental mental mental mental mental mental mental mental mental mental mental mental mental mental mental mental mental mental mental mental mental mental mental mental mental mental mental mental mental mental mental mental mental mental mental mental mental mental mental mental mental mental mental mental mental mental mental mental mental mental mental mental mental mental mental mental mental mental mental mental mental mental mental mental mental mental mental mental mental mental mental mental mental mental mental mental mental mental mental mental mental mental mental mental mental mental mental mental mental mental mental mental mental mental mental mental mental mental mental mental mental mental mental mental mental mental mental mental mental mental mental mental mental mental"
+ },
+ {
+  "start": 604.6,
+  "end": 606.32,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Però è in Italia uguale."
+ },
+ {
+  "start": 607.33,
+  "end": 610.1,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Un cantante canta in modo chiaro, un altro..."
+ },
+ {
+  "start": 611.23,
+  "end": 613.18,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Per esempio conosci Laura Pausini."
+ },
+ {
+  "start": 615.55,
+  "end": 617.01,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Pronunci Laura Pausini."
+ },
+ {
+  "start": 621.0,
+  "end": 622.01,
+  "speaker": "SPEAKER_01",
+  "lang": "pt",
+  "text": "Muito famosa."
+ },
+ {
+  "start": 622.45,
+  "end": 624.81,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Negli Stati Uniti no, in Latina America sì."
+ },
+ {
+  "start": 629.32,
+  "end": 632.29,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Laura Cusini, no, non la conosco."
+ },
+ {
+  "start": 631.29,
+  "end": 633.45,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "No, chiedi a tua moglie."
+ },
+ {
+  "start": 633.75,
+  "end": 636.35,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "È famosissima, canta... Oh sì!"
+ },
+ {
+  "start": 635.81,
+  "end": 638.82,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "Oh, si, si, mi molese, si."
+ },
+ {
+  "start": 639.8,
+  "end": 640.47,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "Freaking hell."
+ },
+ {
+  "start": 640.22,
+  "end": 643.91,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Ti piace o non ti piace, però canta in modo chiaro."
+ },
+ {
+  "start": 644.39,
+  "end": 647.07,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "She's opening the mouth."
+ },
+ {
+  "start": 647.15,
+  "end": 647.88,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Capito?"
+ },
+ {
+  "start": 647.54,
+  "end": 648.49,
+  "speaker": "SPEAKER_01",
+  "lang": "tl",
+  "text": "Sikapisya."
+ },
+ {
+  "start": 649.06,
+  "end": 651.59,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Puoi fare, puoi ascoltare qualche canzone."
+ },
+ {
+  "start": 651.98,
+  "end": 653.5,
+  "speaker": "SPEAKER_01",
+  "lang": "he",
+  "text": "אה, פיים."
+ },
+ {
+  "start": 654.05,
+  "end": 654.76,
+  "speaker": "SPEAKER_01",
+  "lang": "pt",
+  "text": "É..."
+ },
+ {
+  "start": 655.2,
+  "end": 657.08,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Con le parole della canzone."
+ },
+ {
+  "start": 658.56,
+  "end": 659.78,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "È un buon esercizio."
+ },
+ {
+  "start": 661.78,
+  "end": 663.2,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Ascoltare è..."
+ },
+ {
+  "start": 663.71,
+  "end": 664.74,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "E' sempre musica."
+ },
+ {
+  "start": 667.44,
+  "end": 668.06,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Allora..."
+ },
+ {
+  "start": 670.37,
+  "end": 671.49,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Quindi per..."
+ },
+ {
+  "start": 672.04,
+  "end": 673.56,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Ascoltare le parole."
+ },
+ {
+  "start": 675.62,
+  "end": 676.79,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "We are stuck in a..."
+ },
+ {
+  "start": 677.39,
+  "end": 680.55,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Il mio computer per le lezioni di italiano perché..."
+ },
+ {
+  "start": 681.05,
+  "end": 684.33,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Puoi dire perché voglio ascoltare le parole."
+ },
+ {
+  "start": 685.41,
+  "end": 688.09,
+  "speaker": "SPEAKER_00",
+  "lang": "es",
+  "text": "Sí."
+ },
+ {
+  "start": 688.01,
+  "end": 688.63,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "Worship."
+ },
+ {
+  "start": 699.74,
+  "end": 700.51,
+  "speaker": "SPEAKER_01",
+  "lang": "pl",
+  "text": "Dopo..."
+ },
+ {
+  "start": 700.8,
+  "end": 702.84,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Dopo che ho fatto la doccia,"
+ },
+ {
+  "start": 703.79,
+  "end": 704.71,
+  "speaker": "SPEAKER_01",
+  "lang": "es",
+  "text": "Tiempo es lo poquito."
+ },
+ {
+  "start": 715.73,
+  "end": 717.08,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "E ho usato"
+ },
+ {
+  "start": 718.32,
+  "end": 719.8,
+  "speaker": "SPEAKER_01",
+  "lang": "pt",
+  "text": "Passado ou usado."
+ },
+ {
+  "start": 721.52,
+  "end": 722.15,
+  "speaker": "SPEAKER_00",
+  "lang": "ko",
+  "text": "에, 어."
+ },
+ {
+  "start": 722.38,
+  "end": 725.93,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "C, capito, I try to say and, but O is out there, ok."
+ },
+ {
+  "start": 726.23,
+  "end": 727.92,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Ricordati questa..."
+ },
+ {
+  "start": 729.52,
+  "end": 730.18,
+  "speaker": "SPEAKER_00",
+  "lang": "ru",
+  "text": "Я вас прошу."
+ },
+ {
+  "start": 730.18,
+  "end": 733.06,
+  "speaker": "SPEAKER_01",
+  "lang": "es",
+  "text": "Porque la palabra comienza con SP."
+ },
+ {
+  "start": 734.04,
+  "end": 735.44,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Come lo zaino."
+ },
+ {
+  "start": 735.53,
+  "end": 736.34,
+  "speaker": "SPEAKER_00",
+  "lang": "tr",
+  "text": "Batsın."
+ },
+ {
+  "start": 737.45,
+  "end": 739.41,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "Oh my God, I know what it is now."
+ },
+ {
+  "start": 744.25,
+  "end": 745.5,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "I know what I'm doing now."
+ },
+ {
+  "start": 768.3,
+  "end": 780.67,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "It's because, okay Barbara, I understand what's going on. I'm on a MacBook, and anytime I try and scroll, sometimes I scroll left. Ah, I see, when you're scrolling, I see."
+ },
+ {
+  "start": 778.25,
+  "end": 780.75,
+  "speaker": "SPEAKER_01",
+  "lang": "es",
+  "text": "Ah, sí, niños, sí."
+ },
+ {
+  "start": 780.75,
+  "end": 784.58,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "Il raffreddato la scena, quindi non provocaremo più la scena."
+ },
+ {
+  "start": 784.14,
+  "end": 786.74,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Non devo toccare qua, ho pensato io, no."
+ },
+ {
+  "start": 790.13,
+  "end": 790.76,
+  "speaker": "SPEAKER_01",
+  "lang": "ko",
+  "text": "uding"
+ },
+ {
+  "start": 791.11,
+  "end": 795.72,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Ricordati lo spazzolino perché SP like lo specchio."
+ },
+ {
+  "start": 796.7,
+  "end": 798.46,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Ricordare queste parole"
+ },
+ {
+  "start": 799.0,
+  "end": 801.07,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Lo zaino, lo zucchero."
+ },
+ {
+  "start": 800.33,
+  "end": 806.61,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "No, no, no. How do you say low again? I mean..."
+ },
+ {
+  "start": 807.16,
+  "end": 808.99,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "What does it mean again? Low?"
+ },
+ {
+  "start": 809.64,
+  "end": 810.38,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "Is it good?"
+ },
+ {
+  "start": 809.86,
+  "end": 813.42,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Lo articolo, quando hai le parole con la zetta..."
+ },
+ {
+  "start": 814.01,
+  "end": 815.78,
+  "speaker": "SPEAKER_00",
+  "lang": "pt",
+  "text": "Ah, sim, capito."
+ },
+ {
+  "start": 816.19,
+  "end": 817.29,
+  "speaker": "SPEAKER_01",
+  "lang": "es",
+  "text": "Los estadios."
+ },
+ {
+  "start": 820.75,
+  "end": 821.51,
+  "speaker": "SPEAKER_01",
+  "lang": "pt",
+  "text": "Que recorde."
+ },
+ {
+  "start": 821.51,
+  "end": 822.4,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "It's the essence."
+ },
+ {
+  "start": 821.96,
+  "end": 827.68,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Lo psicologo è un gruppo, perché è più facile pronunciarlo, lo psicologo."
+ },
+ {
+  "start": 828.76,
+  "end": 829.83,
+  "speaker": "SPEAKER_01",
+  "lang": "pt",
+  "text": "Psicólogo."
+ },
+ {
+  "start": 830.74,
+  "end": 833.74,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "Wait a minute, the meaning is because it's easier to pronounce?"
+ },
+ {
+  "start": 835.21,
+  "end": 836.24,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "Should be easier."
+ },
+ {
+  "start": 836.59,
+  "end": 839.61,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "No, no, I'm just saying, is that why it's low?"
+ },
+ {
+  "start": 836.61,
+  "end": 837.27,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "No, no, I'm..."
+ },
+ {
+  "start": 839.61,
+  "end": 840.76,
+  "speaker": "SPEAKER_01",
+  "lang": "es",
+  "text": "Sí, sí, sí."
+ },
+ {
+  "start": 841.71,
+  "end": 845.42,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "Lo specchio, otherwise il specchio."
+ },
+ {
+  "start": 846.46,
+  "end": 847.16,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "Thank you."
+ },
+ {
+  "start": 846.55,
+  "end": 847.88,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "Ok, capito."
+ },
+ {
+  "start": 847.88,
+  "end": 850.99,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Lo specchio è più fluido, lo specchio."
+ },
+ {
+  "start": 852.13,
+  "end": 853.75,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Lo psicologo."
+ },
+ {
+  "start": 855.34,
+  "end": 856.64,
+  "speaker": "SPEAKER_01",
+  "lang": "es",
+  "text": "Los estándares."
+ },
+ {
+  "start": 857.97,
+  "end": 861.68,
+  "speaker": "SPEAKER_01",
+  "lang": "es",
+  "text": "El standard, como en inglese, el standard, lo standard."
+ },
+ {
+  "start": 866.27,
+  "end": 866.88,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "Okay."
+ },
+ {
+  "start": 869.5,
+  "end": 872.99,
+  "speaker": "SPEAKER_01",
+  "lang": "es",
+  "text": "Dopo la sedia, lo dopo mi siedo."
+ },
+ {
+  "start": 873.78,
+  "end": 874.9,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "Mi siedio, ok."
+ },
+ {
+  "start": 875.79,
+  "end": 878.14,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "I sit myself, me siedo."
+ },
+ {
+  "start": 878.68,
+  "end": 881.33,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Mi siedo perché io..."
+ },
+ {
+  "start": 881.45,
+  "end": 882.78,
+  "speaker": "SPEAKER_01",
+  "lang": "hr",
+  "text": "Vi sjedo i jo."
+ },
+ {
+  "start": 883.1,
+  "end": 885.68,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Mi siedo nel mio corpo."
+ },
+ {
+  "start": 888.5,
+  "end": 890.68,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Quindi dopo il mistero."
+ },
+ {
+  "start": 899.6,
+  "end": 900.53,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "E..."
+ },
+ {
+  "start": 901.64,
+  "end": 906.24,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Ok, mi siedo alla scrivania, questo deve essere alla scrivania."
+ },
+ {
+  "start": 911.13,
+  "end": 914.27,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Ti ricordi A più LA? Alla."
+ },
+ {
+  "start": 916.53,
+  "end": 917.29,
+  "speaker": "SPEAKER_01",
+  "lang": "id",
+  "text": "Agula"
+ },
+ {
+  "start": 917.68,
+  "end": 919.72,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "Because the Allah doesn't exist alone."
+ },
+ {
+  "start": 920.95,
+  "end": 922.25,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "It's from Allah."
+ },
+ {
+  "start": 922.87,
+  "end": 924.31,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "Allah is great."
+ },
+ {
+  "start": 926.62,
+  "end": 927.99,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "Alla scrivania."
+ },
+ {
+  "start": 928.49,
+  "end": 929.24,
+  "speaker": "SPEAKER_00",
+  "lang": "es",
+  "text": "Gracias."
+ },
+ {
+  "start": 934.26,
+  "end": 935.12,
+  "speaker": "SPEAKER_01",
+  "lang": "es",
+  "text": "Y..."
+ },
+ {
+  "start": 935.33,
+  "end": 937.74,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Ad esempio, mi preparo."
+ },
+ {
+  "start": 938.3,
+  "end": 939.24,
+  "speaker": "SPEAKER_01",
+  "lang": "pt",
+  "text": "Per-o-gi."
+ },
+ {
+  "start": 940.37,
+  "end": 943.11,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Per la giornata mi preparo e mi preparo."
+ },
+ {
+  "start": 944.39,
+  "end": 947.19,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Organizzo la giornata, mi preparo."
+ },
+ {
+  "start": 949.4,
+  "end": 950.36,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "It's the knees."
+ },
+ {
+  "start": 949.42,
+  "end": 951.24,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "It's the knees."
+ },
+ {
+  "start": 952.29,
+  "end": 955.36,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Mi preparo, non esiste in inglese, mi preparo."
+ },
+ {
+  "start": 955.78,
+  "end": 958.9,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Anche get ready, mi preparo e vado."
+ },
+ {
+  "start": 959.34,
+  "end": 960.2,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "A Napoli."
+ },
+ {
+  "start": 961.15,
+  "end": 967.56,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "Ma sì, questo è il problema. Io penso..."
+ },
+ {
+  "start": 968.77,
+  "end": 973.89,
+  "speaker": "SPEAKER_00",
+  "lang": "es",
+  "text": "¿Cómo se dice? Sounds stupido con mí."
+ },
+ {
+  "start": 973.14,
+  "end": 975.0,
+  "speaker": "SPEAKER_01",
+  "lang": "es",
+  "text": "Y sento estúpido."
+ },
+ {
+  "start": 975.0,
+  "end": 978.43,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "Si, porque it sounds like a caveman."
+ },
+ {
+  "start": 978.83,
+  "end": 981.48,
+  "speaker": "SPEAKER_00",
+  "lang": "ro",
+  "text": "Ma, n-am..."
+ },
+ {
+  "start": 982.8,
+  "end": 986.95,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "It's not, I'm not insulting, but I'm just worried."
+ },
+ {
+  "start": 987.07,
+  "end": 992.72,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "Not that I can speak great now, but I'm worried that I may start putting too much me's on everything."
+ },
+ {
+  "start": 993.24,
+  "end": 998.12,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Ma no, è un sonno artificiale, mi alzo, mi siedo, mi preparo."
+ },
+ {
+  "start": 998.64,
+  "end": 1000.55,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "If you keep putting me in me..."
+ },
+ {
+  "start": 1000.96,
+  "end": 1004.35,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Mi sembra strano."
+ },
+ {
+  "start": 1005.46,
+  "end": 1006.66,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Ma è corretto?"
+ },
+ {
+  "start": 1006.93,
+  "end": 1008.68,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "So, so, ma, ma..."
+ },
+ {
+  "start": 1009.36,
+  "end": 1010.02,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "Um..."
+ },
+ {
+  "start": 1010.42,
+  "end": 1012.36,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "But I can't say me..."
+ },
+ {
+  "start": 1013.61,
+  "end": 1017.05,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Ah, no, capito, capito bene."
+ },
+ {
+  "start": 1017.24,
+  "end": 1019.15,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "Why me?"
+ },
+ {
+  "start": 1019.89,
+  "end": 1021.58,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "I do something to myself."
+ },
+ {
+  "start": 1022.1,
+  "end": 1023.38,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "Esatto, si."
+ },
+ {
+  "start": 1022.64,
+  "end": 1024.28,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "Okay, so I can't say meep."
+ },
+ {
+  "start": 1024.58,
+  "end": 1026.2,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "Pagare."
+ },
+ {
+  "start": 1026.4,
+  "end": 1027.5,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "Or me."
+ },
+ {
+  "start": 1028.09,
+  "end": 1030.45,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "No, because it's not on you."
+ },
+ {
+  "start": 1028.17,
+  "end": 1032.63,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "No, because it's not on your scene. Ok, capito. So anytime I think..."
+ },
+ {
+  "start": 1033.12,
+  "end": 1034.77,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "Something is referred to..."
+ },
+ {
+  "start": 1033.46,
+  "end": 1036.63,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "Something is referring to you, to your body."
+ },
+ {
+  "start": 1036.8,
+  "end": 1037.99,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "Ok, ok."
+ },
+ {
+  "start": 1038.2,
+  "end": 1040.29,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Mi alzo, mi ricordo."
+ },
+ {
+  "start": 1040.78,
+  "end": 1045.62,
+  "speaker": "SPEAKER_01",
+  "lang": "es",
+  "text": "Me preparo, me siento, yo tengo que sentarme, yo sento."
+ },
+ {
+  "start": 1046.01,
+  "end": 1049.03,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "Me, your body is supposed to sit somewhere."
+ },
+ {
+  "start": 1049.91,
+  "end": 1052.78,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "Ok, so, with that..."
+ },
+ {
+  "start": 1053.72,
+  "end": 1054.67,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "What about tea?"
+ },
+ {
+  "start": 1056.37,
+  "end": 1060.71,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "Ti, tu, I'm talking to you, tu giasi, ti siedi al bar."
+ },
+ {
+  "start": 1060.83,
+  "end": 1062.72,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "I'm talking to you, present your..."
+ },
+ {
+  "start": 1063.14,
+  "end": 1063.97,
+  "speaker": "SPEAKER_01",
+  "lang": "es",
+  "text": "Cuando..."
+ },
+ {
+  "start": 1065.45,
+  "end": 1066.94,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "Sei Annapoli."
+ },
+ {
+  "start": 1068.13,
+  "end": 1069.13,
+  "speaker": "SPEAKER_01",
+  "lang": "pt",
+  "text": "Não foi em Ticá."
+ },
+ {
+  "start": 1072.47,
+  "end": 1074.44,
+  "speaker": "SPEAKER_01",
+  "lang": "id",
+  "text": "Penas ki disyedi."
+ },
+ {
+  "start": 1074.75,
+  "end": 1075.49,
+  "speaker": "SPEAKER_01",
+  "lang": "es",
+  "text": "Altar."
+ },
+ {
+  "start": 1078.44,
+  "end": 1079.86,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Per prendere un caffè."
+ },
+ {
+  "start": 1080.34,
+  "end": 1082.24,
+  "speaker": "SPEAKER_01",
+  "lang": "tl",
+  "text": "All standing, say..."
+ },
+ {
+  "start": 1083.12,
+  "end": 1083.89,
+  "speaker": "SPEAKER_01",
+  "lang": "de",
+  "text": "In Wien."
+ },
+ {
+  "start": 1085.99,
+  "end": 1088.5,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "Quando prendi un caffè? It's a normal question."
+ },
+ {
+  "start": 1089.19,
+  "end": 1090.61,
+  "speaker": "SPEAKER_01",
+  "lang": "pt",
+  "text": "Quando eu sei a Nápoles..."
+ },
+ {
+  "start": 1091.72,
+  "end": 1095.4,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "Ti siedi, I'm asking you, ti siedi, that's why, ti."
+ },
+ {
+  "start": 1096.77,
+  "end": 1098.59,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "Ok, so me and tea."
+ },
+ {
+  "start": 1099.08,
+  "end": 1102.37,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "Si. To that person, to themselves. Si."
+ },
+ {
+  "start": 1102.37,
+  "end": 1105.56,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "Tea is related to a molier, quando lei..."
+ },
+ {
+  "start": 1106.0,
+  "end": 1106.93,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "È al bar."
+ },
+ {
+  "start": 1107.74,
+  "end": 1109.19,
+  "speaker": "SPEAKER_01",
+  "lang": "es",
+  "text": "En cuando ley."
+ },
+ {
+  "start": 1110.54,
+  "end": 1111.62,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "E al bar."
+ },
+ {
+  "start": 1112.16,
+  "end": 1114.0,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "We are talking about her, third person."
+ },
+ {
+  "start": 1114.37,
+  "end": 1115.54,
+  "speaker": "SPEAKER_01",
+  "lang": "es",
+  "text": "Si siede."
+ },
+ {
+  "start": 1120.45,
+  "end": 1122.47,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "O bevi il caffè in piedi."
+ },
+ {
+  "start": 1124.51,
+  "end": 1128.09,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Stiamo parlando di lei, quindi beve."
+ },
+ {
+  "start": 1130.62,
+  "end": 1132.71,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "Ok, so along those lines."
+ },
+ {
+  "start": 1132.21,
+  "end": 1132.93,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "I love it."
+ },
+ {
+  "start": 1133.42,
+  "end": 1153.71,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "In English, I'm sorry, because this is, I really want to understand this. So, per la ilmolie, tea, if she's doing something for herself. So I can't say tea, aperto il porta, because that's opening a door, not for herself."
+ },
+ {
+  "start": 1155.12,
+  "end": 1158.99,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "But I can say..."
+ },
+ {
+  "start": 1160.41,
+  "end": 1165.27,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "Ah, like, tea, like, how would I say, cut your hair?"
+ },
+ {
+  "start": 1166.46,
+  "end": 1167.93,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "I tagli e i capelli."
+ },
+ {
+  "start": 1168.29,
+  "end": 1171.73,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "You are talking to her. Ti tagli i capelli oggi."
+ },
+ {
+  "start": 1177.89,
+  "end": 1178.93,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "Or if I say..."
+ },
+ {
+  "start": 1178.6,
+  "end": 1181.23,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Significa tua moglie va dal parrucchiere."
+ },
+ {
+  "start": 1181.65,
+  "end": 1185.25,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "It's ok, you are asking her."
+ },
+ {
+  "start": 1185.6,
+  "end": 1189.06,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Oggi ti tagli i capelli come gli è Cilento."
+ },
+ {
+  "start": 1191.58,
+  "end": 1207.35,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "Ok, so what about a mix? Like if there's possibilities of, that there is a T in a me, or if I say for her to bring me something, like how would I know when to use the me?"
+ },
+ {
+  "start": 1208.11,
+  "end": 1213.24,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Io dono bei hard, because some words are, per esempio, alzarsi."
+ },
+ {
+  "start": 1214.27,
+  "end": 1215.89,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "No, I couldn't, uh, screw this."
+ },
+ {
+  "start": 1215.96,
+  "end": 1217.24,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Per esempio..."
+ },
+ {
+  "start": 1217.58,
+  "end": 1219.1,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "Lay the..."
+ },
+ {
+  "start": 1220.36,
+  "end": 1221.66,
+  "speaker": "SPEAKER_01",
+  "lang": "pt",
+  "text": "Minha mãe, lei."
+ },
+ {
+  "start": 1222.81,
+  "end": 1224.03,
+  "speaker": "SPEAKER_01",
+  "lang": "es",
+  "text": "Si alza,"
+ },
+ {
+  "start": 1225.16,
+  "end": 1226.37,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Fantasia alle..."
+ },
+ {
+  "start": 1228.33,
+  "end": 1230.71,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "It's just a statement about her."
+ },
+ {
+  "start": 1236.17,
+  "end": 1239.21,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "When you mix up several different verbs,"
+ },
+ {
+  "start": 1240.41,
+  "end": 1242.32,
+  "speaker": "SPEAKER_01",
+  "lang": "cs",
+  "text": "Je v turnoupe já hráním sál si."
+ },
+ {
+  "start": 1243.01,
+  "end": 1245.59,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Per esempio sedersi."
+ },
+ {
+  "start": 1247.97,
+  "end": 1250.74,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Il punto è, per esempio, io e mia moglie"
+ },
+ {
+  "start": 1250.82,
+  "end": 1251.43,
+  "speaker": "SPEAKER_01",
+  "lang": "pt",
+  "text": "Nós..."
+ },
+ {
+  "start": 1253.08,
+  "end": 1254.11,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "Noi ci"
+ },
+ {
+  "start": 1254.42,
+  "end": 1255.75,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Sediamo al bar."
+ },
+ {
+  "start": 1257.07,
+  "end": 1262.16,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "È una parola che parli di voi, io e mia moglie, noi ci sediamo al bar."
+ },
+ {
+  "start": 1264.53,
+  "end": 1265.59,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Vediamo."
+ },
+ {
+  "start": 1266.01,
+  "end": 1267.46,
+  "speaker": "SPEAKER_01",
+  "lang": "fr",
+  "text": "On va se dire un café."
+ },
+ {
+  "start": 1271.02,
+  "end": 1275.56,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Ciao, sono bella, ciao, mi dispiace."
+ },
+ {
+  "start": 1274.4,
+  "end": 1277.72,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Sì, è bello. Adliriti."
+ },
+ {
+  "start": 1277.27,
+  "end": 1284.29,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "Ok, sorry Barbara."
+ },
+ {
+  "start": 1284.89,
+  "end": 1285.94,
+  "speaker": "SPEAKER_01",
+  "lang": "pt",
+  "text": "Não, não foi o que eu falei."
+ },
+ {
+  "start": 1290.26,
+  "end": 1293.58,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Non si può dimenticare il no, però il C perché si è persi."
+ },
+ {
+  "start": 1294.11,
+  "end": 1296.71,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Ci sediamo al bar e beviamo un caffè."
+ },
+ {
+  "start": 1298.77,
+  "end": 1301.08,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Quindi bere, non riflessivo."
+ },
+ {
+  "start": 1301.48,
+  "end": 1306.31,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Beviamo un caffè, sedersi sì, veni split, ci sediamo."
+ },
+ {
+  "start": 1310.42,
+  "end": 1312.03,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Conosci sedersi?"
+ },
+ {
+  "start": 1312.59,
+  "end": 1313.72,
+  "speaker": "SPEAKER_01",
+  "lang": "es",
+  "text": "Alzarse."
+ },
+ {
+  "start": 1314.95,
+  "end": 1319.27,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Il punto di partenza è svegliarsi. Devi sapere il verbo riflessivo."
+ },
+ {
+  "start": 1319.59,
+  "end": 1325.12,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "Then second step, you split the verb and the person is io, mi, siedo."
+ },
+ {
+  "start": 1325.92,
+  "end": 1328.36,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "I'm talking to you, to TCAD."
+ },
+ {
+  "start": 1329.19,
+  "end": 1332.95,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "We are talking about your wife, Leigh Cicciade."
+ },
+ {
+  "start": 1333.56,
+  "end": 1340.63,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "Each time you have to recognize who are supposed to do something, to perform something, and then you use you, me."
+ },
+ {
+  "start": 1344.16,
+  "end": 1345.32,
+  "speaker": "SPEAKER_00",
+  "lang": "es",
+  "text": "Ley C."
+ },
+ {
+  "start": 1347.01,
+  "end": 1349.05,
+  "speaker": "SPEAKER_00",
+  "lang": "de",
+  "text": "Ma, ähm, du..."
+ },
+ {
+  "start": 1350.61,
+  "end": 1352.83,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "You gave me. Como se dice you gave me?"
+ },
+ {
+  "start": 1353.37,
+  "end": 1354.82,
+  "speaker": "SPEAKER_00",
+  "lang": "es",
+  "text": "Tú me has dado..."
+ },
+ {
+  "start": 1355.18,
+  "end": 1364.46,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Tu mi hai dato la prima lezione con verbi non regolari."
+ },
+ {
+  "start": 1364.68,
+  "end": 1372.8,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "Penso che il numero quattro, ma tu hai una..."
+ },
+ {
+  "start": 1373.79,
+  "end": 1376.0,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "Scroller, como se dice list?"
+ },
+ {
+  "start": 1376.36,
+  "end": 1381.38,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Una lista, sì. Una lista di tutti i verbi..."
+ },
+ {
+  "start": 1381.57,
+  "end": 1382.99,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "Reflexivo."
+ },
+ {
+  "start": 1383.93,
+  "end": 1386.11,
+  "speaker": "SPEAKER_01",
+  "lang": "de",
+  "text": "Sie haben eine Liste."
+ },
+ {
+  "start": 1386.53,
+  "end": 1387.73,
+  "speaker": "SPEAKER_01",
+  "lang": "es",
+  "text": "Puestos, beta."
+ },
+ {
+  "start": 1388.54,
+  "end": 1389.2,
+  "speaker": "SPEAKER_01",
+  "lang": "ko",
+  "text": "mental"
+ },
+ {
+  "start": 1404.17,
+  "end": 1406.46,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Allora, pagina..."
+ },
+ {
+  "start": 1407.0,
+  "end": 1407.89,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Vedi questa."
+ },
+ {
+  "start": 1408.76,
+  "end": 1410.14,
+  "speaker": "SPEAKER_00",
+  "lang": "es",
+  "text": "Sí, sí, capítulo, sí."
+ },
+ {
+  "start": 1410.65,
+  "end": 1412.67,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Questa è la coniugazione."
+ },
+ {
+  "start": 1415.08,
+  "end": 1420.15,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Però, piano piano, facciamo tutto insieme, è il tempo, perché poi fai il mix."
+ },
+ {
+  "start": 1420.15,
+  "end": 1420.99,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "Ok, capito."
+ },
+ {
+  "start": 1420.64,
+  "end": 1425.93,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "È meglio fare mi, io, mi, alzo, tu ti alzi, facciamo io, tu, lei, lui."
+ },
+ {
+  "start": 1426.36,
+  "end": 1427.88,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Perché insieme..."
+ },
+ {
+  "start": 1428.25,
+  "end": 1429.9,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "O eventualmente noi."
+ },
+ {
+  "start": 1431.69,
+  "end": 1434.88,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Per esempio il verbo che tu usi è incontrarsi."
+ },
+ {
+  "start": 1435.86,
+  "end": 1436.95,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "We'll meet this summer."
+ },
+ {
+  "start": 1437.43,
+  "end": 1439.06,
+  "speaker": "SPEAKER_01",
+  "lang": "es",
+  "text": "Encontrarse."
+ },
+ {
+  "start": 1443.47,
+  "end": 1445.64,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "The trigger point is RC-ARN."
+ },
+ {
+  "start": 1448.88,
+  "end": 1452.71,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "Io, you can forget Io because this is not a mistake, Io."
+ },
+ {
+  "start": 1453.0,
+  "end": 1455.55,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Oggi mi incontro"
+ },
+ {
+  "start": 1456.68,
+  "end": 1457.42,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "Corner."
+ },
+ {
+  "start": 1457.96,
+  "end": 1458.98,
+  "speaker": "SPEAKER_01",
+  "lang": "ru",
+  "text": "Амичи."
+ },
+ {
+  "start": 1459.26,
+  "end": 1460.06,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "A Napoli."
+ },
+ {
+  "start": 1465.34,
+  "end": 1465.98,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "Okay."
+ },
+ {
+  "start": 1467.57,
+  "end": 1472.11,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "I'm meeting myself. In inglese non funziona, in italiano è corretto."
+ },
+ {
+  "start": 1473.76,
+  "end": 1474.79,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Mi incontro."
+ },
+ {
+  "start": 1475.41,
+  "end": 1478.11,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "We are talking about NOI, NOI."
+ },
+ {
+  "start": 1479.07,
+  "end": 1481.66,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Ci incontriamo in centro."
+ },
+ {
+  "start": 1484.85,
+  "end": 1488.24,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Ci incontriamo in centro a Napoli."
+ },
+ {
+  "start": 1494.68,
+  "end": 1501.06,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Sì, capito. Noi ci incontriamo in centro a Napoli."
+ },
+ {
+  "start": 1501.89,
+  "end": 1508.25,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Noi non è importante, se scoppiate noi ok, però ci è da essere lì perché il verbo è incontrarsi."
+ },
+ {
+  "start": 1510.31,
+  "end": 1516.16,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Il errore è che se non usi C la frase non è corretta."
+ },
+ {
+  "start": 1518.95,
+  "end": 1519.89,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Ci vediamo."
+ },
+ {
+  "start": 1520.55,
+  "end": 1521.92,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Ci vediamo domani."
+ },
+ {
+  "start": 1522.43,
+  "end": 1523.67,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "We see each other."
+ },
+ {
+  "start": 1524.7,
+  "end": 1526.48,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "You can say vediamo domani."
+ },
+ {
+  "start": 1527.44,
+  "end": 1531.88,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Perché supposiamo che noi due ci vediamo l'uno all'altro."
+ },
+ {
+  "start": 1535.22,
+  "end": 1540.16,
+  "speaker": "SPEAKER_00",
+  "lang": "es",
+  "text": "¿Cuál es la frase inglesa?"
+ },
+ {
+  "start": 1540.57,
+  "end": 1541.17,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "Um..."
+ },
+ {
+  "start": 1541.53,
+  "end": 1542.73,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "Follow me. See you."
+ },
+ {
+  "start": 1542.91,
+  "end": 1544.26,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Ci vediamo."
+ },
+ {
+  "start": 1545.63,
+  "end": 1547.01,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "We see each other."
+ },
+ {
+  "start": 1547.45,
+  "end": 1548.72,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Ci vediamo domani."
+ },
+ {
+  "start": 1550.29,
+  "end": 1552.87,
+  "speaker": "SPEAKER_00",
+  "lang": "zh",
+  "text": "MaoMao, Koso follow me."
+ },
+ {
+  "start": 1553.14,
+  "end": 1554.47,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "How would I say follow me?"
+ },
+ {
+  "start": 1557.24,
+  "end": 1558.13,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "Seguimi."
+ },
+ {
+  "start": 1558.27,
+  "end": 1560.63,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "Because it's like an order, say with me."
+ },
+ {
+  "start": 1561.54,
+  "end": 1563.68,
+  "speaker": "SPEAKER_01",
+  "lang": "ht",
+  "text": "Segui mi."
+ },
+ {
+  "start": 1569.78,
+  "end": 1571.58,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "Seguimi. Ok."
+ },
+ {
+  "start": 1573.93,
+  "end": 1576.91,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Per esempio, e questo molto usato in italiano,"
+ },
+ {
+  "start": 1577.69,
+  "end": 1580.14,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Quando io non capisco una situazione,"
+ },
+ {
+  "start": 1580.66,
+  "end": 1582.13,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Dico non ti seguo."
+ },
+ {
+  "start": 1583.45,
+  "end": 1589.17,
+  "speaker": "SPEAKER_01",
+  "lang": "es",
+  "text": "Pienso anche in ingles, when I say you, I don't follow you, significa I don't understand what are you meaning."
+ },
+ {
+  "start": 1589.83,
+  "end": 1592.61,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "In italiano puoi dire non capisco."
+ },
+ {
+  "start": 1593.77,
+  "end": 1594.46,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "Standard."
+ },
+ {
+  "start": 1596.62,
+  "end": 1597.7,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Non ti seguo."
+ },
+ {
+  "start": 1599.7,
+  "end": 1605.91,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "It's not in a physical way I follow you somewhere. I don't realize what are you saying."
+ },
+ {
+  "start": 1608.08,
+  "end": 1609.75,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Capisco dal contesto."
+ },
+ {
+  "start": 1610.08,
+  "end": 1611.71,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Non ti seguo."
+ },
+ {
+  "start": 1612.61,
+  "end": 1616.05,
+  "speaker": "SPEAKER_01",
+  "lang": "hr",
+  "text": "Ne razumijem što znaš, što znaš?"
+ },
+ {
+  "start": 1618.43,
+  "end": 1621.77,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Queste sono cose che usi nella vita quotidiana."
+ },
+ {
+  "start": 1624.0,
+  "end": 1628.79,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Possibile ascolti, questa è Daily Life Language, la lingua di tutti i giorni."
+ },
+ {
+  "start": 1632.3,
+  "end": 1633.99,
+  "speaker": "SPEAKER_01",
+  "lang": "tr",
+  "text": "Değil mi? Kötü diyalan."
+ },
+ {
+  "start": 1637.9,
+  "end": 1638.78,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "Mmm, ok."
+ },
+ {
+  "start": 1639.89,
+  "end": 1644.03,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Perché tu non parli con tua moglie in italiano, no, sempre in inglese."
+ },
+ {
+  "start": 1644.31,
+  "end": 1648.65,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "No, no, adesso sì, ma..."
+ },
+ {
+  "start": 1649.53,
+  "end": 1656.31,
+  "speaker": "SPEAKER_00",
+  "lang": "ms",
+  "text": "Ada sosi per la China, per la..."
+ },
+ {
+  "start": 1658.18,
+  "end": 1660.94,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "Ci sere... ci seriamo?"
+ },
+ {
+  "start": 1660.97,
+  "end": 1662.08,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Ci sediamo, sì."
+ },
+ {
+  "start": 1661.9,
+  "end": 1666.39,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "On, um, uh, how do you say couch?"
+ },
+ {
+  "start": 1666.88,
+  "end": 1667.92,
+  "speaker": "SPEAKER_00",
+  "lang": "fr",
+  "text": "Sur le sofa,"
+ },
+ {
+  "start": 1668.44,
+  "end": 1670.57,
+  "speaker": "SPEAKER_00",
+  "lang": "ht",
+  "text": "Soudou soufa."
+ },
+ {
+  "start": 1668.5,
+  "end": 1670.08,
+  "speaker": "SPEAKER_01",
+  "lang": "pt",
+  "text": "Isso é um sudo."
+ },
+ {
+  "start": 1671.92,
+  "end": 1673.56,
+  "speaker": "SPEAKER_01",
+  "lang": "es",
+  "text": "Son divano, ángel."
+ },
+ {
+  "start": 1675.72,
+  "end": 1679.38,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "Ma on telefono no, perché..."
+ },
+ {
+  "start": 1679.38,
+  "end": 1681.32,
+  "speaker": "SPEAKER_01",
+  "lang": "es",
+  "text": "No, ¿por qué no? ¿Qué ustedes?"
+ },
+ {
+  "start": 1681.59,
+  "end": 1683.33,
+  "speaker": "SPEAKER_00",
+  "lang": "zh",
+  "text": "是,"
+ },
+ {
+  "start": 1683.92,
+  "end": 1690.23,
+  "speaker": "SPEAKER_00",
+  "lang": "la",
+  "text": "Io penso noi messiaggio... messiaggio? Messaggiamo?"
+ },
+ {
+  "start": 1689.69,
+  "end": 1692.29,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Noi scriviamo messaggi."
+ },
+ {
+  "start": 1692.26,
+  "end": 1694.67,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "Si, on WhatsApp now."
+ },
+ {
+  "start": 1696.85,
+  "end": 1701.03,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Ma lei lavora a Napoli o lavora a casa, da remoto?"
+ },
+ {
+  "start": 1701.27,
+  "end": 1707.56,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "No, no, lavoro a Napoli. Lei, come si dice..."
+ },
+ {
+  "start": 1709.99,
+  "end": 1717.38,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "Lei... Como se dice... God, I know these words. How do you say find again?"
+ },
+ {
+  "start": 1718.09,
+  "end": 1726.85,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Trova? Trova, so, lei trova la casa per la militare e nato persone."
+ },
+ {
+  "start": 1726.85,
+  "end": 1728.82,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Ah, quindi si occupa."
+ },
+ {
+  "start": 1729.26,
+  "end": 1731.69,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Tutti i limiti, occuparsi, gain, vedi?"
+ },
+ {
+  "start": 1732.49,
+  "end": 1735.54,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Si occuparsi, to deal with, lavora."
+ },
+ {
+  "start": 1736.37,
+  "end": 1736.97,
+  "speaker": "SPEAKER_00",
+  "lang": "pt",
+  "text": "Exato."
+ },
+ {
+  "start": 1736.94,
+  "end": 1737.99,
+  "speaker": "SPEAKER_01",
+  "lang": "nl",
+  "text": "In die leeg."
+ },
+ {
+  "start": 1738.85,
+  "end": 1740.15,
+  "speaker": "SPEAKER_01",
+  "lang": "es",
+  "text": "Se ocupa."
+ },
+ {
+  "start": 1742.71,
+  "end": 1743.96,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Appartamenti."
+ },
+ {
+  "start": 1746.56,
+  "end": 1748.1,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Per i militari."
+ },
+ {
+  "start": 1748.21,
+  "end": 1751.59,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "Acuparci, si, acuparci."
+ },
+ {
+  "start": 1751.32,
+  "end": 1754.39,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "If you deal with, it doesn't matter in which situation."
+ },
+ {
+  "start": 1754.74,
+  "end": 1761.44,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "Si, so she leaves anytime."
+ },
+ {
+  "start": 1761.51,
+  "end": 1765.22,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "The schedule is not set."
+ },
+ {
+  "start": 1765.22,
+  "end": 1767.86,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Il programma della giornata è differente."
+ },
+ {
+  "start": 1768.03,
+  "end": 1769.09,
+  "speaker": "SPEAKER_00",
+  "lang": "es",
+  "text": "Sí, sí."
+ },
+ {
+  "start": 1769.66,
+  "end": 1774.18,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "See, I understood exactly what you said, but I just can't form the words."
+ },
+ {
+  "start": 1774.61,
+  "end": 1775.67,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Essere parole."
+ },
+ {
+  "start": 1774.64,
+  "end": 1775.3,
+  "speaker": "SPEAKER_00",
+  "lang": "es",
+  "text": "Esa es la palabra."
+ },
+ {
+  "start": 1777.31,
+  "end": 1780.41,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Ma perché a Milano? A Milano, a Napoli c'è base NATO."
+ },
+ {
+  "start": 1781.15,
+  "end": 1783.75,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "Si, per la nonna..."
+ },
+ {
+  "start": 1783.75,
+  "end": 1785.58,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Per la Marina, no?"
+ },
+ {
+  "start": 1785.39,
+  "end": 1787.57,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "No, no, no, no, I'm just..."
+ },
+ {
+  "start": 1787.77,
+  "end": 1798.5,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "Non c'è una nave, c'è una base NATO vicino all'aeroporto."
+ },
+ {
+  "start": 1799.97,
+  "end": 1804.24,
+  "speaker": "SPEAKER_00",
+  "lang": "pt",
+  "text": "Mas uma outra base,"
+ },
+ {
+  "start": 1804.54,
+  "end": 1811.24,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Un'altra base? Base in... non ricordo questo..."
+ },
+ {
+  "start": 1811.75,
+  "end": 1814.4,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "Posizione o locazione."
+ },
+ {
+  "start": 1814.6,
+  "end": 1816.17,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "La posizione, sì."
+ },
+ {
+  "start": 1816.24,
+  "end": 1817.06,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "Uh..."
+ },
+ {
+  "start": 1817.43,
+  "end": 1818.79,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "Ma... um..."
+ },
+ {
+  "start": 1819.54,
+  "end": 1820.22,
+  "speaker": "SPEAKER_00",
+  "lang": "pt",
+  "text": "Lei..."
+ },
+ {
+  "start": 1819.61,
+  "end": 1820.64,
+  "speaker": "SPEAKER_01",
+  "lang": "pt",
+  "text": "Cilento Napoli."
+ },
+ {
+  "start": 1821.47,
+  "end": 1822.87,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "Si, si, si."
+ },
+ {
+  "start": 1823.44,
+  "end": 1826.77,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "Quindici, Ab..."
+ },
+ {
+  "start": 1827.07,
+  "end": 1830.33,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "20 minuti buida."
+ },
+ {
+  "start": 1831.56,
+  "end": 1833.06,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Da sud a nord."
+ },
+ {
+  "start": 1835.9,
+  "end": 1841.68,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Non lo so, perché dieci..."
+ },
+ {
+  "start": 1841.11,
+  "end": 1842.56,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Non conosco la base."
+ },
+ {
+  "start": 1842.49,
+  "end": 1847.64,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Sì, sì, ma non conosco la direzione per la..."
+ },
+ {
+  "start": 1847.99,
+  "end": 1849.46,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "Um, um..."
+ },
+ {
+  "start": 1851.61,
+  "end": 1857.73,
+  "speaker": "SPEAKER_00",
+  "lang": "es",
+  "text": "No conozco la dirección por la..."
+ },
+ {
+  "start": 1858.39,
+  "end": 1860.11,
+  "speaker": "SPEAKER_00",
+  "lang": "es",
+  "text": "Basso, distanza."
+ },
+ {
+  "start": 1861.24,
+  "end": 1862.29,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Alla distanza."
+ },
+ {
+  "start": 1862.29,
+  "end": 1870.74,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Sì, perché 10-15 minuti non lo so questo mi."
+ },
+ {
+  "start": 1873.38,
+  "end": 1875.89,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "Compared to a monopoly."
+ },
+ {
+  "start": 1876.51,
+  "end": 1877.29,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "Like a non..."
+ },
+ {
+  "start": 1877.29,
+  "end": 1882.52,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Perché Napoli è il centro e poi outside, la periferia di Napoli."
+ },
+ {
+  "start": 1882.23,
+  "end": 1888.39,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Sì, sì, sì. Non lo so, questo è un pomelano d'arco. Ah, è un pomelano d'arco."
+ },
+ {
+  "start": 1887.57,
+  "end": 1888.78,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "Absolutely."
+ },
+ {
+  "start": 1888.48,
+  "end": 1892.53,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "Sud o..."
+ },
+ {
+  "start": 1892.97,
+  "end": 1897.96,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "Vovest, Nord Pernopoli."
+ },
+ {
+  "start": 1897.52,
+  "end": 1901.3,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Ah, il GPS, il mio GPS di Napoli è confuso. Sì."
+ },
+ {
+  "start": 1900.97,
+  "end": 1901.81,
+  "speaker": "SPEAKER_00",
+  "lang": "pt",
+  "text": "Sim, sim."
+ },
+ {
+  "start": 1902.38,
+  "end": 1903.11,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "Save yourself."
+ },
+ {
+  "start": 1903.09,
+  "end": 1907.95,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Sì, perché ci sono basi, c'è una base a Viano."
+ },
+ {
+  "start": 1909.18,
+  "end": 1913.2,
+  "speaker": "SPEAKER_00",
+  "lang": "es",
+  "text": "No, no en Aviano, no en Air Force."
+ },
+ {
+  "start": 1912.39,
+  "end": 1913.57,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "Adriano Hernández."
+ },
+ {
+  "start": 1913.42,
+  "end": 1915.22,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "CCC, Air Force, C."
+ },
+ {
+  "start": 1914.65,
+  "end": 1915.7,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Questo è importante."
+ },
+ {
+  "start": 1915.87,
+  "end": 1921.47,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Sì, sì, lo so a questa base perché..."
+ },
+ {
+  "start": 1920.96,
+  "end": 1922.75,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Conosco questa base."
+ },
+ {
+  "start": 1923.73,
+  "end": 1925.27,
+  "speaker": "SPEAKER_00",
+  "lang": "fr",
+  "text": "Si, parce que..."
+ },
+ {
+  "start": 1928.2,
+  "end": 1931.07,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "In tre anni."
+ },
+ {
+  "start": 1931.26,
+  "end": 1932.0,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "Um..."
+ },
+ {
+  "start": 1932.86,
+  "end": 1936.2,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "Quando in scuola."
+ },
+ {
+  "start": 1937.05,
+  "end": 1939.15,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "Si. Per la estate."
+ },
+ {
+  "start": 1939.39,
+  "end": 1941.13,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "Um, uh..."
+ },
+ {
+  "start": 1942.19,
+  "end": 1956.69,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Io contatto la base per la possibilità del lavoro, questo è Aspedale in Aviano."
+ },
+ {
+  "start": 1945.09,
+  "end": 1947.07,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Contatto, io contatto."
+ },
+ {
+  "start": 1957.35,
+  "end": 1960.35,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Anche ospedale? Sì, sì, ma..."
+ },
+ {
+  "start": 1957.38,
+  "end": 1958.63,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Ah, c'è l'ospedale? Sì."
+ },
+ {
+  "start": 1960.62,
+  "end": 1964.84,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "It didn't happen because I returned to StadiUnity to work at a hospital."
+ },
+ {
+  "start": 1965.38,
+  "end": 1965.98,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "But..."
+ },
+ {
+  "start": 1965.48,
+  "end": 1970.14,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Quanta gente lavora in questa base? Ci sono anche italiani?"
+ },
+ {
+  "start": 1970.53,
+  "end": 1972.35,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Che lavorano negli uffici."
+ },
+ {
+  "start": 1973.06,
+  "end": 1976.48,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Cosa c'è? Supermercato, appartamenti."
+ },
+ {
+  "start": 1976.65,
+  "end": 1987.6,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "Si, si, so no, no, per mi, ospedale per la medicina, so I wanted to keep practicing, but..."
+ },
+ {
+  "start": 1987.72,
+  "end": 1988.5,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "We're"
+ },
+ {
+  "start": 1988.5,
+  "end": 1993.85,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "L'ospedale ha Aviano, non dentro la base."
+ },
+ {
+  "start": 1993.85,
+  "end": 1994.54,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "Si, si, si."
+ },
+ {
+  "start": 1994.54,
+  "end": 1995.9,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Vicino alla base."
+ },
+ {
+  "start": 1998.32,
+  "end": 2000.73,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Questa è una base strategica importante."
+ },
+ {
+  "start": 2002.15,
+  "end": 2005.66,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "Si, si, per la Air Force."
+ },
+ {
+  "start": 2006.18,
+  "end": 2006.94,
+  "speaker": "SPEAKER_01",
+  "lang": "es",
+  "text": "Sin parlar."
+ },
+ {
+  "start": 2007.48,
+  "end": 2010.03,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "L'aviazione, dove ci sono Top Gun."
+ },
+ {
+  "start": 2010.76,
+  "end": 2011.92,
+  "speaker": "SPEAKER_01",
+  "lang": "ko",
+  "text": "아, 미역수요? 네."
+ },
+ {
+  "start": 2011.78,
+  "end": 2012.85,
+  "speaker": "SPEAKER_00",
+  "lang": "pt",
+  "text": "Sim."
+ },
+ {
+  "start": 2013.57,
+  "end": 2017.29,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "E vabbè, famoso perché in Italia ci piace questo."
+ },
+ {
+  "start": 2017.07,
+  "end": 2018.03,
+  "speaker": "SPEAKER_00",
+  "lang": "es",
+  "text": "Sí, sí."
+ },
+ {
+  "start": 2019.39,
+  "end": 2021.17,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Poi c'è la base anche a Gedi."
+ },
+ {
+  "start": 2021.83,
+  "end": 2022.45,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "Okinawa."
+ },
+ {
+  "start": 2021.89,
+  "end": 2023.78,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "A Gedi. Al Lago di Garda, a Gedi."
+ },
+ {
+  "start": 2024.17,
+  "end": 2025.45,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "No, non capito, Gheri."
+ },
+ {
+  "start": 2025.61,
+  "end": 2029.08,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "È una piccola città vicino a Brescia."
+ },
+ {
+  "start": 2029.5,
+  "end": 2031.85,
+  "speaker": "SPEAKER_01",
+  "lang": "ht",
+  "text": "Non veche unha baz, unha baz. Non, non, non."
+ },
+ {
+  "start": 2030.7,
+  "end": 2035.16,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "No, no, no. Piccolo, cheetah piccolo. Banana."
+ },
+ {
+  "start": 2036.13,
+  "end": 2036.83,
+  "speaker": "SPEAKER_00",
+  "lang": "de",
+  "text": "Aspetta."
+ },
+ {
+  "start": 2037.64,
+  "end": 2039.56,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "Let me messiaggio."
+ },
+ {
+  "start": 2039.81,
+  "end": 2041.27,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "Ah, questo."
+ },
+ {
+  "start": 2042.38,
+  "end": 2043.26,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "uding voliuding"
+ },
+ {
+  "start": 2043.96,
+  "end": 2047.69,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Vicino a Brescia è possibile, non so, su una caserna."
+ },
+ {
+  "start": 2050.28,
+  "end": 2051.32,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Grande però."
+ },
+ {
+  "start": 2051.57,
+  "end": 2053.65,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "No, no, no, no, no, no, no, no."
+ },
+ {
+  "start": 2053.21,
+  "end": 2055.66,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Un supermercato anche americano. Sì."
+ },
+ {
+  "start": 2055.36,
+  "end": 2083.35,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Sì, sì, no, tu hai supermercato perché per me, questo, mi piace l'americano cereale. Il mio miole, mole, goza, comparato, comparato."
+ },
+ {
+  "start": 2084.33,
+  "end": 2087.25,
+  "speaker": "SPEAKER_00",
+  "lang": "pt",
+  "text": "Qualcosa. E o..."
+ },
+ {
+  "start": 2087.79,
+  "end": 2090.68,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "El archivo por la base."
+ },
+ {
+  "start": 2091.84,
+  "end": 2094.71,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Quindi ci sono prodotti americani."
+ },
+ {
+  "start": 2094.71,
+  "end": 2095.79,
+  "speaker": "SPEAKER_00",
+  "lang": "zh",
+  "text": "是,是"
+ },
+ {
+  "start": 2096.48,
+  "end": 2099.43,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "Molto sugar, molto dolce."
+ },
+ {
+  "start": 2099.89,
+  "end": 2103.7,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "E vabbè, va, quindi con molto zucchero."
+ },
+ {
+  "start": 2106.1,
+  "end": 2106.96,
+  "speaker": "SPEAKER_01",
+  "lang": "ru",
+  "text": "Продолжение следует..."
+ },
+ {
+  "start": 2109.07,
+  "end": 2114.2,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Molto, perché un mio studente di FBI del Consolato americano qui a Milano"
+ },
+ {
+  "start": 2115.35,
+  "end": 2117.61,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Ero andato a Ghedin."
+ },
+ {
+  "start": 2118.52,
+  "end": 2121.05,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Ha comprato prodotti americani."
+ },
+ {
+  "start": 2121.74,
+  "end": 2122.77,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "Si. Capistano."
+ },
+ {
+  "start": 2122.28,
+  "end": 2128.24,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Ma è una piccola, non è una base militare penso, è solo una..."
+ },
+ {
+  "start": 2128.68,
+  "end": 2129.86,
+  "speaker": "SPEAKER_01",
+  "lang": "es",
+  "text": "Una comunidad."
+ },
+ {
+  "start": 2130.26,
+  "end": 2132.91,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Aspetta, non so, perché è vicino a..."
+ },
+ {
+  "start": 2134.65,
+  "end": 2135.39,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Possibile?"
+ },
+ {
+  "start": 2136.73,
+  "end": 2137.97,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Sul lago di Garda"
+ },
+ {
+  "start": 2147.73,
+  "end": 2149.96,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "E' la prima volta che senti questo nome?"
+ },
+ {
+  "start": 2154.26,
+  "end": 2157.8,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "Ah, ok, capito, capito bene now."
+ },
+ {
+  "start": 2158.16,
+  "end": 2161.68,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "Gedi comune in Italia. Sì. Ok."
+ },
+ {
+  "start": 2162.28,
+  "end": 2162.93,
+  "speaker": "SPEAKER_00",
+  "lang": "es",
+  "text": "Exacto, sí."
+ },
+ {
+  "start": 2165.36,
+  "end": 2168.45,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Vedi, base militare USA di Ghedi, esatto, sì."
+ },
+ {
+  "start": 2169.97,
+  "end": 2170.98,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "L'aeroporto."
+ },
+ {
+  "start": 2171.86,
+  "end": 2172.91,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "E c'è aeroporto."
+ },
+ {
+  "start": 2178.39,
+  "end": 2179.51,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "È vicino a..."
+ },
+ {
+  "start": 2180.26,
+  "end": 2182.85,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Siamo a Porto di Ghedi, vicino a Brescia."
+ },
+ {
+  "start": 2189.7,
+  "end": 2191.06,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "Ok."
+ },
+ {
+  "start": 2189.88,
+  "end": 2190.59,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "Ok."
+ },
+ {
+  "start": 2191.06,
+  "end": 2191.82,
+  "speaker": "SPEAKER_00",
+  "lang": "de",
+  "text": "Okay, cool."
+ },
+ {
+  "start": 2191.16,
+  "end": 2193.55,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "La base dell'aeronautica italiana."
+ },
+ {
+  "start": 2193.97,
+  "end": 2197.43,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Con l'aeroporto militare, con il programma NATO."
+ },
+ {
+  "start": 2202.05,
+  "end": 2206.74,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "Si, so, um, Cappuccino, si, and, uh..."
+ },
+ {
+  "start": 2207.28,
+  "end": 2208.56,
+  "speaker": "SPEAKER_00",
+  "lang": "pt",
+  "text": "Como se diz que..."
+ },
+ {
+  "start": 2208.82,
+  "end": 2209.88,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "Ah, come on."
+ },
+ {
+  "start": 2209.56,
+  "end": 2212.19,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "Ah, Campodichino, a Napoli. Sì, sì, and then..."
+ },
+ {
+  "start": 2210.99,
+  "end": 2213.02,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "Sisi and then Iversa."
+ },
+ {
+  "start": 2213.39,
+  "end": 2216.43,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "Non ricordo a versa, but let's see."
+ },
+ {
+  "start": 2216.97,
+  "end": 2218.94,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Quindi non ricordo il nome."
+ },
+ {
+  "start": 2227.51,
+  "end": 2231.34,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Quindi puoi dire non ricordo il nome o non mi ricordo."
+ },
+ {
+  "start": 2231.92,
+  "end": 2232.58,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "Non-me."
+ },
+ {
+  "start": 2232.58,
+  "end": 2233.57,
+  "speaker": "SPEAKER_01",
+  "lang": "ko",
+  "text": "아!"
+ },
+ {
+  "start": 2233.03,
+  "end": 2235.65,
+  "speaker": "SPEAKER_00",
+  "lang": "pt",
+  "text": "Ah, por quê? Não, não..."
+ },
+ {
+  "start": 2235.09,
+  "end": 2241.52,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Perché allora, è per te, non mi ricordo, in generale, non mi ricordo."
+ },
+ {
+  "start": 2239.28,
+  "end": 2239.93,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "In general."
+ },
+ {
+  "start": 2242.77,
+  "end": 2245.18,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Ok, più facile non ricordo."
+ },
+ {
+  "start": 2245.3,
+  "end": 2246.67,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "I don't remember, basta."
+ },
+ {
+  "start": 2250.92,
+  "end": 2254.19,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Con una parola particolare."
+ },
+ {
+  "start": 2254.75,
+  "end": 2256.32,
+  "speaker": "SPEAKER_01",
+  "lang": "es",
+  "text": "No le recuerdo."
+ },
+ {
+  "start": 2258.41,
+  "end": 2260.94,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Non so, lo ricordo."
+ },
+ {
+  "start": 2262.18,
+  "end": 2263.1,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "La canzone."
+ },
+ {
+  "start": 2263.58,
+  "end": 2265.25,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "You have to put the noun after."
+ },
+ {
+  "start": 2268.05,
+  "end": 2270.9,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Non ricordo in generale, non lo specificate."
+ },
+ {
+  "start": 2271.0,
+  "end": 2272.74,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "How about..."
+ },
+ {
+  "start": 2273.97,
+  "end": 2280.96,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "Is it always good to say it in the present tense or do I need to understand the past?"
+ },
+ {
+  "start": 2280.16,
+  "end": 2283.64,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "The present tense is better because it's a general statement."
+ },
+ {
+  "start": 2285.07,
+  "end": 2286.05,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Lo ricordo."
+ },
+ {
+  "start": 2286.17,
+  "end": 2290.19,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Non mi ricordo, yet to specify, non mi ricordo quando..."
+ },
+ {
+  "start": 2290.8,
+  "end": 2294.9,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Quando devo telefonare in Louisiana."
+ },
+ {
+  "start": 2296.65,
+  "end": 2299.7,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "So if I was late for a meeting, I would never say"
+ },
+ {
+  "start": 2299.91,
+  "end": 2304.21,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "I didn't remember, I'd always just say, I don't remember. Is that..."
+ },
+ {
+  "start": 2304.36,
+  "end": 2308.34,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Non ricordo, per esempio, non ricordo l'ora del meeting."
+ },
+ {
+  "start": 2312.16,
+  "end": 2314.86,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Non ricordo il nome di un collega."
+ },
+ {
+  "start": 2315.36,
+  "end": 2316.38,
+  "speaker": "SPEAKER_01",
+  "lang": "nl",
+  "text": "En ik kan het beoffen."
+ },
+ {
+  "start": 2318.45,
+  "end": 2321.51,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Il nome del supermercato, il nome di un prodotto."
+ },
+ {
+  "start": 2321.95,
+  "end": 2324.48,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "You have to introduce and then you specify."
+ },
+ {
+  "start": 2331.31,
+  "end": 2332.7,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Invece Blackout..."
+ },
+ {
+  "start": 2332.73,
+  "end": 2335.04,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Non ricordo niente, no idea."
+ },
+ {
+  "start": 2337.03,
+  "end": 2341.84,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Non ricordo niente possibile, when you deny non ricordo niente."
+ },
+ {
+  "start": 2356.22,
+  "end": 2357.23,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Quindi aspetta."
+ },
+ {
+  "start": 2357.74,
+  "end": 2359.48,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Qui ultima frase."
+ },
+ {
+  "start": 2373.31,
+  "end": 2375.93,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Mi ricordo di prendere..."
+ },
+ {
+  "start": 2377.41,
+  "end": 2379.2,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Il Red Bull beve."
+ },
+ {
+  "start": 2381.2,
+  "end": 2384.16,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Allora, io, Giasi, mi ricordo di..."
+ },
+ {
+  "start": 2384.43,
+  "end": 2386.48,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Prendere una Red Bull."
+ },
+ {
+  "start": 2387.61,
+  "end": 2388.91,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "Um..."
+ },
+ {
+  "start": 2389.46,
+  "end": 2394.71,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "I remember to take a Red Bulls when I was trying to..."
+ },
+ {
+  "start": 2394.71,
+  "end": 2397.45,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "No, giusto, sì, allora non ricordo."
+ },
+ {
+  "start": 2398.26,
+  "end": 2399.3,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "No, no, corretto."
+ },
+ {
+  "start": 2398.39,
+  "end": 2399.34,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "No, no, corretto."
+ },
+ {
+  "start": 2400.87,
+  "end": 2403.07,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Ma il seguito è di prendere."
+ },
+ {
+  "start": 2405.8,
+  "end": 2409.9,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "You have to know by heart why D and not Y another preposition, it's just all."
+ },
+ {
+  "start": 2414.56,
+  "end": 2416.48,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Non ricordo di prendere."
+ },
+ {
+  "start": 2417.71,
+  "end": 2420.39,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "La Red Bull femminile."
+ },
+ {
+  "start": 2421.26,
+  "end": 2423.69,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "I don't know why it's female, because it's a better age."
+ },
+ {
+  "start": 2423.69,
+  "end": 2425.42,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Una Red Bull."
+ },
+ {
+  "start": 2423.89,
+  "end": 2424.95,
+  "speaker": "SPEAKER_01",
+  "lang": "ru",
+  "text": "У нас Red Bull."
+ },
+ {
+  "start": 2428.87,
+  "end": 2430.61,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "E aspetto la lezione."
+ },
+ {
+  "start": 2432.06,
+  "end": 2433.17,
+  "speaker": "SPEAKER_01",
+  "lang": "es",
+  "text": "Aspecto."
+ },
+ {
+  "start": 2434.64,
+  "end": 2435.94,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "La lezione d'italiano."
+ },
+ {
+  "start": 2440.78,
+  "end": 2441.78,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Prima opzione."
+ },
+ {
+  "start": 2442.11,
+  "end": 2445.07,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Mi preparo per la lezione d'italiano."
+ },
+ {
+  "start": 2446.8,
+  "end": 2452.04,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Come I'm getting ready for, mi preparo per la lezione d'italiano, anche possibile."
+ },
+ {
+  "start": 2452.98,
+  "end": 2454.33,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Mi preparo per..."
+ },
+ {
+  "start": 2456.83,
+  "end": 2457.82,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Anche è possibile."
+ },
+ {
+  "start": 2467.0,
+  "end": 2468.39,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Mi preparo per..."
+ },
+ {
+  "start": 2469.77,
+  "end": 2472.02,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "Per la lezione di italiano."
+ },
+ {
+  "start": 2472.89,
+  "end": 2473.69,
+  "speaker": "SPEAKER_00",
+  "lang": "zh",
+  "text": "你不怕"
+ },
+ {
+  "start": 2473.42,
+  "end": 2476.96,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "In un po' intradurre in inglese, I'm getting ready, mi preparo."
+ },
+ {
+  "start": 2477.97,
+  "end": 2480.32,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "I prepare myself non esiste in inglese."
+ },
+ {
+  "start": 2482.04,
+  "end": 2482.68,
+  "speaker": "SPEAKER_01",
+  "lang": "pt",
+  "text": "Pera."
+ },
+ {
+  "start": 2483.66,
+  "end": 2486.66,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Il tuo obiettivo è la lezione d'italiano."
+ },
+ {
+  "start": 2489.04,
+  "end": 2492.55,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Bene, questo esercizio è molto utile."
+ },
+ {
+  "start": 2494.97,
+  "end": 2500.7,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Perché scrivi e poi focus, analizza, è come radiografia."
+ },
+ {
+  "start": 2502.22,
+  "end": 2511.61,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Eh sì, radiografia per vedere, io ho il cancro, no, qui non è grave, ma è uno screening, un giorno screening, come in inglese."
+ },
+ {
+  "start": 2511.61,
+  "end": 2521.53,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Mi dispiace, ma con lavoro, questa medicina, questo ingegnere, date su..."
+ },
+ {
+  "start": 2520.77,
+  "end": 2524.31,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Dio mio, il tuo cervello deve fare italiano qua, inglese qua."
+ },
+ {
+  "start": 2524.57,
+  "end": 2526.12,
+  "speaker": "SPEAKER_01",
+  "lang": "pt",
+  "text": "Pegue data 4. Sim."
+ },
+ {
+  "start": 2526.17,
+  "end": 2531.5,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Si avvicina qua, devi trovare il posto, devi scavare per un posto."
+ },
+ {
+  "start": 2532.07,
+  "end": 2533.54,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "One left, Gary Marmon."
+ },
+ {
+  "start": 2534.81,
+  "end": 2538.57,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Ma no dai, piano piano, perché è un buon genio di cervello imparare una lingua."
+ },
+ {
+  "start": 2540.02,
+  "end": 2545.93,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Contro Alzheimer, Parkinson, ok, it's not your case, ma molti neurologi, molti."
+ },
+ {
+  "start": 2546.01,
+  "end": 2547.84,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Esperti di geriatria."
+ },
+ {
+  "start": 2549.08,
+  "end": 2550.33,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Conocci geriatria."
+ },
+ {
+  "start": 2550.33,
+  "end": 2551.36,
+  "speaker": "SPEAKER_00",
+  "lang": "de",
+  "text": "Das ist die Gebiete."
+ },
+ {
+  "start": 2551.36,
+  "end": 2554.48,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Dicono, contro il declino cognitivo."
+ },
+ {
+  "start": 2554.06,
+  "end": 2555.56,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "Esatto, so practical."
+ },
+ {
+  "start": 2554.6,
+  "end": 2559.46,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Studiare una lingua, perché una lingua aiuta perché devi imparare, memorizzare."
+ },
+ {
+  "start": 2559.78,
+  "end": 2562.23,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Mettere insieme parole, selezionare."
+ },
+ {
+  "start": 2562.48,
+  "end": 2564.34,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Velocità e molte..."
+ },
+ {
+  "start": 2564.61,
+  "end": 2567.87,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Competenze dei neuroni devono lavorare."
+ },
+ {
+  "start": 2568.05,
+  "end": 2568.78,
+  "speaker": "SPEAKER_00",
+  "lang": "fr",
+  "text": "Si, non."
+ },
+ {
+  "start": 2569.55,
+  "end": 2571.44,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Noi è scientifico questo."
+ },
+ {
+  "start": 2576.99,
+  "end": 2580.32,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Per te è anche importante perché vivi in Italia e è giusto."
+ },
+ {
+  "start": 2580.98,
+  "end": 2581.75,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Studiare."
+ },
+ {
+  "start": 2582.46,
+  "end": 2585.18,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Non è impossibile, all'inizio è un po' come..."
+ },
+ {
+  "start": 2585.59,
+  "end": 2588.28,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Piano piano e poi dopo..."
+ },
+ {
+  "start": 2589.03,
+  "end": 2591.41,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Entri nella dimensione della lingua."
+ },
+ {
+  "start": 2594.68,
+  "end": 2595.44,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "I heard it's..."
+ },
+ {
+  "start": 2594.78,
+  "end": 2602.14,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Per domani hai tempo di ascoltare Alessandro e Barbara, sai?"
+ },
+ {
+  "start": 2602.9,
+  "end": 2603.51,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "Um..."
+ },
+ {
+  "start": 2604.53,
+  "end": 2605.38,
+  "speaker": "SPEAKER_01",
+  "lang": "ru",
+  "text": "Дайолог."
+ },
+ {
+  "start": 2606.04,
+  "end": 2607.08,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "I send you."
+ },
+ {
+  "start": 2607.24,
+  "end": 2612.38,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "No, wait, the dialogue that you sent me, the MP3. See the first timer."
+ },
+ {
+  "start": 2610.58,
+  "end": 2616.74,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Per la prima volta con la routine o sentiamo insieme."
+ },
+ {
+  "start": 2616.99,
+  "end": 2617.82,
+  "speaker": "SPEAKER_01",
+  "lang": "zh",
+  "text": "如果你想"
+ },
+ {
+  "start": 2617.9,
+  "end": 2618.51,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "Si, si."
+ },
+ {
+  "start": 2618.51,
+  "end": 2621.16,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Possiamo ascoltare insieme."
+ },
+ {
+  "start": 2621.66,
+  "end": 2627.22,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "E poi ci riempiamo insieme, facciamo insieme, perché dobbiamo riempire il dialogo con i verb."
+ },
+ {
+  "start": 2627.33,
+  "end": 2628.09,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Ok, sì."
+ },
+ {
+  "start": 2628.9,
+  "end": 2630.79,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Facciamo questo insieme così è."
+ },
+ {
+  "start": 2630.93,
+  "end": 2632.06,
+  "speaker": "SPEAKER_01",
+  "lang": "pt",
+  "text": "Pra chapa."
+ },
+ {
+  "start": 2632.3,
+  "end": 2633.46,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Di questi verdi."
+ },
+ {
+  "start": 2634.66,
+  "end": 2637.71,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Va bene, allora ci sentiamo domani."
+ },
+ {
+  "start": 2638.05,
+  "end": 2644.48,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "Si. Um, um, how do you say same time?"
+ },
+ {
+  "start": 2643.94,
+  "end": 2647.28,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Alla stessa ora."
+ },
+ {
+  "start": 2648.83,
+  "end": 2650.93,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Novanta, le novanta..."
+ },
+ {
+  "start": 2651.36,
+  "end": 2652.66,
+  "speaker": "SPEAKER_00",
+  "lang": "pt",
+  "text": "Cinquanta..."
+ },
+ {
+  "start": 2654.28,
+  "end": 2655.36,
+  "speaker": "SPEAKER_00",
+  "lang": "es",
+  "text": "Así, hazle."
+ },
+ {
+  "start": 2657.89,
+  "end": 2659.16,
+  "speaker": "SPEAKER_01",
+  "lang": "es",
+  "text": "9"
+ },
+ {
+  "start": 2659.53,
+  "end": 2661.51,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "E' cinquantacinque."
+ },
+ {
+  "start": 2665.08,
+  "end": 2668.26,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Quindi buon lavoro, non lavorare troppo."
+ },
+ {
+  "start": 2666.52,
+  "end": 2667.12,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "Go to you."
+ },
+ {
+  "start": 2668.64,
+  "end": 2670.14,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Siamo in Italia, ma..."
+ },
+ {
+  "start": 2670.57,
+  "end": 2672.93,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Il tuo destino, la madre, la slegolizia."
+ },
+ {
+  "start": 2671.06,
+  "end": 2672.36,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "You're super Americano."
+ },
+ {
+  "start": 2673.17,
+  "end": 2677.76,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Non è alternativa, non puoi andare in spiaggia a fare la bella vita."
+ },
+ {
+  "start": 2677.5,
+  "end": 2684.84,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "Si, si, si. Molto non bene rimanere in casa con stati in Italia."
+ },
+ {
+  "start": 2686.14,
+  "end": 2689.96,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "I miei amici americani pensano a Napoli, non fa niente."
+ },
+ {
+  "start": 2690.89,
+  "end": 2697.87,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Cappuccino, caffè, spiaggia, belle donne, non è così. The big mistake, non funziona così in Italia."
+ },
+ {
+  "start": 2697.2,
+  "end": 2698.9,
+  "speaker": "SPEAKER_00",
+  "lang": "es",
+  "text": "En Italia. Sí, sí."
+ },
+ {
+  "start": 2700.59,
+  "end": 2704.06,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Ci vediamo domani, ciao, buon lavoro. Ciao. Ciao, ciao, ciao."
+ }
+]

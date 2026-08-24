@@ -1,0 +1,184 @@
+[
+ {
+  "t": 291.7,
+  "attempt": "Ah, esatto.",
+  "correction": "Ah, esatto, so come costruisci la frase.",
+  "overlap": 0.29,
+  "marker": false
+ },
+ {
+  "t": 432.2,
+  "attempt": "Per la beneficina.",
+  "correction": "Improva, per migliorare.",
+  "overlap": 0.2,
+  "marker": false
+ },
+ {
+  "t": 565.0,
+  "attempt": "Oh, the kind of, see, so.",
+  "correction": "Perché ci sono cantanti che cantano in modo chiaro.",
+  "overlap": 0.0,
+  "marker": true
+ },
+ {
+  "t": 729.5,
+  "attempt": "Io lo so.",
+  "correction": "Perché la parola comincia con SP.",
+  "overlap": 0.0,
+  "marker": true
+ },
+ {
+  "t": 768.3,
+  "attempt": "It's because, okay Barbara, I understand what's going on. I'm on a MacBook, and anytime I try and scroll, sometimes I scroll left. Ah, I see, when you're scrolling, I see.",
+  "correction": "Ah, I see, when you're going to see.",
+  "overlap": 0.23,
+  "marker": false
+ },
+ {
+  "t": 821.5,
+  "attempt": "It's the essence.",
+  "correction": "Lo psicologo è un gruppo, perché è più facile pronunciarlo, lo psicologo.",
+  "overlap": 0.0,
+  "marker": true
+ },
+ {
+  "t": 836.6,
+  "attempt": "No, no, I'm just saying, is that why it's low?",
+  "correction": "No, no, I'm...",
+  "overlap": 0.22,
+  "marker": false
+ },
+ {
+  "t": 1033.1,
+  "attempt": "Something is referred to...",
+  "correction": "Something is referring to you, to your body.",
+  "overlap": 0.38,
+  "marker": false
+ },
+ {
+  "t": 1494.7,
+  "attempt": "Sì, capito. Noi ci incontriamo in centro a Napoli.",
+  "correction": "Noi non è importante, se scoppiate noi ok, però ci è da essere lì perché il verbo è incontrarsi.",
+  "overlap": 0.1,
+  "marker": true
+ },
+ {
+  "t": 1637.9,
+  "attempt": "Mmm, ok.",
+  "correction": "Perché tu non parli con tua moglie in italiano, no, sempre in inglese.",
+  "overlap": 0.0,
+  "marker": true
+ },
+ {
+  "t": 1658.2,
+  "attempt": "Ci sere... ci seriamo?",
+  "correction": "Ci sediamo, sì.",
+  "overlap": 0.2,
+  "marker": false
+ },
+ {
+  "t": 1675.7,
+  "attempt": "Ma on telefono no, perché...",
+  "correction": "No, perché no, più stress.",
+  "overlap": 0.29,
+  "marker": true
+ },
+ {
+  "t": 1774.6,
+  "attempt": "Eh sì, però.",
+  "correction": "Ma perché a Milano? A Milano, a Napoli c'è base NATO.",
+  "overlap": 0.0,
+  "marker": true
+ },
+ {
+  "t": 1781.2,
+  "attempt": "Si, per la nonna...",
+  "correction": "Per la Marina, no?",
+  "overlap": 0.33,
+  "marker": false
+ },
+ {
+  "t": 1811.8,
+  "attempt": "Posizione o locazione.",
+  "correction": "La posizione, sì.",
+  "overlap": 0.25,
+  "marker": false
+ },
+ {
+  "t": 1858.4,
+  "attempt": "Basso, distanza.",
+  "correction": "Alla distanza.",
+  "overlap": 0.33,
+  "marker": false
+ },
+ {
+  "t": 1876.5,
+  "attempt": "Like a non...",
+  "correction": "Perché Napoli è il centro e poi outside, la periferia di Napoli.",
+  "overlap": 0.0,
+  "marker": true
+ },
+ {
+  "t": 1902.4,
+  "attempt": "Save yourself.",
+  "correction": "Sì, perché ci sono basi, c'è una base a Viano.",
+  "overlap": 0.0,
+  "marker": true
+ },
+ {
+  "t": 1915.9,
+  "attempt": "Sì, sì, lo so a questa base perché...",
+  "correction": "Conosco questa base.",
+  "overlap": 0.29,
+  "marker": false
+ },
+ {
+  "t": 1942.2,
+  "attempt": "Io contatto la base per la possibilità del lavoro, questo è Aspedale in Aviano.",
+  "correction": "Contatto, io contatto.",
+  "overlap": 0.17,
+  "marker": false
+ },
+ {
+  "t": 2162.3,
+  "attempt": "Esatto, sì.",
+  "correction": "Vedi, base militare USA di Ghedi, esatto, sì.",
+  "overlap": 0.25,
+  "marker": false
+ },
+ {
+  "t": 2213.4,
+  "attempt": "Non ricordo a versa, but let's see.",
+  "correction": "Quindi non ricordo il nome.",
+  "overlap": 0.22,
+  "marker": false
+ },
+ {
+  "t": 2233.0,
+  "attempt": "Ah, perché? No, no, perché?",
+  "correction": "Perché allora, è per te, non mi ricordo, in generale, non mi ricordo.",
+  "overlap": 0.09,
+  "marker": true
+ },
+ {
+  "t": 2274.0,
+  "attempt": "Is it always good to say it in the present tense or do I need to understand the past?",
+  "correction": "The present tense is better because it's a general statement.",
+  "overlap": 0.2,
+  "marker": false
+ },
+ {
+  "t": 2398.3,
+  "attempt": "No, no, corretto.",
+  "correction": "No, no, corretto.",
+  "overlap": 1.0,
+  "marker": true
+ },
+ {
+  "t": 2554.1,
+  "attempt": "Esatto, so practical.",
+  "correction": "Studiare una lingua, perché una lingua aiuta perché devi imparare, memorizzare.",
+  "overlap": 0.0,
+  "marker": true
+ }
+]

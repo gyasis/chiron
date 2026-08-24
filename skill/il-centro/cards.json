@@ -1,0 +1,554 @@
+[
+ {
+  "clip": "ex-01",
+  "chapter": "Nomi, genere e numero",
+  "sectionId": "chapter-1",
+  "it": "la regola / le regole",
+  "en": "the rule, the rules",
+  "note": ""
+ },
+ {
+  "clip": "ex-02",
+  "chapter": "Nomi, genere e numero",
+  "sectionId": "chapter-1",
+  "it": "l'attore / l'attrice",
+  "en": "the actor, the actress",
+  "note": ""
+ },
+ {
+  "clip": "ex-12",
+  "chapter": "Nomi, genere e numero",
+  "sectionId": "chapter-1",
+  "it": "i registi / le registe",
+  "en": "the directors, the women directors",
+  "note": ""
+ },
+ {
+  "clip": "ex-13",
+  "chapter": "Nomi, genere e numero",
+  "sectionId": "chapter-1",
+  "it": "gli attori / le attrici",
+  "en": "the actors, the actresses",
+  "note": ""
+ },
+ {
+  "clip": "ex-14",
+  "chapter": "Nomi, genere e numero",
+  "sectionId": "chapter-1",
+  "it": "i fenomeni",
+  "en": "the phenomena",
+  "note": ""
+ },
+ {
+  "clip": "ex-15",
+  "chapter": "Nomi, genere e numero",
+  "sectionId": "chapter-1",
+  "it": "i rischi",
+  "en": "the risks",
+  "note": ""
+ },
+ {
+  "clip": "ex-16",
+  "chapter": "Nomi, genere e numero",
+  "sectionId": "chapter-1",
+  "it": "i consigli",
+  "en": "the pieces of advice",
+  "note": ""
+ },
+ {
+  "clip": "ex-20",
+  "chapter": "Nomi, genere e numero",
+  "sectionId": "chapter-1",
+  "it": "un attore",
+  "en": "an actor",
+  "note": ""
+ },
+ {
+  "clip": "ex-04",
+  "chapter": "Nomi, genere e numero",
+  "sectionId": "chapter-1",
+  "it": "devo studiare più italiano",
+  "en": "I have to study more Italian",
+  "note": ""
+ },
+ {
+  "clip": "ex-05",
+  "chapter": "Nomi, genere e numero",
+  "sectionId": "chapter-1",
+  "it": "mi piace più guardare",
+  "en": "I prefer watching",
+  "note": ""
+ },
+ {
+  "clip": "classe-01",
+  "chapter": "Conversazione quotidiana",
+  "sectionId": "chapter-2",
+  "it": "Da quanto tempo abiti in Italia?",
+  "en": "How long have you been living in Italy?",
+  "note": "da + PRESENT tense — Italian says \\\"abito da tre anni\\\", not a past tense."
+ },
+ {
+  "clip": "classe-02",
+  "chapter": "Conversazione quotidiana",
+  "sectionId": "chapter-2",
+  "it": "Hai tempo per scrivere una presentazione?",
+  "en": "Do you have time to write a presentation?",
+  "note": "avere tempo; per + infinito = \\\"to / in order to\\\"."
+ },
+ {
+  "clip": "classe-03",
+  "chapter": "Conversazione quotidiana",
+  "sectionId": "chapter-2",
+  "it": "Voglio praticare la pronuncia.",
+  "en": "I want to practise pronunciation.",
+  "note": "volere + infinito, no preposition between them."
+ },
+ {
+  "clip": "classe-04",
+  "chapter": "Conversazione quotidiana",
+  "sectionId": "chapter-2",
+  "it": "domandare",
+  "en": "to ask (a question)",
+  "note": "chiedere covers asking a question AND asking for something; fare una domanda is the everyday phrase."
+ },
+ {
+  "clip": "classe-05",
+  "chapter": "Conversazione quotidiana",
+  "sectionId": "chapter-2",
+  "it": "un consiglio",
+  "en": "a piece of advice, a tip",
+  "note": "Countable in Italian: i consigli. dare un consiglio = to give advice."
+ },
+ {
+  "clip": "classe-08",
+  "chapter": "Conversazione quotidiana",
+  "sectionId": "chapter-2",
+  "it": "Ci vediamo domani alla stessa ora, allo stesso posto.",
+  "en": "See you tomorrow, same time, same place.",
+  "note": "ci vediamo = we see each other. a+la=alla, a+lo=allo."
+ },
+ {
+  "clip": "ex-07",
+  "chapter": "Conversazione quotidiana",
+  "sectionId": "chapter-2",
+  "it": "abito qui da tre anni",
+  "en": "I've been living here for three years",
+  "note": ""
+ },
+ {
+  "clip": "ex-08",
+  "chapter": "Conversazione quotidiana",
+  "sectionId": "chapter-2",
+  "it": "fare una domanda",
+  "en": "to ask a question",
+  "note": ""
+ },
+ {
+  "clip": "tempo-01",
+  "chapter": "L'ora",
+  "sectionId": "chapter-3",
+  "it": "Adesso sono le 4.36 di mattina.",
+  "en": "It's 4:36 in the morning now.",
+  "note": "sono le + number for every hour except 1, noon and midnight."
+ },
+ {
+  "clip": "tempo-02",
+  "chapter": "L'ora",
+  "sectionId": "chapter-3",
+  "it": "Qui sono le 15.00 di pomeriggio.",
+  "en": "Here it's 3 in the afternoon.",
+  "note": "di mattina / di pomeriggio / di sera / di notte."
+ },
+ {
+  "clip": "tempo-03",
+  "chapter": "L'ora",
+  "sectionId": "chapter-3",
+  "it": "La prima riunione comincia alle 9.00.",
+  "en": "The first meeting starts at 9:00.",
+  "note": "cominciare alle + hour."
+ },
+ {
+  "clip": "tempo-04",
+  "chapter": "L'ora",
+  "sectionId": "chapter-3",
+  "it": "Ho molte riunioni di lavoro.",
+  "en": "I have a lot of work meetings.",
+  "note": "NOTE: di lavoro stays SINGULAR in this fixed phrase (the log shows \\\"di lavori\\\" — that means roadworks)."
+ },
+ {
+  "clip": "dt-01",
+  "chapter": "L'ora",
+  "sectionId": "chapter-3",
+  "it": "Sono le quattro.",
+  "en": "It's four o'clock",
+  "note": ""
+ },
+ {
+  "clip": "dt-02",
+  "chapter": "L'ora",
+  "sectionId": "chapter-3",
+  "it": "È l'una. / È mezzogiorno. / È mezzanotte.",
+  "en": "It's one o'clock. It's noon. It's midnight",
+  "note": ""
+ },
+ {
+  "clip": "ex-09",
+  "chapter": "L'ora",
+  "sectionId": "chapter-3",
+  "it": "È mezzogiorno. / È mezzanotte.",
+  "en": "it's noon, it's midnight",
+  "note": ""
+ },
+ {
+  "clip": "ex-10",
+  "chapter": "L'ora",
+  "sectionId": "chapter-3",
+  "it": "di mattina · di pomeriggio · di sera · di notte",
+  "en": "in the morning, in the afternoon, in the evening, at night",
+  "note": ""
+ },
+ {
+  "clip": "ex-11",
+  "chapter": "L'ora",
+  "sectionId": "chapter-3",
+  "it": "alle 9.00 · alle 9.55 · alla stessa ora",
+  "en": "at nine, at nine fifty-five, at the same time",
+  "note": ""
+ },
+ {
+  "clip": "classe-09",
+  "chapter": "L'ora",
+  "sectionId": "chapter-3",
+  "it": "alle 9.55",
+  "en": "at 9:55",
+  "note": "\\\"At\\\" a time = alle. Italian writes times with a period, not a colon."
+ },
+ {
+  "clip": "ex-17",
+  "chapter": "L'ora",
+  "sectionId": "chapter-3",
+  "it": "lavori in corso",
+  "en": "roadworks in progress",
+  "note": ""
+ },
+ {
+  "clip": "ex-18",
+  "chapter": "L'ora",
+  "sectionId": "chapter-3",
+  "it": "orario di lavoro",
+  "en": "working hours",
+  "note": ""
+ },
+ {
+  "clip": "gram-01",
+  "chapter": "Grammatica",
+  "sectionId": "chapter-4",
+  "it": "La gente è pazza.",
+  "en": "People are crazy.",
+  "note": "la gente is grammatically SINGULAR — è, never sono. Use le persone for a real plural."
+ },
+ {
+  "clip": "gram-02",
+  "chapter": "Grammatica",
+  "sectionId": "chapter-4",
+  "it": "La gente a Nord viaggia a Sud.",
+  "en": "People in the North travel to the South.",
+  "note": "Singular verb again: viaggia, not viaggiano."
+ },
+ {
+  "clip": "gram-03",
+  "chapter": "Grammatica",
+  "sectionId": "chapter-4",
+  "it": "La gente era ottimista.",
+  "en": "People were optimistic.",
+  "note": "Imperfetto era = was / used to be. Still singular agreement."
+ },
+ {
+  "clip": "gram-04",
+  "chapter": "Grammatica",
+  "sectionId": "chapter-4",
+  "it": "Non c'è una regola.",
+  "en": "There's no rule.",
+  "note": "c'è + singular, ci sono + plural."
+ },
+ {
+  "clip": "gram-06",
+  "chapter": "Grammatica",
+  "sectionId": "chapter-4",
+  "it": "Devo studiare più italiano.",
+  "en": "I have to study more Italian.",
+  "note": "Her shorthand was \\\"studiare + italiano\\\" — the + means più. dovere + infinito."
+ },
+ {
+  "clip": "gram-07",
+  "chapter": "Grammatica",
+  "sectionId": "chapter-4",
+  "it": "Lei non ha pazienza.",
+  "en": "She has no patience.",
+  "note": "avere pazienza — you HAVE the state. Same family: avere fame, sete, sonno, ragione, paura."
+ },
+ {
+  "clip": "gram-08",
+  "chapter": "Grammatica",
+  "sectionId": "chapter-4",
+  "it": "Lui si innamora di Sofia Loren.",
+  "en": "He falls in love with Sofia Loren.",
+  "note": "innamorarsi DI, never con."
+ },
+ {
+  "clip": "gram-09",
+  "chapter": "Grammatica",
+  "sectionId": "chapter-4",
+  "it": "Mi piace guardare il cinema italiano.",
+  "en": "I like watching Italian cinema.",
+  "note": "mi piace + infinito. Plural things take mi piacciono."
+ },
+ {
+  "clip": "gram-10",
+  "chapter": "Grammatica",
+  "sectionId": "chapter-4",
+  "it": "fare il bagno",
+  "en": "to take a dip, to go for a swim",
+  "note": "Uses fare. nuotare = to swim as an activity/sport."
+ },
+ {
+  "clip": "dt-03",
+  "chapter": "Grammatica",
+  "sectionId": "chapter-4",
+  "it": "nel fiume · nel lago",
+  "en": "in the river, in the lake",
+  "note": ""
+ },
+ {
+  "clip": "gram-13",
+  "chapter": "Grammatica",
+  "sectionId": "chapter-4",
+  "it": "nella fontana",
+  "en": "in the fountain",
+  "note": "in + la = nella. la fontana."
+ },
+ {
+  "clip": "gram-14",
+  "chapter": "Grammatica",
+  "sectionId": "chapter-4",
+  "it": "la vita degli anni '60",
+  "en": "life in the '60s",
+  "note": "di + gli = degli."
+ },
+ {
+  "clip": "gram-15",
+  "chapter": "Grammatica",
+  "sectionId": "chapter-4",
+  "it": "la generazione di mia moglie",
+  "en": "my wife's generation",
+  "note": "NO article before a singular unmodified family member: mia moglie, not la mia moglie."
+ },
+ {
+  "clip": "gram-16",
+  "chapter": "Grammatica",
+  "sectionId": "chapter-4",
+  "it": "un'attrice internazionale",
+  "en": "an international actress",
+  "note": "un' with apostrophe only before a FEMININE vowel-initial noun. Masculine is un attore, no apostrophe."
+ },
+ {
+  "clip": "ex-06",
+  "chapter": "Grammatica",
+  "sectionId": "chapter-4",
+  "it": "le persone sono pazze",
+  "en": "people are crazy",
+  "note": ""
+ },
+ {
+  "clip": "ex-19",
+  "chapter": "Grammatica",
+  "sectionId": "chapter-4",
+  "it": "avere fame, sete, sonno, ragione, paura",
+  "en": "to be hungry, thirsty, sleepy, right, afraid",
+  "note": ""
+ },
+ {
+  "clip": "tur-01",
+  "chapter": "Il turismo",
+  "sectionId": "chapter-5",
+  "it": "Il turismo è importante per l'Italia.",
+  "en": "Tourism is important for Italy.",
+  "note": ""
+ },
+ {
+  "clip": "tur-02",
+  "chapter": "Il turismo",
+  "sectionId": "chapter-5",
+  "it": "un fenomeno italiano",
+  "en": "an Italian phenomenon",
+  "note": "il fenomeno → i fenomeni."
+ },
+ {
+  "clip": "tur-03",
+  "chapter": "Il turismo",
+  "sectionId": "chapter-5",
+  "it": "il turismo selvaggio",
+  "en": "unchecked / \\\"wild\\\" mass tourism",
+  "note": "selvaggio = wild, savage, unregulated. A loaded phrase in current Italian debate."
+ },
+ {
+  "clip": "tur-04",
+  "chapter": "Il turismo",
+  "sectionId": "chapter-5",
+  "it": "Ferragosto",
+  "en": "15 August — Italy's peak national holiday",
+  "note": "The country empties out and heads for the coast; explains the whole August exodus."
+ },
+ {
+  "clip": "dt-04",
+  "chapter": "Il turismo",
+  "sectionId": "chapter-5",
+  "it": "il governo · il rischio",
+  "en": "the government, the risk",
+  "note": ""
+ },
+ {
+  "clip": "tur-07",
+  "chapter": "Il turismo",
+  "sectionId": "chapter-5",
+  "it": "Fare il bagno nella fontana di Trevi",
+  "en": "To bathe in the Trevi Fountain",
+  "note": "The notorious tourist offence — it carries a fine."
+ },
+ {
+  "clip": "tur-08",
+  "chapter": "Il turismo",
+  "sectionId": "chapter-5",
+  "it": "a Nord / a Sud",
+  "en": "in the North / to the South",
+  "note": "Also al Nord / al Sud."
+ },
+ {
+  "clip": "cin-01",
+  "chapter": "Il cinema",
+  "sectionId": "chapter-6",
+  "it": "in bianco e nero",
+  "en": "in black and white",
+  "note": "No article."
+ },
+ {
+  "clip": "cin-02",
+  "chapter": "Il cinema",
+  "sectionId": "chapter-6",
+  "it": "il regista",
+  "en": "the film director",
+  "note": "FALSE FRIEND — not \\\"registrar\\\". Masculine despite the -a: il regista → i registi; la regista → le registe."
+ },
+ {
+  "clip": "cin-03",
+  "chapter": "Il cinema",
+  "sectionId": "chapter-6",
+  "it": "l'attore / l'attrice",
+  "en": "the actor / the actress",
+  "note": "Plural: gli attori / le attrici."
+ },
+ {
+  "clip": "dt-05",
+  "chapter": "Il cinema",
+  "sectionId": "chapter-6",
+  "it": "Il Sorpasso — 1962",
+  "en": "Il Sorpasso, nineteen sixty-two",
+  "note": ""
+ },
+ {
+  "clip": "cin-05",
+  "chapter": "Il cinema",
+  "sectionId": "chapter-6",
+  "it": "Dino Risi",
+  "en": "the director of Il Sorpasso",
+  "note": "Her note \\\"Dino Risi &lt; il regista\\\" = \\\"who is the director\\\"."
+ },
+ {
+  "clip": "cin-06",
+  "chapter": "Il cinema",
+  "sectionId": "chapter-6",
+  "it": "Vittorio Gassman",
+  "en": "the lead actor of Il Sorpasso",
+  "note": ""
+ },
+ {
+  "clip": "dt-06",
+  "chapter": "Il cinema",
+  "sectionId": "chapter-6",
+  "it": "la vita degli anni '60, il boom economico",
+  "en": "life in the sixties, the economic boom",
+  "note": ""
+ },
+ {
+  "clip": "cin-09",
+  "chapter": "Il cinema",
+  "sectionId": "chapter-6",
+  "it": "il film cult della Dolce Vita",
+  "en": "the cult film La Dolce Vita",
+  "note": "Fellini, 1960 — the Trevi Fountain scene. il film is invariable: i film."
+ },
+ {
+  "clip": "cin-10",
+  "chapter": "Il cinema",
+  "sectionId": "chapter-6",
+  "it": "Ieri, Oggi, Domani",
+  "en": "\\\"Yesterday, Today, Tomorrow\\\" (1963)",
+  "note": "De Sica, with Sofia Loren and Marcello Mastroianni."
+ },
+ {
+  "clip": "sca-01",
+  "chapter": "Pratica",
+  "sectionId": "chapter-7",
+  "it": "Abito in Italia da tre anni.",
+  "en": "I've been living in Italy for three years",
+  "note": ""
+ },
+ {
+  "clip": "sca-02",
+  "chapter": "Pratica",
+  "sectionId": "chapter-7",
+  "it": "Ogni giorno ho molte riunioni di lavoro.",
+  "en": "Every day I have a lot of work meetings",
+  "note": ""
+ },
+ {
+  "clip": "sca-03",
+  "chapter": "Pratica",
+  "sectionId": "chapter-7",
+  "it": "Devo studiare più italiano perché voglio parlare bene.",
+  "en": "I have to study more Italian because I want to speak well",
+  "note": ""
+ },
+ {
+  "clip": "sca-04",
+  "chapter": "Pratica",
+  "sectionId": "chapter-7",
+  "it": "Mi piace guardare il cinema italiano in bianco e nero.",
+  "en": "I like watching Italian cinema in black and white",
+  "note": ""
+ },
+ {
+  "clip": "sca-05",
+  "chapter": "Pratica",
+  "sectionId": "chapter-7",
+  "it": "Il mio film preferito è Il Sorpasso, del regista Dino Risi.",
+  "en": "My favourite film is Il Sorpasso, by the director Dino Risi",
+  "note": ""
+ },
+ {
+  "clip": "classe-06",
+  "chapter": "Pratica",
+  "sectionId": "chapter-7",
+  "it": "una presentazione al presente",
+  "en": "a presentation in the present tense",
+  "note": "Your homework: topic = la mia vita in Italia."
+ },
+ {
+  "clip": "classe-07",
+  "chapter": "Pratica",
+  "sectionId": "chapter-7",
+  "it": "la mia vita in Italia",
+  "en": "my life in Italy",
+  "note": "The homework topic she assigned."
+ }
+]

@@ -1,0 +1,241 @@
+#!/usr/bin/env python3
+"""il centro di italia — Day 2 narration (chiron audio-scripts shape).
+
+R-IC5: teach the language, never narrate the teaching. No notation, no teacher named.
+R-IC9: open on what Day 1 said to go and study.
+Bilingual rule: every Italian phrase is its own it-segment, glossed by the NEXT en-segment.
+"""
+
+GAP_MS = {"word": 60, "clause": 400, "sentence": 900, "paragraph": 1800}
+en = lambda t, g="sentence": {"lang": "en", "text": t, "gapAfter": g}
+it = lambda t, g="clause": {"lang": "it", "text": t, "gapAfter": g}
+
+SUMMARY = [
+    en("Before the new material, three things to keep from last time.", "clause"),
+    it("riunioni di lavoro", "clause"),
+    en("work meetings — lavoro stays singular there.", "clause"),
+    it("La gente è pazza.", "clause"),
+    en("People are crazy — a singular verb, always.", "clause"),
+    it("Abito qui da tre anni.", "clause"),
+    en("I've been living here for three years — the present, with da.", "paragraph"),
+
+    en("Now, four things from today.", "sentence"),
+    en("One, reflexive verbs.", "clause"),
+    it("svegliarsi", "clause"),
+    en("to wake up — becomes", "word"),
+    it("mi sveglio alle sei e un quarto", "clause"),
+    en("I wake up at six fifteen. The pronoun moves in front of the verb.", "sentence"),
+    en("Two,", "word"),
+    it("ci vuole tempo", "clause"),
+    en("it takes time. It agrees with the thing needed, not with you.", "sentence"),
+    en("Three, the correlative.", "clause"),
+    it("Più lavori e più hai successo.", "clause"),
+    en("The more you work, the more successful you are.", "sentence"),
+    en("And four, two false friends worth knowing:", "word"),
+    it("in realtà", "clause"),
+    en("means actually, not in reality; and", "word"),
+    it("l'educazione", "clause"),
+    en("means upbringing and manners, not schooling.", "paragraph"),
+]
+
+SHORTENED = [
+    en("Start with what to carry forward.", "clause"),
+    it("riunioni di lavoro", "clause"),
+    en("stays singular;", "word"),
+    it("la gente", "clause"),
+    en("always takes a singular verb; and Italian keeps the present tense with", "word"),
+    it("da", "clause"),
+    en("for something still going on. Today builds on all three.", "paragraph"),
+
+    en("The main grammar of this lesson is the reflexive verb.", "sentence"),
+    it("svegliarsi", "clause"),
+    en("to wake up. That -si on the end is the marker. To use it, you drop the -si and put "
+       "the pronoun in front:", "word"),
+    it("mi sveglio", "clause"),
+    en("I wake up,", "word"),
+    it("ti svegli", "clause"),
+    en("you wake up,", "word"),
+    it("si sveglia", "clause"),
+    en("he or she wakes up.", "sentence"),
+    it("Mi sveglio alle sei e un quarto.", "clause"),
+    en("I wake up at six fifteen — and there is alle again, from last time.", "sentence"),
+    it("connettersi", "clause"),
+    en("to connect, works the same way:", "word"),
+    it("Mi connetto con gli USA.", "clause"),
+    en("I connect with the USA.", "paragraph"),
+
+    en("The conversation went to health.", "clause"),
+    it("Il futuro della medicina è digitale.", "clause"),
+    en("The future of medicine is digital.", "sentence"),
+    it("Non ci sono giovani medici italiani.", "clause"),
+    en("There are no young Italian doctors — ci sono for a plural, c'è for a singular.", "sentence"),
+    it("un continente vecchio", "clause"),
+    en("an old continent.", "word"),
+    it("le malattie", "clause"),
+    en("illnesses.", "word"),
+    it("i bambini obesi", "clause"),
+    en("obese children — the adjective agrees in gender and number.", "paragraph"),
+
+    en("Then diet and long life.", "clause"),
+    it("la dieta mediterranea", "clause"),
+    en("the Mediterranean diet.", "word"),
+    it("i legumi", "clause"),
+    en("pulses — beans, lentils, chickpeas. Not vegetables in general; that is a false friend.",
+       "sentence"),
+    it("il Cilento", "clause"),
+    en("a region south of Salerno, where that diet was first described, and where you find", "word"),
+    it("i centenari", "clause"),
+    en("centenarians.", "word"),
+    it("gli over 100", "clause"),
+    en("the over-hundreds — a borrowed English word Italian keeps unchanged.", "sentence"),
+    it("una comunità", "clause"),
+    en("a community. That word ends in an accented a, so it never changes in the plural.",
+       "paragraph"),
+
+    en("Society and money next.", "clause"),
+    it("i soldi", "clause"),
+    en("money — always plural in Italian.", "sentence"),
+    it("il sistema americano", "clause"),
+    en("the American system. Sistema ends in -a but is masculine.", "sentence"),
+    it("una società competitiva", "clause"),
+    en("a competitive society, where", "word"),
+    it("l'idea è: più lavori e più hai successo", "clause"),
+    en("the idea is: the more you work, the more successful you are. That is the correlative — "
+       "just più, verb, e, più, verb.", "sentence"),
+    it("la qualità della vita", "clause"),
+    en("quality of life — and vita carries no written accent.", "paragraph"),
+
+    en("Finally, habits and time.", "clause"),
+    it("l'abitudine", "clause"),
+    en("the habit.", "word"),
+    it("ci vuole tempo", "clause"),
+    en("it takes time — and this one agrees with the thing needed:", "word"),
+    it("ci vogliono due ore", "clause"),
+    en("it takes two hours, plural.", "sentence"),
+    it("in realtà", "clause"),
+    en("actually — another false friend.", "sentence"),
+    en("And the numbers:", "word"),
+    it("undici, dodici, tredici", "clause"),
+    en("eleven, twelve, thirteen. Eleven to sixteen all end in -dici; from seventeen it flips.",
+       "paragraph"),
+]
+
+SECTIONS = {
+    "chapter-1": [
+        en("Reflexive verbs are the step up in this lesson.", "sentence"),
+        it("svegliarsi", "clause"),
+        en("to wake up. The -si on the end tells you the action comes back on the subject.", "sentence"),
+        en("To use it, drop the -si and move the pronoun in front of the verb.", "clause"),
+        it("mi sveglio", "clause"),
+        en("I wake up.", "word"),
+        it("ti svegli", "clause"),
+        en("you wake up.", "word"),
+        it("si sveglia", "clause"),
+        en("he or she wakes up.", "word"),
+        it("ci svegliamo", "clause"),
+        en("we wake up. The pronoun is never attached to the conjugated verb.", "sentence"),
+        it("Mi sveglio alle sei e un quarto.", "clause"),
+        en("I wake up at six fifteen.", "sentence"),
+        it("connettersi", "clause"),
+        en("to connect, behaves identically — note the double t.", "clause"),
+        it("Mi connetto con gli USA.", "clause"),
+        en("I connect with the USA.", "sentence"),
+        it("la mia routine", "clause"),
+        en("my routine — borrowed from French and invariable.", "paragraph"),
+    ],
+    "chapter-2": [
+        en("Health and medicine.", "clause"),
+        it("Il futuro della medicina è digitale.", "clause"),
+        en("The future of medicine is digital. Di plus la gives della, and digitale is one "
+           "form for both genders.", "sentence"),
+        it("Non ci sono giovani medici italiani.", "clause"),
+        en("There are no young Italian doctors. Ci sono for a plural; c'è for a singular.", "sentence"),
+        it("un continente vecchio", "clause"),
+        en("an old continent — vecchio keeps a hard k sound.", "sentence"),
+        it("le malattie", "clause"),
+        en("illnesses. La malattia becomes le malattie — feminine -ia goes to -ie.", "sentence"),
+        it("i bambini obesi", "clause"),
+        en("obese children. The adjective agrees in both gender and number.", "sentence"),
+        it("la salute", "clause"),
+        en("health — feminine, despite ending in -e.", "sentence"),
+        it("le droghe illegali", "clause"),
+        en("illegal drugs. The h in droghe keeps the g hard.", "paragraph"),
+    ],
+    "chapter-3": [
+        en("Diet and long life.", "clause"),
+        it("la dieta mediterranea", "clause"),
+        en("the Mediterranean diet.", "sentence"),
+        it("i legumi", "clause"),
+        en("pulses — beans, lentils, chickpeas. A false friend: not vegetables in general.", "sentence"),
+        it("i carboidrati", "clause"),
+        en("carbohydrates.", "word"),
+        it("il cibo locale", "clause"),
+        en("local food.", "sentence"),
+        it("il Cilento", "clause"),
+        en("the Cilento, south of Salerno, where the Mediterranean diet was first described.",
+           "sentence"),
+        it("i centenari", "clause"),
+        en("centenarians.", "word"),
+        it("gli over 100", "clause"),
+        en("the over-hundreds — English borrowed whole and left unchanged.", "sentence"),
+        it("una comunità", "clause"),
+        en("a community. Ending in an accented a, it never changes: una comunità, due comunità.",
+           "sentence"),
+        it("gustare il cibo", "clause"),
+        en("to savour food — gustare is tasting with pleasure, not merely sampling.", "paragraph"),
+    ],
+    "chapter-4": [
+        en("Society and money.", "clause"),
+        it("i soldi", "clause"),
+        en("money — always plural in Italian. I soldi sono, never il soldo.", "sentence"),
+        it("una regione ricca", "clause"),
+        en("a rich region.", "word"),
+        it("l'energia", "clause"),
+        en("energy.", "sentence"),
+        it("il sistema americano", "clause"),
+        en("the American system. Sistema ends in -a but is masculine — i sistemi.", "sentence"),
+        it("lo status sociale", "clause"),
+        en("social status. Lo, not il, before s plus a consonant.", "sentence"),
+        it("una società competitiva", "clause"),
+        en("a competitive society.", "sentence"),
+        it("L'idea è: più lavori e più hai successo.", "clause"),
+        en("The idea is: the more you work, the more successful you are. No che is needed — "
+           "just più, verb, e, più, verb.", "sentence"),
+        it("la qualità della vita", "clause"),
+        en("quality of life. Vita has no written accent.", "sentence"),
+        it("l'ossessione per la sicurezza", "clause"),
+        en("the obsession with safety — ossessione takes per.", "paragraph"),
+    ],
+    "chapter-5": [
+        en("Habits, and how Italian talks about time.", "sentence"),
+        it("l'abitudine", "clause"),
+        en("the habit — feminine.", "word"),
+        it("il trend", "clause"),
+        en("the trend, borrowed and invariable.", "sentence"),
+        it("ci vuole tempo", "clause"),
+        en("it takes time. This is impersonal, and it agrees with the thing needed, not with you.",
+           "clause"),
+        it("ci vogliono due ore", "clause"),
+        en("it takes two hours — plural thing, plural verb.", "sentence"),
+        it("in realtà", "clause"),
+        en("actually, in fact. A false friend: it is not 'in reality'.", "sentence"),
+        it("undici, dodici, tredici", "clause"),
+        en("eleven, twelve, thirteen. Everything from eleven to sixteen ends in -dici, then at "
+           "seventeen the order flips: diciassette, diciotto, diciannove.", "sentence"),
+        it("gli errori", "clause"),
+        en("mistakes.", "word"),
+        it("una richiesta", "clause"),
+        en("a request — fare una richiesta.", "paragraph"),
+    ],
+}
+
+SCRIPTS = {"summary": SUMMARY, "shortened": SHORTENED, "sections": SECTIONS}
+
+if __name__ == "__main__":
+    w = lambda s: sum(len(x["text"].split()) for x in s)
+    print(f"summary   {len(SUMMARY):3} segs · {w(SUMMARY):4} words")
+    print(f"shortened {len(SHORTENED):3} segs · {w(SHORTENED):4} words")
+    t = len(SUMMARY) + len(SHORTENED)
+    for k, v in SECTIONS.items():
+        print(f"  {k:12} {len(v):3} segs · {w(v):4} words"); t += len(v)
+    print(f"TOTAL segments: {t}")

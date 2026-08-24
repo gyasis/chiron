@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>il centro — ingest review</title>
+<link rel="stylesheet" href="_assets/series.css">
+<style>
+  .wrap{padding-bottom:6rem}
+  .stat{display:grid;grid-template-columns:repeat(auto-fit,minmax(7.5rem,1fr));gap:1px;
+    background:var(--rule);border:1px solid var(--rule);border-radius:5px;overflow:hidden}
+  .stat div{background:var(--raised);padding:.8rem .9rem;display:flex;flex-direction:column;gap:.15rem}
+  .stat b{font-family:var(--display);font-size:1.5rem;font-weight:700;line-height:1;
+    font-variant-numeric:tabular-nums}
+  .stat span{font-family:var(--display);font-size:.66rem;letter-spacing:.12em;
+    text-transform:uppercase;color:var(--faint)}
+  .stat div.warn b{color:var(--alert)}
+
+  .sp{border:1px solid var(--rule);border-radius:6px;background:var(--raised);
+    padding:1.1rem 1.25rem;display:flex;flex-direction:column;gap:.8rem}
+  .sp.picked{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
+  .sp h3{font-family:var(--display);font-size:1.125rem;font-weight:700;margin:0;
+    display:flex;align-items:baseline;gap:.7rem;flex-wrap:wrap}
+  .sp .id{font-family:var(--mono);font-size:.72rem;color:var(--faint)}
+  .sp .m{font-family:var(--mono);font-size:.76rem;color:var(--muted)}
+  .sp .m b{color:var(--ink)}
+  .bar{height:5px;border-radius:3px;background:var(--accent-soft);overflow:hidden;max-width:16rem}
+  .bar i{display:block;height:100%;background:var(--accent)}
+  .snips{display:flex;flex-direction:column;gap:.4rem}
+  .snips audio{width:100%;height:32px}
+  .snips .lab{font-family:var(--mono);font-size:.7rem;color:var(--faint)}
+  .who{display:flex;gap:.5rem;flex-wrap:wrap;align-items:center}
+  .who button{font-family:var(--display);font-size:.78rem;font-weight:600;padding:6px 14px;
+    border-radius:999px;border:1px solid var(--rule);background:transparent;color:var(--muted);cursor:pointer}
+  .who button:hover{border-color:var(--accent);color:var(--accent)}
+  .who button.on{background:var(--accent);color:var(--ground);border-color:var(--accent)}
+  .who input{font:inherit;font-size:.85rem;padding:5px 10px;border:1px solid var(--rule);
+    border-radius:6px;background:var(--ground);color:var(--ink);width:9rem}
+  .hint{font-family:var(--mono);font-size:.72rem;color:var(--faint)}
+  .actions{display:flex;gap:.8rem;align-items:center;flex-wrap:wrap}
+  .actions button{font-family:var(--display);font-size:.8rem;font-weight:600;letter-spacing:.06em;
+    text-transform:uppercase;padding:9px 20px;border-radius:999px;border:1px solid var(--accent);
+    background:var(--accent);color:var(--ground);cursor:pointer}
+  .actions button[disabled]{opacity:.4;cursor:not-allowed}
+  .msg{font-family:var(--mono);font-size:.8rem}
+  .msg.ok{color:var(--accent)} .msg.err{color:var(--alert)}
+  .note{background:color-mix(in srgb,var(--alert) 9%,var(--raised));border-left:3px solid var(--alert);
+    padding:.85rem 1rem;border-radius:0 5px 5px 0}
+  .note b{color:var(--alert)}
+</style></head><body>
+<div class="wrap">
+  <header class="board">
+    <div class="board-meta"><span>il centro di italia</span><span>Ingest review</span>
+      <span id="rec">—</span></div>
+    <h1>Chi parla?</h1>
+    <p class="lede">Diarization found the speakers below but cannot name them. Listen to a snippet
+      from each and say who it is. <b>This matters:</b> if the map is inverted, the lesson would
+      teach your own mistakes back to you as correct Italian.</p>
+  </header>
+
+  <section>
+    <p class="eyebrow">What the analysis found</p>
+    <div class="stat" id="stats"></div>
+    <div id="warn"></div>
+  </section>
+
+  <section>
+    <p class="eyebrow">The speakers</p>
+    <div id="speakers" style="display:flex;flex-direction:column;gap:1rem"></div>
+  </section>
+
+  <section>
+    <div class="actions">
+      <button id="save" disabled>Confirm speakers</button>
+      <span class="msg" id="msg"></span>
+    </div>
+    <p class="hint">Confirming writes the names into the voice registry
+      (<code>~/.chiron/voice-registry/il-centro.json</code>). From the next lesson on these two are
+      recognised automatically and you won't be asked again.</p>
+  </section>
+</div>
+
+<script>
+const P = new URLSearchParams(location.search);
+const DAY = P.get('day') || '3';
+const BASE = `day${DAY}`;
+const picks = {};
+
+function fmt(s){ return `${Math.floor(s/60)}:${String(Math.round(s%60)).padStart(2,'0')}`; }
+
+fetch(`${BASE}/ingest.json`).then(r=>r.json()).then(d=>{
+  document.getElementById('rec').textContent = d.recording.split('/').pop();
+
+  const langs = Object.entries(d.lang_split).sort((a,b)=>b[1]-a[1]);
+  const only = langs.filter(([,v])=>v>5).length <= 1;
+  document.getElementById('stats').innerHTML = `
+    <div><b>${d.found_speakers}</b><span>speakers found</span></div>
+    <div${d.found_speakers!==d.expected_speakers?' class="warn"':''}><b>${d.expected_speakers}</b><span>expected</span></div>
+    <div><b>${d.turns}</b><span>turns</span></div>
+    <div><b>${fmt(d.speech_s)}</b><span>speech</span></div>
+    ${langs.slice(0,2).map(([k,v])=>`<div><b>${v}%</b><span>${k}</span></div>`).join('')}`;
+
+  if (d.found_speakers !== d.expected_speakers) {
+    document.getElementById('warn').innerHTML =
+      `<div class="note"><b>Speaker count mismatch.</b> Expected ${d.expected_speakers},
+       found ${d.found_speakers}. Re-run the ingest with
+       <code>--num-speakers ${d.found_speakers}</code> if a third person really was present.</div>`;
+  } else if (only) {
+    document.getElementById('warn').innerHTML =
+      `<div class="note"><b>Only one language detected.</b> On a bilingual lesson that means
+       detection collapsed — the transcript needs the forced two-way decode before use.</div>`;
+  }
+
+  const host = document.getElementById('speakers');
+  d.clusters.forEach(c=>{
+    const el = document.createElement('div');
+    el.className = 'sp'; el.id = 'sp-'+c.speaker;
+    el.innerHTML = `
+      <h3>${c.speaker.replace('SPEAKER_','Speaker ')} <span class="id">${c.speaker}</span></h3>
+      <div class="m"><b>${c.turns}</b> turns · <b>${fmt(c.talk_s)}</b> talking ·
+        <b>${c.italian_pct}%</b> Italian
+        ${c.proposed?` · registry match <b>${c.proposed}</b> (${c.confidence})`:' · no registry match yet'}</div>
+      <div class="bar"><i style="width:${c.italian_pct}%"></i></div>
+      <div class="snips">${c.snippets.map(s=>`
+        <span class="lab">@${fmt(s.start)} · ${s.dur}s</span>
+        <audio controls preload="none" src="${BASE}/${s.file}"></audio>`).join('')}</div>
+      <div class="who">
+        <button data-n="Barbara">Barbara</button>
+        <button data-n="Gyasi">Gyasi</button>
+        <input placeholder="someone else…" />
+        <span class="hint">the teacher speaks more Italian</span>
+      </div>`;
+    host.appendChild(el);
+
+    el.querySelectorAll('.who button').forEach(b=>b.onclick=()=>{
+      el.querySelectorAll('.who button').forEach(x=>x.classList.remove('on'));
+      b.classList.add('on'); el.querySelector('.who input').value='';
+      picks[c.speaker]=b.dataset.n; el.classList.add('picked'); check();
+    });
+    el.querySelector('.who input').oninput = e=>{
+      el.querySelectorAll('.who button').forEach(x=>x.classList.remove('on'));
+      picks[c.speaker]=e.target.value.trim();
+      el.classList.toggle('picked', !!e.target.value.trim()); check();
+    };
+  });
+
+  function check(){
+    const named = d.clusters.map(c=>picks[c.speaker]).filter(Boolean);
+    const dupe = new Set(named).size !== named.length;
+    const ok = named.length === d.clusters.length && !dupe;
+    document.getElementById('save').disabled = !ok;
+    document.getElementById('msg').textContent = dupe ? 'two speakers cannot be the same person' : '';
+    document.getElementById('msg').className = 'msg err';
+  }
+
+  document.getElementById('save').onclick = ()=>{
+    const msg = document.getElementById('msg');
+    msg.className='msg'; msg.textContent='saving…';
+    fetch('/ingest-confirm', {method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({day: DAY, series: d.series, speakers: picks})})
+      .then(r=>r.json())
+      .then(j=>{ msg.className='msg ok';
+                 msg.textContent = j.ok ? `saved — ${Object.entries(picks).map(([k,v])=>k+'='+v).join(', ')}`
+                                        : ('error: '+(j.error||'unknown')); })
+      .catch(e=>{ msg.className='msg err'; msg.textContent='could not reach the server: '+e; });
+  };
+});
+</script>
+</body></html>

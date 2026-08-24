@@ -49,3 +49,17 @@ console-*.png
 r-filter.yml
 /corpus/
 .appstore-vc
+
+# il-centro — source scripts are tracked; recordings and baked audio are not.
+# Lesson audio travels as a .chiron bundle (skill/CHIRON-FORMAT.md), never in git.
+skill/il-centro/audio/
+skill/il-centro/_archive/
+skill/il-centro/*.mp3
+skill/il-centro/*.wav
+skill/il-centro/**/*.mp3
+skill/il-centro/**/*.wav
+skill/il-centro/*.bak
+# Barbara's own class handout + transcript — her material, not ours to publish.
+skill/il-centro/Lezione-Barbara-*.pdf
+skill/il-centro/lezione-*.md
+skill/il-centro/barbara-*.tsv

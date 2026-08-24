@@ -1,0 +1,4472 @@
+[
+ {
+  "start": 1.03,
+  "end": 1.79,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "Uh..."
+ },
+ {
+  "start": 3.1,
+  "end": 5.08,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Come ti organizzi?",
+  "logprob": -0.277
+ },
+ {
+  "start": 5.95,
+  "end": 7.78,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "Alessandro Ultimente."
+ },
+ {
+  "start": 9.4,
+  "end": 11.1,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Ultimamente"
+ },
+ {
+  "start": 11.44,
+  "end": 14.43,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Oltre a me, no, scusami.",
+  "logprob": -0.279
+ },
+ {
+  "start": 14.58,
+  "end": 16.37,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Ultima."
+ },
+ {
+  "start": 15.76,
+  "end": 17.19,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Intimamente."
+ },
+ {
+  "start": 17.66,
+  "end": 19.13,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Ultimamente.",
+  "logprob": -0.259
+ },
+ {
+  "start": 19.47,
+  "end": 20.97,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Ultimamente..."
+ },
+ {
+  "start": 21.8,
+  "end": 23.35,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "Um, me..."
+ },
+ {
+  "start": 23.55,
+  "end": 26.17,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "Sveligarsi, Sveliarsi."
+ },
+ {
+  "start": 26.17,
+  "end": 26.88,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "Mmm."
+ },
+ {
+  "start": 27.08,
+  "end": 28.26,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Sveglio.",
+  "logprob": -0.438
+ },
+ {
+  "start": 29.0,
+  "end": 29.73,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Sveglio.",
+  "logprob": -0.279
+ },
+ {
+  "start": 30.79,
+  "end": 33.44,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "You cut and you add sveglio."
+ },
+ {
+  "start": 34.57,
+  "end": 35.4,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "Man, that's so hard."
+ },
+ {
+  "start": 35.2,
+  "end": 39.86,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "The temptation is to wake up, you forget to wake up, you can't do anything."
+ },
+ {
+  "start": 40.04,
+  "end": 42.44,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "And you add, oh, mi sveglio."
+ },
+ {
+  "start": 43.43,
+  "end": 47.45,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Ok, aspetto, perché...",
+  "logprob": -0.218
+ },
+ {
+  "start": 47.91,
+  "end": 52.9,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Questo è il verbo ma prima di organizzarsi so ti."
+ },
+ {
+  "start": 53.68,
+  "end": 54.74,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "Organizaci."
+ },
+ {
+  "start": 55.33,
+  "end": 56.09,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "Mommy.",
+  "logprob": -0.351
+ },
+ {
+  "start": 56.44,
+  "end": 62.35,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "He organize, the same principle, you take arsi, you cut, you get rid of arsi.",
+  "logprob": -0.327
+ },
+ {
+  "start": 57.66,
+  "end": 58.5,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "E' semplice.",
+  "logprob": -0.576
+ },
+ {
+  "start": 62.64,
+  "end": 68.54,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "Il punto di attenzione è R e aggiungi O o I."
+ },
+ {
+  "start": 69.96,
+  "end": 72.29,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Oh, sì, sì, sì, capito."
+ },
+ {
+  "start": 74.3,
+  "end": 77.17,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "Capito, il... come se dice, mistake?"
+ },
+ {
+  "start": 78.89,
+  "end": 80.31,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Il errore."
+ },
+ {
+  "start": 83.9,
+  "end": 85.01,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Mistake, l'errore.",
+  "logprob": -0.296
+ },
+ {
+  "start": 86.3,
+  "end": 89.45,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "So, um, restart."
+ },
+ {
+  "start": 89.79,
+  "end": 95.8,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Ultimamente mi sveglio, questo verso le sei."
+ },
+ {
+  "start": 97.13,
+  "end": 97.91,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "Uh..."
+ },
+ {
+  "start": 98.68,
+  "end": 101.64,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "Mi lavorso la faccia con il..."
+ },
+ {
+  "start": 101.18,
+  "end": 103.81,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "E che mi lavo.",
+  "logprob": -0.254
+ },
+ {
+  "start": 105.04,
+  "end": 106.68,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "What did I say? An abortion? Ok."
+ },
+ {
+  "start": 107.27,
+  "end": 111.95,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Hai tagliato l'arte, la tentazione è strana, ma..."
+ },
+ {
+  "start": 112.44,
+  "end": 113.31,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Mi lavo."
+ },
+ {
+  "start": 113.9,
+  "end": 116.48,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Sì, sono mi, mi, larva.",
+  "logprob": -0.392
+ },
+ {
+  "start": 116.72,
+  "end": 118.19,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "Wait, mi lavo."
+ },
+ {
+  "start": 119.27,
+  "end": 121.73,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "La faccia con dell'acqua fredda."
+ },
+ {
+  "start": 122.78,
+  "end": 123.67,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Sì.",
+  "logprob": -0.107
+ },
+ {
+  "start": 127.25,
+  "end": 130.09,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "M, M, M, M, M, M, M, M, M, M, M, M, M, M, M, M, M, M, M, M, M, M, M, M, M, M, M, M, M, M, M, M, M, M, M, M, M, M, M, M, M, M, M, M, M, M, M, M, M, M, M, M, M, M, M, M, M, M, M, M, M, M, M, M, M, M, M, M, M, M, M, M, M, M, M, M, M, M, M, M, M, M, M, M, M, M, M, M, M, M, M, M, M, M, M, M, M, M, M, M, M, M, M, M, M, M, M, M, M, M, M, M",
+  "logprob": -0.128
+ },
+ {
+  "start": 130.09,
+  "end": 131.27,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Mi metto bene, sì."
+ },
+ {
+  "start": 131.27,
+  "end": 134.0,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "I vestiti e la scarpa decorse.",
+  "logprob": -0.253
+ },
+ {
+  "start": 134.59,
+  "end": 135.27,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "Um..."
+ },
+ {
+  "start": 142.71,
+  "end": 143.52,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Io..."
+ },
+ {
+  "start": 142.81,
+  "end": 144.33,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Io, restandolo."
+ },
+ {
+  "start": 144.33,
+  "end": 145.21,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "Yo."
+ },
+ {
+  "start": 148.03,
+  "end": 149.0,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "This is a..."
+ },
+ {
+  "start": 148.65,
+  "end": 149.98,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Fare..."
+ },
+ {
+  "start": 150.29,
+  "end": 151.15,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "It's a..."
+ },
+ {
+  "start": 152.26,
+  "end": 156.04,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "Excuse me, I'm not recording this.",
+  "logprob": -0.456
+ },
+ {
+  "start": 155.03,
+  "end": 155.87,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Il faggio."
+ },
+ {
+  "start": 156.34,
+  "end": 158.0,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "Lo faccio. Fai?"
+ },
+ {
+  "start": 157.61,
+  "end": 159.31,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Faccio un po' di stretching."
+ },
+ {
+  "start": 159.09,
+  "end": 163.01,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "Sisi, verbi e girellare, correct?"
+ },
+ {
+  "start": 163.53,
+  "end": 165.83,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Sì, faccio, fai, fa.",
+  "logprob": -0.183
+ },
+ {
+  "start": 166.42,
+  "end": 167.99,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "Ok."
+ },
+ {
+  "start": 170.67,
+  "end": 173.88,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Aspetta, cosa è?"
+ },
+ {
+  "start": 180.19,
+  "end": 184.29,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "E cosa, cosa fai, come, no, no, scusami.",
+  "logprob": -0.135
+ },
+ {
+  "start": 185.79,
+  "end": 188.12,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Ho fatto un po' di stretching e andare."
+ },
+ {
+  "start": 190.13,
+  "end": 191.36,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "A correre al parco.",
+  "logprob": -0.225
+ },
+ {
+  "start": 192.88,
+  "end": 194.7,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "Ah, ok, I expected it."
+ },
+ {
+  "start": 196.12,
+  "end": 196.84,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "Okay."
+ },
+ {
+  "start": 202.11,
+  "end": 204.39,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Ti ricordi andare? È irregolare."
+ },
+ {
+  "start": 205.31,
+  "end": 209.72,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "No, no, aspetta, I just lost my place, scusami."
+ },
+ {
+  "start": 210.14,
+  "end": 210.78,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "Uh..."
+ },
+ {
+  "start": 211.51,
+  "end": 214.02,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "Am I on Barbara or Alessandro?"
+ },
+ {
+  "start": 216.1,
+  "end": 216.84,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "E poi?",
+  "logprob": -0.467
+ },
+ {
+  "start": 216.35,
+  "end": 217.48,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Poi Alessandro."
+ },
+ {
+  "start": 218.28,
+  "end": 219.05,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "Ultimamente,"
+ },
+ {
+  "start": 219.54,
+  "end": 223.13,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Sto parlando di lui, Alessandro. Ultimamente mi sveglio."
+ },
+ {
+  "start": 223.83,
+  "end": 224.67,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Mi lavo."
+ },
+ {
+  "start": 225.25,
+  "end": 229.43,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Ok. Metto i vestiti, faccio, si si si. It's about Alessandro."
+ },
+ {
+  "start": 228.05,
+  "end": 228.7,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "Si, si, si."
+ },
+ {
+  "start": 229.36,
+  "end": 234.09,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Sì, sì, scusami. Ok, un po' di stretching e..."
+ },
+ {
+  "start": 235.99,
+  "end": 236.69,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "Um..."
+ },
+ {
+  "start": 238.58,
+  "end": 240.21,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "Andare means go."
+ },
+ {
+  "start": 242.74,
+  "end": 243.86,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Irregolare però."
+ },
+ {
+  "start": 245.5,
+  "end": 249.28,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Tu va, ah, va, e va subito e... Ah, vado.",
+  "logprob": -0.315
+ },
+ {
+  "start": 248.23,
+  "end": 251.37,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Vado, vado, vado."
+ },
+ {
+  "start": 249.61,
+  "end": 250.91,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Vado, vado.",
+  "logprob": -0.195
+ },
+ {
+  "start": 251.64,
+  "end": 256.23,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Vado subito a correre al parco."
+ },
+ {
+  "start": 258.49,
+  "end": 259.74,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "Ok, Barbara."
+ },
+ {
+  "start": 262.24,
+  "end": 263.16,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "E poi...",
+  "logprob": -0.324
+ },
+ {
+  "start": 263.74,
+  "end": 264.38,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "Um..."
+ },
+ {
+  "start": 268.28,
+  "end": 271.04,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "Ricordi uscire, go out or you leave a place."
+ },
+ {
+  "start": 271.94,
+  "end": 274.84,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Uscire completamente irregolare, do you remember?"
+ },
+ {
+  "start": 274.98,
+  "end": 283.72,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Esco, esci, esce, questo è un verbo, allora you forget uscire, uscire è infinito."
+ },
+ {
+  "start": 277.66,
+  "end": 278.37,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "No."
+ },
+ {
+  "start": 283.97,
+  "end": 285.45,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Poi diventa io."
+ },
+ {
+  "start": 285.96,
+  "end": 286.92,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Esco.",
+  "logprob": -0.42
+ },
+ {
+  "start": 287.75,
+  "end": 290.37,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "You go out, doesn't matter where you go."
+ },
+ {
+  "start": 290.69,
+  "end": 291.78,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Grazie a tutti.",
+  "logprob": -0.575
+ },
+ {
+  "start": 294.01,
+  "end": 294.89,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Esci."
+ },
+ {
+  "start": 296.69,
+  "end": 302.74,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "Even if you are supposed to leave a place, it doesn't matter where you are or where you are supposed to go. Tu es ci."
+ },
+ {
+  "start": 303.02,
+  "end": 303.68,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Tu esci.",
+  "logprob": -0.376
+ },
+ {
+  "start": 306.77,
+  "end": 309.86,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Lei, per esempio, tua moglie, lei esce."
+ },
+ {
+  "start": 310.6,
+  "end": 311.64,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "We lay."
+ },
+ {
+  "start": 312.56,
+  "end": 313.57,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "Oh shit."
+ },
+ {
+  "start": 314.73,
+  "end": 315.81,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Pronuncia shit."
+ },
+ {
+  "start": 316.5,
+  "end": 317.25,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Lui"
+ },
+ {
+  "start": 318.09,
+  "end": 319.04,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "Eh shit."
+ },
+ {
+  "start": 323.27,
+  "end": 324.84,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Esco.",
+  "logprob": -0.406
+ },
+ {
+  "start": 331.94,
+  "end": 332.82,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "Torres Torres Torres Torres Torres Torres Torres Torres Torres Torres Torres Torres Torres Torres Torres Torres Torres Torres Torres Torres Torres Torres Torres Torres Torres Torres Torres Torres Torres Torres Torres Torres Torres Torres Torres Torres Torres Torres Torres Torres Torres Torres Torres Torres Torres Torres Torres Torres Torres Torres Torres Torres Torres Torres Torres Torres Torres Torres Torres Torres Torres Torres Torres Torres Torres Torres Torres Torres Torres Torres Torres Torres Torres Torres Torres Torres Torres Torres Torres Torres Torres Torres Torres Torres Torres Torres Torres Torres Torres Torres Torres Torres Torres Torres Torres Torres Torres Torres Torres Torres Torres Torres Torres Torres Torres Torres Torres Torres Torres Torres Torres Torres Torres Torres Torres Torres Torres Torres Torres Torres Torres Torres Torres Torres Torres Torres Torres Torres Torres Torres Torres Torres Torres Torres Torres Torres Torres Torres Torres Torres Torres Torres Torres Torres Torres Torres Torres Torres Torres Torres Torres Torres Torres Torres Torres Torres Torres Torres Torres Torres Torres Torres Torres Torres Torres Torres Torres Torres Torres Torres Torres Torres Torres Torres Torres Torres Torres Torres Torres Torres Torres Torres Torres Torres Torres Torres Torres Torres Torres Torres Torres Torres Torres Torres Torres Torres Torres Torres Torres Torres Torres Torres Torres Torres Torres Torres Torres Torres Torres Torres Torres Torres Torres Torres Torres Torres Torres Torres Torres Torres Torres Torres Torres",
+  "logprob": -0.347
+ },
+ {
+  "start": 333.28,
+  "end": 335.02,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Dottore, lei..."
+ },
+ {
+  "start": 335.42,
+  "end": 336.26,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "It should.",
+  "logprob": -0.531
+ },
+ {
+  "start": 337.55,
+  "end": 339.17,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Lei è un uomo oggi.",
+  "logprob": -0.742
+ },
+ {
+  "start": 340.79,
+  "end": 344.06,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Questo è il polito formato, lei esce oggi."
+ },
+ {
+  "start": 344.87,
+  "end": 346.41,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "You recognize because of the..."
+ },
+ {
+  "start": 347.22,
+  "end": 349.65,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "Formale, female or male, doesn't matter."
+ },
+ {
+  "start": 353.5,
+  "end": 356.67,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "Ok, so, e poi esci."
+ },
+ {
+  "start": 358.19,
+  "end": 362.81,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "Alessandro Cici"
+ },
+ {
+  "start": 364.94,
+  "end": 367.26,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "Sorry, I already forgot."
+ },
+ {
+  "start": 369.19,
+  "end": 372.88,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Scusate, assistenza, io farei...",
+  "logprob": -0.312
+ },
+ {
+  "start": 372.88,
+  "end": 377.96,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "It's the same like faccio body stretching. Faccio, faccio, faccio. Faccio."
+ },
+ {
+  "start": 375.58,
+  "end": 376.28,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Faccio."
+ },
+ {
+  "start": 377.96,
+  "end": 378.57,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "Fuck you."
+ },
+ {
+  "start": 379.01,
+  "end": 379.94,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Io faccio..."
+ },
+ {
+  "start": 382.06,
+  "end": 387.9,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Io faccio una piccola corsa, circa 30 minuti."
+ },
+ {
+  "start": 388.88,
+  "end": 391.38,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "And Barb says, well, okay, bravo."
+ },
+ {
+  "start": 391.62,
+  "end": 395.38,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "Alessandra Massini and Teddy."
+ },
+ {
+  "start": 395.97,
+  "end": 399.36,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Eccozion, no, eccozion.",
+  "logprob": -0.472
+ },
+ {
+  "start": 399.95,
+  "end": 401.42,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Eccezionale."
+ },
+ {
+  "start": 403.34,
+  "end": 408.51,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "Barbara says,"
+ },
+ {
+  "start": 409.76,
+  "end": 411.31,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "This is so difficult."
+ },
+ {
+  "start": 411.56,
+  "end": 413.13,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "Anki-Fi. The same."
+ },
+ {
+  "start": 413.99,
+  "end": 414.73,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "Allaah Subh'anaHu Wa Ta-A'la."
+ },
+ {
+  "start": 414.36,
+  "end": 415.21,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Allora, io...",
+  "logprob": -0.352
+ },
+ {
+  "start": 416.07,
+  "end": 417.97,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Scusa, scusa.",
+  "logprob": -0.162
+ },
+ {
+  "start": 416.44,
+  "end": 417.55,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Scusa, scusa.",
+  "logprob": -0.242
+ },
+ {
+  "start": 418.24,
+  "end": 420.77,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Io anche faccio."
+ },
+ {
+  "start": 421.1,
+  "end": 422.75,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "La stessa corsa."
+ },
+ {
+  "start": 423.44,
+  "end": 424.22,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "Uh,"
+ },
+ {
+  "start": 424.64,
+  "end": 425.58,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "Me."
+ },
+ {
+  "start": 426.61,
+  "end": 428.42,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Sveglio, presto.",
+  "logprob": -0.308
+ },
+ {
+  "start": 429.11,
+  "end": 430.51,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "Me, la..."
+ },
+ {
+  "start": 431.22,
+  "end": 432.05,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "La Voz."
+ },
+ {
+  "start": 432.05,
+  "end": 433.87,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "La voce.",
+  "logprob": -0.353
+ },
+ {
+  "start": 434.73,
+  "end": 436.32,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "Me."
+ },
+ {
+  "start": 436.87,
+  "end": 438.58,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Faccio calazione."
+ },
+ {
+  "start": 439.98,
+  "end": 441.01,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "Mi preparo."
+ },
+ {
+  "start": 442.36,
+  "end": 444.25,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "Yesi, mi proparo."
+ },
+ {
+  "start": 443.62,
+  "end": 444.86,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Ciao. Mi preparo."
+ },
+ {
+  "start": 444.99,
+  "end": 446.32,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Non...",
+  "logprob": -0.243
+ },
+ {
+  "start": 446.95,
+  "end": 447.74,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "Non mi."
+ },
+ {
+  "start": 450.49,
+  "end": 452.79,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "Trucco, come si dice? Trucco."
+ },
+ {
+  "start": 452.57,
+  "end": 453.55,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Troca il make-up.",
+  "logprob": -0.355
+ },
+ {
+  "start": 454.51,
+  "end": 455.32,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "Makeup. Oh, okay."
+ },
+ {
+  "start": 454.51,
+  "end": 456.13,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Mi trovo, mi trovo."
+ },
+ {
+  "start": 457.38,
+  "end": 459.03,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Perché...",
+  "logprob": -0.31
+ },
+ {
+  "start": 461.19,
+  "end": 461.97,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Vado.",
+  "logprob": -0.461
+ },
+ {
+  "start": 463.03,
+  "end": 465.53,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Alla stazione e in bicicletta."
+ },
+ {
+  "start": 466.49,
+  "end": 469.21,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "Alessandro says, ah, complimenti."
+ },
+ {
+  "start": 470.68,
+  "end": 471.64,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Questo è il regista."
+ },
+ {
+  "start": 473.14,
+  "end": 474.59,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "Thank you."
+ },
+ {
+  "start": 476.94,
+  "end": 478.89,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "Irregular verbs are killing me."
+ },
+ {
+  "start": 479.94,
+  "end": 483.35,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Anch'io sono sportiva.",
+  "logprob": -0.311
+ },
+ {
+  "start": 483.43,
+  "end": 484.04,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Sono.",
+  "logprob": -0.456
+ },
+ {
+  "start": 484.44,
+  "end": 486.93,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Ma per andare alla stazione,"
+ },
+ {
+  "start": 492.36,
+  "end": 494.06,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Questo regolare, prendere."
+ },
+ {
+  "start": 494.82,
+  "end": 496.66,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "Si, prendere."
+ },
+ {
+  "start": 498.0,
+  "end": 502.18,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "Non ricordo prendere for you."
+ },
+ {
+  "start": 503.6,
+  "end": 504.9,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Prendo."
+ },
+ {
+  "start": 505.52,
+  "end": 506.82,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "Ah, no, no, no."
+ },
+ {
+  "start": 506.31,
+  "end": 507.65,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Prendo un caffè.",
+  "logprob": -0.247
+ },
+ {
+  "start": 508.14,
+  "end": 510.37,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "Non irregulare verbi."
+ },
+ {
+  "start": 511.14,
+  "end": 512.03,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "E questo o no?"
+ },
+ {
+  "start": 512.03,
+  "end": 517.98,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "No, no, prendere regolare, sì sì, come leggere, prendo un caffè, prendo, prendo."
+ },
+ {
+  "start": 516.32,
+  "end": 519.41,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Ah, regolare, ok, capito."
+ },
+ {
+  "start": 519.66,
+  "end": 525.91,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Io prendo il treno, finalmente sul treno."
+ },
+ {
+  "start": 528.05,
+  "end": 528.76,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "Me."
+ },
+ {
+  "start": 529.82,
+  "end": 532.98,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Regaloso, qualche volta.",
+  "logprob": -0.541
+ },
+ {
+  "start": 532.49,
+  "end": 533.75,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Rilasso.",
+  "logprob": -0.276
+ },
+ {
+  "start": 534.56,
+  "end": 536.45,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Aspetta, questo mi..."
+ },
+ {
+  "start": 535.36,
+  "end": 536.28,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "Very large."
+ },
+ {
+  "start": 537.72,
+  "end": 539.03,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Rilasso."
+ },
+ {
+  "start": 539.68,
+  "end": 541.75,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "You cut again, mi rilasso."
+ },
+ {
+  "start": 544.0,
+  "end": 545.21,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "Ok, me, me, me."
+ },
+ {
+  "start": 545.38,
+  "end": 547.98,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "I relax myself."
+ },
+ {
+  "start": 548.59,
+  "end": 551.35,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Mi rilasso, mi rilasso.",
+  "logprob": -0.149
+ },
+ {
+  "start": 551.81,
+  "end": 553.02,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "Um..."
+ },
+ {
+  "start": 553.41,
+  "end": 555.0,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "E qualche volta...",
+  "logprob": -0.418
+ },
+ {
+  "start": 555.83,
+  "end": 556.47,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "Me."
+ },
+ {
+  "start": 557.35,
+  "end": 558.31,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "Armento."
+ },
+ {
+  "start": 559.83,
+  "end": 562.05,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Bene, benissimo, mi attormento."
+ },
+ {
+  "start": 562.63,
+  "end": 564.4,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "Alessandro."
+ },
+ {
+  "start": 564.87,
+  "end": 566.98,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Speriamo che..."
+ },
+ {
+  "start": 568.48,
+  "end": 571.18,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "Noi... E ti."
+ },
+ {
+  "start": 571.91,
+  "end": 573.8,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "Oh, it's tea, okay. It's about..."
+ },
+ {
+  "start": 573.24,
+  "end": 575.2,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Speriamo.",
+  "logprob": -0.402
+ },
+ {
+  "start": 576.14,
+  "end": 577.56,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "Ok, spiriamo."
+ },
+ {
+  "start": 577.19,
+  "end": 578.74,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Il cos'Alessandro gli diceva."
+ },
+ {
+  "start": 579.65,
+  "end": 580.8,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "No."
+ },
+ {
+  "start": 580.95,
+  "end": 589.34,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Ok, speriamo che ti sveliarsi, no, sveli in tempo.",
+  "logprob": -0.152
+ },
+ {
+  "start": 589.25,
+  "end": 591.75,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Bene, perché è stile, bene.",
+  "logprob": -0.676
+ },
+ {
+  "start": 592.68,
+  "end": 595.04,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Speriamo che ti svegli in tempo."
+ },
+ {
+  "start": 598.16,
+  "end": 606.15,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "Barbara says, si, certo, mi svelio sempre in tempo e..."
+ },
+ {
+  "start": 607.77,
+  "end": 608.46,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "Me."
+ },
+ {
+  "start": 608.95,
+  "end": 610.82,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Regolare, arrivare."
+ },
+ {
+  "start": 612.32,
+  "end": 613.93,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "I'm sorry."
+ },
+ {
+  "start": 614.16,
+  "end": 617.84,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Il tempo è arrivo finalmente a Milano.",
+  "logprob": -0.315
+ },
+ {
+  "start": 618.89,
+  "end": 624.64,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "And then Fantastico, Buona Giornata, Buona Giornata, Allora. Buona Giornata."
+ },
+ {
+  "start": 625.13,
+  "end": 628.89,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Anche a te, buone lezioni, grazie."
+ },
+ {
+  "start": 630.48,
+  "end": 631.12,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "E' un obede."
+ },
+ {
+  "start": 630.51,
+  "end": 632.57,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Vedi, piano piano..."
+ },
+ {
+  "start": 633.06,
+  "end": 639.15,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Riconosci, è un problema di ripetere, ripetere, ripetere."
+ },
+ {
+  "start": 640.69,
+  "end": 643.91,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "E poi capisci come funziona, perché io ho toccato."
+ },
+ {
+  "start": 644.28,
+  "end": 645.18,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "I'm seeing"
+ },
+ {
+  "start": 645.6,
+  "end": 647.29,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "ARC."
+ },
+ {
+  "start": 649.11,
+  "end": 650.27,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Toccarsi.",
+  "logprob": -0.371
+ },
+ {
+  "start": 651.37,
+  "end": 653.58,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "Prepararsi and you add the O."
+ },
+ {
+  "start": 654.0,
+  "end": 657.38,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Come verbo are o come verbo ere?"
+ },
+ {
+  "start": 658.27,
+  "end": 659.66,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Abbiamo per esempio..."
+ },
+ {
+  "start": 660.82,
+  "end": 662.39,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Svegliarsi, mettersi.",
+  "logprob": -0.151
+ },
+ {
+  "start": 663.03,
+  "end": 665.38,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "You forget natalcy."
+ },
+ {
+  "start": 666.09,
+  "end": 667.22,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "It's like metering."
+ },
+ {
+  "start": 668.33,
+  "end": 670.07,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Mi metto le scarpe."
+ },
+ {
+  "start": 670.42,
+  "end": 672.85,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "If you are wearing something or you put on"
+ },
+ {
+  "start": 673.36,
+  "end": 674.39,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Mi metto.",
+  "logprob": -0.402
+ },
+ {
+  "start": 675.74,
+  "end": 676.67,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Una t-shirt.",
+  "logprob": -0.223
+ },
+ {
+  "start": 678.25,
+  "end": 679.35,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "You put on your..."
+ },
+ {
+  "start": 680.01,
+  "end": 681.53,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Mi metto una camicia."
+ },
+ {
+  "start": 681.75,
+  "end": 682.62,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "It's about you."
+ },
+ {
+  "start": 685.38,
+  "end": 687.37,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Sempre mi metto una camicia."
+ },
+ {
+  "start": 689.76,
+  "end": 691.28,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Mi metto l'orologio."
+ },
+ {
+  "start": 692.31,
+  "end": 695.97,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "Se ti stai portando qualcosa, usi il Mimeto."
+ },
+ {
+  "start": 696.31,
+  "end": 697.32,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Scarpe."
+ },
+ {
+  "start": 698.34,
+  "end": 699.65,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Pantaloni."
+ },
+ {
+  "start": 700.95,
+  "end": 701.68,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "Memento."
+ },
+ {
+  "start": 701.46,
+  "end": 703.11,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "Clothes in general."
+ },
+ {
+  "start": 704.07,
+  "end": 704.87,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "Want makeup?"
+ },
+ {
+  "start": 705.24,
+  "end": 707.26,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Stanno bene, quindi funziona."
+ },
+ {
+  "start": 707.99,
+  "end": 712.24,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "No, non ricordo il verbo irregolare."
+ },
+ {
+  "start": 714.52,
+  "end": 718.72,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Però il regolare, ok, andare, ti ricordi, vado, vai."
+ },
+ {
+  "start": 720.32,
+  "end": 721.74,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "...di cosa? Di vado..."
+ },
+ {
+  "start": 723.65,
+  "end": 727.41,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "In New Orleans, it doesn't matter if you fly or you just stay in Bado."
+ },
+ {
+  "start": 727.92,
+  "end": 730.06,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Vado in Louisiana per lavoro."
+ },
+ {
+  "start": 731.98,
+  "end": 733.13,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "And then Andiana."
+ },
+ {
+  "start": 732.42,
+  "end": 733.3,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "Bye.",
+  "logprob": -0.667
+ },
+ {
+  "start": 735.26,
+  "end": 736.17,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "No endigamo."
+ },
+ {
+  "start": 735.85,
+  "end": 736.66,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "Bye.",
+  "logprob": -0.575
+ },
+ {
+  "start": 738.06,
+  "end": 738.99,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Esatto."
+ },
+ {
+  "start": 738.94,
+  "end": 739.63,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "Oh.",
+  "logprob": -0.675
+ },
+ {
+  "start": 739.12,
+  "end": 740.18,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Poi andate.",
+  "logprob": -0.409
+ },
+ {
+  "start": 741.72,
+  "end": 742.7,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "To..."
+ },
+ {
+  "start": 743.14,
+  "end": 743.95,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "Um..."
+ },
+ {
+  "start": 744.07,
+  "end": 745.6,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "Is it a dette? Fine."
+ },
+ {
+  "start": 746.24,
+  "end": 750.24,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "What's plural they? Loro. Loro a vetri?"
+ },
+ {
+  "start": 749.82,
+  "end": 750.82,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Loro vanno."
+ },
+ {
+  "start": 751.73,
+  "end": 752.91,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Loro vanno."
+ },
+ {
+  "start": 753.5,
+  "end": 754.53,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Fano, fano.",
+  "logprob": -0.288
+ },
+ {
+  "start": 755.0,
+  "end": 755.95,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "That's it."
+ },
+ {
+  "start": 756.1,
+  "end": 756.94,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Buongiorno.",
+  "logprob": -0.569
+ },
+ {
+  "start": 759.15,
+  "end": 762.88,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "Repetire, por favor, uscire."
+ },
+ {
+  "start": 764.82,
+  "end": 766.75,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Assicurato, es, co.",
+  "logprob": -0.623
+ },
+ {
+  "start": 770.05,
+  "end": 771.35,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Il pronuncio è scosto.",
+  "logprob": -0.445
+ },
+ {
+  "start": 773.29,
+  "end": 774.48,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "Is she?"
+ },
+ {
+  "start": 779.49,
+  "end": 780.92,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "Soft A Sheet."
+ },
+ {
+  "start": 784.84,
+  "end": 785.82,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "E s**t.",
+  "logprob": -0.527
+ },
+ {
+  "start": 790.84,
+  "end": 792.13,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "Esche es noi."
+ },
+ {
+  "start": 793.97,
+  "end": 795.62,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Lo esce lei.",
+  "logprob": -0.42
+ },
+ {
+  "start": 795.91,
+  "end": 798.93,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "We are talking about the third person, Yamoli and Leyesha."
+ },
+ {
+  "start": 799.35,
+  "end": 800.08,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Lui."
+ },
+ {
+  "start": 801.31,
+  "end": 803.1,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Una persona, male."
+ },
+ {
+  "start": 804.21,
+  "end": 805.78,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Lei formale."
+ },
+ {
+  "start": 807.74,
+  "end": 810.98,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "Doctor, Avocado, someone is talking to you."
+ },
+ {
+  "start": 811.36,
+  "end": 812.02,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "The poor life."
+ },
+ {
+  "start": 813.93,
+  "end": 816.49,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Lei è medico o è ingegnere?"
+ },
+ {
+  "start": 818.4,
+  "end": 819.68,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "We delay Asia."
+ },
+ {
+  "start": 820.44,
+  "end": 821.96,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Lavora a casa."
+ },
+ {
+  "start": 823.99,
+  "end": 825.62,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "So, Tucci..."
+ },
+ {
+  "start": 824.93,
+  "end": 825.88,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "Thank you for watching."
+ },
+ {
+  "start": 825.88,
+  "end": 828.27,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "Tutti user."
+ },
+ {
+  "start": 828.83,
+  "end": 836.02,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Usare le parole, questo è, come si dice, formale."
+ },
+ {
+  "start": 837.82,
+  "end": 838.72,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Formare, sì.",
+  "logprob": -0.24
+ },
+ {
+  "start": 841.96,
+  "end": 843.24,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Maschile o femminile?"
+ },
+ {
+  "start": 846.45,
+  "end": 850.67,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Forse a Napoli molta gente dice voi, forget voi, non è regolare."
+ },
+ {
+  "start": 851.12,
+  "end": 852.46,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Lei è formale."
+ },
+ {
+  "start": 853.03,
+  "end": 854.66,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Lei è americano?"
+ },
+ {
+  "start": 857.18,
+  "end": 860.28,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Sì, sono americano. Lei è americano, è formale."
+ },
+ {
+  "start": 861.99,
+  "end": 863.17,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Per verbo essere.",
+  "logprob": -0.442
+ },
+ {
+  "start": 869.45,
+  "end": 870.92,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Lo facciamo lei e..."
+ },
+ {
+  "start": 871.4,
+  "end": 872.37,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Canadese.",
+  "logprob": -0.595
+ },
+ {
+  "start": 876.05,
+  "end": 876.8,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Formale."
+ },
+ {
+  "start": 878.02,
+  "end": 878.68,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "No.",
+  "logprob": -0.374
+ },
+ {
+  "start": 879.12,
+  "end": 879.91,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "So no.",
+  "logprob": -0.444
+ },
+ {
+  "start": 880.38,
+  "end": 882.31,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "americano, statunitense."
+ },
+ {
+  "start": 883.61,
+  "end": 884.96,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Allora, ti ricordi?"
+ },
+ {
+  "start": 885.46,
+  "end": 886.78,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Stato unite insieme.",
+  "logprob": -0.736
+ },
+ {
+  "start": 886.96,
+  "end": 887.59,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Sì.",
+  "logprob": -0.211
+ },
+ {
+  "start": 888.57,
+  "end": 892.87,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "Uh, so do we use this form for strangers or?"
+ },
+ {
+  "start": 894.68,
+  "end": 896.75,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "You use it when you don't know the person."
+ },
+ {
+  "start": 897.78,
+  "end": 901.48,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "O sei in una relazione, non lo sai, dottore, medico."
+ },
+ {
+  "start": 902.0,
+  "end": 904.65,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Se tu vai in un negozio..."
+ },
+ {
+  "start": 905.04,
+  "end": 910.24,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "In Pharmacia you can use two because you don't know the guys in the..."
+ },
+ {
+  "start": 910.57,
+  "end": 912.56,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "In the store, here to use the lane."
+ },
+ {
+  "start": 913.34,
+  "end": 914.08,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Capito.",
+  "logprob": -0.409
+ },
+ {
+  "start": 914.34,
+  "end": 915.41,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Ma... E' con...",
+  "logprob": -0.657
+ },
+ {
+  "start": 914.86,
+  "end": 918.79,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Negrazio, dentista, non importa, se non conosci la persona..."
+ },
+ {
+  "start": 919.3,
+  "end": 920.97,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "You start the..."
+ },
+ {
+  "start": 921.64,
+  "end": 923.4,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "A dialogue with lei."
+ },
+ {
+  "start": 923.95,
+  "end": 925.89,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Il film e l'all mail non è importante.",
+  "logprob": -0.485
+ },
+ {
+  "start": 926.52,
+  "end": 927.94,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "But when you say..."
+ },
+ {
+  "start": 928.05,
+  "end": 937.25,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "I don't know the person, it's the person that I'm talking to, so, like, let's say if I'm in the hospital, and someone comes up to me that I don't know. Exactly, exactly. Okay, I understand.",
+  "logprob": -0.236
+ },
+ {
+  "start": 934.67,
+  "end": 935.97,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Esatto, esatto.",
+  "logprob": -0.139
+ },
+ {
+  "start": 939.78,
+  "end": 944.22,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Può essere infermiere, qualsiasi tipo di staff, lo staff dell'ospedale."
+ },
+ {
+  "start": 944.58,
+  "end": 947.27,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "If you don't know the staff, automatic onlay."
+ },
+ {
+  "start": 948.74,
+  "end": 950.95,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Lei è il nuovo medico."
+ },
+ {
+  "start": 952.2,
+  "end": 954.78,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Lei è il dottore..."
+ },
+ {
+  "start": 955.49,
+  "end": 957.74,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Posso mettervi il dottore?"
+ },
+ {
+  "start": 959.02,
+  "end": 960.81,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Facciamo il medico di base."
+ },
+ {
+  "start": 964.3,
+  "end": 966.7,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Sempre domanda lei perché non conosci."
+ },
+ {
+  "start": 966.93,
+  "end": 967.86,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Questa persona."
+ },
+ {
+  "start": 968.39,
+  "end": 971.71,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "You have no relationship, you are not in a relationship or..."
+ },
+ {
+  "start": 971.91,
+  "end": 972.92,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "We are not friends."
+ },
+ {
+  "start": 976.38,
+  "end": 977.35,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Invece tu...",
+  "logprob": -0.371
+ },
+ {
+  "start": 977.85,
+  "end": 981.16,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Tu sei americano, ok, tu è jazz."
+ },
+ {
+  "start": 985.82,
+  "end": 986.53,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Capito bene."
+ },
+ {
+  "start": 989.16,
+  "end": 991.27,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Vuole conoscere noi."
+ },
+ {
+  "start": 991.66,
+  "end": 994.83,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Per esempio io e mia moglie noi usciamo."
+ },
+ {
+  "start": 995.61,
+  "end": 996.47,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Buonasera."
+ },
+ {
+  "start": 1001.12,
+  "end": 1004.03,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "We go out in the afternoon."
+ },
+ {
+  "start": 1004.41,
+  "end": 1005.87,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Noi usciamo lì."
+ },
+ {
+  "start": 1005.54,
+  "end": 1006.42,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "In l'evoluzione.",
+  "logprob": -0.893
+ },
+ {
+  "start": 1006.56,
+  "end": 1008.26,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "Or in the evenings, I mean, just piacere."
+ },
+ {
+  "start": 1010.15,
+  "end": 1013.66,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "O anche il negativo, noi non usciamo la sera."
+ },
+ {
+  "start": 1014.93,
+  "end": 1017.76,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "If you deny, you put the no before the verb."
+ },
+ {
+  "start": 1019.5,
+  "end": 1021.51,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "You can change the sequence."
+ },
+ {
+  "start": 1022.1,
+  "end": 1024.07,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Noi non usciamo la sera."
+ },
+ {
+  "start": 1029.12,
+  "end": 1029.81,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "Um..."
+ },
+ {
+  "start": 1032.11,
+  "end": 1033.17,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "What, uh..."
+ },
+ {
+  "start": 1033.69,
+  "end": 1041.35,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "A situation for a train, we would just say, noi non ci siamo."
+ },
+ {
+  "start": 1041.67,
+  "end": 1043.06,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "Primo."
+ },
+ {
+  "start": 1043.48,
+  "end": 1044.54,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "You stay home."
+ },
+ {
+  "start": 1045.02,
+  "end": 1048.9,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Non vado al cinema, non vado al teatro, vi dico stay home."
+ },
+ {
+  "start": 1049.94,
+  "end": 1052.27,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Io dico che non ci chiamo la sera."
+ },
+ {
+  "start": 1052.73,
+  "end": 1054.43,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Restiamo a casa."
+ },
+ {
+  "start": 1057.57,
+  "end": 1060.78,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "You just give an information about your habits in the evening."
+ },
+ {
+  "start": 1061.45,
+  "end": 1062.67,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Sì. Siamo a casa.",
+  "logprob": -0.426
+ },
+ {
+  "start": 1067.0,
+  "end": 1068.32,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Ricordati voi.",
+  "logprob": -0.184
+ },
+ {
+  "start": 1069.3,
+  "end": 1072.34,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Voi, io, voi a New Orleans uscite.",
+  "logprob": -0.3
+ },
+ {
+  "start": 1073.67,
+  "end": 1077.89,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "La sera è per voi e per le vostre linee. Voi uscite la sera a..."
+ },
+ {
+  "start": 1078.44,
+  "end": 1080.1,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "E' un nuovo polizzo.",
+  "logprob": -0.699
+ },
+ {
+  "start": 1082.48,
+  "end": 1084.03,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Questo voi."
+ },
+ {
+  "start": 1088.62,
+  "end": 1095.05,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "Um, primo si, molto tempo, ma..."
+ },
+ {
+  "start": 1096.35,
+  "end": 1097.28,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "Adesso no."
+ },
+ {
+  "start": 1097.39,
+  "end": 1110.71,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "No, I mean, no, per la... no, aspetta, tre, quattro anni prima fa."
+ },
+ {
+  "start": 1111.81,
+  "end": 1113.09,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "Um, who's..."
+ },
+ {
+  "start": 1114.25,
+  "end": 1118.42,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "Ushiro, no, aspeto."
+ },
+ {
+  "start": 1118.49,
+  "end": 1120.87,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Io, io già si esco."
+ },
+ {
+  "start": 1121.17,
+  "end": 1124.16,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "No, esco, sì, io esco.",
+  "logprob": -0.122
+ },
+ {
+  "start": 1124.88,
+  "end": 1125.8,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Qualcosa.",
+  "logprob": -0.252
+ },
+ {
+  "start": 1126.05,
+  "end": 1132.68,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Ma quando studiare, quando molto lavoro, non ho tempo.",
+  "logprob": -0.177
+ },
+ {
+  "start": 1132.95,
+  "end": 1137.73,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "Ma, io ho tempo, ma non..."
+ },
+ {
+  "start": 1139.82,
+  "end": 1142.99,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Io voglio, ma non...",
+  "logprob": -0.199
+ },
+ {
+  "start": 1143.7,
+  "end": 1147.03,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Non posso, non posso."
+ },
+ {
+  "start": 1147.46,
+  "end": 1148.42,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "We need volunteers."
+ },
+ {
+  "start": 1147.92,
+  "end": 1149.67,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Quindi voglio uscire."
+ },
+ {
+  "start": 1150.01,
+  "end": 1152.81,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Il suo espresso di design, voglio uscire."
+ },
+ {
+  "start": 1153.69,
+  "end": 1156.31,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Per esempio la sera a New Orleans."
+ },
+ {
+  "start": 1159.21,
+  "end": 1160.29,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Non posso."
+ },
+ {
+  "start": 1161.49,
+  "end": 1163.88,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "E spesso spesso fai guai, non posso."
+ },
+ {
+  "start": 1164.31,
+  "end": 1165.08,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Perché?",
+  "logprob": -0.351
+ },
+ {
+  "start": 1165.54,
+  "end": 1167.75,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Per esempio, devo studiare."
+ },
+ {
+  "start": 1168.27,
+  "end": 1169.32,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "I have two of my..."
+ },
+ {
+  "start": 1169.72,
+  "end": 1170.84,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Devo studiare."
+ },
+ {
+  "start": 1171.76,
+  "end": 1172.54,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "Didi didi."
+ },
+ {
+  "start": 1172.83,
+  "end": 1174.3,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "You introduced the point."
+ },
+ {
+  "start": 1174.68,
+  "end": 1175.93,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "La sera."
+ },
+ {
+  "start": 1180.86,
+  "end": 1183.39,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Voglio uscire, ma non posso."
+ },
+ {
+  "start": 1183.88,
+  "end": 1189.58,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "Ma doteci, cattolici anni fa, si, sempre."
+ },
+ {
+  "start": 1191.29,
+  "end": 1193.97,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "...studente o teenager..."
+ },
+ {
+  "start": 1193.7,
+  "end": 1207.13,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "No, non teenager, ma sono perché il lavoro per la..."
+ },
+ {
+  "start": 1207.61,
+  "end": 1211.89,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "Ambulanza, and then Dopo."
+ },
+ {
+  "start": 1212.13,
+  "end": 1214.61,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Cibo, sembra..."
+ },
+ {
+  "start": 1213.6,
+  "end": 1215.18,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Lavoro per emergenti."
+ },
+ {
+  "start": 1215.18,
+  "end": 1217.24,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "Si, esatto."
+ },
+ {
+  "start": 1216.63,
+  "end": 1219.62,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Quindi lavoro con l'ambulanza."
+ },
+ {
+  "start": 1219.62,
+  "end": 1220.36,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Sì.",
+  "logprob": -0.158
+ },
+ {
+  "start": 1220.52,
+  "end": 1221.71,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "And then, um..."
+ },
+ {
+  "start": 1223.77,
+  "end": 1224.99,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "In città, New Orleans."
+ },
+ {
+  "start": 1224.99,
+  "end": 1228.06,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "C, how do you say, um, uh..."
+ },
+ {
+  "start": 1232.73,
+  "end": 1234.49,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Il weekend, il fine settimana."
+ },
+ {
+  "start": 1234.89,
+  "end": 1236.09,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Final settimana.",
+  "logprob": -0.303
+ },
+ {
+  "start": 1236.5,
+  "end": 1237.14,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "Um..."
+ },
+ {
+  "start": 1240.01,
+  "end": 1241.63,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "Quando non lavoro..."
+ },
+ {
+  "start": 1241.36,
+  "end": 1243.72,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Fine settimana lavoro all'ospedale."
+ },
+ {
+  "start": 1244.12,
+  "end": 1246.32,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "No, no, no."
+ },
+ {
+  "start": 1246.57,
+  "end": 1258.92,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "Quando fino a la settimana non lavoro, io voglio esco il ristorante, il bar."
+ },
+ {
+  "start": 1256.86,
+  "end": 1259.12,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "Ristorante, bar."
+ },
+ {
+  "start": 1261.35,
+  "end": 1262.52,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Voglio uscire.",
+  "logprob": -0.228
+ },
+ {
+  "start": 1263.19,
+  "end": 1268.47,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "If you start with volere, the second verb, you don't have to conjugate."
+ },
+ {
+  "start": 1269.98,
+  "end": 1271.22,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Io voglio uscire.",
+  "logprob": -0.081
+ },
+ {
+  "start": 1271.51,
+  "end": 1272.74,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Ah, capito.",
+  "logprob": -0.237
+ },
+ {
+  "start": 1274.68,
+  "end": 1277.15,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Come I want to go out, voglio uscire.",
+  "logprob": -0.118
+ },
+ {
+  "start": 1283.12,
+  "end": 1286.92,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "Today was a very difficult day."
+ },
+ {
+  "start": 1288.56,
+  "end": 1292.42,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Oggi molte cose da brush up che già conosci ma..."
+ },
+ {
+  "start": 1292.83,
+  "end": 1293.89,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Devi ripetere."
+ },
+ {
+  "start": 1298.26,
+  "end": 1300.72,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Perché vedi, sono frasi semplici."
+ },
+ {
+  "start": 1301.28,
+  "end": 1303.49,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Che puoi usare sempre, vedi, posso."
+ },
+ {
+  "start": 1304.11,
+  "end": 1305.01,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Non posso."
+ },
+ {
+  "start": 1305.87,
+  "end": 1307.27,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "No, sì, ehm...",
+  "logprob": -0.317
+ },
+ {
+  "start": 1306.6,
+  "end": 1309.19,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "Ok, you are not in this situation, not possible."
+ },
+ {
+  "start": 1309.82,
+  "end": 1313.09,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Perché devo studiare, have to o must."
+ },
+ {
+  "start": 1313.31,
+  "end": 1314.37,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Devo studiare."
+ },
+ {
+  "start": 1314.73,
+  "end": 1315.91,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Devo lavorare.",
+  "logprob": -0.349
+ },
+ {
+  "start": 1315.29,
+  "end": 1316.33,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Devo lavorare.",
+  "logprob": -0.193
+ },
+ {
+  "start": 1316.77,
+  "end": 1328.35,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Io penso questo, io voglio uscire, uscire, uscire, sì, a...",
+  "logprob": -0.241
+ },
+ {
+  "start": 1328.84,
+  "end": 1331.11,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "Learn. Come se dice? Learn."
+ },
+ {
+  "start": 1332.24,
+  "end": 1334.45,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Voglio imparare."
+ },
+ {
+  "start": 1334.69,
+  "end": 1337.36,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "I need to put myself in these situations, I guess."
+ },
+ {
+  "start": 1339.43,
+  "end": 1341.86,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Ah, il tumore, voglio imparare.",
+  "logprob": -0.383
+ },
+ {
+  "start": 1339.69,
+  "end": 1340.38,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "I want to."
+ },
+ {
+  "start": 1341.47,
+  "end": 1342.47,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Sì, sì.",
+  "logprob": -0.374
+ },
+ {
+  "start": 1346.12,
+  "end": 1350.79,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Voglio parlare con mia moglie, io start with con mia moglie perché funziona."
+ },
+ {
+  "start": 1352.44,
+  "end": 1353.24,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "No, no, no.",
+  "logprob": -0.278
+ },
+ {
+  "start": 1352.63,
+  "end": 1355.43,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Devo parlare con mia voglia in italiano."
+ },
+ {
+  "start": 1355.65,
+  "end": 1358.76,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Non proviamo mimoli."
+ },
+ {
+  "start": 1360.27,
+  "end": 1363.18,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Ma proprio zero, non c'è contatto, no cotta."
+ },
+ {
+  "start": 1363.18,
+  "end": 1364.49,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Sì, esatto.",
+  "logprob": -0.286
+ },
+ {
+  "start": 1365.84,
+  "end": 1368.44,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Non ciò."
+ },
+ {
+  "start": 1365.86,
+  "end": 1367.45,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Non ciò. Non mi interessa."
+ },
+ {
+  "start": 1369.91,
+  "end": 1372.54,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Quindi non voglio parlare con mia moglie, bravo."
+ },
+ {
+  "start": 1372.85,
+  "end": 1374.31,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Non voglio parlare con te.",
+  "logprob": -0.199
+ },
+ {
+  "start": 1381.81,
+  "end": 1382.43,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Bravo.",
+  "logprob": -0.395
+ },
+ {
+  "start": 1384.98,
+  "end": 1386.82,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "E no, invece un buon esercizio."
+ },
+ {
+  "start": 1388.83,
+  "end": 1389.62,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "No."
+ },
+ {
+  "start": 1389.23,
+  "end": 1390.85,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "It's a very good exercise, because.",
+  "logprob": -0.599
+ },
+ {
+  "start": 1392.3,
+  "end": 1395.26,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Non voglio parlare con mia mamma."
+ },
+ {
+  "start": 1395.31,
+  "end": 1397.53,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Sì, no, no, non è vero."
+ },
+ {
+  "start": 1396.74,
+  "end": 1398.19,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "Ironic, a bit."
+ },
+ {
+  "start": 1400.54,
+  "end": 1401.23,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Devo.",
+  "logprob": -0.324
+ },
+ {
+  "start": 1401.65,
+  "end": 1403.09,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Devo parlare con lei."
+ },
+ {
+  "start": 1403.74,
+  "end": 1405.41,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Perché è importante."
+ },
+ {
+  "start": 1406.51,
+  "end": 1409.03,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Devo parlare in italiano con lei."
+ },
+ {
+  "start": 1410.65,
+  "end": 1412.0,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Ma, ehm...",
+  "logprob": -0.271
+ },
+ {
+  "start": 1412.6,
+  "end": 1413.3,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "Um..."
+ },
+ {
+  "start": 1413.79,
+  "end": 1419.07,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "Per esempio, non le non con..."
+ },
+ {
+  "start": 1419.66,
+  "end": 1420.94,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Noi",
+  "logprob": -0.202
+ },
+ {
+  "start": 1421.23,
+  "end": 1422.39,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "Uh, proliamo."
+ },
+ {
+  "start": 1424.99,
+  "end": 1426.63,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Lei non...",
+  "logprob": -0.096
+ },
+ {
+  "start": 1427.13,
+  "end": 1428.55,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "User team, user..."
+ },
+ {
+  "start": 1429.53,
+  "end": 1432.46,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "Uh, Leight doesn't use these words."
+ },
+ {
+  "start": 1433.73,
+  "end": 1434.37,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Capito.",
+  "logprob": -0.349
+ },
+ {
+  "start": 1434.37,
+  "end": 1439.86,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "No, cosa vuol dire? No. Ma she's at home, è a casa o she left? È a casa? No, no, no."
+ },
+ {
+  "start": 1439.32,
+  "end": 1441.97,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "No, no, lei questo adesso."
+ },
+ {
+  "start": 1443.32,
+  "end": 1449.96,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "L'ha ascoltata. Attenzione, io non sono responsabile. Non grazie."
+ },
+ {
+  "start": 1450.03,
+  "end": 1452.61,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Sono molto occupata, non ho ammazzo nuovo.",
+  "logprob": -0.581
+ },
+ {
+  "start": 1452.97,
+  "end": 1458.76,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "La reputazione, la reputazione di tua moglie, no, rovinata."
+ },
+ {
+  "start": 1459.82,
+  "end": 1464.55,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "Si, no, le madres..."
+ },
+ {
+  "start": 1464.95,
+  "end": 1466.77,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Tua madre.",
+  "logprob": -0.42
+ },
+ {
+  "start": 1466.18,
+  "end": 1466.84,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Sua madre.",
+  "logprob": -0.259
+ },
+ {
+  "start": 1466.82,
+  "end": 1471.57,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "See, to speak in Italian to me more. So her mother..."
+ },
+ {
+  "start": 1472.68,
+  "end": 1476.61,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Ah, bene, quindi preferisco parlare con sua mamma."
+ },
+ {
+  "start": 1472.88,
+  "end": 1474.28,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Ah, bene, quindi preferisco..."
+ },
+ {
+  "start": 1476.42,
+  "end": 1477.45,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Sì, sì, sì.",
+  "logprob": -0.131
+ },
+ {
+  "start": 1477.44,
+  "end": 1480.46,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Con tua socia preferisco parlare."
+ },
+ {
+  "start": 1482.89,
+  "end": 1484.47,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "So her mom says the same thing."
+ },
+ {
+  "start": 1483.44,
+  "end": 1484.91,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "This is the same thing."
+ },
+ {
+  "start": 1485.81,
+  "end": 1487.44,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "She needs to talk to me in Italian more."
+ },
+ {
+  "start": 1489.59,
+  "end": 1491.6,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "No dai, è una buona opzione."
+ },
+ {
+  "start": 1492.19,
+  "end": 1493.82,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "You will improve faster."
+ },
+ {
+  "start": 1494.68,
+  "end": 1496.79,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Fai più veloce."
+ },
+ {
+  "start": 1497.3,
+  "end": 1498.55,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "That's good to hear."
+ },
+ {
+  "start": 1498.95,
+  "end": 1501.59,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Ok, solo l'italiano, adesso.",
+  "logprob": -0.26
+ },
+ {
+  "start": 1503.37,
+  "end": 1504.08,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Ecco, dai."
+ },
+ {
+  "start": 1504.37,
+  "end": 1509.21,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "O fai il 50%, 50% inglese facciamo un compromesso."
+ },
+ {
+  "start": 1510.16,
+  "end": 1512.1,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Si dice fare un compromesso."
+ },
+ {
+  "start": 1515.73,
+  "end": 1516.79,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "Make a compromise.",
+  "logprob": -0.532
+ },
+ {
+  "start": 1519.25,
+  "end": 1520.23,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Eh, funziona."
+ },
+ {
+  "start": 1521.84,
+  "end": 1525.88,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Vengo a Getty News, piano piano, ogni giorno, parlo, parlo."
+ },
+ {
+  "start": 1526.42,
+  "end": 1527.27,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Il tempo?",
+  "logprob": -0.537
+ },
+ {
+  "start": 1528.45,
+  "end": 1531.49,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Migliora la situazione in modo naturale."
+ },
+ {
+  "start": 1535.44,
+  "end": 1536.35,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Perché...",
+  "logprob": -0.438
+ },
+ {
+  "start": 1536.48,
+  "end": 1540.43,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Quando sei a Napoli o quando sei fuori casa, when you are exposed.",
+  "logprob": -0.154
+ },
+ {
+  "start": 1540.84,
+  "end": 1542.71,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Quando si ha contatto con la lingua.",
+  "logprob": -0.152
+ },
+ {
+  "start": 1543.92,
+  "end": 1545.71,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Non tutti parlano inglese."
+ },
+ {
+  "start": 1546.1,
+  "end": 1546.98,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "No, a Napoli."
+ },
+ {
+  "start": 1546.3,
+  "end": 1548.35,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "A Napoli, fluentemente penso."
+ },
+ {
+  "start": 1550.25,
+  "end": 1551.01,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "We need to..."
+ },
+ {
+  "start": 1551.01,
+  "end": 1553.71,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "A Milano sì, perché è una città internazionale."
+ },
+ {
+  "start": 1553.91,
+  "end": 1555.97,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "C'è una grande comunità qui in via.",
+  "logprob": -0.203
+ },
+ {
+  "start": 1556.18,
+  "end": 1557.66,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Se tu sei a Milano,"
+ },
+ {
+  "start": 1557.78,
+  "end": 1560.87,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "E parla inglese, molta gente parla inglese."
+ },
+ {
+  "start": 1562.98,
+  "end": 1564.61,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Però Napoli è differente."
+ },
+ {
+  "start": 1565.24,
+  "end": 1581.49,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Ma in centro d'istorico Napoli ha inglese per l'hotel, per i turisti, sì, sì, restauranti, sì, ma non..."
+ },
+ {
+  "start": 1574.94,
+  "end": 1575.89,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Per i turisti."
+ },
+ {
+  "start": 1576.9,
+  "end": 1577.74,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "I see."
+ },
+ {
+  "start": 1582.11,
+  "end": 1583.23,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Non...",
+  "logprob": -0.323
+ },
+ {
+  "start": 1584.2,
+  "end": 1585.72,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "Visita?"
+ },
+ {
+  "start": 1586.69,
+  "end": 1590.45,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "Coma city se enough, enough public places."
+ },
+ {
+  "start": 1591.16,
+  "end": 1592.2,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "To us, scultare."
+ },
+ {
+  "start": 1592.54,
+  "end": 1596.32,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Abbastanza, non ci sono abbastanza posti."
+ },
+ {
+  "start": 1595.46,
+  "end": 1596.76,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Abbastanza."
+ },
+ {
+  "start": 1603.6,
+  "end": 1605.59,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Quindi oggi che programma hai?"
+ },
+ {
+  "start": 1606.26,
+  "end": 1610.21,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Cosa fai? Adesso cominci a lavorare a New York?"
+ },
+ {
+  "start": 1610.23,
+  "end": 1618.92,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "Si, si, molto importante, come se dice, presentazione per la..."
+ },
+ {
+  "start": 1619.73,
+  "end": 1620.54,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "Um..."
+ },
+ {
+  "start": 1620.71,
+  "end": 1622.68,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "Prima Directory."
+ },
+ {
+  "start": 1625.04,
+  "end": 1626.39,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Una presentazione."
+ },
+ {
+  "start": 1626.39,
+  "end": 1630.11,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "Si, le e che e o."
+ },
+ {
+  "start": 1631.29,
+  "end": 1637.04,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Sono molto importanti le presentazioni."
+ },
+ {
+  "start": 1637.88,
+  "end": 1639.27,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "In..."
+ },
+ {
+  "start": 1639.98,
+  "end": 1640.86,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Questo..."
+ },
+ {
+  "start": 1640.92,
+  "end": 1642.12,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "In Cinque Ore."
+ },
+ {
+  "start": 1642.53,
+  "end": 1644.7,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "So, for me..."
+ },
+ {
+  "start": 1644.08,
+  "end": 1645.9,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Allora, fra cinque ore."
+ },
+ {
+  "start": 1645.9,
+  "end": 1648.06,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Sì, quindi per me...",
+  "logprob": -0.324
+ },
+ {
+  "start": 1647.69,
+  "end": 1648.73,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Ma New York?"
+ },
+ {
+  "start": 1650.64,
+  "end": 1657.07,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "So, fino al... la presentazione... Complitare?"
+ },
+ {
+  "start": 1657.78,
+  "end": 1662.88,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "How do I say completion? Finita. Finita. Si. Finita."
+ },
+ {
+  "start": 1663.55,
+  "end": 1664.23,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "Um..."
+ },
+ {
+  "start": 1664.83,
+  "end": 1678.27,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "80% adesso fino all in due ore. And then presta attenzione per le persone importanti."
+ },
+ {
+  "start": 1680.43,
+  "end": 1681.79,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "So."
+ },
+ {
+  "start": 1682.37,
+  "end": 1683.7,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "Si, so today is..."
+ },
+ {
+  "start": 1683.67,
+  "end": 1685.52,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Quante persone ci sono?"
+ },
+ {
+  "start": 1685.74,
+  "end": 1688.95,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Quante persone partecipano al meeting?"
+ },
+ {
+  "start": 1689.1,
+  "end": 1694.4,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "Si, 1, 2, 3, 4, 5, 6."
+ },
+ {
+  "start": 1696.24,
+  "end": 1700.34,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Ci sono sei persone."
+ },
+ {
+  "start": 1700.51,
+  "end": 1702.79,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "6 persone, 7 economie."
+ },
+ {
+  "start": 1703.11,
+  "end": 1703.71,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Nella...",
+  "logprob": -0.513
+ },
+ {
+  "start": 1704.47,
+  "end": 1706.18,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Sente come nella riunione"
+ },
+ {
+  "start": 1710.06,
+  "end": 1713.72,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "E quindi presenti con slide, con microfono."
+ },
+ {
+  "start": 1714.13,
+  "end": 1718.65,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "No, no, no, quindi la..."
+ },
+ {
+  "start": 1718.97,
+  "end": 1734.17,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "Come se dice? Dashboard, electronic dashboard, not slides. Perché con dashboard, tu hai bisogno..."
+ },
+ {
+  "start": 1735.3,
+  "end": 1737.92,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "Explain the data."
+ },
+ {
+  "start": 1737.92,
+  "end": 1739.44,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "Pigare, extreme."
+ },
+ {
+  "start": 1739.17,
+  "end": 1741.84,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Che pare il data.",
+  "logprob": -0.791
+ },
+ {
+  "start": 1743.23,
+  "end": 1743.98,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "I dati.",
+  "logprob": -0.335
+ },
+ {
+  "start": 1743.98,
+  "end": 1745.14,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Sì, il dating.",
+  "logprob": -0.214
+ },
+ {
+  "start": 1746.09,
+  "end": 1747.59,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "So, non-slides."
+ },
+ {
+  "start": 1747.35,
+  "end": 1751.42,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "E' più caldo, è più vero, è differente."
+ },
+ {
+  "start": 1748.52,
+  "end": 1749.87,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "S-idea."
+ },
+ {
+  "start": 1751.42,
+  "end": 1760.58,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "Loro, Guardare, Guardi, no, Guardano, Il Dato, and then..."
+ },
+ {
+  "start": 1761.82,
+  "end": 1762.81,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "Your prindle..."
+ },
+ {
+  "start": 1762.32,
+  "end": 1764.09,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "In real time, in tempo reale."
+ },
+ {
+  "start": 1764.16,
+  "end": 1767.7,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "Si, and then yo prendo molto domanda."
+ },
+ {
+  "start": 1769.05,
+  "end": 1771.42,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Io faccio molte domande."
+ },
+ {
+  "start": 1771.21,
+  "end": 1776.34,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "Scusa, scrivere, per favore?"
+ },
+ {
+  "start": 1777.66,
+  "end": 1782.64,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Io faccio, quando domanda io uso io faccio."
+ },
+ {
+  "start": 1783.08,
+  "end": 1784.43,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Molte domande."
+ },
+ {
+  "start": 1785.15,
+  "end": 1785.98,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "Okay."
+ },
+ {
+  "start": 1785.49,
+  "end": 1787.11,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Make a question, faccio."
+ },
+ {
+  "start": 1787.16,
+  "end": 1789.78,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "C, ok, so yes, I have to answer a lot."
+ },
+ {
+  "start": 1791.67,
+  "end": 1794.1,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Big Data è il futuro."
+ },
+ {
+  "start": 1794.86,
+  "end": 1795.58,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "It took time."
+ },
+ {
+  "start": 1796.36,
+  "end": 1798.33,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Medicina, turismo."
+ },
+ {
+  "start": 1799.29,
+  "end": 1801.61,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Tutta la struttura, la..."
+ },
+ {
+  "start": 1802.01,
+  "end": 1804.59,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "I dati personali è grande."
+ },
+ {
+  "start": 1805.32,
+  "end": 1806.25,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Grande lavoro.",
+  "logprob": -0.241
+ },
+ {
+  "start": 1807.77,
+  "end": 1811.24,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Con matematica, con informatica."
+ },
+ {
+  "start": 1811.87,
+  "end": 1812.95,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Molto complicato."
+ },
+ {
+  "start": 1814.06,
+  "end": 1815.16,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Interessante ma..."
+ },
+ {
+  "start": 1817.01,
+  "end": 1821.05,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "Sempre, always."
+ },
+ {
+  "start": 1821.64,
+  "end": 1822.63,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "Explain."
+ },
+ {
+  "start": 1823.09,
+  "end": 1826.06,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "Why numbers change? That's the biggest part."
+ },
+ {
+  "start": 1827.14,
+  "end": 1829.03,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "Like a prediction. I'm thinking numeric."
+ },
+ {
+  "start": 1829.05,
+  "end": 1830.39,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Sì, sì.",
+  "logprob": -0.3
+ },
+ {
+  "start": 1830.8,
+  "end": 1834.28,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "Predictions, ok, va bene, ma questo sempre."
+ },
+ {
+  "start": 1834.65,
+  "end": 1835.69,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "Per que?"
+ },
+ {
+  "start": 1835.88,
+  "end": 1839.52,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "Numero... Combi?"
+ },
+ {
+  "start": 1839.96,
+  "end": 1840.67,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Grazie.",
+  "logprob": -0.581
+ },
+ {
+  "start": 1840.22,
+  "end": 1843.79,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "Cabiano. Cabiano. Cabiano. Si. Por que. Por que. Por que."
+ },
+ {
+  "start": 1841.41,
+  "end": 1842.06,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "Come here."
+ },
+ {
+  "start": 1845.77,
+  "end": 1848.5,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Eh ma poi ci sono le reti neuronali e..."
+ },
+ {
+  "start": 1849.24,
+  "end": 1853.88,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "È complicato tutto l'assoluto, è come una rete."
+ },
+ {
+  "start": 1853.92,
+  "end": 1889.22,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "Si, si. And companies always base their decisions based off of aggregations of a lot of things. So if, for instance, in English, because it's hard to explain this in Italian when I don't know, but like let's say you have a thousand people and, you know, a hundred of those people make a decision that the other 900 doesn't make, then people want to know exactly why did these people do this and what can we do, especially in sales. How to get them back, you know, what do we need to do. So, and medicine is the same thing."
+ },
+ {
+  "start": 1889.1,
+  "end": 1893.41,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "E' lo stesso, ho un studente russico che lavora a Milano."
+ },
+ {
+  "start": 1893.91,
+  "end": 1897.34,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "In a start-up they are dealing with tourism."
+ },
+ {
+  "start": 1897.44,
+  "end": 1901.91,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Shipping, cruise, e lui fa reti neuronali."
+ },
+ {
+  "start": 1902.4,
+  "end": 1908.27,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "They have a client and they want to know, they have to predict how many people, tourism."
+ },
+ {
+  "start": 1908.49,
+  "end": 1911.36,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "First class, second class, lavora ore e ore.",
+  "logprob": -0.196
+ },
+ {
+  "start": 1911.75,
+  "end": 1916.14,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "E lui ha inventato una rete neuronale speciale."
+ },
+ {
+  "start": 1916.53,
+  "end": 1922.79,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Tu predica, gli piace, ma lavora ore e ore, una start-up."
+ },
+ {
+  "start": 1923.21,
+  "end": 1924.54,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Con sette persone."
+ },
+ {
+  "start": 1925.55,
+  "end": 1927.63,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Sì, è una passione."
+ },
+ {
+  "start": 1929.01,
+  "end": 1929.84,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "Well, man.",
+  "logprob": -0.628
+ },
+ {
+  "start": 1930.11,
+  "end": 1933.2,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "È bello, ma devi avere una passione particolare."
+ },
+ {
+  "start": 1934.48,
+  "end": 1939.12,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "Molto soldi con questo, ma non piace."
+ },
+ {
+  "start": 1939.32,
+  "end": 1941.35,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "Bene."
+ },
+ {
+  "start": 1941.4,
+  "end": 1946.77,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "Io voglio il lavoro in Medici, in Fino."
+ },
+ {
+  "start": 1946.55,
+  "end": 1949.14,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Quindi voglio lavorare nella medicina."
+ },
+ {
+  "start": 1948.5,
+  "end": 1952.08,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "Finito il Big Data."
+ },
+ {
+  "start": 1954.16,
+  "end": 1955.03,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Sì, della...",
+  "logprob": -0.258
+ },
+ {
+  "start": 1958.31,
+  "end": 1963.86,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "C'è tutto, medicina, turismo, il mio studente russo lavora nel turismo."
+ },
+ {
+  "start": 1964.53,
+  "end": 1972.43,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Però pensa di lasciare perché ha detto stop, troppo stress, troppo lavoro, lavora anche sabato, domenica, perché il suo capo ha detto..."
+ },
+ {
+  "start": 1972.63,
+  "end": 1978.84,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Cambia, migliora, vogliamo struttura più veloce, più dinamica e lui lavora sabato."
+ },
+ {
+  "start": 1979.15,
+  "end": 1981.93,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Per creare un'ora. È normale. Scusa."
+ },
+ {
+  "start": 1980.33,
+  "end": 1981.83,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "È normale."
+ },
+ {
+  "start": 1983.2,
+  "end": 1983.89,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Eeeh, no.",
+  "logprob": -0.468
+ },
+ {
+  "start": 1984.9,
+  "end": 1986.22,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Però è così."
+ },
+ {
+  "start": 1986.96,
+  "end": 1988.5,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Fa parte del rischio."
+ },
+ {
+  "start": 1989.46,
+  "end": 1991.35,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Il rischio se lavori con..."
+ },
+ {
+  "start": 1991.57,
+  "end": 1993.59,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "Big data, the price you have to pay for."
+ },
+ {
+  "start": 1994.54,
+  "end": 1995.68,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Prezzo da pagare."
+ },
+ {
+  "start": 1996.98,
+  "end": 1999.36,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Va bene, ti lascio andare, ci vediamo domani."
+ },
+ {
+  "start": 1999.41,
+  "end": 2005.39,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "Si, si, si. Cosa e il lesione?"
+ },
+ {
+  "start": 2005.74,
+  "end": 2007.14,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "For the Sarah."
+ },
+ {
+  "start": 2007.14,
+  "end": 2008.6,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Ti mando..."
+ },
+ {
+  "start": 2008.76,
+  "end": 2012.11,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Ti mando un'altra cosa, tu filato un ascolto."
+ },
+ {
+  "start": 2012.81,
+  "end": 2016.78,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "E ascoltiamo insieme la routine della giornata e facciamo i verbi."
+ },
+ {
+  "start": 2017.44,
+  "end": 2019.61,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Facciamo brush up, verbi al presente."
+ },
+ {
+  "start": 2020.63,
+  "end": 2022.38,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "Grazie, molto grazie."
+ },
+ {
+  "start": 2022.38,
+  "end": 2023.93,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Buona giornata, ciao."
+ },
+ {
+  "start": 2023.36,
+  "end": 2024.53,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "Ciao, ciao."
+ },
+ {
+  "start": 2034.31,
+  "end": 2035.83,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "I know, I thought you said..."
+ },
+ {
+  "start": 2036.15,
+  "end": 2039.96,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "I was trying to say, I mean you know what I was trying to say."
+ },
+ {
+  "start": 2046.46,
+  "end": 2048.0,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "Thank you."
+ },
+ {
+  "start": 2050.06,
+  "end": 2051.14,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "Yeah, I think so."
+ },
+ {
+  "start": 2052.89,
+  "end": 2057.67,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "I'm like shhh. Oh my, my face is starting to hurt."
+ },
+ {
+  "start": 2058.36,
+  "end": 2059.03,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "Thank you."
+ },
+ {
+  "start": 2060.37,
+  "end": 2060.99,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "Oh."
+ },
+ {
+  "start": 2062.31,
+  "end": 2064.67,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "I don't want to think about that. That's kind of weird."
+ },
+ {
+  "start": 2065.06,
+  "end": 2065.77,
+  "speaker": "SPEAKER_01",
+  "lang": "it",
+  "text": "No, a voi.",
+  "logprob": -0.38
+ },
+ {
+  "start": 2066.81,
+  "end": 2073.02,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "No, no, no, no, trust me, trust me. I never want to see a pussy start moving. Have you ever seen..."
+ },
+ {
+  "start": 2073.02,
+  "end": 2074.04,
+  "speaker": "SPEAKER_00",
+  "lang": "it",
+  "text": "Dai, vabbè!",
+  "logprob": -0.459
+ },
+ {
+  "start": 2080.33,
+  "end": 2081.04,
+  "speaker": "SPEAKER_00",
+  "lang": "en",
+  "text": "Don't let..."
+ },
+ {
+  "start": 2085.83,
+  "end": 2087.45,
+  "speaker": "SPEAKER_01",
+  "lang": "en",
+  "text": "Let me start this because I gotta..."
+ }
+]
