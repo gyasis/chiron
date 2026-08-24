@@ -1,0 +1,354 @@
+[
+ {
+  "clip": "d2-rif-01",
+  "chapter": "Verbi riflessivi",
+  "sectionId": "chapter-1",
+  "it": "svegliarsi",
+  "en": "to wake up",
+  "note": "The -si on the end IS the reflexive marker. Strip it, conjugate, and move the pronoun in front."
+ },
+ {
+  "clip": "d2-rif-02",
+  "chapter": "Verbi riflessivi",
+  "sectionId": "chapter-1",
+  "it": "mi sveglio",
+  "en": "I wake up",
+  "note": "mi sveglio, ti svegli, si sveglia. The pronoun goes BEFORE the verb, never attached."
+ },
+ {
+  "clip": "d2-rif-03",
+  "chapter": "Verbi riflessivi",
+  "sectionId": "chapter-1",
+  "it": "mi sveglio alle 6.15",
+  "en": "I wake up at 6:15",
+  "note": "alle for the time — the same rule as Day 1."
+ },
+ {
+  "clip": "d2-rif-04",
+  "chapter": "Verbi riflessivi",
+  "sectionId": "chapter-1",
+  "it": "la mia routine",
+  "en": "my routine",
+  "note": "Borrowed from French, invariable: la routine, le routine."
+ },
+ {
+  "clip": "d2-rif-05",
+  "chapter": "Verbi riflessivi",
+  "sectionId": "chapter-1",
+  "it": "connettersi",
+  "en": "to connect (oneself)",
+  "note": "Also reflexive. Note the double t: connettersi, mi connetto."
+ },
+ {
+  "clip": "d2-rif-06",
+  "chapter": "Verbi riflessivi",
+  "sectionId": "chapter-1",
+  "it": "mi connetto con gli USA",
+  "en": "I connect with the USA",
+  "note": "gli USA is masculine plural — gli, not i, before a vowel-ish sound."
+ },
+ {
+  "clip": "d2-med-01",
+  "chapter": "Salute e medicina",
+  "sectionId": "chapter-2",
+  "it": "il futuro della medicina è digitale",
+  "en": "the future of medicine is digital",
+  "note": "di + la = della. digitale is one form for both genders."
+ },
+ {
+  "clip": "d2-med-02",
+  "chapter": "Salute e medicina",
+  "sectionId": "chapter-2",
+  "it": "non ci sono giovani medici italiani",
+  "en": "there are no young Italian doctors",
+  "note": "ci sono for plural — c'è for singular. Adjectives follow: medici italiani."
+ },
+ {
+  "clip": "d2-med-03",
+  "chapter": "Salute e medicina",
+  "sectionId": "chapter-2",
+  "it": "un continente vecchio",
+  "en": "an old continent",
+  "note": "vecchio keeps the hard k sound: VEK-kio."
+ },
+ {
+  "clip": "d2-med-04",
+  "chapter": "Salute e medicina",
+  "sectionId": "chapter-2",
+  "it": "le malattie",
+  "en": "illnesses, diseases",
+  "note": "la malattia → le malattie. Feminine -ia becomes -ie."
+ },
+ {
+  "clip": "d2-med-05",
+  "chapter": "Salute e medicina",
+  "sectionId": "chapter-2",
+  "it": "i bambini obesi",
+  "en": "obese children",
+  "note": "obeso → obesi. The adjective agrees in gender AND number."
+ },
+ {
+  "clip": "d2-med-06",
+  "chapter": "Salute e medicina",
+  "sectionId": "chapter-2",
+  "it": "la salute",
+  "en": "health",
+  "note": "Feminine despite the -e ending. Salute! is also what you say when someone sneezes."
+ },
+ {
+  "clip": "d2-med-07",
+  "chapter": "Salute e medicina",
+  "sectionId": "chapter-2",
+  "it": "le droghe illegali",
+  "en": "illegal drugs",
+  "note": "la droga → le droghe — the h keeps the g hard."
+ },
+ {
+  "clip": "d2-die-01",
+  "chapter": "Dieta e longevità",
+  "sectionId": "chapter-3",
+  "it": "la dieta mediterranea",
+  "en": "the Mediterranean diet",
+  "note": "Adjective after the noun, agreeing: dieta mediterranea."
+ },
+ {
+  "clip": "d2-die-02",
+  "chapter": "Dieta e longevità",
+  "sectionId": "chapter-3",
+  "it": "i legumi",
+  "en": "pulses, legumes",
+  "note": "FALSE FRIEND — not 'legumes' as in vegetables generally. Beans, lentils, chickpeas."
+ },
+ {
+  "clip": "d2-die-03",
+  "chapter": "Dieta e longevità",
+  "sectionId": "chapter-3",
+  "it": "i carboidrati",
+  "en": "carbohydrates",
+  "note": "il carboidrato → i carboidrati."
+ },
+ {
+  "clip": "d2-die-04",
+  "chapter": "Dieta e longevità",
+  "sectionId": "chapter-3",
+  "it": "il Cilento",
+  "en": "the Cilento",
+  "note": "A region south of Salerno — where the Mediterranean diet was first described."
+ },
+ {
+  "clip": "d2-die-05",
+  "chapter": "Dieta e longevità",
+  "sectionId": "chapter-3",
+  "it": "i centenari",
+  "en": "centenarians",
+  "note": "il centenario → i centenari."
+ },
+ {
+  "clip": "d2-die-06",
+  "chapter": "Dieta e longevità",
+  "sectionId": "chapter-3",
+  "it": "gli over 100",
+  "en": "the over-100s",
+  "note": "A live anglicism. Italian borrows 'over' and keeps it invariable."
+ },
+ {
+  "clip": "d2-die-07",
+  "chapter": "Dieta e longevità",
+  "sectionId": "chapter-3",
+  "it": "il cibo locale",
+  "en": "local food",
+  "note": "locale is one form for both genders — il cibo locale, la cucina locale."
+ },
+ {
+  "clip": "d2-die-08",
+  "chapter": "Dieta e longevità",
+  "sectionId": "chapter-3",
+  "it": "una comunità",
+  "en": "a community",
+  "note": "Ends in accented -à, so it NEVER changes: una comunità, due comunità."
+ },
+ {
+  "clip": "d2-die-09",
+  "chapter": "Dieta e longevità",
+  "sectionId": "chapter-3",
+  "it": "Okinawa",
+  "en": "Okinawa",
+  "note": "Another blue zone, alongside the Cilento."
+ },
+ {
+  "clip": "d2-die-10",
+  "chapter": "Dieta e longevità",
+  "sectionId": "chapter-3",
+  "it": "la moringa",
+  "en": "moringa",
+  "note": "One of the imported 'superfood' trends."
+ },
+ {
+  "clip": "d2-die-11",
+  "chapter": "Dieta e longevità",
+  "sectionId": "chapter-3",
+  "it": "l'açaí",
+  "en": "açaí",
+  "note": "Borrowed from Portuguese; the accent keeps the stress final."
+ },
+ {
+  "clip": "d2-die-12",
+  "chapter": "Dieta e longevità",
+  "sectionId": "chapter-3",
+  "it": "gustare il cibo",
+  "en": "to savour food",
+  "note": "gustare is to taste with pleasure — not assaggiare, which is to sample."
+ },
+ {
+  "clip": "d2-soc-01",
+  "chapter": "Società ed economia",
+  "sectionId": "chapter-4",
+  "it": "i soldi",
+  "en": "the money",
+  "note": "Always PLURAL in Italian: i soldi sono, never il soldo."
+ },
+ {
+  "clip": "d2-soc-02",
+  "chapter": "Società ed economia",
+  "sectionId": "chapter-4",
+  "it": "l'energia",
+  "en": "the energy",
+  "note": "Feminine: l'energia, le energie."
+ },
+ {
+  "clip": "d2-soc-03",
+  "chapter": "Società ed economia",
+  "sectionId": "chapter-4",
+  "it": "una regione ricca",
+  "en": "a rich region",
+  "note": "ricco → ricca. The double c stays hard before a."
+ },
+ {
+  "clip": "d2-soc-04",
+  "chapter": "Società ed economia",
+  "sectionId": "chapter-4",
+  "it": "il sistema americano",
+  "en": "the American system",
+  "note": "il sistema ends in -a but is MASCULINE — like il regista on Day 1. i sistemi."
+ },
+ {
+  "clip": "d2-soc-05",
+  "chapter": "Società ed economia",
+  "sectionId": "chapter-4",
+  "it": "lo status sociale",
+  "en": "social status",
+  "note": "lo before s+consonant — lo status, lo studente, lo sport."
+ },
+ {
+  "clip": "d2-soc-06",
+  "chapter": "Società ed economia",
+  "sectionId": "chapter-4",
+  "it": "una società competitiva",
+  "en": "a competitive society",
+  "note": "società is invariable — la società, le società."
+ },
+ {
+  "clip": "d2-soc-07",
+  "chapter": "Società ed economia",
+  "sectionId": "chapter-4",
+  "it": "l'idea è: più lavori e più hai successo",
+  "en": "the idea is: the more you work, the more successful you are",
+  "note": "più… più… — the correlative. No 'che' anywhere; just più + verb, e, più + verb."
+ },
+ {
+  "clip": "d2-soc-08",
+  "chapter": "Società ed economia",
+  "sectionId": "chapter-4",
+  "it": "la qualità della vita",
+  "en": "quality of life",
+  "note": "vita has NO accent. And qualità, ending in -à, never changes in the plural."
+ },
+ {
+  "clip": "d2-soc-09",
+  "chapter": "Società ed economia",
+  "sectionId": "chapter-4",
+  "it": "le vacanze",
+  "en": "the holidays",
+  "note": "Usually plural: andare in vacanza, but le vacanze estive."
+ },
+ {
+  "clip": "d2-soc-10",
+  "chapter": "Società ed economia",
+  "sectionId": "chapter-4",
+  "it": "l'ossessione per la sicurezza",
+  "en": "the obsession with safety",
+  "note": "ossessione takes PER, not 'con' or 'di'."
+ },
+ {
+  "clip": "d2-soc-11",
+  "chapter": "Società ed economia",
+  "sectionId": "chapter-4",
+  "it": "l'educazione",
+  "en": "upbringing, manners",
+  "note": "FALSE FRIEND — closer to manners/upbringing than schooling. Schooling is l'istruzione."
+ },
+ {
+  "clip": "d2-abi-01",
+  "chapter": "Abitudini e tempo",
+  "sectionId": "chapter-5",
+  "it": "l'abitudine",
+  "en": "the habit",
+  "note": "Feminine: l'abitudine, le abitudini."
+ },
+ {
+  "clip": "d2-abi-02",
+  "chapter": "Abitudini e tempo",
+  "sectionId": "chapter-5",
+  "it": "il trend",
+  "en": "the trend",
+  "note": "Borrowed and invariable: i trend."
+ },
+ {
+  "clip": "d2-abi-03",
+  "chapter": "Abitudini e tempo",
+  "sectionId": "chapter-5",
+  "it": "ci vuole tempo",
+  "en": "it takes time",
+  "note": "Impersonal ci vuole + singular; ci vogliono + plural. Ci vogliono due ore."
+ },
+ {
+  "clip": "d2-abi-04",
+  "chapter": "Abitudini e tempo",
+  "sectionId": "chapter-5",
+  "it": "in realtà",
+  "en": "actually, in fact",
+  "note": "FALSE FRIEND — it means 'actually', not 'in reality'."
+ },
+ {
+  "clip": "d2-abi-05",
+  "chapter": "Abitudini e tempo",
+  "sectionId": "chapter-5",
+  "it": "undici, dodici, tredici",
+  "en": "eleven, twelve, thirteen",
+  "note": "11–16 end in -dici. From 17 it flips: diciassette, diciotto, diciannove."
+ },
+ {
+  "clip": "d2-abi-06",
+  "chapter": "Abitudini e tempo",
+  "sectionId": "chapter-5",
+  "it": "un audio",
+  "en": "an audio message",
+  "note": "Invariable: un audio, due audio. Mandare un audio = send a voice note."
+ },
+ {
+  "clip": "d2-abi-07",
+  "chapter": "Abitudini e tempo",
+  "sectionId": "chapter-5",
+  "it": "gli errori",
+  "en": "mistakes",
+  "note": "l'errore → gli errori. gli before a vowel."
+ },
+ {
+  "clip": "d2-abi-08",
+  "chapter": "Abitudini e tempo",
+  "sectionId": "chapter-5",
+  "it": "una richiesta",
+  "en": "a request",
+  "note": "From chiedere. fare una richiesta = to make a request."
+ }
+]

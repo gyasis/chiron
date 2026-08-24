@@ -1,0 +1,411 @@
+
+  :root {
+    --ground: #F1F0EC;
+    --raised: #FBFAF7;
+    --ink: #16191B;
+    --muted: #6B7076;
+    --faint: #8E9298;
+    --accent: #1D4E6B;
+    --accent-soft: #E2EAEF;
+    --alert: #A8382B;
+    --alert-soft: #F3E4E1;
+    --rule: #D6D5CF;
+
+    --display: system-ui, -apple-system, "SF Pro Display", "Helvetica Neue",
+               "Segoe UI", Roboto, sans-serif;
+    --body: system-ui, -apple-system, "SF Pro Text", "Helvetica Neue",
+            "Segoe UI", Roboto, sans-serif;
+    --mono: ui-monospace, "SF Mono", Menlo, "DejaVu Sans Mono", monospace;
+
+    --step-0: 1.0625rem;
+    --step-1: 1.125rem;
+    --step-2: 1.4375rem;
+    --step-3: 1.875rem;
+    --step-4: 2.5rem;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --ground: #14171A;
+      --raised: #1C2024;
+      --ink: #E7E6E1;
+      --muted: #9BA1A8;
+      --faint: #7C838A;
+      --accent: #7FB8D6;
+      --accent-soft: #1E2E38;
+      --alert: #E0897B;
+      --alert-soft: #33211E;
+      --rule: #2C3237;
+    }
+  }
+  :root[data-theme="dark"] {
+    --ground: #14171A;
+    --raised: #1C2024;
+    --ink: #E7E6E1;
+    --muted: #9BA1A8;
+    --faint: #7C838A;
+    --accent: #7FB8D6;
+    --accent-soft: #1E2E38;
+    --alert: #E0897B;
+    --alert-soft: #33211E;
+    --rule: #2C3237;
+  }
+  :root[data-theme="light"] {
+    --ground: #F1F0EC;
+    --raised: #FBFAF7;
+    --ink: #16191B;
+    --muted: #6B7076;
+    --faint: #8E9298;
+    --accent: #1D4E6B;
+    --accent-soft: #E2EAEF;
+    --alert: #A8382B;
+    --alert-soft: #F3E4E1;
+    --rule: #D6D5CF;
+  }
+
+  body {
+    background: var(--ground);
+    color: var(--ink);
+    font-family: var(--body);
+    font-size: var(--step-0);
+    line-height: 1.6;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  .wrap {
+    max-width: 43rem;
+    margin: 0 auto;
+    padding: 2rem 1.35rem 6rem;
+    display: flex;
+    flex-direction: column;
+    gap: 3.25rem;
+  }
+
+  /* ---------- board header ---------- */
+
+  .board {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    border-top: 2px solid var(--ink);
+    border-bottom: 1px solid var(--rule);
+    padding: 1.1rem 0 1.35rem;
+  }
+  .board-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem 1.25rem;
+    font-family: var(--display);
+    font-size: 0.75rem;
+    letter-spacing: 0.13em;
+    text-transform: uppercase;
+    color: var(--faint);
+  }
+  .board h1 {
+    font-family: var(--display);
+    font-size: var(--step-4);
+    font-weight: 700;
+    line-height: 1.1;
+    letter-spacing: -0.022em;
+    text-wrap: balance;
+    margin: 0;
+  }
+  .board h1 em {
+    font-style: normal;
+    color: var(--accent);
+  }
+  .board p {
+    margin: 0;
+    color: var(--muted);
+    max-width: 34rem;
+  }
+  .next {
+    display: flex;
+    align-items: baseline;
+    gap: 0.7rem;
+    font-family: var(--display);
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    font-size: 0.75rem;
+    color: var(--faint);
+    border-top: 1px dotted var(--rule);
+    padding-top: 0.9rem;
+  }
+  .next b {
+    font-size: 1.6rem;
+    letter-spacing: -0.02em;
+    font-variant-numeric: tabular-nums;
+    color: var(--ink);
+    font-weight: 700;
+  }
+
+  /* ---------- sections ---------- */
+
+  section {
+    display: flex;
+    flex-direction: column;
+    gap: 1.1rem;
+  }
+  .eyebrow {
+    font-family: var(--display);
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.19em;
+    text-transform: uppercase;
+    color: var(--accent);
+  }
+  section > h2 {
+    font-family: var(--display);
+    font-size: var(--step-3);
+    font-weight: 700;
+    line-height: 1.18;
+    letter-spacing: -0.018em;
+    text-wrap: balance;
+    margin: -0.55rem 0 0;
+  }
+  section > p { margin: 0; }
+  h3 {
+    font-family: var(--display);
+    font-size: var(--step-1);
+    font-weight: 600;
+    letter-spacing: -0.005em;
+    margin: 0.6rem 0 -0.35rem;
+  }
+  .lede { color: var(--muted); }
+  em.it { font-style: italic; }
+
+  /* ---------- phrase list ---------- */
+
+  dl.phrases {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    margin: 0;
+    border-top: 1px solid var(--rule);
+  }
+  dl.phrases > div {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.2rem;
+    padding: 0.85rem 0;
+    border-bottom: 1px solid var(--rule);
+  }
+  dl.phrases dt {
+    font-family: var(--display);
+    font-size: var(--step-1);
+    font-weight: 600;
+    line-height: 1.35;
+    letter-spacing: -0.008em;
+    color: var(--ink);
+  }
+  dl.phrases dd {
+    margin: 0;
+    color: var(--muted);
+  }
+  dl.phrases .why {
+    display: block;
+    margin-top: 0.3rem;
+    font-family: var(--mono);
+    font-size: 0.78rem;
+    line-height: 1.55;
+    color: var(--faint);
+  }
+  dl.phrases .why b { color: var(--muted); font-weight: 600; }
+  @media (min-width: 40rem) {
+    dl.phrases > div {
+      grid-template-columns: 1fr 1fr;
+      column-gap: 1.75rem;
+    }
+    dl.phrases .why { grid-column: 1 / -1; }
+  }
+
+  /* ---------- key / decoder ---------- */
+
+  .key {
+    background: var(--raised);
+    border: 1px solid var(--rule);
+    border-radius: 3px;
+    padding: 1.15rem 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+  .key-row {
+    display: grid;
+    grid-template-columns: 2.75rem minmax(0, 1fr);
+    gap: 0.9rem;
+    align-items: start;
+  }
+  .glyph {
+    font-family: var(--mono);
+    font-size: 1.6rem;
+    font-weight: 700;
+    line-height: 1.1;
+    color: var(--accent);
+    text-align: center;
+    background: var(--accent-soft);
+    border-radius: 3px;
+    padding: 0.15rem 0;
+  }
+  .key-row p { margin: 0; }
+  .key-row .ex {
+    display: block;
+    margin-top: 0.35rem;
+    font-family: var(--mono);
+    font-size: 0.78rem;
+    line-height: 1.6;
+    color: var(--faint);
+  }
+
+  /* ---------- trap callout ---------- */
+
+  .trap {
+    background: var(--alert-soft);
+    border-left: 3px solid var(--alert);
+    padding: 0.95rem 1.1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+  }
+  .trap .tag {
+    font-family: var(--display);
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.17em;
+    text-transform: uppercase;
+    color: var(--alert);
+  }
+  .trap p { margin: 0; }
+  .trap code, .trap b { font-family: var(--mono); font-size: 0.86em; font-weight: 600; }
+  .no { color: var(--alert); text-decoration: line-through; }
+  .yes { color: var(--accent); font-weight: 600; }
+
+  /* ---------- clock strip ---------- */
+
+  .clocks {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(8rem, 1fr));
+    gap: 1px;
+    background: var(--rule);
+    border: 1px solid var(--rule);
+    border-radius: 3px;
+    overflow: hidden;
+  }
+  .clock {
+    background: var(--raised);
+    padding: 0.9rem 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+  }
+  .clock b {
+    font-family: var(--display);
+    font-size: 1.75rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    line-height: 1;
+    letter-spacing: -0.02em;
+  }
+  .clock span {
+    font-family: var(--display);
+    font-size: 0.7rem;
+    letter-spacing: 0.13em;
+    text-transform: uppercase;
+    color: var(--faint);
+  }
+
+  /* ---------- scaffold ---------- */
+
+  .scaffold {
+    background: var(--raised);
+    border: 1px solid var(--rule);
+    border-radius: 3px;
+    overflow-x: auto;
+    padding: 1.1rem 1.25rem;
+  }
+  .scaffold pre {
+    margin: 0;
+    font-family: var(--mono);
+    font-size: 0.82rem;
+    line-height: 1.9;
+    white-space: pre;
+  }
+  .scaffold .cue { color: var(--faint); }
+
+  ol.check {
+    margin: 0;
+    padding-left: 1.3rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    color: var(--muted);
+  }
+  ol.check code { font-family: var(--mono); font-size: 0.86em; color: var(--ink); }
+
+  footer {
+    border-top: 1px solid var(--rule);
+    padding-top: 1.1rem;
+    font-family: var(--display);
+    font-size: 0.75rem;
+    letter-spacing: 0.13em;
+    text-transform: uppercase;
+    color: var(--faint);
+  }
+
+  a { color: var(--accent); }
+  a:focus-visible, [tabindex]:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 3px;
+  }
+
+  /* ---- navigation between lessons -------------------------------------------------
+     The series grew one day at a time and each page ended up a dead end: Days 1-2 had a
+     bare link back to the index, Days 3, 4 and 6 had no way out at all. A lesson you can
+     only reach by going back to a tab you left open is a lesson you don't revisit. */
+
+  .daynav {
+    display: flex;
+    align-items: center;
+    gap: 0.9rem;
+    font-family: var(--display);
+    font-size: 0.72rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+  .daynav a {
+    color: var(--muted);
+    text-decoration: none;
+    border-bottom: 1px solid transparent;
+    padding-bottom: 2px;
+    transition: color 0.15s, border-color 0.15s;
+  }
+  .daynav a:hover { color: var(--accent); border-bottom-color: var(--accent); }
+  .daynav .here { color: var(--faint); }
+
+  /* top: a single way back, sitting above the masthead */
+  .daynav.top {
+    margin-bottom: 1.6rem;
+    padding-bottom: 0.9rem;
+    border-bottom: 1px solid var(--rule);
+  }
+
+  /* bottom: previous / index / next, pushed to the edges so the thumbs find them */
+  .daynav.bottom {
+    justify-content: space-between;
+    margin-top: 3rem;
+    padding-top: 1.4rem;
+    border-top: 1px solid var(--rule);
+  }
+  .daynav.bottom .lbl { display: block; color: var(--faint); font-size: 0.63rem; }
+  .daynav.bottom .ttl { display: block; text-transform: none; letter-spacing: 0.01em;
+                        font-family: var(--body); font-size: 0.9rem; margin-top: 0.25rem; }
+  .daynav.bottom .next { text-align: right; }
+  .daynav.bottom .gap { flex: 1; }
+
+  @media (max-width: 30rem) {
+    .daynav.bottom .ttl { font-size: 0.8rem; }
+  }
+
+  /* pushes the Ascolto link to the far edge of the top bar (from the retired add_nav.py) */
+  .daynav .sp { flex: 1; }
+  .daynav .go { color: var(--accent); }

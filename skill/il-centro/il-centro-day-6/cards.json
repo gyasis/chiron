@@ -1,0 +1,482 @@
+[
+ {
+  "clip": "d6-imp-01",
+  "chapter": "L'imperfetto — il passato che dura",
+  "sectionId": "sec-imperfetto",
+  "it": "quando era più giovane",
+  "en": "when he/she was younger",
+  "note": "<b>era</b> = was. The imperfetto is for a STATE that lasted, not an event that happened."
+ },
+ {
+  "clip": "d6-imp-02",
+  "chapter": "L'imperfetto — il passato che dura",
+  "sectionId": "sec-imperfetto",
+  "it": "quando aveva 55, 60 anni",
+  "en": "when he/she was 55, 60",
+  "note": "Age uses <b>avere</b> — you HAVE years. In the past: <i>aveva</i>."
+ },
+ {
+  "clip": "d6-imp-03",
+  "chapter": "L'imperfetto — il passato che dura",
+  "sectionId": "sec-imperfetto",
+  "it": "ero sorpreso",
+  "en": "I was surprised",
+  "note": "<b>ero</b> = I was. A state, so imperfetto — not <i>sono stato</i>."
+ },
+ {
+  "clip": "d6-imp-04",
+  "chapter": "L'imperfetto — il passato che dura",
+  "sectionId": "sec-imperfetto",
+  "it": "ho sentito",
+  "en": "I heard, I've heard",
+  "note": "<b>Passato prossimo</b> — a single completed event. The contrast with <i>era</i> is the whole lesson: one thing happened, the other was simply the case."
+ },
+ {
+  "clip": "d6-imp-05",
+  "chapter": "L'imperfetto — il passato che dura",
+  "sectionId": "sec-imperfetto",
+  "it": "vivono stabilmente",
+  "en": "they live permanently",
+  "note": "Present, for something still true. Change it to <i>vivevano</i> and it's over."
+ },
+ {
+  "clip": "d6-imp-06",
+  "chapter": "L'imperfetto — il passato che dura",
+  "sectionId": "sec-imperfetto",
+  "it": "dopo la laurea",
+  "en": "after graduating",
+  "note": "<b>la laurea</b> = a university degree. <i>Laurearsi</i> = to graduate."
+ },
+ {
+  "clip": "d6-san-01",
+  "chapter": "Santhià, Piemonte",
+  "sectionId": "sec-santhia",
+  "it": "Santhià",
+  "en": "Santhià",
+  "note": "A town in Piedmont. The accent is on the final <b>à</b> — Santhi-À."
+ },
+ {
+  "clip": "d6-san-02",
+  "chapter": "Santhià, Piemonte",
+  "sectionId": "sec-santhia",
+  "it": "il Piemonte",
+  "en": "Piedmont",
+  "note": "Literally <i>foot of the mountain</i>. Italian regions take the article."
+ },
+ {
+  "clip": "d6-san-03",
+  "chapter": "Santhià, Piemonte",
+  "sectionId": "sec-santhia",
+  "it": "vicino alla collina",
+  "en": "near the hill",
+  "note": "<b>vicino a</b> + article → vicino <b>alla</b>. Day 1's fused preposition."
+ },
+ {
+  "clip": "d6-san-04",
+  "chapter": "Santhià, Piemonte",
+  "sectionId": "sec-santhia",
+  "it": "90 km",
+  "en": "90 km",
+  "note": ""
+ },
+ {
+  "clip": "d6-san-05",
+  "chapter": "Santhià, Piemonte",
+  "sectionId": "sec-santhia",
+  "it": "8000 abitanti",
+  "en": "8,000 inhabitants",
+  "note": "<b>ottomila</b> — one word, and <i>mila</i> is the plural of <i>mille</i>."
+ },
+ {
+  "clip": "d6-san-06",
+  "chapter": "Santhià, Piemonte",
+  "sectionId": "sec-santhia",
+  "it": "un posto tranquillo",
+  "en": "a quiet place",
+  "note": ""
+ },
+ {
+  "clip": "d6-san-07",
+  "chapter": "Santhià, Piemonte",
+  "sectionId": "sec-santhia",
+  "it": "il marmo",
+  "en": "marble",
+  "note": ""
+ },
+ {
+  "clip": "d6-san-08",
+  "chapter": "Santhià, Piemonte",
+  "sectionId": "sec-santhia",
+  "it": "i vicini hanno un giardino",
+  "en": "the neighbours have a garden",
+  "note": "<b>i vicini</b> = the neighbours — same word as <i>vicino</i>, near."
+ },
+ {
+  "clip": "d6-san-09",
+  "chapter": "Santhià, Piemonte",
+  "sectionId": "sec-santhia",
+  "it": "l'autunno",
+  "en": "autumn",
+  "note": "Masculine: <i>in autunno</i>."
+ },
+ {
+  "clip": "d6-vit-01",
+  "chapter": "Una vita lunga",
+  "sectionId": "sec-vita",
+  "it": "93 anni",
+  "en": "93 years old",
+  "note": "<b>ha 93 anni</b> — he HAS 93 years."
+ },
+ {
+  "clip": "d6-vit-02",
+  "chapter": "Una vita lunga",
+  "sectionId": "sec-vita",
+  "it": "resiliente",
+  "en": "resilient",
+  "note": "One form for both genders, like <i>divertente</i>."
+ },
+ {
+  "clip": "d6-vit-03",
+  "chapter": "Una vita lunga",
+  "sectionId": "sec-vita",
+  "it": "il viaggio di nozze",
+  "en": "the honeymoon",
+  "note": "<b>le nozze</b> = the wedding, always plural."
+ },
+ {
+  "clip": "d6-vit-04",
+  "chapter": "Una vita lunga",
+  "sectionId": "sec-vita",
+  "it": "divertente",
+  "en": "fun, entertaining",
+  "note": "From <i>divertire</i>. <b>Mi diverto</b> = I enjoy myself."
+ },
+ {
+  "clip": "d6-vit-05",
+  "chapter": "Una vita lunga",
+  "sectionId": "sec-vita",
+  "it": "occupato",
+  "en": "busy, occupied",
+  "note": "<i>Sono occupato</i> = I'm busy. Also: a seat that's taken."
+ },
+ {
+  "clip": "d6-vit-07",
+  "chapter": "Una vita lunga",
+  "sectionId": "sec-vita",
+  "it": "le giovani americane",
+  "en": "young American women",
+  "note": "<b>giovane</b> before the noun here; <i>le giovani</i> = the young women."
+ },
+ {
+  "clip": "d6-ces-01",
+  "chapter": "C'è, ci sono — la regola del meteo",
+  "sectionId": "sec-cesono",
+  "it": "c'è il vento",
+  "en": "there's wind",
+  "note": "Her rule, at 7:27 — for weather you <b>always</b> use <i>c'è</i>."
+ },
+ {
+  "clip": "d6-ces-02",
+  "chapter": "C'è, ci sono — la regola del meteo",
+  "sectionId": "sec-cesono",
+  "it": "c'è la brezza",
+  "en": "there's a breeze",
+  "note": "Same breath as <i>c'è il vento</i>: «it doesn't matter what kind of» weather."
+ },
+ {
+  "clip": "d6-ces-03",
+  "chapter": "C'è, ci sono — la regola del meteo",
+  "sectionId": "sec-cesono",
+  "it": "c'è la pioggia",
+  "en": "there's rain",
+  "note": "7:32. Also <i>c'è pioggia</i>, without the article — both are hers."
+ },
+ {
+  "clip": "d6-ces-04",
+  "chapter": "C'è, ci sono — la regola del meteo",
+  "sectionId": "sec-cesono",
+  "it": "ci sono 29 gradi",
+  "en": "it's 29 degrees",
+  "note": "4:48. Temperature is PLURAL in Italian → <b>ci sono</b>, never <i>è</i>."
+ },
+ {
+  "clip": "d6-ces-05",
+  "chapter": "C'è, ci sono — la regola del meteo",
+  "sectionId": "sec-cesono",
+  "it": "dove c'è l'Everglades è umidissimo",
+  "en": "where the Everglades is, it's very humid",
+  "note": "8:15 — <b>both verbs in one sentence.</b> <i>C'è</i> says it EXISTS there; <i>è</i> DESCRIBES what it's like. This one line is the whole rule."
+ },
+ {
+  "clip": "d6-ces-06",
+  "chapter": "C'è, ci sono — la regola del meteo",
+  "sectionId": "sec-cesono",
+  "it": "quando c'era Katrina",
+  "en": "when Katrina was happening",
+  "note": "10:06 — the <b>imperfetto</b> of <i>c'è</i>. Ties straight back to this day's main lesson: a state that lasted."
+ },
+ {
+  "clip": "d6-ces-07",
+  "chapter": "C'è, ci sono — la regola del meteo",
+  "sectionId": "sec-cesono",
+  "it": "non c'è aria condizionata",
+  "en": "there's no air conditioning",
+  "note": "15:06. The negative just wraps it: <b>non c'è</b>."
+ },
+ {
+  "clip": "d6-ces-08",
+  "chapter": "C'è, ci sono — la regola del meteo",
+  "sectionId": "sec-cesono",
+  "it": "ci sono molte allergie",
+  "en": "there are a lot of allergies",
+  "note": "14:12. Plural thing → <b>ci sono</b>, even in a list of problems."
+ },
+ {
+  "clip": "d6-ces-09",
+  "chapter": "C'è, ci sono — la regola del meteo",
+  "sectionId": "sec-cesono",
+  "it": "c'è poca gente",
+  "en": "there aren't many people",
+  "note": "22:42. <i>Gente</i> is SINGULAR in Italian → <b>c'è</b>, though English says «people are»."
+ },
+ {
+  "clip": "d6-ces-10",
+  "chapter": "C'è, ci sono — la regola del meteo",
+  "sectionId": "sec-cesono",
+  "it": "c'è una comunità in Florida",
+  "en": "there's an Italian community in Florida",
+  "note": "32:06 — her actual wording on the tape, shorter than the chat log's."
+ },
+ {
+  "clip": "d6-avv-01",
+  "chapter": "Veloce → velocemente",
+  "sectionId": "sec-avverbi",
+  "it": "le reazioni veloci",
+  "en": "quick reactions",
+  "note": "<b>veloci</b> is the ADJECTIVE — it agrees with <i>reazioni</i>."
+ },
+ {
+  "clip": "d6-avv-02",
+  "chapter": "Veloce → velocemente",
+  "sectionId": "sec-avverbi",
+  "it": "reagire velocemente",
+  "en": "to react quickly",
+  "note": "<b>velocemente</b> is the ADVERB — it never agrees. Same root, different job."
+ },
+ {
+  "clip": "d6-avv-03",
+  "chapter": "Veloce → velocemente",
+  "sectionId": "sec-avverbi",
+  "it": "stabilmente",
+  "en": "permanently, stably",
+  "note": "<i>stabile</i> → <b>stabilmente</b>. Adjectives in -le drop the e: stabil + mente."
+ },
+ {
+  "clip": "d6-avv-04",
+  "chapter": "Veloce → velocemente",
+  "sectionId": "sec-avverbi",
+  "it": "scoprire",
+  "en": "to discover",
+  "note": "<b>lei scopre</b> — the stem shortens: scopr-."
+ },
+ {
+  "clip": "d6-avv-05",
+  "chapter": "Veloce → velocemente",
+  "sectionId": "sec-avverbi",
+  "it": "lei scopre che molta gente...",
+  "en": "she discovers that a lot of people…",
+  "note": "<b>molta gente</b> — and <i>gente</i> is still singular. Day 1's rule, still true."
+ },
+ {
+  "clip": "d6-avv-06",
+  "chapter": "Veloce → velocemente",
+  "sectionId": "sec-avverbi",
+  "it": "criticare",
+  "en": "to criticise",
+  "note": "Regular -are."
+ },
+ {
+  "clip": "d6-avv-07",
+  "chapter": "Veloce → velocemente",
+  "sectionId": "sec-avverbi",
+  "it": "completare",
+  "en": "to complete",
+  "note": "Regular -are."
+ },
+ {
+  "clip": "d6-avv-08",
+  "chapter": "Veloce → velocemente",
+  "sectionId": "sec-avverbi",
+  "it": "chissà!",
+  "en": "who knows!",
+  "note": "<b>chi sa</b> fused into one word — and it keeps the accent."
+ },
+ {
+  "clip": "d6-avv-09",
+  "chapter": "Veloce → velocemente",
+  "sectionId": "sec-avverbi",
+  "it": "noi parliamo di questo",
+  "en": "we talk about this",
+  "note": "<b>parlare di</b> = to talk ABOUT."
+ },
+ {
+  "clip": "d6-ext-01",
+  "chapter": "Fuori registrazione",
+  "sectionId": "sec-extra",
+  "it": "sottosopra",
+  "en": "upside down; in a mess",
+  "note": "One word, literally <i>under-over</i>, and it <b>never changes</b> — no <s>sottosopri</s>. Physical: <em>la stanza è sottosopra</em>, the room is a shambles. Emotional: <em>sono sottosopra</em>, I'm all shaken up."
+ },
+ {
+  "clip": "d6-ext-02",
+  "chapter": "Fuori registrazione",
+  "sectionId": "sec-extra",
+  "it": "la produzione di ricchezza",
+  "en": "the production of wealth",
+  "note": "<b>ricchezza</b> is the abstract noun from <i>ricco</i> — wealth as a concept. The plural <em>le ricchezze</em> means riches, actual assets. Sits naturally beside this day's <i>il profitto</i>."
+ },
+ {
+  "clip": "d6-med-01",
+  "chapter": "Medicina, profitto, natura",
+  "sectionId": "sec-medicina",
+  "it": "la zoonosi",
+  "en": "zoonosis",
+  "note": "A disease crossing from animals to humans. Invariable: <i>le zoonosi</i>."
+ },
+ {
+  "clip": "d6-med-02",
+  "chapter": "Medicina, profitto, natura",
+  "sectionId": "sec-medicina",
+  "it": "le vittime",
+  "en": "the victims",
+  "note": "<b>la vittima</b> is feminine even for a man — <i>la vittima è lui</i>."
+ },
+ {
+  "clip": "d6-med-03",
+  "chapter": "Medicina, profitto, natura",
+  "sectionId": "sec-medicina",
+  "it": "il profitto",
+  "en": "profit",
+  "note": ""
+ },
+ {
+  "clip": "d6-med-04",
+  "chapter": "Medicina, profitto, natura",
+  "sectionId": "sec-medicina",
+  "it": "le erbe naturali",
+  "en": "natural herbs",
+  "note": "<b>l'erba</b> → le erbe."
+ },
+ {
+  "clip": "d6-med-05",
+  "chapter": "Medicina, profitto, natura",
+  "sectionId": "sec-medicina",
+  "it": "la coltivazione della cannabis",
+  "en": "cannabis cultivation",
+  "note": "di + la = <b>della</b>."
+ },
+ {
+  "clip": "d6-med-06",
+  "chapter": "Medicina, profitto, natura",
+  "sectionId": "sec-medicina",
+  "it": "dietro alle medicine",
+  "en": "behind the medicines",
+  "note": "<b>dietro a</b> + le → <i>dietro alle</i>."
+ },
+ {
+  "clip": "d6-med-07",
+  "chapter": "Medicina, profitto, natura",
+  "sectionId": "sec-medicina",
+  "it": "i pesticidi, gli erbicidi",
+  "en": "pesticides, herbicides",
+  "note": "<b>i</b> pesticidi but <b>gli</b> erbicidi — <i>gli</i> before a vowel."
+ },
+ {
+  "clip": "d6-med-08",
+  "chapter": "Medicina, profitto, natura",
+  "sectionId": "sec-medicina",
+  "it": "il glifosato",
+  "en": "glyphosate",
+  "note": ""
+ },
+ {
+  "clip": "d6-med-09",
+  "chapter": "Medicina, profitto, natura",
+  "sectionId": "sec-medicina",
+  "it": "tossico",
+  "en": "toxic",
+  "note": "<i>tossica, tossici, tossiche</i>."
+ },
+ {
+  "clip": "d6-med-10",
+  "chapter": "Medicina, profitto, natura",
+  "sectionId": "sec-medicina",
+  "it": "un narcotico",
+  "en": "a narcotic",
+  "note": ""
+ },
+ {
+  "clip": "d6-med-11",
+  "chapter": "Medicina, profitto, natura",
+  "sectionId": "sec-medicina",
+  "it": "permettere le medicine",
+  "en": "to allow the medicines",
+  "note": "<b>permettere</b> — regular -ere."
+ },
+ {
+  "clip": "d6-med-12",
+  "chapter": "Medicina, profitto, natura",
+  "sectionId": "sec-medicina",
+  "it": "la follia",
+  "en": "madness",
+  "note": ""
+ },
+ {
+  "clip": "d6-med-13",
+  "chapter": "Medicina, profitto, natura",
+  "sectionId": "sec-medicina",
+  "it": "la sirena",
+  "en": "the siren",
+  "note": "Also: a mermaid."
+ },
+ {
+  "clip": "d6-ask-01",
+  "chapter": "Le parole che ho chiesto",
+  "sectionId": "sec-chieste",
+  "it": "metto la sveglia",
+  "en": "I set my alarm",
+  "note": "Asked at 3:36. <b>la sveglia</b> = the alarm clock; <em>svegliarsi</em> = to wake up."
+ },
+ {
+  "clip": "d6-ask-02",
+  "chapter": "Le parole che ho chiesto",
+  "sectionId": "sec-chieste",
+  "it": "dipende dove abiti",
+  "en": "it depends where you live",
+  "note": "Asked at 6:12 — she repeated it twice, so it was worth writing down."
+ },
+ {
+  "clip": "d6-ask-05",
+  "chapter": "Le parole che ho chiesto",
+  "sectionId": "sec-chieste",
+  "it": "non occupato",
+  "en": "not busy",
+  "note": "Asked at 23:24, for a quiet holiday."
+ },
+ {
+  "clip": "d6-ask-07",
+  "chapter": "Le parole che ho chiesto",
+  "sectionId": "sec-chieste",
+  "it": "camionista",
+  "en": "truck driver",
+  "note": "Her answer at 28:06: <em>era un camionista</em> — imperfetto, a job he had for years."
+ },
+ {
+  "clip": "d6-ask-10",
+  "chapter": "Le parole che ho chiesto",
+  "sectionId": "sec-chieste",
+  "it": "adolescenti",
+  "en": "teenagers",
+  "note": "Asked at 47:12, after circling <i>puberty</i>."
+ }
+]

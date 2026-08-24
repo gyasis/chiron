@@ -1,0 +1,714 @@
+<title>Lezione con Barbara — 3 agosto</title>
+
+<style>
+  :root {
+    --ground: #F1F0EC;
+    --raised: #FBFAF7;
+    --ink: #16191B;
+    --muted: #6B7076;
+    --faint: #8E9298;
+    --accent: #1D4E6B;
+    --accent-soft: #E2EAEF;
+    --alert: #A8382B;
+    --alert-soft: #F3E4E1;
+    --rule: #D6D5CF;
+
+    --display: system-ui, -apple-system, "SF Pro Display", "Helvetica Neue",
+               "Segoe UI", Roboto, sans-serif;
+    --body: system-ui, -apple-system, "SF Pro Text", "Helvetica Neue",
+            "Segoe UI", Roboto, sans-serif;
+    --mono: ui-monospace, "SF Mono", Menlo, "DejaVu Sans Mono", monospace;
+
+    --step-0: 1.0625rem;
+    --step-1: 1.125rem;
+    --step-2: 1.4375rem;
+    --step-3: 1.875rem;
+    --step-4: 2.5rem;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --ground: #14171A;
+      --raised: #1C2024;
+      --ink: #E7E6E1;
+      --muted: #9BA1A8;
+      --faint: #7C838A;
+      --accent: #7FB8D6;
+      --accent-soft: #1E2E38;
+      --alert: #E0897B;
+      --alert-soft: #33211E;
+      --rule: #2C3237;
+    }
+  }
+  :root[data-theme="dark"] {
+    --ground: #14171A;
+    --raised: #1C2024;
+    --ink: #E7E6E1;
+    --muted: #9BA1A8;
+    --faint: #7C838A;
+    --accent: #7FB8D6;
+    --accent-soft: #1E2E38;
+    --alert: #E0897B;
+    --alert-soft: #33211E;
+    --rule: #2C3237;
+  }
+  :root[data-theme="light"] {
+    --ground: #F1F0EC;
+    --raised: #FBFAF7;
+    --ink: #16191B;
+    --muted: #6B7076;
+    --faint: #8E9298;
+    --accent: #1D4E6B;
+    --accent-soft: #E2EAEF;
+    --alert: #A8382B;
+    --alert-soft: #F3E4E1;
+    --rule: #D6D5CF;
+  }
+
+  body {
+    background: var(--ground);
+    color: var(--ink);
+    font-family: var(--body);
+    font-size: var(--step-0);
+    line-height: 1.6;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  .wrap {
+    max-width: 43rem;
+    margin: 0 auto;
+    padding: 2rem 1.35rem 6rem;
+    display: flex;
+    flex-direction: column;
+    gap: 3.25rem;
+  }
+
+  /* ---------- board header ---------- */
+
+  .board {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    border-top: 2px solid var(--ink);
+    border-bottom: 1px solid var(--rule);
+    padding: 1.1rem 0 1.35rem;
+  }
+  .board-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem 1.25rem;
+    font-family: var(--display);
+    font-size: 0.75rem;
+    letter-spacing: 0.13em;
+    text-transform: uppercase;
+    color: var(--faint);
+  }
+  .board h1 {
+    font-family: var(--display);
+    font-size: var(--step-4);
+    font-weight: 700;
+    line-height: 1.1;
+    letter-spacing: -0.022em;
+    text-wrap: balance;
+    margin: 0;
+  }
+  .board h1 em {
+    font-style: normal;
+    color: var(--accent);
+  }
+  .board p {
+    margin: 0;
+    color: var(--muted);
+    max-width: 34rem;
+  }
+  .next {
+    display: flex;
+    align-items: baseline;
+    gap: 0.7rem;
+    font-family: var(--display);
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    font-size: 0.75rem;
+    color: var(--faint);
+    border-top: 1px dotted var(--rule);
+    padding-top: 0.9rem;
+  }
+  .next b {
+    font-size: 1.6rem;
+    letter-spacing: -0.02em;
+    font-variant-numeric: tabular-nums;
+    color: var(--ink);
+    font-weight: 700;
+  }
+
+  /* ---------- sections ---------- */
+
+  section {
+    display: flex;
+    flex-direction: column;
+    gap: 1.1rem;
+  }
+  .eyebrow {
+    font-family: var(--display);
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.19em;
+    text-transform: uppercase;
+    color: var(--accent);
+  }
+  section > h2 {
+    font-family: var(--display);
+    font-size: var(--step-3);
+    font-weight: 700;
+    line-height: 1.18;
+    letter-spacing: -0.018em;
+    text-wrap: balance;
+    margin: -0.55rem 0 0;
+  }
+  section > p { margin: 0; }
+  h3 {
+    font-family: var(--display);
+    font-size: var(--step-1);
+    font-weight: 600;
+    letter-spacing: -0.005em;
+    margin: 0.6rem 0 -0.35rem;
+  }
+  .lede { color: var(--muted); }
+  em.it { font-style: italic; }
+
+  /* ---------- phrase list ---------- */
+
+  dl.phrases {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    margin: 0;
+    border-top: 1px solid var(--rule);
+  }
+  dl.phrases > div {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.2rem;
+    padding: 0.85rem 0;
+    border-bottom: 1px solid var(--rule);
+  }
+  dl.phrases dt {
+    font-family: var(--display);
+    font-size: var(--step-1);
+    font-weight: 600;
+    line-height: 1.35;
+    letter-spacing: -0.008em;
+    color: var(--ink);
+  }
+  dl.phrases dd {
+    margin: 0;
+    color: var(--muted);
+  }
+  dl.phrases .why {
+    display: block;
+    margin-top: 0.3rem;
+    font-family: var(--mono);
+    font-size: 0.78rem;
+    line-height: 1.55;
+    color: var(--faint);
+  }
+  dl.phrases .why b { color: var(--muted); font-weight: 600; }
+  @media (min-width: 40rem) {
+    dl.phrases > div {
+      grid-template-columns: 1fr 1fr;
+      column-gap: 1.75rem;
+    }
+    dl.phrases .why { grid-column: 1 / -1; }
+  }
+
+  /* ---------- key / decoder ---------- */
+
+  .key {
+    background: var(--raised);
+    border: 1px solid var(--rule);
+    border-radius: 3px;
+    padding: 1.15rem 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+  .key-row {
+    display: grid;
+    grid-template-columns: 2.75rem minmax(0, 1fr);
+    gap: 0.9rem;
+    align-items: start;
+  }
+  .glyph {
+    font-family: var(--mono);
+    font-size: 1.6rem;
+    font-weight: 700;
+    line-height: 1.1;
+    color: var(--accent);
+    text-align: center;
+    background: var(--accent-soft);
+    border-radius: 3px;
+    padding: 0.15rem 0;
+  }
+  .key-row p { margin: 0; }
+  .key-row .ex {
+    display: block;
+    margin-top: 0.35rem;
+    font-family: var(--mono);
+    font-size: 0.78rem;
+    line-height: 1.6;
+    color: var(--faint);
+  }
+
+  /* ---------- trap callout ---------- */
+
+  .trap {
+    background: var(--alert-soft);
+    border-left: 3px solid var(--alert);
+    padding: 0.95rem 1.1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+  }
+  .trap .tag {
+    font-family: var(--display);
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.17em;
+    text-transform: uppercase;
+    color: var(--alert);
+  }
+  .trap p { margin: 0; }
+  .trap code, .trap b { font-family: var(--mono); font-size: 0.86em; font-weight: 600; }
+  .no { color: var(--alert); text-decoration: line-through; }
+  .yes { color: var(--accent); font-weight: 600; }
+
+  /* ---------- clock strip ---------- */
+
+  .clocks {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(8rem, 1fr));
+    gap: 1px;
+    background: var(--rule);
+    border: 1px solid var(--rule);
+    border-radius: 3px;
+    overflow: hidden;
+  }
+  .clock {
+    background: var(--raised);
+    padding: 0.9rem 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+  }
+  .clock b {
+    font-family: var(--display);
+    font-size: 1.75rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    line-height: 1;
+    letter-spacing: -0.02em;
+  }
+  .clock span {
+    font-family: var(--display);
+    font-size: 0.7rem;
+    letter-spacing: 0.13em;
+    text-transform: uppercase;
+    color: var(--faint);
+  }
+
+  /* ---------- scaffold ---------- */
+
+  .scaffold {
+    background: var(--raised);
+    border: 1px solid var(--rule);
+    border-radius: 3px;
+    overflow-x: auto;
+    padding: 1.1rem 1.25rem;
+  }
+  .scaffold pre {
+    margin: 0;
+    font-family: var(--mono);
+    font-size: 0.82rem;
+    line-height: 1.9;
+    white-space: pre;
+  }
+  .scaffold .cue { color: var(--faint); }
+
+  ol.check {
+    margin: 0;
+    padding-left: 1.3rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    color: var(--muted);
+  }
+  ol.check code { font-family: var(--mono); font-size: 0.86em; color: var(--ink); }
+
+  footer {
+    border-top: 1px solid var(--rule);
+    padding-top: 1.1rem;
+    font-family: var(--display);
+    font-size: 0.75rem;
+    letter-spacing: 0.13em;
+    text-transform: uppercase;
+    color: var(--faint);
+  }
+
+  a { color: var(--accent); }
+  a:focus-visible, [tabindex]:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 3px;
+  }
+</style>
+
+<div class="wrap">
+
+  <header class="board">
+    <div class="board-meta">
+      <span>Lezione d'italiano</span>
+      <span>3 agosto 2026</span>
+      <span>Barbara Cavallaro</span>
+    </div>
+    <h1>Il turismo selvaggio<br>e <em>il cinema in bianco e nero</em></h1>
+    <p class="lede">Forty-two messages, decoded. What she was actually teaching under
+      the vocabulary — and the six traps to check before you hand in the homework.</p>
+    <p class="next"><span>Prossima lezione</span> <b>9.55</b> <span>stesso posto</span></p>
+  </header>
+
+  <section>
+    <p class="eyebrow">Prima di tutto</p>
+    <h2>Her shorthand is not a typo</h2>
+    <p>She types fast during the lesson. Two symbols carry real grammatical
+      instruction, and without them a third of the log is unreadable a week later.</p>
+
+    <div class="key">
+      <div class="key-row">
+        <span class="glyph" aria-hidden="true">&lt;</span>
+        <p>Shows a <strong>pair or a transformation</strong> — "and its counterpart",
+          "which is". When you see it, the drill is to produce the other side out loud.
+          <span class="ex">la regola &lt; le regole &nbsp;— singular → plural<br>
+          l'attore &lt; l'attrice &nbsp;— masculine → feminine<br>
+          Dino Risi &lt; il regista &nbsp;— the person → his role</span></p>
+      </div>
+      <div class="key-row">
+        <span class="glyph" aria-hidden="true">+</span>
+        <p>Is simply the word <strong>più</strong> ("more").
+          <span class="ex">devo studiare + italiano &nbsp;→ &nbsp;devo studiare <b>più</b> italiano<br>
+          mi piace+ guardare &nbsp;→ &nbsp;mi piace <b>più</b> guardare</span></p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <p class="eyebrow">La classe</p>
+    <h2>The language of the lesson itself</h2>
+    <p class="lede">The most immediately useful Italian you got, because you'll hear
+      it every single session.</p>
+
+    <dl class="phrases">
+      <div>
+        <dt>Da quanto tempo abiti in Italia?</dt>
+        <dd>How long have you been living in Italy?</dd>
+        <span class="why"><b>da + PRESENT.</b> Italian keeps the present where English
+          goes past: <i>abito qui da tre anni.</i> Never <i>ho abitato</i> here.</span>
+      </div>
+      <div>
+        <dt>Hai tempo per scrivere una presentazione?</dt>
+        <dd>Do you have time to write a presentation?</dd>
+        <span class="why"><b>avere</b> tempo — not <i>essere</i>. And <b>per + infinito</b>
+          = "in order to". This is the homework being assigned.</span>
+      </div>
+      <div>
+        <dt>Voglio praticare la pronuncia.</dt>
+        <dd>I want to practise pronunciation.</dd>
+        <span class="why"><b>volere + infinito</b>, bare — nothing between them.</span>
+      </div>
+      <div>
+        <dt>domandare</dt>
+        <dd>to ask (a question)</dd>
+        <span class="why">Paired with <b>chiedere</b>, which covers asking a question
+          <i>and</i> asking <i>for</i> something. Everyday form: <b>fare una domanda</b>.</span>
+      </div>
+      <div>
+        <dt>Lei non ha pazienza.</dt>
+        <dd>She has no patience.</dd>
+        <span class="why"><b>avere pazienza</b> — you <i>have</i> the state. Same family:
+          avere fame, sete, sonno, ragione, paura, fretta.</span>
+      </div>
+      <div>
+        <dt>un consiglio</dt>
+        <dd>a piece of advice, a tip</dd>
+        <span class="why">Countable, unlike English "advice": <b>i consigli</b>.</span>
+      </div>
+      <div>
+        <dt>Ci vediamo domani alla stessa ora, allo stesso posto.</dt>
+        <dd>See you tomorrow, same time, same place.</dd>
+        <span class="why"><b>ci vediamo</b> = literally "we see each other". Two fused
+          prepositions in one sentence: a+la = <b>alla</b>, a+lo = <b>allo</b>.</span>
+      </div>
+    </dl>
+  </section>
+
+  <section>
+    <p class="eyebrow">L'ora</p>
+    <h2>Two clocks on the table</h2>
+    <p>She was at 15.00, you were at 4.36, and you had a 9.00 meeting. That gap is why
+      she drilled time expressions — it was live information, not a textbook exercise.</p>
+
+    <div class="clocks">
+      <div class="clock"><b>4.36</b><span>di mattina — tu</span></div>
+      <div class="clock"><b>9.00</b><span>la prima riunione</span></div>
+      <div class="clock"><b>15.00</b><span>di pomeriggio — lei</span></div>
+      <div class="clock"><b>9.55</b><span>la prossima lezione</span></div>
+    </div>
+
+    <h3>La regola</h3>
+    <dl class="phrases">
+      <div>
+        <dt>Sono le quattro.</dt>
+        <dd>It's four o'clock.</dd>
+        <span class="why"><b>sono le</b> + number for every hour — you're really saying
+          <i>sono le [ore] quattro</i>, so it's plural.</span>
+      </div>
+      <div>
+        <dt>È l'una. / È mezzogiorno. / È mezzanotte.</dt>
+        <dd>It's one. / It's noon. / It's midnight.</dd>
+        <span class="why">The only three singulars. Everything else takes <b>sono le</b>.</span>
+      </div>
+      <div>
+        <dt>alle 9.00 · alle 9.55 · alla stessa ora</dt>
+        <dd>at 9:00 · at 9:55 · at the same time</dd>
+        <span class="why">"At" a time = <b>alle</b> (<b>all'una</b> for one o'clock).
+          Italy writes times with a <b>period</b>, not a colon.</span>
+      </div>
+      <div>
+        <dt>di mattina · di pomeriggio · di sera · di notte</dt>
+        <dd>in the morning · afternoon · evening · at night</dd>
+        <span class="why">Needed on the 12-hour clock, redundant on the 24-hour one.
+          She used both to show you the pair.</span>
+      </div>
+    </dl>
+
+    <div class="trap">
+      <span class="tag">Correzione</span>
+      <p>The log reads <em class="it">ho molte riunioni <span class="no">di lavori</span></em>.
+        Standard Italian is <em class="it">riunioni <span class="yes">di lavoro</span></em> —
+        in this fixed compound <b>lavoro</b> stays singular and invariable, exactly like
+        <code>orario di lavoro</code>, <code>gruppo di lavoro</code>, <code>posto di lavoro</code>.</p>
+      <p>The plural <b>lavori</b> is a real word, but it means <i>works / roadworks</i>
+        — <code>lavori in corso</code>. Drill the singular.</p>
+    </div>
+  </section>
+
+  <section>
+    <p class="eyebrow">La grammatica</p>
+    <h2>What she was really drilling</h2>
+    <p class="lede">Four points, threaded invisibly through what looked like vocabulary.</p>
+
+    <div class="trap">
+      <span class="tag">Il grande trabocchetto</span>
+      <p><b>la gente</b> is grammatically <strong>singular</strong>. She hit this three
+        separate times, because English "people" will fight you every time.</p>
+      <p><em class="it">La gente <span class="yes">è</span> pazza</em> ·
+        <em class="it">la gente <span class="yes">viaggia</span> a Sud</em> ·
+        <em class="it">la gente <span class="yes">era</span> ottimista</em> —
+        never <span class="no">sono</span>, <span class="no">viaggiano</span>,
+        <span class="no">erano</span>.</p>
+      <p>Want a genuine plural? Use <b>le persone</b>: <em class="it">le persone sono pazze</em>.</p>
+    </div>
+
+    <h3>Preposizioni articolate</h3>
+    <p>She handed you a clean paradigm without ever naming it — the preposition fuses
+      with the article.</p>
+    <dl class="phrases">
+      <div>
+        <dt>fare il bagno nella fontana di Trevi</dt>
+        <dd>to take a dip in the Trevi Fountain</dd>
+        <span class="why">in + la = <b>nella</b>. Also: <b>fare il bagno</b> uses <i>fare</i>
+          — <i>nuotare</i> is swimming as a sport.</span>
+      </div>
+      <div>
+        <dt>nel fiume · nel lago</dt>
+        <dd>in the river · in the lake</dd>
+        <span class="why">in + il = <b>nel</b>.</span>
+      </div>
+      <div>
+        <dt>la vita degli anni '60</dt>
+        <dd>life in the '60s</dd>
+        <span class="why">di + gli = <b>degli</b>.</span>
+      </div>
+      <div>
+        <dt>il film cult della Dolce Vita</dt>
+        <dd>the cult film <i>La Dolce Vita</i></dd>
+        <span class="why">di + la = <b>della</b>.</span>
+      </div>
+    </dl>
+
+    <h3>Verb patterns she modelled</h3>
+    <dl class="phrases">
+      <div>
+        <dt>Devo studiare più italiano.</dt>
+        <dd>I have to study more Italian.</dd>
+        <span class="why"><b>dovere + infinito</b>, bare.</span>
+      </div>
+      <div>
+        <dt>Mi piace guardare il cinema italiano.</dt>
+        <dd>I like watching Italian cinema.</dd>
+        <span class="why"><b>mi piace + infinito.</b> The thing liked is the subject —
+          plural things take <b>mi piacciono</b>.</span>
+      </div>
+      <div>
+        <dt>Lui si innamora di Sofia Loren.</dt>
+        <dd>He falls in love with Sofia Loren.</dd>
+        <span class="why"><b>innamorarsi DI</b> — never <i>con</i>.</span>
+      </div>
+      <div>
+        <dt>Non c'è una regola.</dt>
+        <dd>There's no rule.</dd>
+        <span class="why"><b>c'è</b> + singular, <b>ci sono</b> + plural.</span>
+      </div>
+      <div>
+        <dt>La gente era ottimista.</dt>
+        <dd>People were optimistic.</dd>
+        <span class="why">Your first <b>imperfetto</b> — <i>era</i> = "was / used to be",
+          the tense for ongoing states and background in the past. A preview, set against
+          all the present tenses so you feel the contrast.</span>
+      </div>
+      <div>
+        <dt>la generazione di mia moglie</dt>
+        <dd>my wife's generation</dd>
+        <span class="why"><b>No article</b> before a singular, unmodified family member:
+          <i>mia moglie</i>, not <span class="no">la mia moglie</span>.</span>
+      </div>
+      <div>
+        <dt>un'attrice internazionale</dt>
+        <dd>an international actress</dd>
+        <span class="why">The apostrophe in <b>un'</b> is only for a <b>feminine</b>
+          vowel-initial noun. Masculine is <b>un attore</b> — no apostrophe. Real spelling trap.</span>
+      </div>
+    </dl>
+  </section>
+
+  <section>
+    <p class="eyebrow">Il turismo</p>
+    <h2>La gente è pazza</h2>
+    <p>The lesson's first real conversation: mass tourism and the August exodus.</p>
+    <dl class="phrases">
+      <div>
+        <dt>Il turismo è importante per l'Italia.</dt>
+        <dd>Tourism is important for Italy.</dd>
+      </div>
+      <div>
+        <dt>un fenomeno italiano</dt>
+        <dd>an Italian phenomenon</dd>
+        <span class="why">il fenomeno → <b>i fenomeni</b>.</span>
+      </div>
+      <div>
+        <dt>La gente a Nord viaggia a Sud.</dt>
+        <dd>People in the North travel to the South.</dd>
+        <span class="why">The August migration. <b>al Nord / al Sud</b> is equally common.</span>
+      </div>
+      <div>
+        <dt>Ferragosto</dt>
+        <dd>15 August — the peak national holiday</dd>
+        <span class="why">The day the country empties out for the coast. Culturally
+          load-bearing: it explains the entire exodus, and it comes back in the film.</span>
+      </div>
+      <div>
+        <dt>il turismo selvaggio</dt>
+        <dd>unchecked, "wild" mass tourism</dd>
+        <span class="why"><b>selvaggio</b> = wild, savage, unregulated. A loaded phrase
+          in live Italian public debate.</span>
+      </div>
+      <div>
+        <dt>il governo · il rischio</dt>
+        <dd>the government · the risk</dd>
+        <span class="why">il rischio → <b>i rischi</b> (masculine -o → -i).</span>
+      </div>
+    </dl>
+  </section>
+
+  <section>
+    <p class="eyebrow">Il cinema</p>
+    <h2>The pivot was the fountain</h2>
+    <p>Watch how she changed the subject: bathing in the Trevi Fountain → the most famous
+      scene of bathing in that fountain → <em class="it">La Dolce Vita</em> → Italian cinema.
+      One image, and the whole topic turns. That's deliberate teaching, and it's why the
+      vocabulary sticks.</p>
+    <dl class="phrases">
+      <div>
+        <dt>in bianco e nero</dt>
+        <dd>in black and white</dd>
+        <span class="why">No article.</span>
+      </div>
+      <div>
+        <dt>il regista</dt>
+        <dd>the film director</dd>
+        <span class="why"><b>False friend</b> — not "registrar". And masculine despite
+          the -a: il regista → <b>i registi</b>; la regista → le registe.</span>
+      </div>
+      <div>
+        <dt>l'attore &lt; l'attrice</dt>
+        <dd>the actor / the actress</dd>
+        <span class="why">gli attori / le attrici.</span>
+      </div>
+      <div>
+        <dt>Il Sorpasso — 1962</dt>
+        <dd>"The Overtaking" — passing another car</dd>
+        <span class="why">Dir. <b>Dino Risi</b>, starring <b>Vittorio Gassman</b>. A road
+          movie set over the deserted <b>Ferragosto</b> weekend — which is exactly why it
+          followed the tourism conversation. Say the year as one word:
+          <i>millenovecentosessantadue</i>.</span>
+      </div>
+      <div>
+        <dt>la vita degli anni '60, il boom economico</dt>
+        <dd>life in the '60s, the economic boom</dd>
+        <span class="why">Italy's postwar miracle — the backdrop to
+          <i>la gente era ottimista</i>.</span>
+      </div>
+      <div>
+        <dt>Ieri, Oggi, Domani</dt>
+        <dd>"Yesterday, Today, Tomorrow" (1963)</dd>
+        <span class="why">De Sica, with <b>Sofia Loren</b> and Marcello Mastroianni —
+          <i>un'attrice internazionale</i>.</span>
+      </div>
+    </dl>
+  </section>
+
+  <section>
+    <p class="eyebrow">I compiti</p>
+    <h2>Una presentazione al presente</h2>
+    <p>Write an introduction <strong>in the present tense</strong> on the topic
+      <em class="it">la mia vita in Italia</em>. Due at the next lesson, 9.55.
+      She said <em class="it">al presente</em> for a reason — stay there. The one
+      <em class="it">era</em> you saw is a preview, not an invitation.</p>
+
+    <h3>Scaffold — built only from today's structures</h3>
+    <div class="scaffold">
+<pre>Mi chiamo ___ e ___.
+Abito in ___ da ___ anni.                    <span class="cue">← da + presente</span>
+Ogni giorno ho molte riunioni di lavoro.     <span class="cue">← singolare!</span>
+La prima riunione comincia alle ___.         <span class="cue">← alle</span>
+Qui sono le ___ di mattina quando ___.       <span class="cue">← sono le</span>
+Devo studiare più italiano perché ___.       <span class="cue">← dovere + inf.</span>
+Voglio praticare la pronuncia.               <span class="cue">← volere + inf.</span>
+Mi piace guardare il cinema italiano, ___.   <span class="cue">← mi piace + inf.</span>
+Il mio film preferito è ___, del regista ___.
+La generazione di mia moglie ___.            <span class="cue">← niente articolo</span>
+Non c'è ___. / C'è ___.                      <span class="cue">← c'è / ci sono</span></pre>
+    </div>
+
+    <h3>Check before you send it</h3>
+    <ol class="check">
+      <li>Any <code>la gente</code>? The verb must be <strong>singular</strong>.</li>
+      <li>Any <code>di lavori</code>? Make it <code>di lavoro</code>.</li>
+      <li>Times: <code>sono le</code> except <code>è l'una</code>; "at" is <code>alle</code>.</li>
+      <li>Any <code>un'</code> in front of a masculine noun? Drop the apostrophe.</li>
+      <li><code>mia moglie</code> — no article.</li>
+      <li>Present tense the whole way through.</li>
+    </ol>
+  </section>
+
+  <footer>42 messaggi · 48 note in Anki · 96 carte · Italiano::Barbara 2026-08-03</footer>
+
+</div>

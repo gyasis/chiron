@@ -1,0 +1,181 @@
+
+/* ── inline ▶ — GHOST at rest, inks on hover/focus (pilot variant C).
+   chiron ships a solid accent circle on every row; on a page you READ that turns the
+   type column into a column of dots. Near-zero ink at rest, full affordance on hover. ── */
+.chiron-play-inline{display:inline-grid;place-items:center;width:22px;height:22px;
+  margin-right:8px;vertical-align:middle;flex:none;background:transparent;color:var(--faint);
+  border:1.5px solid transparent;box-shadow:none;border-radius:50%;cursor:pointer;
+  font:inherit;line-height:1;padding:0;
+  transition:transform .1s ease,box-shadow .12s ease,background .14s ease,color .14s ease,border-color .14s ease}
+.chiron-play-inline .ico{font-size:10px;margin-left:1px}
+/* ink it when the row is hovered, or the button itself is hovered/focused */
+dl.phrases>div:hover .chiron-play-inline,
+.clock:hover .chiron-play-inline,
+.idx .r:hover .chiron-play-inline,
+tr:hover .chiron-play-inline,
+.chiron-play-inline:hover,
+.chiron-play-inline:focus-visible{
+  background:var(--accent);color:var(--raised);border-color:var(--raised);
+  box-shadow:0 1px 3px rgba(0,0,0,.28)}
+.chiron-play-inline:hover{transform:scale(1.12);box-shadow:0 2px 7px rgba(0,0,0,.34)}
+.chiron-play-inline:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+/* playing: always visible, in the alert colour */
+.chiron-play-inline.playing{background:var(--alert);color:var(--raised);
+  border-color:var(--raised);box-shadow:0 1px 3px rgba(0,0,0,.28)}
+/* touch has no hover — show the mark so it stays tappable */
+@media (hover:none){.chiron-play-inline{background:var(--accent);color:var(--raised);
+  border-color:var(--raised);box-shadow:0 1px 3px rgba(0,0,0,.28)}}
+
+.chiron-listen{position:fixed;right:18px;bottom:18px;z-index:9999;width:250px;
+  max-width:calc(100vw - 36px);background:var(--raised);border:1px solid var(--rule);
+  border-radius:14px;box-shadow:0 8px 30px rgba(0,0,0,.16);overflow:hidden;font-family:var(--body)}
+.chiron-listen-head{display:flex;align-items:center;gap:7px;font-family:var(--display);font-weight:700;
+  font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;padding:10px 13px;
+  border-bottom:1px solid var(--rule);color:var(--muted)}
+.chiron-listen-list{display:flex;flex-direction:column;max-height:46vh;overflow-y:auto}
+.chiron-listen-group{padding:6px}
+.chiron-listen-group + .chiron-listen-group{border-top:1px solid var(--rule)}
+.chiron-listen-grouptitle{font-family:var(--display);font-size:.62rem;font-weight:700;
+  letter-spacing:.1em;text-transform:uppercase;color:var(--faint);padding:5px 10px 4px}
+.chiron-listen-btn{display:flex;align-items:center;gap:9px;text-align:left;width:100%;
+  background:transparent;border:0;border-radius:9px;padding:8px 10px;cursor:pointer;font:inherit;
+  font-size:.8rem;line-height:1.25;color:var(--ink)}
+.chiron-listen-btn:hover{background:var(--accent-soft)}
+.chiron-listen-btn .ico{flex:none;width:17px;height:17px;display:grid;place-items:center;
+  font-size:9px;color:var(--accent)}
+.chiron-listen-btn .lbl{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.chiron-listen-btn.playing{background:linear-gradient(to right,
+  color-mix(in srgb,var(--accent) 20%,transparent) calc(var(--clip-progress,0) * 100%),
+  var(--accent-soft) calc(var(--clip-progress,0) * 100%));font-weight:600;cursor:ew-resize}
+.chiron-listen-btn.playing .ico{cursor:pointer}
+.chiron-clip-timer{margin-left:auto;padding-left:8px;font-size:.68rem;font-family:var(--mono);
+  color:var(--faint);white-space:nowrap;flex-shrink:0}
+.chiron-play-inline .ico{font-size:10px;margin-left:1px}
+.chiron-play-inline:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+.chiron-listen-btn:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+.chiron-listen-btn.err .lbl{color:var(--alert)}
+.chiron-has-audio{scroll-margin-top:84px}
+.chiron-listening{background:var(--accent-soft);animation:chiron-glow 1.7s ease-in-out infinite;
+  border-radius:8px}
+@keyframes chiron-glow{0%,100%{box-shadow:0 0 0 0 var(--glow)}50%{box-shadow:0 0 0 7px var(--glow2)}}
+section.chiron-listening{padding:.75rem;margin:-.75rem;border-radius:10px}
+@media(prefers-reduced-motion:reduce){.chiron-listening{animation:none;box-shadow:0 0 0 3px var(--glow)}
+  html{scroll-behavior:auto}}
+@media(max-width:640px){.chiron-listen{right:10px;left:10px;bottom:10px;width:auto}}
+
+/* components introduced after Day 1 — shared so both days have them */
+.recap{background:var(--accent-soft);border-left:3px solid var(--accent);padding:.95rem 1.1rem;border-radius:0 5px 5px 0}
+.recap .tag{font-family:var(--display);font-size:.7rem;font-weight:600;letter-spacing:.17em;text-transform:uppercase;color:var(--accent);display:block;margin-bottom:.4rem}
+.recap ul{margin:0;padding-left:1.1rem;color:var(--muted)} .recap b{color:var(--ink)}
+.recap .why{display:block;margin-top:.5rem;font-family:var(--mono);font-size:.76rem;color:var(--faint)}
+.pearl{background:var(--raised);border:1px solid var(--rule);border-left:3px solid var(--accent);padding:.95rem 1.1rem;display:flex;flex-direction:column;gap:.45rem;border-radius:0 5px 5px 0}
+.pearl .tag{font-family:var(--display);font-size:.7rem;font-weight:600;letter-spacing:.17em;text-transform:uppercase;color:var(--accent)}
+.pearl p{margin:0}
+.pearl .en{display:none;color:var(--muted);font-size:.92rem;border-top:1px dotted var(--rule);padding-top:.5rem}
+.pearl.open .en{display:block}
+.pearl button{align-self:flex-start;background:transparent;border:1px solid var(--rule);border-radius:999px;color:var(--muted);font:inherit;font-size:.72rem;padding:2px 9px;cursor:pointer}
+.pearl button:hover{background:var(--accent-soft);color:var(--accent)}
+.cloze{background:var(--raised);border:1px solid var(--rule);border-radius:5px;padding:1.1rem 1.25rem;display:flex;flex-direction:column;gap:.55rem}
+.cloze .row{display:flex;align-items:baseline;gap:.5rem;flex-wrap:wrap;font-family:var(--mono);font-size:.85rem}
+.cloze input{font:inherit;width:7rem;padding:2px 6px;border:1px solid var(--rule);border-radius:4px;background:var(--ground);color:var(--ink)}
+.cloze .hint{color:var(--faint);font-size:.75rem}
+.cloze .ans{color:var(--accent);font-weight:700;display:none} .cloze .row.open .ans{display:inline}
+.cloze button{background:transparent;border:1px solid var(--rule);border-radius:999px;color:var(--muted);font:inherit;font-size:.7rem;padding:1px 8px;cursor:pointer}
+.trap .why{font-family:var(--mono);font-size:.78rem;color:var(--faint)}
+h3.eyebrow{margin:.4rem 0 -.3rem}
+/* indice */
+#indice .idx-head{display:flex;align-items:baseline;gap:.9rem;flex-wrap:wrap}
+#indice .idx-head button{background:transparent;border:1px solid var(--rule);border-radius:999px;color:var(--muted);font-family:var(--display);font-size:.7rem;letter-spacing:.08em;text-transform:uppercase;padding:3px 11px;cursor:pointer}
+#indice .idx-head button:hover{background:var(--accent-soft);color:var(--accent)}
+#indice .idx-head button[aria-pressed="true"]{background:var(--accent);color:var(--ground);border-color:var(--accent)}
+.idx{border-top:1px solid var(--rule)}
+.idx .r{display:grid;grid-template-columns:1fr;gap:.15rem;padding:.5rem .4rem;border-bottom:1px solid var(--rule);border-radius:6px;scroll-margin-top:80px}
+.idx .it{font-family:var(--display);font-weight:600;font-size:1.0625rem;letter-spacing:-.008em}
+.idx .en{color:var(--muted);font-size:.95rem}
+.idx .sec{font-family:var(--mono);font-size:.68rem;color:var(--faint)}
+@media(min-width:40rem){.idx .r{grid-template-columns:1fr 1fr auto;column-gap:1.5rem;align-items:baseline}}
+#indice.hide-en .idx .en{visibility:hidden}
+#indice.hide-en .idx .r:hover .en,#indice.hide-en .idx .r:focus-within .en{visibility:visible}
+
+/* ── Tutto — the play-through control, in the panel header ── */
+.chiron-playall{margin-left:auto;background:transparent;border:1px solid var(--rule);
+  border-radius:999px;color:var(--muted);font-family:var(--mono);font-size:.66rem;
+  letter-spacing:.02em;padding:2px 9px;cursor:pointer;white-space:nowrap;
+  transition:background .14s ease,color .14s ease,border-color .14s ease}
+.chiron-playall:hover{border-color:var(--accent);color:var(--accent);background:var(--accent-soft)}
+.chiron-playall.on{background:var(--accent);color:var(--ground);border-color:var(--accent)}
+.chiron-playall:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+/* ── I miei errori — attempt vs correction, lifted from the recording ── */
+.errori{display:flex;flex-direction:column;gap:.8rem}
+.err{background:var(--raised);border:1px solid var(--rule);border-left:3px solid var(--alert);
+  border-radius:0 5px 5px 0;padding:.9rem 1.1rem;display:grid;
+  grid-template-columns:auto 1fr;gap:.15rem .9rem;align-items:baseline}
+.err .t{grid-row:1/span 3;font-family:var(--mono);font-size:.72rem;color:var(--faint);
+  align-self:start;padding-top:.15rem}
+.err p{margin:0}
+.err .att{font-family:var(--display);font-size:1.05rem;font-weight:600;color:var(--alert)}
+.err .att s{text-decoration-thickness:2px}
+.err .cor{font-family:var(--display);font-size:1.125rem;font-weight:700;color:var(--accent);
+  letter-spacing:-.008em}
+.err .rule{margin-top:.3rem;font-family:var(--mono);font-size:.78rem;line-height:1.55;
+  color:var(--faint)}
+.err .rule b{color:var(--muted)}
+@media(max-width:40rem){.err{grid-template-columns:1fr}.err .t{grid-row:auto}}
+
+/* ── Registrazione — the real lesson audio + speaker transcript ── */
+.reg{background:var(--raised);border:1px solid var(--rule);border-radius:5px;padding:1rem 1.15rem;
+  display:flex;flex-direction:column;gap:.7rem}
+.reg audio{width:100%}
+.reg .turns{max-height:22rem;overflow-y:auto;display:flex;flex-direction:column;gap:.3rem;
+  border-top:1px solid var(--rule);padding-top:.7rem}
+.reg .turn{display:grid;grid-template-columns:4.2rem 1fr;gap:.7rem;padding:.3rem .35rem;
+  border-radius:5px;cursor:pointer;align-items:baseline}
+.reg .turn:hover{background:var(--accent-soft)}
+.reg .turn .ts{font-family:var(--mono);font-size:.68rem;color:var(--faint)}
+.reg .turn .tx{font-size:.92rem}
+.reg .turn.b .tx{color:var(--ink)}
+.reg .turn.g .tx{color:var(--muted);font-style:italic}
+.reg .turn .who{font-family:var(--display);font-size:.62rem;letter-spacing:.1em;
+  text-transform:uppercase;color:var(--faint);display:block}
+.reg .turn.playing{background:var(--accent-soft);box-shadow:inset 3px 0 0 var(--accent)}
+
+/* ── ESERCIZIO — the worksheet, and how the lesson resolved it ── */
+.ex-sheet{background:var(--raised);border:1px solid var(--rule);border-radius:5px;overflow:hidden}
+.ex-head{display:flex;align-items:baseline;gap:.7rem;flex-wrap:wrap;padding:.85rem 1.1rem;
+  border-bottom:1px solid var(--rule)}
+.ex-head b{font-family:var(--display);font-size:.95rem;font-weight:700}
+.ex-head span{font-family:var(--mono);font-size:.72rem;color:var(--faint)}
+.ex-row{display:grid;grid-template-columns:1fr auto auto;gap:.8rem;align-items:baseline;
+  padding:.5rem 1.1rem;border-bottom:1px solid var(--rule)}
+.ex-row:last-child{border-bottom:0}
+.ex-row .p{font-family:var(--display);font-size:1rem;font-weight:600}
+.ex-row .who{font-family:var(--display);font-size:.68rem;font-weight:700;letter-spacing:.1em;
+  text-transform:uppercase;padding:2px 9px;border-radius:999px;white-space:nowrap}
+.ex-row .who.a{background:var(--accent);color:var(--ground)}
+.ex-row .who.b{background:var(--accent-soft);color:var(--accent);border:1px solid var(--accent)}
+.ex-row .who.q{background:transparent;color:var(--faint);border:1px dashed var(--rule)}
+.ex-row .at{font-family:var(--mono);font-size:.7rem;color:var(--faint)}
+@media(max-width:40rem){.ex-row{grid-template-columns:1fr auto}.ex-row .at{grid-column:1/-1}}
+
+/* ── the cloze dialogue: the real worksheet ── */
+.dlg-cloze{background:var(--raised);border:1px solid var(--rule);border-radius:5px;
+  padding:1.1rem 1.25rem;display:flex;flex-direction:column;gap:.55rem}
+.dlg-cloze .ln{display:grid;grid-template-columns:3.4rem 1fr;gap:.8rem;align-items:baseline}
+.dlg-cloze .sp{font-family:var(--display);font-size:.68rem;font-weight:700;letter-spacing:.1em;
+  text-transform:uppercase;color:var(--faint)}
+.dlg-cloze .ln.ale .sp{color:var(--accent)}
+.dlg-cloze .tx{line-height:1.75}
+.dlg-cloze .bl{display:inline-block;min-width:5.5rem;border-bottom:1.5px solid var(--accent);
+  text-align:center;font-family:var(--mono);font-size:.85rem;color:var(--faint);cursor:pointer;
+  padding:0 .3rem;user-select:none}
+.dlg-cloze .bl:hover{background:var(--accent-soft)}
+.dlg-cloze .bl.open{color:var(--accent);font-weight:700;border-bottom-style:solid}
+.dlg-cloze .inf{font-family:var(--mono);font-size:.76rem;color:var(--faint)}
+.dlg-cloze .nb{display:block;font-family:var(--mono);font-size:.7rem;color:var(--faint);
+  margin-left:4.2rem}
+.dlg-tools{display:flex;gap:.6rem;align-items:center;flex-wrap:wrap;margin-bottom:.2rem}
+.dlg-tools button{font-family:var(--display);font-size:.7rem;font-weight:600;letter-spacing:.08em;
+  text-transform:uppercase;padding:4px 12px;border-radius:999px;border:1px solid var(--rule);
+  background:transparent;color:var(--muted);cursor:pointer}
+.dlg-tools button:hover{border-color:var(--accent);color:var(--accent)}

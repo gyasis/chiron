@@ -1,0 +1,8687 @@
+[
+ {
+  "start": 0.03096875,
+  "end": 6.03846875,
+  "speaker": "SPEAKER_00",
+  "text": "quando comincio un nuovo lavoro di fare questo controllo.",
+  "lang": "it",
+  "avg_logprob": -0.214,
+  "who": "Barbara"
+ },
+ {
+  "start": 7.000343750000001,
+  "end": 30.422843750000002,
+  "speaker": "SPEAKER_01",
+  "text": "Okay, so, aspetta, io sento questo parola controllo molto ora? Is that right? Many times? How do I say it?  Molte volte.  Molte volte. Molte volte you said this. What does this word mean again, exactly?  Because I see it.",
+  "lang": "en",
+  "avg_logprob": -0.291,
+  "who": "Gyasi"
+ },
+ {
+  "start": 22.609718750000003,
+  "end": 23.57159375,
+  "speaker": "SPEAKER_00",
+  "text": "Molte volte.",
+  "lang": "it",
+  "avg_logprob": -0.484,
+  "who": "Barbara"
+ },
+ {
+  "start": 30.034718750000003,
+  "end": 30.405968750000003,
+  "speaker": "SPEAKER_00",
+  "text": "Grazie.",
+  "lang": "it",
+  "avg_logprob": -0.565,
+  "who": "Barbara"
+ },
+ {
+  "start": 30.422843750000002,
+  "end": 34.42221875,
+  "speaker": "SPEAKER_00",
+  "text": "Controlli, controllo, feedback, noti tecniche.",
+  "lang": "it",
+  "avg_logprob": -0.57,
+  "who": "Barbara"
+ },
+ {
+  "start": 34.877843750000004,
+  "end": 36.63284375,
+  "speaker": "SPEAKER_00",
+  "text": "controllo e un check",
+  "lang": "it",
+  "avg_logprob": -0.812,
+  "who": "Barbara"
+ },
+ {
+  "start": 36.95346875,
+  "end": 39.99096875,
+  "speaker": "SPEAKER_00",
+  "text": "Check up, when you check something, check up.",
+  "lang": "it",
+  "avg_logprob": -0.379,
+  "who": "Barbara"
+ },
+ {
+  "start": 40.463468750000004,
+  "end": 42.80909375,
+  "speaker": "SPEAKER_00",
+  "text": "Controllo medico, per esempio.",
+  "lang": "it",
+  "avg_logprob": -0.296,
+  "who": "Barbara"
+ },
+ {
+  "start": 42.96096875,
+  "end": 44.580968750000004,
+  "speaker": "SPEAKER_00",
+  "text": "Per riconoscere il contesto.",
+  "lang": "it",
+  "avg_logprob": -0.42,
+  "who": "Barbara"
+ },
+ {
+  "start": 46.032218750000006,
+  "end": 46.74096875,
+  "speaker": "SPEAKER_01",
+  "text": "Sì, ma...",
+  "lang": "it",
+  "avg_logprob": -0.436,
+  "who": "Gyasi"
+ },
+ {
+  "start": 46.70721875,
+  "end": 48.07409375,
+  "speaker": "SPEAKER_00",
+  "text": "quello del passaporto",
+  "lang": "it",
+  "avg_logprob": -0.512,
+  "who": "Barbara"
+ },
+ {
+  "start": 48.31034375,
+  "end": 49.17096875,
+  "speaker": "SPEAKER_01",
+  "text": "Sì, è vero.",
+  "lang": "it",
+  "avg_logprob": -0.505,
+  "who": "Gyasi"
+ },
+ {
+  "start": 48.884093750000005,
+  "end": 51.07784375,
+  "speaker": "SPEAKER_00",
+  "text": "Any kind of check is controlled.",
+  "lang": "en",
+  "avg_logprob": -0.503,
+  "who": "Barbara"
+ },
+ {
+  "start": 51.56721875,
+  "end": 58.384718750000005,
+  "speaker": "SPEAKER_01",
+  "text": "okay so any check okay because i see it in government buildings as well um questura all",
+  "lang": "en",
+  "avg_logprob": -0.235,
+  "who": "Gyasi"
+ },
+ {
+  "start": 57.81096875,
+  "end": 58.97534375,
+  "speaker": "SPEAKER_00",
+  "text": "Dentista.",
+  "lang": "en",
+  "avg_logprob": -0.917,
+  "who": "Barbara"
+ },
+ {
+  "start": 58.97534375,
+  "end": 59.48159375,
+  "speaker": "SPEAKER_01",
+  "text": "Okay.",
+  "lang": "en",
+  "avg_logprob": -0.457,
+  "who": "Gyasi"
+ },
+ {
+  "start": 59.48159375,
+  "end": 62.11409375,
+  "speaker": "SPEAKER_00",
+  "text": "è che tutto è possibile controllo.",
+  "lang": "it",
+  "avg_logprob": -0.386,
+  "who": "Barbara"
+ },
+ {
+  "start": 62.19846875,
+  "end": 62.67096875,
+  "speaker": "SPEAKER_01",
+  "text": "Okay.",
+  "lang": "en",
+  "avg_logprob": -0.352,
+  "who": "Gyasi"
+ },
+ {
+  "start": 62.23221875,
+  "end": 64.13909375,
+  "speaker": "SPEAKER_00",
+  "text": "Aspetta, aspetta.",
+  "lang": "it",
+  "avg_logprob": -0.642,
+  "who": "Barbara"
+ },
+ {
+  "start": 64.66221875000001,
+  "end": 65.86034375,
+  "speaker": "SPEAKER_00",
+  "text": "un controllo",
+  "lang": "it",
+  "avg_logprob": -0.564,
+  "who": "Barbara"
+ },
+ {
+  "start": 66.09659375000001,
+  "end": 68.62784375000001,
+  "speaker": "SPEAKER_00",
+  "text": "come diagnostica all'ospedale.",
+  "lang": "it",
+  "avg_logprob": -0.247,
+  "who": "Barbara"
+ },
+ {
+  "start": 68.62784375000001,
+  "end": 69.58971875,
+  "speaker": "SPEAKER_01",
+  "text": "Ok, capito.",
+  "lang": "it",
+  "avg_logprob": -0.209,
+  "who": "Gyasi"
+ },
+ {
+  "start": 70.63596875,
+  "end": 75.22596875,
+  "speaker": "SPEAKER_00",
+  "text": "controllo generale capisci dal contesto medico in questo caso è",
+  "lang": "it",
+  "avg_logprob": -0.228,
+  "who": "Barbara"
+ },
+ {
+  "start": 75.56346875,
+  "end": 77.70659375000001,
+  "speaker": "SPEAKER_00",
+  "text": "all'ospedale o privato anche.",
+  "lang": "it",
+  "avg_logprob": -0.226,
+  "who": "Barbara"
+ },
+ {
+  "start": 78.46596875,
+  "end": 79.81596875000001,
+  "speaker": "SPEAKER_00",
+  "text": "un controllo generale.",
+  "lang": "it",
+  "avg_logprob": -0.525,
+  "who": "Barbara"
+ },
+ {
+  "start": 81.85784375,
+  "end": 86.65034375,
+  "speaker": "SPEAKER_00",
+  "text": "Quindi adesso lavori, che ore sono adesso? A Miami? Le 5?",
+  "lang": "it",
+  "avg_logprob": -0.411,
+  "who": "Barbara"
+ },
+ {
+  "start": 87.32534375,
+  "end": 98.09159375,
+  "speaker": "SPEAKER_01",
+  "text": "Um, let's see, what time is it now, um, quattordici, um, undici, quattordici ora, undici minuti, capito?",
+  "lang": "en",
+  "avg_logprob": -0.431,
+  "who": "Gyasi"
+ },
+ {
+  "start": 99.27284375,
+  "end": 103.08659375,
+  "speaker": "SPEAKER_00",
+  "text": "Di 14, no, di 14...  No, no, no, 14, no.",
+  "lang": "it",
+  "avg_logprob": -0.353,
+  "who": "Barbara"
+ },
+ {
+  "start": 100.58909375,
+  "end": 101.29784375000001,
+  "speaker": "SPEAKER_01",
+  "text": "Martina",
+  "lang": "it",
+  "avg_logprob": -0.713,
+  "who": "Gyasi"
+ },
+ {
+  "start": 101.82096875,
+  "end": 106.73159375,
+  "speaker": "SPEAKER_01",
+  "text": "No, no, no, 14, no, mi dispiace, 4, 4 mattina.",
+  "lang": "it",
+  "avg_logprob": -0.346,
+  "who": "Gyasi"
+ },
+ {
+  "start": 103.27221875000001,
+  "end": 105.24659375,
+  "speaker": "SPEAKER_00",
+  "text": "mi dispiace, quattro",
+  "lang": "it",
+  "avg_logprob": -0.656,
+  "who": "Barbara"
+ },
+ {
+  "start": 108.30096875000001,
+  "end": 110.03909375,
+  "speaker": "SPEAKER_00",
+  "text": "Le quattro, perché?",
+  "lang": "it",
+  "avg_logprob": -0.581,
+  "who": "Barbara"
+ },
+ {
+  "start": 110.42721875000001,
+  "end": 113.26221875,
+  "speaker": "SPEAKER_00",
+  "text": "It's very empty waking up in the morning.",
+  "lang": "en",
+  "avg_logprob": -0.355,
+  "who": "Barbara"
+ },
+ {
+  "start": 113.70096875,
+  "end": 115.77659375,
+  "speaker": "SPEAKER_00",
+  "text": "Very early, a lot of water.",
+  "lang": "en",
+  "avg_logprob": -0.695,
+  "who": "Barbara"
+ },
+ {
+  "start": 114.73034375,
+  "end": 115.13534375,
+  "speaker": "SPEAKER_01",
+  "text": "Yeah.",
+  "lang": "en",
+  "avg_logprob": -0.52,
+  "who": "Gyasi"
+ },
+ {
+  "start": 117.66659375,
+  "end": 119.15159375,
+  "speaker": "SPEAKER_00",
+  "text": "Per adrenalina positiva.",
+  "lang": "it",
+  "avg_logprob": -0.246,
+  "who": "Barbara"
+ },
+ {
+  "start": 119.28659375000001,
+  "end": 131.08221875,
+  "speaker": "SPEAKER_01",
+  "text": "Sì, mi dispiace, ieri, perché, come si dice, ok, io arrivo in Stati Uniti.",
+  "lang": "it",
+  "avg_logprob": -0.357,
+  "who": "Gyasi"
+ },
+ {
+  "start": 131.08221875,
+  "end": 131.55471875,
+  "speaker": "SPEAKER_00",
+  "text": "Oh, y'all.",
+  "lang": "en",
+  "avg_logprob": -0.564,
+  "who": "Barbara"
+ },
+ {
+  "start": 131.97659375,
+  "end": 132.65159375000002,
+  "speaker": "SPEAKER_01",
+  "text": "um",
+  "lang": "en",
+  "avg_logprob": -0.728,
+  "who": "Gyasi"
+ },
+ {
+  "start": 133.91721875000002,
+  "end": 134.55846875,
+  "speaker": "SPEAKER_01",
+  "text": "Grazie.",
+  "lang": "it",
+  "avg_logprob": -0.672,
+  "who": "Gyasi"
+ },
+ {
+  "start": 134.76096875000002,
+  "end": 145.15596875,
+  "speaker": "SPEAKER_01",
+  "text": "Two days ago, I went back to my mom in New Orleans.",
+  "lang": "en",
+  "avg_logprob": -0.659,
+  "who": "Gyasi"
+ },
+ {
+  "start": 145.39221875,
+  "end": 150.31971875000002,
+  "speaker": "SPEAKER_00",
+  "text": "Milano, New York, New Orleans",
+  "lang": "it",
+  "avg_logprob": -0.476,
+  "who": "Barbara"
+ },
+ {
+  "start": 146.01659375,
+  "end": 146.45534375,
+  "speaker": "SPEAKER_01",
+  "text": "Prima",
+  "lang": "it",
+  "avg_logprob": -0.471,
+  "who": "Gyasi"
+ },
+ {
+  "start": 150.35346875000002,
+  "end": 151.48409375,
+  "speaker": "SPEAKER_01",
+  "text": "Sì, sì.",
+  "lang": "it",
+  "avg_logprob": -0.422,
+  "who": "Gyasi"
+ },
+ {
+  "start": 151.68659375000001,
+  "end": 154.90971875,
+  "speaker": "SPEAKER_00",
+  "text": "Allora mi incontro mia madre.",
+  "lang": "it",
+  "avg_logprob": -0.284,
+  "who": "Barbara"
+ },
+ {
+  "start": 155.73659375,
+  "end": 156.64784375000002,
+  "speaker": "SPEAKER_00",
+  "text": "al mio avvenimento",
+  "lang": "it",
+  "avg_logprob": -0.748,
+  "who": "Barbara"
+ },
+ {
+  "start": 159.56721875000002,
+  "end": 162.13221875000002,
+  "speaker": "SPEAKER_00",
+  "text": "like this temperament when you meet someone.",
+  "lang": "en",
+  "avg_logprob": -0.736,
+  "who": "Barbara"
+ },
+ {
+  "start": 162.13221875000002,
+  "end": 162.48659375,
+  "speaker": "SPEAKER_01",
+  "text": "Sì.",
+  "lang": "it",
+  "avg_logprob": -0.334,
+  "who": "Gyasi"
+ },
+ {
+  "start": 162.14909375000002,
+  "end": 166.26659375,
+  "speaker": "SPEAKER_00",
+  "text": "Incontro mia madre al Mjolnir, prima.",
+  "lang": "it",
+  "avg_logprob": -0.559,
+  "who": "Barbara"
+ },
+ {
+  "start": 166.35096875000002,
+  "end": 169.89471875,
+  "speaker": "SPEAKER_01",
+  "text": "Sì, esatto.  E poi...",
+  "lang": "it",
+  "avg_logprob": -0.532,
+  "who": "Gyasi"
+ },
+ {
+  "start": 169.60784375,
+  "end": 170.02971875,
+  "speaker": "SPEAKER_00",
+  "text": "Bye.",
+  "lang": "en",
+  "avg_logprob": -0.659,
+  "who": "Barbara"
+ },
+ {
+  "start": 170.02971875,
+  "end": 176.77971875,
+  "speaker": "SPEAKER_01",
+  "text": "con questo finale settimana con la famiglia.",
+  "lang": "it",
+  "avg_logprob": -0.405,
+  "who": "Gyasi"
+ },
+ {
+  "start": 177.97784375,
+  "end": 183.25971875000002,
+  "speaker": "SPEAKER_01",
+  "text": "and then um the return of my miami um",
+  "lang": "en",
+  "avg_logprob": -0.564,
+  "who": "Gyasi"
+ },
+ {
+  "start": 183.68159375000002,
+  "end": 184.28909375,
+  "speaker": "SPEAKER_01",
+  "text": "più",
+  "lang": "it",
+  "avg_logprob": -0.507,
+  "who": "Gyasi"
+ },
+ {
+  "start": 184.13721875000002,
+  "end": 185.13284375,
+  "speaker": "SPEAKER_00",
+  "text": "lunedì mattina",
+  "lang": "it",
+  "avg_logprob": -0.244,
+  "who": "Barbara"
+ },
+ {
+  "start": 185.28471875000002,
+  "end": 186.66846875000002,
+  "speaker": "SPEAKER_01",
+  "text": "No, no, no, um...",
+  "lang": "en",
+  "avg_logprob": -0.184,
+  "who": "Gyasi"
+ },
+ {
+  "start": 186.78659375,
+  "end": 191.78159375,
+  "speaker": "SPEAKER_01",
+  "text": "Non Luna Di Martina, ma Dominica...",
+  "lang": "it",
+  "avg_logprob": -0.45,
+  "who": "Gyasi"
+ },
+ {
+  "start": 192.13596875000002,
+  "end": 199.69596875000002,
+  "speaker": "SPEAKER_01",
+  "text": "uh retardo no uh retardo um note like very late how would i say very late",
+  "lang": "en",
+  "avg_logprob": -0.213,
+  "who": "Gyasi"
+ },
+ {
+  "start": 198.78471875000002,
+  "end": 206.71596875,
+  "speaker": "SPEAKER_00",
+  "text": "Now what did I say very late?  Ritorno late, tardi di notte, late in the night, tardi di notte.",
+  "lang": "en",
+  "avg_logprob": -0.539,
+  "who": "Barbara"
+ },
+ {
+  "start": 206.80034375000002,
+  "end": 207.17159375,
+  "speaker": "SPEAKER_01",
+  "text": "See?",
+  "lang": "en",
+  "avg_logprob": -0.705,
+  "who": "Gyasi"
+ },
+ {
+  "start": 208.65659375,
+  "end": 213.73596875,
+  "speaker": "SPEAKER_01",
+  "text": "So, one, two, three, four, five, six, seven, eight, nine, ten.",
+  "lang": "en",
+  "avg_logprob": -0.571,
+  "who": "Gyasi"
+ },
+ {
+  "start": 213.93846875000003,
+  "end": 220.30034375000002,
+  "speaker": "SPEAKER_01",
+  "text": "Dopo, come si dice, how would I say, I set my alarm?",
+  "lang": "it",
+  "avg_logprob": -0.311,
+  "who": "Gyasi"
+ },
+ {
+  "start": 220.63784375,
+  "end": 221.63346875000002,
+  "speaker": "SPEAKER_01",
+  "text": "Ho pensato...",
+  "lang": "it",
+  "avg_logprob": -0.741,
+  "who": "Gyasi"
+ },
+ {
+  "start": 221.32971875,
+  "end": 226.71284375000002,
+  "speaker": "SPEAKER_00",
+  "text": "Ma dopo metto l'allarme e la sveglia.",
+  "lang": "it",
+  "avg_logprob": -0.243,
+  "who": "Barbara"
+ },
+ {
+  "start": 228.78846875000002,
+  "end": 230.98221875000002,
+  "speaker": "SPEAKER_00",
+  "text": "Il dispositivo si chiama Lasvelia.",
+  "lang": "it",
+  "avg_logprob": -0.285,
+  "who": "Barbara"
+ },
+ {
+  "start": 232.29846875,
+  "end": 233.74971875000003,
+  "speaker": "SPEAKER_01",
+  "text": "Sì, so io...",
+  "lang": "it",
+  "avg_logprob": -0.402,
+  "who": "Gyasi"
+ },
+ {
+  "start": 233.27721875,
+  "end": 233.85096875000002,
+  "speaker": "SPEAKER_00",
+  "text": "You're set.",
+  "lang": "en",
+  "avg_logprob": -0.844,
+  "who": "Barbara"
+ },
+ {
+  "start": 234.22221875000002,
+  "end": 243.09846875000002,
+  "speaker": "SPEAKER_01",
+  "text": "Io penso mettere la sveglia in un dispositivo, ma no, perché ieri...",
+  "lang": "it",
+  "avg_logprob": -0.549,
+  "who": "Gyasi"
+ },
+ {
+  "start": 238.33971875,
+  "end": 238.91346875000002,
+  "speaker": "SPEAKER_00",
+  "text": "unknown  but",
+  "lang": "en",
+  "avg_logprob": -0.645,
+  "who": "Barbara"
+ },
+ {
+  "start": 242.57534375,
+  "end": 243.21659375000002,
+  "speaker": "SPEAKER_00",
+  "text": "Oh, no.",
+  "lang": "en",
+  "avg_logprob": -0.737,
+  "who": "Barbara"
+ },
+ {
+  "start": 243.14909375000002,
+  "end": 244.26284375,
+  "speaker": "SPEAKER_01",
+  "text": "Sì, sì.",
+  "lang": "it",
+  "avg_logprob": -0.469,
+  "who": "Gyasi"
+ },
+ {
+  "start": 244.80284375000002,
+  "end": 245.19096875000002,
+  "speaker": "SPEAKER_01",
+  "text": "Sì.",
+  "lang": "it",
+  "avg_logprob": -0.42,
+  "who": "Gyasi"
+ },
+ {
+  "start": 244.92096875000001,
+  "end": 249.81471875000003,
+  "speaker": "SPEAKER_00",
+  "text": "Era logico, jetlag, spiaggia, stress, famiglia.",
+  "lang": "it",
+  "avg_logprob": -0.374,
+  "who": "Barbara"
+ },
+ {
+  "start": 247.21596875,
+  "end": 248.61659375000002,
+  "speaker": "SPEAKER_01",
+  "text": "Sì, sì.",
+  "lang": "it",
+  "avg_logprob": -0.495,
+  "who": "Gyasi"
+ },
+ {
+  "start": 250.11846875,
+  "end": 270.11534375,
+  "speaker": "SPEAKER_01",
+  "text": "Sì, perché adesso io dormo a sei sera qui, ma io penso in Italia è mezzanotte.",
+  "lang": "it",
+  "avg_logprob": -0.252,
+  "who": "Gyasi"
+ },
+ {
+  "start": 264.96846875,
+  "end": 265.79534375000003,
+  "speaker": "SPEAKER_00",
+  "text": "Let's go in a...",
+  "lang": "en",
+  "avg_logprob": -0.868,
+  "who": "Barbara"
+ },
+ {
+  "start": 270.89159375,
+  "end": 273.20346875,
+  "speaker": "SPEAKER_00",
+  "text": "e che ne dì il ritmo ai candidati.",
+  "lang": "it",
+  "avg_logprob": -0.666,
+  "who": "Barbara"
+ },
+ {
+  "start": 272.98409375,
+  "end": 274.14846875,
+  "speaker": "SPEAKER_01",
+  "text": "Sì, sì",
+  "lang": "it",
+  "avg_logprob": -0.698,
+  "who": "Gyasi"
+ },
+ {
+  "start": 274.21596875,
+  "end": 276.39284375,
+  "speaker": "SPEAKER_00",
+  "text": "È logico, io ritmo.",
+  "lang": "it",
+  "avg_logprob": -0.589,
+  "who": "Barbara"
+ },
+ {
+  "start": 277.64159375,
+  "end": 281.30346875000004,
+  "speaker": "SPEAKER_00",
+  "text": "ha cambiato, è cambiato abbastanza.",
+  "lang": "it",
+  "avg_logprob": -0.533,
+  "who": "Barbara"
+ },
+ {
+  "start": 282.06284375,
+  "end": 283.34534375000004,
+  "speaker": "SPEAKER_00",
+  "text": "Poi si change.",
+  "lang": "it",
+  "avg_logprob": -0.617,
+  "who": "Barbara"
+ },
+ {
+  "start": 287.07471875000005,
+  "end": 292.17096875000004,
+  "speaker": "SPEAKER_00",
+  "text": "Ma qui adesso ci sono 29 gradi, 30. Questa mattina è più fresco.",
+  "lang": "it",
+  "avg_logprob": -0.14,
+  "who": "Barbara"
+ },
+ {
+  "start": 292.71096875,
+  "end": 294.04409375,
+  "speaker": "SPEAKER_01",
+  "text": "No, it's, uh...",
+  "lang": "en",
+  "avg_logprob": -0.366,
+  "who": "Gyasi"
+ },
+ {
+  "start": 293.77409375,
+  "end": 295.42784375,
+  "speaker": "SPEAKER_00",
+  "text": "Grazie a tutti.",
+  "lang": "it",
+  "avg_logprob": -0.818,
+  "who": "Barbara"
+ },
+ {
+  "start": 296.05221875,
+  "end": 305.28284375000004,
+  "speaker": "SPEAKER_01",
+  "text": "no it's uh oh wow um aspetta let me uh translate this but this so um",
+  "lang": "en",
+  "avg_logprob": -0.357,
+  "who": "Gyasi"
+ },
+ {
+  "start": 305.04659375,
+  "end": 306.91971875,
+  "speaker": "SPEAKER_00",
+  "text": "Ma i Fahrenheit, i Celsius...",
+  "lang": "it",
+  "avg_logprob": -0.642,
+  "who": "Barbara"
+ },
+ {
+  "start": 307.13909375000003,
+  "end": 317.50034375,
+  "speaker": "SPEAKER_01",
+  "text": "Sì, adesso sono solo 28, ma adesso...",
+  "lang": "it",
+  "avg_logprob": -0.487,
+  "who": "Gyasi"
+ },
+ {
+  "start": 318.14159375,
+  "end": 320.99346875000003,
+  "speaker": "SPEAKER_01",
+  "text": "crystal orgy",
+  "lang": "en",
+  "avg_logprob": -0.573,
+  "who": "Gyasi"
+ },
+ {
+  "start": 321.60096875,
+  "end": 327.65909375,
+  "speaker": "SPEAKER_01",
+  "text": "E' passato trentanove.",
+  "lang": "it",
+  "avg_logprob": -0.651,
+  "who": "Gyasi"
+ },
+ {
+  "start": 327.28784375000004,
+  "end": 329.29596875000004,
+  "speaker": "SPEAKER_00",
+  "text": "In the knowledge.  See you.",
+  "lang": "en",
+  "avg_logprob": -0.874,
+  "who": "Barbara"
+ },
+ {
+  "start": 327.99659375000005,
+  "end": 328.68846875,
+  "speaker": "SPEAKER_01",
+  "text": "See ya.",
+  "lang": "en",
+  "avg_logprob": -0.962,
+  "who": "Gyasi"
+ },
+ {
+  "start": 329.61659375000005,
+  "end": 332.60346875000005,
+  "speaker": "SPEAKER_00",
+  "text": "Ci sono 39.",
+  "lang": "it",
+  "avg_logprob": -0.461,
+  "who": "Barbara"
+ },
+ {
+  "start": 333.93659375000004,
+  "end": 335.35409375,
+  "speaker": "SPEAKER_00",
+  "text": "Grazie.",
+  "lang": "it",
+  "avg_logprob": -0.349,
+  "who": "Barbara"
+ },
+ {
+  "start": 335.94471875000005,
+  "end": 336.67034375000003,
+  "speaker": "SPEAKER_00",
+  "text": "Mm-hmm.",
+  "lang": "en",
+  "avg_logprob": -0.673,
+  "who": "Barbara"
+ },
+ {
+  "start": 338.02034375,
+  "end": 341.88471875000005,
+  "speaker": "SPEAKER_01",
+  "text": "Qua... Qua... Qua... Qua... Qua... La Fury.",
+  "lang": "it",
+  "avg_logprob": -0.435,
+  "who": "Gyasi"
+ },
+ {
+  "start": 342.99846875000003,
+  "end": 346.81221875,
+  "speaker": "SPEAKER_00",
+  "text": "Una mia amica italiana abita a Fort Lauderdale.",
+  "lang": "it",
+  "avg_logprob": -0.125,
+  "who": "Barbara"
+ },
+ {
+  "start": 347.38596875,
+  "end": 356.78534375000004,
+  "speaker": "SPEAKER_01",
+  "text": "Sì, quindi Fort Lauderdale, come si dice, 45 minuti fa.",
+  "lang": "it",
+  "avg_logprob": -0.336,
+  "who": "Gyasi"
+ },
+ {
+  "start": 356.75159375000004,
+  "end": 357.27471875000003,
+  "speaker": "SPEAKER_00",
+  "text": "routine",
+  "lang": "it",
+  "avg_logprob": -0.819,
+  "who": "Barbara"
+ },
+ {
+  "start": 356.88659375000003,
+  "end": 357.96659375,
+  "speaker": "SPEAKER_01",
+  "text": "Sì, so.",
+  "lang": "it",
+  "avg_logprob": -0.728,
+  "who": "Gyasi"
+ },
+ {
+  "start": 357.74721875,
+  "end": 358.86096875000004,
+  "speaker": "SPEAKER_00",
+  "text": "E anche caldo.",
+  "lang": "it",
+  "avg_logprob": -0.496,
+  "who": "Barbara"
+ },
+ {
+  "start": 358.91159375,
+  "end": 359.58659375,
+  "speaker": "SPEAKER_01",
+  "text": "Yes, yes.",
+  "lang": "en",
+  "avg_logprob": -0.515,
+  "who": "Gyasi"
+ },
+ {
+  "start": 360.27846875,
+  "end": 361.02096875,
+  "speaker": "SPEAKER_00",
+  "text": "Eh, eh, no.",
+  "lang": "it",
+  "avg_logprob": -0.733,
+  "who": "Barbara"
+ },
+ {
+  "start": 361.13909375000003,
+  "end": 362.25284375,
+  "speaker": "SPEAKER_00",
+  "text": "Perché...",
+  "lang": "it",
+  "avg_logprob": -0.821,
+  "who": "Barbara"
+ },
+ {
+  "start": 362.55659375000005,
+  "end": 364.75034375,
+  "speaker": "SPEAKER_00",
+  "text": "Questa ondata di caldo è orribile.",
+  "lang": "it",
+  "avg_logprob": -0.118,
+  "who": "Barbara"
+ },
+ {
+  "start": 365.39159375,
+  "end": 369.81284375,
+  "speaker": "SPEAKER_01",
+  "text": "Sì, ma non è orribile...",
+  "lang": "it",
+  "avg_logprob": -0.404,
+  "who": "Gyasi"
+ },
+ {
+  "start": 370.58909375,
+  "end": 371.51721875000004,
+  "speaker": "SPEAKER_01",
+  "text": "Come si dice?",
+  "lang": "it",
+  "avg_logprob": -0.361,
+  "who": "Gyasi"
+ },
+ {
+  "start": 371.97284375000004,
+  "end": 375.56721875000005,
+  "speaker": "SPEAKER_01",
+  "text": "uh the pendare um to",
+  "lang": "en",
+  "avg_logprob": -0.308,
+  "who": "Gyasi"
+ },
+ {
+  "start": 376.42784375,
+  "end": 380.47784375000003,
+  "speaker": "SPEAKER_01",
+  "text": "Abiti? How do I say depends on where you live?",
+  "lang": "en",
+  "avg_logprob": -0.281,
+  "who": "Gyasi"
+ },
+ {
+  "start": 380.47784375000003,
+  "end": 385.57409375000003,
+  "speaker": "SPEAKER_00",
+  "text": "Dipende dove abiti, it depends, dipende dove abiti.",
+  "lang": "it",
+  "avg_logprob": -0.326,
+  "who": "Barbara"
+ },
+ {
+  "start": 386.41784375000003,
+  "end": 392.03721875,
+  "speaker": "SPEAKER_01",
+  "text": "perché in Vincino la...",
+  "lang": "it",
+  "avg_logprob": -0.54,
+  "who": "Gyasi"
+ },
+ {
+  "start": 393.10034375000004,
+  "end": 393.77534375000005,
+  "speaker": "SPEAKER_01",
+  "text": "L'acqua.",
+  "lang": "it",
+  "avg_logprob": -0.37,
+  "who": "Gyasi"
+ },
+ {
+  "start": 394.77096875,
+  "end": 399.41159375,
+  "speaker": "SPEAKER_00",
+  "text": "è differente oppure on the coast sul lago che è vicino",
+  "lang": "it",
+  "avg_logprob": -0.519,
+  "who": "Barbara"
+ },
+ {
+  "start": 400.76159375000003,
+  "end": 402.65159375,
+  "speaker": "SPEAKER_00",
+  "text": "Io ho fumato all'acqua.",
+  "lang": "it",
+  "avg_logprob": -0.524,
+  "who": "Barbara"
+ },
+ {
+  "start": 403.68096875000003,
+  "end": 404.47409375,
+  "speaker": "SPEAKER_01",
+  "text": "Sì, so che...",
+  "lang": "it",
+  "avg_logprob": -0.42,
+  "who": "Gyasi"
+ },
+ {
+  "start": 404.18721875,
+  "end": 408.81096875000003,
+  "speaker": "SPEAKER_00",
+  "text": "Perché vicino plus A, vicino all'acqua è più...",
+  "lang": "it",
+  "avg_logprob": -0.394,
+  "who": "Barbara"
+ },
+ {
+  "start": 410.04284375000003,
+  "end": 411.35909375,
+  "speaker": "SPEAKER_00",
+  "text": "Plese, piacevole.",
+  "lang": "it",
+  "avg_logprob": -0.437,
+  "who": "Barbara"
+ },
+ {
+  "start": 411.46034375000005,
+  "end": 420.08346875,
+  "speaker": "SPEAKER_01",
+  "text": "Sì, so, Vincino all'acqua, questo, no, Vincino all'acqua.",
+  "lang": "it",
+  "avg_logprob": -0.282,
+  "who": "Gyasi"
+ },
+ {
+  "start": 420.15096875,
+  "end": 423.86346875000004,
+  "speaker": "SPEAKER_01",
+  "text": "Tu hai il...",
+  "lang": "it",
+  "avg_logprob": -0.692,
+  "who": "Gyasi"
+ },
+ {
+  "start": 425.44971875000005,
+  "end": 427.64346875,
+  "speaker": "SPEAKER_01",
+  "text": "Ventilatori?  Debris.  Debris, sì.",
+  "lang": "it",
+  "avg_logprob": -0.467,
+  "who": "Gyasi"
+ },
+ {
+  "start": 425.97284375000004,
+  "end": 432.31784375,
+  "speaker": "SPEAKER_00",
+  "text": "The breeze, l'aperezza o il vento.  No, breeze in italiano, l'aperezza è the breeze.",
+  "lang": "it",
+  "avg_logprob": -0.371,
+  "who": "Barbara"
+ },
+ {
+  "start": 433.11096875000004,
+  "end": 435.57471875000005,
+  "speaker": "SPEAKER_00",
+  "text": "Il vento è ok to win.",
+  "lang": "it",
+  "avg_logprob": -0.433,
+  "who": "Barbara"
+ },
+ {
+  "start": 435.92909375000005,
+  "end": 436.48596875000004,
+  "speaker": "SPEAKER_00",
+  "text": "Grazie mille.",
+  "lang": "it",
+  "avg_logprob": -0.436,
+  "who": "Barbara"
+ },
+ {
+  "start": 437.16096875000005,
+  "end": 438.61221875,
+  "speaker": "SPEAKER_00",
+  "text": "And you always use a chain.",
+  "lang": "en",
+  "avg_logprob": -0.369,
+  "who": "Barbara"
+ },
+ {
+  "start": 439.10159375,
+  "end": 440.95784375000005,
+  "speaker": "SPEAKER_00",
+  "text": "When you describe the",
+  "lang": "en",
+  "avg_logprob": -0.401,
+  "who": "Barbara"
+ },
+ {
+  "start": 441.27846875,
+  "end": 443.38784375,
+  "speaker": "SPEAKER_00",
+  "text": "Situazione meteorologica c'è.",
+  "lang": "it",
+  "avg_logprob": -0.207,
+  "who": "Barbara"
+ },
+ {
+  "start": 445.17659375000005,
+  "end": 445.96971875,
+  "speaker": "SPEAKER_00",
+  "text": "Always check.",
+  "lang": "it",
+  "avg_logprob": -0.612,
+  "who": "Barbara"
+ },
+ {
+  "start": 446.88096875,
+  "end": 450.94784375,
+  "speaker": "SPEAKER_00",
+  "text": "C'è il vento, c'è la brezza, it doesn't matter what kind of...",
+  "lang": "en",
+  "avg_logprob": -0.3,
+  "who": "Barbara"
+ },
+ {
+  "start": 448.55159375000005,
+  "end": 449.07471875000005,
+  "speaker": "SPEAKER_01",
+  "text": "Grazie.",
+  "lang": "it",
+  "avg_logprob": -0.492,
+  "who": "Gyasi"
+ },
+ {
+  "start": 451.87596875,
+  "end": 452.93909375000004,
+  "speaker": "SPEAKER_00",
+  "text": "C'è la pioggia.",
+  "lang": "it",
+  "avg_logprob": -0.284,
+  "who": "Barbara"
+ },
+ {
+  "start": 453.41159375,
+  "end": 456.58409375,
+  "speaker": "SPEAKER_01",
+  "text": "Okay, so you use this when you are describing.",
+  "lang": "en",
+  "avg_logprob": -0.231,
+  "who": "Gyasi"
+ },
+ {
+  "start": 457.76534375000006,
+  "end": 461.05596875000003,
+  "speaker": "SPEAKER_00",
+  "text": "I venti, il clima, il genio, tutto.",
+  "lang": "it",
+  "avg_logprob": -0.686,
+  "who": "Barbara"
+ },
+ {
+  "start": 458.50784375,
+  "end": 459.23346875000004,
+  "speaker": "SPEAKER_01",
+  "text": "Grazie.",
+  "lang": "it",
+  "avg_logprob": -0.667,
+  "who": "Gyasi"
+ },
+ {
+  "start": 460.81971875000005,
+  "end": 461.22471875,
+  "speaker": "SPEAKER_01",
+  "text": "Okay.",
+  "lang": "en",
+  "avg_logprob": -0.399,
+  "who": "Gyasi"
+ },
+ {
+  "start": 461.22471875,
+  "end": 466.38846875,
+  "speaker": "SPEAKER_00",
+  "text": "Per esempio, piove, you can say it rains, ok, piove.",
+  "lang": "it",
+  "avg_logprob": -0.241,
+  "who": "Barbara"
+ },
+ {
+  "start": 467.16471875,
+  "end": 469.17284375,
+  "speaker": "SPEAKER_00",
+  "text": "if you want, just develop without",
+  "lang": "en",
+  "avg_logprob": -0.542,
+  "who": "Barbara"
+ },
+ {
+  "start": 469.40909375,
+  "end": 470.55659375000005,
+  "speaker": "SPEAKER_00",
+  "text": "non c'è nulla di opposto",
+  "lang": "it",
+  "avg_logprob": -0.614,
+  "who": "Barbara"
+ },
+ {
+  "start": 471.23159375000006,
+  "end": 472.48034375000003,
+  "speaker": "SPEAKER_00",
+  "text": "C'è pioggia.",
+  "lang": "it",
+  "avg_logprob": -0.265,
+  "who": "Barbara"
+ },
+ {
+  "start": 475.50096875,
+  "end": 477.77909375,
+  "speaker": "SPEAKER_00",
+  "text": "quale è il broadcasting o c'è pioggia.",
+  "lang": "it",
+  "avg_logprob": -0.606,
+  "who": "Barbara"
+ },
+ {
+  "start": 478.47096875000005,
+  "end": 483.02721875000003,
+  "speaker": "SPEAKER_00",
+  "text": "Sempre c'è, non facciamo errori se usiamo c'è.",
+  "lang": "it",
+  "avg_logprob": -0.435,
+  "who": "Barbara"
+ },
+ {
+  "start": 483.19596875,
+  "end": 493.62471875000006,
+  "speaker": "SPEAKER_01",
+  "text": "Ok, capito. C'è l'evento caldo, ma esiste.",
+  "lang": "it",
+  "avg_logprob": -0.291,
+  "who": "Gyasi"
+ },
+ {
+  "start": 491.75159375000004,
+  "end": 493.23659375000005,
+  "speaker": "SPEAKER_00",
+  "text": "beh esiste",
+  "lang": "it",
+  "avg_logprob": -0.802,
+  "who": "Barbara"
+ },
+ {
+  "start": 495.16034375000004,
+  "end": 500.45909375,
+  "speaker": "SPEAKER_00",
+  "text": "Ma è umido, perché Florida è umida, dove c'è Everglades è umidissimo.",
+  "lang": "it",
+  "avg_logprob": -0.13,
+  "who": "Barbara"
+ },
+ {
+  "start": 500.20596875,
+  "end": 512.1028437499999,
+  "speaker": "SPEAKER_01",
+  "text": "No, perché non è umido vicino all'acqua, ma... come si dice... interiore, centro.",
+  "lang": "it",
+  "avg_logprob": -0.467,
+  "who": "Gyasi"
+ },
+ {
+  "start": 511.73159375000006,
+  "end": 514.3303437500001,
+  "speaker": "SPEAKER_00",
+  "text": "Sì, in centro, che noi eri in città.",
+  "lang": "it",
+  "avg_logprob": -0.346,
+  "who": "Barbara"
+ },
+ {
+  "start": 512.72721875,
+  "end": 513.6384687500001,
+  "speaker": "SPEAKER_01",
+  "text": "che lo lievi",
+  "lang": "it",
+  "avg_logprob": -0.619,
+  "who": "Gyasi"
+ },
+ {
+  "start": 518.2453437500001,
+  "end": 525.1640937500001,
+  "speaker": "SPEAKER_01",
+  "text": "In centro più o meno in New Orleans ma molto.",
+  "lang": "it",
+  "avg_logprob": -0.571,
+  "who": "Gyasi"
+ },
+ {
+  "start": 524.9953437500001,
+  "end": 526.9865937500001,
+  "speaker": "SPEAKER_00",
+  "text": "Louisiana, I think, is very humid.",
+  "lang": "en",
+  "avg_logprob": -0.368,
+  "who": "Barbara"
+ },
+ {
+  "start": 526.93596875,
+  "end": 535.94721875,
+  "speaker": "SPEAKER_01",
+  "text": "Sì, sì, perché in New Orleans il specialista, come si dice, la cheeta...",
+  "lang": "it",
+  "avg_logprob": -0.233,
+  "who": "Gyasi"
+ },
+ {
+  "start": 537.07784375,
+  "end": 539.27159375,
+  "speaker": "SPEAKER_01",
+  "text": "Subito? Beneath?",
+  "lang": "en",
+  "avg_logprob": -0.467,
+  "who": "Gyasi"
+ },
+ {
+  "start": 539.9297187500001,
+  "end": 540.7903437500001,
+  "speaker": "SPEAKER_01",
+  "text": "The level.",
+  "lang": "en",
+  "avg_logprob": -0.554,
+  "who": "Gyasi"
+ },
+ {
+  "start": 540.3347187500001,
+  "end": 543.4228437500001,
+  "speaker": "SPEAKER_00",
+  "text": "Sotto il mare.",
+  "lang": "it",
+  "avg_logprob": -0.431,
+  "who": "Barbara"
+ },
+ {
+  "start": 543.49034375,
+  "end": 545.1103437500001,
+  "speaker": "SPEAKER_01",
+  "text": "Sì, so, so, below, so...",
+  "lang": "it",
+  "avg_logprob": -0.405,
+  "who": "Gyasi"
+ },
+ {
+  "start": 544.8572187500001,
+  "end": 546.05534375,
+  "speaker": "SPEAKER_00",
+  "text": "Under the sea level.",
+  "lang": "en",
+  "avg_logprob": -0.395,
+  "who": "Barbara"
+ },
+ {
+  "start": 545.8528437500001,
+  "end": 548.04659375,
+  "speaker": "SPEAKER_01",
+  "text": "Sì esatto",
+  "lang": "it",
+  "avg_logprob": -0.428,
+  "who": "Gyasi"
+ },
+ {
+  "start": 548.04659375,
+  "end": 549.2109687500001,
+  "speaker": "SPEAKER_00",
+  "text": "e sotto",
+  "lang": "it",
+  "avg_logprob": -0.848,
+  "who": "Barbara"
+ },
+ {
+  "start": 549.8859687500001,
+  "end": 550.39221875,
+  "speaker": "SPEAKER_00",
+  "text": "mille",
+  "lang": "it",
+  "avg_logprob": -0.638,
+  "who": "Barbara"
+ },
+ {
+  "start": 551.37096875,
+  "end": 553.34534375,
+  "speaker": "SPEAKER_00",
+  "text": "Livello del mare.",
+  "lang": "it",
+  "avg_logprob": -0.354,
+  "who": "Barbara"
+ },
+ {
+  "start": 553.75034375,
+  "end": 557.15909375,
+  "speaker": "SPEAKER_00",
+  "text": "You have to put the level of the sea instead of sea level.",
+  "lang": "en",
+  "avg_logprob": -0.304,
+  "who": "Barbara"
+ },
+ {
+  "start": 558.44159375,
+  "end": 559.6059687500001,
+  "speaker": "SPEAKER_01",
+  "text": "You live there a little bit more than I do.",
+  "lang": "en",
+  "avg_logprob": -0.556,
+  "who": "Gyasi"
+ },
+ {
+  "start": 558.59346875,
+  "end": 561.49596875,
+  "speaker": "SPEAKER_00",
+  "text": "Beneath is like under, under the sea level.",
+  "lang": "en",
+  "avg_logprob": -0.408,
+  "who": "Barbara"
+ },
+ {
+  "start": 561.5972187500001,
+  "end": 568.66784375,
+  "speaker": "SPEAKER_01",
+  "text": "Sì, in New Orleans la città è similare al...",
+  "lang": "it",
+  "avg_logprob": -0.376,
+  "who": "Gyasi"
+ },
+ {
+  "start": 570.65909375,
+  "end": 571.23284375,
+  "speaker": "SPEAKER_01",
+  "text": "Um",
+  "lang": "en",
+  "avg_logprob": -0.51,
+  "who": "Gyasi"
+ },
+ {
+  "start": 572.5828437499999,
+  "end": 574.8272187499999,
+  "speaker": "SPEAKER_01",
+  "text": "How am I drawing a blank?",
+  "lang": "en",
+  "avg_logprob": -0.297,
+  "who": "Gyasi"
+ },
+ {
+  "start": 576.1772187500001,
+  "end": 576.85221875,
+  "speaker": "SPEAKER_01",
+  "text": "buona",
+  "lang": "it",
+  "avg_logprob": -0.79,
+  "who": "Gyasi"
+ },
+ {
+  "start": 579.1472187500001,
+  "end": 580.76721875,
+  "speaker": "SPEAKER_01",
+  "text": "How do you say bowl?",
+  "lang": "en",
+  "avg_logprob": -0.186,
+  "who": "Gyasi"
+ },
+ {
+  "start": 581.2734687500001,
+  "end": 582.1340937500001,
+  "speaker": "SPEAKER_00",
+  "text": "Una palla.",
+  "lang": "it",
+  "avg_logprob": -0.322,
+  "who": "Barbara"
+ },
+ {
+  "start": 582.4040937500001,
+  "end": 584.2097187500001,
+  "speaker": "SPEAKER_01",
+  "text": "No, no, no, no, no.",
+  "lang": "en",
+  "avg_logprob": -0.397,
+  "who": "Gyasi"
+ },
+ {
+  "start": 583.70346875,
+  "end": 584.31096875,
+  "speaker": "SPEAKER_00",
+  "text": "No, no, no.",
+  "lang": "en",
+  "avg_logprob": -0.687,
+  "who": "Barbara"
+ },
+ {
+  "start": 584.31096875,
+  "end": 588.8672187500001,
+  "speaker": "SPEAKER_01",
+  "text": "Non piatto, ma bol.",
+  "lang": "it",
+  "avg_logprob": -0.516,
+  "who": "Gyasi"
+ },
+ {
+  "start": 589.47471875,
+  "end": 594.6384687500001,
+  "speaker": "SPEAKER_00",
+  "text": "Ah sì, come si dice in italiano, una ciotola.",
+  "lang": "it",
+  "avg_logprob": -0.319,
+  "who": "Barbara"
+ },
+ {
+  "start": 591.2297187500001,
+  "end": 592.1072187500001,
+  "speaker": "SPEAKER_01",
+  "text": "C'è...",
+  "lang": "it",
+  "avg_logprob": -0.756,
+  "who": "Gyasi"
+ },
+ {
+  "start": 594.6215937500001,
+  "end": 595.56659375,
+  "speaker": "SPEAKER_01",
+  "text": "Ciao a tutti",
+  "lang": "it",
+  "avg_logprob": -0.691,
+  "who": "Gyasi"
+ },
+ {
+  "start": 595.7522187500001,
+  "end": 596.25846875,
+  "speaker": "SPEAKER_01",
+  "text": "Yes.",
+  "lang": "en",
+  "avg_logprob": -0.658,
+  "who": "Gyasi"
+ },
+ {
+  "start": 598.8740937499999,
+  "end": 604.3247187500001,
+  "speaker": "SPEAKER_00",
+  "text": "Questo è il problema, è tutta l'umidità dell'aria sulle stagne.",
+  "lang": "it",
+  "avg_logprob": -0.196,
+  "who": "Barbara"
+ },
+ {
+  "start": 602.99159375,
+  "end": 606.1303437500001,
+  "speaker": "SPEAKER_01",
+  "text": "Sì, esatto, esatto.",
+  "lang": "it",
+  "avg_logprob": -0.417,
+  "who": "Gyasi"
+ },
+ {
+  "start": 606.7209687500001,
+  "end": 609.6740937500001,
+  "speaker": "SPEAKER_00",
+  "text": "E quando c'era Catrina, catastrofe.",
+  "lang": "it",
+  "avg_logprob": -0.253,
+  "who": "Barbara"
+ },
+ {
+  "start": 609.77534375,
+  "end": 610.9734687499999,
+  "speaker": "SPEAKER_01",
+  "text": "Sì, sì.",
+  "lang": "it",
+  "avg_logprob": -0.503,
+  "who": "Gyasi"
+ },
+ {
+  "start": 610.46721875,
+  "end": 611.6484687500001,
+  "speaker": "SPEAKER_00",
+  "text": "so now i don't see",
+  "lang": "en",
+  "avg_logprob": -0.685,
+  "who": "Barbara"
+ },
+ {
+  "start": 611.6484687500001,
+  "end": 612.69471875,
+  "speaker": "SPEAKER_01",
+  "text": "Sì, molto bene.",
+  "lang": "it",
+  "avg_logprob": -0.702,
+  "who": "Gyasi"
+ },
+ {
+  "start": 612.10409375,
+  "end": 616.33971875,
+  "speaker": "SPEAKER_00",
+  "text": "Perché in Louisiana c'è molto swamp, molte paludi.",
+  "lang": "it",
+  "avg_logprob": -0.172,
+  "who": "Barbara"
+ },
+ {
+  "start": 616.66034375,
+  "end": 617.2509687500001,
+  "speaker": "SPEAKER_01",
+  "text": "Esatto.",
+  "lang": "it",
+  "avg_logprob": -0.309,
+  "who": "Gyasi"
+ },
+ {
+  "start": 617.1159687500001,
+  "end": 618.16221875,
+  "speaker": "SPEAKER_00",
+  "text": "E questo è il problema.",
+  "lang": "it",
+  "avg_logprob": -0.339,
+  "who": "Barbara"
+ },
+ {
+  "start": 618.1284687500001,
+  "end": 618.73596875,
+  "speaker": "SPEAKER_01",
+  "text": "Esatto.",
+  "lang": "it",
+  "avg_logprob": -0.267,
+  "who": "Gyasi"
+ },
+ {
+  "start": 620.5078437500001,
+  "end": 622.0603437500001,
+  "speaker": "SPEAKER_01",
+  "text": "in setti maschili",
+  "lang": "it",
+  "avg_logprob": -0.579,
+  "who": "Gyasi"
+ },
+ {
+  "start": 620.9297187500001,
+  "end": 625.23284375,
+  "speaker": "SPEAKER_00",
+  "text": "Ok, il parco nazionale va bene, il parco per alligatori, per...",
+  "lang": "it",
+  "avg_logprob": -0.24,
+  "who": "Barbara"
+ },
+ {
+  "start": 625.5365937500001,
+  "end": 627.4097187500001,
+  "speaker": "SPEAKER_00",
+  "text": "Birdwatching è fantastico.",
+  "lang": "it",
+  "avg_logprob": -0.443,
+  "who": "Barbara"
+ },
+ {
+  "start": 627.86534375,
+  "end": 628.2365937500001,
+  "speaker": "SPEAKER_01",
+  "text": "Sì.",
+  "lang": "it",
+  "avg_logprob": -0.379,
+  "who": "Gyasi"
+ },
+ {
+  "start": 628.4053437499999,
+  "end": 630.2278437500001,
+  "speaker": "SPEAKER_00",
+  "text": "ma per abitare sì.",
+  "lang": "it",
+  "avg_logprob": -0.19,
+  "who": "Barbara"
+ },
+ {
+  "start": 630.81846875,
+  "end": 633.8897187499999,
+  "speaker": "SPEAKER_00",
+  "text": "come Nord Italia anche, dove c'è Lombardia.",
+  "lang": "it",
+  "avg_logprob": -0.226,
+  "who": "Barbara"
+ },
+ {
+  "start": 634.49721875,
+  "end": 637.3490937500001,
+  "speaker": "SPEAKER_00",
+  "text": "Catastrofe, sdai che suono secondo me.",
+  "lang": "it",
+  "avg_logprob": -0.373,
+  "who": "Barbara"
+ },
+ {
+  "start": 638.8172187499999,
+  "end": 643.47471875,
+  "speaker": "SPEAKER_00",
+  "text": "Nord Italia è il peggior scenario, è caldo, umido.",
+  "lang": "it",
+  "avg_logprob": -0.33,
+  "who": "Barbara"
+ },
+ {
+  "start": 644.4365937499999,
+  "end": 646.34346875,
+  "speaker": "SPEAKER_00",
+  "text": "e poi è molto antropizzato.",
+  "lang": "it",
+  "avg_logprob": -0.234,
+  "who": "Barbara"
+ },
+ {
+  "start": 647.55846875,
+  "end": 648.8915937500001,
+  "speaker": "SPEAKER_00",
+  "text": "molto traffico",
+  "lang": "it",
+  "avg_logprob": -0.45,
+  "who": "Barbara"
+ },
+ {
+  "start": 649.3472187500001,
+  "end": 650.1572187500001,
+  "speaker": "SPEAKER_00",
+  "text": "treno",
+  "lang": "it",
+  "avg_logprob": -0.586,
+  "who": "Barbara"
+ },
+ {
+  "start": 650.4440937500001,
+  "end": 651.40596875,
+  "speaker": "SPEAKER_00",
+  "text": "macchine",
+  "lang": "it",
+  "avg_logprob": -0.415,
+  "who": "Barbara"
+ },
+ {
+  "start": 652.78971875,
+  "end": 655.1184687500001,
+  "speaker": "SPEAKER_00",
+  "text": "l'aria è",
+  "lang": "it",
+  "avg_logprob": -0.662,
+  "who": "Barbara"
+ },
+ {
+  "start": 654.02159375,
+  "end": 659.7590937500001,
+  "speaker": "SPEAKER_01",
+  "text": "So, the air is, uh, como se dice, how do you say air?  The air is, um.",
+  "lang": "en",
+  "avg_logprob": -0.335,
+  "who": "Gyasi"
+ },
+ {
+  "start": 660.82221875,
+  "end": 664.2309687500001,
+  "speaker": "SPEAKER_00",
+  "text": "L'aria è la città più pollutata d'Europa.",
+  "lang": "it",
+  "avg_logprob": -0.239,
+  "who": "Barbara"
+ },
+ {
+  "start": 664.9397187500001,
+  "end": 668.53409375,
+  "speaker": "SPEAKER_01",
+  "text": "Non credo, è vero.",
+  "lang": "it",
+  "avg_logprob": -0.475,
+  "who": "Gyasi"
+ },
+ {
+  "start": 666.9140937500001,
+  "end": 667.3359687500001,
+  "speaker": "SPEAKER_00",
+  "text": "Grazie.",
+  "lang": "it",
+  "avg_logprob": -0.793,
+  "who": "Barbara"
+ },
+ {
+  "start": 669.22596875,
+  "end": 669.66471875,
+  "speaker": "SPEAKER_01",
+  "text": "Wow.",
+  "lang": "en",
+  "avg_logprob": -0.39,
+  "who": "Gyasi"
+ },
+ {
+  "start": 669.7490937500002,
+  "end": 670.9809687500001,
+  "speaker": "SPEAKER_00",
+  "text": "Sì, mi danno, sì.",
+  "lang": "it",
+  "avg_logprob": -0.522,
+  "who": "Barbara"
+ },
+ {
+  "start": 671.21721875,
+  "end": 672.2465937500001,
+  "speaker": "SPEAKER_00",
+  "text": "Inquietantissimo.",
+  "lang": "it",
+  "avg_logprob": -0.53,
+  "who": "Barbara"
+ },
+ {
+  "start": 673.86659375,
+  "end": 674.99721875,
+  "speaker": "SPEAKER_00",
+  "text": "In montagna no.",
+  "lang": "it",
+  "avg_logprob": -0.281,
+  "who": "Barbara"
+ },
+ {
+  "start": 675.68909375,
+  "end": 678.33846875,
+  "speaker": "SPEAKER_00",
+  "text": "Ma perché è flat, è tutto piatto.",
+  "lang": "it",
+  "avg_logprob": -0.236,
+  "who": "Barbara"
+ },
+ {
+  "start": 678.33846875,
+  "end": 678.6928437500001,
+  "speaker": "SPEAKER_01",
+  "text": "See?",
+  "lang": "en",
+  "avg_logprob": -0.633,
+  "who": "Gyasi"
+ },
+ {
+  "start": 680.04284375,
+  "end": 683.70471875,
+  "speaker": "SPEAKER_00",
+  "text": "e le montagne bloccano la circolazione dell'aria.",
+  "lang": "it",
+  "avg_logprob": -0.155,
+  "who": "Barbara"
+ },
+ {
+  "start": 685.0209687500001,
+  "end": 688.2947187500001,
+  "speaker": "SPEAKER_00",
+  "text": "Poi c'è l'agricoltura intensiva.",
+  "lang": "it",
+  "avg_logprob": -0.183,
+  "who": "Barbara"
+ },
+ {
+  "start": 689.4084687500001,
+  "end": 689.77971875,
+  "speaker": "SPEAKER_00",
+  "text": "Hmm.",
+  "lang": "en",
+  "avg_logprob": -0.619,
+  "who": "Barbara"
+ },
+ {
+  "start": 690.9609687500001,
+  "end": 694.84221875,
+  "speaker": "SPEAKER_00",
+  "text": "Ci sono molti casi cancer, molti casi di cancro.",
+  "lang": "it",
+  "avg_logprob": -0.217,
+  "who": "Barbara"
+ },
+ {
+  "start": 695.11221875,
+  "end": 698.4197187500001,
+  "speaker": "SPEAKER_00",
+  "text": "problemi con asma, è un problema medico serio.",
+  "lang": "it",
+  "avg_logprob": -0.271,
+  "who": "Barbara"
+ },
+ {
+  "start": 702.28409375,
+  "end": 704.7478437500001,
+  "speaker": "SPEAKER_00",
+  "text": "stili così. Molti bambini",
+  "lang": "it",
+  "avg_logprob": -0.555,
+  "who": "Barbara"
+ },
+ {
+  "start": 705.4397187500001,
+  "end": 706.51971875,
+  "speaker": "SPEAKER_00",
+  "text": "I pediatri...",
+  "lang": "it",
+  "avg_logprob": -0.428,
+  "who": "Barbara"
+ },
+ {
+  "start": 706.78971875,
+  "end": 713.1684687500001,
+  "speaker": "SPEAKER_00",
+  "text": "Dicono che d'inverno c'è un bollettino, i bambini devono stare in casa, altrimenti continuano a respirare.",
+  "lang": "it",
+  "avg_logprob": -0.261,
+  "who": "Barbara"
+ },
+ {
+  "start": 713.6240937500002,
+  "end": 714.63659375,
+  "speaker": "SPEAKER_01",
+  "text": "Sì, sì.",
+  "lang": "it",
+  "avg_logprob": -0.366,
+  "who": "Gyasi"
+ },
+ {
+  "start": 714.3328437499999,
+  "end": 718.3828437500001,
+  "speaker": "SPEAKER_00",
+  "text": "There is a lot of stuff inside this particular area.",
+  "lang": "en",
+  "avg_logprob": -0.453,
+  "who": "Barbara"
+ },
+ {
+  "start": 718.70346875,
+  "end": 722.2978437500001,
+  "speaker": "SPEAKER_00",
+  "text": "furani, prodotti chimici, tu in ali.",
+  "lang": "it",
+  "avg_logprob": -0.403,
+  "who": "Barbara"
+ },
+ {
+  "start": 722.83784375,
+  "end": 724.79534375,
+  "speaker": "SPEAKER_00",
+  "text": "e va direttamente nei polmoni.",
+  "lang": "it",
+  "avg_logprob": -0.185,
+  "who": "Barbara"
+ },
+ {
+  "start": 725.0990937500001,
+  "end": 725.77409375,
+  "speaker": "SPEAKER_01",
+  "text": "Oh, wow.",
+  "lang": "en",
+  "avg_logprob": -0.471,
+  "who": "Gyasi"
+ },
+ {
+  "start": 725.89221875,
+  "end": 730.6340937500001,
+  "speaker": "SPEAKER_00",
+  "text": "You can get rid of acid because it's called particulate, it's like dust.",
+  "lang": "en",
+  "avg_logprob": -0.422,
+  "who": "Barbara"
+ },
+ {
+  "start": 730.81971875,
+  "end": 732.3215937500001,
+  "speaker": "SPEAKER_00",
+  "text": "Una polvere fine.",
+  "lang": "it",
+  "avg_logprob": -0.343,
+  "who": "Barbara"
+ },
+ {
+  "start": 733.1484687500001,
+  "end": 744.43784375,
+  "speaker": "SPEAKER_01",
+  "text": "Sì, esatto, in Napoli questo guardare il particolare perché, come si dice...",
+  "lang": "it",
+  "avg_logprob": -0.294,
+  "who": "Gyasi"
+ },
+ {
+  "start": 744.64034375,
+  "end": 746.9015937500001,
+  "speaker": "SPEAKER_01",
+  "text": "Uh, we clean, um...",
+  "lang": "en",
+  "avg_logprob": -0.607,
+  "who": "Gyasi"
+ },
+ {
+  "start": 747.0365937500001,
+  "end": 749.1797187500001,
+  "speaker": "SPEAKER_00",
+  "text": "puliamo, noi puliamo",
+  "lang": "it",
+  "avg_logprob": -0.419,
+  "who": "Barbara"
+ },
+ {
+  "start": 749.55096875,
+  "end": 755.6597187500001,
+  "speaker": "SPEAKER_01",
+  "text": "Noi puliamo e dopo oggi...",
+  "lang": "it",
+  "avg_logprob": -0.428,
+  "who": "Gyasi"
+ },
+ {
+  "start": 755.86221875,
+  "end": 757.0265937500001,
+  "speaker": "SPEAKER_01",
+  "text": "Sì.",
+  "lang": "it",
+  "avg_logprob": -0.566,
+  "who": "Gyasi"
+ },
+ {
+  "start": 756.3515937500001,
+  "end": 756.7903437500001,
+  "speaker": "SPEAKER_00",
+  "text": "Sì",
+  "lang": "it",
+  "avg_logprob": -0.639,
+  "who": "Barbara"
+ },
+ {
+  "start": 757.54971875,
+  "end": 758.0222187500001,
+  "speaker": "SPEAKER_01",
+  "text": "It's back.",
+  "lang": "en",
+  "avg_logprob": -0.287,
+  "who": "Gyasi"
+ },
+ {
+  "start": 759.4228437500001,
+  "end": 764.0634687500001,
+  "speaker": "SPEAKER_00",
+  "text": "Il problema è Napoli è una città sul mare e quindi il vantaggio.",
+  "lang": "it",
+  "avg_logprob": -0.155,
+  "who": "Barbara"
+ },
+ {
+  "start": 764.40096875,
+  "end": 764.82284375,
+  "speaker": "SPEAKER_00",
+  "text": "Hmm.",
+  "lang": "en",
+  "avg_logprob": -0.745,
+  "who": "Barbara"
+ },
+ {
+  "start": 765.83534375,
+  "end": 769.8347187500001,
+  "speaker": "SPEAKER_00",
+  "text": "Invece qui non c'è il mare e il problema sono le arti.",
+  "lang": "it",
+  "avg_logprob": -0.175,
+  "who": "Barbara"
+ },
+ {
+  "start": 770.18909375,
+  "end": 772.70346875,
+  "speaker": "SPEAKER_00",
+  "text": "perché le Alpi bloccano la circolazione.",
+  "lang": "it",
+  "avg_logprob": -0.191,
+  "who": "Barbara"
+ },
+ {
+  "start": 773.1928437500001,
+  "end": 773.59784375,
+  "speaker": "SPEAKER_01",
+  "text": "Sì.",
+  "lang": "it",
+  "avg_logprob": -0.379,
+  "who": "Gyasi"
+ },
+ {
+  "start": 773.54721875,
+  "end": 774.10409375,
+  "speaker": "SPEAKER_00",
+  "text": "Grazie a tutti.",
+  "lang": "it",
+  "avg_logprob": -0.521,
+  "who": "Barbara"
+ },
+ {
+  "start": 774.96471875,
+  "end": 776.83784375,
+  "speaker": "SPEAKER_00",
+  "text": "Sì, questo è un problema strutturale.",
+  "lang": "it",
+  "avg_logprob": -0.159,
+  "who": "Barbara"
+ },
+ {
+  "start": 778.4072187500001,
+  "end": 782.54159375,
+  "speaker": "SPEAKER_00",
+  "text": "che esiste da tanti anni, però politici bla bla bla parlano male.",
+  "lang": "it",
+  "avg_logprob": -0.158,
+  "who": "Barbara"
+ },
+ {
+  "start": 785.7309687500001,
+  "end": 789.9497187500001,
+  "speaker": "SPEAKER_00",
+  "text": "Adesso con il riscaldamento globale il futuro non so.",
+  "lang": "it",
+  "avg_logprob": -0.176,
+  "who": "Barbara"
+ },
+ {
+  "start": 791.85659375,
+  "end": 798.8428437500002,
+  "speaker": "SPEAKER_01",
+  "text": "Non... come si dice? Non persone... come si dice?  Come si dice? Fix?  Vuoi fissare il problema?",
+  "lang": "it",
+  "avg_logprob": -0.442,
+  "who": "Gyasi"
+ },
+ {
+  "start": 798.1172187500001,
+  "end": 800.85096875,
+  "speaker": "SPEAKER_00",
+  "text": "per risolvere  e no",
+  "lang": "it",
+  "avg_logprob": -0.447,
+  "who": "Barbara"
+ },
+ {
+  "start": 800.58096875,
+  "end": 801.6440937500001,
+  "speaker": "SPEAKER_01",
+  "text": "Resolver, yeah, see.",
+  "lang": "en",
+  "avg_logprob": -0.552,
+  "who": "Gyasi"
+ },
+ {
+  "start": 804.37784375,
+  "end": 805.7109687500001,
+  "speaker": "SPEAKER_00",
+  "text": "Il problema è poi...",
+  "lang": "it",
+  "avg_logprob": -0.279,
+  "who": "Barbara"
+ },
+ {
+  "start": 805.81221875,
+  "end": 808.6303437500001,
+  "speaker": "SPEAKER_00",
+  "text": "In futuro la sanità chi paga?",
+  "lang": "it",
+  "avg_logprob": -0.292,
+  "who": "Barbara"
+ },
+ {
+  "start": 809.4740937500001,
+  "end": 811.38096875,
+  "speaker": "SPEAKER_00",
+  "text": "Long term, a lungo termine.",
+  "lang": "it",
+  "avg_logprob": -0.264,
+  "who": "Barbara"
+ },
+ {
+  "start": 811.9040937500001,
+  "end": 812.39346875,
+  "speaker": "SPEAKER_01",
+  "text": "Yeah.",
+  "lang": "en",
+  "avg_logprob": -0.479,
+  "who": "Gyasi"
+ },
+ {
+  "start": 814.0134687500001,
+  "end": 814.50284375,
+  "speaker": "SPEAKER_00",
+  "text": "Eh sì.",
+  "lang": "it",
+  "avg_logprob": -0.547,
+  "who": "Barbara"
+ },
+ {
+  "start": 814.75596875,
+  "end": 815.9540937500001,
+  "speaker": "SPEAKER_00",
+  "text": "anche bambini.",
+  "lang": "it",
+  "avg_logprob": -0.323,
+  "who": "Barbara"
+ },
+ {
+  "start": 816.19034375,
+  "end": 825.20159375,
+  "speaker": "SPEAKER_00",
+  "text": "Quando tu nasci in questa zona, tu continui a respirare tutta la tua vita e poi improvvisamente hai il cancro.",
+  "lang": "it",
+  "avg_logprob": -0.379,
+  "who": "Barbara"
+ },
+ {
+  "start": 825.7922187500001,
+  "end": 828.6272187500001,
+  "speaker": "SPEAKER_00",
+  "text": "perché lo Spirito Santo, perché you live in...",
+  "lang": "it",
+  "avg_logprob": -0.396,
+  "who": "Barbara"
+ },
+ {
+  "start": 828.7622187500001,
+  "end": 832.50846875,
+  "speaker": "SPEAKER_00",
+  "text": "in un posto pollutile, in un posto inquinato.",
+  "lang": "it",
+  "avg_logprob": -0.193,
+  "who": "Barbara"
+ },
+ {
+  "start": 832.9978437500001,
+  "end": 850.4297187500001,
+  "speaker": "SPEAKER_01",
+  "text": "Sì, perché questo è... mi piace la bresa.  Ho bisogno della bresa perché non la bresa, perché mi muoio molto, non l'asma, ma l'allergia.",
+  "lang": "it",
+  "avg_logprob": -0.368,
+  "who": "Gyasi"
+ },
+ {
+  "start": 851.35784375,
+  "end": 854.14221875,
+  "speaker": "SPEAKER_00",
+  "text": "È allergia, ci sono molte allergie, sì.",
+  "lang": "it",
+  "avg_logprob": -0.355,
+  "who": "Barbara"
+ },
+ {
+  "start": 858.8334687500001,
+  "end": 871.2365937500001,
+  "speaker": "SPEAKER_01",
+  "text": "Perché noi, primo, noi abbiamo un problema, perché...",
+  "lang": "it",
+  "avg_logprob": -0.525,
+  "who": "Gyasi"
+ },
+ {
+  "start": 864.70596875,
+  "end": 865.0772187500002,
+  "speaker": "SPEAKER_00",
+  "text": "uh...",
+  "lang": "en",
+  "avg_logprob": -0.4,
+  "who": "Barbara"
+ },
+ {
+  "start": 871.5403437500001,
+  "end": 873.10971875,
+  "speaker": "SPEAKER_01",
+  "text": "Mio sono americano.",
+  "lang": "it",
+  "avg_logprob": -0.349,
+  "who": "Gyasi"
+ },
+ {
+  "start": 873.3290937500001,
+  "end": 877.5984687500002,
+  "speaker": "SPEAKER_01",
+  "text": "comunque  mi",
+  "lang": "it",
+  "avg_logprob": -0.632,
+  "who": "Gyasi"
+ },
+ {
+  "start": 878.07096875,
+  "end": 882.40784375,
+  "speaker": "SPEAKER_01",
+  "text": "Io piace la ventilatore e le condizioni.",
+  "lang": "it",
+  "avg_logprob": -0.553,
+  "who": "Gyasi"
+ },
+ {
+  "start": 879.58971875,
+  "end": 880.2140937500001,
+  "speaker": "SPEAKER_00",
+  "text": "Good luck.",
+  "lang": "en",
+  "avg_logprob": -0.58,
+  "who": "Barbara"
+ },
+ {
+  "start": 882.54284375,
+  "end": 886.05284375,
+  "speaker": "SPEAKER_00",
+  "text": "Eh sì, l'aria condizionata sì, sì. E lei no.",
+  "lang": "it",
+  "avg_logprob": -0.46,
+  "who": "Barbara"
+ },
+ {
+  "start": 884.4834687500002,
+  "end": 885.9853437500001,
+  "speaker": "SPEAKER_01",
+  "text": "sì sì  lei no",
+  "lang": "it",
+  "avg_logprob": -0.424,
+  "who": "Gyasi"
+ },
+ {
+  "start": 886.4409687500001,
+  "end": 898.30409375,
+  "speaker": "SPEAKER_01",
+  "text": "Esatto, lei no, ma adesso quando è l'estate, lei piace perché è molto caldo.",
+  "lang": "it",
+  "avg_logprob": -0.231,
+  "who": "Gyasi"
+ },
+ {
+  "start": 897.4265937500002,
+  "end": 898.4053437500002,
+  "speaker": "SPEAKER_00",
+  "text": "toccata",
+  "lang": "it",
+  "avg_logprob": -0.857,
+  "who": "Barbara"
+ },
+ {
+  "start": 898.74284375,
+  "end": 901.84784375,
+  "speaker": "SPEAKER_00",
+  "text": "Molto caldo, adesso fai un compromesso.",
+  "lang": "it",
+  "avg_logprob": -0.181,
+  "who": "Barbara"
+ },
+ {
+  "start": 899.55284375,
+  "end": 899.9072187500001,
+  "speaker": "SPEAKER_01",
+  "text": "Yes.",
+  "lang": "en",
+  "avg_logprob": -0.808,
+  "who": "Gyasi"
+ },
+ {
+  "start": 902.0503437500001,
+  "end": 902.77596875,
+  "speaker": "SPEAKER_00",
+  "text": "Compromai.",
+  "lang": "it",
+  "avg_logprob": -0.523,
+  "who": "Barbara"
+ },
+ {
+  "start": 902.97846875,
+  "end": 903.7378437500001,
+  "speaker": "SPEAKER_01",
+  "text": "Sì.",
+  "lang": "it",
+  "avg_logprob": -0.461,
+  "who": "Gyasi"
+ },
+ {
+  "start": 906.48846875,
+  "end": 910.25159375,
+  "speaker": "SPEAKER_00",
+  "text": "Per esempio qui a casa dove abito io non c'è aria condizionata.",
+  "lang": "it",
+  "avg_logprob": -0.074,
+  "who": "Barbara"
+ },
+ {
+  "start": 910.84221875,
+  "end": 916.3940937500001,
+  "speaker": "SPEAKER_00",
+  "text": "perché c'è green, c'è molto verde vicino, c'è giardino.",
+  "lang": "it",
+  "avg_logprob": -0.262,
+  "who": "Barbara"
+ },
+ {
+  "start": 916.9509687500001,
+  "end": 918.7903437500001,
+  "speaker": "SPEAKER_00",
+  "text": "e quindi quando arrivo a Milano",
+  "lang": "it",
+  "avg_logprob": -0.306,
+  "who": "Barbara"
+ },
+ {
+  "start": 919.71846875,
+  "end": 923.9878437500001,
+  "speaker": "SPEAKER_00",
+  "text": "Quando sono qui io dormo bene di notte, non c'è problema.",
+  "lang": "it",
+  "avg_logprob": -0.136,
+  "who": "Barbara"
+ },
+ {
+  "start": 923.9878437500001,
+  "end": 924.4097187500001,
+  "speaker": "SPEAKER_01",
+  "text": "Sì.",
+  "lang": "it",
+  "avg_logprob": -0.448,
+  "who": "Gyasi"
+ },
+ {
+  "start": 924.61221875,
+  "end": 927.0928437500002,
+  "speaker": "SPEAKER_00",
+  "text": "because we have a lot of marble, you know, marble.",
+  "lang": "en",
+  "avg_logprob": -0.325,
+  "who": "Barbara"
+ },
+ {
+  "start": 927.2278437500001,
+  "end": 932.89784375,
+  "speaker": "SPEAKER_01",
+  "text": "No, no. Oh, sì, sì, Marble, sì.  Ah, so, è capito, capito.",
+  "lang": "it",
+  "avg_logprob": -0.415,
+  "who": "Gyasi"
+ },
+ {
+  "start": 930.4340937500001,
+  "end": 931.5478437500001,
+  "speaker": "SPEAKER_00",
+  "text": "quindi è fresco",
+  "lang": "it",
+  "avg_logprob": -0.825,
+  "who": "Barbara"
+ },
+ {
+  "start": 933.64034375,
+  "end": 935.9522187500002,
+  "speaker": "SPEAKER_00",
+  "text": "Okay, in the inverno, it's like living in the fridge.",
+  "lang": "en",
+  "avg_logprob": -0.369,
+  "who": "Barbara"
+ },
+ {
+  "start": 937.0322187500001,
+  "end": 938.9897187500001,
+  "speaker": "SPEAKER_00",
+  "text": "Però per il sistema immunitario...",
+  "lang": "it",
+  "avg_logprob": -0.235,
+  "who": "Barbara"
+ },
+ {
+  "start": 939.0403437500001,
+  "end": 940.4578437500002,
+  "speaker": "SPEAKER_00",
+  "text": "strong e più forte.",
+  "lang": "it",
+  "avg_logprob": -0.692,
+  "who": "Barbara"
+ },
+ {
+  "start": 940.89659375,
+  "end": 943.59659375,
+  "speaker": "SPEAKER_00",
+  "text": "Ed è stato fresco perché i fiori...",
+  "lang": "it",
+  "avg_logprob": -0.331,
+  "who": "Barbara"
+ },
+ {
+  "start": 943.7990937500001,
+  "end": 945.28409375,
+  "speaker": "SPEAKER_00",
+  "text": "Baffo, se tu sei...",
+  "lang": "it",
+  "avg_logprob": -0.522,
+  "who": "Barbara"
+ },
+ {
+  "start": 945.5034687500001,
+  "end": 950.07659375,
+  "speaker": "SPEAKER_00",
+  "text": "A piedi nudi il marmo sui piedi è fresco, è fresco naturale.",
+  "lang": "it",
+  "avg_logprob": -0.136,
+  "who": "Barbara"
+ },
+ {
+  "start": 954.0422187500001,
+  "end": 954.41346875,
+  "speaker": "SPEAKER_01",
+  "text": "Mmm.",
+  "lang": "it",
+  "avg_logprob": -0.578,
+  "who": "Gyasi"
+ },
+ {
+  "start": 955.66221875,
+  "end": 960.75846875,
+  "speaker": "SPEAKER_00",
+  "text": "Questo è un vantaggio, più giardino, The Neighbor vicino ha un giardino, tutti hanno un giardino.",
+  "lang": "it",
+  "avg_logprob": -0.242,
+  "who": "Barbara"
+ },
+ {
+  "start": 961.14659375,
+  "end": 962.3615937500001,
+  "speaker": "SPEAKER_00",
+  "text": "con piante e...",
+  "lang": "it",
+  "avg_logprob": -0.539,
+  "who": "Barbara"
+ },
+ {
+  "start": 962.9015937500001,
+  "end": 964.1672187500001,
+  "speaker": "SPEAKER_00",
+  "text": "C'è differenza.",
+  "lang": "it",
+  "avg_logprob": -0.373,
+  "who": "Barbara"
+ },
+ {
+  "start": 967.49159375,
+  "end": 969.2297187500001,
+  "speaker": "SPEAKER_00",
+  "text": "I think that they've got guillotine.",
+  "lang": "en",
+  "avg_logprob": -0.764,
+  "who": "Barbara"
+ },
+ {
+  "start": 973.6509687500002,
+  "end": 974.8490937500001,
+  "speaker": "SPEAKER_00",
+  "text": "allo giardino.",
+  "lang": "it",
+  "avg_logprob": -0.503,
+  "who": "Barbara"
+ },
+ {
+  "start": 978.6459687500001,
+  "end": 980.26596875,
+  "speaker": "SPEAKER_01",
+  "text": "Which I don't care about. See ya.",
+  "lang": "en",
+  "avg_logprob": -0.667,
+  "who": "Gyasi"
+ },
+ {
+  "start": 981.0928437500002,
+  "end": 984.94034375,
+  "speaker": "SPEAKER_00",
+  "text": "All the birds ci sono uccelli, è differente dalla città.",
+  "lang": "it",
+  "avg_logprob": -0.302,
+  "who": "Barbara"
+ },
+ {
+  "start": 985.80096875,
+  "end": 988.61909375,
+  "speaker": "SPEAKER_00",
+  "text": "We are also sometimes a family of bad men.",
+  "lang": "en",
+  "avg_logprob": -0.368,
+  "who": "Barbara"
+ },
+ {
+  "start": 989.41221875,
+  "end": 990.69471875,
+  "speaker": "SPEAKER_00",
+  "text": "Mi presterai lì.",
+  "lang": "it",
+  "avg_logprob": -0.706,
+  "who": "Barbara"
+ },
+ {
+  "start": 991.3528437500001,
+  "end": 991.82534375,
+  "speaker": "SPEAKER_00",
+  "text": "Peace.",
+  "lang": "en",
+  "avg_logprob": -0.502,
+  "who": "Barbara"
+ },
+ {
+  "start": 992.6353437500002,
+  "end": 995.1497187500001,
+  "speaker": "SPEAKER_00",
+  "text": "Se di notte volano piccoli, sì.",
+  "lang": "it",
+  "avg_logprob": -0.354,
+  "who": "Barbara"
+ },
+ {
+  "start": 995.08221875,
+  "end": 1005.5447187500001,
+  "speaker": "SPEAKER_01",
+  "text": "Sì, ma dove tu abitui? In centrocittà o come si dice?  Non so.",
+  "lang": "it",
+  "avg_logprob": -0.488,
+  "who": "Gyasi"
+ },
+ {
+  "start": 995.87534375,
+  "end": 996.9553437500001,
+  "speaker": "SPEAKER_00",
+  "text": "una famiglia",
+  "lang": "it",
+  "avg_logprob": -0.459,
+  "who": "Barbara"
+ },
+ {
+  "start": 1005.0890937500001,
+  "end": 1009.71284375,
+  "speaker": "SPEAKER_00",
+  "text": "Non fuori, io abito in una piccola città, mini, mini, piccola.",
+  "lang": "it",
+  "avg_logprob": -0.22,
+  "who": "Barbara"
+ },
+ {
+  "start": 1010.38784375,
+  "end": 1011.78846875,
+  "speaker": "SPEAKER_00",
+  "text": "vicino a",
+  "lang": "it",
+  "avg_logprob": -0.235,
+  "who": "Barbara"
+ },
+ {
+  "start": 1012.4634687500002,
+  "end": 1012.95284375,
+  "speaker": "SPEAKER_00",
+  "text": "Ehm...",
+  "lang": "it",
+  "avg_logprob": -0.742,
+  "who": "Barbara"
+ },
+ {
+  "start": 1013.20596875,
+  "end": 1016.58096875,
+  "speaker": "SPEAKER_00",
+  "text": "Si chiama così Santia Piccola e Nord Italia.",
+  "lang": "it",
+  "avg_logprob": -0.305,
+  "who": "Barbara"
+ },
+ {
+  "start": 1017.3403437500001,
+  "end": 1020.91784375,
+  "speaker": "SPEAKER_00",
+  "text": "vicino a un po' Lago Maggiore, more or less.",
+  "lang": "it",
+  "avg_logprob": -0.327,
+  "who": "Barbara"
+ },
+ {
+  "start": 1021.1372187500001,
+  "end": 1022.08221875,
+  "speaker": "SPEAKER_00",
+  "text": "in Piemonte.",
+  "lang": "it",
+  "avg_logprob": -0.386,
+  "who": "Barbara"
+ },
+ {
+  "start": 1022.65596875,
+  "end": 1023.04409375,
+  "speaker": "SPEAKER_01",
+  "text": "Mmm",
+  "lang": "it",
+  "avg_logprob": -0.798,
+  "who": "Gyasi"
+ },
+ {
+  "start": 1026.45284375,
+  "end": 1031.4140937500001,
+  "speaker": "SPEAKER_00",
+  "text": "e vado a lavorare a Milano, Milano è 90 km.",
+  "lang": "it",
+  "avg_logprob": -0.294,
+  "who": "Barbara"
+ },
+ {
+  "start": 1032.62909375,
+  "end": 1033.64159375,
+  "speaker": "SPEAKER_01",
+  "text": "Oh, è vero.",
+  "lang": "it",
+  "avg_logprob": -0.315,
+  "who": "Gyasi"
+ },
+ {
+  "start": 1034.62034375,
+  "end": 1039.81784375,
+  "speaker": "SPEAKER_00",
+  "text": "Sì, ma per americano non è niente, 90 km è ridicolo, se abiti a Los Angeles...",
+  "lang": "it",
+  "avg_logprob": -0.229,
+  "who": "Barbara"
+ },
+ {
+  "start": 1039.96971875,
+  "end": 1040.77971875,
+  "speaker": "SPEAKER_01",
+  "text": "Ah, sí, sí.",
+  "lang": "en",
+  "avg_logprob": -0.457,
+  "who": "Gyasi"
+ },
+ {
+  "start": 1041.1340937500001,
+  "end": 1041.5390937500001,
+  "speaker": "SPEAKER_01",
+  "text": "Yeah, bro.",
+  "lang": "en",
+  "avg_logprob": -0.396,
+  "who": "Gyasi"
+ },
+ {
+  "start": 1041.5390937500001,
+  "end": 1043.1422187500002,
+  "speaker": "SPEAKER_00",
+  "text": "è relativo, sì.",
+  "lang": "it",
+  "avg_logprob": -0.488,
+  "who": "Barbara"
+ },
+ {
+  "start": 1043.3784687500001,
+  "end": 1049.79096875,
+  "speaker": "SPEAKER_01",
+  "text": "Ma come si dice, do you live like high or low?",
+  "lang": "it",
+  "avg_logprob": -0.292,
+  "who": "Gyasi"
+ },
+ {
+  "start": 1050.24659375,
+  "end": 1053.6553437500002,
+  "speaker": "SPEAKER_00",
+  "text": "È un po' piatto, ma è un po' vicino alla collina.",
+  "lang": "it",
+  "avg_logprob": -0.24,
+  "who": "Barbara"
+ },
+ {
+  "start": 1054.33034375,
+  "end": 1057.24971875,
+  "speaker": "SPEAKER_00",
+  "text": "Dieci minuti e vicino alla collina.",
+  "lang": "it",
+  "avg_logprob": -0.198,
+  "who": "Barbara"
+ },
+ {
+  "start": 1061.60346875,
+  "end": 1065.83909375,
+  "speaker": "SPEAKER_00",
+  "text": "E poi c'è l'agricoltura, c'è solo agricoltura con mais, grano.",
+  "lang": "it",
+  "avg_logprob": -0.214,
+  "who": "Barbara"
+ },
+ {
+  "start": 1066.3115937500002,
+  "end": 1068.5897187500002,
+  "speaker": "SPEAKER_00",
+  "text": "non è campagna",
+  "lang": "it",
+  "avg_logprob": -0.391,
+  "who": "Barbara"
+ },
+ {
+  "start": 1069.23096875,
+  "end": 1071.1040937500002,
+  "speaker": "SPEAKER_00",
+  "text": "È una piccola città.",
+  "lang": "it",
+  "avg_logprob": -0.273,
+  "who": "Barbara"
+ },
+ {
+  "start": 1071.57659375,
+  "end": 1073.3484687500002,
+  "speaker": "SPEAKER_00",
+  "text": "in",
+  "lang": "it",
+  "avg_logprob": -0.466,
+  "who": "Barbara"
+ },
+ {
+  "start": 1074.14159375,
+  "end": 1076.8753437500002,
+  "speaker": "SPEAKER_00",
+  "text": "Piccola, can you imagine? 8000 abitanti is nothing.",
+  "lang": "it",
+  "avg_logprob": -0.305,
+  "who": "Barbara"
+ },
+ {
+  "start": 1077.3309687500002,
+  "end": 1078.1240937500002,
+  "speaker": "SPEAKER_00",
+  "text": "niente",
+  "lang": "it",
+  "avg_logprob": -0.333,
+  "who": "Barbara"
+ },
+ {
+  "start": 1079.6765937500002,
+  "end": 1081.33034375,
+  "speaker": "SPEAKER_00",
+  "text": "un villaggio per gli Stati Uniti.",
+  "lang": "it",
+  "avg_logprob": -0.176,
+  "who": "Barbara"
+ },
+ {
+  "start": 1081.4990937500002,
+  "end": 1083.8784687500001,
+  "speaker": "SPEAKER_01",
+  "text": "Ma quiet? Is it quiet or is it loud?",
+  "lang": "it",
+  "avg_logprob": -0.216,
+  "who": "Gyasi"
+ },
+ {
+  "start": 1084.0134687500001,
+  "end": 1087.08471875,
+  "speaker": "SPEAKER_00",
+  "text": "Sì, tranquillo, molto tranquillo, però va bene.",
+  "lang": "it",
+  "avg_logprob": -0.154,
+  "who": "Barbara"
+ },
+ {
+  "start": 1087.37159375,
+  "end": 1087.8440937500002,
+  "speaker": "SPEAKER_01",
+  "text": "See ya.",
+  "lang": "en",
+  "avg_logprob": -0.459,
+  "who": "Gyasi"
+ },
+ {
+  "start": 1087.9622187500001,
+  "end": 1103.95971875,
+  "speaker": "SPEAKER_01",
+  "text": "Tu senti, come si dice, ho dimenticato tutte le mie parole, i bambini, senti i bambini e i suoni di notte e non la macchina.",
+  "lang": "it",
+  "avg_logprob": -0.349,
+  "who": "Gyasi"
+ },
+ {
+  "start": 1099.2009687500001,
+  "end": 1101.4790937500002,
+  "speaker": "SPEAKER_00",
+  "text": "night sounds and not the",
+  "lang": "en",
+  "avg_logprob": -0.368,
+  "who": "Barbara"
+ },
+ {
+  "start": 1104.66846875,
+  "end": 1106.8622187500002,
+  "speaker": "SPEAKER_00",
+  "text": "No, non è per voi, non è per me.",
+  "lang": "it",
+  "avg_logprob": -0.697,
+  "who": "Barbara"
+ },
+ {
+  "start": 1107.6890937500002,
+  "end": 1110.28784375,
+  "speaker": "SPEAKER_00",
+  "text": "È molto rilassante per il cervello.",
+  "lang": "it",
+  "avg_logprob": -0.307,
+  "who": "Barbara"
+ },
+ {
+  "start": 1112.0597187500002,
+  "end": 1116.1097187500002,
+  "speaker": "SPEAKER_00",
+  "text": "Sentire perché calda, ti senti più tranquillo.",
+  "lang": "it",
+  "avg_logprob": -0.391,
+  "who": "Barbara"
+ },
+ {
+  "start": 1112.8697187500002,
+  "end": 1113.3084687500002,
+  "speaker": "SPEAKER_01",
+  "text": "True.",
+  "lang": "en",
+  "avg_logprob": -0.601,
+  "who": "Gyasi"
+ },
+ {
+  "start": 1116.2615937500002,
+  "end": 1117.6622187500002,
+  "speaker": "SPEAKER_01",
+  "text": "Sì, sì, è vero.",
+  "lang": "it",
+  "avg_logprob": -0.267,
+  "who": "Gyasi"
+ },
+ {
+  "start": 1117.9153437500001,
+  "end": 1118.87721875,
+  "speaker": "SPEAKER_00",
+  "text": "Ma si fa bene.",
+  "lang": "it",
+  "avg_logprob": -0.545,
+  "who": "Barbara"
+ },
+ {
+  "start": 1119.0459687500002,
+  "end": 1126.4878437500001,
+  "speaker": "SPEAKER_01",
+  "text": "Because when I first worked with this ambulance,",
+  "lang": "en",
+  "avg_logprob": -0.52,
+  "who": "Gyasi"
+ },
+ {
+  "start": 1126.85909375,
+  "end": 1130.7065937500001,
+  "speaker": "SPEAKER_01",
+  "text": "the two recording see uh perky um",
+  "lang": "en",
+  "avg_logprob": -0.585,
+  "who": "Gyasi"
+ },
+ {
+  "start": 1127.3653437500002,
+  "end": 1127.82096875,
+  "speaker": "SPEAKER_00",
+  "text": "recording",
+  "lang": "en",
+  "avg_logprob": -0.594,
+  "who": "Barbara"
+ },
+ {
+  "start": 1131.3984687500001,
+  "end": 1143.7847187500001,
+  "speaker": "SPEAKER_01",
+  "text": "Quattro anni per questo lavoro, ma quando non lavoro in ambulanza,",
+  "lang": "it",
+  "avg_logprob": -0.33,
+  "who": "Gyasi"
+ },
+ {
+  "start": 1144.13909375,
+  "end": 1145.0840937500002,
+  "speaker": "SPEAKER_01",
+  "text": "Dopo",
+  "lang": "it",
+  "avg_logprob": -0.342,
+  "who": "Gyasi"
+ },
+ {
+  "start": 1145.30346875,
+  "end": 1154.3484687500002,
+  "speaker": "SPEAKER_01",
+  "text": "rimanere in mi casa quando ascoltare come si dice siren",
+  "lang": "it",
+  "avg_logprob": -0.416,
+  "who": "Gyasi"
+ },
+ {
+  "start": 1155.6478437500002,
+  "end": 1157.5715937500001,
+  "speaker": "SPEAKER_00",
+  "text": "La sirena, immagina.",
+  "lang": "it",
+  "avg_logprob": -0.355,
+  "who": "Barbara"
+ },
+ {
+  "start": 1157.67284375,
+  "end": 1159.0059687500002,
+  "speaker": "SPEAKER_01",
+  "text": "la serena",
+  "lang": "it",
+  "avg_logprob": -0.811,
+  "who": "Gyasi"
+ },
+ {
+  "start": 1158.49971875,
+  "end": 1159.64721875,
+  "speaker": "SPEAKER_00",
+  "text": "Sono stressato.",
+  "lang": "it",
+  "avg_logprob": -0.468,
+  "who": "Barbara"
+ },
+ {
+  "start": 1160.17034375,
+  "end": 1168.48971875,
+  "speaker": "SPEAKER_01",
+  "text": "Esatto, la reazione, l'adrenalina ritorna.",
+  "lang": "it",
+  "avg_logprob": -0.332,
+  "who": "Gyasi"
+ },
+ {
+  "start": 1163.7815937500002,
+  "end": 1166.95409375,
+  "speaker": "SPEAKER_00",
+  "text": "si la ragiona, si la adrenalina ritorna",
+  "lang": "it",
+  "avg_logprob": -0.514,
+  "who": "Barbara"
+ },
+ {
+  "start": 1168.0172187500002,
+  "end": 1174.96971875,
+  "speaker": "SPEAKER_00",
+  "text": "Perché il tuo cervello ha memorizzato emergenza, urgente, panico, pericolo.",
+  "lang": "it",
+  "avg_logprob": -0.114,
+  "who": "Barbara"
+ },
+ {
+  "start": 1172.3878437500002,
+  "end": 1174.1934687500002,
+  "speaker": "SPEAKER_01",
+  "text": "urgente, panico",
+  "lang": "it",
+  "avg_logprob": -0.464,
+  "who": "Gyasi"
+ },
+ {
+  "start": 1175.25659375,
+  "end": 1175.64471875,
+  "speaker": "SPEAKER_00",
+  "text": "Exactly.",
+  "lang": "en",
+  "avg_logprob": -0.251,
+  "who": "Barbara"
+ },
+ {
+  "start": 1175.77971875,
+  "end": 1191.0684687500002,
+  "speaker": "SPEAKER_01",
+  "text": "E non è il panico, ma questo per me, quando ascolto la serena, non è la morte, ma la morte per la persona, capito?",
+  "lang": "it",
+  "avg_logprob": -0.292,
+  "who": "Gyasi"
+ },
+ {
+  "start": 1191.86159375,
+  "end": 1193.68409375,
+  "speaker": "SPEAKER_00",
+  "text": "Eh certo, il collego...",
+  "lang": "it",
+  "avg_logprob": -0.608,
+  "who": "Barbara"
+ },
+ {
+  "start": 1192.5872187500001,
+  "end": 1198.0715937500001,
+  "speaker": "SPEAKER_01",
+  "text": "Yes, so I had to think a lot.",
+  "lang": "en",
+  "avg_logprob": -0.493,
+  "who": "Gyasi"
+ },
+ {
+  "start": 1198.3584687500002,
+  "end": 1202.39159375,
+  "speaker": "SPEAKER_01",
+  "text": "What will we do?  That kind of thing.",
+  "lang": "en",
+  "avg_logprob": -0.374,
+  "who": "Gyasi"
+ },
+ {
+  "start": 1202.22284375,
+  "end": 1206.1040937500002,
+  "speaker": "SPEAKER_00",
+  "text": "Sì, devo realizzare cosa faccio, devo correre.",
+  "lang": "it",
+  "avg_logprob": -0.175,
+  "who": "Barbara"
+ },
+ {
+  "start": 1206.5428437500002,
+  "end": 1209.7322187500001,
+  "speaker": "SPEAKER_00",
+  "text": "Devo arrivare in tempo? Sì, devi...",
+  "lang": "it",
+  "avg_logprob": -0.404,
+  "who": "Barbara"
+ },
+ {
+  "start": 1209.83346875,
+  "end": 1212.51659375,
+  "speaker": "SPEAKER_00",
+  "text": "mettere in movimento molte reazioni.",
+  "lang": "it",
+  "avg_logprob": -0.272,
+  "who": "Barbara"
+ },
+ {
+  "start": 1212.93846875,
+  "end": 1213.3097187500002,
+  "speaker": "SPEAKER_01",
+  "text": "See you.",
+  "lang": "en",
+  "avg_logprob": -0.569,
+  "who": "Gyasi"
+ },
+ {
+  "start": 1213.3940937500001,
+  "end": 1216.4822187500001,
+  "speaker": "SPEAKER_00",
+  "text": "delle reazioni fast, veloci.",
+  "lang": "it",
+  "avg_logprob": -0.386,
+  "who": "Barbara"
+ },
+ {
+  "start": 1218.28784375,
+  "end": 1220.80221875,
+  "speaker": "SPEAKER_00",
+  "text": "Si dice in italiano to react, reagire.",
+  "lang": "it",
+  "avg_logprob": -0.223,
+  "who": "Barbara"
+ },
+ {
+  "start": 1223.31659375,
+  "end": 1224.19409375,
+  "speaker": "SPEAKER_00",
+  "text": "reagire",
+  "lang": "it",
+  "avg_logprob": -0.535,
+  "who": "Barbara"
+ },
+ {
+  "start": 1224.5484687500002,
+  "end": 1225.86471875,
+  "speaker": "SPEAKER_00",
+  "text": "velocemente.",
+  "lang": "it",
+  "avg_logprob": -0.343,
+  "who": "Barbara"
+ },
+ {
+  "start": 1226.9278437500002,
+  "end": 1230.20159375,
+  "speaker": "SPEAKER_00",
+  "text": "Quindi devo reagire velocemente.",
+  "lang": "it",
+  "avg_logprob": -0.152,
+  "who": "Barbara"
+ },
+ {
+  "start": 1232.47971875,
+  "end": 1233.15471875,
+  "speaker": "SPEAKER_01",
+  "text": "We need that.",
+  "lang": "en",
+  "avg_logprob": -0.585,
+  "who": "Gyasi"
+ },
+ {
+  "start": 1232.74971875,
+  "end": 1234.6565937500002,
+  "speaker": "SPEAKER_00",
+  "text": "Quindi Napoli è vita più tranquilla.",
+  "lang": "it",
+  "avg_logprob": -0.223,
+  "who": "Barbara"
+ },
+ {
+  "start": 1235.68596875,
+  "end": 1236.0909687500002,
+  "speaker": "SPEAKER_01",
+  "text": "I don't know.",
+  "lang": "en",
+  "avg_logprob": -0.68,
+  "who": "Gyasi"
+ },
+ {
+  "start": 1236.71534375,
+  "end": 1237.3565937500002,
+  "speaker": "SPEAKER_00",
+  "text": "Adesso.",
+  "lang": "it",
+  "avg_logprob": -0.552,
+  "who": "Barbara"
+ },
+ {
+  "start": 1241.2884687500002,
+  "end": 1244.83221875,
+  "speaker": "SPEAKER_01",
+  "text": "Tranquillo adesso perché...",
+  "lang": "it",
+  "avg_logprob": -0.524,
+  "who": "Gyasi"
+ },
+ {
+  "start": 1241.3897187500002,
+  "end": 1242.01409375,
+  "speaker": "SPEAKER_00",
+  "text": "So tranquilo.",
+  "lang": "en",
+  "avg_logprob": -0.283,
+  "who": "Barbara"
+ },
+ {
+  "start": 1244.73096875,
+  "end": 1246.67159375,
+  "speaker": "SPEAKER_00",
+  "text": "Si chiama Iemi, scusa.",
+  "lang": "it",
+  "avg_logprob": -0.504,
+  "who": "Barbara"
+ },
+ {
+  "start": 1246.3509687500002,
+  "end": 1247.5659687500001,
+  "speaker": "SPEAKER_01",
+  "text": "No, sì, sì.",
+  "lang": "it",
+  "avg_logprob": -0.35,
+  "who": "Gyasi"
+ },
+ {
+  "start": 1246.9078437500002,
+  "end": 1248.7472187500002,
+  "speaker": "SPEAKER_00",
+  "text": "Don't complain.",
+  "lang": "en",
+  "avg_logprob": -0.557,
+  "who": "Barbara"
+ },
+ {
+  "start": 1248.2578437500001,
+  "end": 1253.5059687500002,
+  "speaker": "SPEAKER_01",
+  "text": "Sì, sì, sì. Non in Napoli, ma in Miami, sì.",
+  "lang": "it",
+  "avg_logprob": -0.281,
+  "who": "Gyasi"
+ },
+ {
+  "start": 1254.0797187500002,
+  "end": 1259.9690937500002,
+  "speaker": "SPEAKER_01",
+  "text": "Molto turista in Miami adesso.",
+  "lang": "it",
+  "avg_logprob": -0.406,
+  "who": "Gyasi"
+ },
+ {
+  "start": 1259.3784687500001,
+  "end": 1262.9390937500002,
+  "speaker": "SPEAKER_00",
+  "text": "No, non posso immaginare di abitare, no.",
+  "lang": "it",
+  "avg_logprob": -0.393,
+  "who": "Barbara"
+ },
+ {
+  "start": 1263.27659375,
+  "end": 1264.0359687500002,
+  "speaker": "SPEAKER_00",
+  "text": "per me no",
+  "lang": "it",
+  "avg_logprob": -0.375,
+  "who": "Barbara"
+ },
+ {
+  "start": 1264.54221875,
+  "end": 1264.8965937500002,
+  "speaker": "SPEAKER_01",
+  "text": "Sì.",
+  "lang": "it",
+  "avg_logprob": -0.445,
+  "who": "Gyasi"
+ },
+ {
+  "start": 1264.8965937500002,
+  "end": 1268.6597187500001,
+  "speaker": "SPEAKER_00",
+  "text": "E molti turisti italiani anche, europei, brasiliani.  Sì.",
+  "lang": "it",
+  "avg_logprob": -0.201,
+  "who": "Barbara"
+ },
+ {
+  "start": 1268.33909375,
+  "end": 1268.74409375,
+  "speaker": "SPEAKER_01",
+  "text": "Sì.",
+  "lang": "it",
+  "avg_logprob": -0.445,
+  "who": "Gyasi"
+ },
+ {
+  "start": 1268.74409375,
+  "end": 1269.9928437500002,
+  "speaker": "SPEAKER_00",
+  "text": "Ancindini",
+  "lang": "it",
+  "avg_logprob": -0.653,
+  "who": "Barbara"
+ },
+ {
+  "start": 1270.4147187500002,
+  "end": 1276.62471875,
+  "speaker": "SPEAKER_01",
+  "text": "How do you say? How do you say funny? Is it divertamente?",
+  "lang": "en",
+  "avg_logprob": -0.44,
+  "who": "Gyasi"
+ },
+ {
+  "start": 1276.62471875,
+  "end": 1277.7215937500002,
+  "speaker": "SPEAKER_00",
+  "text": "divertente.",
+  "lang": "it",
+  "avg_logprob": -0.546,
+  "who": "Barbara"
+ },
+ {
+  "start": 1277.7215937500002,
+  "end": 1280.97846875,
+  "speaker": "SPEAKER_01",
+  "text": "diventer divertente ma",
+  "lang": "it",
+  "avg_logprob": -0.507,
+  "who": "Gyasi"
+ },
+ {
+  "start": 1281.24846875,
+  "end": 1282.0078437500001,
+  "speaker": "SPEAKER_01",
+  "text": "Grazie a tutti.",
+  "lang": "it",
+  "avg_logprob": -0.673,
+  "who": "Gyasi"
+ },
+ {
+  "start": 1282.7503437500002,
+  "end": 1285.09596875,
+  "speaker": "SPEAKER_01",
+  "text": "Uh, or maybe not, because...",
+  "lang": "en",
+  "avg_logprob": -0.545,
+  "who": "Gyasi"
+ },
+ {
+  "start": 1285.1465937500002,
+  "end": 1289.29784375,
+  "speaker": "SPEAKER_01",
+  "text": "People want seem to want to go in places that are hot like",
+  "lang": "en",
+  "avg_logprob": -0.282,
+  "who": "Gyasi"
+ },
+ {
+  "start": 1290.25971875,
+  "end": 1291.4915937500002,
+  "speaker": "SPEAKER_01",
+  "text": "See where there is a",
+  "lang": "en",
+  "avg_logprob": -0.676,
+  "who": "Gyasi"
+ },
+ {
+  "start": 1290.85034375,
+  "end": 1294.90034375,
+  "speaker": "SPEAKER_00",
+  "text": "Where there is a lot of mess, confusion, music.",
+  "lang": "en",
+  "avg_logprob": -0.249,
+  "who": "Barbara"
+ },
+ {
+  "start": 1294.79909375,
+  "end": 1295.8453437500002,
+  "speaker": "SPEAKER_01",
+  "text": "Yeah, I see that.",
+  "lang": "en",
+  "avg_logprob": -0.46,
+  "who": "Gyasi"
+ },
+ {
+  "start": 1295.2378437500001,
+  "end": 1297.60034375,
+  "speaker": "SPEAKER_00",
+  "text": "cocktail, ballare",
+  "lang": "it",
+  "avg_logprob": -0.385,
+  "who": "Barbara"
+ },
+ {
+  "start": 1297.31346875,
+  "end": 1298.2415937500002,
+  "speaker": "SPEAKER_01",
+  "text": "Sì, sì, sì",
+  "lang": "it",
+  "avg_logprob": -0.509,
+  "who": "Gyasi"
+ },
+ {
+  "start": 1298.5115937500002,
+  "end": 1299.42284375,
+  "speaker": "SPEAKER_00",
+  "text": "Dopo 6 anni.",
+  "lang": "it",
+  "avg_logprob": -0.535,
+  "who": "Barbara"
+ },
+ {
+  "start": 1300.67159375,
+  "end": 1309.53096875,
+  "speaker": "SPEAKER_00",
+  "text": "confuso, sotto pressione. La gente ama questo stress, è un po' come il narcotico.",
+  "lang": "it",
+  "avg_logprob": -0.454,
+  "who": "Barbara"
+ },
+ {
+  "start": 1304.2659687500002,
+  "end": 1304.6878437500002,
+  "speaker": "SPEAKER_01",
+  "text": "Sì.",
+  "lang": "it",
+  "avg_logprob": -0.292,
+  "who": "Gyasi"
+ },
+ {
+  "start": 1309.7334687500002,
+  "end": 1310.52659375,
+  "speaker": "SPEAKER_01",
+  "text": "Sì",
+  "lang": "it",
+  "avg_logprob": -0.727,
+  "who": "Gyasi"
+ },
+ {
+  "start": 1312.4334687500002,
+  "end": 1315.8253437500002,
+  "speaker": "SPEAKER_01",
+  "text": "Or you can say social system, systemi social.",
+  "lang": "en",
+  "avg_logprob": -0.482,
+  "who": "Gyasi"
+ },
+ {
+  "start": 1316.8040937500002,
+  "end": 1317.54659375,
+  "speaker": "SPEAKER_00",
+  "text": "No comment.",
+  "lang": "en",
+  "avg_logprob": -0.743,
+  "who": "Barbara"
+ },
+ {
+  "start": 1319.2003437500002,
+  "end": 1323.3515937500001,
+  "speaker": "SPEAKER_00",
+  "text": "Poi dopo il tuo, come si chiama, brain sense, dopo declina.",
+  "lang": "it",
+  "avg_logprob": -0.448,
+  "who": "Barbara"
+ },
+ {
+  "start": 1323.0140937500003,
+  "end": 1324.3472187500001,
+  "speaker": "SPEAKER_01",
+  "text": "I don't think so.",
+  "lang": "en",
+  "avg_logprob": -0.915,
+  "who": "Gyasi"
+ },
+ {
+  "start": 1325.14034375,
+  "end": 1328.8697187500002,
+  "speaker": "SPEAKER_00",
+  "text": "You know, the price you have to pay for long term.",
+  "lang": "en",
+  "avg_logprob": -0.362,
+  "who": "Barbara"
+ },
+ {
+  "start": 1329.2915937500002,
+  "end": 1330.21971875,
+  "speaker": "SPEAKER_00",
+  "text": "Sì, scusa.",
+  "lang": "it",
+  "avg_logprob": -0.522,
+  "who": "Barbara"
+ },
+ {
+  "start": 1329.3253437500002,
+  "end": 1329.78096875,
+  "speaker": "SPEAKER_01",
+  "text": "Esiste.",
+  "lang": "it",
+  "avg_logprob": -0.691,
+  "who": "Gyasi"
+ },
+ {
+  "start": 1330.4222187500002,
+  "end": 1330.79346875,
+  "speaker": "SPEAKER_01",
+  "text": "Sì.",
+  "lang": "it",
+  "avg_logprob": -0.426,
+  "who": "Gyasi"
+ },
+ {
+  "start": 1331.31659375,
+  "end": 1333.72971875,
+  "speaker": "SPEAKER_00",
+  "text": "Dopo sei idiota quando ho qualche problema.",
+  "lang": "it",
+  "avg_logprob": -0.369,
+  "who": "Barbara"
+ },
+ {
+  "start": 1334.01659375,
+  "end": 1345.9303437500002,
+  "speaker": "SPEAKER_01",
+  "text": "Sì, perché mi piace, mi molto piace la città sorrento, ma non sorrento con l'estate.",
+  "lang": "it",
+  "avg_logprob": -0.219,
+  "who": "Gyasi"
+ },
+ {
+  "start": 1346.4872187500002,
+  "end": 1351.60034375,
+  "speaker": "SPEAKER_01",
+  "text": "in, let's see, aspeta, estate, primavera, inverno.",
+  "lang": "en",
+  "avg_logprob": -0.318,
+  "who": "Gyasi"
+ },
+ {
+  "start": 1352.2584687500002,
+  "end": 1354.7728437500002,
+  "speaker": "SPEAKER_01",
+  "text": "Autunno.  Autunno, sì, in autunno.",
+  "lang": "it",
+  "avg_logprob": -0.347,
+  "who": "Gyasi"
+ },
+ {
+  "start": 1352.56221875,
+  "end": 1353.0853437500002,
+  "speaker": "SPEAKER_00",
+  "text": "I don't know.",
+  "lang": "en",
+  "avg_logprob": -0.553,
+  "who": "Barbara"
+ },
+ {
+  "start": 1354.4353437500001,
+  "end": 1355.4647187500002,
+  "speaker": "SPEAKER_00",
+  "text": "è tranquillo",
+  "lang": "it",
+  "avg_logprob": -0.521,
+  "who": "Barbara"
+ },
+ {
+  "start": 1355.12721875,
+  "end": 1357.08471875,
+  "speaker": "SPEAKER_01",
+  "text": "Sì, molto tranquille.",
+  "lang": "it",
+  "avg_logprob": -0.436,
+  "who": "Gyasi"
+ },
+ {
+  "start": 1356.81471875,
+  "end": 1359.6665937500002,
+  "speaker": "SPEAKER_00",
+  "text": "Il mare d'autunno è bello, rilassante.",
+  "lang": "it",
+  "avg_logprob": -0.219,
+  "who": "Barbara"
+ },
+ {
+  "start": 1360.2572187500002,
+  "end": 1363.7503437500002,
+  "speaker": "SPEAKER_00",
+  "text": "C'è poca gente, anche i colori meno forti.",
+  "lang": "it",
+  "avg_logprob": -0.142,
+  "who": "Barbara"
+ },
+ {
+  "start": 1363.7503437500002,
+  "end": 1364.8809687500002,
+  "speaker": "SPEAKER_01",
+  "text": "Sì, sì, sì.",
+  "lang": "it",
+  "avg_logprob": -0.344,
+  "who": "Gyasi"
+ },
+ {
+  "start": 1364.7290937500002,
+  "end": 1365.92721875,
+  "speaker": "SPEAKER_00",
+  "text": "Sì, l'ottuno è...",
+  "lang": "it",
+  "avg_logprob": -0.456,
+  "who": "Barbara"
+ },
+ {
+  "start": 1366.36596875,
+  "end": 1367.2772187500002,
+  "speaker": "SPEAKER_00",
+  "text": "Spettacolare.",
+  "lang": "it",
+  "avg_logprob": -0.449,
+  "who": "Barbara"
+ },
+ {
+  "start": 1368.8297187500002,
+  "end": 1371.2259687500002,
+  "speaker": "SPEAKER_00",
+  "text": "Ma il problema è adesso over-purism.",
+  "lang": "it",
+  "avg_logprob": -0.281,
+  "who": "Barbara"
+ },
+ {
+  "start": 1371.7828437500002,
+  "end": 1373.3015937500002,
+  "speaker": "SPEAKER_00",
+  "text": "Sono una cosa impossibile.",
+  "lang": "it",
+  "avg_logprob": -0.349,
+  "who": "Barbara"
+ },
+ {
+  "start": 1373.4197187500001,
+  "end": 1381.13159375,
+  "speaker": "SPEAKER_01",
+  "text": "You cannot enjoy the sights or seeing the the buildings because there's just people like everywhere",
+  "lang": "en",
+  "avg_logprob": -0.387,
+  "who": "Gyasi"
+ },
+ {
+  "start": 1381.13159375,
+  "end": 1385.9578437500002,
+  "speaker": "SPEAKER_00",
+  "text": "Sì, c'è sempre gente, gente che cammina, gente che fa foto.",
+  "lang": "it",
+  "avg_logprob": -0.18,
+  "who": "Barbara"
+ },
+ {
+  "start": 1385.8734687500003,
+  "end": 1386.2784687500002,
+  "speaker": "SPEAKER_01",
+  "text": "Sì.",
+  "lang": "it",
+  "avg_logprob": -0.623,
+  "who": "Gyasi"
+ },
+ {
+  "start": 1386.4134687500002,
+  "end": 1388.2022187500002,
+  "speaker": "SPEAKER_00",
+  "text": "che fa CEPF.",
+  "lang": "it",
+  "avg_logprob": -0.751,
+  "who": "Barbara"
+ },
+ {
+  "start": 1388.5397187500002,
+  "end": 1388.9447187500002,
+  "speaker": "SPEAKER_01",
+  "text": "Sì.",
+  "lang": "it",
+  "avg_logprob": -0.294,
+  "who": "Gyasi"
+ },
+ {
+  "start": 1388.7759687500002,
+  "end": 1390.27784375,
+  "speaker": "SPEAKER_00",
+  "text": "because",
+  "lang": "en",
+  "avg_logprob": -0.751,
+  "who": "Barbara"
+ },
+ {
+  "start": 1390.80096875,
+  "end": 1392.1340937500001,
+  "speaker": "SPEAKER_00",
+  "text": "questa è l'emozione.",
+  "lang": "it",
+  "avg_logprob": -0.451,
+  "who": "Barbara"
+ },
+ {
+  "start": 1392.79221875,
+  "end": 1394.9353437500001,
+  "speaker": "SPEAKER_00",
+  "text": "Sempre action, fare molte cose.",
+  "lang": "it",
+  "avg_logprob": -0.248,
+  "who": "Barbara"
+ },
+ {
+  "start": 1395.4922187500001,
+  "end": 1397.71971875,
+  "speaker": "SPEAKER_00",
+  "text": "mangiare, camminare.",
+  "lang": "it",
+  "avg_logprob": -0.239,
+  "who": "Barbara"
+ },
+ {
+  "start": 1398.1753437500001,
+  "end": 1401.53346875,
+  "speaker": "SPEAKER_00",
+  "text": "fare foto e questa vacanza è molto stressante.",
+  "lang": "it",
+  "avg_logprob": -0.206,
+  "who": "Barbara"
+ },
+ {
+  "start": 1401.65159375,
+  "end": 1402.09034375,
+  "speaker": "SPEAKER_01",
+  "text": "Sì.",
+  "lang": "it",
+  "avg_logprob": -0.263,
+  "who": "Gyasi"
+ },
+ {
+  "start": 1402.3097187500002,
+  "end": 1402.90034375,
+  "speaker": "SPEAKER_00",
+  "text": "Grazie mille.",
+  "lang": "it",
+  "avg_logprob": -0.708,
+  "who": "Barbara"
+ },
+ {
+  "start": 1403.33909375,
+  "end": 1418.2903437500001,
+  "speaker": "SPEAKER_01",
+  "text": "But I like to have a lot of vacancies or visits in, how do you say, not busy?",
+  "lang": "en",
+  "avg_logprob": -0.644,
+  "who": "Gyasi"
+ },
+ {
+  "start": 1418.96534375,
+  "end": 1420.0115937500002,
+  "speaker": "SPEAKER_01",
+  "text": "non",
+  "lang": "it",
+  "avg_logprob": -0.587,
+  "who": "Gyasi"
+ },
+ {
+  "start": 1419.8765937500002,
+  "end": 1423.6397187500002,
+  "speaker": "SPEAKER_00",
+  "text": "Non occupato, sono obeso, sono occupato.",
+  "lang": "it",
+  "avg_logprob": -0.445,
+  "who": "Barbara"
+ },
+ {
+  "start": 1420.1128437500001,
+  "end": 1420.8890937500003,
+  "speaker": "SPEAKER_01",
+  "text": "non occupare",
+  "lang": "it",
+  "avg_logprob": -0.434,
+  "who": "Gyasi"
+ },
+ {
+  "start": 1427.0315937500002,
+  "end": 1430.33909375,
+  "speaker": "SPEAKER_00",
+  "text": "Sono occupato per esempio durante la settimana.",
+  "lang": "it",
+  "avg_logprob": -0.175,
+  "who": "Barbara"
+ },
+ {
+  "start": 1430.8284687500002,
+  "end": 1431.4359687500003,
+  "speaker": "SPEAKER_01",
+  "text": "Sì.",
+  "lang": "it",
+  "avg_logprob": -0.378,
+  "who": "Gyasi"
+ },
+ {
+  "start": 1431.8240937500002,
+  "end": 1436.4478437500002,
+  "speaker": "SPEAKER_01",
+  "text": "Non piace a molte persone.",
+  "lang": "it",
+  "avg_logprob": -0.43,
+  "who": "Gyasi"
+ },
+ {
+  "start": 1436.9878437500001,
+  "end": 1446.80909375,
+  "speaker": "SPEAKER_01",
+  "text": "Non ho trovato molte persone, no, adesso ho molte persone in aeroplane, ma...",
+  "lang": "it",
+  "avg_logprob": -0.522,
+  "who": "Gyasi"
+ },
+ {
+  "start": 1446.80909375,
+  "end": 1448.6822187500002,
+  "speaker": "SPEAKER_00",
+  "text": "Sì, logico, però normalmente...",
+  "lang": "it",
+  "avg_logprob": -0.39,
+  "who": "Barbara"
+ },
+ {
+  "start": 1448.7328437500003,
+  "end": 1454.8584687500002,
+  "speaker": "SPEAKER_00",
+  "text": "Ma se tu pensi, questa mia amica americana, no, italiana, ma lei ha il passaporto americano.  Sì.",
+  "lang": "it",
+  "avg_logprob": -0.185,
+  "who": "Barbara"
+ },
+ {
+  "start": 1454.65596875,
+  "end": 1455.0272187500002,
+  "speaker": "SPEAKER_01",
+  "text": "Sì.",
+  "lang": "it",
+  "avg_logprob": -0.287,
+  "who": "Gyasi"
+ },
+ {
+  "start": 1455.0272187500002,
+  "end": 1458.89159375,
+  "speaker": "SPEAKER_00",
+  "text": "chi vive a Fort Lauderdale, lei fa guida turistica.",
+  "lang": "it",
+  "avg_logprob": -0.231,
+  "who": "Barbara"
+ },
+ {
+  "start": 1459.2122187500001,
+  "end": 1464.4265937500002,
+  "speaker": "SPEAKER_01",
+  "text": "Yes, exactly. Especially young people in Fort Lauderdale.",
+  "lang": "en",
+  "avg_logprob": -0.259,
+  "who": "Gyasi"
+ },
+ {
+  "start": 1460.2247187500002,
+  "end": 1460.9672187500003,
+  "speaker": "SPEAKER_00",
+  "text": "It's good.",
+  "lang": "en",
+  "avg_logprob": -0.867,
+  "who": "Barbara"
+ },
+ {
+  "start": 1466.08034375,
+  "end": 1470.6365937500002,
+  "speaker": "SPEAKER_00",
+  "text": "Non mi scusa, arriva il gruppo italiano, europeo, germano, arriva, accompagna.",
+  "lang": "it",
+  "avg_logprob": -0.194,
+  "who": "Barbara"
+ },
+ {
+  "start": 1470.6365937500002,
+  "end": 1471.0584687500002,
+  "speaker": "SPEAKER_01",
+  "text": "See?",
+  "lang": "en",
+  "avg_logprob": -0.407,
+  "who": "Gyasi"
+ },
+ {
+  "start": 1471.10909375,
+  "end": 1471.6153437500002,
+  "speaker": "SPEAKER_00",
+  "text": "Poi...",
+  "lang": "it",
+  "avg_logprob": -0.662,
+  "who": "Barbara"
+ },
+ {
+  "start": 1472.0709687500002,
+  "end": 1475.34471875,
+  "speaker": "SPEAKER_00",
+  "text": "di settembre-ottobre  fa",
+  "lang": "it",
+  "avg_logprob": -0.22,
+  "who": "Barbara"
+ },
+ {
+  "start": 1476.03659375,
+  "end": 1477.7578437500001,
+  "speaker": "SPEAKER_00",
+  "text": "Cambia programma, fa...",
+  "lang": "it",
+  "avg_logprob": -0.401,
+  "who": "Barbara"
+ },
+ {
+  "start": 1478.2640937500003,
+  "end": 1481.5040937500003,
+  "speaker": "SPEAKER_00",
+  "text": "New York, Niagara Falls, Canada.",
+  "lang": "it",
+  "avg_logprob": -0.288,
+  "who": "Barbara"
+ },
+ {
+  "start": 1482.0272187500002,
+  "end": 1486.0603437500001,
+  "speaker": "SPEAKER_00",
+  "text": "Montreal, ritorno a Washington DC, ritorno a Miami.",
+  "lang": "it",
+  "avg_logprob": -0.265,
+  "who": "Barbara"
+ },
+ {
+  "start": 1482.21284375,
+  "end": 1483.6134687500003,
+  "speaker": "SPEAKER_01",
+  "text": "Grazie.",
+  "lang": "it",
+  "avg_logprob": -0.796,
+  "who": "Gyasi"
+ },
+ {
+  "start": 1486.43159375,
+  "end": 1487.00534375,
+  "speaker": "SPEAKER_00",
+  "text": "Wow.",
+  "lang": "it",
+  "avg_logprob": -0.463,
+  "who": "Barbara"
+ },
+ {
+  "start": 1488.0853437500002,
+  "end": 1490.8528437500001,
+  "speaker": "SPEAKER_00",
+  "text": "E non mi scusa, io non posso con questo ritmo.",
+  "lang": "it",
+  "avg_logprob": -0.431,
+  "who": "Barbara"
+ },
+ {
+  "start": 1491.3253437500002,
+  "end": 1494.5147187500002,
+  "speaker": "SPEAKER_00",
+  "text": "Per me è normale, gruppo italiano o gruppo americano.",
+  "lang": "it",
+  "avg_logprob": -0.122,
+  "who": "Barbara"
+ },
+ {
+  "start": 1494.9365937500002,
+  "end": 1498.4297187500001,
+  "speaker": "SPEAKER_00",
+  "text": "Poi fa anche, penso, turismo domestico, va in Georgia.",
+  "lang": "it",
+  "avg_logprob": -0.1,
+  "who": "Barbara"
+ },
+ {
+  "start": 1498.7165937500001,
+  "end": 1499.66159375,
+  "speaker": "SPEAKER_00",
+  "text": "Sì.",
+  "lang": "it",
+  "avg_logprob": -0.721,
+  "who": "Barbara"
+ },
+ {
+  "start": 1500.25221875,
+  "end": 1504.6903437500002,
+  "speaker": "SPEAKER_00",
+  "text": "Dappertutto fa anche qualche volta a California, però a Mosque principalmente.",
+  "lang": "it",
+  "avg_logprob": -0.374,
+  "who": "Barbara"
+ },
+ {
+  "start": 1505.0784687500002,
+  "end": 1505.7872187500002,
+  "speaker": "SPEAKER_00",
+  "text": "Florida.",
+  "lang": "en",
+  "avg_logprob": -0.52,
+  "who": "Barbara"
+ },
+ {
+  "start": 1506.7659687500002,
+  "end": 1509.80346875,
+  "speaker": "SPEAKER_00",
+  "text": "Perché arrivano italiani anche che fanno honeymoon.",
+  "lang": "it",
+  "avg_logprob": -0.276,
+  "who": "Barbara"
+ },
+ {
+  "start": 1510.1747187500002,
+  "end": 1511.18721875,
+  "speaker": "SPEAKER_00",
+  "text": "per esempio",
+  "lang": "it",
+  "avg_logprob": -0.468,
+  "who": "Barbara"
+ },
+ {
+  "start": 1511.4403437500002,
+  "end": 1516.5197187500003,
+  "speaker": "SPEAKER_00",
+  "text": "E soprattutto Canada, italiani, giovani che fanno honeymoon, il viaggio di notte.",
+  "lang": "it",
+  "avg_logprob": -0.218,
+  "who": "Barbara"
+ },
+ {
+  "start": 1518.8653437500002,
+  "end": 1520.4178437500002,
+  "speaker": "SPEAKER_01",
+  "text": "Wait, in Canada?",
+  "lang": "en",
+  "avg_logprob": -0.327,
+  "who": "Gyasi"
+ },
+ {
+  "start": 1521.5315937500002,
+  "end": 1525.0584687500002,
+  "speaker": "SPEAKER_00",
+  "text": "Sì, perché ci piace Niagara Falls, le cascate del Niagara.",
+  "lang": "it",
+  "avg_logprob": -0.323,
+  "who": "Barbara"
+ },
+ {
+  "start": 1525.83471875,
+  "end": 1527.4884687500003,
+  "speaker": "SPEAKER_00",
+  "text": "by Montreal, Quebec.",
+  "lang": "en",
+  "avg_logprob": -0.412,
+  "who": "Barbara"
+ },
+ {
+  "start": 1527.9609687500001,
+  "end": 1530.8465937500002,
+  "speaker": "SPEAKER_00",
+  "text": "e poi dopo il primo gruppo",
+  "lang": "it",
+  "avg_logprob": -0.325,
+  "who": "Barbara"
+ },
+ {
+  "start": 1531.0997187500002,
+  "end": 1533.41159375,
+  "speaker": "SPEAKER_00",
+  "text": "Una settimana, ritorno a New York.",
+  "lang": "it",
+  "avg_logprob": -0.123,
+  "who": "Barbara"
+ },
+ {
+  "start": 1533.6478437500002,
+  "end": 1537.07346875,
+  "speaker": "SPEAKER_00",
+  "text": "Arriva un nuovo transfert dall'Europa, un nuovo gruppo.",
+  "lang": "it",
+  "avg_logprob": -0.212,
+  "who": "Barbara"
+ },
+ {
+  "start": 1537.4109687500002,
+  "end": 1541.57909375,
+  "speaker": "SPEAKER_00",
+  "text": "Ancora con il bus vanno in Canada, ritornano a Washington DC.",
+  "lang": "it",
+  "avg_logprob": -0.14,
+  "who": "Barbara"
+ },
+ {
+  "start": 1541.7647187500002,
+  "end": 1543.4859687500002,
+  "speaker": "SPEAKER_00",
+  "text": "ritornano a New York.",
+  "lang": "it",
+  "avg_logprob": -0.285,
+  "who": "Barbara"
+ },
+ {
+  "start": 1545.2915937500002,
+  "end": 1548.1265937500002,
+  "speaker": "SPEAKER_00",
+  "text": "Perché lei ama questo stile di vita.",
+  "lang": "it",
+  "avg_logprob": -0.24,
+  "who": "Barbara"
+ },
+ {
+  "start": 1548.61596875,
+  "end": 1550.6578437500002,
+  "speaker": "SPEAKER_00",
+  "text": "Dopo la settimana sono morta.",
+  "lang": "it",
+  "avg_logprob": -0.495,
+  "who": "Barbara"
+ },
+ {
+  "start": 1551.01221875,
+  "end": 1551.6703437500003,
+  "speaker": "SPEAKER_01",
+  "text": "Sì.",
+  "lang": "it",
+  "avg_logprob": -0.306,
+  "who": "Gyasi"
+ },
+ {
+  "start": 1552.2103437500002,
+  "end": 1555.5853437500002,
+  "speaker": "SPEAKER_00",
+  "text": "Pese il papà, ha 93 anni, suo padre.",
+  "lang": "it",
+  "avg_logprob": -0.222,
+  "who": "Barbara"
+ },
+ {
+  "start": 1556.1084687500002,
+  "end": 1556.76659375,
+  "speaker": "SPEAKER_01",
+  "text": "I'm Vero.",
+  "lang": "en",
+  "avg_logprob": -0.467,
+  "who": "Gyasi"
+ },
+ {
+  "start": 1558.15034375,
+  "end": 1560.27659375,
+  "speaker": "SPEAKER_00",
+  "text": "Allora il papà è pazzo, quando arriva...",
+  "lang": "it",
+  "avg_logprob": -0.336,
+  "who": "Barbara"
+ },
+ {
+  "start": 1560.58034375,
+  "end": 1564.76534375,
+  "speaker": "SPEAKER_00",
+  "text": "A Fort Lauderdale vanno nel gym e lui fa ginnastica.",
+  "lang": "it",
+  "avg_logprob": -0.271,
+  "who": "Barbara"
+ },
+ {
+  "start": 1565.2715937500002,
+  "end": 1570.28346875,
+  "speaker": "SPEAKER_00",
+  "text": "He said, Dad is again on the gym.  Excuse me, but he's 93 years old.",
+  "lang": "en",
+  "avg_logprob": -0.412,
+  "who": "Barbara"
+ },
+ {
+  "start": 1570.6040937500002,
+  "end": 1572.22409375,
+  "speaker": "SPEAKER_01",
+  "text": "Non sta bene.",
+  "lang": "it",
+  "avg_logprob": -0.423,
+  "who": "Gyasi"
+ },
+ {
+  "start": 1571.7009687500001,
+  "end": 1573.48971875,
+  "speaker": "SPEAKER_00",
+  "text": "Sta bene, è molto attivo.",
+  "lang": "it",
+  "avg_logprob": -0.207,
+  "who": "Barbara"
+ },
+ {
+  "start": 1573.48971875,
+  "end": 1574.19846875,
+  "speaker": "SPEAKER_01",
+  "text": "Sì, sì.",
+  "lang": "it",
+  "avg_logprob": -0.322,
+  "who": "Gyasi"
+ },
+ {
+  "start": 1573.8272187500002,
+  "end": 1578.0797187500002,
+  "speaker": "SPEAKER_00",
+  "text": "Una volta lui è partito da solo e ha fatto Milano.",
+  "lang": "it",
+  "avg_logprob": -0.181,
+  "who": "Barbara"
+ },
+ {
+  "start": 1578.41721875,
+  "end": 1580.7290937500002,
+  "speaker": "SPEAKER_00",
+  "text": "Milano-New York, Milano-Miami.",
+  "lang": "it",
+  "avg_logprob": -0.191,
+  "who": "Barbara"
+ },
+ {
+  "start": 1581.6065937500002,
+  "end": 1585.89284375,
+  "speaker": "SPEAKER_00",
+  "text": "Sta qualche giorno a Miami, prendono un volo domestico, vanno a Yellowstone.",
+  "lang": "it",
+  "avg_logprob": -0.146,
+  "who": "Barbara"
+ },
+ {
+  "start": 1586.3990937500002,
+  "end": 1587.29346875,
+  "speaker": "SPEAKER_00",
+  "text": "in inverno.",
+  "lang": "it",
+  "avg_logprob": -0.33,
+  "who": "Barbara"
+ },
+ {
+  "start": 1588.39034375,
+  "end": 1588.7447187500002,
+  "speaker": "SPEAKER_01",
+  "text": "No, no.",
+  "lang": "en",
+  "avg_logprob": -0.426,
+  "who": "Gyasi"
+ },
+ {
+  "start": 1588.4747187500002,
+  "end": 1593.3009687500003,
+  "speaker": "SPEAKER_00",
+  "text": "Ma scusa, vedo foto ha detto Ted e a Yellowstone ha detto Matt.",
+  "lang": "it",
+  "avg_logprob": -0.398,
+  "who": "Barbara"
+ },
+ {
+  "start": 1593.8240937500002,
+  "end": 1598.3465937500002,
+  "speaker": "SPEAKER_00",
+  "text": "Poi prendono un volo domestico da Denver e ritornano in Florida.",
+  "lang": "it",
+  "avg_logprob": -0.115,
+  "who": "Barbara"
+ },
+ {
+  "start": 1599.1397187500002,
+  "end": 1600.3209687500002,
+  "speaker": "SPEAKER_00",
+  "text": "scusaglielo  sto",
+  "lang": "it",
+  "avg_logprob": -0.639,
+  "who": "Barbara"
+ },
+ {
+  "start": 1600.48971875,
+  "end": 1604.1009687500002,
+  "speaker": "SPEAKER_00",
+  "text": "In inverno in Florida una persona che ha 90 anni",
+  "lang": "it",
+  "avg_logprob": -0.219,
+  "who": "Barbara"
+ },
+ {
+  "start": 1604.8940937500001,
+  "end": 1605.5015937500002,
+  "speaker": "SPEAKER_00",
+  "text": "Sta bene.",
+  "lang": "it",
+  "avg_logprob": -0.242,
+  "who": "Barbara"
+ },
+ {
+  "start": 1605.9065937500002,
+  "end": 1608.4209687500002,
+  "speaker": "SPEAKER_01",
+  "text": "Sì, sì, no, no, no, um...",
+  "lang": "it",
+  "avg_logprob": -0.426,
+  "who": "Gyasi"
+ },
+ {
+  "start": 1608.5728437500002,
+  "end": 1609.6022187500002,
+  "speaker": "SPEAKER_00",
+  "text": "molto sano",
+  "lang": "it",
+  "avg_logprob": -0.548,
+  "who": "Barbara"
+ },
+ {
+  "start": 1609.63596875,
+  "end": 1614.54659375,
+  "speaker": "SPEAKER_01",
+  "text": "Not even with a lot of money would I travel that much.  That's too much.",
+  "lang": "en",
+  "avg_logprob": -0.221,
+  "who": "Gyasi"
+ },
+ {
+  "start": 1615.6265937500002,
+  "end": 1617.2128437500003,
+  "speaker": "SPEAKER_00",
+  "text": "Ma ecco, è come un dis-age.",
+  "lang": "it",
+  "avg_logprob": -0.423,
+  "who": "Barbara"
+ },
+ {
+  "start": 1617.6853437500001,
+  "end": 1618.09034375,
+  "speaker": "SPEAKER_01",
+  "text": "Yeah.",
+  "lang": "en",
+  "avg_logprob": -0.432,
+  "who": "Gyasi"
+ },
+ {
+  "start": 1618.0565937500003,
+  "end": 1623.97971875,
+  "speaker": "SPEAKER_00",
+  "text": "Okay, at that time it was only 90, okay.  Yesterday I was only 90 years old, okay.",
+  "lang": "en",
+  "avg_logprob": -0.461,
+  "who": "Barbara"
+ },
+ {
+  "start": 1621.44846875,
+  "end": 1622.0897187500002,
+  "speaker": "SPEAKER_01",
+  "text": "da ieri",
+  "lang": "it",
+  "avg_logprob": -0.849,
+  "who": "Gyasi"
+ },
+ {
+  "start": 1624.7728437500002,
+  "end": 1625.3297187500002,
+  "speaker": "SPEAKER_00",
+  "text": "Va bene.",
+  "lang": "it",
+  "avg_logprob": -0.288,
+  "who": "Barbara"
+ },
+ {
+  "start": 1625.8697187500002,
+  "end": 1632.01221875,
+  "speaker": "SPEAKER_00",
+  "text": "Non molto attivo, muscoloso, va a bicicletta, però 90 anni, scusa, prende l'aereo, non parla inglese.",
+  "lang": "it",
+  "avg_logprob": -0.098,
+  "who": "Barbara"
+ },
+ {
+  "start": 1632.7378437500001,
+  "end": 1636.2815937500002,
+  "speaker": "SPEAKER_00",
+  "text": "Vende l'aereo da Milano, ok, Milano-New York, New York-Miami.",
+  "lang": "it",
+  "avg_logprob": -0.182,
+  "who": "Barbara"
+ },
+ {
+  "start": 1636.77096875,
+  "end": 1644.2972187500002,
+  "speaker": "SPEAKER_00",
+  "text": "Pausa e poi vanno direttamente a Yellowstone da Denver, penso.  Ho detto, ah ma sì, il volo domestico non è male.",
+  "lang": "it",
+  "avg_logprob": -0.245,
+  "who": "Barbara"
+ },
+ {
+  "start": 1644.65159375,
+  "end": 1652.51534375,
+  "speaker": "SPEAKER_01",
+  "text": "Ma come si dice, estends la vita forte.  Sì, sì, molto.",
+  "lang": "it",
+  "avg_logprob": -0.389,
+  "who": "Gyasi"
+ },
+ {
+  "start": 1651.3509687500002,
+  "end": 1654.20284375,
+  "speaker": "SPEAKER_00",
+  "text": "Sì, è molto resiliente.",
+  "lang": "it",
+  "avg_logprob": -0.319,
+  "who": "Barbara"
+ },
+ {
+  "start": 1659.28221875,
+  "end": 1662.9609687500001,
+  "speaker": "SPEAKER_00",
+  "text": "E qualche volta quest'anno sono stati in Argentina, in Patagonia.",
+  "lang": "it",
+  "avg_logprob": -0.186,
+  "who": "Barbara"
+ },
+ {
+  "start": 1659.29909375,
+  "end": 1659.8897187500002,
+  "speaker": "SPEAKER_01",
+  "text": "e qualche volta",
+  "lang": "it",
+  "avg_logprob": -0.462,
+  "who": "Gyasi"
+ },
+ {
+  "start": 1663.5347187500001,
+  "end": 1664.0915937500001,
+  "speaker": "SPEAKER_00",
+  "text": "Sì.",
+  "lang": "it",
+  "avg_logprob": -0.673,
+  "who": "Barbara"
+ },
+ {
+  "start": 1663.5853437500002,
+  "end": 1663.9734687500002,
+  "speaker": "SPEAKER_01",
+  "text": "Sì",
+  "lang": "it",
+  "avg_logprob": -0.748,
+  "who": "Gyasi"
+ },
+ {
+  "start": 1665.20534375,
+  "end": 1671.9722187500001,
+  "speaker": "SPEAKER_00",
+  "text": "L'anno scorso sono stato in Brasile, a Bahia, e lui sta bene, ha detto mi piace viaggiare.",
+  "lang": "it",
+  "avg_logprob": -0.174,
+  "who": "Barbara"
+ },
+ {
+  "start": 1672.22534375,
+  "end": 1678.6209687500002,
+  "speaker": "SPEAKER_01",
+  "text": "Ma adesso, quando lui è giovane...",
+  "lang": "it",
+  "avg_logprob": -0.245,
+  "who": "Gyasi"
+ },
+ {
+  "start": 1678.9922187500001,
+  "end": 1681.79346875,
+  "speaker": "SPEAKER_01",
+  "text": "Or, no, how do I say younger?  When he was younger, did he do that?",
+  "lang": "en",
+  "avg_logprob": -0.266,
+  "who": "Gyasi"
+ },
+ {
+  "start": 1681.7259687500002,
+  "end": 1684.9490937500002,
+  "speaker": "SPEAKER_00",
+  "text": "Quando era più giovane non viaggiava.",
+  "lang": "it",
+  "avg_logprob": -0.186,
+  "who": "Barbara"
+ },
+ {
+  "start": 1685.1853437500001,
+  "end": 1685.57346875,
+  "speaker": "SPEAKER_01",
+  "text": "Mmm.",
+  "lang": "it",
+  "avg_logprob": -0.6,
+  "who": "Gyasi"
+ },
+ {
+  "start": 1687.7165937500001,
+  "end": 1691.19284375,
+  "speaker": "SPEAKER_00",
+  "text": "Era un truck driver, camionista.",
+  "lang": "it",
+  "avg_logprob": -0.314,
+  "who": "Barbara"
+ },
+ {
+  "start": 1691.4628437500003,
+  "end": 1691.8847187500003,
+  "speaker": "SPEAKER_01",
+  "text": "Wow.",
+  "lang": "en",
+  "avg_logprob": -0.531,
+  "who": "Gyasi"
+ },
+ {
+  "start": 1692.59346875,
+  "end": 1696.69409375,
+  "speaker": "SPEAKER_00",
+  "text": "Ma un uomo molto piccolo, ma muscoloso, molto...",
+  "lang": "it",
+  "avg_logprob": -0.325,
+  "who": "Barbara"
+ },
+ {
+  "start": 1695.85034375,
+  "end": 1696.3565937500002,
+  "speaker": "SPEAKER_01",
+  "text": "Sì",
+  "lang": "it",
+  "avg_logprob": -0.526,
+  "who": "Gyasi"
+ },
+ {
+  "start": 1697.26784375,
+  "end": 1700.9972187500002,
+  "speaker": "SPEAKER_00",
+  "text": "Però da giovane vive qua e non viaggia.",
+  "lang": "it",
+  "avg_logprob": -0.203,
+  "who": "Barbara"
+ },
+ {
+  "start": 1701.4190937500002,
+  "end": 1707.1734687500002,
+  "speaker": "SPEAKER_00",
+  "text": "Comincia a viaggiare quando la sua figlia si sposa con questo americano.",
+  "lang": "it",
+  "avg_logprob": -0.146,
+  "who": "Barbara"
+ },
+ {
+  "start": 1707.5615937500002,
+  "end": 1710.6497187500001,
+  "speaker": "SPEAKER_00",
+  "text": "e abitano in Florida, lui era di Boston.",
+  "lang": "it",
+  "avg_logprob": -0.348,
+  "who": "Barbara"
+ },
+ {
+  "start": 1711.1390937500003,
+  "end": 1711.8309687500002,
+  "speaker": "SPEAKER_01",
+  "text": "Oh, buddy.",
+  "lang": "en",
+  "avg_logprob": -0.402,
+  "who": "Gyasi"
+ },
+ {
+  "start": 1711.32471875,
+  "end": 1712.6747187500002,
+  "speaker": "SPEAKER_00",
+  "text": "il marito, questo te",
+  "lang": "it",
+  "avg_logprob": -0.783,
+  "who": "Barbara"
+ },
+ {
+  "start": 1712.7422187500001,
+  "end": 1713.41721875,
+  "speaker": "SPEAKER_01",
+  "text": "Capito?",
+  "lang": "it",
+  "avg_logprob": -0.525,
+  "who": "Gyasi"
+ },
+ {
+  "start": 1712.99534375,
+  "end": 1718.1590937500002,
+  "speaker": "SPEAKER_00",
+  "text": "E lui comincia a viaggiare con la figlia quando la figlia...",
+  "lang": "it",
+  "avg_logprob": -0.256,
+  "who": "Barbara"
+ },
+ {
+  "start": 1718.49659375,
+  "end": 1721.2303437500002,
+  "speaker": "SPEAKER_00",
+  "text": "Questa mia amica lascia l'Europa.",
+  "lang": "it",
+  "avg_logprob": -0.162,
+  "who": "Barbara"
+ },
+ {
+  "start": 1721.9559687500002,
+  "end": 1723.25534375,
+  "speaker": "SPEAKER_00",
+  "text": "and live in Florida.",
+  "lang": "en",
+  "avg_logprob": -0.478,
+  "who": "Barbara"
+ },
+ {
+  "start": 1724.7065937500001,
+  "end": 1726.1915937500003,
+  "speaker": "SPEAKER_00",
+  "text": "Ma cominci a viaggiare...",
+  "lang": "it",
+  "avg_logprob": -0.397,
+  "who": "Barbara"
+ },
+ {
+  "start": 1726.6134687500003,
+  "end": 1728.8240937500002,
+  "speaker": "SPEAKER_00",
+  "text": "Cuando, when it was, cuando.",
+  "lang": "en",
+  "avg_logprob": -0.653,
+  "who": "Barbara"
+ },
+ {
+  "start": 1729.2965937500003,
+  "end": 1730.7647187500002,
+  "speaker": "SPEAKER_00",
+  "text": "Aveva",
+  "lang": "it",
+  "avg_logprob": -0.64,
+  "who": "Barbara"
+ },
+ {
+  "start": 1731.55784375,
+  "end": 1732.5197187500003,
+  "speaker": "SPEAKER_00",
+  "text": "Sessant'anni.",
+  "lang": "it",
+  "avg_logprob": -0.252,
+  "who": "Barbara"
+ },
+ {
+  "start": 1733.54909375,
+  "end": 1738.1222187500002,
+  "speaker": "SPEAKER_00",
+  "text": "Non proprio giovanissimo, 55-60, comincia a viaggiare.",
+  "lang": "it",
+  "avg_logprob": -0.144,
+  "who": "Barbara"
+ },
+ {
+  "start": 1739.6240937500002,
+  "end": 1742.2059687500002,
+  "speaker": "SPEAKER_00",
+  "text": "Un aereo cambia continente, prima no.",
+  "lang": "it",
+  "avg_logprob": -0.172,
+  "who": "Barbara"
+ },
+ {
+  "start": 1742.4928437500002,
+  "end": 1742.8472187500001,
+  "speaker": "SPEAKER_01",
+  "text": "Hmm.",
+  "lang": "en",
+  "avg_logprob": -0.639,
+  "who": "Gyasi"
+ },
+ {
+  "start": 1742.81346875,
+  "end": 1744.23096875,
+  "speaker": "SPEAKER_00",
+  "text": "viaggia solo in Europa.",
+  "lang": "it",
+  "avg_logprob": -0.307,
+  "who": "Barbara"
+ },
+ {
+  "start": 1744.9565937500001,
+  "end": 1755.2165937500001,
+  "speaker": "SPEAKER_01",
+  "text": "Molto, come si dice, la persona italiana in Florida, Fort Lauderdale, Miami.",
+  "lang": "it",
+  "avg_logprob": -0.252,
+  "who": "Gyasi"
+ },
+ {
+  "start": 1755.0309687500003,
+  "end": 1758.2034687500002,
+  "speaker": "SPEAKER_00",
+  "text": "Like retired pensionati.",
+  "lang": "en",
+  "avg_logprob": -0.558,
+  "who": "Barbara"
+ },
+ {
+  "start": 1758.0347187500001,
+  "end": 1762.7597187500003,
+  "speaker": "SPEAKER_01",
+  "text": "No, no, no, no, no, just, uh, no, no, no, um, um,",
+  "lang": "en",
+  "avg_logprob": -0.336,
+  "who": "Gyasi"
+ },
+ {
+  "start": 1759.6040937500002,
+  "end": 1760.2790937500001,
+  "speaker": "SPEAKER_00",
+  "text": "Adesso.",
+  "lang": "it",
+  "avg_logprob": -0.46,
+  "who": "Barbara"
+ },
+ {
+  "start": 1763.08034375,
+  "end": 1763.50221875,
+  "speaker": "SPEAKER_01",
+  "text": "Um,",
+  "lang": "en",
+  "avg_logprob": -0.429,
+  "who": "Gyasi"
+ },
+ {
+  "start": 1764.4472187500003,
+  "end": 1767.2315937500002,
+  "speaker": "SPEAKER_00",
+  "text": "A italiani che lavorano nel turismo...",
+  "lang": "it",
+  "avg_logprob": -0.279,
+  "who": "Barbara"
+ },
+ {
+  "start": 1764.48096875,
+  "end": 1773.18846875,
+  "speaker": "SPEAKER_01",
+  "text": "There are Italians who work in tourism...  No, no. Vivare? How do you say live?  Vivano.  Vivano.  Yes, yes.",
+  "lang": "en",
+  "avg_logprob": -0.56,
+  "who": "Gyasi"
+ },
+ {
+  "start": 1772.20971875,
+  "end": 1772.63159375,
+  "speaker": "SPEAKER_00",
+  "text": "leave them.",
+  "lang": "en",
+  "avg_logprob": -0.878,
+  "who": "Barbara"
+ },
+ {
+  "start": 1773.8634687500003,
+  "end": 1775.1122187500002,
+  "speaker": "SPEAKER_00",
+  "text": "Stabilmente, sì.",
+  "lang": "it",
+  "avg_logprob": -0.324,
+  "who": "Barbara"
+ },
+ {
+  "start": 1776.4790937500002,
+  "end": 1776.85034375,
+  "speaker": "SPEAKER_01",
+  "text": "See.",
+  "lang": "en",
+  "avg_logprob": -0.791,
+  "who": "Gyasi"
+ },
+ {
+  "start": 1778.4703437500002,
+  "end": 1785.13596875,
+  "speaker": "SPEAKER_00",
+  "text": "Vivono stabilmente per lavoro, hanno ristorante, galleria, real estate, lavorano.",
+  "lang": "it",
+  "avg_logprob": -0.207,
+  "who": "Barbara"
+ },
+ {
+  "start": 1785.27096875,
+  "end": 1787.5828437500002,
+  "speaker": "SPEAKER_00",
+  "text": "Nel settore immobiliare, sì.",
+  "lang": "it",
+  "avg_logprob": -0.465,
+  "who": "Barbara"
+ },
+ {
+  "start": 1786.95846875,
+  "end": 1787.3297187500002,
+  "speaker": "SPEAKER_01",
+  "text": "Sì.",
+  "lang": "it",
+  "avg_logprob": -0.316,
+  "who": "Gyasi"
+ },
+ {
+  "start": 1787.6334687500002,
+  "end": 1788.7809687500003,
+  "speaker": "SPEAKER_00",
+  "text": "ma da tanti anni.",
+  "lang": "it",
+  "avg_logprob": -0.291,
+  "who": "Barbara"
+ },
+ {
+  "start": 1790.3165937500003,
+  "end": 1791.04221875,
+  "speaker": "SPEAKER_01",
+  "text": "Sì, perché...",
+  "lang": "it",
+  "avg_logprob": -0.462,
+  "who": "Gyasi"
+ },
+ {
+  "start": 1790.6034687500003,
+  "end": 1799.4122187500002,
+  "speaker": "SPEAKER_00",
+  "text": "Qualcuno studia all'università, però pochi. Normalmente nel turismo o gastronomia, ristorante, discoteche.",
+  "lang": "it",
+  "avg_logprob": -0.147,
+  "who": "Barbara"
+ },
+ {
+  "start": 1799.3784687500001,
+  "end": 1814.7684687500002,
+  "speaker": "SPEAKER_01",
+  "text": "Sì, sì, sì, capito bene. Perché in New York, certo, ma non, come si dice,  I was surprised to see that many...  Ero sorpreso.",
+  "lang": "it",
+  "avg_logprob": -0.259,
+  "who": "Gyasi"
+ },
+ {
+  "start": 1813.5872187500001,
+  "end": 1814.7853437500003,
+  "speaker": "SPEAKER_00",
+  "text": "Ero sorpreso.",
+  "lang": "it",
+  "avg_logprob": -0.358,
+  "who": "Barbara"
+ },
+ {
+  "start": 1814.7853437500003,
+  "end": 1833.1284687500001,
+  "speaker": "SPEAKER_01",
+  "text": "Sì, perché non, I did not know this until my wife, before we got married, she came down a lot and she started thinking about working, come si dice, aspetta, mi...",
+  "lang": "it",
+  "avg_logprob": -0.256,
+  "who": "Gyasi"
+ },
+ {
+  "start": 1833.6009687500002,
+  "end": 1834.5628437500002,
+  "speaker": "SPEAKER_01",
+  "text": "Firenze a te.",
+  "lang": "it",
+  "avg_logprob": -0.485,
+  "who": "Gyasi"
+ },
+ {
+  "start": 1834.1072187500001,
+  "end": 1840.4690937500002,
+  "speaker": "SPEAKER_00",
+  "text": "Did your wife start working in the United States or in Naples?",
+  "lang": "en",
+  "avg_logprob": -0.285,
+  "who": "Barbara"
+ },
+ {
+  "start": 1835.77784375,
+  "end": 1836.1659687500003,
+  "speaker": "SPEAKER_01",
+  "text": "Sì.",
+  "lang": "it",
+  "avg_logprob": -0.509,
+  "who": "Gyasi"
+ },
+ {
+  "start": 1839.5915937500001,
+  "end": 1845.7172187500003,
+  "speaker": "SPEAKER_01",
+  "text": "Sì, sì. No, no, in Stati Uniti. Perché, come si dice, dopo...",
+  "lang": "it",
+  "avg_logprob": -0.203,
+  "who": "Gyasi"
+ },
+ {
+  "start": 1845.9703437500002,
+  "end": 1852.2478437500001,
+  "speaker": "SPEAKER_01",
+  "text": "Dopo io ho il mio come si dice...",
+  "lang": "it",
+  "avg_logprob": -0.558,
+  "who": "Gyasi"
+ },
+ {
+  "start": 1853.8003437500001,
+  "end": 1854.5090937500001,
+  "speaker": "SPEAKER_00",
+  "text": "Diploma.",
+  "lang": "it",
+  "avg_logprob": -0.401,
+  "who": "Barbara"
+ },
+ {
+  "start": 1854.5597187500002,
+  "end": 1858.00221875,
+  "speaker": "SPEAKER_01",
+  "text": "Diploma? How do you say diploma again?",
+  "lang": "en",
+  "avg_logprob": -0.343,
+  "who": "Gyasi"
+ },
+ {
+  "start": 1858.2890937500001,
+  "end": 1860.8372187500001,
+  "speaker": "SPEAKER_00",
+  "text": "Il diploma o la laurea?  La laurea, la laurea.",
+  "lang": "it",
+  "avg_logprob": -0.497,
+  "who": "Barbara"
+ },
+ {
+  "start": 1859.6559687500003,
+  "end": 1860.8203437500001,
+  "speaker": "SPEAKER_01",
+  "text": "L'Aurea",
+  "lang": "it",
+  "avg_logprob": -0.713,
+  "who": "Gyasi"
+ },
+ {
+  "start": 1860.8372187500001,
+  "end": 1861.8497187500002,
+  "speaker": "SPEAKER_01",
+  "text": "L'aria",
+  "lang": "it",
+  "avg_logprob": -0.735,
+  "who": "Gyasi"
+ },
+ {
+  "start": 1861.1240937500002,
+  "end": 1861.91721875,
+  "speaker": "SPEAKER_00",
+  "text": "L'ho con la nave.",
+  "lang": "it",
+  "avg_logprob": -0.827,
+  "who": "Barbara"
+ },
+ {
+  "start": 1861.91721875,
+  "end": 1862.2715937500002,
+  "speaker": "SPEAKER_01",
+  "text": "Yes.",
+  "lang": "en",
+  "avg_logprob": -0.7,
+  "who": "Gyasi"
+ },
+ {
+  "start": 1862.9634687500002,
+  "end": 1889.9634687500002,
+  "speaker": "SPEAKER_01",
+  "text": "In Stati Uniti per un anno, un anno e mezzo, quando pensare, ok, lavoro in Stati Uniti, lavoro a Napoli.  Quando il mio fidanzato è arrivato con me negli Stati Uniti, lei...",
+  "lang": "it",
+  "avg_logprob": -0.134,
+  "who": "Gyasi"
+ },
+ {
+  "start": 1891.6172187500001,
+  "end": 1899.75096875,
+  "speaker": "SPEAKER_01",
+  "text": "parli um la persona and so lay um how do you say discovered",
+  "lang": "en",
+  "avg_logprob": -0.492,
+  "who": "Gyasi"
+ },
+ {
+  "start": 1900.74659375,
+  "end": 1902.8053437500002,
+  "speaker": "SPEAKER_00",
+  "text": "Scopre, discover, scoprire.",
+  "lang": "it",
+  "avg_logprob": -0.229,
+  "who": "Barbara"
+ },
+ {
+  "start": 1903.2272187500002,
+  "end": 1907.05784375,
+  "speaker": "SPEAKER_01",
+  "text": "scoprire molto",
+  "lang": "it",
+  "avg_logprob": -0.449,
+  "who": "Gyasi"
+ },
+ {
+  "start": 1907.2603437500002,
+  "end": 1908.8128437500002,
+  "speaker": "SPEAKER_01",
+  "text": "La genti.",
+  "lang": "it",
+  "avg_logprob": -0.835,
+  "who": "Gyasi"
+ },
+ {
+  "start": 1908.9647187500002,
+  "end": 1910.8884687500001,
+  "speaker": "SPEAKER_01",
+  "text": "Um, in, uh...",
+  "lang": "en",
+  "avg_logprob": -0.337,
+  "who": "Gyasi"
+ },
+ {
+  "start": 1910.9728437500003,
+  "end": 1912.5084687500002,
+  "speaker": "SPEAKER_01",
+  "text": "And like...",
+  "lang": "en",
+  "avg_logprob": -0.72,
+  "who": "Gyasi"
+ },
+ {
+  "start": 1912.6772187500003,
+  "end": 1914.2634687500001,
+  "speaker": "SPEAKER_01",
+  "text": "How do I say this?",
+  "lang": "en",
+  "avg_logprob": -0.243,
+  "who": "Gyasi"
+ },
+ {
+  "start": 1914.8540937500002,
+  "end": 1916.0015937500002,
+  "speaker": "SPEAKER_01",
+  "text": "Comunities.",
+  "lang": "it",
+  "avg_logprob": -0.637,
+  "who": "Gyasi"
+ },
+ {
+  "start": 1916.1197187500002,
+  "end": 1916.9803437500002,
+  "speaker": "SPEAKER_01",
+  "text": "Comunities",
+  "lang": "it",
+  "avg_logprob": -0.669,
+  "who": "Gyasi"
+ },
+ {
+  "start": 1916.8622187500002,
+  "end": 1922.7853437500003,
+  "speaker": "SPEAKER_00",
+  "text": "Sì che molta gente, che molti italiani sono in una comunità, quindi you use a game chat.",
+  "lang": "it",
+  "avg_logprob": -0.279,
+  "who": "Barbara"
+ },
+ {
+  "start": 1923.1228437500001,
+  "end": 1925.5697187500002,
+  "speaker": "SPEAKER_00",
+  "text": "C'è una comunità in Florida.",
+  "lang": "it",
+  "avg_logprob": -0.205,
+  "who": "Barbara"
+ },
+ {
+  "start": 1925.5697187500002,
+  "end": 1926.4978437500001,
+  "speaker": "SPEAKER_01",
+  "text": "Ok, sì.",
+  "lang": "it",
+  "avg_logprob": -0.288,
+  "who": "Gyasi"
+ },
+ {
+  "start": 1927.3415937500001,
+  "end": 1928.6578437500002,
+  "speaker": "SPEAKER_01",
+  "text": "c'è una comunità",
+  "lang": "it",
+  "avg_logprob": -0.301,
+  "who": "Gyasi"
+ },
+ {
+  "start": 1927.9153437500001,
+  "end": 1930.3959687500003,
+  "speaker": "SPEAKER_00",
+  "text": "Una comunità di italiani in Florida.",
+  "lang": "it",
+  "avg_logprob": -0.194,
+  "who": "Barbara"
+ },
+ {
+  "start": 1934.34471875,
+  "end": 1940.1497187500001,
+  "speaker": "SPEAKER_00",
+  "text": "Perché The Dream, il sogno di molti italiani è vivere negli Stati Uniti, adesso la situazione è un po' differente.",
+  "lang": "it",
+  "avg_logprob": -0.131,
+  "who": "Barbara"
+ },
+ {
+  "start": 1941.7697187500003,
+  "end": 1944.6553437500002,
+  "speaker": "SPEAKER_00",
+  "text": "Trump è un'atmosfera proprio del passato.",
+  "lang": "it",
+  "avg_logprob": -0.287,
+  "who": "Barbara"
+ },
+ {
+  "start": 1945.0772187500002,
+  "end": 1955.01659375,
+  "speaker": "SPEAKER_00",
+  "text": "Questo American Dream, molti giovani dopo l'università fanno PhD o studiano in un'università americana, se hai soldi, non so, Stanford.",
+  "lang": "it",
+  "avg_logprob": -0.197,
+  "who": "Barbara"
+ },
+ {
+  "start": 1955.3540937500002,
+  "end": 1957.6322187500002,
+  "speaker": "SPEAKER_00",
+  "text": "o i scosti studi.",
+  "lang": "it",
+  "avg_logprob": -0.717,
+  "who": "Barbara"
+ },
+ {
+  "start": 1957.7840937500002,
+  "end": 1960.5853437500002,
+  "speaker": "SPEAKER_00",
+  "text": "Fai MBA, fai qualcosa, un master.",
+  "lang": "it",
+  "avg_logprob": -0.369,
+  "who": "Barbara"
+ },
+ {
+  "start": 1960.8384687500002,
+  "end": 1962.1547187500003,
+  "speaker": "SPEAKER_00",
+  "text": "Qualcuno resta?",
+  "lang": "it",
+  "avg_logprob": -0.211,
+  "who": "Barbara"
+ },
+ {
+  "start": 1962.3065937500003,
+  "end": 1965.3103437500001,
+  "speaker": "SPEAKER_00",
+  "text": "Ci sono molti italiani accademici che lavorano.",
+  "lang": "it",
+  "avg_logprob": -0.133,
+  "who": "Barbara"
+ },
+ {
+  "start": 1965.2428437500002,
+  "end": 1966.2047187500002,
+  "speaker": "SPEAKER_01",
+  "text": "sì sì  durante il corso",
+  "lang": "it",
+  "avg_logprob": -0.472,
+  "who": "Gyasi"
+ },
+ {
+  "start": 1965.4790937500002,
+  "end": 1966.7953437500003,
+  "speaker": "SPEAKER_00",
+  "text": "durante il Covid",
+  "lang": "it",
+  "avg_logprob": -0.55,
+  "who": "Barbara"
+ },
+ {
+  "start": 1967.1328437500001,
+  "end": 1972.4315937500003,
+  "speaker": "SPEAKER_00",
+  "text": "Molti lavorano nel settore MIT, microbiologia, biologia.",
+  "lang": "it",
+  "avg_logprob": -0.196,
+  "who": "Barbara"
+ },
+ {
+  "start": 1972.9547187500002,
+  "end": 1976.2284687500003,
+  "speaker": "SPEAKER_00",
+  "text": "C'è questo professore alla Emory University a Atlanta.",
+  "lang": "it",
+  "avg_logprob": -0.27,
+  "who": "Barbara"
+ },
+ {
+  "start": 1976.7178437500002,
+  "end": 1979.4684687500003,
+  "speaker": "SPEAKER_00",
+  "text": "come si chiama, che lavora nel settore big data.",
+  "lang": "it",
+  "avg_logprob": -0.172,
+  "who": "Barbara"
+ },
+ {
+  "start": 1980.4134687500002,
+  "end": 1986.10034375,
+  "speaker": "SPEAKER_00",
+  "text": "ma è lì da tanti anni, penso che ha 55 anni, lavora all'università, professore.",
+  "lang": "it",
+  "avg_logprob": -0.181,
+  "who": "Barbara"
+ },
+ {
+  "start": 1986.4040937500001,
+  "end": 1988.6484687500001,
+  "speaker": "SPEAKER_00",
+  "text": "specialist in big data and",
+  "lang": "en",
+  "avg_logprob": -0.429,
+  "who": "Barbara"
+ },
+ {
+  "start": 1989.0872187500001,
+  "end": 1991.0447187500001,
+  "speaker": "SPEAKER_00",
+  "text": "come si chiama, infettivologo.",
+  "lang": "it",
+  "avg_logprob": -0.255,
+  "who": "Barbara"
+ },
+ {
+  "start": 1991.5678437500003,
+  "end": 1993.0359687500002,
+  "speaker": "SPEAKER_01",
+  "text": "ok capito",
+  "lang": "it",
+  "avg_logprob": -0.455,
+  "who": "Gyasi"
+ },
+ {
+  "start": 1993.55909375,
+  "end": 1997.0184687500002,
+  "speaker": "SPEAKER_00",
+  "text": "Durante Covid abbiamo sempre in tv",
+  "lang": "it",
+  "avg_logprob": -0.334,
+  "who": "Barbara"
+ },
+ {
+  "start": 1997.2715937500002,
+  "end": 2004.9159687500003,
+  "speaker": "SPEAKER_00",
+  "text": "Il professore italiano che lavora a MIT, a Boston, a Harvard, tutti lavorano come accademici, ma a alto livello.",
+  "lang": "it",
+  "avg_logprob": -0.25,
+  "who": "Barbara"
+ },
+ {
+  "start": 2005.2703437500002,
+  "end": 2007.1265937500002,
+  "speaker": "SPEAKER_00",
+  "text": "genetisti, microbiologi.",
+  "lang": "it",
+  "avg_logprob": -0.301,
+  "who": "Barbara"
+ },
+ {
+  "start": 2007.34596875,
+  "end": 2010.1134687500003,
+  "speaker": "SPEAKER_00",
+  "text": "esperti di malattie.",
+  "lang": "it",
+  "avg_logprob": -0.287,
+  "who": "Barbara"
+ },
+ {
+  "start": 2010.3834687500002,
+  "end": 2014.51784375,
+  "speaker": "SPEAKER_00",
+  "text": "Abbiamo scoperto che questi italiani vivono lì da 20-25 anni.",
+  "lang": "it",
+  "avg_logprob": -0.07,
+  "who": "Barbara"
+ },
+ {
+  "start": 2014.6190937500003,
+  "end": 2034.1097187500002,
+  "speaker": "SPEAKER_01",
+  "text": "Sì, sì, non capito perché una televisione per la Covid, la professore, la, come si dice, expert, surname italiano, surname italiano, sì.",
+  "lang": "it",
+  "avg_logprob": -0.277,
+  "who": "Gyasi"
+ },
+ {
+  "start": 2026.1953437500001,
+  "end": 2027.2922187500003,
+  "speaker": "SPEAKER_00",
+  "text": "I guess so, yes.",
+  "lang": "en",
+  "avg_logprob": -0.533,
+  "who": "Barbara"
+ },
+ {
+  "start": 2027.5284687500002,
+  "end": 2028.5409687500003,
+  "speaker": "SPEAKER_00",
+  "text": "expert",
+  "lang": "en",
+  "avg_logprob": -0.454,
+  "who": "Barbara"
+ },
+ {
+  "start": 2034.5315937500002,
+  "end": 2035.5609687500003,
+  "speaker": "SPEAKER_00",
+  "text": "Sono incredibile.",
+  "lang": "it",
+  "avg_logprob": -0.584,
+  "who": "Barbara"
+ },
+ {
+  "start": 2034.5484687500002,
+  "end": 2034.9703437500002,
+  "speaker": "SPEAKER_01",
+  "text": "Sì.",
+  "lang": "it",
+  "avg_logprob": -0.487,
+  "who": "Gyasi"
+ },
+ {
+  "start": 2035.6622187500002,
+  "end": 2036.1009687500002,
+  "speaker": "SPEAKER_01",
+  "text": "Sì.",
+  "lang": "it",
+  "avg_logprob": -0.469,
+  "who": "Gyasi"
+ },
+ {
+  "start": 2036.2528437500002,
+  "end": 2037.4509687500001,
+  "speaker": "SPEAKER_00",
+  "text": "perché sono",
+  "lang": "it",
+  "avg_logprob": -0.351,
+  "who": "Barbara"
+ },
+ {
+  "start": 2037.7715937500002,
+  "end": 2043.0872187500001,
+  "speaker": "SPEAKER_00",
+  "text": "erano medici o specialisti, biologi, microbiologi, una famosa...",
+  "lang": "it",
+  "avg_logprob": -0.182,
+  "who": "Barbara"
+ },
+ {
+  "start": 2043.6947187500002,
+  "end": 2046.3272187500002,
+  "speaker": "SPEAKER_00",
+  "text": "una famosa che si chiama Eladia Capua.",
+  "lang": "it",
+  "avg_logprob": -0.258,
+  "who": "Barbara"
+ },
+ {
+  "start": 2046.6647187500002,
+  "end": 2048.68971875,
+  "speaker": "SPEAKER_00",
+  "text": "Lavoro all'università di...",
+  "lang": "it",
+  "avg_logprob": -0.345,
+  "who": "Barbara"
+ },
+ {
+  "start": 2049.22971875,
+  "end": 2053.09409375,
+  "speaker": "SPEAKER_00",
+  "text": "della Florida esperta di zoonosi.",
+  "lang": "it",
+  "avg_logprob": -0.285,
+  "who": "Barbara"
+ },
+ {
+  "start": 2057.8359687500006,
+  "end": 2058.74721875,
+  "speaker": "SPEAKER_00",
+  "text": "veterinaria.",
+  "lang": "it",
+  "avg_logprob": -0.382,
+  "who": "Barbara"
+ },
+ {
+  "start": 2058.6628437500003,
+  "end": 2059.13534375,
+  "speaker": "SPEAKER_01",
+  "text": "Mm.",
+  "lang": "en",
+  "avg_logprob": -0.848,
+  "who": "Gyasi"
+ },
+ {
+  "start": 2059.65846875,
+  "end": 2064.41721875,
+  "speaker": "SPEAKER_00",
+  "text": "Adesso penso di tornare, non so se a Napoli, si chiama Ilaria K, molto brava.",
+  "lang": "it",
+  "avg_logprob": -0.137,
+  "who": "Barbara"
+ },
+ {
+  "start": 2065.02471875,
+  "end": 2067.74159375,
+  "speaker": "SPEAKER_00",
+  "text": "Durante il Covid parla di spillover.",
+  "lang": "it",
+  "avg_logprob": -0.308,
+  "who": "Barbara"
+ },
+ {
+  "start": 2067.9609687500006,
+  "end": 2069.0240937500002,
+  "speaker": "SPEAKER_00",
+  "text": "questi problemi.",
+  "lang": "it",
+  "avg_logprob": -0.397,
+  "who": "Barbara"
+ },
+ {
+  "start": 2069.7665937500005,
+  "end": 2076.12846875,
+  "speaker": "SPEAKER_00",
+  "text": "E lei ha lavorato per anni all'Università della Florida, la figlia abita con lei.",
+  "lang": "it",
+  "avg_logprob": -0.136,
+  "who": "Barbara"
+ },
+ {
+  "start": 2077.30971875,
+  "end": 2080.88721875,
+  "speaker": "SPEAKER_00",
+  "text": "perché il mondo accademico italiano è mafia e ha detto",
+  "lang": "it",
+  "avg_logprob": -0.201,
+  "who": "Barbara"
+ },
+ {
+  "start": 2081.2584687500002,
+  "end": 2082.7772187500004,
+  "speaker": "SPEAKER_00",
+  "text": "Lascio l'Italia.",
+  "lang": "it",
+  "avg_logprob": -0.223,
+  "who": "Barbara"
+ },
+ {
+  "start": 2083.3678437500002,
+  "end": 2085.8653437500006,
+  "speaker": "SPEAKER_00",
+  "text": "perché l'università americana",
+  "lang": "it",
+  "avg_logprob": -0.333,
+  "who": "Barbara"
+ },
+ {
+  "start": 2086.37159375,
+  "end": 2088.0759687500004,
+  "speaker": "SPEAKER_00",
+  "text": "mi dà un'opportunità.",
+  "lang": "it",
+  "avg_logprob": -0.275,
+  "who": "Barbara"
+ },
+ {
+  "start": 2088.3122187500003,
+  "end": 2089.4597187500003,
+  "speaker": "SPEAKER_01",
+  "text": "Sì, sì",
+  "lang": "it",
+  "avg_logprob": -0.577,
+  "who": "Gyasi"
+ },
+ {
+  "start": 2089.81409375,
+  "end": 2092.8347187500003,
+  "speaker": "SPEAKER_00",
+  "text": "Salute in Italia, devi conoscere...",
+  "lang": "it",
+  "avg_logprob": -0.527,
+  "who": "Barbara"
+ },
+ {
+  "start": 2093.1384687500004,
+  "end": 2098.23471875,
+  "speaker": "SPEAKER_00",
+  "text": "In Final Time Connection è molto difficile come professore all'università.",
+  "lang": "it",
+  "avg_logprob": -0.264,
+  "who": "Barbara"
+ },
+ {
+  "start": 2098.23471875,
+  "end": 2101.74471875,
+  "speaker": "SPEAKER_01",
+  "text": "I heard this, that you needed connections here.",
+  "lang": "en",
+  "avg_logprob": -0.336,
+  "who": "Gyasi"
+ },
+ {
+  "start": 2101.1540937500004,
+  "end": 2101.66034375,
+  "speaker": "SPEAKER_00",
+  "text": "Grazie.",
+  "lang": "it",
+  "avg_logprob": -0.749,
+  "who": "Barbara"
+ },
+ {
+  "start": 2101.7615937500004,
+  "end": 2102.40284375,
+  "speaker": "SPEAKER_01",
+  "text": "you know",
+  "lang": "en",
+  "avg_logprob": -0.706,
+  "who": "Gyasi"
+ },
+ {
+  "start": 2103.31409375,
+  "end": 2105.6765937500004,
+  "speaker": "SPEAKER_00",
+  "text": "Nuova generazione sta cambiando.",
+  "lang": "it",
+  "avg_logprob": -0.114,
+  "who": "Barbara"
+ },
+ {
+  "start": 2105.9128437500003,
+  "end": 2106.8915937500005,
+  "speaker": "SPEAKER_00",
+  "text": "ma nel passato.",
+  "lang": "it",
+  "avg_logprob": -0.208,
+  "who": "Barbara"
+ },
+ {
+  "start": 2107.1953437500006,
+  "end": 2110.18221875,
+  "speaker": "SPEAKER_00",
+  "text": "molti medici, non medici, molti scienziati.",
+  "lang": "it",
+  "avg_logprob": -0.172,
+  "who": "Barbara"
+ },
+ {
+  "start": 2110.5534687500003,
+  "end": 2114.1140937500004,
+  "speaker": "SPEAKER_00",
+  "text": "Non scrivono, non parlano l'inglese.",
+  "lang": "it",
+  "avg_logprob": -0.326,
+  "who": "Barbara"
+ },
+ {
+  "start": 2114.5528437500006,
+  "end": 2115.5147187500006,
+  "speaker": "SPEAKER_00",
+  "text": "iscrivono",
+  "lang": "it",
+  "avg_logprob": -0.459,
+  "who": "Barbara"
+ },
+ {
+  "start": 2115.78471875,
+  "end": 2117.3709687500004,
+  "speaker": "SPEAKER_00",
+  "text": "release a new",
+  "lang": "en",
+  "avg_logprob": -0.529,
+  "who": "Barbara"
+ },
+ {
+  "start": 2117.82659375,
+  "end": 2121.6572187500005,
+  "speaker": "SPEAKER_00",
+  "text": "New England Journal of Medicine, non scrive inglese e scrive.",
+  "lang": "it",
+  "avg_logprob": -0.243,
+  "who": "Barbara"
+ },
+ {
+  "start": 2122.09596875,
+  "end": 2123.90159375,
+  "speaker": "SPEAKER_00",
+  "text": "Pubblica, pubblica studente.",
+  "lang": "it",
+  "avg_logprob": -0.186,
+  "who": "Barbara"
+ },
+ {
+  "start": 2123.90159375,
+  "end": 2124.2559687500006,
+  "speaker": "SPEAKER_01",
+  "text": "Sì.",
+  "lang": "it",
+  "avg_logprob": -0.385,
+  "who": "Gyasi"
+ },
+ {
+  "start": 2125.16721875,
+  "end": 2127.76596875,
+  "speaker": "SPEAKER_00",
+  "text": "Il studente usa Like a Slave e scrive",
+  "lang": "it",
+  "avg_logprob": -0.323,
+  "who": "Barbara"
+ },
+ {
+  "start": 2128.0359687500004,
+  "end": 2130.0778437500003,
+  "speaker": "SPEAKER_00",
+  "text": "un articolo",
+  "lang": "it",
+  "avg_logprob": -0.42,
+  "who": "Barbara"
+ },
+ {
+  "start": 2130.3815937500003,
+  "end": 2134.70159375,
+  "speaker": "SPEAKER_00",
+  "text": "e scrive bla bla bla e il professore, non è il professore, è lo studente.",
+  "lang": "it",
+  "avg_logprob": -0.157,
+  "who": "Barbara"
+ },
+ {
+  "start": 2134.9040937500004,
+  "end": 2144.80971875,
+  "speaker": "SPEAKER_01",
+  "text": "I understand, I understand, yes, yes, yes, because this, I heard, I listened to it.",
+  "lang": "en",
+  "avg_logprob": -0.648,
+  "who": "Gyasi"
+ },
+ {
+  "start": 2137.6715937500003,
+  "end": 2138.44784375,
+  "speaker": "SPEAKER_00",
+  "text": "non lo dite",
+  "lang": "it",
+  "avg_logprob": -0.419,
+  "who": "Barbara"
+ },
+ {
+  "start": 2144.47221875,
+  "end": 2145.5690937500003,
+  "speaker": "SPEAKER_00",
+  "text": "ho sentito",
+  "lang": "it",
+  "avg_logprob": -0.424,
+  "who": "Barbara"
+ },
+ {
+  "start": 2146.3115937500006,
+  "end": 2148.92721875,
+  "speaker": "SPEAKER_01",
+  "text": "L'ho sentito, sì.",
+  "lang": "it",
+  "avg_logprob": -0.36,
+  "who": "Gyasi"
+ },
+ {
+  "start": 2149.41659375,
+  "end": 2149.77096875,
+  "speaker": "SPEAKER_01",
+  "text": "um",
+  "lang": "en",
+  "avg_logprob": -0.752,
+  "who": "Gyasi"
+ },
+ {
+  "start": 2150.2097187500003,
+  "end": 2154.51284375,
+  "speaker": "SPEAKER_01",
+  "text": "Come si dice? Come si dice che abbiamo parlato di questo prima?",
+  "lang": "it",
+  "avg_logprob": -0.394,
+  "who": "Gyasi"
+ },
+ {
+  "start": 2154.9178437500004,
+  "end": 2155.49159375,
+  "speaker": "SPEAKER_01",
+  "text": "Or we...",
+  "lang": "en",
+  "avg_logprob": -0.941,
+  "who": "Gyasi"
+ },
+ {
+  "start": 2155.42409375,
+  "end": 2157.36471875,
+  "speaker": "SPEAKER_00",
+  "text": "Noi parliamo di questo.",
+  "lang": "it",
+  "avg_logprob": -0.255,
+  "who": "Barbara"
+ },
+ {
+  "start": 2157.78659375,
+  "end": 2159.5078437500006,
+  "speaker": "SPEAKER_01",
+  "text": "Noi parliamo di questo.",
+  "lang": "it",
+  "avg_logprob": -0.201,
+  "who": "Gyasi"
+ },
+ {
+  "start": 2161.7859687500004,
+  "end": 2162.30909375,
+  "speaker": "SPEAKER_01",
+  "text": "Um",
+  "lang": "en",
+  "avg_logprob": -0.632,
+  "who": "Gyasi"
+ },
+ {
+  "start": 2162.9334687500004,
+  "end": 2164.5703437500006,
+  "speaker": "SPEAKER_00",
+  "text": "Lo scandalo anche, ma...",
+  "lang": "it",
+  "avg_logprob": -0.472,
+  "who": "Barbara"
+ },
+ {
+  "start": 2164.7390937500004,
+  "end": 2180.09534375,
+  "speaker": "SPEAKER_01",
+  "text": "Sì, ma in ospedale, come si dice, il medico, il signore, non, come si dice, non, they don't want to train the young doctors.",
+  "lang": "it",
+  "avg_logprob": -0.212,
+  "who": "Gyasi"
+ },
+ {
+  "start": 2180.3484687500004,
+  "end": 2181.95159375,
+  "speaker": "SPEAKER_01",
+  "text": "or the new doctors.",
+  "lang": "en",
+  "avg_logprob": -0.461,
+  "who": "Gyasi"
+ },
+ {
+  "start": 2180.7028437500003,
+  "end": 2184.36471875,
+  "speaker": "SPEAKER_00",
+  "text": "Sì, sì, perché è una competizione, perché è una competizione.",
+  "lang": "it",
+  "avg_logprob": -0.327,
+  "who": "Barbara"
+ },
+ {
+  "start": 2183.7234687500004,
+  "end": 2190.03471875,
+  "speaker": "SPEAKER_01",
+  "text": "ma ma ma ma perché competizione because uh they get paid the same uh per case",
+  "lang": "en",
+  "avg_logprob": -0.414,
+  "who": "Gyasi"
+ },
+ {
+  "start": 2189.42721875,
+  "end": 2190.69284375,
+  "speaker": "SPEAKER_00",
+  "text": "Eh ma sì perché...",
+  "lang": "it",
+  "avg_logprob": -0.545,
+  "who": "Barbara"
+ },
+ {
+  "start": 2190.9122187500006,
+  "end": 2191.5028437500005,
+  "speaker": "SPEAKER_01",
+  "text": "e sono",
+  "lang": "it",
+  "avg_logprob": -0.57,
+  "who": "Gyasi"
+ },
+ {
+  "start": 2190.9459687500002,
+  "end": 2193.81471875,
+  "speaker": "SPEAKER_00",
+  "text": "E sono il medico del futuro, quindi...",
+  "lang": "it",
+  "avg_logprob": -0.288,
+  "who": "Barbara"
+ },
+ {
+  "start": 2194.54034375,
+  "end": 2200.49721875,
+  "speaker": "SPEAKER_00",
+  "text": "Devo evolversi, il nuovo giovane medico impara.",
+  "lang": "it",
+  "avg_logprob": -0.351,
+  "who": "Barbara"
+ },
+ {
+  "start": 2200.88534375,
+  "end": 2201.30721875,
+  "speaker": "SPEAKER_00",
+  "text": "Mmm",
+  "lang": "it",
+  "avg_logprob": -0.612,
+  "who": "Barbara"
+ },
+ {
+  "start": 2202.50534375,
+  "end": 2203.6865937500006,
+  "speaker": "SPEAKER_00",
+  "text": "ma nel passato",
+  "lang": "it",
+  "avg_logprob": -0.33,
+  "who": "Barbara"
+ },
+ {
+  "start": 2203.9228437500005,
+  "end": 2204.5303437500006,
+  "speaker": "SPEAKER_00",
+  "text": "Grazie.",
+  "lang": "it",
+  "avg_logprob": -0.522,
+  "who": "Barbara"
+ },
+ {
+  "start": 2205.0703437500006,
+  "end": 2208.5465937500003,
+  "speaker": "SPEAKER_00",
+  "text": "dopo Covid, una mia studentessa giapponese.",
+  "lang": "it",
+  "avg_logprob": -0.264,
+  "who": "Barbara"
+ },
+ {
+  "start": 2208.51284375,
+  "end": 2208.88409375,
+  "speaker": "SPEAKER_01",
+  "text": "Sì.",
+  "lang": "it",
+  "avg_logprob": -0.371,
+  "who": "Gyasi"
+ },
+ {
+  "start": 2209.49159375,
+  "end": 2211.48284375,
+  "speaker": "SPEAKER_00",
+  "text": "È assistente di un...",
+  "lang": "it",
+  "avg_logprob": -0.446,
+  "who": "Barbara"
+ },
+ {
+  "start": 2211.97221875,
+  "end": 2215.1278437500005,
+  "speaker": "SPEAKER_00",
+  "text": "cardiologo che lavora a Chicago.",
+  "lang": "it",
+  "avg_logprob": -0.161,
+  "who": "Barbara"
+ },
+ {
+  "start": 2216.17409375,
+  "end": 2220.2409687500003,
+  "speaker": "SPEAKER_00",
+  "text": "origine dalla Romania, che fa uno studio sul mitocondrio.",
+  "lang": "it",
+  "avg_logprob": -0.241,
+  "who": "Barbara"
+ },
+ {
+  "start": 2220.62909375,
+  "end": 2221.0340937500005,
+  "speaker": "SPEAKER_01",
+  "text": "Okay.",
+  "lang": "en",
+  "avg_logprob": -0.387,
+  "who": "Gyasi"
+ },
+ {
+  "start": 2220.6628437500003,
+  "end": 2221.5234687500006,
+  "speaker": "SPEAKER_00",
+  "text": "Okay.",
+  "lang": "en",
+  "avg_logprob": -0.674,
+  "who": "Barbara"
+ },
+ {
+  "start": 2221.84409375,
+  "end": 2223.9365937500006,
+  "speaker": "SPEAKER_00",
+  "text": "Operazione a cuore aperto.",
+  "lang": "it",
+  "avg_logprob": -0.138,
+  "who": "Barbara"
+ },
+ {
+  "start": 2225.3034687500003,
+  "end": 2227.26096875,
+  "speaker": "SPEAKER_00",
+  "text": "Conosci Open Heart Aquarete?  Sì, ci siamo.",
+  "lang": "it",
+  "avg_logprob": -0.57,
+  "who": "Barbara"
+ },
+ {
+  "start": 2226.73784375,
+  "end": 2227.4297187500006,
+  "speaker": "SPEAKER_01",
+  "text": "Sì, ci siamo.",
+  "lang": "it",
+  "avg_logprob": -0.522,
+  "who": "Gyasi"
+ },
+ {
+  "start": 2227.37909375,
+  "end": 2228.1384687500004,
+  "speaker": "SPEAKER_00",
+  "text": "a Chicago.",
+  "lang": "it",
+  "avg_logprob": -0.53,
+  "who": "Barbara"
+ },
+ {
+  "start": 2228.52659375,
+  "end": 2230.0790937500005,
+  "speaker": "SPEAKER_00",
+  "text": "arriva in Europa",
+  "lang": "it",
+  "avg_logprob": -0.374,
+  "who": "Barbara"
+ },
+ {
+  "start": 2230.46721875,
+  "end": 2236.2890937500006,
+  "speaker": "SPEAKER_00",
+  "text": "qui a Milano, perché a Milano ci sono cliniche e ospedali di cardiologia molto buoni.",
+  "lang": "it",
+  "avg_logprob": -0.164,
+  "who": "Barbara"
+ },
+ {
+  "start": 2236.2890937500006,
+  "end": 2236.6434687500005,
+  "speaker": "SPEAKER_01",
+  "text": "Sì.",
+  "lang": "it",
+  "avg_logprob": -0.424,
+  "who": "Gyasi"
+ },
+ {
+  "start": 2236.8797187500004,
+  "end": 2237.99346875,
+  "speaker": "SPEAKER_00",
+  "text": "Molto avanzato.",
+  "lang": "it",
+  "avg_logprob": -0.307,
+  "who": "Barbara"
+ },
+ {
+  "start": 2238.4997187500003,
+  "end": 2239.44471875,
+  "speaker": "SPEAKER_00",
+  "text": "lui fa",
+  "lang": "it",
+  "avg_logprob": -0.417,
+  "who": "Barbara"
+ },
+ {
+  "start": 2239.56284375,
+  "end": 2243.0222187500003,
+  "speaker": "SPEAKER_00",
+  "text": "Organizzo un corso all'Università di Parigi.",
+  "lang": "it",
+  "avg_logprob": -0.228,
+  "who": "Barbara"
+ },
+ {
+  "start": 2243.4440937500003,
+  "end": 2245.95846875,
+  "speaker": "SPEAKER_00",
+  "text": "perché Brescia studia relazioni tra.",
+  "lang": "it",
+  "avg_logprob": -0.198,
+  "who": "Barbara"
+ },
+ {
+  "start": 2246.14409375,
+  "end": 2248.7597187500005,
+  "speaker": "SPEAKER_00",
+  "text": "malattie cardiovascolari e pollution.",
+  "lang": "it",
+  "avg_logprob": -0.23,
+  "who": "Barbara"
+ },
+ {
+  "start": 2249.26596875,
+  "end": 2249.68784375,
+  "speaker": "SPEAKER_01",
+  "text": "Sì.",
+  "lang": "it",
+  "avg_logprob": -0.392,
+  "who": "Gyasi"
+ },
+ {
+  "start": 2249.68784375,
+  "end": 2256.69096875,
+  "speaker": "SPEAKER_00",
+  "text": "inquinamento. The more is polluted, più una zona inquinata, the higher is the risk, più alto è il rischio.",
+  "lang": "it",
+  "avg_logprob": -0.212,
+  "who": "Barbara"
+ },
+ {
+  "start": 2250.6159687500003,
+  "end": 2250.97034375,
+  "speaker": "SPEAKER_01",
+  "text": "Sì",
+  "lang": "it",
+  "avg_logprob": -0.407,
+  "who": "Gyasi"
+ },
+ {
+  "start": 2256.8428437500006,
+  "end": 2258.4628437500005,
+  "speaker": "SPEAKER_00",
+  "text": "di sviluppare malattie.",
+  "lang": "it",
+  "avg_logprob": -0.24,
+  "who": "Barbara"
+ },
+ {
+  "start": 2258.59784375,
+  "end": 2262.0234687500006,
+  "speaker": "SPEAKER_00",
+  "text": "il cardiovascolare in nord Italia perché è sporchissimo.",
+  "lang": "it",
+  "avg_logprob": -0.415,
+  "who": "Barbara"
+ },
+ {
+  "start": 2263.60971875,
+  "end": 2267.47409375,
+  "speaker": "SPEAKER_00",
+  "text": "E lui lavora con Big Pharma e la sua assistente ha detto no comment.",
+  "lang": "it",
+  "avg_logprob": -0.164,
+  "who": "Barbara"
+ },
+ {
+  "start": 2267.87909375,
+  "end": 2272.6884687500005,
+  "speaker": "SPEAKER_00",
+  "text": "Il presidente della cardiologia europea è un mafioso greco.",
+  "lang": "it",
+  "avg_logprob": -0.12,
+  "who": "Barbara"
+ },
+ {
+  "start": 2273.26221875,
+  "end": 2274.8484687500004,
+  "speaker": "SPEAKER_00",
+  "text": "Non parla inglese.",
+  "lang": "it",
+  "avg_logprob": -0.358,
+  "who": "Barbara"
+ },
+ {
+  "start": 2275.9453437500006,
+  "end": 2276.40096875,
+  "speaker": "SPEAKER_01",
+  "text": "Wow.",
+  "lang": "en",
+  "avg_logprob": -0.454,
+  "who": "Gyasi"
+ },
+ {
+  "start": 2277.4303437500002,
+  "end": 2279.87721875,
+  "speaker": "SPEAKER_00",
+  "text": "riceve uno sponsor da Big Pharma",
+  "lang": "it",
+  "avg_logprob": -0.485,
+  "who": "Barbara"
+ },
+ {
+  "start": 2280.19784375,
+  "end": 2281.75034375,
+  "speaker": "SPEAKER_00",
+  "text": "4 milioni di dollari.",
+  "lang": "it",
+  "avg_logprob": -0.153,
+  "who": "Barbara"
+ },
+ {
+  "start": 2281.9697187500005,
+  "end": 2285.5303437500006,
+  "speaker": "SPEAKER_00",
+  "text": "per un progetto che è un progetto pilota.",
+  "lang": "it",
+  "avg_logprob": -0.303,
+  "who": "Barbara"
+ },
+ {
+  "start": 2286.10409375,
+  "end": 2288.14596875,
+  "speaker": "SPEAKER_00",
+  "text": "per questi problemi di cuore.",
+  "lang": "it",
+  "avg_logprob": -0.327,
+  "who": "Barbara"
+ },
+ {
+  "start": 2288.43284375,
+  "end": 2293.56284375,
+  "speaker": "SPEAKER_00",
+  "text": "e Francia, Germania, Italia dice non vogliamo usare",
+  "lang": "it",
+  "avg_logprob": -0.251,
+  "who": "Barbara"
+ },
+ {
+  "start": 2293.91721875,
+  "end": 2296.34721875,
+  "speaker": "SPEAKER_00",
+  "text": "questo esperimento per pazienti.",
+  "lang": "it",
+  "avg_logprob": -0.218,
+  "who": "Barbara"
+ },
+ {
+  "start": 2296.58346875,
+  "end": 2297.05596875,
+  "speaker": "SPEAKER_00",
+  "text": "Ok.",
+  "lang": "it",
+  "avg_logprob": -0.418,
+  "who": "Barbara"
+ },
+ {
+  "start": 2297.29221875,
+  "end": 2299.8065937500005,
+  "speaker": "SPEAKER_00",
+  "text": "mandano l'esperimento in Bulgaria.",
+  "lang": "it",
+  "avg_logprob": -0.317,
+  "who": "Barbara"
+ },
+ {
+  "start": 2300.6334687500002,
+  "end": 2302.05096875,
+  "speaker": "SPEAKER_00",
+  "text": "and a lot of people died.",
+  "lang": "en",
+  "avg_logprob": -0.355,
+  "who": "Barbara"
+ },
+ {
+  "start": 2302.8778437500005,
+  "end": 2303.4684687500003,
+  "speaker": "SPEAKER_01",
+  "text": "Wow.",
+  "lang": "it",
+  "avg_logprob": -0.536,
+  "who": "Gyasi"
+ },
+ {
+  "start": 2306.1178437500002,
+  "end": 2313.76221875,
+  "speaker": "SPEAKER_00",
+  "text": "Immagina, questa dottoressa mi racconta che tu puoi immaginare cosa sta succedendo dietro con questo Big Pharma.",
+  "lang": "it",
+  "avg_logprob": -0.338,
+  "who": "Barbara"
+ },
+ {
+  "start": 2313.7790937500004,
+  "end": 2314.25159375,
+  "speaker": "SPEAKER_01",
+  "text": "Sì",
+  "lang": "it",
+  "avg_logprob": -0.728,
+  "who": "Gyasi"
+ },
+ {
+  "start": 2314.3359687500006,
+  "end": 2316.04034375,
+  "speaker": "SPEAKER_00",
+  "text": "Ha detto uno scandalo a Europa.",
+  "lang": "it",
+  "avg_logprob": -0.485,
+  "who": "Barbara"
+ },
+ {
+  "start": 2316.3103437500004,
+  "end": 2318.6728437500005,
+  "speaker": "SPEAKER_00",
+  "text": "occidentale dice no grazie",
+  "lang": "it",
+  "avg_logprob": -0.384,
+  "who": "Barbara"
+ },
+ {
+  "start": 2319.31409375,
+  "end": 2321.10284375,
+  "speaker": "SPEAKER_00",
+  "text": "The pharmacist is not safe.",
+  "lang": "en",
+  "avg_logprob": -0.537,
+  "who": "Barbara"
+ },
+ {
+  "start": 2321.3728437500004,
+  "end": 2324.91659375,
+  "speaker": "SPEAKER_00",
+  "text": "Il farmaco non è ancora sperimentato per molti anni.",
+  "lang": "it",
+  "avg_logprob": -0.039,
+  "who": "Barbara"
+ },
+ {
+  "start": 2325.0515937500004,
+  "end": 2325.45659375,
+  "speaker": "SPEAKER_01",
+  "text": "Sì.",
+  "lang": "it",
+  "avg_logprob": -0.362,
+  "who": "Gyasi"
+ },
+ {
+  "start": 2326.1484687500006,
+  "end": 2331.1434687500005,
+  "speaker": "SPEAKER_00",
+  "text": "Loro hanno detto, ah non c'è problema, Francia, Spagna, Portogallo non vogliono, mandiamo.",
+  "lang": "it",
+  "avg_logprob": -0.179,
+  "who": "Barbara"
+ },
+ {
+  "start": 2331.3290937500005,
+  "end": 2333.0165937500005,
+  "speaker": "SPEAKER_00",
+  "text": "in East Europe, Muskosa.",
+  "lang": "en",
+  "avg_logprob": -0.614,
+  "who": "Barbara"
+ },
+ {
+  "start": 2334.4509687500004,
+  "end": 2337.01596875,
+  "speaker": "SPEAKER_01",
+  "text": "Ecco, è similare a...",
+  "lang": "it",
+  "avg_logprob": -0.572,
+  "who": "Gyasi"
+ },
+ {
+  "start": 2335.93596875,
+  "end": 2341.60596875,
+  "speaker": "SPEAKER_00",
+  "text": "perché la ricerca deve andare avanti  e le vittime",
+  "lang": "it",
+  "avg_logprob": -0.275,
+  "who": "Barbara"
+ },
+ {
+  "start": 2342.26409375,
+  "end": 2342.93909375,
+  "speaker": "SPEAKER_00",
+  "text": "Ascuse.",
+  "lang": "it",
+  "avg_logprob": -0.645,
+  "who": "Barbara"
+ },
+ {
+  "start": 2343.2428437500002,
+  "end": 2349.2334687500006,
+  "speaker": "SPEAKER_01",
+  "text": "Sì, no, è simile all'Africa.  Sì, no, è no.",
+  "lang": "it",
+  "avg_logprob": -0.404,
+  "who": "Gyasi"
+ },
+ {
+  "start": 2347.63034375,
+  "end": 2350.27971875,
+  "speaker": "SPEAKER_00",
+  "text": "Sì, è uno scandalo.",
+  "lang": "it",
+  "avg_logprob": -0.266,
+  "who": "Barbara"
+ },
+ {
+  "start": 2349.97596875,
+  "end": 2350.34721875,
+  "speaker": "SPEAKER_01",
+  "text": "Sì.",
+  "lang": "it",
+  "avg_logprob": -0.472,
+  "who": "Gyasi"
+ },
+ {
+  "start": 2351.91659375,
+  "end": 2353.35096875,
+  "speaker": "SPEAKER_00",
+  "text": "A lot of U.S. citizens",
+  "lang": "en",
+  "avg_logprob": -0.472,
+  "who": "Barbara"
+ },
+ {
+  "start": 2353.4353437500004,
+  "end": 2362.14284375,
+  "speaker": "SPEAKER_00",
+  "text": "Tu sei paziente, il tuo paziente è di seconda classe africana, anche se muore, che problema c'è?",
+  "lang": "it",
+  "avg_logprob": -0.287,
+  "who": "Barbara"
+ },
+ {
+  "start": 2362.2440937500005,
+  "end": 2366.96909375,
+  "speaker": "SPEAKER_01",
+  "text": "Sì, sì, esatto.  Sì, è un classico, un classico o un soldi.  Se non lo hai...",
+  "lang": "it",
+  "avg_logprob": -0.374,
+  "who": "Gyasi"
+ },
+ {
+  "start": 2366.6484687500006,
+  "end": 2372.45346875,
+  "speaker": "SPEAKER_00",
+  "text": "Il paziente caucasico bianco va bene, gli altri pazienti...",
+  "lang": "it",
+  "avg_logprob": -0.192,
+  "who": "Barbara"
+ },
+ {
+  "start": 2372.6053437500004,
+  "end": 2374.1747187500005,
+  "speaker": "SPEAKER_00",
+  "text": "è merda, non funziona.",
+  "lang": "it",
+  "avg_logprob": -0.447,
+  "who": "Barbara"
+ },
+ {
+  "start": 2374.3603437500005,
+  "end": 2374.74846875,
+  "speaker": "SPEAKER_01",
+  "text": "Sì.",
+  "lang": "it",
+  "avg_logprob": -0.412,
+  "who": "Gyasi"
+ },
+ {
+  "start": 2374.69784375,
+  "end": 2375.4909687500003,
+  "speaker": "SPEAKER_00",
+  "text": "Eh, scusa.",
+  "lang": "it",
+  "avg_logprob": -0.314,
+  "who": "Barbara"
+ },
+ {
+  "start": 2376.30096875,
+  "end": 2377.1953437500006,
+  "speaker": "SPEAKER_01",
+  "text": "Ma non...",
+  "lang": "it",
+  "avg_logprob": -0.309,
+  "who": "Gyasi"
+ },
+ {
+  "start": 2376.62159375,
+  "end": 2379.6590937500005,
+  "speaker": "SPEAKER_00",
+  "text": "Come problema hai visto? Problema di malaria.",
+  "lang": "it",
+  "avg_logprob": -0.414,
+  "who": "Barbara"
+ },
+ {
+  "start": 2380.53659375,
+  "end": 2380.90784375,
+  "speaker": "SPEAKER_01",
+  "text": "Mmm",
+  "lang": "it",
+  "avg_logprob": -0.688,
+  "who": "Gyasi"
+ },
+ {
+  "start": 2380.90784375,
+  "end": 2383.9959687500004,
+  "speaker": "SPEAKER_00",
+  "text": "Non trovano una soluzione per malaria, non vogliono.",
+  "lang": "it",
+  "avg_logprob": -0.181,
+  "who": "Barbara"
+ },
+ {
+  "start": 2385.22784375,
+  "end": 2390.0372187500006,
+  "speaker": "SPEAKER_00",
+  "text": "They don't want, they are able, I don't know, there are a lot of plans you can imagine.",
+  "lang": "en",
+  "avg_logprob": -0.336,
+  "who": "Barbara"
+ },
+ {
+  "start": 2390.52659375,
+  "end": 2392.63596875,
+  "speaker": "SPEAKER_00",
+  "text": "Molte piante si possono sviluppare per",
+  "lang": "it",
+  "avg_logprob": -0.289,
+  "who": "Barbara"
+ },
+ {
+  "start": 2392.9228437500005,
+  "end": 2395.89284375,
+  "speaker": "SPEAKER_00",
+  "text": "Hanno fatto l'Ariam.",
+  "lang": "it",
+  "avg_logprob": -0.365,
+  "who": "Barbara"
+ },
+ {
+  "start": 2396.6015937500006,
+  "end": 2399.3184687500006,
+  "speaker": "SPEAKER_00",
+  "text": "Che era droga come LSD, tossico.",
+  "lang": "it",
+  "avg_logprob": -0.327,
+  "who": "Barbara"
+ },
+ {
+  "start": 2398.5253437500005,
+  "end": 2399.7403437500006,
+  "speaker": "SPEAKER_01",
+  "text": "tossico  si",
+  "lang": "it",
+  "avg_logprob": -0.637,
+  "who": "Gyasi"
+ },
+ {
+  "start": 2399.7403437500006,
+  "end": 2401.86659375,
+  "speaker": "SPEAKER_00",
+  "text": "Ma dai, scusa, ma non siamo stupiti.",
+  "lang": "it",
+  "avg_logprob": -0.256,
+  "who": "Barbara"
+ },
+ {
+  "start": 2402.0184687500005,
+  "end": 2408.92034375,
+  "speaker": "SPEAKER_01",
+  "text": "Sì, molto pari... pari... pari... paristi? Parasites?  Sì, parasiti.",
+  "lang": "it",
+  "avg_logprob": -0.362,
+  "who": "Gyasi"
+ },
+ {
+  "start": 2407.95846875,
+  "end": 2408.9540937500005,
+  "speaker": "SPEAKER_00",
+  "text": "si parassitino",
+  "lang": "it",
+  "avg_logprob": -0.531,
+  "who": "Barbara"
+ },
+ {
+  "start": 2408.9372187500003,
+  "end": 2424.05721875,
+  "speaker": "SPEAKER_01",
+  "text": "Paraceti and other drugs are for more,  the diseases are for more third world countries.  And because those countries can't pay,  yeah, it's just like, that's no profit, so.",
+  "lang": "en",
+  "avg_logprob": -0.238,
+  "who": "Gyasi"
+ },
+ {
+  "start": 2424.22596875,
+  "end": 2426.6728437500005,
+  "speaker": "SPEAKER_00",
+  "text": "No, è sempre il profitto, prima di tutto il profitto.",
+  "lang": "it",
+  "avg_logprob": -0.164,
+  "who": "Barbara"
+ },
+ {
+  "start": 2425.91346875,
+  "end": 2426.3690937500005,
+  "speaker": "SPEAKER_01",
+  "text": "profitto",
+  "lang": "it",
+  "avg_logprob": -0.68,
+  "who": "Gyasi"
+ },
+ {
+  "start": 2426.92596875,
+  "end": 2427.29721875,
+  "speaker": "SPEAKER_01",
+  "text": "See ya.",
+  "lang": "en",
+  "avg_logprob": -0.437,
+  "who": "Gyasi"
+ },
+ {
+  "start": 2431.22909375,
+  "end": 2437.86096875,
+  "speaker": "SPEAKER_00",
+  "text": "E poi tu vivi negli Stati Uniti in questo problema del narcotraffico, scusa, cocaina, cocaina ma coca.",
+  "lang": "it",
+  "avg_logprob": -0.172,
+  "who": "Barbara"
+ },
+ {
+  "start": 2436.22409375,
+  "end": 2437.3378437500005,
+  "speaker": "SPEAKER_01",
+  "text": "la cocaina",
+  "lang": "it",
+  "avg_logprob": -0.935,
+  "who": "Gyasi"
+ },
+ {
+  "start": 2438.08034375,
+  "end": 2442.06284375,
+  "speaker": "SPEAKER_00",
+  "text": "Nella foglia di coca è il più alto contenitore di calcio.",
+  "lang": "it",
+  "avg_logprob": -0.127,
+  "who": "Barbara"
+ },
+ {
+  "start": 2442.48471875,
+  "end": 2448.62721875,
+  "speaker": "SPEAKER_00",
+  "text": "di nutrienti, come moringa e coca, foglia di coca, per esempio donna in menopausa.",
+  "lang": "it",
+  "avg_logprob": -0.36,
+  "who": "Barbara"
+ },
+ {
+  "start": 2448.9140937500006,
+  "end": 2451.9684687500003,
+  "speaker": "SPEAKER_00",
+  "text": "o problemi con il calcio, la più alta quantità",
+  "lang": "it",
+  "avg_logprob": -0.272,
+  "who": "Barbara"
+ },
+ {
+  "start": 2452.1709687500006,
+  "end": 2456.71034375,
+  "speaker": "SPEAKER_00",
+  "text": "di calcio nella foglia di coca. Coca leaves non è cocaina.",
+  "lang": "it",
+  "avg_logprob": -0.279,
+  "who": "Barbara"
+ },
+ {
+  "start": 2457.3515937500006,
+  "end": 2458.0772187500006,
+  "speaker": "SPEAKER_00",
+  "text": "Ma scusate.",
+  "lang": "it",
+  "avg_logprob": -0.617,
+  "who": "Barbara"
+ },
+ {
+  "start": 2457.97596875,
+  "end": 2458.76909375,
+  "speaker": "SPEAKER_01",
+  "text": "Esatto",
+  "lang": "it",
+  "avg_logprob": -0.422,
+  "who": "Gyasi"
+ },
+ {
+  "start": 2459.49471875,
+  "end": 2460.01784375,
+  "speaker": "SPEAKER_01",
+  "text": "Esatto.",
+  "lang": "it",
+  "avg_logprob": -0.383,
+  "who": "Gyasi"
+ },
+ {
+  "start": 2459.52846875,
+  "end": 2462.97096875,
+  "speaker": "SPEAKER_00",
+  "text": "Esatto, però è chiaro, il mercato esplode.",
+  "lang": "it",
+  "avg_logprob": -0.079,
+  "who": "Barbara"
+ },
+ {
+  "start": 2463.2409687500003,
+  "end": 2465.2322187500004,
+  "speaker": "SPEAKER_00",
+  "text": "Se tu usi erbe dell'Amazzonia.",
+  "lang": "it",
+  "avg_logprob": -0.313,
+  "who": "Barbara"
+ },
+ {
+  "start": 2465.45159375,
+  "end": 2470.4803437500004,
+  "speaker": "SPEAKER_00",
+  "text": "Tutti i prodotti anche della foresta africana, tutto, il principio attivo è erbe.",
+  "lang": "it",
+  "avg_logprob": -0.099,
+  "who": "Barbara"
+ },
+ {
+  "start": 2472.0497187500005,
+  "end": 2472.4209687500006,
+  "speaker": "SPEAKER_01",
+  "text": "Sì",
+  "lang": "it",
+  "avg_logprob": -0.548,
+  "who": "Gyasi"
+ },
+ {
+  "start": 2473.6022187500002,
+  "end": 2474.2097187500003,
+  "speaker": "SPEAKER_01",
+  "text": "And then...",
+  "lang": "en",
+  "avg_logprob": -0.475,
+  "who": "Gyasi"
+ },
+ {
+  "start": 2473.6865937500006,
+  "end": 2475.2559687500006,
+  "speaker": "SPEAKER_00",
+  "text": "Non siamo stupidi.",
+  "lang": "it",
+  "avg_logprob": -0.466,
+  "who": "Barbara"
+ },
+ {
+  "start": 2475.2897187500002,
+  "end": 2485.2965937500003,
+  "speaker": "SPEAKER_01",
+  "text": "Adesso il medicina come si dice, il weight loss, molto bene.",
+  "lang": "it",
+  "avg_logprob": -0.719,
+  "who": "Gyasi"
+ },
+ {
+  "start": 2483.65971875,
+  "end": 2485.44846875,
+  "speaker": "SPEAKER_00",
+  "text": "Per te, per te Jason",
+  "lang": "it",
+  "avg_logprob": -0.683,
+  "who": "Barbara"
+ },
+ {
+  "start": 2485.9715937500005,
+  "end": 2510.4403437500005,
+  "speaker": "SPEAKER_01",
+  "text": "So our lawmakers want to push the weight loss drugs for insurances to be able for everyone  to use it.  So it became from like, oh, let's just have some of the rich people use it, to now it's  just like, oh, let's give it to everyone.  It's money.  It's money.",
+  "lang": "en",
+  "avg_logprob": -0.22,
+  "who": "Gyasi"
+ },
+ {
+  "start": 2511.2334687500006,
+  "end": 2517.22409375,
+  "speaker": "SPEAKER_00",
+  "text": "Siccome in Italia l'unica regione dove si può coltivare marijuana, cannabis è...",
+  "lang": "it",
+  "avg_logprob": -0.145,
+  "who": "Barbara"
+ },
+ {
+  "start": 2517.6122187500005,
+  "end": 2518.96221875,
+  "speaker": "SPEAKER_00",
+  "text": "in Tuscany.",
+  "lang": "en",
+  "avg_logprob": -0.306,
+  "who": "Barbara"
+ },
+ {
+  "start": 2519.9747187500006,
+  "end": 2523.3497187500006,
+  "speaker": "SPEAKER_00",
+  "text": "sotto controllo dell'esercito italiano.",
+  "lang": "it",
+  "avg_logprob": -0.354,
+  "who": "Barbara"
+ },
+ {
+  "start": 2523.65346875,
+  "end": 2526.13409375,
+  "speaker": "SPEAKER_00",
+  "text": "You're allowed to...  It's illegal.",
+  "lang": "en",
+  "avg_logprob": -0.597,
+  "who": "Barbara"
+ },
+ {
+  "start": 2524.9022187500004,
+  "end": 2525.7459687500004,
+  "speaker": "SPEAKER_01",
+  "text": "It's illegal.",
+  "lang": "en",
+  "avg_logprob": -0.479,
+  "who": "Gyasi"
+ },
+ {
+  "start": 2526.3028437500006,
+  "end": 2527.5515937500004,
+  "speaker": "SPEAKER_01",
+  "text": "È vero! Wow!",
+  "lang": "it",
+  "avg_logprob": -0.579,
+  "who": "Gyasi"
+ },
+ {
+  "start": 2526.45471875,
+  "end": 2528.37846875,
+  "speaker": "SPEAKER_00",
+  "text": "in toscana",
+  "lang": "it",
+  "avg_logprob": -0.8,
+  "who": "Barbara"
+ },
+ {
+  "start": 2528.4459687500002,
+  "end": 2528.85096875,
+  "speaker": "SPEAKER_01",
+  "text": "Okay.",
+  "lang": "en",
+  "avg_logprob": -0.349,
+  "who": "Gyasi"
+ },
+ {
+  "start": 2529.2559687500006,
+  "end": 2535.06096875,
+  "speaker": "SPEAKER_00",
+  "text": "perché ci sono ospedali sperimentali che usano per problemi di SLA, per problemi...",
+  "lang": "it",
+  "avg_logprob": -0.171,
+  "who": "Barbara"
+ },
+ {
+  "start": 2535.22971875,
+  "end": 2541.8447187500005,
+  "speaker": "SPEAKER_00",
+  "text": "anche di depressione, perché funziona, perché noi pensiamo a marijuana, marijuana, marijuana non è questo.",
+  "lang": "it",
+  "avg_logprob": -0.265,
+  "who": "Barbara"
+ },
+ {
+  "start": 2540.05596875,
+  "end": 2541.3047187500006,
+  "speaker": "SPEAKER_01",
+  "text": "Yes, yes, I understand.",
+  "lang": "en",
+  "avg_logprob": -0.358,
+  "who": "Gyasi"
+ },
+ {
+  "start": 2541.87846875,
+  "end": 2542.4522187500006,
+  "speaker": "SPEAKER_01",
+  "text": "Capito?",
+  "lang": "it",
+  "avg_logprob": -0.302,
+  "who": "Gyasi"
+ },
+ {
+  "start": 2542.5534687500003,
+  "end": 2545.5234687500006,
+  "speaker": "SPEAKER_00",
+  "text": "Il principio attivo con antidepressivo.",
+  "lang": "it",
+  "avg_logprob": -0.482,
+  "who": "Barbara"
+ },
+ {
+  "start": 2545.96221875,
+  "end": 2550.8053437500002,
+  "speaker": "SPEAKER_00",
+  "text": "per molti usi. L'unica regione che sperimenta questo è la Toscana.",
+  "lang": "it",
+  "avg_logprob": -0.085,
+  "who": "Barbara"
+ },
+ {
+  "start": 2550.92346875,
+  "end": 2551.4297187500006,
+  "speaker": "SPEAKER_01",
+  "text": "Sì.",
+  "lang": "it",
+  "avg_logprob": -0.37,
+  "who": "Gyasi"
+ },
+ {
+  "start": 2551.2440937500005,
+  "end": 2553.13409375,
+  "speaker": "SPEAKER_00",
+  "text": "We have gardens, hanno giardini.",
+  "lang": "it",
+  "avg_logprob": -0.503,
+  "who": "Barbara"
+ },
+ {
+  "start": 2553.45471875,
+  "end": 2556.5428437500004,
+  "speaker": "SPEAKER_00",
+  "text": "sotto controllo dell'esercito italiano, quindi meglio.",
+  "lang": "it",
+  "avg_logprob": -0.236,
+  "who": "Barbara"
+ },
+ {
+  "start": 2557.2178437500006,
+  "end": 2558.4834687500006,
+  "speaker": "SPEAKER_00",
+  "text": "si, funziona",
+  "lang": "it",
+  "avg_logprob": -0.578,
+  "who": "Barbara"
+ },
+ {
+  "start": 2560.4072187500005,
+  "end": 2563.49534375,
+  "speaker": "SPEAKER_01",
+  "text": "It's just in solo regione.",
+  "lang": "en",
+  "avg_logprob": -0.555,
+  "who": "Gyasi"
+ },
+ {
+  "start": 2563.68096875,
+  "end": 2567.42721875,
+  "speaker": "SPEAKER_00",
+  "text": "Sì, la Toscana, sì, la coltivazione della cannabis.",
+  "lang": "it",
+  "avg_logprob": -0.186,
+  "who": "Barbara"
+ },
+ {
+  "start": 2564.57534375,
+  "end": 2565.01409375,
+  "speaker": "SPEAKER_01",
+  "text": "Grazie a tutti.",
+  "lang": "it",
+  "avg_logprob": -0.792,
+  "who": "Gyasi"
+ },
+ {
+  "start": 2567.8659687500003,
+  "end": 2568.9122187500006,
+  "speaker": "SPEAKER_00",
+  "text": "legale",
+  "lang": "it",
+  "avg_logprob": -0.51,
+  "who": "Barbara"
+ },
+ {
+  "start": 2573.75534375,
+  "end": 2574.95346875,
+  "speaker": "SPEAKER_00",
+  "text": "escludi il tabacco",
+  "lang": "it",
+  "avg_logprob": -0.382,
+  "who": "Barbara"
+ },
+ {
+  "start": 2575.20659375,
+  "end": 2578.5984687500004,
+  "speaker": "SPEAKER_00",
+  "text": "Il tabacco non è una droga, il tabacco it's ok, va bene.",
+  "lang": "it",
+  "avg_logprob": -0.132,
+  "who": "Barbara"
+ },
+ {
+  "start": 2580.3365937500002,
+  "end": 2583.88034375,
+  "speaker": "SPEAKER_00",
+  "text": "Invece la cannabis crea dipendenza perché è un big business.",
+  "lang": "it",
+  "avg_logprob": -0.285,
+  "who": "Barbara"
+ },
+ {
+  "start": 2584.0828437500004,
+  "end": 2584.4372187500003,
+  "speaker": "SPEAKER_01",
+  "text": "See ya.",
+  "lang": "en",
+  "avg_logprob": -0.729,
+  "who": "Gyasi"
+ },
+ {
+  "start": 2584.9772187500002,
+  "end": 2585.3484687500004,
+  "speaker": "SPEAKER_01",
+  "text": "Sì.",
+  "lang": "it",
+  "avg_logprob": -0.404,
+  "who": "Gyasi"
+ },
+ {
+  "start": 2585.56784375,
+  "end": 2590.02284375,
+  "speaker": "SPEAKER_00",
+  "text": "Conosciamo, c'è la medicina e tu sei medico, conosci cosa c'è.",
+  "lang": "it",
+  "avg_logprob": -0.175,
+  "who": "Barbara"
+ },
+ {
+  "start": 2590.4109687500004,
+  "end": 2591.0859687500006,
+  "speaker": "SPEAKER_00",
+  "text": "behind",
+  "lang": "en",
+  "avg_logprob": -0.83,
+  "who": "Barbara"
+ },
+ {
+  "start": 2591.35596875,
+  "end": 2592.0478437500005,
+  "speaker": "SPEAKER_00",
+  "text": "dietro",
+  "lang": "it",
+  "avg_logprob": -0.604,
+  "who": "Barbara"
+ },
+ {
+  "start": 2595.13596875,
+  "end": 2596.5703437500006,
+  "speaker": "SPEAKER_00",
+  "text": "Io sono in medicina e...",
+  "lang": "it",
+  "avg_logprob": -0.615,
+  "who": "Barbara"
+ },
+ {
+  "start": 2602.84784375,
+  "end": 2604.73784375,
+  "speaker": "SPEAKER_00",
+  "text": "E poi in Italia è una tipica situazione.",
+  "lang": "it",
+  "avg_logprob": -0.156,
+  "who": "Barbara"
+ },
+ {
+  "start": 2605.37909375,
+  "end": 2607.62346875,
+  "speaker": "SPEAKER_00",
+  "text": "If you eat junk food, manji male.",
+  "lang": "en",
+  "avg_logprob": -0.369,
+  "who": "Barbara"
+ },
+ {
+  "start": 2608.63596875,
+  "end": 2612.1797187500006,
+  "speaker": "SPEAKER_00",
+  "text": "e dopo sei malato e dopo bombardato con medicine.",
+  "lang": "it",
+  "avg_logprob": -0.388,
+  "who": "Barbara"
+ },
+ {
+  "start": 2612.1797187500006,
+  "end": 2613.0234687500006,
+  "speaker": "SPEAKER_01",
+  "text": "esatto",
+  "lang": "it",
+  "avg_logprob": -0.46,
+  "who": "Gyasi"
+ },
+ {
+  "start": 2612.44971875,
+  "end": 2620.39784375,
+  "speaker": "SPEAKER_00",
+  "text": "Ma scusa, fai cibo sano, con additivi, cibo.  Un mio ex studente è manager di una azienda chimica.",
+  "lang": "it",
+  "avg_logprob": -0.191,
+  "who": "Barbara"
+ },
+ {
+  "start": 2621.3259687500004,
+  "end": 2624.1778437500006,
+  "speaker": "SPEAKER_00",
+  "text": "nord italia e mi ha detto noi produciamo",
+  "lang": "it",
+  "avg_logprob": -0.279,
+  "who": "Barbara"
+ },
+ {
+  "start": 2624.44784375,
+  "end": 2626.01721875,
+  "speaker": "SPEAKER_00",
+  "text": "addensanti.",
+  "lang": "it",
+  "avg_logprob": -0.497,
+  "who": "Barbara"
+ },
+ {
+  "start": 2626.06784375,
+  "end": 2627.02971875,
+  "speaker": "SPEAKER_00",
+  "text": "You know what he said.",
+  "lang": "en",
+  "avg_logprob": -0.596,
+  "who": "Barbara"
+ },
+ {
+  "start": 2627.28284375,
+  "end": 2634.20159375,
+  "speaker": "SPEAKER_00",
+  "text": "ad istanti preservativi, conservativi, ad istanti to make creamy the different...",
+  "lang": "it",
+  "avg_logprob": -0.403,
+  "who": "Barbara"
+ },
+ {
+  "start": 2629.8815937500003,
+  "end": 2631.19784375,
+  "speaker": "SPEAKER_01",
+  "text": "Sì, sì, sì",
+  "lang": "it",
+  "avg_logprob": -0.612,
+  "who": "Gyasi"
+ },
+ {
+  "start": 2634.7247187500006,
+  "end": 2642.1328437500006,
+  "speaker": "SPEAKER_00",
+  "text": "Allora, uno per industria cosmetica, uno per industria alimentare, uno per clean up, per pulizia in casa.",
+  "lang": "it",
+  "avg_logprob": -0.138,
+  "who": "Barbara"
+ },
+ {
+  "start": 2642.89221875,
+  "end": 2644.56284375,
+  "speaker": "SPEAKER_00",
+  "text": "le stesse sostanze",
+  "lang": "it",
+  "avg_logprob": -0.359,
+  "who": "Barbara"
+ },
+ {
+  "start": 2643.55034375,
+  "end": 2646.1490937500002,
+  "speaker": "SPEAKER_01",
+  "text": "Sì, sì, similare a che chimica.",
+  "lang": "it",
+  "avg_logprob": -0.266,
+  "who": "Gyasi"
+ },
+ {
+  "start": 2647.11096875,
+  "end": 2652.83159375,
+  "speaker": "SPEAKER_00",
+  "text": "ecco allora una parte per il gelato cremoso ha detto la stessa d'instante guar guar",
+  "lang": "it",
+  "avg_logprob": -0.196,
+  "who": "Barbara"
+ },
+ {
+  "start": 2653.00034375,
+  "end": 2654.3672187500006,
+  "speaker": "SPEAKER_00",
+  "text": "lo usi per",
+  "lang": "it",
+  "avg_logprob": -0.437,
+  "who": "Barbara"
+ },
+ {
+  "start": 2654.6540937500004,
+  "end": 2659.02471875,
+  "speaker": "SPEAKER_00",
+  "text": "Prodotto in cucina per clean up, per pulire e cosmetici.",
+  "lang": "it",
+  "avg_logprob": -0.237,
+  "who": "Barbara"
+ },
+ {
+  "start": 2659.1090937500003,
+  "end": 2660.83034375,
+  "speaker": "SPEAKER_01",
+  "text": "Ma aspetta...",
+  "lang": "it",
+  "avg_logprob": -0.244,
+  "who": "Gyasi"
+ },
+ {
+  "start": 2660.8809687500006,
+  "end": 2675.0222187500003,
+  "speaker": "SPEAKER_01",
+  "text": "Ho una domanda. Per la produttore vendura, produttore frutta, non è problema con insetti?",
+  "lang": "it",
+  "avg_logprob": -0.221,
+  "who": "Gyasi"
+ },
+ {
+  "start": 2676.7772187500004,
+  "end": 2680.23659375,
+  "speaker": "SPEAKER_00",
+  "text": "Eh sì, usano molti pesticidi, erbicidi.",
+  "lang": "it",
+  "avg_logprob": -0.244,
+  "who": "Barbara"
+ },
+ {
+  "start": 2683.49346875,
+  "end": 2685.9403437500005,
+  "speaker": "SPEAKER_00",
+  "text": "pesticidi come in inglese, erbicidi",
+  "lang": "it",
+  "avg_logprob": -0.308,
+  "who": "Barbara"
+ },
+ {
+  "start": 2686.3622187500005,
+  "end": 2688.92721875,
+  "speaker": "SPEAKER_01",
+  "text": "See, so, so.",
+  "lang": "en",
+  "avg_logprob": -0.601,
+  "who": "Gyasi"
+ },
+ {
+  "start": 2688.4209687500006,
+  "end": 2690.98596875,
+  "speaker": "SPEAKER_00",
+  "text": "E glifosato, non glifosato.  No.",
+  "lang": "it",
+  "avg_logprob": -0.383,
+  "who": "Barbara"
+ },
+ {
+  "start": 2692.2684687500005,
+  "end": 2694.90096875,
+  "speaker": "SPEAKER_00",
+  "text": "Glifosato questo che usa Monsanto.",
+  "lang": "it",
+  "avg_logprob": -0.322,
+  "who": "Barbara"
+ },
+ {
+  "start": 2695.37346875,
+  "end": 2699.1534687500007,
+  "speaker": "SPEAKER_00",
+  "text": "negli Stati Uniti, in Europa è proibito in parte.",
+  "lang": "it",
+  "avg_logprob": -0.152,
+  "who": "Barbara"
+ },
+ {
+  "start": 2699.6090937500003,
+  "end": 2704.89096875,
+  "speaker": "SPEAKER_00",
+  "text": "because all the bees are dying in glyphosate.",
+  "lang": "en",
+  "avg_logprob": -0.286,
+  "who": "Barbara"
+ },
+ {
+  "start": 2703.3722187500007,
+  "end": 2703.9122187500006,
+  "speaker": "SPEAKER_01",
+  "text": "NANI-",
+  "lang": "en",
+  "avg_logprob": -0.784,
+  "who": "Gyasi"
+ },
+ {
+  "start": 2705.8359687500006,
+  "end": 2706.6122187500005,
+  "speaker": "SPEAKER_00",
+  "text": "the crops.",
+  "lang": "en",
+  "avg_logprob": -0.952,
+  "who": "Barbara"
+ },
+ {
+  "start": 2708.9747187500006,
+  "end": 2712.2822187500005,
+  "speaker": "SPEAKER_00",
+  "text": "Glifosato, come si chiama in inglese? Glifosato.",
+  "lang": "it",
+  "avg_logprob": -0.154,
+  "who": "Barbara"
+ },
+ {
+  "start": 2713.21034375,
+  "end": 2713.9528437500003,
+  "speaker": "SPEAKER_01",
+  "text": "I'll look it up.",
+  "lang": "en",
+  "avg_logprob": -0.23,
+  "who": "Gyasi"
+ },
+ {
+  "start": 2715.25221875,
+  "end": 2723.58846875,
+  "speaker": "SPEAKER_00",
+  "text": "Si usa poi nella pasta, nella birra, tutto quello che è coltivato col grano.  Negli Stati Uniti si usa, in Canada.",
+  "lang": "it",
+  "avg_logprob": -0.145,
+  "who": "Barbara"
+ },
+ {
+  "start": 2716.6022187500002,
+  "end": 2717.42909375,
+  "speaker": "SPEAKER_01",
+  "text": "trovi nella parte",
+  "lang": "it",
+  "avg_logprob": -0.566,
+  "who": "Gyasi"
+ },
+ {
+  "start": 2724.12846875,
+  "end": 2727.38534375,
+  "speaker": "SPEAKER_00",
+  "text": "di cosiolare l'audito. Per me è stato un carico linfosato.",
+  "lang": "it",
+  "avg_logprob": -0.698,
+  "who": "Barbara"
+ },
+ {
+  "start": 2727.7565937500003,
+  "end": 2729.9503437500007,
+  "speaker": "SPEAKER_00",
+  "text": "Stati Uniti, in Europa meno.",
+  "lang": "it",
+  "avg_logprob": -0.202,
+  "who": "Barbara"
+ },
+ {
+  "start": 2730.4734687500004,
+  "end": 2731.8065937500005,
+  "speaker": "SPEAKER_00",
+  "text": "Però è cancerogeno.",
+  "lang": "it",
+  "avg_logprob": -0.165,
+  "who": "Barbara"
+ },
+ {
+  "start": 2733.3084687500004,
+  "end": 2737.20659375,
+  "speaker": "SPEAKER_00",
+  "text": "Ma Monsanto paga FBA, FBA paga l'università.",
+  "lang": "it",
+  "avg_logprob": -0.248,
+  "who": "Barbara"
+ },
+ {
+  "start": 2737.39221875,
+  "end": 2739.4003437500005,
+  "speaker": "SPEAKER_00",
+  "text": "Università scrive un report.",
+  "lang": "it",
+  "avg_logprob": -0.418,
+  "who": "Barbara"
+ },
+ {
+  "start": 2739.6365937500004,
+  "end": 2743.82159375,
+  "speaker": "SPEAKER_00",
+  "text": "Monsanto ti dà 10 milioni di dollari e tu ti dici tutto bene?",
+  "lang": "it",
+  "avg_logprob": -0.147,
+  "who": "Barbara"
+ },
+ {
+  "start": 2743.9228437500005,
+  "end": 2745.6778437500006,
+  "speaker": "SPEAKER_00",
+  "text": "Non è tossico, ma dai.",
+  "lang": "it",
+  "avg_logprob": -0.406,
+  "who": "Barbara"
+ },
+ {
+  "start": 2745.1209687500004,
+  "end": 2745.5934687500003,
+  "speaker": "SPEAKER_01",
+  "text": "Magari.",
+  "lang": "it",
+  "avg_logprob": -0.87,
+  "who": "Gyasi"
+ },
+ {
+  "start": 2745.7284687500005,
+  "end": 2746.23471875,
+  "speaker": "SPEAKER_01",
+  "text": "Sì",
+  "lang": "it",
+  "avg_logprob": -0.514,
+  "who": "Gyasi"
+ },
+ {
+  "start": 2746.2178437500006,
+  "end": 2746.96034375,
+  "speaker": "SPEAKER_00",
+  "text": "Pasquoso",
+  "lang": "it",
+  "avg_logprob": -0.688,
+  "who": "Barbara"
+ },
+ {
+  "start": 2749.79534375,
+  "end": 2750.2509687500005,
+  "speaker": "SPEAKER_01",
+  "text": "Sì.",
+  "lang": "it",
+  "avg_logprob": -0.665,
+  "who": "Gyasi"
+ },
+ {
+  "start": 2749.84596875,
+  "end": 2753.0690937500003,
+  "speaker": "SPEAKER_00",
+  "text": "alternativa boicotti, non compri questa merda",
+  "lang": "it",
+  "avg_logprob": -0.243,
+  "who": "Barbara"
+ },
+ {
+  "start": 2753.47409375,
+  "end": 2753.89596875,
+  "speaker": "SPEAKER_01",
+  "text": "See you.",
+  "lang": "en",
+  "avg_logprob": -0.446,
+  "who": "Gyasi"
+ },
+ {
+  "start": 2753.5584687500004,
+  "end": 2754.4190937500007,
+  "speaker": "SPEAKER_00",
+  "text": "Lo compri.",
+  "lang": "it",
+  "avg_logprob": -0.504,
+  "who": "Barbara"
+ },
+ {
+  "start": 2754.2334687500006,
+  "end": 2757.6590937500005,
+  "speaker": "SPEAKER_01",
+  "text": "No, no, no, to, to, uh, to a very, um...",
+  "lang": "en",
+  "avg_logprob": -0.379,
+  "who": "Gyasi"
+ },
+ {
+  "start": 2757.9122187500006,
+  "end": 2770.82159375,
+  "speaker": "SPEAKER_01",
+  "text": "Perché compare, comprata stati uniti in Europa,  allowed medicines, you see a big difference.",
+  "lang": "it",
+  "avg_logprob": -0.455,
+  "who": "Gyasi"
+ },
+ {
+  "start": 2768.64471875,
+  "end": 2771.07471875,
+  "speaker": "SPEAKER_00",
+  "text": "Sì, ha fatto una grande differenza.",
+  "lang": "it",
+  "avg_logprob": -0.406,
+  "who": "Barbara"
+ },
+ {
+  "start": 2772.1378437500007,
+  "end": 2773.48784375,
+  "speaker": "SPEAKER_00",
+  "text": "Allaudo, permettere.",
+  "lang": "it",
+  "avg_logprob": -0.486,
+  "who": "Barbara"
+ },
+ {
+  "start": 2774.01096875,
+  "end": 2774.38221875,
+  "speaker": "SPEAKER_01",
+  "text": "Sì.",
+  "lang": "it",
+  "avg_logprob": -0.338,
+  "who": "Gyasi"
+ },
+ {
+  "start": 2777.6728437500005,
+  "end": 2780.7947187500004,
+  "speaker": "SPEAKER_00",
+  "text": "Tutti sanno che FDE è un'associazione criminale.",
+  "lang": "it",
+  "avg_logprob": -0.25,
+  "who": "Barbara"
+ },
+ {
+  "start": 2782.1784687500003,
+  "end": 2787.3759687500005,
+  "speaker": "SPEAKER_00",
+  "text": "Queste licenze, sai, anni fa c'era questa licenza per prodotti per donna.",
+  "lang": "it",
+  "avg_logprob": -0.2,
+  "who": "Barbara"
+ },
+ {
+  "start": 2787.69659375,
+  "end": 2789.1309687500006,
+  "speaker": "SPEAKER_00",
+  "text": "pre-menopausa.",
+  "lang": "it",
+  "avg_logprob": -0.227,
+  "who": "Barbara"
+ },
+ {
+  "start": 2790.48096875,
+  "end": 2794.09221875,
+  "speaker": "SPEAKER_00",
+  "text": "Molte donne prendono questo prodotto perché",
+  "lang": "it",
+  "avg_logprob": -0.182,
+  "who": "Barbara"
+ },
+ {
+  "start": 2794.39596875,
+  "end": 2796.9440937500003,
+  "speaker": "SPEAKER_00",
+  "text": "durante il periodo pre-menopausa.",
+  "lang": "it",
+  "avg_logprob": -0.213,
+  "who": "Barbara"
+ },
+ {
+  "start": 2797.23096875,
+  "end": 2799.20534375,
+  "speaker": "SPEAKER_00",
+  "text": "Sei nervoso, gli ormoni cambiano.",
+  "lang": "it",
+  "avg_logprob": -0.304,
+  "who": "Barbara"
+ },
+ {
+  "start": 2799.6103437500005,
+  "end": 2802.6140937500004,
+  "speaker": "SPEAKER_00",
+  "text": "Dopo molte donne americane prendono per anni.",
+  "lang": "it",
+  "avg_logprob": -0.107,
+  "who": "Barbara"
+ },
+ {
+  "start": 2802.95159375,
+  "end": 2808.5878437500005,
+  "speaker": "SPEAKER_00",
+  "text": "queste PILS, queste pastiglie e molte si sono suicidate perché crea depressione.",
+  "lang": "it",
+  "avg_logprob": -0.335,
+  "who": "Barbara"
+ },
+ {
+  "start": 2808.68909375,
+  "end": 2820.6534687500007,
+  "speaker": "SPEAKER_01",
+  "text": "Sì, ma comunque il giovane, come si dice, giovane femminile...",
+  "lang": "it",
+  "avg_logprob": -0.273,
+  "who": "Gyasi"
+ },
+ {
+  "start": 2821.0078437500006,
+  "end": 2821.7334687500006,
+  "speaker": "SPEAKER_01",
+  "text": "uh",
+  "lang": "en",
+  "avg_logprob": -0.258,
+  "who": "Gyasi"
+ },
+ {
+  "start": 2821.9528437500003,
+  "end": 2823.7247187500006,
+  "speaker": "SPEAKER_00",
+  "text": "nei giovani",
+  "lang": "it",
+  "avg_logprob": -0.344,
+  "who": "Barbara"
+ },
+ {
+  "start": 2823.6572187500005,
+  "end": 2827.47096875,
+  "speaker": "SPEAKER_01",
+  "text": "For young people, this is...",
+  "lang": "en",
+  "avg_logprob": -0.491,
+  "who": "Gyasi"
+ },
+ {
+  "start": 2830.1034687500005,
+  "end": 2839.5534687500003,
+  "speaker": "SPEAKER_01",
+  "text": "what is the the word in i can't think of the word puberty um puberty uh pu pu jovi capito puberty",
+  "lang": "en",
+  "avg_logprob": -0.176,
+  "who": "Gyasi"
+ },
+ {
+  "start": 2839.1315937500003,
+  "end": 2840.2284687500005,
+  "speaker": "SPEAKER_00",
+  "text": "Adolescenti.",
+  "lang": "en",
+  "avg_logprob": -0.386,
+  "who": "Barbara"
+ },
+ {
+  "start": 2840.14409375,
+  "end": 2848.8515937500006,
+  "speaker": "SPEAKER_01",
+  "text": "Sì, sì, sì. Sono nove, no, ma nove, dieci.  Alle ragazzine?  Sì, sì. Adesso qui, so.",
+  "lang": "it",
+  "avg_logprob": -0.266,
+  "who": "Gyasi"
+ },
+ {
+  "start": 2841.59534375,
+  "end": 2842.11846875,
+  "speaker": "SPEAKER_00",
+  "text": "So no.",
+  "lang": "en",
+  "avg_logprob": -0.679,
+  "who": "Barbara"
+ },
+ {
+  "start": 2845.5272187500004,
+  "end": 2846.7422187500006,
+  "speaker": "SPEAKER_00",
+  "text": "alle ragazzine  si",
+  "lang": "it",
+  "avg_logprob": -0.369,
+  "who": "Barbara"
+ },
+ {
+  "start": 2851.2478437500004,
+  "end": 2852.56409375,
+  "speaker": "SPEAKER_00",
+  "text": "Ma se noi, per esempio,",
+  "lang": "it",
+  "avg_logprob": -0.315,
+  "who": "Barbara"
+ },
+ {
+  "start": 2852.80034375,
+  "end": 2855.9559687500005,
+  "speaker": "SPEAKER_00",
+  "text": "Il nostro pollo americano è chimico.",
+  "lang": "it",
+  "avg_logprob": -0.257,
+  "who": "Barbara"
+ },
+ {
+  "start": 2856.3103437500004,
+  "end": 2859.6178437500002,
+  "speaker": "SPEAKER_00",
+  "text": "Ma anche il pollo italiano usa molti antibiotici.",
+  "lang": "it",
+  "avg_logprob": -0.305,
+  "who": "Barbara"
+ },
+ {
+  "start": 2860.79909375,
+  "end": 2866.60409375,
+  "speaker": "SPEAKER_00",
+  "text": "Molte ragazzine hanno prima mestruazione a nove o otto anni perché il seno già è",
+  "lang": "it",
+  "avg_logprob": -0.243,
+  "who": "Barbara"
+ },
+ {
+  "start": 2866.9247187500005,
+  "end": 2867.5153437500003,
+  "speaker": "SPEAKER_00",
+  "text": "Perché?",
+  "lang": "it",
+  "avg_logprob": -0.462,
+  "who": "Barbara"
+ },
+ {
+  "start": 2867.78534375,
+  "end": 2871.7340937500003,
+  "speaker": "SPEAKER_00",
+  "text": "L'endocrinologo fa una visita specialistica, visita del sangue.",
+  "lang": "it",
+  "avg_logprob": -0.195,
+  "who": "Barbara"
+ },
+ {
+  "start": 2872.18971875,
+  "end": 2877.38721875,
+  "speaker": "SPEAKER_00",
+  "text": "La bambina mangia tre volte alla settimana torchi, pollo, tacchino perché secondo noi",
+  "lang": "it",
+  "avg_logprob": -0.165,
+  "who": "Barbara"
+ },
+ {
+  "start": 2877.6065937500007,
+  "end": 2881.6903437500005,
+  "speaker": "SPEAKER_00",
+  "text": "Carne bianca non è sana, è piena di ormoni.",
+  "lang": "it",
+  "avg_logprob": -0.145,
+  "who": "Barbara"
+ },
+ {
+  "start": 2882.1122187500005,
+  "end": 2885.2340937500003,
+  "speaker": "SPEAKER_00",
+  "text": "devi mangiare pollo dal tuo giardino",
+  "lang": "it",
+  "avg_logprob": -0.309,
+  "who": "Barbara"
+ },
+ {
+  "start": 2885.52096875,
+  "end": 2891.8153437500005,
+  "speaker": "SPEAKER_00",
+  "text": "in italy now you are not allowed if you have chicken or if you are  rooster in the garden you are not allowed",
+  "lang": "en",
+  "avg_logprob": -0.231,
+  "who": "Barbara"
+ },
+ {
+  "start": 2892.4734687500004,
+  "end": 2892.99659375,
+  "speaker": "SPEAKER_01",
+  "text": "Perché?",
+  "lang": "it",
+  "avg_logprob": -0.378,
+  "who": "Gyasi"
+ },
+ {
+  "start": 2892.99659375,
+  "end": 2897.40096875,
+  "speaker": "SPEAKER_00",
+  "text": "Immagino, perché non è sano, perché ci sono batteri, germi.",
+  "lang": "it",
+  "avg_logprob": -0.211,
+  "who": "Barbara"
+ },
+ {
+  "start": 2897.40096875,
+  "end": 2897.99159375,
+  "speaker": "SPEAKER_01",
+  "text": "Ah ok  No",
+  "lang": "it",
+  "avg_logprob": -0.347,
+  "who": "Gyasi"
+ },
+ {
+  "start": 2897.6034687500005,
+  "end": 2901.0459687500006,
+  "speaker": "SPEAKER_00",
+  "text": "No, arrivano i carabinieri e controllano, in pagina.",
+  "lang": "it",
+  "avg_logprob": -0.217,
+  "who": "Barbara"
+ },
+ {
+  "start": 2902.76721875,
+  "end": 2908.11659375,
+  "speaker": "SPEAKER_00",
+  "text": "O devi fare una denuncia ufficiale che tu hai animali in giardino?  Sì, hai.",
+  "lang": "it",
+  "avg_logprob": -0.244,
+  "who": "Barbara"
+ },
+ {
+  "start": 2908.5047187500004,
+  "end": 2910.78284375,
+  "speaker": "SPEAKER_00",
+  "text": "ai animali polli, galline.",
+  "lang": "it",
+  "avg_logprob": -0.313,
+  "who": "Barbara"
+ },
+ {
+  "start": 2911.7784687500007,
+  "end": 2912.14971875,
+  "speaker": "SPEAKER_00",
+  "text": "Wow",
+  "lang": "it",
+  "avg_logprob": -0.552,
+  "who": "Barbara"
+ },
+ {
+  "start": 2913.5165937500005,
+  "end": 2916.19971875,
+  "speaker": "SPEAKER_00",
+  "text": "Sì, questa è la pazzia, la follia ancora.",
+  "lang": "it",
+  "avg_logprob": -0.159,
+  "who": "Barbara"
+ },
+ {
+  "start": 2916.6553437500006,
+  "end": 2918.24159375,
+  "speaker": "SPEAKER_00",
+  "text": "invece il supermercato è più buono.",
+  "lang": "it",
+  "avg_logprob": -0.257,
+  "who": "Barbara"
+ },
+ {
+  "start": 2918.84909375,
+  "end": 2921.1778437500006,
+  "speaker": "SPEAKER_00",
+  "text": "Supermercato in chimico, 100%.",
+  "lang": "it",
+  "avg_logprob": -0.3,
+  "who": "Barbara"
+ },
+ {
+  "start": 2921.5828437500004,
+  "end": 2925.76784375,
+  "speaker": "SPEAKER_00",
+  "text": "Così quando sei malato vai dal medico, il medico ti dà qualche medicina.",
+  "lang": "it",
+  "avg_logprob": -0.093,
+  "who": "Barbara"
+ },
+ {
+  "start": 2926.2234687500004,
+  "end": 2928.0290937500004,
+  "speaker": "SPEAKER_00",
+  "text": "E così è una reazione a catena.",
+  "lang": "it",
+  "avg_logprob": -0.163,
+  "who": "Barbara"
+ },
+ {
+  "start": 2930.00346875,
+  "end": 2934.2897187500002,
+  "speaker": "SPEAKER_00",
+  "text": "E poi scusa, italiani anche esperti medici dicono",
+  "lang": "it",
+  "avg_logprob": -0.291,
+  "who": "Barbara"
+ },
+ {
+  "start": 2934.44159375,
+  "end": 2935.9265937500004,
+  "speaker": "SPEAKER_00",
+  "text": "Life Span",
+  "lang": "it",
+  "avg_logprob": -0.682,
+  "who": "Barbara"
+ },
+ {
+  "start": 2936.12909375,
+  "end": 2942.11971875,
+  "speaker": "SPEAKER_00",
+  "text": "La vita oggi in Europa è lunghissima, vivi fino a 90 anni, ossia sei bombardato di prodotti chimici.",
+  "lang": "it",
+  "avg_logprob": -0.11,
+  "who": "Barbara"
+ },
+ {
+  "start": 2943.60471875,
+  "end": 2946.0515937500004,
+  "speaker": "SPEAKER_00",
+  "text": "Ma questa è una spiegazione scientifica.",
+  "lang": "it",
+  "avg_logprob": -0.242,
+  "who": "Barbara"
+ },
+ {
+  "start": 2946.4059687500003,
+  "end": 2947.11471875,
+  "speaker": "SPEAKER_01",
+  "text": "Sì, sì.",
+  "lang": "it",
+  "avg_logprob": -0.407,
+  "who": "Gyasi"
+ },
+ {
+  "start": 2947.11471875,
+  "end": 2950.8778437500005,
+  "speaker": "SPEAKER_00",
+  "text": "Ma dai, tu prima morivi a 40 anni.",
+  "lang": "it",
+  "avg_logprob": -0.415,
+  "who": "Barbara"
+ },
+ {
+  "start": 2951.02971875,
+  "end": 2953.9659687500007,
+  "speaker": "SPEAKER_00",
+  "text": "a quarantacinque si vede, che adesso invece si è...",
+  "lang": "it",
+  "avg_logprob": -0.684,
+  "who": "Barbara"
+ },
+ {
+  "start": 2954.15159375,
+  "end": 2959.1803437500002,
+  "speaker": "SPEAKER_00",
+  "text": "Sì, la mattina 5 pillole, 7 pillole, 8 pillole, tutto il giorno prendi pillole.",
+  "lang": "it",
+  "avg_logprob": -0.093,
+  "who": "Barbara"
+ },
+ {
+  "start": 2959.41659375,
+  "end": 2960.4122187500006,
+  "speaker": "SPEAKER_00",
+  "text": "E stai bene.",
+  "lang": "it",
+  "avg_logprob": -0.268,
+  "who": "Barbara"
+ },
+ {
+  "start": 2960.6990937500004,
+  "end": 2961.0534687500003,
+  "speaker": "SPEAKER_01",
+  "text": "See ya.",
+  "lang": "en",
+  "avg_logprob": -0.348,
+  "who": "Gyasi"
+ },
+ {
+  "start": 2961.08721875,
+  "end": 2965.0359687500004,
+  "speaker": "SPEAKER_00",
+  "text": "Sei chimico 100%, questa non è...",
+  "lang": "it",
+  "avg_logprob": -0.434,
+  "who": "Barbara"
+ },
+ {
+  "start": 2965.8797187500004,
+  "end": 2969.5584687500004,
+  "speaker": "SPEAKER_00",
+  "text": "Questa non è scienza, questa è mistificazione e propaganda.",
+  "lang": "it",
+  "avg_logprob": -0.151,
+  "who": "Barbara"
+ },
+ {
+  "start": 2970.6553437500006,
+  "end": 2972.29221875,
+  "speaker": "SPEAKER_01",
+  "text": "No, è vero, è vero",
+  "lang": "it",
+  "avg_logprob": -0.33,
+  "who": "Gyasi"
+ },
+ {
+  "start": 2973.55784375,
+  "end": 2976.3253437500007,
+  "speaker": "SPEAKER_00",
+  "text": "Ma tu sei il medico? Scusa, non siamo studi.",
+  "lang": "it",
+  "avg_logprob": -0.269,
+  "who": "Barbara"
+ },
+ {
+  "start": 2977.8272187500006,
+  "end": 3002.31284375,
+  "speaker": "SPEAKER_01",
+  "text": "Sì, ho capito bene perché non mi piacciono molto i medici, ho capito bene.  C'è un... come si dice? Compressi per questo, un presso per questo, 20 pressi.",
+  "lang": "it",
+  "avg_logprob": -0.477,
+  "who": "Gyasi"
+ },
+ {
+  "start": 2996.6259687500005,
+  "end": 2998.1953437500006,
+  "speaker": "SPEAKER_00",
+  "text": "Sì, sì, da tutto",
+  "lang": "it",
+  "avg_logprob": -0.489,
+  "who": "Barbara"
+ },
+ {
+  "start": 3002.9034687500007,
+  "end": 3003.46034375,
+  "speaker": "SPEAKER_01",
+  "text": "Adesso...",
+  "lang": "it",
+  "avg_logprob": -0.597,
+  "who": "Gyasi"
+ },
+ {
+  "start": 3002.98784375,
+  "end": 3017.56784375,
+  "speaker": "SPEAKER_00",
+  "text": "Adesso è molto di moda questo, sai questo Gavis con tutti questi prodotti per reflusso, gastroesofageo.  Ma questa è merda, perché ho chiesto al farmacista, ha detto,",
+  "lang": "it",
+  "avg_logprob": -0.241,
+  "who": "Barbara"
+ },
+ {
+  "start": 3017.85471875,
+  "end": 3021.34784375,
+  "speaker": "SPEAKER_00",
+  "text": "Non comprerei questo Gavisco perché 25 euro.",
+  "lang": "it",
+  "avg_logprob": -0.398,
+  "who": "Barbara"
+ },
+ {
+  "start": 3021.73596875,
+  "end": 3022.15784375,
+  "speaker": "SPEAKER_01",
+  "text": "Sì.",
+  "lang": "it",
+  "avg_logprob": -0.389,
+  "who": "Gyasi"
+ },
+ {
+  "start": 3022.3434687500003,
+  "end": 3023.6090937500003,
+  "speaker": "SPEAKER_01",
+  "text": "Sì, esatto.",
+  "lang": "it",
+  "avg_logprob": -0.369,
+  "who": "Gyasi"
+ },
+ {
+  "start": 3023.33909375,
+  "end": 3023.71034375,
+  "speaker": "SPEAKER_00",
+  "text": "Sì.",
+  "lang": "it",
+  "avg_logprob": -0.616,
+  "who": "Barbara"
+ },
+ {
+  "start": 3024.26721875,
+  "end": 3027.57471875,
+  "speaker": "SPEAKER_00",
+  "text": "Scusa, ho trovato poi questo non è male, è naturale.",
+  "lang": "it",
+  "avg_logprob": -0.262,
+  "who": "Barbara"
+ },
+ {
+  "start": 3035.57346875,
+  "end": 3039.7247187500006,
+  "speaker": "SPEAKER_00",
+  "text": "Questa è una buona fabbrica, è naturale, è bionicida.",
+  "lang": "it",
+  "avg_logprob": -0.324,
+  "who": "Barbara"
+ },
+ {
+  "start": 3040.28159375,
+  "end": 3042.74534375,
+  "speaker": "SPEAKER_00",
+  "text": "A Boca è una fabbrica di erbe.",
+  "lang": "it",
+  "avg_logprob": -0.207,
+  "who": "Barbara"
+ },
+ {
+  "start": 3043.1503437500005,
+  "end": 3048.22971875,
+  "speaker": "SPEAKER_01",
+  "text": "Dove comprare?",
+  "lang": "it",
+  "avg_logprob": -0.451,
+  "who": "Gyasi"
+ },
+ {
+  "start": 3043.7578437500006,
+  "end": 3044.2809687500003,
+  "speaker": "SPEAKER_00",
+  "text": "dove",
+  "lang": "it",
+  "avg_logprob": -0.803,
+  "who": "Barbara"
+ },
+ {
+  "start": 3048.60096875,
+  "end": 3049.4615937500002,
+  "speaker": "SPEAKER_00",
+  "text": "Informatica",
+  "lang": "it",
+  "avg_logprob": -0.426,
+  "who": "Barbara"
+ },
+ {
+  "start": 3049.8497187500006,
+  "end": 3054.25409375,
+  "speaker": "SPEAKER_01",
+  "text": "Oh, ok, chiama, scrivere per favore?  Ah, bocca.",
+  "lang": "it",
+  "avg_logprob": -0.371,
+  "who": "Gyasi"
+ },
+ {
+  "start": 3054.76034375,
+  "end": 3059.99159375,
+  "speaker": "SPEAKER_00",
+  "text": "C'erano tanti, bionacide, riflusso, difficoltà digestiva.",
+  "lang": "it",
+  "avg_logprob": -0.302,
+  "who": "Barbara"
+ },
+ {
+  "start": 3055.18221875,
+  "end": 3055.5534687500003,
+  "speaker": "SPEAKER_01",
+  "text": "Ok",
+  "lang": "it",
+  "avg_logprob": -0.391,
+  "who": "Gyasi"
+ },
+ {
+  "start": 3060.54846875,
+  "end": 3061.7634687500004,
+  "speaker": "SPEAKER_00",
+  "text": "e acidità.",
+  "lang": "it",
+  "avg_logprob": -0.532,
+  "who": "Barbara"
+ },
+ {
+  "start": 3063.73784375,
+  "end": 3071.4665937500004,
+  "speaker": "SPEAKER_00",
+  "text": "Ma ci sono tante opzioni, questo per esempio la vitamina C senza coloranti, senza zuccheri.",
+  "lang": "it",
+  "avg_logprob": -0.189,
+  "who": "Barbara"
+ },
+ {
+  "start": 3071.7028437500003,
+  "end": 3072.64784375,
+  "speaker": "SPEAKER_00",
+  "text": "c'è tutto",
+  "lang": "it",
+  "avg_logprob": -0.375,
+  "who": "Barbara"
+ },
+ {
+  "start": 3073.1540937500004,
+  "end": 3076.39409375,
+  "speaker": "SPEAKER_00",
+  "text": "Dipende, anche colesterolo, tutto a base di erbe.",
+  "lang": "it",
+  "avg_logprob": -0.142,
+  "who": "Barbara"
+ },
+ {
+  "start": 3076.79909375,
+  "end": 3079.1953437500006,
+  "speaker": "SPEAKER_00",
+  "text": "Questo è acerola, vitamina C.",
+  "lang": "it",
+  "avg_logprob": -0.225,
+  "who": "Barbara"
+ },
+ {
+  "start": 3079.8365937500002,
+  "end": 3083.32971875,
+  "speaker": "SPEAKER_00",
+  "text": "Cosa c'è dentro? Non ci sono zuccheri?",
+  "lang": "it",
+  "avg_logprob": -0.156,
+  "who": "Barbara"
+ },
+ {
+  "start": 3084.88221875,
+  "end": 3085.8778437500005,
+  "speaker": "SPEAKER_00",
+  "text": "Polifenoli.",
+  "lang": "it",
+  "avg_logprob": -0.48,
+  "who": "Barbara"
+ },
+ {
+  "start": 3090.6872187500003,
+  "end": 3095.00721875,
+  "speaker": "SPEAKER_00",
+  "text": "Vitamine, acido scorbico, aminoacidi, flavonoidi, minerali.",
+  "lang": "it",
+  "avg_logprob": -0.149,
+  "who": "Barbara"
+ },
+ {
+  "start": 3096.15471875,
+  "end": 3096.5428437500004,
+  "speaker": "SPEAKER_01",
+  "text": "Nice.",
+  "lang": "en",
+  "avg_logprob": -0.204,
+  "who": "Gyasi"
+ },
+ {
+  "start": 3097.06596875,
+  "end": 3098.93909375,
+  "speaker": "SPEAKER_00",
+  "text": "Questo c'è alternativo.",
+  "lang": "it",
+  "avg_logprob": -0.245,
+  "who": "Barbara"
+ },
+ {
+  "start": 3099.4453437500006,
+  "end": 3101.52096875,
+  "speaker": "SPEAKER_00",
+  "text": "E gaviscon, ma gaviscon.",
+  "lang": "it",
+  "avg_logprob": -0.47,
+  "who": "Barbara"
+ },
+ {
+  "start": 3101.5547187500006,
+  "end": 3104.0859687500006,
+  "speaker": "SPEAKER_00",
+  "text": "Che fa schifo. Poi è a gusto.",
+  "lang": "it",
+  "avg_logprob": -0.371,
+  "who": "Barbara"
+ },
+ {
+  "start": 3104.65971875,
+  "end": 3105.2840937500005,
+  "speaker": "SPEAKER_00",
+  "text": "DD",
+  "lang": "en",
+  "avg_logprob": -0.488,
+  "who": "Barbara"
+ },
+ {
+  "start": 3105.50346875,
+  "end": 3112.1015937500006,
+  "speaker": "SPEAKER_00",
+  "text": "stroberi di fragola, come plastica pura, così nello stomaco arriva tutto questo liquido.",
+  "lang": "it",
+  "avg_logprob": -0.25,
+  "who": "Barbara"
+ },
+ {
+  "start": 3112.25346875,
+  "end": 3112.6247187500003,
+  "speaker": "SPEAKER_01",
+  "text": "See you.",
+  "lang": "en",
+  "avg_logprob": -0.576,
+  "who": "Gyasi"
+ },
+ {
+  "start": 3112.9959687500004,
+  "end": 3115.25721875,
+  "speaker": "SPEAKER_00",
+  "text": "Dopo un'ora il problema ritorna.",
+  "lang": "it",
+  "avg_logprob": -0.092,
+  "who": "Barbara"
+ },
+ {
+  "start": 3116.45534375,
+  "end": 3118.9697187500005,
+  "speaker": "SPEAKER_01",
+  "text": "See, um, molto, uh, come se dice, um...",
+  "lang": "en",
+  "avg_logprob": -0.531,
+  "who": "Gyasi"
+ },
+ {
+  "start": 3119.3240937500004,
+  "end": 3137.07659375,
+  "speaker": "SPEAKER_01",
+  "text": "Più medicina, come si dice, non è più specifica, più sintomi fissi, ma poi altri problemi, come un altro problema, se ho capito.",
+  "lang": "it",
+  "avg_logprob": -0.218,
+  "who": "Gyasi"
+ },
+ {
+  "start": 3128.2003437500007,
+  "end": 3128.6053437500004,
+  "speaker": "SPEAKER_00",
+  "text": "Esatto.",
+  "lang": "it",
+  "avg_logprob": -0.898,
+  "who": "Barbara"
+ },
+ {
+  "start": 3136.89096875,
+  "end": 3139.79346875,
+  "speaker": "SPEAKER_00",
+  "text": "C'è il primo sintomo principale.",
+  "lang": "it",
+  "avg_logprob": -0.28,
+  "who": "Barbara"
+ },
+ {
+  "start": 3140.08034375,
+  "end": 3142.81409375,
+  "speaker": "SPEAKER_00",
+  "text": "Controlla, ma tutto intorno ignora.",
+  "lang": "it",
+  "avg_logprob": -0.226,
+  "who": "Barbara"
+ },
+ {
+  "start": 3142.8984687500006,
+  "end": 3143.5565937500005,
+  "speaker": "SPEAKER_01",
+  "text": "Esatto.",
+  "lang": "it",
+  "avg_logprob": -0.278,
+  "who": "Gyasi"
+ },
+ {
+  "start": 3144.36659375,
+  "end": 3149.56409375,
+  "speaker": "SPEAKER_00",
+  "text": "E così è una reazione a catena, così compri un altro prodotto, compri 3-4 prodotti.",
+  "lang": "it",
+  "avg_logprob": -0.162,
+  "who": "Barbara"
+ },
+ {
+  "start": 3149.78346875,
+  "end": 3151.84221875,
+  "speaker": "SPEAKER_00",
+  "text": "e continuo a prendere cose",
+  "lang": "it",
+  "avg_logprob": -0.315,
+  "who": "Barbara"
+ },
+ {
+  "start": 3152.26409375,
+  "end": 3156.29721875,
+  "speaker": "SPEAKER_00",
+  "text": "Non vai alle radici del problema.",
+  "lang": "it",
+  "avg_logprob": -0.318,
+  "who": "Barbara"
+ },
+ {
+  "start": 3158.23784375,
+  "end": 3165.20721875,
+  "speaker": "SPEAKER_00",
+  "text": "Vabbè dai, cosa possiamo fare? Spero che l'FDA non ha sentito questa conversazione.",
+  "lang": "it",
+  "avg_logprob": -0.302,
+  "who": "Barbara"
+ },
+ {
+  "start": 3166.72596875,
+  "end": 3173.3240937500004,
+  "speaker": "SPEAKER_00",
+  "text": "Perché tu finisci i tuoi giorni in jail e io mi blocco.",
+  "lang": "it",
+  "avg_logprob": -0.382,
+  "who": "Barbara"
+ },
+ {
+  "start": 3171.11346875,
+  "end": 3172.0584687500004,
+  "speaker": "SPEAKER_01",
+  "text": "No, sì",
+  "lang": "it",
+  "avg_logprob": -0.826,
+  "who": "Gyasi"
+ },
+ {
+  "start": 3173.6953437500006,
+  "end": 3175.3828437500006,
+  "speaker": "SPEAKER_00",
+  "text": "FBI mi controllano.",
+  "lang": "it",
+  "avg_logprob": -0.524,
+  "who": "Barbara"
+ },
+ {
+  "start": 3173.9315937500005,
+  "end": 3174.37034375,
+  "speaker": "SPEAKER_01",
+  "text": "Sì.",
+  "lang": "it",
+  "avg_logprob": -0.671,
+  "who": "Gyasi"
+ },
+ {
+  "start": 3175.1972187500005,
+  "end": 3178.79159375,
+  "speaker": "SPEAKER_01",
+  "text": "Sì, noi crediamo, so sì, capito?",
+  "lang": "it",
+  "avg_logprob": -0.428,
+  "who": "Gyasi"
+ },
+ {
+  "start": 3178.42034375,
+  "end": 3180.8672187500006,
+  "speaker": "SPEAKER_00",
+  "text": "Abbiamo criticato, ma scusa.",
+  "lang": "it",
+  "avg_logprob": -0.245,
+  "who": "Barbara"
+ },
+ {
+  "start": 3180.9853437500005,
+  "end": 3181.4747187500006,
+  "speaker": "SPEAKER_01",
+  "text": "No, no.",
+  "lang": "en",
+  "avg_logprob": -0.268,
+  "who": "Gyasi"
+ },
+ {
+  "start": 3182.38596875,
+  "end": 3184.15784375,
+  "speaker": "SPEAKER_00",
+  "text": "Non siamo in Nord Corea o...",
+  "lang": "it",
+  "avg_logprob": -0.266,
+  "who": "Barbara"
+ },
+ {
+  "start": 3184.81596875,
+  "end": 3187.3809687500006,
+  "speaker": "SPEAKER_00",
+  "text": "Siamo in un paese democratico.",
+  "lang": "it",
+  "avg_logprob": -0.314,
+  "who": "Barbara"
+ },
+ {
+  "start": 3187.76909375,
+  "end": 3193.72596875,
+  "speaker": "SPEAKER_00",
+  "text": "Sì, esatto.  Nel momento ancora democratico, nel futuro chissà.",
+  "lang": "it",
+  "avg_logprob": -0.518,
+  "who": "Barbara"
+ },
+ {
+  "start": 3187.81971875,
+  "end": 3188.59596875,
+  "speaker": "SPEAKER_01",
+  "text": "Sì esatto",
+  "lang": "it",
+  "avg_logprob": -0.501,
+  "who": "Gyasi"
+ },
+ {
+  "start": 3193.7428437500002,
+  "end": 3203.4459687500002,
+  "speaker": "SPEAKER_01",
+  "text": "Sì, chi sa, Trump rimarrà in giro, forse non probabilmente per la FTA.",
+  "lang": "it",
+  "avg_logprob": -0.591,
+  "who": "Gyasi"
+ },
+ {
+  "start": 3200.8134687500005,
+  "end": 3202.7878437500003,
+  "speaker": "SPEAKER_00",
+  "text": "No, no, no, no, no, no, no, no, no.",
+  "lang": "it",
+  "avg_logprob": -0.515,
+  "who": "Barbara"
+ },
+ {
+  "start": 3205.4540937500005,
+  "end": 3211.3603437500005,
+  "speaker": "SPEAKER_00",
+  "text": "Lo come. Ma domani ci vediamo stessa ora in hotel o on the beach?",
+  "lang": "it",
+  "avg_logprob": -0.258,
+  "who": "Barbara"
+ },
+ {
+  "start": 3210.1959687500002,
+  "end": 3211.27596875,
+  "speaker": "SPEAKER_01",
+  "text": "No, sì.",
+  "lang": "it",
+  "avg_logprob": -0.484,
+  "who": "Gyasi"
+ },
+ {
+  "start": 3211.32659375,
+  "end": 3218.2790937500004,
+  "speaker": "SPEAKER_01",
+  "text": "No, no, no, non ho tempo per questo.  E non per questo no?  Sì, sì.  Come?",
+  "lang": "it",
+  "avg_logprob": -0.419,
+  "who": "Gyasi"
+ },
+ {
+  "start": 3211.6640937500006,
+  "end": 3212.22096875,
+  "speaker": "SPEAKER_00",
+  "text": "No, no, no.",
+  "lang": "en",
+  "avg_logprob": -0.23,
+  "who": "Barbara"
+ },
+ {
+  "start": 3216.5915937500004,
+  "end": 3217.0809687500005,
+  "speaker": "SPEAKER_00",
+  "text": "Questo no.",
+  "lang": "it",
+  "avg_logprob": -0.493,
+  "who": "Barbara"
+ },
+ {
+  "start": 3217.9415937500007,
+  "end": 3219.6628437500003,
+  "speaker": "SPEAKER_00",
+  "text": "cocktail, discoteca, no",
+  "lang": "it",
+  "avg_logprob": -0.499,
+  "who": "Barbara"
+ },
+ {
+  "start": 3219.83159375,
+  "end": 3221.08034375,
+  "speaker": "SPEAKER_01",
+  "text": "No, no, no.",
+  "lang": "it",
+  "avg_logprob": -0.211,
+  "who": "Gyasi"
+ },
+ {
+  "start": 3221.2997187500005,
+  "end": 3244.48596875,
+  "speaker": "SPEAKER_01",
+  "text": "No, non ho tempo perché per la prima lavoro, come si dice, tre rapporti e poi dopo io devo studiare l'italiano.  Quindi non bevo vino, non bevo birra, non discoteco, non guardo.",
+  "lang": "it",
+  "avg_logprob": -0.247,
+  "who": "Gyasi"
+ },
+ {
+  "start": 3242.54534375,
+  "end": 3244.3678437500002,
+  "speaker": "SPEAKER_00",
+  "text": "discoteca, non guardare",
+  "lang": "it",
+  "avg_logprob": -0.545,
+  "who": "Barbara"
+ },
+ {
+  "start": 3244.6884687500005,
+  "end": 3247.35471875,
+  "speaker": "SPEAKER_00",
+  "text": "Detox, vita sana.",
+  "lang": "it",
+  "avg_logprob": -0.628,
+  "who": "Barbara"
+ },
+ {
+  "start": 3245.26221875,
+  "end": 3249.64971875,
+  "speaker": "SPEAKER_01",
+  "text": "Sì, sì, esatto.",
+  "lang": "it",
+  "avg_logprob": -0.638,
+  "who": "Gyasi"
+ },
+ {
+  "start": 3249.1603437500007,
+  "end": 3256.9059687500003,
+  "speaker": "SPEAKER_00",
+  "text": "Quindi domani ascoltiamo, se hai tempo, questo audio e facciamo insieme.",
+  "lang": "it",
+  "avg_logprob": -0.367,
+  "who": "Barbara"
+ },
+ {
+  "start": 3254.40846875,
+  "end": 3284.5978437500007,
+  "speaker": "SPEAKER_01",
+  "text": "Sì, sì, sì. Ascoltare due, ma non leggere. Non ascoltare, non leggere. Solo ascoltare. Dopo ascoltare e scrivere.  So domani I'll have come si dice, il lesione, how do you say filled out?",
+  "lang": "it",
+  "avg_logprob": -0.354,
+  "who": "Gyasi"
+ },
+ {
+  "start": 3266.33909375,
+  "end": 3267.7059687500005,
+  "speaker": "SPEAKER_00",
+  "text": "Non scrivo esercizi.",
+  "lang": "it",
+  "avg_logprob": -0.272,
+  "who": "Barbara"
+ },
+ {
+  "start": 3272.92034375,
+  "end": 3273.3084687500004,
+  "speaker": "SPEAKER_00",
+  "text": "conto.",
+  "lang": "it",
+  "avg_logprob": -0.455,
+  "who": "Barbara"
+ },
+ {
+  "start": 3276.90284375,
+  "end": 3277.56096875,
+  "speaker": "SPEAKER_00",
+  "text": "Ma c'è",
+  "lang": "it",
+  "avg_logprob": -0.526,
+  "who": "Barbara"
+ },
+ {
+  "start": 3284.5978437500007,
+  "end": 3287.7028437500003,
+  "speaker": "SPEAKER_00",
+  "text": "Come si dice?  Complete?  Completiamo, fila app, completare.",
+  "lang": "it",
+  "avg_logprob": -0.714,
+  "who": "Barbara"
+ },
+ {
+  "start": 3284.90159375,
+  "end": 3285.7284687500005,
+  "speaker": "SPEAKER_01",
+  "text": "A completion?  A completion.",
+  "lang": "en",
+  "avg_logprob": -0.765,
+  "who": "Gyasi"
+ },
+ {
+  "start": 3288.0909687500007,
+  "end": 3289.20471875,
+  "speaker": "SPEAKER_01",
+  "text": "completare",
+  "lang": "it",
+  "avg_logprob": -0.365,
+  "who": "Gyasi"
+ },
+ {
+  "start": 3289.6603437500007,
+  "end": 3291.1453437500004,
+  "speaker": "SPEAKER_00",
+  "text": "Completiamo insieme.",
+  "lang": "it",
+  "avg_logprob": -0.279,
+  "who": "Barbara"
+ },
+ {
+  "start": 3292.20846875,
+  "end": 3298.11471875,
+  "speaker": "SPEAKER_00",
+  "text": "Ok bene, allora ci vediamo domani, buonanotte, buona giornata perché adesso...",
+  "lang": "it",
+  "avg_logprob": -0.271,
+  "who": "Barbara"
+ },
+ {
+  "start": 3293.33909375,
+  "end": 3293.8115937500006,
+  "speaker": "SPEAKER_01",
+  "text": "Okay.",
+  "lang": "en",
+  "avg_logprob": -0.534,
+  "who": "Gyasi"
+ },
+ {
+  "start": 3298.41846875,
+  "end": 3301.18596875,
+  "speaker": "SPEAKER_00",
+  "text": "Qui sono le 11, con calma.",
+  "lang": "it",
+  "avg_logprob": -0.352,
+  "who": "Barbara"
+ },
+ {
+  "start": 3298.4522187500006,
+  "end": 3298.9415937500007,
+  "speaker": "SPEAKER_01",
+  "text": "See?",
+  "lang": "en",
+  "avg_logprob": -0.82,
+  "who": "Gyasi"
+ },
+ {
+  "start": 3301.3884687500004,
+  "end": 3301.84409375,
+  "speaker": "SPEAKER_01",
+  "text": "Sì.",
+  "lang": "it",
+  "avg_logprob": -0.371,
+  "who": "Gyasi"
+ },
+ {
+  "start": 3301.84409375,
+  "end": 3302.4684687500003,
+  "speaker": "SPEAKER_00",
+  "text": "Va bene.",
+  "lang": "it",
+  "avg_logprob": -0.373,
+  "who": "Barbara"
+ },
+ {
+  "start": 3302.4684687500003,
+  "end": 3303.53159375,
+  "speaker": "SPEAKER_01",
+  "text": "Okay, grazie.",
+  "lang": "en",
+  "avg_logprob": -0.282,
+  "who": "Gyasi"
+ },
+ {
+  "start": 3302.8903437500003,
+  "end": 3304.25721875,
+  "speaker": "SPEAKER_00",
+  "text": "Buona giornata, ciao.",
+  "lang": "it",
+  "avg_logprob": -0.312,
+  "who": "Barbara"
+ },
+ {
+  "start": 3303.88596875,
+  "end": 3304.9997187500003,
+  "speaker": "SPEAKER_01",
+  "text": "Ciao.  Ciao.",
+  "lang": "en",
+  "avg_logprob": -0.542,
+  "who": "Gyasi"
+ }
+]

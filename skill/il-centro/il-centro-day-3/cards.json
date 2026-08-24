@@ -1,0 +1,282 @@
+[
+ {
+  "clip": "d3-lo-01",
+  "chapter": "L'articolo LO",
+  "sectionId": "sec-lo",
+  "it": "lo spazzolino",
+  "en": "the toothbrush",
+  "note": "s + consonant takes LO, never IL. Her rule on the tape: «perché la parola comincia con SP»."
+ },
+ {
+  "clip": "d3-lo-02",
+  "chapter": "L'articolo LO",
+  "sectionId": "sec-lo",
+  "it": "lo specchio",
+  "en": "the mirror",
+  "note": "sp- → lo."
+ },
+ {
+  "clip": "d3-lo-03",
+  "chapter": "L'articolo LO",
+  "sectionId": "sec-lo",
+  "it": "lo stadio",
+  "en": "the stadium",
+  "note": "st- → lo."
+ },
+ {
+  "clip": "d3-lo-04",
+  "chapter": "L'articolo LO",
+  "sectionId": "sec-lo",
+  "it": "lo psicologo",
+  "en": "the psychologist",
+  "note": "ps- counts too — the test is s+consonant, not the letter s alone."
+ },
+ {
+  "clip": "d3-lo-05",
+  "chapter": "L'articolo LO",
+  "sectionId": "sec-lo",
+  "it": "lo standard",
+  "en": "the standard",
+  "note": "Even a borrowed word obeys it: lo standard, lo sport, lo staff."
+ },
+ {
+  "clip": "d3-lo-06",
+  "chapter": "L'articolo LO",
+  "sectionId": "sec-lo",
+  "it": "lo zucchero",
+  "en": "the sugar",
+  "note": "z- takes LO as well — from «prodotti con molto zucchero»."
+ },
+ {
+  "clip": "d3-rif-01",
+  "chapter": "I riflessivi, continuati",
+  "sectionId": "sec-riflessivi",
+  "it": "mi siedo alla scrivania",
+  "en": "I sit at the desk",
+  "note": "sedersi. And alla = a + la — Day 1's rule, still working."
+ },
+ {
+  "clip": "d3-rif-02",
+  "chapter": "I riflessivi, continuati",
+  "sectionId": "sec-riflessivi",
+  "it": "mi preparo per la lezione di italiano",
+  "en": "I get ready for the Italian lesson",
+  "note": "prepararsi. She noted mi preparo has no clean English equivalent."
+ },
+ {
+  "clip": "d3-rif-03",
+  "chapter": "I riflessivi, continuati",
+  "sectionId": "sec-riflessivi",
+  "it": "lei si alza alle 8.00",
+  "en": "she gets up at 8:00",
+  "note": "alzarsi, third person: si alza. alle for the hour — Day 1."
+ },
+ {
+  "clip": "d3-rif-04",
+  "chapter": "I riflessivi, continuati",
+  "sectionId": "sec-riflessivi",
+  "it": "ti tagli i capelli?",
+  "en": "are you getting your hair cut?",
+  "note": "tagliarsi. Reflexive because it is YOUR hair — Italian marks that, English doesn't."
+ },
+ {
+  "clip": "d3-rif-05",
+  "chapter": "I riflessivi, continuati",
+  "sectionId": "sec-riflessivi",
+  "it": "quando sei a Napoli ti siedi al bar o sei in piedi?",
+  "en": "when you're in Naples do you sit at the bar or stand?",
+  "note": "in piedi = standing. The everyday Neapolitan question."
+ },
+ {
+  "clip": "d3-rif-06",
+  "chapter": "I riflessivi, continuati",
+  "sectionId": "sec-riflessivi",
+  "it": "noi ci sediamo al bar e beviamo un caffè",
+  "en": "we sit at the bar and drink a coffee",
+  "note": "ci sediamo — first person plural. The pronoun still comes first."
+ },
+ {
+  "clip": "d3-rif-07",
+  "chapter": "I riflessivi, continuati",
+  "sectionId": "sec-riflessivi",
+  "it": "ci sediamo sul divano",
+  "en": "we sit on the sofa",
+  "note": "su + il = sul. Another fused preposition."
+ },
+ {
+  "clip": "d3-inc-01",
+  "chapter": "Incontrarsi, occuparsi",
+  "sectionId": "sec-incontrarsi",
+  "it": "incontrarsi",
+  "en": "to meet (each other)",
+  "note": "Reciprocal: the -si means one another, not oneself."
+ },
+ {
+  "clip": "d3-inc-02",
+  "chapter": "Incontrarsi, occuparsi",
+  "sectionId": "sec-incontrarsi",
+  "it": "mi incontro con amici a Napoli",
+  "en": "I meet up with friends in Naples",
+  "note": "mi incontro CON — the preposition stays."
+ },
+ {
+  "clip": "d3-inc-03",
+  "chapter": "Incontrarsi, occuparsi",
+  "sectionId": "sec-incontrarsi",
+  "it": "noi ci incontriamo in centro a Napoli",
+  "en": "we meet in the centre of Naples",
+  "note": "ci incontriamo — reciprocal plural. in centro, no article."
+ },
+ {
+  "clip": "d3-inc-04",
+  "chapter": "Incontrarsi, occuparsi",
+  "sectionId": "sec-incontrarsi",
+  "it": "occuparsi",
+  "en": "to deal with, to look after",
+  "note": "Takes DI: occuparsi di qualcosa."
+ },
+ {
+  "clip": "d3-inc-05",
+  "chapter": "Incontrarsi, occuparsi",
+  "sectionId": "sec-incontrarsi",
+  "it": "lei si occupa di appartamenti per i militari",
+  "en": "she handles apartments for the military",
+  "note": "si occupa DI — never occuparsi a/con."
+ },
+ {
+  "clip": "d3-inc-06",
+  "chapter": "Incontrarsi, occuparsi",
+  "sectionId": "sec-incontrarsi",
+  "it": "ci vediamo domani!",
+  "en": "see you tomorrow!",
+  "note": "Day 1's sign-off, still the standard."
+ },
+ {
+  "clip": "d3-inc-07",
+  "chapter": "Incontrarsi, occuparsi",
+  "sectionId": "sec-incontrarsi",
+  "it": "ci sentiamo domani!",
+  "en": "we'll speak tomorrow!",
+  "note": "sentirsi = to hear one another. Use it when the next contact is by phone or message."
+ },
+ {
+  "clip": "d3-ric-01",
+  "chapter": "Ricordare o ricordarsi",
+  "sectionId": "sec-ricordare",
+  "it": "non ricordo il nome",
+  "en": "I don't remember the name",
+  "note": "ricordare + direct object — no pronoun needed."
+ },
+ {
+  "clip": "d3-ric-02",
+  "chapter": "Ricordare o ricordarsi",
+  "sectionId": "sec-ricordare",
+  "it": "non mi ricordo",
+  "en": "I don't remember",
+  "note": "ricordarsi, standing alone. Both forms are correct; the reflexive is more colloquial."
+ },
+ {
+  "clip": "d3-ric-03",
+  "chapter": "Ricordare o ricordarsi",
+  "sectionId": "sec-ricordare",
+  "it": "non ricordo niente",
+  "en": "I don't remember anything",
+  "note": "The double negative is REQUIRED: non … niente."
+ },
+ {
+  "clip": "d3-ric-04",
+  "chapter": "Ricordare o ricordarsi",
+  "sectionId": "sec-ricordare",
+  "it": "non ricordo di prendere le medicine",
+  "en": "I don't remember to take the medicine",
+  "note": "Before a verb it needs DI: ricordare DI + infinito. Her note: «non ricordo + di + prendere»."
+ },
+ {
+  "clip": "d3-ric-05",
+  "chapter": "Ricordare o ricordarsi",
+  "sectionId": "sec-ricordare",
+  "it": "non capisco",
+  "en": "I don't understand",
+  "note": "The one to have ready in every lesson."
+ },
+ {
+  "clip": "d3-ric-06",
+  "chapter": "Ricordare o ricordarsi",
+  "sectionId": "sec-ricordare",
+  "it": "non ti seguo",
+  "en": "I'm not following you",
+  "note": "Softer than non capisco — you're following the person, not the words."
+ },
+ {
+  "clip": "d3-ric-07",
+  "chapter": "Ricordare o ricordarsi",
+  "sectionId": "sec-ricordare",
+  "it": "seguimi!",
+  "en": "follow me!",
+  "note": "Imperative with the pronoun ATTACHED — the opposite of the present tense."
+ },
+ {
+  "clip": "d3-con-01",
+  "chapter": "La tua vita qui",
+  "sectionId": "sec-contesto",
+  "it": "conosco questo posto",
+  "en": "I know this place",
+  "note": "CONOSCERE for places and people; SAPERE for facts. See the correction below."
+ },
+ {
+  "clip": "d3-con-02",
+  "chapter": "La tua vita qui",
+  "sectionId": "sec-contesto",
+  "it": "una base NATO",
+  "en": "a NATO base",
+  "note": "Ghedi, Aviano."
+ },
+ {
+  "clip": "d3-con-03",
+  "chapter": "La tua vita qui",
+  "sectionId": "sec-contesto",
+  "it": "l'aviazione",
+  "en": "the air force",
+  "note": "Feminine: l'aviazione."
+ },
+ {
+  "clip": "d3-con-04",
+  "chapter": "La tua vita qui",
+  "sectionId": "sec-contesto",
+  "it": "la lingua quotidiana",
+  "en": "everyday language",
+  "note": "quotidiano = daily — what she is actually teaching you."
+ },
+ {
+  "clip": "d3-con-05",
+  "chapter": "La tua vita qui",
+  "sectionId": "sec-contesto",
+  "it": "una lista",
+  "en": "a list",
+  "note": ""
+ },
+ {
+  "clip": "d3-con-06",
+  "chapter": "La tua vita qui",
+  "sectionId": "sec-contesto",
+  "it": "i neuroni",
+  "en": "the neurons",
+  "note": "il neurone → i neuroni."
+ },
+ {
+  "clip": "d3-con-07",
+  "chapter": "La tua vita qui",
+  "sectionId": "sec-contesto",
+  "it": "prodotti con molto zucchero",
+  "en": "products with a lot of sugar",
+  "note": "molto agrees with nothing here — it modifies zucchero."
+ },
+ {
+  "clip": "d3-con-08",
+  "chapter": "La tua vita qui",
+  "sectionId": "sec-contesto",
+  "it": "alla stessa ora, alle 9.55",
+  "en": "at the same time, at 9:55",
+  "note": "Unchanged since Day 1."
+ }
+]
