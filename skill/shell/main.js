@@ -1108,6 +1108,14 @@
      - Summary / non-anchored clips keep the old whole-page proportional scroll.
      The sectionId is stored in active.sectionId (set by play() for section clips). */
   audio.addEventListener('timeupdate', function () {
+    /* OFF by default (2026-08-04). This follow-scroll is time-proportional ONLY: it maps
+       elapsed/duration onto page position and knows nothing about what is being narrated,
+       so on a whole-lesson clip 50% of the audio lands the reader 50% down the page —
+       almost never the passage being spoken. It also re-issued a *smooth* scrollTo on every
+       timeupdate (~4x/sec), stacking animations and making the page judder.
+       The glow + the one-time centre-scroll on press are kept; those are accurate.
+       Opt back in per-lesson with:  window.__chironFollowScroll = true  */
+    if (!window.__chironFollowScroll) return;
     if (userTookOver) return;
     if (!active) return;
     var dur = audio.duration;
@@ -1275,6 +1283,10 @@
     window._chironResolveSrc = function (path, cb) {
       var C = window._chironClipBlobs;
       if (C[path]) { cb(C[path]); return; }
+      /* file:// — fetch() is ALWAYS blocked (a file URL is a unique opaque origin), so do
+         not attempt it: it only emitted one CORS error per clip before hitting the catch
+         fallback below. A data: URI needs no fetch either. (2026-08-04) */
+      if (location.protocol === 'file:' || path.slice(0, 5) === 'data:') { cb(path); return; }
       try {
         fetch(path).then(function (r) { return r.ok ? r.blob() : Promise.reject(); })
           .then(function (b) { var u = URL.createObjectURL(b); C[path] = u; cb(u); })
@@ -1377,7 +1389,10 @@
       var btn = document.createElement('button');
       btn.type = 'button'; btn.className = 'chiron-play-inline'; btn.title = 'Ascolta'; btn.setAttribute('aria-label', 'Play audio');
       var ico = document.createElement('span'); ico.className = 'ico'; ico.textContent = '▶'; btn.appendChild(ico);
-      btn.addEventListener('click', function (e) { e.preventDefault(); e.stopPropagation(); play(c, btn, null, '▶'); });
+      /* Glow the row/tile the phrase lives in, not just the <dt>/<td> — so the whole
+         entry pulses while it plays, matching what section clips do. (2026-08-04) */
+      var glowEl = el.closest('dl.phrases > div, .clock, tr, .idx .r, li') || el;
+      btn.addEventListener('click', function (e) { e.preventDefault(); e.stopPropagation(); play(c, btn, glowEl, '▶'); });
       el.classList.add('chiron-has-audio');
       el.insertBefore(btn, el.firstChild);
     });
