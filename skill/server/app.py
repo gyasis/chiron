@@ -2245,6 +2245,17 @@ def ask_config():
             models = sorted(m["id"] for m in r.json().get("data", []))
         except Exception:
             pass
+    elif c["provider"] == "ollama":
+        # ollama does NOT speak OpenAI's /models — it lists at /api/tags and returns
+        # {"models":[{"name": ...}]} instead of {"data":[{"id": ...}]}. Without this branch the
+        # picker is empty for every ollama/governor setup even though the endpoint is healthy,
+        # which reads as "no models available" when the truth is "wrong path, wrong key".
+        # Longer timeout than the OpenAI branch: this hop goes through the governor.
+        try:
+            r = httpx.get(f"{c['llm_url'].rstrip('/')}/api/tags", timeout=8.0)
+            models = sorted(m["name"] for m in r.json().get("models", []) if m.get("name"))
+        except Exception:
+            pass
     return {"provider": c["provider"], "base": "/ask/llm", "model": c["model"], "models": models}
 
 
@@ -2257,6 +2268,24 @@ async def ask_llm_proxy(path: str, request: Request):
     between the two (atelier-governor.md R-AG7)."""
     base = _ask_cfg()["llm_url"].rstrip("/")
     body = await request.body()
+    # acolyte's vendored ollama client hardcodes options.num_predict = -1 ("unlimited"). Local
+    # ollama accepts that; Ollama CLOUD models (*-cloud) map num_predict -> max_tokens and reject
+    # it outright: `max_tokens must be positive, got: -1`. So every cloud model in the picker 400s
+    # on the first question. Strip the sentinel here rather than in skill/ask/vendor/acolyte.js,
+    # which is a regenerated bundle — a patch there is reverted by the next vendor sync.
+    # Omitting the cap is what chiron's own chains already do deliberately: a LOW cap makes
+    # ollama reasoners return empty content, so automatic is the correct value, not a number.
+    if body:
+        try:
+            _b = json.loads(body)
+            _opts = _b.get("options")
+            if isinstance(_opts, dict) and _opts.get("num_predict") is not None and _opts["num_predict"] <= 0:
+                _opts.pop("num_predict", None)
+                if not _opts:
+                    _b.pop("options", None)
+                body = json.dumps(_b).encode()
+        except (ValueError, AttributeError):
+            pass          # not JSON, or not a shape we recognise — forward it untouched
     try:
         async with httpx.AsyncClient(timeout=httpx.Timeout(connect=3.0, read=180.0, write=30.0, pool=5.0)) as cx:
             r = await cx.request(request.method, f"{base}/{path}", content=body or None,
