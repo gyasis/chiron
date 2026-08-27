@@ -166,8 +166,18 @@ for (const d of dirs) {
       if (slug.startsWith(pfx)) { source = key; sourceRef = slug.slice(pfx.length).replace(/-(\d+)$/, '_$1'); break; }
     }
   }
+  // SERVED path, from disk truth. A BUNDLED lesson is served from its EXTRACTED copy under the
+  // document root — only /lessons/**, /library/** and /ask/** are served, so the bare
+  // `<rel>/lesson.html` is not a reachable URL. Writing it here 404'd every bundled lesson until
+  // something re-bundled them ONE AT A TIME: that is why a full re-index silently broke 322
+  // lessons (2026-08-24) and 329 again (2026-08-27), and why `_rebuild_catalog()` running AFTER
+  // `_bundle_lesson()` in /accept/{ref} leaves the lesson it just accepted unreachable.
+  const entryName = cj.entry || 'lesson.html';
+  const servedPath = existsSync(join(OUT, 'lessons', slug, entryName))
+    ? 'lessons/' + slug + '/' + entryName
+    : join(rel, entryName);
   lessons.push({
-    id: rel, title, path: join(rel, cj.entry || 'lesson.html'), domain: tags.dom,
+    id: rel, title, path: servedPath, domain: tags.dom,
     system: tags.sys || null, subject: tags.subj || null, topic: tags.topic || null,
     level: tags.level || null, scope: tags.scope || (tags.subj && /diseases|disorders/i.test(title) ? 'subject' : 'disease'),
     trend: tags.trend || null, status: cj.status || 'published', clips, ready: true, mtime,
