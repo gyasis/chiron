@@ -178,7 +178,7 @@ function extractEpisode(lesson, html) {
         lesson: lesson.title, lessonId: lesson.id, domain: lesson.domain || null,
         system: null, subject: lesson.subject || null, level: lesson.level || null,
         section: `scene-${s.scene}`, scene: s.scene, t: s.start ?? null,
-        href: `/lessons/${lesson.path}#t=${Math.round(s.start || 0)}`,
+        href: `/lessons/${relPath(lesson.path)}#t=${Math.round(s.start || 0)}`,
       },
     };
   }).filter(p => p.text.length >= MIN_CHARS);
@@ -206,7 +206,7 @@ function extract(lesson, file) {
           level: lesson.level || null,
           section: sec.id,
           // the source-card jump target, served by :8911
-          href: `/lessons/${lesson.path}#${sec.id}`,
+          href: `/lessons/${relPath(lesson.path)}#${sec.id}`,
         },
       });
     });
@@ -223,6 +223,22 @@ if (!existsSync(indexFile)) {
 }
 mkdirSync(OUT, { recursive: true });
 
+// `path` in library.index.json comes in TWO shapes and both are legitimate:
+//   bare      `<rel>/lesson.html`            — what the indexer writes for an unbundled lesson
+//   served    `lessons/<slug>/lesson.html`   — what a BUNDLED lesson needs, because library.js
+//                                              streams l.path directly without prefixing
+// This file needs the bare form for the filesystem and the served form for hrefs, so normalise
+// once here instead of assuming one shape. Assuming the bare shape is what made a full re-index
+// report `missing html 330`.
+const relPath = (p) => (p || '').startsWith('lessons/') ? p.slice('lessons/'.length) : (p || '');
+const lessonFile = (p) => {
+  const bare = join(GEN, p);
+  if (existsSync(bare)) return bare;
+  const under = join(OUT, p);
+  if (existsSync(under)) return under;
+  return join(OUT, 'lessons', relPath(p));
+};
+
 const index = JSON.parse(readFileSync(indexFile, 'utf8'));
 let cache = {};
 if (!FORCE && existsSync(CACHE)) {
@@ -235,7 +251,7 @@ const corpus = [];
 let parsed = 0, reused = 0, missing = 0;
 
 for (const l of lessons) {
-  const file = join(GEN, l.path);
+  const file = lessonFile(l.path);
   let st;
   try { st = statSync(file); } catch { missing++; continue; }
   const fp = `${Math.round(st.mtimeMs)}:${st.size}`;

@@ -230,13 +230,37 @@ async function boot() {
  * a title + scope line in the topbar — not acolyte's header strip. Rather than
  * reimplement those controls (and inherit the bugs), the real elements are MOVED
  * into place: they keep every handler acolyte wired to them. */
+
+/* Ollama CLOUD models (…-cloud) run off-box: they cost money, need the network, and behave
+ * differently from the local ones — notably they REJECT num_predict:-1, which the server strips.
+ * They are indistinguishable from local models in a plain list of 60 names, so mark them.
+ * Both a class AND a ☁ prefix on purpose: native <select> options ignore colour and font-weight
+ * on macOS, so the class alone would be invisible exactly where this is being read. */
+const isCloudModel = (v) => /(?:-|:)cloud$/.test(v || '') || /-cloud(?::|$)/.test(v || '');
+
+function markCloudModels(picker) {
+  if (!picker) return;
+  for (const o of picker.querySelectorAll('option')) {
+    const cloud = isCloudModel(o.value || o.textContent);
+    o.classList.toggle('cloud-model', cloud);
+    if (cloud && !o.textContent.startsWith('\u2601')) o.textContent = '\u2601 ' + o.textContent;
+  }
+  picker.classList.toggle('on-cloud', isCloudModel(picker.value));
+}
+
 function adoptControls(handle, stats) {
   const panel = document.querySelector('#host .acolyte-panel');
   if (!panel) return;
 
   // model picker → the composer meta row
   const picker = panel.querySelector('.acolyte-model-picker');
-  if (picker) $('#cmeta').prepend(picker);
+  if (picker) {
+    $('#cmeta').prepend(picker);
+    markCloudModels(picker);
+    // acolyte repopulates the list when the config lands, so re-mark on change and on mutation
+    picker.addEventListener('change', () => markCloudModels(picker));
+    new MutationObserver(() => markCloudModels(picker)).observe(picker, { childList: true });
+  }
 
   // persona picker is ours — acolyte has no UI for it
   const persona = document.createElement('select');

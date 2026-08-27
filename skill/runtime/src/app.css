@@ -67,6 +67,22 @@
   --chiron-success: #22c55e; --chiron-warning: #f59e0b; --chiron-error: #ef4444; --chiron-info: #38bdf8;
   --chiron-border: #1f3a55; --chiron-divider: #16293e;
 }
+/* Centro — bone ground, one deep teal-blue accent; brick is reserved for corrections. */
+[data-theme="centro"] {
+  --chiron-bg: #f1f0ec; --chiron-surface: #fbfaf7; --chiron-elevated: #e2eaef;
+  --chiron-fg: #16191b; --chiron-fg-secondary: #6b7076; --chiron-muted: #8e9298;
+  --chiron-accent: #1d4e6b; --chiron-accent-light: #2f6e92; --chiron-warm-accent: #a8382b;
+  --chiron-success: #3f6b4a; --chiron-warning: #8a5a1e; --chiron-error: #a8382b; --chiron-info: #1d4e6b;
+  --chiron-border: #d6d5cf; --chiron-divider: #e1e0da;
+}
+/* Centro Notte — the dark half; the accent lifts so it still reads on a dark ground. */
+[data-theme="centro-notte"] {
+  --chiron-bg: #14171a; --chiron-surface: #1c2024; --chiron-elevated: #1e2e38;
+  --chiron-fg: #e7e6e1; --chiron-fg-secondary: #9ba1a8; --chiron-muted: #7c838a;
+  --chiron-accent: #7fb8d6; --chiron-accent-light: #a3cde3; --chiron-warm-accent: #e0897b;
+  --chiron-success: #7fb08a; --chiron-warning: #d9a441; --chiron-error: #e0897b; --chiron-info: #7fb8d6;
+  --chiron-border: #2c3237; --chiron-divider: #262b30;
+}
 
 body {
   background: var(--chiron-bg);
