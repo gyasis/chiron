@@ -399,3 +399,21 @@
 #host .as-st.run { background: var(--medbg); color: var(--med); }
 #host .as-st.run .as-dot { background: var(--med); animation: as-pulse 1.1s ease-in-out infinite; }
 @keyframes as-pulse { 0%, 100% { opacity: 1 } 50% { opacity: .25 } }
+
+
+/* ── cloud models in the picker ─────────────────────────────────────────────
+   An off-box model costs money and needs the network. Bold + green so it is
+   obvious which one is selected before a question is sent. The ☁ prefix in
+   ask.js carries the meaning where native <select> ignores these rules. */
+.acolyte-model-picker option.cloud-model {
+  font-weight: 700;
+  color: var(--chiron-success, #1a7f37);
+}
+.acolyte-model-picker.on-cloud {
+  font-weight: 700;
+  color: var(--chiron-success, #1a7f37);
+}
+@media (prefers-color-scheme: dark) {
+  .acolyte-model-picker option.cloud-model,
+  .acolyte-model-picker.on-cloud { color: var(--chiron-success, #3fb950); }
+}
