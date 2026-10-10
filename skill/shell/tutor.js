@@ -30,7 +30,7 @@
   var CHAT_MAX_BYTES = 200000;
   var FALLBACK_MODELS = [
     { id: 'gemma4', label: 'Gemma 4 · cloud (fast)' },
-    { id: 'gemini3', label: 'Gemini 3 Flash · cloud' },
+    { id: 'glmflash', label: 'GLM Flash · cloud (latest)' },
     { id: 'qwen_local', label: 'Qwen3 32B · Mac (local)' },
     { id: 'agent', label: 'Deep agent (Harrison’s, slower)' }
   ];

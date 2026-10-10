@@ -63,8 +63,8 @@ def backfill_one(slug: str, dry: bool):
     if typ is None:
         return (slug, "skip", "unknown type (no chapters/breakdown)")
     env = {**os.environ, "CH_STAGE": "scripts",
-           "CH_MODEL_REASON": os.environ.get("CH_MODEL_REASON", "glm-5.1"),
-           "CH_MODEL_STRUCT": os.environ.get("CH_MODEL_STRUCT", "glm-5.1")}
+           "CH_MODEL_REASON": os.environ.get("CH_MODEL_REASON", "glm@latest"),
+           "CH_MODEL_STRUCT": os.environ.get("CH_MODEL_STRUCT", "glm@latest")}
     if typ == "passage":
         try:
             qid = json.load(open(d / "source" / "passage.json"))["qid"]

@@ -18,6 +18,8 @@ from __future__ import annotations
 import sys
 import json, os, re, subprocess, urllib.request
 from promptchain.utils.promptchaining import PromptChain
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'chains'))
+import chiron_models  # noqa: E402  live-catalog resolver: 'cloud:<family>@latest' + heals retired names
 from promptchain.utils.agentic_step_processor import AgenticStepProcessor
 
 AGENT_MODEL = os.environ.get("TUTOR_AGENT_MODEL", "gemini/gemini-flash-latest")
@@ -43,8 +45,8 @@ GOVERNOR = os.environ.get("ATELIER_GOVERNOR", "http://192.168.0.159:8799/llm/oll
 # spec = 'cloud:<model>' (Ollama Cloud, fast) | 'gemini' (direct API) | 'governor:<model>' (Mac, local)
 MODELS = {
     "gemma4":     {"label": "Gemma 4 31B · cloud (fast, default)", "spec": "cloud:gemma4:31b"},
-    "gemini3":    {"label": "Gemini 3 Flash · cloud",             "spec": "cloud:gemini-3-flash-preview"},
-    "deepseek":   {"label": "DeepSeek V4 Flash · cloud",          "spec": "cloud:deepseek-v4-flash"},
+    "glmflash":   {"label": "GLM Flash · cloud (latest)",         "spec": "cloud:glm-flash@latest"},
+    "deepseek":   {"label": "DeepSeek Flash · cloud (latest)",    "spec": "cloud:deepseek-flash@latest"},
     "gptoss":     {"label": "GPT-OSS 120B · cloud",               "spec": "cloud:gpt-oss:120b"},
     "gemini_api": {"label": "Gemini Flash · direct API",          "spec": "gemini"},
     "qwen_local": {"label": "Qwen3 32B · Mac (local)",            "spec": "governor:qwen3:32b"},
@@ -52,8 +54,9 @@ MODELS = {
     "agent":      {"label": "Deep agent · tool-calling (slower)", "spec": "agent"},
 }
 DEFAULT_MODEL = os.environ.get("TUTOR_DEFAULT_MODEL", "gemma4")
-CLASSIFY_SPEC = os.environ.get("TUTOR_CLASSIFY", "cloud:deepseek-v4-flash")
-FALLBACKS = ["cloud:gemini-3-flash-preview", "cloud:gemma4:31b", "gemini", "cloud:deepseek-v4-flash"]
+# gemini-3-flash-preview (retired 2026-07-15) and deepseek-v4-flash (retired 2026-09-25) were dead rungs here.
+CLASSIFY_SPEC = os.environ.get("TUTOR_CLASSIFY", "cloud:deepseek-flash@latest")
+FALLBACKS = ["cloud:glm-flash@latest", "cloud:gemma4:31b", "gemini", "cloud:deepseek-flash@latest"]
 
 DEEP = re.compile(r"\b(why|how does|how do|mechanism|pathophysiolog|differential|compare|contrast|"
                   r"cause|etiolog|treat|treatment|manage|management|first.line|dose|deeper|in depth|"
@@ -95,7 +98,7 @@ def _ollama_chat(url: str, model: str, headers: dict, system: str, history: list
 
 def _call(spec: str, system: str, history: list[dict], user: str) -> str:
     prov, _, model = spec.partition(":")
-    if prov == "cloud":    return _ollama_chat(OLLAMA_CLOUD, model, {"Authorization": "Bearer " + OLLAMA_KEY}, system, history, user)
+    if prov == "cloud":    return _ollama_chat(OLLAMA_CLOUD, chiron_models.resolve(model), {"Authorization": "Bearer " + OLLAMA_KEY}, system, history, user)
     if prov == "governor": return _ollama_chat(GOVERNOR + "/api/chat", model or "gemma3:27b", {}, system, history, user)
     return _gemini(system, history, user)
 

@@ -24,6 +24,7 @@ from pathlib import Path
 
 sys.stdout.reconfigure(line_buffering=True)
 from promptchain import PromptChain
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "chains")); import chiron_models  # heals retired cloud model names
 from promptchain.utils.external_loop import over_worklist
 
 HOME = Path(os.path.expanduser("~"))
@@ -75,12 +76,12 @@ def load_persona_register(name: str | None = None, limit: int = 2500) -> str:
     return ""
 
 # Model ladder: glm-5.1 primary (Ollama Cloud), gemini-flash a DIFFERENT family fallback (mirrors the chains).
-_DEFAULT_LADDER = os.environ.get("CH_ENRICH_LADDER", "glm-5.1,deepseek-v4-flash")
+_DEFAULT_LADDER = os.environ.get("CH_ENRICH_LADDER", "glm@latest,deepseek-flash@latest")
 
 
 # ── model helpers (compact copies of the chain's — PromptChain-based, per-call explicit model) ──
 def ollama(name: str, temperature: float = 0.4) -> dict:
-    return {"name": f"ollama_chat/{name}",
+    return {"name": f"ollama_chat/{chiron_models.resolve(name)}",
             "params": {"api_base": "https://ollama.com", "api_key": OLLAMA_KEY, "temperature": temperature}}
 
 
@@ -104,7 +105,7 @@ def _ladder() -> list[str]:
         if m.startswith("gpt-") and not OPENAI_KEY:
             continue
         out.append(m)
-    return out or ["glm-5.1"]
+    return out or ["glm@latest"]
 
 
 def extract_json(s: str):

@@ -9,6 +9,7 @@ Usage: OLLAMA_API_KEY=… python3 gen-lecture-scripts.py <lesson-dir> "<Lesson T
 import asyncio, json, os, re, sys
 from pathlib import Path
 from promptchain import PromptChain
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "chains")); import chiron_models  # heals retired cloud model names
 
 HOME = Path(os.path.expanduser("~"))
 SKILL = Path(os.environ.get("CHIRON_SKILL", HOME / "Documents/code/chiron/skill"))
@@ -49,7 +50,7 @@ def extract_json(s):
 
 
 async def llm(prompt):
-    ch = PromptChain(models=[{"name": "openai/glm-5.2",
+    ch = PromptChain(models=[{"name": f"openai/{chiron_models.resolve('glm@latest')}",
                               "params": {"api_base": "https://ollama.com/v1", "api_key": OLLAMA_KEY, "temperature": 0.4}}],
                      instructions=[prompt + "\n\n{input}"])
     return await ch.process_prompt_async("go")

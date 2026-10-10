@@ -34,6 +34,7 @@ from pathlib import Path
 sys.stdout.reconfigure(line_buffering=True)
 from promptchain import PromptChain
 import sys as _sys; from pathlib import Path as _P; _sys.path.insert(0, str(_P(__file__).resolve().parent.parent))
+import chiron_models   # shared chains/chiron_models.py — heals retired cloud model names against the live catalog
 import obs   # shared chains/obs.py — per-lesson steps.jsonl observability (best-effort; never breaks generation)
 from promptchain.utils.external_loop import over_worklist
 
@@ -67,9 +68,9 @@ STAGE = os.environ.get("CH_STAGE", "author")
 
 # Models (per role). glm-5.1 primary (glm-5.2 was flaky on Ollama Cloud); QC is a DIFFERENT family
 # (gemini-flash) so the judge doesn't share the author's blind spots. max_tokens AUTOMATIC.
-MODEL_REASON = os.environ.get("CH_MODEL_REASON", "glm-5.1")     # Phase 1 plan
-MODEL_STRUCT = os.environ.get("CH_MODEL_STRUCT", "glm-5.1")     # Phase 2 per-section author
-MODEL_QC = os.environ.get("CH_MODEL_QC", "deepseek-v4-flash")  # Phase 2.5 judge (different family, Ollama Cloud)
+MODEL_REASON = os.environ.get("CH_MODEL_REASON", "glm@latest")     # Phase 1 plan
+MODEL_STRUCT = os.environ.get("CH_MODEL_STRUCT", "glm@latest")     # Phase 2 per-section author
+MODEL_QC = os.environ.get("CH_MODEL_QC", "deepseek-flash@latest")  # Phase 2.5 judge (different family, Ollama Cloud)
 # Section authoring is governed by AUTHOR_LADDER (below), not a single engine — CH_AUTHOR_LADDER overrides it.
 QC_ROUNDS = int(os.environ.get("CH_QC_ROUNDS", "0"))   # 0 = lean (Phase-2 validator + assemble gate suffice, like the medicine chain); set 1 to add the LLM QC re-author pass
 N_SECTIONS = int(os.environ.get("CH_SECTIONS", "8"))
@@ -79,17 +80,17 @@ OUT = GEN / SLUG
 
 
 def ollama(model=MODEL_STRUCT, t=0.45):
-    return {"name": f"openai/{model}", "params": {"api_base": "https://ollama.com/v1", "api_key": OLLAMA_KEY, "temperature": t}}
+    return {"name": f"openai/{chiron_models.resolve(model)}", "params": {"api_base": "https://ollama.com/v1", "api_key": OLLAMA_KEY, "temperature": t}}
 
 
 # Model FALLBACK ladder: when the primary can't produce valid JSON after its repairs, try the next model.
-_FB = [m.strip() for m in os.environ.get("CH_MODEL_FALLBACKS", "local/gemma4:12b,deepseek-v4-flash,gpt-5-mini").split(",") if m.strip()]
+_FB = [m.strip() for m in os.environ.get("CH_MODEL_FALLBACKS", "local/gemma4:12b,deepseek-flash@latest,gpt-5-mini").split(",") if m.strip()]
 FALLBACKS = [m for m in _FB if not (m.startswith("gpt-") and not OPENAI_KEY) and not (m.startswith("gemini") and not GEMINI_KEY) and not (m.startswith("local/") and not os.environ.get("CH_LOCAL_BASE"))]
 
 # AUTHOR engine ladder (Phase-2 section authoring ONLY): glm (primary) -> claude (headless CLI) -> gemini-flash.
 # glm authors first (fast, its 3 repairs); only if it CAN'T produce valid output do we fall to claude, then gemini.
 # "claude" = the claude -p CLI (always available, not a litellm key); everything else routes through model_for/llm.
-_AL = [m.strip() for m in os.environ.get("CH_AUTHOR_LADDER", "glm-5.1,claude,deepseek-v4-flash").split(",") if m.strip()]
+_AL = [m.strip() for m in os.environ.get("CH_AUTHOR_LADDER", "glm@latest,claude,deepseek-flash@latest").split(",") if m.strip()]
 AUTHOR_LADDER = [m for m in _AL if m == "claude" or (not (m.startswith("gpt-") and not OPENAI_KEY) and not (m.startswith("gemini") and not GEMINI_KEY))]
 
 

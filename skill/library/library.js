@@ -278,7 +278,7 @@ const LIB = {
   // match a model string the server's CH_PRIMARY_ROTATION / _PRIMARY_POOL understands.
   PROVIDERS: [
     {label:'🏠 Local (Mac)', value:'local/qwen2.5:7b', title:'Mac governor — ZERO cloud tokens (slower). Value auto-syncs to the server\'s CH_LOCAL_MODEL.'},
-    {label:'🐢 Ollama Cloud', value:'glm-5.1', title:'Ollama Cloud (glm-5.1) — free tier'},
+    {label:'🐢 Ollama Cloud', value:'glm@latest', title:'Ollama Cloud — newest live GLM (free tier)'},
     {label:'⚡ Gemini', value:'gemini/gemini-flash-latest', title:'Gemini flash — cheap'},
     {label:'💲 GPT-5-mini', value:'gpt-5-mini', title:'paid — untick to save tokens'},
   ],
@@ -531,7 +531,7 @@ const LIB = {
     if(seq!==LIB._jobsSeq) return;                  // a fresher _loadJobs already ran → this response is stale
     const active=d.active||[];
     LIB._genPaused=!!d.paused;
-    LIB._genPool=d.pool||[];
+    LIB._genPool=d.pool||[]; LIB._resolved=d.resolved||{};
     LIB._bake=d.bake||{};   // rebake lane: {mac_queued, modal_pending, running:[{slug,engine}]}
     // Keep the "🏠 Local (Mac)" pill's value in lockstep with the server's CH_LOCAL_MODEL (e.g. if the
     // governor model is bumped) so toggling it posts a model the server's rotation actually understands.
@@ -547,7 +547,7 @@ const LIB = {
     const pauseBtn=LIB._genPaused
       ? `<button class="jpause resumed" title="new lessons stay queued until you resume" onclick="LIB.resumeGen()">▶ Resume generation</button>`
       : `<button class="jpause" title="finish in-flight lessons, hold everything else in the queue" onclick="LIB.pauseGen()">⏸ Pause generation</button>`;
-    const provPills=LIB.PROVIDERS.map(p=>`<button class="provpill ${LIB._genPool.includes(p.value)?'on':''}" title="${esc(p.title)}" onclick="LIB.togProvider('${p.value}')">${p.label}</button>`).join('');
+    const provPills=LIB.PROVIDERS.map(p=>`<button class="provpill ${LIB._genPool.includes(p.value)?'on':''}" title="${esc(p.title+(LIB._resolved&&LIB._resolved[p.value]&&LIB._resolved[p.value]!==p.value?' → '+LIB._resolved[p.value]:''))}" onclick="LIB.togProvider('${p.value}')">${p.label}</button>`).join('');
     const provBtns=`<span class="jprov" title="which models the batch rotates across — untick the paid ones to save tokens">${provPills}</span>`;
     // "Generating now" is TEXT generation only. Audio bakes also live in active (status queued/baking) but
     // belong to the Rebake lane below — never render them here (they showed as phantom "generating" rows).
