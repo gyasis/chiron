@@ -261,7 +261,6 @@
 
   .trap {
     background: var(--alert-soft);
-    border-left: 3px solid var(--alert);
     padding: 0.95rem 1.1rem;
     display: flex;
     flex-direction: column;

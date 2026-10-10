@@ -32,8 +32,7 @@
 
 .vignette-block {
   background: var(--chiron-surface);
-  border-left: 4px solid var(--chiron-accent);
-  border-radius: 0 var(--chiron-radius-md) var(--chiron-radius-md) 0;
+  border-radius: var(--chiron-radius-md);
   /* top: space-6 (1.5rem), sides: space-6 (1.5rem), bottom: space-4 (1rem) */
   padding: var(--chiron-space-6) var(--chiron-space-6) var(--chiron-space-4);
   margin-bottom: var(--chiron-space-3);
@@ -173,21 +172,18 @@
   margin-top: var(--chiron-space-3);
   padding: var(--chiron-space-3) var(--chiron-space-4);
   background: color-mix(in srgb, var(--chiron-elevated) 80%, white);
-  border-left: 3px solid var(--chiron-muted);
-  border-radius: 0 var(--chiron-radius-sm) var(--chiron-radius-sm) 0;
+  border-radius: var(--chiron-radius-sm);
   font-size: 0.88rem;
   color: var(--chiron-fg-secondary);
   line-height: 1.6;
 }
 
 .option.correct .explanation {
-  border-left-color: var(--chiron-success);
   background: color-mix(in srgb, var(--chiron-success) 6%, white);
 }
 
 .option.incorrect .explanation,
 .option.selected-wrong .explanation {
-  border-left-color: var(--chiron-error);
   background: color-mix(in srgb, var(--chiron-error) 5%, white);
 }
 
@@ -204,8 +200,7 @@
 .attending-tip {
   background: color-mix(in srgb, var(--chiron-warm-accent) 8%, var(--chiron-surface));
   border: 1px solid color-mix(in srgb, var(--chiron-warm-accent) 30%, var(--chiron-border));
-  border-left: 4px solid var(--chiron-warm-accent);
-  border-radius: 0 var(--chiron-radius-md) var(--chiron-radius-md) 0;
+  border-radius: var(--chiron-radius-md);
   padding: var(--chiron-space-4) var(--chiron-space-5);
   margin-top: var(--chiron-space-5);
   font-size: 0.9rem;
@@ -434,8 +429,7 @@
   margin-top: var(--chiron-space-5);
   padding: var(--chiron-space-4) var(--chiron-space-5);
   background: color-mix(in srgb, var(--chiron-elevated) 70%, white);
-  border-left: 4px solid var(--chiron-accent);
-  border-radius: 0 var(--chiron-radius-md) var(--chiron-radius-md) 0;
+  border-radius: var(--chiron-radius-md);
 }
 
 .rationale ol {
@@ -514,8 +508,7 @@
 
 .why-care {
   background: color-mix(in srgb, var(--chiron-warm-accent) 7%, var(--chiron-surface));
-  border-left: 4px solid var(--chiron-warm-accent);
-  border-radius: 0 var(--chiron-radius-md) var(--chiron-radius-md) 0;
+  border-radius: var(--chiron-radius-md);
   /* Use space-4 top/bottom (1rem), space-6 right (1.5rem), space-8 left (2rem) to clear the bar */
   padding: var(--chiron-space-4) var(--chiron-space-6) var(--chiron-space-4) var(--chiron-space-8);
   margin: var(--chiron-space-6) 0;
@@ -594,7 +587,6 @@
 .pattern-card {
   background: var(--chiron-surface);
   border: 1px solid var(--chiron-border);
-  border-top: 3px solid var(--chiron-accent);
   border-radius: var(--chiron-radius-md);
   /* Use only defined tokens: space-6=1.5rem top/bottom, space-4=1rem left/right */
   padding: var(--chiron-space-6) var(--chiron-space-4);
@@ -1220,8 +1212,7 @@
   margin-top: var(--chiron-space-3);
   padding: var(--chiron-space-3) var(--chiron-space-4);
   background: color-mix(in srgb, var(--chiron-elevated) 70%, white);
-  border-left: 3px solid var(--chiron-muted);
-  border-radius: 0 var(--chiron-radius-sm) var(--chiron-radius-sm) 0;
+  border-radius: var(--chiron-radius-sm);
   font-size: 0.88rem;
   color: var(--chiron-fg-secondary);
   line-height: 1.6;

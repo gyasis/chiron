@@ -93,7 +93,7 @@ video{width:100%;display:block;background:#000;border-radius:12px 12px 0 0;aspec
 .chip{font-size:11px;font-family:var(--mono);color:#fff;padding:2px 9px;border-radius:999px}
 .rail{position:sticky;top:calc(var(--barh,52px) + 12px);align-self:start;max-height:calc(100vh - var(--barh,52px) - 30px);overflow:auto}
 .chap{display:flex;gap:9px;align-items:baseline;padding:9px 12px;border-bottom:1px solid var(--divider);cursor:pointer;font-size:13px}
-.chap:hover{background:var(--elev)}.chap.cur{background:#fbecdf;border-left:3px solid var(--accent);padding-left:9px}
+.chap:hover{background:var(--elev)}.chap.cur{background:#fbecdf}
 .chap .n{font-family:var(--mono);font-size:10px;color:var(--muted);width:20px;flex:none}
 .chap .nm{font-weight:600}.chap .lc{margin-left:8px;font-family:var(--mono);font-size:10px;color:var(--muted)}
 .cues{max-height:none}
@@ -102,7 +102,7 @@ video{width:100%;display:block;background:#000;border-radius:12px 12px 0 0;aspec
 .cue .it-c{grid-column:2;grid-row:1}
 .cue .en-c{grid-column:2;grid-row:2}
 .cue:hover{background:var(--elev)}
-.cue.now{background:#fbecdf;border-left:3px solid var(--accent);padding-left:9px}
+.cue.now{background:#fbecdf}
 .cue .who{font-family:var(--mono);font-size:11px;text-transform:uppercase;text-align:right;padding-top:2px;overflow:hidden;text-overflow:ellipsis}
 .cue .t{font-family:var(--mono);font-size:9px;color:var(--muted)}
 .cue .it{font-size:15.5px}.cue .en{font-size:12.5px;color:var(--muted);font-style:italic}
@@ -117,7 +117,7 @@ video{width:100%;display:block;background:#000;border-radius:12px 12px 0 0;aspec
 .sa .lbl{font-family:var(--mono);font-size:9px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted)}
 .sa .s{font-size:11px;background:#f3ede0;border:1px solid var(--border);border-radius:6px;padding:2px 8px;color:var(--info);cursor:pointer}
 .sa .s:hover{background:#ece2cf}.sa .s.on{background:var(--info);color:#fff;border-color:var(--info)}
-.sa-detail{display:none;margin-top:7px;font-size:13px;line-height:1.4;background:var(--elev);border-left:3px solid var(--info);border-radius:0 8px 8px 0;padding:8px 12px}
+.sa-detail{display:none;margin-top:7px;font-size:13px;line-height:1.4;background:var(--elev);border-radius: 8px;padding:8px 12px}
 .sa-detail.show{display:block}
 .sa-detail .sa-fn{font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--info);display:block;margin-bottom:3px}
 .sa-detail .sa-it{font-weight:600;color:var(--accent)}.sa-detail .sa-en{color:var(--muted);font-style:italic}

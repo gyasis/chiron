@@ -1,7 +1,7 @@
 {
   "source": "gyasis/acolyte",
-  "commit": "3fd5b78",
+  "commit": "2410c27",
   "dirty": false,
-  "vendored_at": "2026-08-23T11:32:55+00:00",
+  "vendored_at": "2026-10-10T16:05:34+00:00",
   "note": "Rebuild with skill/scripts/vendor-acolyte.sh \u2014 do not edit these files by hand."
 }

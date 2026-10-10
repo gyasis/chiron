@@ -831,7 +831,6 @@ const html = `<!DOCTYPE html>
     /* Scroll-spy: active sub-section link */
     .side .toc-sub-link.is-active {
       color: var(--packt-orange); font-weight: 700;
-      border-left-color: var(--packt-orange);
       background: var(--packt-orange-soft);
     }
     .side .toc-chapter-link.is-active-chapter { color: var(--packt-orange); }
@@ -869,9 +868,8 @@ const html = `<!DOCTYPE html>
       margin: 2.5rem 0 1rem;
       color: var(--chiron-fg);
       padding: 0.35rem 0 0.5rem 0.85rem;
-      border-left: 5px solid var(--packt-orange);
       background: linear-gradient(to right, var(--chiron-elevated) 0, transparent 80%);
-      border-radius: 0 4px 4px 0;
+      border-radius: 4px;
       scroll-margin-top: 1rem;
     }
     section.chapter h2::before {
@@ -912,7 +910,7 @@ const html = `<!DOCTYPE html>
 
     /* ── Packt admonition system ── */
     .admonition {
-      margin: 1.25rem 0; padding: 0; border-left: 4px solid; border-radius: 0 4px 4px 0;
+      margin: 1.25rem 0; padding: 0; border-radius: 4px;
       overflow: hidden;
     }
     .admonition-title {
@@ -925,26 +923,26 @@ const html = `<!DOCTYPE html>
     .admonition-body { padding: 0.5rem 1rem 0.9rem; font-size: 0.94rem; }
     .admonition-body p:first-child { margin-top: 0; }
     .admonition-body p:last-child { margin-bottom: 0; }
-    .admonition-note          { border-left-color: var(--packt-blue);   background: var(--packt-blue-soft); }
+    .admonition-note          { background: var(--packt-blue-soft); }
     .admonition-note .admonition-title          { color: var(--packt-blue); }
     .admonition-note .admonition-body           { color: #103a5c; }
-    .admonition-tip           { border-left-color: var(--packt-green);  background: var(--packt-green-soft); }
+    .admonition-tip           { background: var(--packt-green-soft); }
     .admonition-tip .admonition-title           { color: var(--packt-green); }
     .admonition-tip .admonition-body            { color: #14532d; }
-    .admonition-warning       { border-left-color: var(--packt-orange); background: var(--packt-orange-soft); }
+    .admonition-warning       { background: var(--packt-orange-soft); }
     .admonition-warning .admonition-title       { color: var(--packt-orange); }
     .admonition-warning .admonition-body        { color: #7c2d12; }
-    .admonition-best-practice { border-left-color: #6F42C1;             background: #F4ECFB; }
+    .admonition-best-practice { background: #F4ECFB; }
     .admonition-best-practice .admonition-title { color: #6F42C1; }
     .admonition-best-practice .admonition-body  { color: #3b1f63; }
-    .admonition-hands-on      { border-left-color: #495057;             background: var(--packt-gray-soft); }
+    .admonition-hands-on      { background: var(--packt-gray-soft); }
     .admonition-hands-on .admonition-title      { color: #212529; }
     .admonition-hands-on .admonition-body       { color: #212529; }
 
     /* ── Math callout ── */
     .math-callout {
-      background: var(--chiron-elevated); border-left: 3px solid var(--packt-orange);
-      border-radius: 0 4px 4px 0; padding: 0.85rem 1.25rem; margin: 1rem 0; font-size: 1.05rem;
+      background: var(--chiron-elevated);
+      border-radius: 4px; padding: 0.85rem 1.25rem; margin: 1rem 0; font-size: 1.05rem;
     }
     .math-callout .math-cite {
       font-size: 0.78rem; color: var(--chiron-fg-secondary); font-style: italic;
@@ -976,7 +974,6 @@ const html = `<!DOCTYPE html>
       color: var(--chiron-fg);
       background: var(--chiron-surface);
       border: 1px solid var(--chiron-border);
-      border-left: 3px solid var(--packt-orange);
       border-radius: 4px;
       padding: 0.85rem 1.25rem; overflow-x: auto; white-space: pre;
       margin: 1rem 0;
@@ -1006,7 +1003,7 @@ const html = `<!DOCTYPE html>
     .failure-modes .fm {
       display: grid; grid-template-columns: 42px 1fr; gap: 0.75rem;
       padding: 0.65rem 1rem; background: var(--chiron-surface);
-      border-left: 3px solid var(--packt-orange); border-radius: 0 4px 4px 0;
+       border-radius: 4px;
       font-size: 0.93rem;
     }
     .failure-modes .fm-num { font-family: 'JetBrains Mono', monospace; color: var(--packt-orange); font-weight: 700; }
@@ -1031,15 +1028,15 @@ const html = `<!DOCTYPE html>
     /* ── 5 rules ── */
     ul.rules { list-style: none; padding-left: 0; }
     ul.rules li {
-      padding: 0.55rem 0.85rem; border-left: 3px solid var(--packt-green);
+      padding: 0.55rem 0.85rem;
       margin-bottom: 0.45rem; background: var(--chiron-surface);
-      border-radius: 0 4px 4px 0; font-size: 0.95rem;
+      border-radius: 4px; font-size: 0.95rem;
     }
 
     /* ── SVG flowchart (real boxes + arrows) ── */
     figure.flowchart {
       margin: 1.25rem 0; padding: 1rem 1rem 0.85rem; background: var(--chiron-surface);
-      border: 1px solid var(--chiron-border); border-left: 3px solid var(--packt-orange);
+      border: 1px solid var(--chiron-border);
       border-radius: 6px;
     }
     figure.flowchart figcaption {
@@ -1092,8 +1089,8 @@ const html = `<!DOCTYPE html>
     .cmp-card--warn .cmp-card-badge   { background: var(--packt-orange); color: rgb(255,255,255); }
     .cmp-takeaway {
       margin-top: 0.75rem; padding: 0.65rem 0.9rem;
-      background: var(--packt-orange-soft); border-left: 3px solid var(--packt-orange);
-      border-radius: 0 4px 4px 0; font-size: 0.95rem; color: #7c2d12;
+      background: var(--packt-orange-soft);
+      border-radius: 4px; font-size: 0.95rem; color: #7c2d12;
     }
 
     /* ── Chart SVG ── */
@@ -1118,7 +1115,6 @@ const html = `<!DOCTYPE html>
     .chapter-summary {
       margin: 2.5rem 0 0; padding: 1.25rem 1.5rem;
       background: var(--chiron-elevated);
-      border-top: 3px solid var(--packt-orange);
       border-radius: 0 0 6px 6px;
     }
     .chapter-summary h2 {

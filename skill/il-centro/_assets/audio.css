@@ -64,11 +64,11 @@ section.chiron-listening{padding:.75rem;margin:-.75rem;border-radius:10px}
 @media(max-width:640px){.chiron-listen{right:10px;left:10px;bottom:10px;width:auto}}
 
 /* components introduced after Day 1 — shared so both days have them */
-.recap{background:var(--accent-soft);border-left:3px solid var(--accent);padding:.95rem 1.1rem;border-radius:0 5px 5px 0}
+.recap{background:var(--accent-soft);padding:.95rem 1.1rem;border-radius: 5px}
 .recap .tag{font-family:var(--display);font-size:.7rem;font-weight:600;letter-spacing:.17em;text-transform:uppercase;color:var(--accent);display:block;margin-bottom:.4rem}
 .recap ul{margin:0;padding-left:1.1rem;color:var(--muted)} .recap b{color:var(--ink)}
 .recap .why{display:block;margin-top:.5rem;font-family:var(--mono);font-size:.76rem;color:var(--faint)}
-.pearl{background:var(--raised);border:1px solid var(--rule);border-left:3px solid var(--accent);padding:.95rem 1.1rem;display:flex;flex-direction:column;gap:.45rem;border-radius:0 5px 5px 0}
+.pearl{background:var(--raised);border:1px solid var(--rule);padding:.95rem 1.1rem;display:flex;flex-direction:column;gap:.45rem;border-radius: 5px}
 .pearl .tag{font-family:var(--display);font-size:.7rem;font-weight:600;letter-spacing:.17em;text-transform:uppercase;color:var(--accent)}
 .pearl p{margin:0}
 .pearl .en{display:none;color:var(--muted);font-size:.92rem;border-top:1px dotted var(--rule);padding-top:.5rem}
@@ -108,8 +108,8 @@ h3.eyebrow{margin:.4rem 0 -.3rem}
 
 /* ── I miei errori — attempt vs correction, lifted from the recording ── */
 .errori{display:flex;flex-direction:column;gap:.8rem}
-.err{background:var(--raised);border:1px solid var(--rule);border-left:3px solid var(--alert);
-  border-radius:0 5px 5px 0;padding:.9rem 1.1rem;display:grid;
+.err{background:var(--raised);border:1px solid var(--rule);
+  border-radius: 5px;padding:.9rem 1.1rem;display:grid;
   grid-template-columns:auto 1fr;gap:.15rem .9rem;align-items:baseline}
 .err .t{grid-row:1/span 3;font-family:var(--mono);font-size:.72rem;color:var(--faint);
   align-self:start;padding-top:.15rem}
@@ -138,7 +138,7 @@ h3.eyebrow{margin:.4rem 0 -.3rem}
 .reg .turn.g .tx{color:var(--muted);font-style:italic}
 .reg .turn .who{font-family:var(--display);font-size:.62rem;letter-spacing:.1em;
   text-transform:uppercase;color:var(--faint);display:block}
-.reg .turn.playing{background:var(--accent-soft);box-shadow:inset 3px 0 0 var(--accent)}
+.reg .turn.playing{background:var(--accent-soft);}
 
 /* ── ESERCIZIO — the worksheet, and how the lesson resolved it ── */
 .ex-sheet{background:var(--raised);border:1px solid var(--rule);border-radius:5px;overflow:hidden}

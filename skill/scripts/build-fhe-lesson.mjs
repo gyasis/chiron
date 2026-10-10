@@ -590,16 +590,16 @@ const html = `<!DOCTYPE html>
     section.chapter pre { background: var(--chiron-elevated); border: 1px solid var(--chiron-border); border-radius: var(--chiron-radius-md); padding: var(--chiron-space-4); overflow-x: auto; font-size: 0.85rem; line-height: 1.5; }
     section.chapter pre code { background: none; color: var(--chiron-fg); padding: 0; }
     section.chapter pre.ascii-diagram { font-family: 'JetBrains Mono', 'Menlo', 'Consolas', monospace; font-size: 0.78rem; line-height: 1.35; color: var(--chiron-fg-secondary); background: var(--chiron-surface); border-color: var(--chiron-accent); border-left-width: 3px; white-space: pre; }
-    .enriched-banner { background: var(--chiron-elevated); border-left: 4px solid var(--chiron-warm-accent); padding: var(--chiron-space-4); border-radius: var(--chiron-radius-md); margin: var(--chiron-space-5) 0; font-size: 0.95rem; }
-    .enriched-cite { font-size: 0.78rem; color: var(--chiron-warm-accent); font-style: italic; margin: var(--chiron-space-2) 0 var(--chiron-space-5); padding-left: var(--chiron-space-3); border-left: 2px solid var(--chiron-warm-accent); }
+    .enriched-banner { background: var(--chiron-elevated); padding: var(--chiron-space-4); border-radius: var(--chiron-radius-md); margin: var(--chiron-space-5) 0; font-size: 0.95rem; }
+    .enriched-cite { font-size: 0.78rem; color: var(--chiron-warm-accent); font-style: italic; margin: var(--chiron-space-2) 0 var(--chiron-space-5); padding-left: var(--chiron-space-3); }
     .enriched-cite a { color: var(--chiron-warm-accent); }
     .enriched-summary { background: var(--chiron-surface); border: 1px solid var(--chiron-accent); border-radius: var(--chiron-radius-md); padding: var(--chiron-space-5); margin: var(--chiron-space-6) 0 0; font-size: 0.92rem; color: var(--chiron-fg); }
     section.chapter table { width: 100%; border-collapse: collapse; margin: var(--chiron-space-5) 0; font-size: 0.9rem; }
     section.chapter th { background: var(--chiron-elevated); color: var(--chiron-accent); padding: var(--chiron-space-3); text-align: left; font-weight: 600; }
     section.chapter td { padding: var(--chiron-space-3); border-bottom: 1px dashed var(--chiron-divider); }
-    section.chapter .cold-open { background: var(--chiron-surface); padding: var(--chiron-space-5); border-left: 4px solid var(--chiron-warm-accent); border-radius: var(--chiron-radius-md); font-style: italic; }
+    section.chapter .cold-open { background: var(--chiron-surface); padding: var(--chiron-space-5); border-radius: var(--chiron-radius-md); font-style: italic; }
     section.chapter .source-cite { font-size: 0.78rem; color: var(--chiron-muted); font-family: var(--chiron-font-mono, monospace); padding: var(--chiron-space-2) 0; border-top: 1px dashed var(--chiron-divider); margin-top: var(--chiron-space-4); }
-    section.chapter .closing ul { background: var(--chiron-elevated); padding: var(--chiron-space-4) var(--chiron-space-6); border-radius: var(--chiron-radius-md); border-left: 3px solid var(--chiron-warm-accent); }
+    section.chapter .closing ul { background: var(--chiron-elevated); padding: var(--chiron-space-4) var(--chiron-space-6); border-radius: var(--chiron-radius-md); }
     .theme-bar { display: flex; gap: 4px; flex-wrap: wrap; margin-top: var(--chiron-space-3); }
     .theme-bar button { font: inherit; font-size: 10px; padding: 3px 7px; border-radius: var(--chiron-radius-sm); background: var(--chiron-elevated); color: var(--chiron-fg-secondary); border: 1px solid var(--chiron-border); cursor: pointer; }
     .theme-bar button[aria-pressed="true"] { background: var(--chiron-accent); color: var(--chiron-surface); border-color: var(--chiron-accent); }
