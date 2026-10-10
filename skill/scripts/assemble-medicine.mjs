@@ -257,8 +257,7 @@ aside.side {
 .side .toc-link.active {
   background: var(--chiron-elevated);
   color: var(--chiron-accent);
-  border-left: 3px solid var(--chiron-accent);
-  padding-left: calc(var(--chiron-space-3) - 3px);
+  padding-left: var(--chiron-space-3);
 }
 .side .toc-num {
   font-family: var(--chiron-font-mono, monospace);
@@ -374,7 +373,6 @@ section.chapter h1 {
 .mathjax {
   padding: var(--chiron-space-5) var(--chiron-space-6);
   background: var(--chiron-surface);
-  border-left: 3px solid var(--chiron-accent);
   border-radius: var(--chiron-radius-sm);
   overflow-x: auto;
   font-size: 1.05rem;

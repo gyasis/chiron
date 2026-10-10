@@ -283,7 +283,7 @@ const html = `<!DOCTYPE html>
     .side .toc-header { font-family: var(--chiron-font-mono, monospace); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--chiron-muted); margin: var(--chiron-space-6) 0 var(--chiron-space-3); }
     .side .toc-link { display: flex; gap: var(--chiron-space-2); padding: var(--chiron-space-2) var(--chiron-space-3); border-radius: var(--chiron-radius-sm); color: var(--chiron-fg-secondary); text-decoration: none; font-size: 0.85rem; line-height: 1.35; margin-bottom: 2px; }
     .side .toc-link:hover { background: var(--chiron-elevated); color: var(--chiron-fg); }
-    .side .toc-link.active { background: var(--chiron-accent-light); color: var(--chiron-accent); border-left: 3px solid var(--chiron-accent); padding-left: calc(var(--chiron-space-3) - 3px); }
+    .side .toc-link.active { background: var(--chiron-accent-light); color: var(--chiron-accent); padding-left: var(--chiron-space-3); }
     .side .toc-num { font-family: var(--chiron-font-mono, monospace); color: var(--chiron-muted); flex-shrink: 0; font-size: 0.8rem; }
     .side .view-picker { display: flex; gap: 4px; flex-wrap: wrap; margin-top: var(--chiron-space-3); }
     .side .view-picker button { font: inherit; font-size: 11px; padding: 5px 9px; border-radius: var(--chiron-radius-sm); background: var(--chiron-elevated); color: var(--chiron-fg-secondary); border: 1px solid var(--chiron-border); cursor: pointer; }
@@ -298,7 +298,7 @@ const html = `<!DOCTYPE html>
     section.chapter { max-width: 1500px; margin: 0 auto; padding: 3rem 3rem 5rem; min-height: auto; }
     section.chapter > .ch-num { font-family: var(--chiron-font-mono, monospace); text-transform: uppercase; letter-spacing: 0.1em; color: var(--chiron-muted); font-size: 0.75rem; }
     section.chapter > h1 { font-family: var(--chiron-font-heading); font-size: 2.1rem; line-height: 1.2; margin: var(--chiron-space-2) 0 var(--chiron-space-4); color: var(--chiron-fg); max-width: 75ch; }
-    section.chapter > .objective { font-style: italic; color: var(--chiron-fg-secondary); border-left: 3px solid var(--chiron-accent); padding-left: var(--chiron-space-4); margin-bottom: var(--chiron-space-6); max-width: 75ch; }
+    section.chapter > .objective { font-style: italic; color: var(--chiron-fg-secondary); padding-left: var(--chiron-space-4); margin-bottom: var(--chiron-space-6); max-width: 75ch; }
     section.chapter > p { max-width: 75ch; margin: var(--chiron-space-4) 0; }
     section.chapter > p code { background: var(--chiron-elevated); padding: 2px 6px; border-radius: var(--chiron-radius-sm); font-family: var(--chiron-font-mono, monospace); font-size: 0.88em; }
     section.chapter > table { width: 100%; max-width: 75ch; border-collapse: collapse; margin: var(--chiron-space-5) 0; clear: both; }
@@ -319,13 +319,11 @@ const html = `<!DOCTYPE html>
     }
     .hy, .pearl, .mnemonic {
       background: var(--chiron-elevated);
-      border-left: 3px solid var(--chiron-accent);
       border-radius: var(--chiron-radius-sm);
       padding: var(--chiron-space-4);
       margin: var(--chiron-space-4) 0;
     }
-    .pearl { border-left-color: var(--chiron-warm-accent); }
-    .mnemonic { border-left-color: var(--chiron-accent); background: var(--chiron-surface); }
+    .mnemonic { background: var(--chiron-surface); }
     .hy-title, .pearl-title, .mnemonic-title {
       font-family: var(--chiron-font-mono, monospace); font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.08em;
       color: var(--chiron-muted); margin-bottom: var(--chiron-space-2);

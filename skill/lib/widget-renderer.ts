@@ -2973,7 +2973,7 @@ const AP_CSS = `<style data-ap-css="1">
 .annotated-passage [data-layer="literal"]{--ap-c:var(--chiron-muted)}
 .annotated-passage [data-layer="concept"]{--ap-c:var(--chiron-info)}
 .annotated-passage [data-layer="subtext"]{--ap-c:var(--chiron-accent-light)}
-.annotated-passage .ap-anomalies{border-left:3px solid var(--chiron-warning);background:var(--chiron-elevated);padding:var(--chiron-space-2) var(--chiron-space-3);margin-bottom:var(--chiron-space-3);border-radius:var(--chiron-radius-sm);font-size:.9rem}
+.annotated-passage .ap-anomalies{background:var(--chiron-elevated);padding:var(--chiron-space-2) var(--chiron-space-3);margin-bottom:var(--chiron-space-3);border-radius:var(--chiron-radius-sm);font-size:.9rem}
 .annotated-passage .ap-anomalies b{color:var(--chiron-warning)}
 .annotated-passage .ap-sentence{margin:var(--chiron-space-4) 0;padding-top:var(--chiron-space-3);border-top:1px solid var(--chiron-divider)}
 .annotated-passage .ap-clean{font-size:1.15rem;line-height:1.7;font-family:var(--chiron-font-body)}
@@ -2994,7 +2994,7 @@ const AP_CSS = `<style data-ap-css="1">
 .annotated-passage .ap-phrases{display:flex;flex-wrap:wrap;gap:var(--chiron-space-2);margin:.5em 0}
 .annotated-passage .ap-phrase{background:var(--chiron-elevated);border:1px solid var(--chiron-border);border-radius:var(--chiron-radius-sm);padding:.3em .6em;font-size:.85rem}
 .annotated-passage .ap-phrase b{font-family:var(--chiron-font-body)}
-.annotated-passage .ap-concept{background:var(--chiron-elevated);border-left:3px solid var(--chiron-info);padding:var(--chiron-space-2) var(--chiron-space-3);border-radius:var(--chiron-radius-sm);margin:.5em 0;font-size:.92rem}
+.annotated-passage .ap-concept{background:var(--chiron-elevated);padding:var(--chiron-space-2) var(--chiron-space-3);border-radius:var(--chiron-radius-sm);margin:.5em 0;font-size:.92rem}
 .annotated-passage .ap-tips{margin:.4em 0 0;padding-left:1.2em;font-size:.88rem;color:var(--chiron-fg-secondary)}
 /* layer OFF: drop the annotation affordance (the WORDS stay; only marks go) */
 .annotated-passage.ap-hide-articles .ap-tok[data-layer="articles"],.annotated-passage.ap-hide-nouns .ap-tok[data-layer="nouns"],.annotated-passage.ap-hide-verbs .ap-tok[data-layer="verbs"],.annotated-passage.ap-hide-adverbs .ap-tok[data-layer="adverbs"],.annotated-passage.ap-hide-preps .ap-tok[data-layer="preps"],.annotated-passage.ap-hide-pronouns .ap-tok[data-layer="pronouns"]{cursor:default}

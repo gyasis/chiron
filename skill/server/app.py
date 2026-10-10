@@ -36,6 +36,7 @@ PORT = int(os.environ.get("CHIRON_SERVER_PORT", "8911"))
 
 sys.path.insert(0, str(SKILL / "chains"))
 import dispatch  # noqa: E402  the single routing entry point
+import chiron_models  # noqa: E402  live-catalog model resolver (aliases like glm@latest; heals retired names)
 
 JOBS: dict = {}
 import queue as _queuemod
@@ -46,9 +47,11 @@ GEN_CONC = int(os.environ.get("CHIRON_GEN_CONC", "6") or 6)  # not the client. C
 # hammer one into a 429. Each lesson keeps its full fallback ladder (local/gemma4:12b → deepseek-v4-flash →
 # gpt-5-mini) if its primary hiccups. NO GEMINI here (cost, 2026-07-27): gemini/gemini-flash-latest was the
 # rung-2 primary → ~1/3 of a batch generated entirely on paid Gemini. Removed. Set CH_PRIMARY_ROTATION to
-# re-add it deliberately, or to steer fully local (e.g. "local/gemma4:12b,glm-5.1,deepseek-v4-flash").
+# re-add it deliberately, or to steer fully local (e.g. "local/gemma4:12b,glm@latest,deepseek-flash@latest").
+# Pool entries stay as ALIASES (glm@latest) so they track the live catalog; the chains resolve them per call
+# (chains/chiron_models.py). glm-5.1 + deepseek-v4-flash were retired 2026-09-25 while hard-coded here.
 _PRIMARY_POOL = [m.strip() for m in os.environ.get(
-    "CH_PRIMARY_ROTATION", "glm-5.1,deepseek-v4-flash,gpt-5-mini").split(",") if m.strip()]
+    "CH_PRIMARY_ROTATION", "glm@latest,deepseek-flash@latest,gpt-5-mini").split(",") if m.strip()]
 _PRIMARY_I = [0]
 # LOCAL option: `local/<model>` routes through the Atelier governor (Mac ollama, zero cloud tokens).
 # Surfaced to the UI (a "🏠 Local" pill) so a batch can be steered fully local. Base+model via env
@@ -825,6 +828,7 @@ def _run_bake(job: dict, out: Path) -> None:
         job.update(status="cancelled", phase="cancelled before start", finished=_now()); _save()
         return
     log = STATE / f"{jid}.bake.log"
+    log.write_text("")   # fresh per run; the transcript fallback and the bake below both APPEND
     domain = job.get("domain", "medical-italian")
     # Italian lessons — medical-italian, the SSM/passage format (domain 'language'/'language-it'), AND the
     # pure-Italian chain (domain 'italian') — bake with the language-it baker + the Lucrezia voice. Only true
@@ -859,9 +863,22 @@ def _run_bake(job: dict, out: Path) -> None:
                 tenv = {**os.environ, **res["env"], "CH_STAGE": "audio", "CH_SLUG": slug0}
                 _append_step(out, {"kind": "event", "phase": "Baking audio", "event_type": "TRANSCRIPTS",
                                    "step_instruction": "no narration scripts found — writing them first (audio stage)"})
-                subprocess.run([sys.executable, res["runpy"]], env=tenv, timeout=1800, check=False)
+                with open(log, "a") as lf:   # into the job's bake log — it used to go only to the journal
+                    lf.write("=== transcript fallback: writing audio-scripts.json first (CH_STAGE=audio) ===\n"); lf.flush()
+                    subprocess.run([sys.executable, res["runpy"]], env=tenv, timeout=1800, check=False,
+                                   stdout=lf, stderr=subprocess.STDOUT)
             except Exception as e:
                 print(f"[bake] transcript fallback failed for {slug0}: {e}", flush=True)
+        if not (out / "audio-scripts.json").exists():
+            # Without scripts the baker synthesizes 0 clips and the failure looks like a bake problem. Say why.
+            err = "narration scripts could not be written — see the transcript-fallback output in " + log.name
+            with open(log, "a") as lf:
+                lf.write(f"\n[bake] ABORT: {err}\n")
+            _append_step(out, {"kind": "event", "phase": "Baking audio", "event_type": "ERROR",
+                               "step_instruction": err})
+            job.update(status="audio-failed", phase="error", error=err, finished=_now())
+            _save()
+            return
     # announce the recovery into the timeline: what's reused vs what we bake (so we never redo text)
     rec = _recovery(job["slug"])
     _append_step(out, {"kind": "phase", "name": "Baking audio", "status": "start"})
@@ -882,7 +899,7 @@ def _run_bake(job: dict, out: Path) -> None:
     if job.get("engine") == "modal":
         env["CH_BAKE_ENGINE"] = "modal"
     try:
-        with open(log, "w") as lf:
+        with open(log, "a") as lf:
             # stream the bake output: tee to the log AND emit a per-clip sub-chip onto the timeline
             p = subprocess.Popen(cmd, env=env, stdout=subprocess.PIPE,
                                  stderr=subprocess.STDOUT, text=True, bufsize=1,
@@ -1597,7 +1614,7 @@ def activity(limit: int = 100):
     _true_err = sum(1 for r in _best.values() if r == 0)
     _true_done = sum(1 for r in _best.values() if r >= 5)   # ready or published
     return {"active": active, "history": history, "paused": _GEN_PAUSED, "pool": list(_PRIMARY_POOL),
-            "local_model": _LOCAL_MODEL, "bake": bake,
+            "resolved": _resolved_pool(), "local_model": _LOCAL_MODEL, "bake": bake,
             "counts": {"active": len(active), "done": _true_done, "error": _true_err}}
 
 
@@ -1623,6 +1640,20 @@ def gen_status():
 
 class RotationReq(BaseModel):
     pool: list[str]
+
+
+def _resolved_pool() -> dict:
+    """alias/name -> the live model it runs on right now (memoized per process; probes are cached on disk)."""
+    try:
+        return {m: chiron_models.resolve(m) for m in _PRIMARY_POOL}
+    except Exception as e:
+        return {"error": str(e)}
+
+
+@app.get("/models")
+def models_status():
+    """Machine-readable model state: catalog age, what each family alias resolves to, probe results."""
+    return {**chiron_models.status(), "pool": list(_PRIMARY_POOL), "resolved": _resolved_pool()}
 
 
 @app.get("/gen/rotation")

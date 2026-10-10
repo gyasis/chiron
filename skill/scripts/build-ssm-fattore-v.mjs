@@ -353,7 +353,7 @@ const html = `<!DOCTYPE html>
     }
     .side .toc-link:hover { background: var(--chiron-elevated); color: var(--chiron-fg); }
     .side .toc-link.active, .side .toc-link[aria-current="true"] {
-      color: var(--chiron-accent); border-left-color: var(--chiron-accent); font-weight: 600;
+      color: var(--chiron-accent); font-weight: 600;
       background: color-mix(in srgb, var(--chiron-accent) 20%, transparent);
     }
     .side .toc-num { font-variant-numeric: tabular-nums; color: var(--chiron-muted); font-size: 0.7rem; flex-shrink: 0; opacity: 0.65; }
@@ -376,27 +376,24 @@ const html = `<!DOCTYPE html>
     .subtitle { color: var(--chiron-fg-secondary); font-size: 1.1rem; font-style: italic; }
 
     section.lesson-section { margin: var(--chiron-space-8) 0; scroll-margin-top: var(--chiron-space-6); }
-    h2.section-h { font-family: var(--chiron-font-heading); font-size: 1.55rem; color: var(--chiron-accent); border-left: 4px solid var(--chiron-accent); padding-left: var(--chiron-space-4); margin: 0 0 var(--chiron-space-4); }
+    h2.section-h { font-family: var(--chiron-font-heading); font-size: 1.55rem; color: var(--chiron-accent); padding-left: var(--chiron-space-4); margin: 0 0 var(--chiron-space-4); }
     h2.section-h .num { color: var(--chiron-muted); font-size: 0.7em; font-weight: 400; margin-right: var(--chiron-space-3); font-family: var(--chiron-font-mono, monospace); }
     h3.subsection-h { font-family: var(--chiron-font-heading); color: var(--chiron-fg-secondary); margin-top: var(--chiron-space-6); font-size: 1.15rem; }
 
-    .cold-open { background: var(--chiron-surface); border-radius: var(--chiron-radius-lg); padding: var(--chiron-space-6) var(--chiron-space-8); box-shadow: var(--chiron-shadow-md); border-left: 4px solid var(--chiron-warm-accent); font-family: var(--chiron-font-heading); font-size: 1.18rem; line-height: 1.6; color: var(--chiron-fg); font-style: italic; }
+    .cold-open { background: var(--chiron-surface); border-radius: var(--chiron-radius-lg); padding: var(--chiron-space-6) var(--chiron-space-8); box-shadow: var(--chiron-shadow-md); font-family: var(--chiron-font-heading); font-size: 1.18rem; line-height: 1.6; color: var(--chiron-fg); font-style: italic; }
     .cold-open .it { color: var(--chiron-fg); font-style: italic; }
     .cold-open .gloss { color: var(--chiron-muted); font-size: 0.9em; display: block; margin-top: var(--chiron-space-2); font-style: normal; }
 
-    .callout { padding: var(--chiron-space-3) var(--chiron-space-4); margin: var(--chiron-space-3) 0; border-radius: var(--chiron-radius-md); border-left: 3px solid var(--chiron-info); background: var(--chiron-elevated); font-size: 0.95em; }
+    .callout { padding: var(--chiron-space-3) var(--chiron-space-4); margin: var(--chiron-space-3) 0; border-radius: var(--chiron-radius-md); background: var(--chiron-elevated); font-size: 0.95em; }
     .callout .tag { display: inline-block; font-family: var(--chiron-font-heading); font-weight: 700; font-size: 0.75em; text-transform: uppercase; letter-spacing: 0.08em; padding: 2px 8px; border-radius: var(--chiron-radius-sm); margin-right: var(--chiron-space-2); }
-    .callout.tip { border-left-color: var(--chiron-info); }
     .callout.tip .tag { background: var(--chiron-info); color: var(--chiron-surface); }
-    .callout.grammar-pearl { border-left-color: var(--chiron-accent); }
     .callout.grammar-pearl .tag { background: var(--chiron-accent); color: var(--chiron-surface); }
 
-    .closing { background: var(--chiron-surface); border-radius: var(--chiron-radius-lg); padding: var(--chiron-space-6); border-left: 4px solid var(--chiron-warm-accent); }
+    .closing { background: var(--chiron-surface); border-radius: var(--chiron-radius-lg); padding: var(--chiron-space-6); }
     footer.lesson-footer { margin-top: var(--chiron-space-8); padding-top: var(--chiron-space-4); border-top: 1px solid var(--chiron-divider); color: var(--chiron-muted); font-size: 0.85em; text-align: center; }
 
     /* ---- Read-first FULL ITEM blockquote (token-based; no hex) ---- */
     .passage-full {
-      border-left: 4px solid var(--chiron-accent);
       background: var(--chiron-surface);
       margin: var(--chiron-space-5) 0;
       padding: var(--chiron-space-6) var(--chiron-space-8);

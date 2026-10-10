@@ -3,10 +3,11 @@
 Usage: gen-glossary.py <lesson-dir>   (writes <dir>/glossary.json; the assembler renders it). Free-ish: 1 glm call."""
 import glob, json, os, re, subprocess, sys
 from pathlib import Path
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "chains")); import chiron_models  # heals retired cloud model names
 
 OUT = Path(sys.argv[1]).expanduser()
 KEY = os.environ.get("OLLAMA_API_KEY", "")
-MODEL = os.environ.get("CH_MODEL_STRUCT", "glm-5.1")   # glm-5.2 has a silent-stop regression on Ollama Cloud; glm-5.1 is reliable
+MODEL = chiron_models.resolve(os.environ.get("CH_MODEL_STRUCT", "glm@latest"))   # newest live+probed GLM (chains/chiron_models.py)
 
 def strip(html): return re.sub(r"\s+", " ", re.sub(r"<[^>]+>", " ", html or "")).strip()
 

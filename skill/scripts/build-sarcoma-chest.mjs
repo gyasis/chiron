@@ -445,8 +445,7 @@ aside.side {
 .side .toc-link.active {
   background: var(--chiron-elevated);
   color: var(--chiron-accent);
-  border-left: 3px solid var(--chiron-accent);
-  padding-left: calc(var(--chiron-space-3) - 3px);
+  padding-left: var(--chiron-space-3);
 }
 .side .toc-num {
   font-family: var(--chiron-font-mono, monospace);
@@ -482,7 +481,6 @@ section.chapter > h1 {
 section.chapter > .objective {
   font-style: italic;
   color: var(--chiron-fg-secondary);
-  border-left: 3px solid var(--chiron-accent);
   padding-left: var(--chiron-space-4);
   margin-bottom: var(--chiron-space-6);
   max-width: 75ch;
@@ -494,13 +492,11 @@ section.chapter > p {
 }
 .hy, .pearl, .mnemonic {
   background: var(--chiron-elevated);
-  border-left: 3px solid var(--chiron-accent);
   border-radius: var(--chiron-radius-sm);
   padding: var(--chiron-space-4);
   margin: var(--chiron-space-4) 0;
   max-width: 75ch;
 }
-.pearl { border-left-color: var(--chiron-warm-accent); }
 .hy-title, .pearl-title {
   font-family: var(--chiron-font-mono, monospace);
   font-size: 0.7rem;
@@ -581,7 +577,6 @@ const widgetCss = `
 }
 .vignette-block {
   background: var(--chiron-elevated);
-  border-left: 4px solid var(--chiron-accent);
   border-radius: var(--chiron-radius-sm);
   padding: var(--chiron-space-4) var(--chiron-space-5);
   margin-bottom: var(--chiron-space-4);
@@ -647,13 +642,10 @@ const widgetCss = `
   margin-top: var(--chiron-space-2);
   padding: var(--chiron-space-2) var(--chiron-space-3);
   background: var(--chiron-bg);
-  border-left: 2px solid var(--chiron-muted);
   font-size: 0.86rem;
   color: var(--chiron-fg-secondary);
   line-height: 1.55;
 }
-.option.correct .explanation { border-left-color: var(--chiron-success); }
-.option.incorrect .explanation { border-left-color: var(--chiron-error); }
 .mcv-controls {
   display: flex;
   align-items: center;
@@ -685,7 +677,6 @@ const widgetCss = `
 .attending-tip {
   background: #fffbeb;
   border: 1px solid #fde68a;
-  border-left: 4px solid var(--chiron-warning);
   border-radius: var(--chiron-radius-sm);
   padding: var(--chiron-space-4);
   margin-top: var(--chiron-space-4);
