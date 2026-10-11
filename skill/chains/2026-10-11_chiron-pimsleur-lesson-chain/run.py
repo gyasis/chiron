@@ -211,11 +211,9 @@ ITEMS:
 {json.dumps(items, ensure_ascii=False, indent=1)}
 Return ONLY JSON: {{"issues": [{{"id": "...", "problem": "...", "fix": "<corrected it or en>"}}]}} (empty list if none)."""
     try:
-        md = pi.model_for(pi.MODEL_QC, 0.1)
-        # deepseek-*-flash is a THINKING model (capabilities, checked 2026-10-11); this is a gate, so thinking off.
-        # /v1/chat/completions takes reasoning_effort (think:false is ignored there). Measured: 311 -> 0 reasoning chars.
-        md["params"]["reasoning_effort"] = "none"
-        md["params"]["allowed_openai_params"] = ["reasoning_effort"]   # litellm refuses it for openai/<non-OpenAI> otherwise
+        # deepseek-*-flash is a THINKING model; this is a gate, so thinking off — by the method VERIFIED for its
+        # lane (chiron_models.thinking_off: per-lane ladder, measured to emit 0 reasoning, cached).
+        md = pi.chiron_models.thinking_off(pi.model_for(pi.MODEL_QC, 0.1))
         raw = await pi.llm(md, prompt)
         return (pi.extract_json(raw) or {}).get("issues") or []
     except Exception as e:

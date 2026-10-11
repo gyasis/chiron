@@ -18,7 +18,8 @@ with a silent-stop regression (empty content ~80% of calls). Results are cached 
 ~/.cache/chiron/model-probe.json, so a new model costs 3 tiny calls once, not per lesson.
 
 Observability: every heal prints one `[models]` line to stderr; `python3 chiron_models.py` prints the
-current resolution table, `--json` for machines, `--reprobe` to force fresh probes.
+current resolution table, `--json` for machines, `--reprobe` to force fresh probes,
+`--thinking` the verified thinking-off method per model (see thinking_off()).
 """
 from __future__ import annotations
 
@@ -189,6 +190,112 @@ def resolve_list(csv: str) -> list[str]:
     return out
 
 
+# ── thinking off ──────────────────────────────────────────────────────────────
+# Every lane takes a DIFFERENT off switch, and the wrong one either errors or is silently ignored.
+# Measured through litellm 2026-10-11 (the way the chains call models):
+#   Ollama Cloud / local (openai/<model> + api_base): litellm REJECTS reasoning_effort unless it is in
+#     allowed_openai_params; extra_body passes it raw. Both -> 0 reasoning. "minimal"/"disable" rejected.
+#   gemini/: litellm maps reasoning_effort natively ("none"/"disable"/"minimal" -> 0); extra_body -> 400.
+#   real OpenAI gpt-5*: "none" is rejected by OpenAI; "minimal" -> 0 reasoning tokens.
+# Reasoning shows up in DIFFERENT places per lane (Ollama: message.reasoning_content / provider
+# "reasoning"; Gemini + OpenAI: only usage.completion_tokens_details.reasoning_tokens) — read all three.
+_ALLOW = {"allowed_openai_params": ["reasoning_effort"]}
+THINK_OFF_LADDERS = {
+    "openai-compatible": [{"reasoning_effort": "none", **_ALLOW}, {"extra_body": {"reasoning_effort": "none"}},
+                          {"extra_body": {"think": False}}],
+    "gemini": [{"reasoning_effort": "none"}, {"reasoning_effort": "disable"}, {"reasoning_effort": "minimal"}],
+    "openai": [{"reasoning_effort": "minimal"}, {"reasoning_effort": "low"}],
+}
+_TRANSIENT = ("Timeout", "APIConnectionError", "ServiceUnavailable", "RateLimit", "InternalServerError")
+
+
+def think_lane(md: dict) -> str | None:
+    """Which off-switch family a litellm model_dict needs. None = nothing to switch off (claude CLI)."""
+    name, base = md.get("name", ""), (md.get("params") or {}).get("api_base") or ""
+    if md.get("_claude") or name == "claude":
+        return None
+    if name.startswith("gemini/"):
+        return "gemini"
+    if name.startswith("openai/") and (not base or "api.openai.com" in base):
+        return "openai"
+    return "openai-compatible"
+
+
+def reasoning_size(resp) -> int:
+    """Reasoning emitted by one litellm response, whichever field the lane uses (chars or tokens)."""
+    m = resp.choices[0].message
+    psf = getattr(m, "provider_specific_fields", None) or {}
+    det = getattr(getattr(resp, "usage", None), "completion_tokens_details", None)
+    return max(len(getattr(m, "reasoning_content", None) or ""),
+               len(psf.get("reasoning") or "") if isinstance(psf, dict) else 0,
+               getattr(det, "reasoning_tokens", None) or 0)
+
+
+def _probe_think_off(md: dict, method: dict) -> tuple[str, int]:
+    """('ok'|'transient'|'rejected'|'still-thinking'|'empty', reasoning) for one candidate method."""
+    import litellm
+    try:
+        r = litellm.completion(model=md["name"], timeout=120, max_tokens=2000,
+                               messages=[{"role": "user", "content": "Is 'Penso che sia vero' correct Italian? yes or no."}],
+                               **{k: v for k, v in (md.get("params") or {}).items() if k != "temperature"}, **method)
+    except Exception as e:
+        return ("transient" if any(t in type(e).__name__ for t in _TRANSIENT) else "rejected"), 0
+    n = reasoning_size(r)
+    if not (r.choices[0].message.content or "").strip():
+        return "empty", n
+    return ("ok" if n == 0 else "still-thinking"), n
+
+
+def thinking_off(md: dict, force: bool = False) -> dict:
+    """Return a copy of a litellm model_dict with thinking switched off by the method VERIFIED for its lane.
+
+    Tries the lane's ladder in order; a method counts only if the call succeeds AND emits 0 reasoning.
+    The winner is cached (PROBE_CACHE, PROBE_TTL_DAYS) so this costs a few tiny calls once per model.
+    Fallback when nothing reaches 0: the method with the least reasoning, else the md UNCHANGED (thinking
+    stays on) — logged loudly either way. Never raises: a gate that thinks is slower, not broken."""
+    lane = think_lane(md)
+    if lane is None:
+        return md
+    base = (md.get("params") or {}).get("api_base") or ""
+    ck = f"think-off|{md['name']}|{base}"
+    PROBE_CACHE.parent.mkdir(parents=True, exist_ok=True)
+    with open(PROBE_CACHE.with_suffix(".lock"), "w") as lk:
+        fcntl.flock(lk, fcntl.LOCK_EX)
+        try:
+            cache = json.loads(PROBE_CACHE.read_text())
+        except Exception:
+            cache = {}
+        hit = cache.get(ck)
+        if hit and not force and time.time() - hit["ts"] < PROBE_TTL_DAYS * 86400:
+            method = hit["method"]
+        else:
+            tried, best, method, transient = [], None, None, False
+            for cand in THINK_OFF_LADDERS[lane]:
+                verdict, n = _probe_think_off(md, cand)
+                tried.append({"method": cand, "verdict": verdict, "reasoning": n})
+                if verdict == "ok":
+                    method = cand
+                    break
+                if verdict == "transient":
+                    transient = True
+                elif verdict == "still-thinking" and (best is None or n < best[1]):
+                    best = (cand, n)
+            if method is None and best:
+                method = best[0]
+                _log(f"thinking-off {md['name']}: nothing reached 0 — using least-reasoning {method} ({best[1]})")
+            if transient and method is None:
+                _log(f"thinking-off {md['name']}: transient probe failures — not cached, using {THINK_OFF_LADDERS[lane][0]}")
+                method = THINK_OFF_LADDERS[lane][0]
+            else:
+                cache[ck] = {"ts": time.time(), "lane": lane, "method": method, "tried": tried}
+                PROBE_CACHE.write_text(json.dumps(cache, indent=1))
+                _log(f"thinking-off {md['name']}: {method if method else 'NO METHOD WORKS — thinking stays ON'} "
+                     f"({lane}; tried {len(tried)})")
+    if not method:
+        return md
+    return {**md, "params": {**(md.get("params") or {}), **method}}
+
+
 def status(force: bool = False) -> dict:
     try:
         gen = json.loads(CATALOG.read_text()).get("generated")
@@ -203,6 +310,15 @@ def status(force: bool = False) -> dict:
 
 
 if __name__ == "__main__":
+    if "--thinking" in sys.argv:          # which off-switch each model verified (from the probe cache)
+        try:
+            probes = json.loads(PROBE_CACHE.read_text())
+        except Exception:
+            probes = {}
+        for k, v in probes.items():
+            if k.startswith("think-off|"):
+                print(f"  {k.split('|')[1]:34} {v['lane']:18} -> {v['method']}")
+        sys.exit(0)
     s = status(force="--reprobe" in sys.argv)
     if "--json" in sys.argv:
         print(json.dumps(s, indent=1))
