@@ -404,6 +404,12 @@ function writeManifest(db: Database.Database, lessonDir: string, courseId: strin
   );
   const audioDir = join(lessonDir, 'audio');
   mkdirSync(audioDir, { recursive: true });
+  // The Pimsleur drill is baked by scripts/pimsleur_drill.py, not from audio_clips — keep it across re-bakes.
+  try {
+    const prev = JSON.parse(readFileSync(join(audioDir, 'manifest.json'), 'utf8'));
+    const drills = (prev.clips || []).filter((c: { artifact?: string }) => c.artifact === 'pimsleur');
+    clips.unshift(...drills);
+  } catch { /* no earlier manifest */ }
   const payload = JSON.stringify({ clips });
   // manifest.json for HTTP-served lessons; manifest.js (sets a global) for
   // file:// lessons, where fetch() of a local file is blocked by the browser.
