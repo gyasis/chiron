@@ -239,12 +239,26 @@ def _norm(s: str) -> str:
     return " ".join(_words("".join(c for c in s if not unicodedata.combining(c))))
 
 
+# Whisper writes small numbers as digits ("Alle 9." for "alle nove"); spell them back before comparing.
+NUMBER_WORDS = {
+    "it": "zero uno due tre quattro cinque sei sette otto nove dieci undici dodici tredici quattordici quindici "
+          "sedici diciassette diciotto diciannove venti".split(),
+    "en": "zero one two three four five six seven eight nine ten eleven twelve thirteen fourteen fifteen "
+          "sixteen seventeen eighteen nineteen twenty".split(),
+}
+
+
+def _spell_numbers(s: str, lang: str) -> str:
+    words = NUMBER_WORDS.get(lang, [])
+    return re.sub(r"\b\d+\b", lambda m: words[int(m[0])] if int(m[0]) < len(words) else m[0], s)
+
+
 def qc_clip(path: str, text: str, lang: str) -> tuple[float, str]:
     """Transcribe one clip with its language forced; return (similarity, heard)."""
     out = subprocess.run(["curl", "-s", "--max-time", "90", "-F", f"file=@{path}", "-F", f"language={lang}",
                           f"{ASR_URL}/transcribe"], capture_output=True, text=True).stdout
     heard = " ".join(seg.get("text", "").strip() for seg in json.loads(out).get("segments", []))
-    return difflib.SequenceMatcher(None, _norm(text), _norm(heard)).ratio(), heard
+    return difflib.SequenceMatcher(None, _norm(text), _norm(_spell_numbers(heard, lang))).ratio(), heard
 
 
 def build(lesson_dir: str, qc: bool) -> dict:

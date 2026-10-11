@@ -78,6 +78,14 @@ class Schedule(unittest.TestCase):
         self.assertTrue(all("ask" in c.lower() for c in cues), cues)
 
 
+class Qc(unittest.TestCase):
+    def test_whisper_digits_are_spelled_back(self):
+        """Whisper writes 'Alle 9.' for 'alle nove' -- that is not a bad clip."""
+        self.assertEqual(pd._norm(pd._spell_numbers("Alle 9.", "it")), pd._norm("alle nove"))
+        self.assertEqual(pd._spell_numbers("10 minuti fa", "it"), "dieci minuti fa")
+        self.assertEqual(pd._spell_numbers("at 45", "en"), "at 45")
+
+
 class Pause(unittest.TestCase):
     def test_answer_pause_rule(self):
         self.assertEqual(pd.answer_pause(0.5), 3.5)
