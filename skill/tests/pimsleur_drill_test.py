@@ -83,7 +83,7 @@ class Qc(unittest.TestCase):
         """Whisper writes 'Alle 9.' for 'alle nove' -- that is not a bad clip."""
         self.assertEqual(pd._norm(pd._spell_numbers("Alle 9.", "it")), pd._norm("alle nove"))
         self.assertEqual(pd._spell_numbers("10 minuti fa", "it"), "dieci minuti fa")
-        self.assertEqual(pd._spell_numbers("at 45", "en"), "at 45")
+        self.assertEqual(pd._spell_numbers("at 45", "en"), "at forty-five")
 
 
 class Recheck(unittest.TestCase):
@@ -121,6 +121,15 @@ VERDICT: FIX"""
             wav(f"{td}/cut.wav", lambda t: 1.0)                       # loud until it stops
             self.assertLessEqual(pd.tail_db(f"{td}/fade.wav"), pd.TAIL_MAX_DB)
             self.assertGreater(pd.tail_db(f"{td}/cut.wav"), pd.TAIL_MAX_DB)
+
+
+class Numbers(unittest.TestCase):
+    def test_doses_and_numbers_are_spelled_like_the_script(self):
+        self.assertEqual(pd._spell_numbers("Amoxicillina 500 mg", "it"), "Amoxicillina cinquecento milligrammi")
+        self.assertEqual(pd._spell_numbers("1 g ogni 8 ore", "it"), "un grammo ogni otto ore")
+        self.assertEqual(pd._spell_numbers("21 giorni, 28, 250 ml", "it"), "ventuno giorni, ventotto, duecentocinquanta millilitri")
+        self.assertEqual(pd._spell_numbers("take 500 mg", "en"), "take five hundred milligrams")
+        self.assertEqual(pd._spell_numbers("1200", "it"), "1200")            # out of range: left as is
 
 
 class Pause(unittest.TestCase):
