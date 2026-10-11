@@ -149,6 +149,9 @@ for (const d of dirs) {
       if (ward) tags = { dom: 'medical-italian', sys: WARD_SYS[ward] || 'Emergency', subj: 'Ward Italian', level: 'B1' };
       else if (/situazioni\//.test(rel)) tags = { dom: 'medical-italian', sys: 'Emergency', subj: 'Ward Italian', level: 'B1' };  // professional situations (e.g. the Ordine exam)
       else if (/patologie/.test(rel)) { const subj = subjFor(title, ''); tags = { dom: 'medical-italian', sys: sysFor(subj), subj, level: 'B1' }; }
+      // a lesson that DECLARES medical-italian (chiron-ward-*, the Ordine Pimsleur seasons) stays medical-italian
+      // even when its folder isn't under wards/ situazioni/ patologie/ — it was being filed as general Italian
+      else if (rawDom === 'medical-italian') tags = { dom: 'medical-italian', sys: 'Emergency', subj: 'Ward Italian', level: 'B1' };
       else tags = { dom: 'language-it', topic: topicFor(title), level: 'A2' };
     }
   }
