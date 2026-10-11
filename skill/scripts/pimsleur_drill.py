@@ -35,7 +35,7 @@ AUDIO TRAPS (measured 2026-10-10, see memory finding-pimsleur-audio-builder)
 """
 from __future__ import annotations
 
-import argparse, difflib, hashlib, json, os, re, subprocess, sys, tempfile, unicodedata, urllib.request
+import argparse, difflib, hashlib, json, os, re, subprocess, sys, tempfile, time, unicodedata, urllib.request
 
 OV_URL = os.environ.get("CHIRON_OMNIVOICE_URL", "http://192.168.0.159:8770")
 ASR_URL = os.environ.get("CHIRON_WHISPER_URL", "http://192.168.0.159:8766")
@@ -250,16 +250,61 @@ NUMBER_WORDS = {
 }
 
 
+_TENS = {"it": "venti trenta quaranta cinquanta sessanta settanta ottanta novanta".split(),
+         "en": "twenty thirty forty fifty sixty seventy eighty ninety".split()}
+# Whisper writes doses as "500 mg"; the script says "cinquecento milligrammi" (2026-10-11, Ordine prescription lesson).
+UNITS = {"it": {"mg": "milligrammi", "ml": "millilitri", "g": "grammi", "kg": "chili", "mcg": "microgrammi"},
+         "en": {"mg": "milligrams", "ml": "milliliters", "g": "grams", "kg": "kilos", "mcg": "micrograms"}}
+UNIT_ONE = {"it": {"mg": "un milligrammo", "ml": "un millilitro", "g": "un grammo", "kg": "un chilo", "mcg": "un microgrammo"},
+            "en": {"mg": "one milligram", "ml": "one milliliter", "g": "one gram", "kg": "one kilo", "mcg": "one microgram"}}
+
+
+def _num_word(n: int, lang: str) -> str | None:
+    """0..999 as spoken words (Italian elides: ventuno, ventotto), else None."""
+    small = NUMBER_WORDS.get(lang)
+    if not small or not 0 <= n <= 999:
+        return None
+    if n < len(small):
+        return small[n]
+    if n < 100:
+        t, u = _TENS[lang][n // 10 - 2], n % 10
+        if not u:
+            return t
+        if lang == "it":
+            return (t[:-1] if u in (1, 8) else t) + small[u]
+        return f"{t}-{small[u]}"
+    h, r = divmod(n, 100)
+    head = ("cento" if h == 1 else small[h] + "cento") if lang == "it" else f"{small[h]} hundred"
+    if not r:
+        return head
+    tail = _num_word(r, lang)
+    return head + tail if lang == "it" else f"{head} {tail}"
+
+
 def _spell_numbers(s: str, lang: str) -> str:
-    words = NUMBER_WORDS.get(lang, [])
-    return re.sub(r"\b\d+\b", lambda m: words[int(m[0])] if int(m[0]) < len(words) else m[0], s)
+    def unit(m):
+        if m[1] == "1" and m[2] in UNIT_ONE.get(lang, {}):
+            return UNIT_ONE[lang][m[2]]
+        return f"{m[1]} {UNITS.get(lang, {}).get(m[2], m[2])}"
+    s = re.sub(r"\b(\d+)\s*(mg|ml|mcg|kg|g)\b", unit, s)
+    return re.sub(r"\b\d+\b", lambda m: _num_word(int(m[0]), lang) or m[0], s)
 
 
 def qc_clip(path: str, text: str, lang: str) -> tuple[float, str]:
     """Transcribe one clip with its language forced; return (similarity, heard)."""
-    out = subprocess.run(["curl", "-s", "--max-time", "90", "-F", f"file=@{path}", "-F", f"language={lang}",
-                          f"{ASR_URL}/transcribe"], capture_output=True, text=True).stdout
-    heard = " ".join(seg.get("text", "").strip() for seg in json.loads(out).get("segments", []))
+    # The Mac sidecars self-restart to reclaim memory (exit 42) — an empty reply mid-restart is normal: retry.
+    for wait in (5, 15, 30, None):
+        out = subprocess.run(["curl", "-s", "--max-time", "90", "-F", f"file=@{path}", "-F", f"language={lang}",
+                              f"{ASR_URL}/transcribe"], capture_output=True, text=True).stdout
+        try:
+            segs = json.loads(out).get("segments", [])
+            break
+        except ValueError:
+            if wait is None:
+                raise RuntimeError(f"ASR unreachable at {ASR_URL} after 4 tries (last reply {out[:80]!r})")
+            print(f"  asr: no answer (sidecar restarting?) — retry in {wait}s", flush=True)
+            time.sleep(wait)
+    heard = " ".join(seg.get("text", "").strip() for seg in segs)
     return difflib.SequenceMatcher(None, _norm(text), _norm(_spell_numbers(heard, lang))).ratio(), heard
 
 

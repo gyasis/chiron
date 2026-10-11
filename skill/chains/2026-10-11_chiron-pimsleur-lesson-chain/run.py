@@ -342,6 +342,13 @@ def p4_bake(out: Path):
 
 
 def p5_listen(out: Path):
+    if not (out / "audio" / "pimsleur.mp3").exists():
+        print(f"[P5] {out.name}: skipped — no mp3 (the bake did not finish)", flush=True)
+        return
+    lm, mp3 = out / "audio" / "pimsleur.listen.md", out / "audio" / "pimsleur.mp3"
+    if lm.exists() and lm.stat().st_mtime >= mp3.stat().st_mtime and not FORCE:
+        print(f"[P5] resume {out.name} (review is newer than the mp3)", flush=True)
+        return
     if not os.environ.get("GEMINI_API_KEY"):
         print("[P5] skipped: no GEMINI_API_KEY (run under `cred checkout gemini --exec`)", flush=True)
         return
