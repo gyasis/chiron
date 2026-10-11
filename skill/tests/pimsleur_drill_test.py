@@ -86,6 +86,43 @@ class Qc(unittest.TestCase):
         self.assertEqual(pd._spell_numbers("at 45", "en"), "at 45")
 
 
+class Recheck(unittest.TestCase):
+    REVIEW = """**Critical Observation:**
+- **03:57 - 04:00**: the audio clip is cut off abruptly before "così" is fully spoken.
+2. **Italian pronunciation**: Authentic native pronunciation throughout.
+5. **Confusing elements**: The clipped syllable at 03:57 disrupts the chain.
+VERDICT: FIX"""
+
+    def test_glitch_lines_are_measurable(self):
+        ranges, other = pd.flagged(self.REVIEW)
+        self.assertEqual(ranges, [(237, 240), (237, 237)])
+        self.assertEqual(other, [])
+
+    def test_pronunciation_or_pause_complaints_are_not(self):
+        _, other = pd.flagged("- **05:10**: 'appuntamento' mispronounced\n- 07:00 pause too short\nVERDICT: FIX")
+        self.assertEqual(len(other), 2)
+
+    def test_clips_at_maps_time_to_clip(self):
+        tl = [{"t": 233.2, "who": "cue", "text": "Listen and repeat."}, {"t": 236.1, "who": "target", "text": "bene così"},
+              {"t": 240.2, "who": "target", "text": "vada bene così"}, {"t": 260.0, "who": "target", "text": "x"}]
+        durs = {"Listen and repeat.": 1.4, "bene così": 1.56, "vada bene così": 1.69, "x": 1.0}
+        self.assertEqual([e["text"] for e in pd.clips_at(tl, 237, 237, dur=lambda e: durs[e["text"]])], ["bene così"])
+
+    def test_tail_db_fade_vs_hard_cut(self):
+        import math, struct, tempfile, wave
+        def wav(path, env):
+            sr = 24000
+            x = [int(12000 * env(i / sr) * math.sin(2 * math.pi * 220 * i / sr)) for i in range(int(sr * 1.0))]
+            x += [0] * int(sr * 0.1)
+            w = wave.open(path, "wb"); w.setnchannels(1); w.setsampwidth(2); w.setframerate(sr)
+            w.writeframes(struct.pack(f"<{len(x)}h", *x)); w.close()
+        with tempfile.TemporaryDirectory() as td:
+            wav(f"{td}/fade.wav", lambda t: max(0.0, 1 - t) ** 3)      # decays to nothing
+            wav(f"{td}/cut.wav", lambda t: 1.0)                       # loud until it stops
+            self.assertLessEqual(pd.tail_db(f"{td}/fade.wav"), pd.TAIL_MAX_DB)
+            self.assertGreater(pd.tail_db(f"{td}/cut.wav"), pd.TAIL_MAX_DB)
+
+
 class Pause(unittest.TestCase):
     def test_answer_pause_rule(self):
         self.assertEqual(pd.answer_pause(0.5), 3.5)

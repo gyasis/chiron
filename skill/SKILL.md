@@ -203,7 +203,9 @@ What it makes: one lesson dir per lesson, `~/Documents/generated/chiron-pimsleur
 The method (anticipation, back-chaining, graduated recall, recycled review, talk-about-it) is DETERMINISTIC in
 `scripts/pimsleur_drill.py`; models only author items (P1, reviewed by a second model family) and the card (P3).
 Before telling the user a season is done: every lesson's `pimsleur.timeline.json` qc shows 0 failing, and
-`audio/pimsleur.listen.md` ends `VERDICT: PASS` (or its notes were read and acted on).
+`audio/pimsleur.listen.md` ends `VERDICT: PASS` (or its notes were read and acted on). A FIX made only of
+timestamped clip-glitch complaints is re-measured automatically (strict ASR + fade-out, `pimsleur_drill.py recheck`)
+and becomes `PASS (re-checked …)` only when every flagged clip is clean — read those measurements too.
 Older built lessons need `scripts/upgrade_player_pimsleur.py <lesson.html>` before a drill shows in their player.
 
 ## Mode A vs Mode B
