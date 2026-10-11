@@ -1073,7 +1073,7 @@
      prefers-reduced-motion: skip smooth-scroll easing. */
 (function () {
   'use strict';
-  var PANEL_KIND = { summary: 0, shortened: 1, section: 2 };
+  var PANEL_KIND = { pimsleur: -1, summary: 0, shortened: 1, section: 2 };
   var INLINE_KIND = { dialogue: 1, phrase: 1, 'grammar-pearl': 1, 'story-verbatim': 1, 'story-description': 1 };
 
   var audio = new Audio();
@@ -1331,6 +1331,7 @@
   }
 
   function panelLabel(c) {
+    if (c.artifact === 'pimsleur') return c.label || 'Pimsleur drill';
     if (c.artifact === 'summary') return 'Summary';
     if (c.artifact === 'shortened') return 'Full lecture';
     if (c.sectionId) {
@@ -1375,6 +1376,7 @@
       });
       panel.appendChild(g);
     }
+    group('🎧 Pimsleur drill', clips.filter(function (c) { return c.artifact === 'pimsleur'; }));
     group('Whole lesson', clips.filter(function (c) { return c.artifact === 'summary' || c.artifact === 'shortened'; }));
     group('By section', clips.filter(function (c) { return c.artifact === 'section'; }));
     document.body.appendChild(panel);
@@ -1695,16 +1697,18 @@
     document.body.classList.remove('chiron-fs-lock');
   }
 
-  /* Build the ordered clip list (summary → sections) */
+  /* Build the ordered clip list (pimsleur drill → summary → sections) */
   function buildOrderedClips(rawClips) {
+    var drill = rawClips.filter(function (c) { return c.artifact === 'pimsleur'; });
     var whole = rawClips.filter(function (c) { return c.artifact === 'summary' || c.artifact === 'shortened'; });
     var sects = rawClips.filter(function (c) { return c.artifact === 'section'; });
-    return whole.concat(sects);
+    return drill.concat(whole, sects);
   }
 
   /* Label clips for display */
   function labelClips(clips) {
     clips.forEach(function (c) {
+      if (c.artifact === 'pimsleur')  { c._label = c.label || 'Pimsleur drill'; return; }
       if (c.artifact === 'summary')   { c._label = 'Summary'; return; }
       if (c.artifact === 'shortened') { c._label = 'Full lecture'; return; }
       if (c.sectionId) {
