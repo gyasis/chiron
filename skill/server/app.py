@@ -495,8 +495,8 @@ def _bake_worker() -> None:
             if job.get("status") != "queued":            # superseded/duplicate queue entry (a prior pop
                 continue                                  # already baked it) → don't re-bake. Mirrors _gen_worker.
             _run_bake(job, GEN / slug)
-        except Exception:
-            pass
+        except Exception as e:                           # never silent: a swallowed error here
+            print(f"[bake-worker] {slug}: {type(e).__name__}: {e}", file=sys.stderr, flush=True)   # strands the job
         finally:
             _BAKE_Q.task_done()
 
@@ -1073,7 +1073,6 @@ def _resume_orphaned_bakes() -> None:
     _save()
 
 
-_resume_orphaned_bakes()   # recover bakes interrupted by the last restart
 
 
 def _collapse_slug(slug: str) -> None:
@@ -1222,6 +1221,12 @@ def _job_for_slug(slug: str) -> dict:
            "depth": cj.get("depth"), "slug": slug, "stage": "all", "extra": {}}
     JOBS[jid] = job
     return job
+
+
+# Must run AFTER _job_for_slug is defined: the bake worker thread is already live and pops the slug at
+# once — called earlier (it used to sit right under _resume_orphaned_bakes), the worker hit a NameError
+# that its except swallowed, so a bake interrupted by a restart sat 'queued' forever with no worker on it.
+_resume_orphaned_bakes()   # recover bakes interrupted by the last restart
 
 
 def _enqueue_bake(job: dict, engine: str = "mac") -> None:
