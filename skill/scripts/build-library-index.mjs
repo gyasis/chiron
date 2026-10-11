@@ -147,6 +147,7 @@ for (const d of dirs) {
     } else { // language-it → medical-italian (wards/patologie) vs italian (general)
       const ward = (rel.match(/wards\/([a-z-]+)/) || [])[1];
       if (ward) tags = { dom: 'medical-italian', sys: WARD_SYS[ward] || 'Emergency', subj: 'Ward Italian', level: 'B1' };
+      else if (/situazioni\//.test(rel)) tags = { dom: 'medical-italian', sys: 'Emergency', subj: 'Ward Italian', level: 'B1' };  // professional situations (e.g. the Ordine exam)
       else if (/patologie/.test(rel)) { const subj = subjFor(title, ''); tags = { dom: 'medical-italian', sys: sysFor(subj), subj, level: 'B1' }; }
       else tags = { dom: 'language-it', topic: topicFor(title), level: 'A2' };
     }
@@ -176,8 +177,14 @@ for (const d of dirs) {
   const servedPath = existsSync(join(OUT, 'lessons', slug, entryName))
     ? 'lessons/' + slug + '/' + entryName
     : join(rel, entryName);
+  // format: Pimsleur iff audio/manifest.json carries a clip with artifact "pimsleur"; else Course.
+  let format = 'Course';
+  try {
+    const man = JSON.parse(readFileSync(join(d, 'audio', 'manifest.json'), 'utf8'));
+    if ((man.clips || []).some(c => c && c.artifact === 'pimsleur')) format = 'Pimsleur';
+  } catch {}
   lessons.push({
-    id: rel, title, path: servedPath, domain: tags.dom,
+    id: rel, format, title, path: servedPath, domain: tags.dom,
     system: tags.sys || null, subject: tags.subj || null, topic: tags.topic || null,
     level: tags.level || null, scope: tags.scope || (tags.subj && /diseases|disorders/i.test(title) ? 'subject' : 'disease'),
     trend: tags.trend || null, status: cj.status || 'published', clips, ready: true, mtime,

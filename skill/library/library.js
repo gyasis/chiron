@@ -2,7 +2,7 @@
  * Adding a facet to library.yaml → rebuild → it appears here. Lessons open their own lesson.html
  * (served over http, where audio + nav work). */
 'use strict';
-const FIELD = { system:'system', subject:'subject', series:'subject', topic:'topic', trend:'trend', lang_level:'level', source:'source' }; // facet → lesson field (series reuses the subject field = the series name)
+const FIELD = { system:'system', subject:'subject', series:'subject', topic:'topic', trend:'trend', lang_level:'level', source:'source', format:'format' }; // facet → lesson field (series reuses the subject field = the series name)
 let CONFIG, LESSONS;
 const F = { q:'', sort:'priority', domain:new Set(), facets:{}, hiddenDom:new Set(), hiddenSys:new Set(), selectMode:false, selected:new Set(), showSSM:false };
 /* stable selection key for a lesson (ready lessons have id; to-generate slots keyed by domain+descriptor) */
@@ -219,7 +219,8 @@ function tileHtml(l){
   else action = (l.bundle ? `<span class="taction dl" title="download .chiron bundle" onclick="event.stopPropagation();LIB.dlfile('${slug}')">⬇</span>` : '')
               + `<span class="taction open">Open →</span>`;
   const badges = (staged?`<span class="treview">🟡 REVIEW</span>`:'') + (l.bankable>0?`<span class="tbank">💰 ${l.bankable}</span>`:'')
-    + (l.scope==='system'?`<span class="tag sys">organ system</span>`:'');
+    + (l.scope==='system'?`<span class="tag sys">organ system</span>`:'')
+    + (l.format==='Pimsleur'?`<span class="tag fmt" title="Pimsleur-style audio drill">🎧 Pimsleur</span>`:'');
   const onclick = selectable ? ` onclick="LIB.togSel('${cssq(keyOf(l))}')"` : (l.ready ? ` onclick="LIB.open('${slug}')"` : '');
   const selCls = selectable ? ' selectable' + (isSel?' selected':'') : '';
   return `<div class="tcard ${l.domain}${l.ready?'':' queued'}${l.bankable>0?' bankq':''}${selCls}"${onclick}>
