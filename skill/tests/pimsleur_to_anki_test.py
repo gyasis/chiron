@@ -47,5 +47,14 @@ class T(unittest.TestCase):
         bad = {"fields": {"Front": {"value": "Hi"}, "Back": {"value": "Ciao."}}, "tags": []}
         self.assertEqual(len(m.verify_note(p, bad)), 2)
 
+class ExamNotes(unittest.TestCase):
+    def test_exam_front_is_italian_question_plus_guidance(self):
+        bank = {"album": "A", "items": [{"id": "f", "kind": "exam", "q": "Mi parli di sé.", "en": "Say who you are",
+                                         "it": "Mi chiamo Marco Rossi."}, {"id": "t", "kind": "talk", "en": "x y", "it": "z"}]}
+        plans = m.build_notes(bank, "/tmp/nolesson")
+        self.assertEqual(len(plans), 1)
+        self.assertEqual(plans[0]["front"], "Mi parli di sé.<br><i>Say who you are</i>")
+        self.assertEqual(plans[0]["it"], "Mi chiamo Marco Rossi.")
+
 
 unittest.main()

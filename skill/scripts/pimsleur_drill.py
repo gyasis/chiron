@@ -78,8 +78,10 @@ def validate(bank: dict) -> list[str]:
                 errs.append(f"{tag}: duplicate id")
             seen.add(it.get("id"))
             kind = it.get("kind", "phrase")
-            if kind not in ("phrase", "question", "talk"):
-                errs.append(f"{tag}: kind must be phrase|question|talk, got {kind!r}")
+            if kind not in ("phrase", "question", "talk", "exam"):
+                errs.append(f"{tag}: kind must be phrase|question|talk|exam, got {kind!r}")
+            if kind == "exam" and not (isinstance(it.get("q"), str) and it["q"].strip()):
+                errs.append(f"{tag}: an exam item needs `q` (the examiner's question, in Italian)")
             if kind == "talk" and where == "review":
                 errs.append(f"{tag}: talk prompts cannot be review items")
             full = _words(it.get("it", ""))
@@ -121,7 +123,11 @@ def schedule(bank: dict) -> list[tuple]:
 
     def recall(item):
         nonlocal n
-        s.extend([("cue", _cue(item, n)), ("answer_pause", item["it"]), ("target", item["it"]), ("repeat_pause",)])
+        if item.get("kind") == "exam":     # the commission asks in ITALIAN; the learner answers, then hears a model
+            s.extend([("cue", "The examiner asks:"), ("target", item["q"]), ("answer_pause", item["it"]),
+                      ("cue", "A good answer:"), ("target", item["it"]), ("repeat_pause",)])
+        else:
+            s.extend([("cue", _cue(item, n)), ("answer_pause", item["it"]), ("target", item["it"]), ("repeat_pause",)])
         n += 1
 
     for line in bank.get("intro") or []:
@@ -134,15 +140,21 @@ def schedule(bank: dict) -> list[tuple]:
             s.extend([("cue", item["en"]), ("talk_pause", int(item.get("secs", TALK_DEFAULT))),
                       ("cue", "One possible answer:"), ("target", item["it"]), ("repeat_pause",)])
             continue
-        verb = "ask" if item.get("kind") == "question" else "say"
-        s.extend([("cue", re.sub(r"\?\.$", "?", f"Here is how to {verb}: {_en(item['en'])}.")), ("target", item["it"]), ("repeat_pause",),
-                  ("target", item["it"]), ("repeat_pause",)])
-        if item.get("build"):
-            s.append(("cue", "Listen and repeat, from the end."))
-            for piece in item["build"]:
-                if _words(piece) != _words(item["it"]):
-                    s.extend([("target", piece), ("repeat_pause",)])
-            s.extend([("target", item["it"]), ("repeat_pause",)])
+        if item.get("kind") == "exam":
+            # first meeting: hear the question, the guidance, a model answer — THEN answer it yourself (recall)
+            s.extend([("cue", "The examiner asks:"), ("target", item["q"]), ("repeat_pause",),
+                      ("cue", _en(item["en"]) + "."), ("cue", "Listen to a good answer."), ("target", item["it"]),
+                      ("repeat_pause",), ("cue", "Now you answer.")])
+        else:
+            verb = "ask" if item.get("kind") == "question" else "say"
+            s.extend([("cue", re.sub(r"\?\.$", "?", f"Here is how to {verb}: {_en(item['en'])}.")), ("target", item["it"]), ("repeat_pause",),
+                      ("target", item["it"]), ("repeat_pause",)])
+            if item.get("build"):
+                s.append(("cue", "Listen and repeat, from the end."))
+                for piece in item["build"]:
+                    if _words(piece) != _words(item["it"]):
+                        s.extend([("target", piece), ("repeat_pause",)])
+                s.extend([("target", item["it"]), ("repeat_pause",)])
         recall(item)
         introduced += 1
         due += [(introduced + k, item) for k in RECALL_AFTER]
@@ -260,10 +272,17 @@ UNIT_ONE = {"it": {"mg": "un milligrammo", "ml": "un millilitro", "g": "un gramm
 
 
 def _num_word(n: int, lang: str) -> str | None:
-    """0..999 as spoken words (Italian elides: ventuno, ventotto), else None."""
+    """0..9999 as spoken words (Italian elides: ventuno, ventotto; years: millenovecentonovantanove), else None."""
     small = NUMBER_WORDS.get(lang)
-    if not small or not 0 <= n <= 999:
+    if not small or not 0 <= n <= 9999:
         return None
+    if n >= 1000:
+        k, r = divmod(n, 1000)
+        head = ("mille" if k == 1 else small[k] + "mila") if lang == "it" else f"{small[k]} thousand"
+        if not r:
+            return head
+        tail = _num_word(r, lang)
+        return head + tail if lang == "it" else f"{head} {tail}"
     if n < len(small):
         return small[n]
     if n < 100:
@@ -386,9 +405,11 @@ def build(lesson_dir: str, qc: bool, engine: str = "mac") -> dict:
             t += _dur(p) + GAP_AFTER_SPEECH
         elif kind == "answer_pause":
             d = answer_pause(_dur(baker.clip("target", st[1])))
-            parts.append(baker.silence(d)); timeline.append({"t": round(t, 1), "who": "pause", "secs": round(d, 1)}); t += d
+            # "answer": the learner answers from the cue (read-along shows "your turn"); "repeat": say it after the model
+            parts.append(baker.silence(d)); timeline.append({"t": round(t, 1), "who": "answer", "secs": round(d, 1)}); t += d
         elif kind == "repeat_pause":
-            parts.append(baker.silence(REPEAT_GAP)); t += REPEAT_GAP
+            parts.append(baker.silence(REPEAT_GAP)); timeline.append({"t": round(t, 1), "who": "repeat", "secs": REPEAT_GAP})
+            t += REPEAT_GAP
         elif kind == "talk_pause":
             secs = float(st[1])
             parts += [baker.tone(880), baker.silence(secs - 0.3), baker.tone(660)]
@@ -404,8 +425,11 @@ def build(lesson_dir: str, qc: bool, engine: str = "mac") -> dict:
     _run("ffmpeg", "-y", "-loglevel", "error", "-f", "concat", "-safe", "0", "-i", lst,
          "-af", "loudnorm=I=-20:TP=-1.5:LRA=11", "-ar", "44100", "-codec:a", "libmp3lame", "-q:a", "3", *meta, out)
     secs = round(_dur(out), 2)
-    json.dump({"title": bank["title"], "durationS": secs, "timeline": timeline, "qc": report},
-              open(os.path.join(audio_dir, "pimsleur.timeline.json"), "w"), ensure_ascii=False, indent=1)
+    tl = {"title": bank["title"], "durationS": secs, "timeline": timeline, "qc": report}
+    json.dump(tl, open(os.path.join(audio_dir, "pimsleur.timeline.json"), "w"), ensure_ascii=False, indent=1)
+    # the same timeline as a script, for the read-along on file:// pages (fetch() of a local JSON is blocked there)
+    open(os.path.join(audio_dir, "pimsleur.timeline.js"), "w").write(
+        "window.__chironPimsleurTimeline = " + json.dumps({"durationS": secs, "timeline": timeline}, ensure_ascii=False) + ";\n")
 
     man_path = os.path.join(audio_dir, "manifest.json")
     man = json.load(open(man_path)) if os.path.exists(man_path) else {"clips": []}
