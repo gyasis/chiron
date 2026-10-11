@@ -268,7 +268,7 @@ def synth_modal(baker: Baker, lines: list, slug: str):
     length-bucketed). Same OmniVoice weights + refs as the Mac, so the voices match; levelling stays local."""
     todo = [(r, t) for r, t in lines if not os.path.exists(baker.raw(r, t))]
     if not todo:
-        return
+        return 0, 0.0
     segs = [{"voice": baker.voices[r], "lang": "en" if r == "cue" else "it", "text": t} for r, t in todo]
     refs = {v: {"wav": os.path.basename(baker.refs[v]["refAudio"]), "txt": baker.refs[v]["refText"]}
             for v in {s["voice"] for s in segs}}
@@ -288,11 +288,16 @@ def synth_modal(baker: Baker, lines: list, slug: str):
             # a missing or empty one (Modal once returned a 78-byte header for 'farLe') falls through to the Mac
             if os.path.exists(src) and os.path.getsize(src) > 2000:
                 _run("ffmpeg", "-y", "-loglevel", "error", "-i", src, "-ar", str(RATE), "-ac", "1", baker.raw(role, text))
+    return res["clips"], float(res.get("synth_s") or 0)
 
 
-def synth(baker: Baker, lines: list, engine: str, slug: str):
+def synth(baker: Baker, lines: list, engine: str, slug: str, report: dict | None = None):
+    """Synthesize every line; Modal usage is added to report["modal"] (clips, gpu_s) for the run report."""
     if engine == "modal":
-        synth_modal(baker, lines, slug)
+        clips, gpu_s = synth_modal(baker, lines, slug)
+        if report is not None and clips:
+            m = report.setdefault("modal", {"clips": 0, "gpu_s": 0.0})
+            m["clips"], m["gpu_s"] = m["clips"] + clips, round(m["gpu_s"] + gpu_s, 1)
     for role, text in lines:
         baker.clip(role, text)
 
@@ -308,9 +313,8 @@ def build(lesson_dir: str, qc: bool, engine: str = "mac") -> dict:
 
     lines = {(st[0], st[1]) for st in steps if st[0] in ("cue", "target")}
     lines |= {("target", st[1]) for st in steps if st[0] == "answer_pause"}
-    synth(baker, sorted(lines), engine, os.path.basename(os.path.normpath(lesson_dir)))
-
     report = {"checked": 0, "resynth": [], "failed": []}
+    synth(baker, sorted(lines), engine, os.path.basename(os.path.normpath(lesson_dir)), report)
     if qc:
         bad = []
         for role, text in sorted(lines):
@@ -320,7 +324,7 @@ def build(lesson_dir: str, qc: bool, engine: str = "mac") -> dict:
                 bad.append((role, text))
                 baker.forget(role, text)
                 report["resynth"].append({"text": text, "heard": heard, "ratio": round(ratio, 2)})
-        synth(baker, bad, engine, "qc-" + os.path.basename(os.path.normpath(lesson_dir)))
+        synth(baker, bad, engine, "qc-" + os.path.basename(os.path.normpath(lesson_dir)), report)
         for role, text in bad:
             ratio2, heard2 = qc_clip(baker.raw(role, text), text, "en" if role == "cue" else "it")
             if ratio2 < QC_MIN_RATIO:
@@ -398,7 +402,8 @@ def listen(lesson_dir: str) -> str:
         "https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent",
         json.dumps(body).encode(), {"content-type": "application/json", "x-goog-api-key": key})
     resp = json.loads(urllib.request.urlopen(req, timeout=600).read())
-    json.dump(resp.get("usageMetadata") or {}, open(os.path.join(audio_dir, "pimsleur.listen.usage.json"), "w"), indent=1)
+    json.dump({**(resp.get("usageMetadata") or {}), "modelVersion": resp.get("modelVersion")},
+              open(os.path.join(audio_dir, "pimsleur.listen.usage.json"), "w"), indent=1)
     text = "".join(p.get("text", "") for p in resp["candidates"][0]["content"]["parts"])
     open(os.path.join(audio_dir, "pimsleur.listen.md"), "w").write(text + "\n")
     return text

@@ -185,7 +185,13 @@ SOURCE to ground in (a study pack, a PDF's text) — pass it as `CH_SOURCE`. Run
 cd ~/Documents/code/chiron/skill/chains/2026-10-11_chiron-pimsleur-lesson-chain
 cred checkout ollama-cloud --exec "cred checkout gemini --exec 'CH_TOPIC=\"<topic>\" CH_STAGE=all python3 run.py'"
 #   CH_LESSONS=4  CH_DOMAIN=medical-italian  CH_SOURCE=~/path/to/pack  CH_STAGE=plan,author,card|bake|listen|export
+#   CHIRON_PIMSLEUR_ENGINE=modal  (audio on the chiron-bake Modal lane; ~3 min GPU per lesson)
+#   CH_STAGE=report  (re-price a finished season: Modal's last hour keeps accruing after the run)
 ```
+
+Every run that bakes or listens appends itself to `chiron-pimsleur-<topic>.run-report.md` (+ `.json`):
+time per stage, Modal $ (billing report), Gemini $ (listen tokens × the llm-snitch price table), Ollama
+tokens. Reruns add a run, never overwrite; anything it can't price makes the total read "at least $X".
 
 What it makes: one lesson dir per lesson, `~/Documents/generated/chiron-pimsleur-<topic>-NN-<slug>/`, each with
 - `pimsleur.json` — the ITEM BANK, the single source for every surface below (schema: `scripts/pimsleur_drill.py`)

@@ -27,6 +27,9 @@ PIPELINE
                                     widget built from the same items; the phone app's `ordine` flavour is fed by
                                     match-madness/ingest/pimsleur.mjs, which is Ordine-specific (it writes
                                     data/ordine-pimsleur.json) — so the chain never calls it for other seasons.
+  P7  REPORT   (fn)                  run_report.py: time per stage + cost (Modal billing, Gemini tokens x price
+                                    table, Ollama logged tokens) -> <topic-slug>.run-report.{md,json}.
+                                    CH_STAGE=report re-prices a finished run (Modal's last hour keeps accruing).
 
 USAGE
 -----
@@ -34,13 +37,13 @@ USAGE
   Env: CHIRON_PIMSLEUR_ENGINE=modal bakes on the chiron-bake Modal lane instead of the Mac.
   Env: CH_TOPIC (required) · CH_LESSONS (default: planner decides, 3-6) · CH_DOMAIN (language-it|medical-italian)
        CH_SOURCE (file or dir of .md/.txt/.json to ground in; e.g. a study pack) · CH_STAGE (plan|author|card|bake|
-       listen|export|all; comma list ok) · CH_FORCE=1 (re-author) · plus the pure-italian chain's model env vars.
+       listen|export|report|all; comma list ok) · CH_FORCE=1 (re-author) · plus the pure-italian chain's model env vars.
 Outputs: ~/Documents/generated/chiron-pimsleur-<topic-slug>-<NN>-<lesson-slug>/ (one dir per lesson, Library-visible)
-         ~/Documents/generated/chiron-pimsleur-<topic-slug>.season.json
+         ~/Documents/generated/chiron-pimsleur-<topic-slug>.season.json  (+ .run-report.md / .run-report.json)
 """
 from __future__ import annotations
 
-import asyncio, datetime, importlib.util, json, os, re, subprocess, sys
+import asyncio, datetime, importlib.util, json, os, re, subprocess, sys, time
 from pathlib import Path
 
 sys.stdout.reconfigure(line_buffering=True)
@@ -70,6 +73,7 @@ def _load(name: str, path: Path):
 os.environ.setdefault("CH_TOPIC", TOPIC)
 pi = _load("pure_italian_chain", SKILL / "chains" / "2026-06-30_chiron-pure-italian-lesson-chain" / "run.py")
 pd = _load("pimsleur_drill", SKILL / "scripts" / "pimsleur_drill.py")
+rr = _load("run_report", Path(__file__).parent / "run_report.py")
 
 
 def stage(name: str) -> bool:
@@ -350,24 +354,60 @@ def p6_export(outs: list):
     print(f"[P6] anki: {'ok' if r.returncode == 0 else 'unreachable' if r.returncode == 2 else 'FAILED'}", flush=True)
 
 
+def p7_report(season: dict, outs: list, T=None):
+    """Append this run to the season's run log and rewrite the report. Without a Timer (CH_STAGE=report)
+    nothing is appended: every run's Modal line is re-priced (its last hour keeps accruing). A season with
+    no log yet gets one APPROXIMATE run: the season plan to the last drill mp3."""
+    stem = SEASON_FILE.with_name(SEASON_FILE.name.removesuffix(".season.json"))
+    runs = rr.load_runs(stem.with_suffix(".run-report.json"))
+    title, prices = season.get("album") or TOPIC, rr.load_prices()
+    extra = [GEN / f"chiron-pimsleur-{TOPIC_SLUG}-plan"]
+    if T is not None:
+        rows = rr.modal_rows(min([T.start] + [r["start"] for r in runs]))
+        runs.append(rr.build(title, outs, T.spans, T.start, time.time(), rows, prices, extra))
+    elif not runs:
+        mp3s = [o / "audio" / "pimsleur.mp3" for o in outs if (o / "audio" / "pimsleur.mp3").exists()]
+        start = SEASON_FILE.stat().st_mtime
+        end = max((f.stat().st_mtime for f in mp3s), default=start)
+        rows = rr.modal_rows(start)
+        runs.append(rr.build(title, outs, [], start, end, rows, prices, extra))
+    else:
+        rows = rr.modal_rows(min(r["start"] for r in runs))
+    rr.reprice_modal(runs, rows)
+    md = rr.write(stem, runs)
+    t = rr.season_totals(runs)
+    print(f"[P7] report: {len(runs)} run(s) · season ${t['usd']:.3f}{' (incomplete)' if t['incomplete'] else ''} -> {md}", flush=True)
+
+
 async def main():
-    season = await p0_plan()
+    T = rr.Timer()
+    with T("P0"):
+        season = await p0_plan()
     outs, prev = [], []
     for n, l in enumerate(season["lessons"], 1):
         out = lesson_dir(n, l)
         if stage("author") or stage("card") or stage("bake") or stage("listen"):
-            bank = await p1_author(n, l, out, prev, season)
+            with T("P1", out.name):
+                bank = await p1_author(n, l, out, prev, season)
             prev = prev + bank["items"]
             if stage("card"):
-                await p3_card(n, l, out, bank)
+                with T("P3", out.name):
+                    await p3_card(n, l, out, bank)
         outs.append(out)
     for out in outs:
         if stage("bake"):
-            p4_bake(out)
+            with T("P4", out.name):
+                p4_bake(out)
         if stage("listen"):
-            p5_listen(out)
+            with T("P5", out.name):
+                p5_listen(out)
     if stage("export"):
-        p6_export(outs)
+        with T("P6"):
+            p6_export(outs)
+    if STAGES == {"report"}:
+        p7_report(season, outs)
+    elif stage("bake") or stage("listen"):
+        p7_report(season, outs, T)
     print("[done] " + " ".join(o.name for o in outs))
 
 
