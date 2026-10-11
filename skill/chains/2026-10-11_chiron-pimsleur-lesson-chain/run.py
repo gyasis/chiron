@@ -22,7 +22,9 @@ PIPELINE
   P1c RECYCLE  (fn)                  2 items of the previous lesson become this lesson's `review` (graduated recall)
   P3  CARD     (LLM small + assemble-language.mjs) pattern table + pearl -> content.json -> lesson.html
   P4  BAKE     (fn)                  pimsleur_drill.py build --qc  (per-clip ASR, auto re-synth)
-  P5  LISTEN   (Gemini)              pimsleur_drill.py listen      (whole-file review -> audio/pimsleur.listen.md)
+  P5  LISTEN   (Gemini)              pimsleur_drill.py listen      (whole-file review -> audio/pimsleur.listen.md);
+                                    a FIX whose complaints are all timestamped clip glitches is re-measured
+                                    (strict ASR + fade-out) and overruled only if every flagged clip is clean
   P6  EXPORT   (fn)                  Anki (if reachable). Match Madness: every read card carries the in-lesson
                                     widget built from the same items; the phone app's `ordine` flavour is fed by
                                     match-madness/ingest/pimsleur.mjs, which is Ordine-specific (it writes
@@ -345,7 +347,9 @@ def p5_listen(out: Path):
         return
     r = subprocess.run([sys.executable, str(SKILL / "scripts" / "pimsleur_drill.py"), "listen", str(out)],
                        capture_output=True, text=True)
-    verdict = "PASS" if r.returncode == 0 else "FIX — read audio/pimsleur.listen.md"
+    rechecked = "re-checked" in (out / "audio" / "pimsleur.listen.md").read_text() if r.returncode == 0 else False
+    verdict = ("PASS (Gemini flagged a glitch; every flagged clip measured clean — see listen.md)" if rechecked
+               else "PASS" if r.returncode == 0 else "FIX — read audio/pimsleur.listen.md (auto re-check confirmed it or couldn't measure it)")
     print(f"[P5] {out.name}: {verdict}", flush=True)
 
 

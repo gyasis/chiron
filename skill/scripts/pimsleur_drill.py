@@ -409,9 +409,95 @@ def listen(lesson_dir: str) -> str:
     return text
 
 
+# ---------------------------------------------------------------- re-check a FIX verdict
+# The listen review is ONE model's opinion and sometimes hears a glitch that isn't there (2026-10-11: congiuntivo
+# L2 "bene così" flagged as cut off; the clip fades out naturally and ASR hears every word; the same audio had
+# passed an hour earlier). So a FIX whose complaints are all timestamped CLIP glitches is re-measured; anything
+# else (pronunciation, pauses, loudness, untimed complaints) keeps FIX — measurement can't overrule those.
+GLITCH = re.compile(r"cut[ -]?off|\bcut\b|clipp|garbl|artifact|artefact|truncat|stray|syllable|glitch|"
+                    r"missing word|wrong word|skipped", re.I)
+NOT_MEASURABLE = re.compile(r"pronunc|pause|loud|volume|balance|speed|too fast|too slow", re.I)
+TAIL_MAX_DB = -28.0      # last voiced 50 ms must have decayed below this — a hard cut ends loud
+
+
+def flagged(text: str) -> tuple[list[tuple[float, float]], list[str]]:
+    """(time ranges of clip-glitch complaints, complaint lines measurement can't settle)."""
+    ranges, other = [], []
+    for line in text.splitlines():
+        ts = [int(m) * 60 + int(s) for m, s in re.findall(r"\b(\d{1,2}):(\d{2})\b", line)]
+        if not ts or "VERDICT" in line:
+            continue
+        if NOT_MEASURABLE.search(line) or not GLITCH.search(line):
+            other.append(line.strip())
+        else:
+            ranges.append((min(ts), max(ts)))
+    return ranges, other
+
+
+def clips_at(timeline: list[dict], a: float, b: float, dur=None, slack: float = 1.5) -> list[dict]:
+    """Speech entries whose AUDIBLE span [t, t + dur(e)) overlaps [a - slack, b + slack]
+    (without dur: up to the next entry, which over-reaches into the silence after a clip)."""
+    out = []
+    for i, e in enumerate(timeline):
+        if e.get("who") not in ("cue", "target"):
+            continue
+        end = e["t"] + dur(e) if dur else (timeline[i + 1]["t"] if i + 1 < len(timeline) else e["t"] + 10)
+        if e["t"] <= b + slack and end >= a - slack:
+            out.append(e)
+    return out
+
+
+def tail_db(path: str) -> float:
+    """dBFS of the last voiced 50 ms window (16-bit mono wav)."""
+    import math, struct, wave
+    w = wave.open(path)
+    n, sr = w.getnframes(), w.getframerate()
+    x = struct.unpack(f"<{n}h", w.readframes(n))
+    win = max(1, int(0.05 * sr))
+    for i in range(n - win, -1, -win):
+        seg = x[i:i + win]
+        db = 20 * math.log10(max(1e-9, math.sqrt(sum(v * v for v in seg) / len(seg)) / 32768))
+        if db > -50:
+            return db
+    return -180.0
+
+
+def recheck(lesson_dir: str, text: str) -> tuple[bool, list[str]]:
+    """Measure every clip a FIX verdict flags. True only if all complaints were clip glitches AND every
+    flagged clip passes strict ASR (same words, nothing extra) and fades out (no hard cut)."""
+    ranges, other = flagged(text)
+    if not ranges:
+        return False, ["no timestamped clip-glitch complaint to measure — FIX stands"]
+    notes = [f"not measurable, FIX stands: {o[:140]}" for o in other]
+    bank = json.load(open(os.path.join(lesson_dir, "pimsleur.json")))
+    baker = Baker(os.path.join(lesson_dir, "audio", "pimsleur-cache"), bank.get("voices"))
+    timeline = json.load(open(os.path.join(lesson_dir, "audio", "pimsleur.timeline.json")))["timeline"]
+    ok, seen = not other, set()
+    for a, b in ranges:
+        hits = clips_at(timeline, a, b, dur=lambda e: _dur(baker.clip(e["who"], e["text"])))
+        if not hits:
+            ok = False
+            notes.append(f"{a // 60:02d}:{a % 60:02d}: no clip at that time — FIX stands")
+        for e in hits:
+            key = (e["who"], e["text"])
+            if key in seen:
+                continue
+            seen.add(key)
+            lang = "en" if e["who"] == "cue" else "it"
+            ratio, heard = qc_clip(baker.raw(*key), e["text"], lang)
+            same = _words(_norm(_spell_numbers(heard, lang))) == _words(_norm(e["text"]))
+            db = tail_db(baker.clip(*key))
+            good = same and db <= TAIL_MAX_DB
+            ok = ok and good
+            notes.append(f"{e['t'] // 60:02.0f}:{e['t'] % 60:02.0f} {e['text']!r}: ASR heard {heard!r} "
+                         f"({'same words' if same else 'WORDS DIFFER'}) · ends at {db:.0f} dBFS "
+                         f"({'fades out' if db <= TAIL_MAX_DB else 'HARD CUT'}) -> {'clean' if good else 'CONFIRMED'}")
+    return ok, notes
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
-    ap.add_argument("cmd", choices=["validate", "plan", "build", "listen"])
+    ap.add_argument("cmd", choices=["validate", "plan", "build", "listen", "recheck"])
     ap.add_argument("lesson_dir")
     ap.add_argument("--qc", action="store_true", help="check every clip with forced-language ASR, re-synth failures once")
     ap.add_argument("--engine", choices=["mac", "modal"], default=os.environ.get("CHIRON_PIMSLEUR_ENGINE", "mac"),
@@ -429,10 +515,17 @@ def main():
         for st in schedule(bank):
             print(f"{st[0]:13} {st[1] if len(st) > 1 else ''}")
         return
-    if a.cmd == "listen":
-        text = listen(a.lesson_dir)
+    if a.cmd in ("listen", "recheck"):
+        text = listen(a.lesson_dir) if a.cmd == "listen" else open(os.path.join(a.lesson_dir, "audio", "pimsleur.listen.md")).read()
         print(text)
-        sys.exit(0 if "VERDICT: PASS" in text else 1)
+        if "VERDICT: PASS" in text:
+            sys.exit(0)
+        ok, notes = recheck(a.lesson_dir, text)
+        print("\n".join(notes))
+        with open(os.path.join(a.lesson_dir, "audio", "pimsleur.listen.md"), "a") as f:
+            f.write("\n## Auto re-check (measured)\n" + "\n".join(f"- {n}" for n in notes) + "\n"
+                    + ("VERDICT: PASS (re-checked: every flagged clip measured clean)\n" if ok else ""))
+        sys.exit(0 if ok else 1)
     report = build(a.lesson_dir, a.qc, a.engine)
     sys.exit(QC_FAILED if report["failed"] else 0)   # a crash exits 1, so the chain can tell the two apart
 
