@@ -4,6 +4,8 @@
     pimsleur_drill.py validate <lesson-dir>          check pimsleur.json, print the problems, exit 1 on any
     pimsleur_drill.py plan     <lesson-dir>          print the running order (no audio)
     pimsleur_drill.py build    <lesson-dir> [--qc]   bake audio/pimsleur.mp3 + timeline, upsert the manifest clip
+    pimsleur_drill.py listen   <lesson-dir>          Gemini listens to the finished MP3 -> audio/pimsleur.listen.md
+                                                    (needs GEMINI_API_KEY: run under `cred checkout gemini --exec`)
 
 WHAT PIMSLEUR IS, AND WHERE EACH PRINCIPLE LIVES HERE
 -----------------------------------------------------
@@ -11,7 +13,8 @@ WHAT PIMSLEUR IS, AND WHERE EACH PRINCIPLE LIVES HERE
   back-chaining  long phrases are built up from their END (informato -> consenso informato), item.build
   graduated      every new item is recalled again after 1, 2 and 4 further new items, then in a final round,
   recall         and items carried over from earlier lessons (review) are interleaved between new ones
-  talk-about-it  open prompts get a long free-speech pause, then one model answer
+  talk-about-it  open prompts get a long free-speech pause, framed by a soft tone at start and end (a bare 25 s
+                 silence reads as "playback stopped" — Gemini review 2026-10-10), then one model answer
 
 The model only AUTHORS pimsleur.json. Everything here is deterministic: the running order, the pause lengths,
 the loudness. Those are exactly where the 2026-10-10 prototype had its bugs.
@@ -210,6 +213,14 @@ class Baker:
             if os.path.exists(p):
                 os.remove(p)
 
+    def tone(self, hz: int) -> str:
+        """A soft 0.15 s tone that frames the free-speech pause: high = start talking, low = time is up."""
+        p = f"{self.cache}/tone_{hz}.wav"
+        if not os.path.exists(p):
+            _run("ffmpeg", "-y", "-loglevel", "error", "-f", "lavfi", "-i", f"sine=frequency={hz}:duration=0.15",
+                 "-af", "volume=0.2,afade=t=in:d=0.02,afade=t=out:st=0.1:d=0.05", "-ar", str(RATE), "-ac", "1", p)
+        return p
+
     def silence(self, secs: float) -> str:
         p = f"{self.cache}/sil_{secs:.2f}.wav"
         if not os.path.exists(p):
@@ -279,7 +290,9 @@ def build(lesson_dir: str, qc: bool) -> dict:
         elif kind == "repeat_pause":
             parts.append(baker.silence(REPEAT_GAP)); t += REPEAT_GAP
         elif kind == "talk_pause":
-            parts.append(baker.silence(float(st[1]))); timeline.append({"t": round(t, 1), "who": "talk", "secs": st[1]}); t += st[1]
+            secs = float(st[1])
+            parts += [baker.tone(880), baker.silence(secs - 0.3), baker.tone(660)]
+            timeline.append({"t": round(t, 1), "who": "talk", "secs": st[1]}); t += secs
 
     out = os.path.join(audio_dir, "pimsleur.mp3")
     lst = os.path.join(baker.cache, "concat.txt")
@@ -307,9 +320,41 @@ def build(lesson_dir: str, qc: bool) -> dict:
     return report
 
 
+LISTEN_PROMPT = (
+    "Pimsleur-style Italian drill for a learner who must SPEAK in each silence. English cue -> silence for the "
+    "learner to answer aloud -> native Italian answer; soft tones frame the long free-speech pauses. Planned "
+    "timeline (seconds):\n{timeline}\n\nListen to the whole file and report BRIEFLY with timestamps: 1) any clip "
+    "garbled, cut off, wrong words or with artifacts; 2) Italian mispronunciation (stress, double consonants, names); "
+    "3) loudness balance between the voices; 4) whether pauses are adequate; 5) anything that would confuse or annoy "
+    "a learner. Say 'none' where nothing is wrong. End with one line: VERDICT: PASS or VERDICT: FIX.")
+
+
+def listen(lesson_dir: str) -> str:
+    """Gemini hears the finished MP3 — catches what per-clip ASR cannot (prosody, balance, pacing, artifacts)."""
+    import base64
+    key = os.environ.get("GEMINI_API_KEY") or os.environ.get("GOOGLE_API_KEY")
+    if not key:
+        sys.exit("listen: no GEMINI_API_KEY — run under `cred checkout gemini --exec '...'`")
+    audio_dir = os.path.join(lesson_dir, "audio")
+    tl = json.load(open(os.path.join(audio_dir, "pimsleur.timeline.json")))["timeline"]
+    body = {"contents": [{"parts": [
+        {"inline_data": {"mime_type": "audio/mpeg",
+                         "data": base64.b64encode(open(os.path.join(audio_dir, "pimsleur.mp3"), "rb").read()).decode()}},
+        {"text": LISTEN_PROMPT.format(timeline=json.dumps(tl, ensure_ascii=False))}]}],
+        # gemini-flash-latest is a thinking model (checked 2026-10-10): cap reasoning, this is a review not a puzzle
+        "generationConfig": {"thinkingConfig": {"thinkingBudget": 1024}, "temperature": 0.3}}
+    req = urllib.request.Request(
+        "https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent",
+        json.dumps(body).encode(), {"content-type": "application/json", "x-goog-api-key": key})
+    resp = json.loads(urllib.request.urlopen(req, timeout=600).read())
+    text = "".join(p.get("text", "") for p in resp["candidates"][0]["content"]["parts"])
+    open(os.path.join(audio_dir, "pimsleur.listen.md"), "w").write(text + "\n")
+    return text
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
-    ap.add_argument("cmd", choices=["validate", "plan", "build"])
+    ap.add_argument("cmd", choices=["validate", "plan", "build", "listen"])
     ap.add_argument("lesson_dir")
     ap.add_argument("--qc", action="store_true", help="check every clip with forced-language ASR, re-synth failures once")
     a = ap.parse_args()
@@ -325,6 +370,10 @@ def main():
         for st in schedule(bank):
             print(f"{st[0]:13} {st[1] if len(st) > 1 else ''}")
         return
+    if a.cmd == "listen":
+        text = listen(a.lesson_dir)
+        print(text)
+        sys.exit(0 if "VERDICT: PASS" in text else 1)
     report = build(a.lesson_dir, a.qc)
     sys.exit(1 if report["failed"] else 0)
 

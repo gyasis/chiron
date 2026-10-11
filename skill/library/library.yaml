@@ -74,6 +74,11 @@ facets:
     type: pills
     appliesTo: [code]
     values: [TypeScript, Python, Rust, Go]
+  format:
+    label: Format
+    type: pills
+    appliesTo: [language-it, medical-italian, medicine]   # Ordine lessons are stamped language-it AND medicine in the index
+    values: [Course, Passage, Pimsleur]                   # default Course; Pimsleur = lesson has an artifact:"pimsleur" clip in audio/manifest.json
   source:
     label: Source
     type: pills

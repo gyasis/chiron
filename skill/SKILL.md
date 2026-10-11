@@ -9,9 +9,11 @@ description: |
   "make a course on Y", "lesson from this PDF", "make a lesson from this
   video/audio/recording", "turn this YouTube video into a course", "transcribe
   this lecture into a lesson", "capture pages from my phone", "case-study this",
-  "chiron …") AND on slash-commands (/chiron, /chiron-code, /chiron-medicine,
-  /chiron-language, /chiron-research-paper, /chiron-case-study). Produces a single
-  self-contained lesson.html plus a per-lesson SQLite state DB.
+  "chiron …", "Pimsleur lessons on X", "Pimsleur-style audio drill") AND on
+  slash-commands (/chiron, /chiron-code, /chiron-medicine, /chiron-language,
+  /chiron-language-pimsleur, /chiron-research-paper, /chiron-case-study). Produces a
+  single self-contained lesson.html plus a per-lesson SQLite state DB; a Pimsleur
+  request produces a SEASON of short read cards, each with a speak-aloud drill MP3.
 allowed-tools:
   - Read
   - Write
@@ -89,6 +91,7 @@ modern browser. It is built around three foundational facts:
 | `make a lesson from this audio/recording/lecture` / `<file>.mp3` | Mode A; source = audio (local whisper) |
 | `transcribe this lecture into a lesson` | Mode A; source = audio |
 | `capture pages from my phone` / `start the capture server` | runs the G6 capture sidecar |
+| `Pimsleur lessons on <X>` / `Pimsleur-style audio drill on <X>` / `build me Pimsleur lessons for <X>` | Pimsleur season (see **Pimsleur format** below) |
 | `case-study this` | Mode B (forced) |
 | `explain the pattern` | Mode B (forced) |
 | `chiron <…>` | Generic fallback |
@@ -101,6 +104,7 @@ modern browser. It is built around three foundational facts:
 | `/chiron-code` | A | code |
 | `/chiron-medicine` | A | medicine (asks AMBOSS vs UpToDate sub-mode at run time) |
 | `/chiron-language` | A | language-it (German is **deferred to post-v1**) |
+| `/chiron-language-pimsleur <topic>` | Pimsleur season | language-it (or medical-italian with a medical source) |
 | `/chiron-research-paper` | A | research-paper |
 | `/chiron-case-study` | **B (forced)** | auto |
 
@@ -171,6 +175,30 @@ Two surfaces, both genre-driven (NOT hand-coded per lesson):
    lesson element (NOT inside the annotated-passage widget).
 2. The lesson **🎧 player panel** surfaces both in a "La frase" group (skeleton
    `language-lesson-skeleton.html`).
+
+## Pimsleur format (drill season)
+
+Request: "Pimsleur lessons on <topic>" or `/chiron-language-pimsleur <topic>`. Optional: how many lessons, and a
+SOURCE to ground in (a study pack, a PDF's text) — pass it as `CH_SOURCE`. Run the chain:
+
+```bash
+cd ~/Documents/code/chiron/skill/chains/2026-10-11_chiron-pimsleur-lesson-chain
+cred checkout ollama-cloud --exec "cred checkout gemini --exec 'CH_TOPIC=\"<topic>\" CH_STAGE=all python3 run.py'"
+#   CH_LESSONS=4  CH_DOMAIN=medical-italian  CH_SOURCE=~/path/to/pack  CH_STAGE=plan,author,card|bake|listen|export
+```
+
+What it makes: one lesson dir per lesson, `~/Documents/generated/chiron-pimsleur-<topic>-NN-<slug>/`, each with
+- `pimsleur.json` — the ITEM BANK, the single source for every surface below (schema: `scripts/pimsleur_drill.py`)
+- `lesson.html` — a SHORT read card (pattern table · the lesson's phrases · one pearl · Match Madness · SR deck)
+- `audio/pimsleur.mp3` — the drill, FIRST in the lesson player ("🎧 Pimsleur drill"; mobile ⛶ full-screen)
+- Library: tagged Format = Pimsleur (🎧 chip + filter); Anki: `Chiron::Pimsleur::<album>` notes with the same clips
+  (`scripts/pimsleur_to_anki.py`, needs Anki open on the MacBook); Match Madness: in every read card, and the phone app's `ordine` flavour via `match-madness/ingest/pimsleur.mjs` (Ordine-only).
+
+The method (anticipation, back-chaining, graduated recall, recycled review, talk-about-it) is DETERMINISTIC in
+`scripts/pimsleur_drill.py`; models only author items (P1, reviewed by a second model family) and the card (P3).
+Before telling the user a season is done: every lesson's `pimsleur.timeline.json` qc shows 0 failing, and
+`audio/pimsleur.listen.md` ends `VERDICT: PASS` (or its notes were read and acted on).
+Older built lessons need `scripts/upgrade_player_pimsleur.py <lesson.html>` before a drill shows in their player.
 
 ## Mode A vs Mode B
 
