@@ -35,10 +35,12 @@ AUDIO TRAPS (measured 2026-10-10, see memory finding-pimsleur-audio-builder)
 """
 from __future__ import annotations
 
-import argparse, difflib, hashlib, json, os, re, subprocess, sys, unicodedata, urllib.request
+import argparse, difflib, hashlib, json, os, re, subprocess, sys, tempfile, unicodedata, urllib.request
 
 OV_URL = os.environ.get("CHIRON_OMNIVOICE_URL", "http://192.168.0.159:8770")
 ASR_URL = os.environ.get("CHIRON_WHISPER_URL", "http://192.168.0.159:8766")
+QC_FAILED = 3
+MODAL_SYNTH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "modal", "modal_synth.py")
 VOICES_FILE = os.path.expanduser("~/.chiron/voices.json")
 DEFAULT_VOICES = {"cue": "pauls_tutor", "target": "lucrezia_italian"}
 LUFS = {"cue": "-18", "target": "-20"}   # the cue voice reads ~2 dB quieter at equal LUFS
@@ -261,7 +263,41 @@ def qc_clip(path: str, text: str, lang: str) -> tuple[float, str]:
     return difflib.SequenceMatcher(None, _norm(text), _norm(_spell_numbers(heard, lang))).ratio(), heard
 
 
-def build(lesson_dir: str, qc: bool) -> dict:
+def synth_modal(baker: Baker, lines: list, slug: str):
+    """Fill the raw cache for every uncached line in ONE job on the deployed chiron-bake Modal lane (L4,
+    length-bucketed). Same OmniVoice weights + refs as the Mac, so the voices match; levelling stays local."""
+    todo = [(r, t) for r, t in lines if not os.path.exists(baker.raw(r, t))]
+    if not todo:
+        return
+    segs = [{"voice": baker.voices[r], "lang": "en" if r == "cue" else "it", "text": t} for r, t in todo]
+    refs = {v: {"wav": os.path.basename(baker.refs[v]["refAudio"]), "txt": baker.refs[v]["refText"]}
+            for v in {s["voice"] for s in segs}}
+    with tempfile.TemporaryDirectory(prefix="pimsleur-modal-") as td:
+        jp, pref = os.path.join(td, "job.json"), os.path.join(td, "pref")
+        json.dump({"slug": slug, "num_step": 48, "bucket": 8, "refs": refs, "sections": {"all": segs}}, open(jp, "w"))
+        print(f"  modal: {len(todo)} clips -> chiron-bake", flush=True)
+        r = subprocess.run(["python3", MODAL_SYNTH, jp, pref], capture_output=True, text=True,
+                           timeout=max(1800, len(todo) * 5 + 600))
+        out = (r.stdout.strip().splitlines() or ["{}"])[-1]
+        res = json.loads(out) if out.startswith("{") else {}
+        if res.get("error") or not res.get("clips"):
+            sys.exit(f"Modal synth failed: {res.get('error') or r.stderr[-300:]}")
+        print(f"  modal: {res['clips']} clips back, {res.get('synth_s')}s GPU", flush=True)
+        for i, (role, text) in enumerate(todo):
+            src = os.path.join(pref, "all", f"{i}.wav")
+            # a missing or empty one (Modal once returned a 78-byte header for 'farLe') falls through to the Mac
+            if os.path.exists(src) and os.path.getsize(src) > 2000:
+                _run("ffmpeg", "-y", "-loglevel", "error", "-i", src, "-ar", str(RATE), "-ac", "1", baker.raw(role, text))
+
+
+def synth(baker: Baker, lines: list, engine: str, slug: str):
+    if engine == "modal":
+        synth_modal(baker, lines, slug)
+    for role, text in lines:
+        baker.clip(role, text)
+
+
+def build(lesson_dir: str, qc: bool, engine: str = "mac") -> dict:
     bank = json.load(open(os.path.join(lesson_dir, "pimsleur.json")))
     errs = validate(bank)
     if errs:
@@ -272,22 +308,23 @@ def build(lesson_dir: str, qc: bool) -> dict:
 
     lines = {(st[0], st[1]) for st in steps if st[0] in ("cue", "target")}
     lines |= {("target", st[1]) for st in steps if st[0] == "answer_pause"}
-    for role, text in sorted(lines):
-        baker.clip(role, text)
+    synth(baker, sorted(lines), engine, os.path.basename(os.path.normpath(lesson_dir)))
 
     report = {"checked": 0, "resynth": [], "failed": []}
     if qc:
+        bad = []
         for role, text in sorted(lines):
-            lang = "en" if role == "cue" else "it"
-            ratio, heard = qc_clip(baker.raw(role, text), text, lang)
+            ratio, heard = qc_clip(baker.raw(role, text), text, "en" if role == "cue" else "it")
             report["checked"] += 1
             if ratio < QC_MIN_RATIO:
+                bad.append((role, text))
                 baker.forget(role, text)
-                baker.clip(role, text)
-                ratio2, heard2 = qc_clip(baker.raw(role, text), text, lang)
                 report["resynth"].append({"text": text, "heard": heard, "ratio": round(ratio, 2)})
-                if ratio2 < QC_MIN_RATIO:
-                    report["failed"].append({"text": text, "heard": heard2, "ratio": round(ratio2, 2)})
+        synth(baker, bad, engine, "qc-" + os.path.basename(os.path.normpath(lesson_dir)))
+        for role, text in bad:
+            ratio2, heard2 = qc_clip(baker.raw(role, text), text, "en" if role == "cue" else "it")
+            if ratio2 < QC_MIN_RATIO:
+                report["failed"].append({"text": text, "heard": heard2, "ratio": round(ratio2, 2)})
         print(f"  qc: {report['checked']} clips, {len(report['resynth'])} re-synthesized, {len(report['failed'])} still failing")
 
     parts, timeline, t = [], [], 0.0
@@ -361,6 +398,7 @@ def listen(lesson_dir: str) -> str:
         "https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent",
         json.dumps(body).encode(), {"content-type": "application/json", "x-goog-api-key": key})
     resp = json.loads(urllib.request.urlopen(req, timeout=600).read())
+    json.dump(resp.get("usageMetadata") or {}, open(os.path.join(audio_dir, "pimsleur.listen.usage.json"), "w"), indent=1)
     text = "".join(p.get("text", "") for p in resp["candidates"][0]["content"]["parts"])
     open(os.path.join(audio_dir, "pimsleur.listen.md"), "w").write(text + "\n")
     return text
@@ -371,6 +409,8 @@ def main():
     ap.add_argument("cmd", choices=["validate", "plan", "build", "listen"])
     ap.add_argument("lesson_dir")
     ap.add_argument("--qc", action="store_true", help="check every clip with forced-language ASR, re-synth failures once")
+    ap.add_argument("--engine", choices=["mac", "modal"], default=os.environ.get("CHIRON_PIMSLEUR_ENGINE", "mac"),
+                    help="where OmniVoice runs: the Mac sidecar, or the chiron-bake Modal lane (L4, batched)")
     a = ap.parse_args()
     bank = json.load(open(os.path.join(a.lesson_dir, "pimsleur.json")))
     if a.cmd == "validate":
@@ -388,8 +428,8 @@ def main():
         text = listen(a.lesson_dir)
         print(text)
         sys.exit(0 if "VERDICT: PASS" in text else 1)
-    report = build(a.lesson_dir, a.qc)
-    sys.exit(1 if report["failed"] else 0)
+    report = build(a.lesson_dir, a.qc, a.engine)
+    sys.exit(QC_FAILED if report["failed"] else 0)   # a crash exits 1, so the chain can tell the two apart
 
 
 if __name__ == "__main__":

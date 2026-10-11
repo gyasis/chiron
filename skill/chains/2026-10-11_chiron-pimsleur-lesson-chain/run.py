@@ -31,6 +31,7 @@ PIPELINE
 USAGE
 -----
   CH_TOPIC="common irregular verbs in the passato prossimo and futuro" CH_STAGE=all python3 run.py
+  Env: CHIRON_PIMSLEUR_ENGINE=modal bakes on the chiron-bake Modal lane instead of the Mac.
   Env: CH_TOPIC (required) · CH_LESSONS (default: planner decides, 3-6) · CH_DOMAIN (language-it|medical-italian)
        CH_SOURCE (file or dir of .md/.txt/.json to ground in; e.g. a study pack) · CH_STAGE (plan|author|card|bake|
        listen|export|all; comma list ok) · CH_FORCE=1 (re-author) · plus the pure-italian chain's model env vars.
@@ -198,11 +199,12 @@ def taught_block(prev_items: list) -> str:
     return "\n".join(f"- {i['it']}  ({i['en']})" for i in prev_items if i.get("kind") != "talk")
 
 
-async def review_italian(items: list) -> list:
+async def review_italian(items: list) -> list | None:
     """A different model family checks every Italian line. Fail-OPEN: a broken judge never blocks the season."""
     prompt = f"""You are a native Italian editor checking lines a language course will teach to a learner.
 For EACH item check: is `it` correct, natural spoken Italian (grammar, agreement, articles, clitics, participle
-agreement with essere, formal Lei where addressed to someone)? Does `en` mean the same thing? Are the `build`
+agreement with essere, formal Lei where addressed to someone)? Does `en` mean the same thing? (Not for kind "talk":
+there `en` is the speaking TASK given to the learner and `it` a model answer — check only that `it` answers it.) Are the `build`
 pieces the same WORDS as the end of `it` (ignore punctuation and capitals — the code compares words)? Only report
 REAL errors — not style preferences, not punctuation in build pieces.
 ITEMS:
@@ -213,11 +215,12 @@ Return ONLY JSON: {{"issues": [{{"id": "...", "problem": "...", "fix": "<correct
         # deepseek-*-flash is a THINKING model (capabilities, checked 2026-10-11); this is a gate, so thinking off.
         # /v1/chat/completions takes reasoning_effort (think:false is ignored there). Measured: 311 -> 0 reasoning chars.
         md["params"]["reasoning_effort"] = "none"
+        md["params"]["allowed_openai_params"] = ["reasoning_effort"]   # litellm refuses it for openai/<non-OpenAI> otherwise
         raw = await pi.llm(md, prompt)
         return (pi.extract_json(raw) or {}).get("issues") or []
     except Exception as e:
         print(f"[P1b] review unavailable ({e}) — fail-open", flush=True)
-        return []
+        return None
 
 
 async def p1_author(n: int, l: dict, out: Path, prev_items: list, season: dict) -> dict:
@@ -248,8 +251,15 @@ Return ONLY JSON: {{"intro": ["..."], "items": [{{"id": "...", "it": "...", "en"
             prompt + f"\n\n## PREVIOUS DRAFT\n{json.dumps(o, ensure_ascii=False)}\n\n## EDITOR'S CORRECTIONS — apply every one\n"
             + json.dumps(issues, ensure_ascii=False), f"pimsleur-l{n:02d}-fix", pi.model_for(pi.MODEL_STRUCT), bank_valid, via_engine=True)
         if fixed:
+            # a talk item's `en` is the learner's TASK, never a translation — the fix round must not rewrite it
+            task = {i["id"]: i["en"] for i in o["items"] if i.get("kind") == "talk"}
+            for i in fixed["items"]:
+                if i.get("kind") == "talk" and i["id"] in task:
+                    i["en"] = task[i["id"]]
             o = fixed
         (out / "review.json").write_text(json.dumps({"issues": issues, "applied": bool(fixed)}, ensure_ascii=False, indent=1))
+    elif issues is not None:
+        print(f"[P1b] lesson {n}: Italian review clean", flush=True)
     # P1c RECYCLE (deterministic): two items of the previous lesson return as this lesson's review
     pool = [i for i in prev_items if i.get("kind") != "talk"][-8:]
     review = [pool[0], pool[len(pool) // 2]] if len(pool) >= 2 else pool
@@ -321,8 +331,10 @@ def p4_bake(out: Path):
         print(f"[P4] resume {out.name}")
         return
     r = subprocess.run([sys.executable, str(SKILL / "scripts" / "pimsleur_drill.py"), "build", str(out), "--qc"])
-    if r.returncode:
+    if r.returncode == pd.QC_FAILED:
         print(f"[P4] {out.name}: QC left failing clips — see audio/pimsleur.timeline.json", flush=True)
+    elif r.returncode:
+        print(f"[P4] {out.name}: BAKE CRASHED (exit {r.returncode}) — no mp3; see the traceback above", flush=True)
 
 
 def p5_listen(out: Path):
