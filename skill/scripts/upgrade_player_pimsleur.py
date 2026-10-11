@@ -7,8 +7,9 @@ block is patched on its own: a block that already knows 'pimsleur' is left alone
 does not is upgraded. Idempotent. Exits 1 if a player block matches none of the known shapes.
 Usage: upgrade_player_pimsleur.py <lesson.html> [...]
 """
-import re, sys
+import json, os, re, sys
 
+READALONG = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "shell", "pimsleur-readalong.js")
 MARK = "artifact === 'pimsleur'"
 MARK_MIN = "artifact==='pimsleur'"
 
@@ -64,6 +65,17 @@ def upgrade_js(js: str) -> tuple[str, int]:
     return js, done
 
 
+def ensure_timeline_js(lesson_dir: str) -> None:
+    """Lessons baked before the read-along have only pimsleur.timeline.json: derive the .js twin (file:// pages)."""
+    src = os.path.join(lesson_dir, "audio", "pimsleur.timeline.json")
+    dst = src[:-2]   # .json -> .js
+    if os.path.exists(src) and not os.path.exists(dst):
+        tl = json.load(open(src))
+        open(dst, "w").write("window.__chironPimsleurTimeline = "
+                             + json.dumps({"durationS": tl.get("durationS"), "timeline": tl.get("timeline", [])},
+                                          ensure_ascii=False) + ";\n")
+
+
 def upgrade(path: str) -> int:
     h = open(path).read()
     out, last, total = [], 0, 0
@@ -75,8 +87,20 @@ def upgrade(path: str) -> int:
         out += [h[last:m.start(2)], js]
         last, total = m.end(2), total + n
     out.append(h[last:])
+    h = "".join(out)
+    # read-along: the drill's words in sync with the audio (inlined: lessons must work offline)
+    js = open(READALONG).read().replace("</script", "<\\/script")
+    block = f"<script>\n{js}\n</script>"
+    old = re.search(r"<script>\n/\* ── Chiron Pimsleur read-along.*?</script>", h, re.S)
+    if old and old.group(0) != block:                  # an older read-along: replace it, so fixes reach every lesson
+        h = h[:old.start()] + block + h[old.end():]
+        total += 1
+    elif not old and "</body>" in h:
+        h = h.replace("</body>", block + "\n</body>", 1)
+        total += 1
     if total:
-        open(path, "w").write("".join(out))
+        open(path, "w").write(h)
+    ensure_timeline_js(os.path.dirname(os.path.abspath(path)))
     print(f"{'patched' if total else 'already current'} ({total} player part(s)): {path}")
     return total
 

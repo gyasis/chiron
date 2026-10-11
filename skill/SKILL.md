@@ -189,6 +189,17 @@ cred checkout ollama-cloud --exec "cred checkout gemini --exec 'CH_TOPIC=\"<topi
 #   CH_STAGE=report  (re-price a finished season: Modal's last hour keeps accruing after the run)
 ```
 
+`CH_FORMAT=exam` makes an EXAM season (Ordine commission rehearsal): each lesson teaches 3-5 key phrases, then
+2-3 `exam` items — Lucrezia ASKS the commission's question in Italian (`q`), the narrator gives English guidance
+on what a good answer contains (`en`), the learner hears a model answer (`it`) and later answers it himself;
+recalls re-ask in Italian. Anki cards: front = the Italian question + guidance, back = the model answer.
+The reviewer also checks FACTS (doses, laws, Codice articles) against `CH_SOURCE`.
+
+Read-along: every Pimsleur lesson inlines `shell/pimsleur-readalong.js` (via `upgrade_player_pimsleur.py`): while
+the drill plays, a panel shows the line being spoken (EN / IT / ESAMINATORE) and the learner's turns ("Tocca a te",
+"Ripeti", free-talk countdown), from `audio/pimsleur.timeline.js`. Works offline (phone app, file://) and served.
+The tutor is injected only when the lesson is served by the Chiron app (`:8911/lessons/<slug>/lesson.html`).
+
 Every run that bakes or listens appends itself to `chiron-pimsleur-<topic>.run-report.md` (+ `.json`):
 time per stage, Modal $ (billing report), Gemini $ (listen tokens × the llm-snitch price table), Ollama
 tokens. Reruns add a run, never overwrite; anything it can't price makes the total read "at least $X".

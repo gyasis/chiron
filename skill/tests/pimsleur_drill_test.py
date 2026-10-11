@@ -86,6 +86,40 @@ class Qc(unittest.TestCase):
         self.assertEqual(pd._spell_numbers("at 45", "en"), "at forty-five")
 
 
+class Exam(unittest.TestCase):
+    E = {"id": "formazione", "kind": "exam", "q": "Mi parli della sua formazione.",
+         "en": "Say where you studied, in which language, and which specialty you want",
+         "it": "Mi sono laureato in Medicina a Bologna, in italiano. Vorrei specializzarmi in Cardiologia."}
+
+    def setUp(self):
+        self.steps = pd.schedule({"items": [A, self.E, B, D, T]})
+
+    def test_exam_item_validates_and_needs_q(self):
+        self.assertEqual(pd.validate({"items": [A, self.E, T]}), [])
+        bad = {**self.E}; bad.pop("q")
+        self.assertTrue(any("needs `q`" in e for e in pd.validate({"items": [bad]})))
+
+    def test_question_is_asked_in_italian_then_guidance_then_model(self):
+        i = self.steps.index(("target", self.E["q"]))
+        self.assertEqual(self.steps[i - 1], ("cue", "The examiner asks:"))
+        self.assertEqual(self.steps[i + 2], ("cue", self.E["en"] + "."))
+        self.assertEqual(self.steps[i + 4], ("target", self.E["it"]))     # model heard BEFORE the learner answers
+
+    def test_recalls_reask_in_italian(self):
+        asks = [k for k, st in enumerate(self.steps) if st == ("answer_pause", self.E["it"])]
+        self.assertGreaterEqual(len(asks), 3)
+        for k in asks:
+            self.assertEqual(self.steps[k - 1], ("target", self.E["q"]))   # never an English cue
+
+    def test_heard_before_asked_still_holds(self):
+        heard = set()
+        for st in self.steps:
+            if st[0] == "answer_pause":
+                self.assertIn(st[1], heard)
+            if st[0] == "target":
+                heard.add(st[1])
+
+
 class Recheck(unittest.TestCase):
     REVIEW = """**Critical Observation:**
 - **03:57 - 04:00**: the audio clip is cut off abruptly before "così" is fully spoken.
@@ -129,7 +163,9 @@ class Numbers(unittest.TestCase):
         self.assertEqual(pd._spell_numbers("1 g ogni 8 ore", "it"), "un grammo ogni otto ore")
         self.assertEqual(pd._spell_numbers("21 giorni, 28, 250 ml", "it"), "ventuno giorni, ventotto, duecentocinquanta millilitri")
         self.assertEqual(pd._spell_numbers("take 500 mg", "en"), "take five hundred milligrams")
-        self.assertEqual(pd._spell_numbers("1200", "it"), "1200")            # out of range: left as is
+        self.assertEqual(pd._spell_numbers("DPR 394 del 1999", "it"), "DPR trecentonovantaquattro del millenovecentonovantanove")
+        self.assertEqual(pd._spell_numbers("nel 2026", "it"), "nel duemilaventisei")
+        self.assertEqual(pd._spell_numbers("12000", "it"), "12000")          # out of range: left as is
 
 
 class Pause(unittest.TestCase):

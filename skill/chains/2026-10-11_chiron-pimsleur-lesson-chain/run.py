@@ -60,6 +60,7 @@ STAGES = set((os.environ.get("CH_STAGE", "all")).split(","))
 DOMAIN = os.environ.get("CH_DOMAIN", "language-it")
 N_LESSONS = int(os.environ.get("CH_LESSONS", "0"))
 FORCE = os.environ.get("CH_FORCE") == "1"
+FORMAT = os.environ.get("CH_FORMAT", "drill")   # drill | exam (commission questions asked in Italian)
 TOPIC_SLUG = re.sub(r"[^a-z0-9]+", "-", TOPIC.lower()).strip("-")[:40]
 SEASON_FILE = GEN / f"chiron-pimsleur-{TOPIC_SLUG}.season.json"
 
@@ -114,6 +115,15 @@ ITEM RULES (a drill item is something the learner must SAY aloud, from an Englis
   `it` (the END of the phrase), never the full phrase. "Ieri ho fatto la spesa." -> ["la spesa", "fatto la spesa"].
 - `id`: short snake_case, unique across the season.
 - No duplicates of items taught in earlier lessons (listed below) — build on them instead.
+"""
+
+EXAM_RULES = """
+EXAM ITEMS (CH_FORMAT=exam — the learner is rehearsing the Ordine dei Medici oral/written language test):
+- kind "exam": `q` = the question an examiner on the commission would ask, in natural formal Italian (Lei);
+  `en` = English GUIDANCE on what a good answer must contain (not a translation), 8-30 words, no Italian words;
+  `it` = a model answer the learner can actually say: 1-3 short sentences, 8-40 words, built from this lesson's
+  phrase items (teach those phrases FIRST, as normal phrase items). No `build` on exam items.
+- Facts in `q`/`it` (laws, Codice articles, procedures, doses) must be supported by the SOURCE — never invented.
 """
 
 
@@ -185,9 +195,21 @@ def bank_valid(o) -> list:
         iss.append(f"need 6-9 items (incl. the talk item), got {len(items)}")
     if talks != [len(items) - 1]:
         iss.append("exactly ONE talk item, and it must be LAST")
+    exams = [it for it in items if it.get("kind") == "exam"]
+    if FORMAT == "exam" and not 2 <= len(exams) <= 3:
+        iss.append(f"exam format: need 2-3 exam items, got {len(exams)}")
+    if FORMAT != "exam" and exams:
+        iss.append("exam items are only for CH_FORMAT=exam")
     for it in items:
         if it.get("kind") == "talk":
             it.setdefault("secs", 25)
+            continue
+        if it.get("kind") == "exam":
+            n = len(pd._words(it.get("it", "")))
+            if not 8 <= n <= 40:
+                iss.append(f"{it.get('id')}: exam model answer has {n} words (8-40)")
+            if not 8 <= len((it.get("en") or "").split()) <= 30:
+                iss.append(f"{it.get('id')}: exam `en` guidance must be 8-30 words")
             continue
         n = len(pd._words(it.get("it", "")))
         if not 1 <= n <= 10:
@@ -213,6 +235,11 @@ agreement with essere, formal Lei where addressed to someone)? Does `en` mean th
 there `en` is the speaking TASK given to the learner and `it` a model answer — check only that `it` answers it.) Are the `build`
 pieces the same WORDS as the end of `it` (ignore punctuation and capitals — the code compares words)? Only report
 REAL errors — not style preferences, not punctuation in build pieces.
+For kind "exam": `q` is the examiner's Italian question (check it), `en` is English guidance (not a translation),
+`it` the model answer (check it answers `q`).
+ALSO report any line that is FACTUALLY or CLINICALLY wrong — a dose or frequency a doctor would not prescribe,
+a law, article or procedure stated wrongly or not supported by the SOURCE below. A learner will repeat it aloud.
+{SRC}
 ITEMS:
 {json.dumps(items, ensure_ascii=False, indent=1)}
 Return ONLY JSON: {{"issues": [{{"id": "...", "problem": "...", "fix": "<corrected it or en>"}}]}} (empty list if none)."""
@@ -242,7 +269,7 @@ ALREADY TAUGHT in earlier lessons:
 {taught_block(prev_items)}
 {SRC}
 {ITEM_RULES}
-Write 5-8 phrase/question items covering the targets, then the ONE talk item last.
+{EXAM_RULES + "Write 3-5 phrase items (the building blocks of the answers), then 2-3 exam items, then the ONE talk item last." if FORMAT == "exam" else "Write 5-8 phrase/question items covering the targets, then the ONE talk item last."}
 Also write `intro`: ONE English sentence setting a scene for the lesson.
 Return ONLY JSON: {{"intro": ["..."], "items": [{{"id": "...", "it": "...", "en": "...", "kind": "phrase", "build": ["..."]}}]}}"""
     o = await pi.json_with_repair(prompt, f"pimsleur-l{n:02d}", pi.model_for(pi.MODEL_STRUCT), bank_valid, via_engine=True)

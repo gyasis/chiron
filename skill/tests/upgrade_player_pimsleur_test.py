@@ -65,5 +65,23 @@ class Upgrade(unittest.TestCase):
             upg.upgrade_js("function buildOrderedClips(x){ return x.slice(); }")
 
 
+class Readalong(unittest.TestCase):
+    def test_inlined_once_replaced_when_stale_and_timeline_js_written(self):
+        import json, tempfile
+        with tempfile.TemporaryDirectory() as td:
+            os.makedirs(f"{td}/audio")
+            json.dump({"durationS": 9, "timeline": [{"t": 0, "who": "cue", "text": "Hi there."}]},
+                      open(f"{td}/audio/pimsleur.timeline.json", "w"))
+            page = f"{td}/lesson.html"
+            open(page, "w").write("<html><body><p>x</p></body></html>")
+            self.assertEqual(upg.upgrade(page), 1)
+            self.assertTrue(os.path.exists(f"{td}/audio/pimsleur.timeline.js"))
+            self.assertEqual(upg.upgrade(page), 0)                                   # idempotent
+            h = open(page).read()
+            open(page, "w").write(h.replace("cra-k-", "cra-old-"))                     # simulate an older copy
+            self.assertEqual(upg.upgrade(page), 1)
+            self.assertEqual(open(page).read().count("Chiron Pimsleur read-along"), 1)
+
+
 if __name__ == "__main__":
     unittest.main()

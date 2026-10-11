@@ -37,18 +37,20 @@ def media_name(key: str) -> str:
 
 
 def build_notes(bank: dict, lesson_dir: str, deck: str | None = None) -> list[dict]:
-    """One plan entry per exportable item (phrase|question; talk skipped)."""
+    """One plan entry per exportable item (phrase|question|exam; talk skipped). An exam card's front is the
+    examiner's Italian question + the English guidance; its back is the model answer."""
     lesson = os.path.basename(os.path.normpath(lesson_dir))
     voice = {**DEFAULT_VOICES, **(bank.get("voices") or {})}["target"]
     deck = deck or f"Chiron::Pimsleur::{bank.get('album') or lesson}"
     out = []
     for where in ("items", "review"):
         for it in bank.get(where) or []:
-            if it.get("kind", "phrase") not in ("phrase", "question"):
+            if it.get("kind", "phrase") not in ("phrase", "question", "exam"):
                 continue
             key = clip_key(voice, it["it"])
             wav = os.path.join(lesson_dir, "audio", "pimsleur-cache", f"{key}.lev{TARGET_LUFS}.wav")
-            out.append({"id": it["id"], "review": where == "review", "deck": deck, "front": it["en"],
+            out.append({"id": it["id"], "review": where == "review", "deck": deck,
+                        "front": f"{it['q']}<br><i>{it['en']}</i>" if it.get("kind") == "exam" else it["en"],
                         "it": it["it"], "wav": wav, "has_clip": os.path.exists(wav), "media": media_name(key),
                         "tag": item_tag(lesson, it["id"]), "tags": ["chiron", "pimsleur", item_tag(lesson, it["id"])]})
     return out
