@@ -1247,11 +1247,11 @@ def _enqueue_bake(job: dict, engine: str = "mac") -> None:
                                           # skipped by the worker's _CANCELLED check (F4: a cancelled slug's
                                           # next legitimate bake got silently eaten)
     if engine == "modal":
-        job.update(status="queued", phase="queued for fast bake", started=_now(), finished=None)
+        job.update(status="queued", phase="queued for fast bake", started=_now(), finished=None, error=None)
         _save()
         _MODAL_POOL.submit(_run_bake, job, GEN / job["slug"])
     else:
-        job.update(status="queued", phase="queued for bake", started=_now(), finished=None)
+        job.update(status="queued", phase="queued for bake", started=_now(), finished=None, error=None)
         _save()
         _BAKE_Q.put(job["slug"])
 
