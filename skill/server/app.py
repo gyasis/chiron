@@ -857,7 +857,12 @@ def _run_bake(job: dict, out: Path) -> None:
                 subj = json.loads((out / "chiron.json").read_text()).get("subject")
             except Exception:
                 subj = None
-        if subj:
+        # Only for a lesson a medicine chain itself authored (every one writes syllabus.json). On any other
+        # lesson the chain finds no syllabus and PLANS + WRITES a brand-new one from the slug, then
+        # reassembles lesson.html over the real lesson (hit 2026-10-10 on a July ward lesson mislabelled
+        # 'medicine' — saved only because the planning call failed).
+        has_syllabus = (out / "syllabus.json").exists()
+        if subj and has_syllabus:
             try:
                 res = dispatch.resolve(domain, job.get("depth"), subj, job.get("subject_type"), job.get("extra") or {})
                 tenv = {**os.environ, **res["env"], "CH_STAGE": "audio", "CH_SLUG": slug0}
@@ -871,7 +876,10 @@ def _run_bake(job: dict, out: Path) -> None:
                 print(f"[bake] transcript fallback failed for {slug0}: {e}", flush=True)
         if not (out / "audio-scripts.json").exists():
             # Without scripts the baker synthesizes 0 clips and the failure looks like a bake problem. Say why.
-            err = "narration scripts could not be written — see the transcript-fallback output in " + log.name
+            err = ("narration scripts could not be written — see the transcript-fallback output in " + log.name
+                   if has_syllabus else
+                   "no narration scripts and no syllabus.json — not a medicine-chain lesson, so they can't be "
+                   "regenerated here (check the domain in its chiron.json: an Italian lesson bakes without them)")
             with open(log, "a") as lf:
                 lf.write(f"\n[bake] ABORT: {err}\n")
             _append_step(out, {"kind": "event", "phase": "Baking audio", "event_type": "ERROR",
