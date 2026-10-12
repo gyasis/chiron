@@ -10,7 +10,14 @@ let LIB = localStorage.getItem('chiron.lib') || (location.port === '8911' ? loca
 const idxUrl = () => LIB + '/library/library.index.json';
 const catUrl = () => LIB + '/library/lessons';           // server_lessons(catUrl) + <catUrl>/<file>.chiron
 const slugOf = id => id.replace(/\//g, '-');
-let LESSONS = [], OFFLINE = {};   // slug -> {id,entry} of installed lessons (native)
+let LESSONS = [], OFFLINE = {};
+// Tags (chiron.json "labels" via the index) + their colours from library.yaml (library.config.json).
+// Both are CACHED on the phone so the Library still lists your saved lessons when the computer is off.
+let TAGSTYLE = {}, SERVER_DOWN = false;
+try { TAGSTYLE = JSON.parse(localStorage.getItem('chiron.tagstyle') || '{}'); } catch (e) {}
+const tagSt = t => TAGSTYLE[t] || {};
+const hlOf = l => (l.labels || []).map(t => [t, tagSt(t)]).find(([, st]) => st.highlight);
+const tagChips = l => (l.labels || []).map(t => { const st = tagSt(t); return `<span class="ltag" style="--tagc:${st.color || 'var(--accent)'}">${st.icon ? st.icon + ' ' : ''}${esc(t)}</span>`; }).join('');   // slug -> {id,entry} of installed lessons (native)
 
 /* ---------- nav: swipe panes + EDGE DRAWER ---------- */
 const pane = document.getElementById('pane');
@@ -45,7 +52,7 @@ document.getElementById('themebtn').onclick = () => {
 paintTheme();
 
 /* ---------- library ---------- */
-const F = { q: '', dom: '', sort: 'domain', view: localStorage.getItem('chiron.view') || 'tiles', hideDom: new Set(), hideSys: new Set() };
+const F = { only: new Set(JSON.parse(localStorage.getItem('chiron.onlyTags') || '[]')), q: '', dom: '', sort: 'domain', view: localStorage.getItem('chiron.view') || 'tiles', hideDom: new Set(), hideSys: new Set() };
 try { const H = JSON.parse(localStorage.getItem('chiron.hide') || '{}'); (H.dom || []).forEach(d => F.hideDom.add(d)); (H.sys || []).forEach(s => F.hideSys.add(s)); } catch (e) {}
 const saveHide = () => { try { localStorage.setItem('chiron.hide', JSON.stringify({ dom: [...F.hideDom], sys: [...F.hideSys] })); } catch (e) {} };
 const DL_TIME = JSON.parse(localStorage.getItem('chiron.dltime') || '{}');   // slug → when it was synced to THIS device
@@ -92,11 +99,21 @@ function renderChips() {
     `<div class="chip ${F.dom === v ? 'on' : ''}" data-d="${v}">${l}</div>`).join('');
   document.querySelectorAll('#chips .chip').forEach(c => c.onclick = () => { F.dom = c.dataset.d; renderChips(); renderRows(); });
 }
+function renderFocus() {   // one chip per tag marked toggle:true — like the Library sidebar's Focus switches
+  const el = document.getElementById('focus'); if (!el) return;
+  const tags = Object.entries(TAGSTYLE).filter(([t, st]) => st.toggle && LESSONS.some(l => (l.labels || []).includes(t)));
+  el.style.display = tags.length ? '' : 'none';
+  el.innerHTML = tags.map(([t, st]) => `<div class="chip fx ${F.only.has(t) ? 'on' : ''}" style="--hlc:${st.color || 'var(--accent)'}" data-t="${esc(t)}">${st.icon ? st.icon + ' ' : ''}${esc(t)} ${LESSONS.filter(l => (l.labels || []).includes(t)).length}</div>`).join('');
+  el.querySelectorAll('[data-t]').forEach(c => c.onclick = () => { const t = c.dataset.t; F.only.has(t) ? F.only.delete(t) : F.only.add(t);
+    localStorage.setItem('chiron.onlyTags', JSON.stringify([...F.only])); renderFocus(); renderRows(); });
+}
 function match(l) {
+  if (SERVER_DOWN && !OFFLINE[slugOf(l.id)]) return false;  // computer unreachable: only what is ON the phone opens
+  if (F.only.size && !(l.labels || []).some(t => F.only.has(t))) return false;
   if (F.hideDom.has(l.domain)) return false;                 // hide-filters win, incl. over search
   if (l.system && F.hideSys.has(l.system)) return false;
   if (F.dom && l.domain !== F.dom) return false;
-  if (F.q) { const s = (l.title + ' ' + (l.system || '') + ' ' + (l.subject || '') + ' ' + (l.topic || '')).toLowerCase();
+  if (F.q) { const s = (l.title + ' ' + (l.system || '') + ' ' + (l.subject || '') + ' ' + (l.topic || '') + ' ' + (l.labels || []).join(' ')).toLowerCase();
     if (!s.includes(F.q.toLowerCase())) return false; } return true;
 }
 function lessonAction(l) {   // shared by the list (Index) rows and the Tiles cards
@@ -113,16 +130,18 @@ function rowHtml(l) {   // Index view — dense one-line rows
   const off = !!OFFLINE[slugOf(l.id)];
   const cat = l.system ? `<span class="tag ${domCls(l.domain)}">${l.system}</span>` : l.topic ? `<span class="tag l">${l.topic}</span>` : '';
   const lvl = l.level ? `<span class="tag">${l.level}</span>` : '';
-  return `<div class="row ${domCls(l.domain)}"><div class="edge"></div>
+  const hl = hlOf(l);
+  return `<div class="row ${domCls(l.domain)}${hl ? ' hl' : ''}"${hl ? ` style="--hlc:${hl[1].color}"` : ''}><div class="edge"></div>
     <div class="body"><div class="t">${esc(l.title)}</div>
-      <div class="meta">${l.status === 'staged' ? '<span class="tag rev">🟡 REVIEW</span>' : ''}<span class="tag ${domCls(l.domain)}">${l.domain}</span>${cat}${lvl}${l.clips ? `<span class="clip">▸${l.clips}${off ? ' · ✓' : ''}</span>` : ''}</div></div>
+      <div class="meta">${l.status === 'staged' ? '<span class="tag rev">🟡 REVIEW</span>' : ''}<span class="tag ${domCls(l.domain)}">${l.domain}</span>${cat}${lvl}${l.clips ? `<span class="clip">▸${l.clips}${off ? ' · ✓' : ''}</span>` : ''}</div>${tagChips(l)}</div>
     <div class="act">${lessonAction(l)}</div></div>`;
 }
 function tileHtml(l) {   // Tiles view — 2-up cards
   const off = !!OFFLINE[slugOf(l.id)];
   const sub = l.subject || l.system || l.topic || (l.level ? 'Livello ' + l.level : '') || '';
-  return `<div class="tcard ${domCls(l.domain)}${l.ready ? '' : ' q'}"><div class="tstrip"></div>
-    <div class="tbd"><div class="tt">${esc(l.title)}</div><div class="tsub">${esc(sub)}</div>${l.status === 'staged' ? '<span class="tag rev">🟡 REVIEW</span>' : ''}</div>
+  const hl = hlOf(l);
+  return `<div class="tcard ${domCls(l.domain)}${l.ready ? '' : ' q'}${hl ? ' hl' : ''}"${hl ? ` style="--hlc:${hl[1].color}"` : ''}><div class="tstrip"></div>
+    <div class="tbd"><div class="tt">${esc(l.title)}</div><div class="tsub">${esc(sub)}</div>${tagChips(l)}${l.status === 'staged' ? '<span class="tag rev">🟡 REVIEW</span>' : ''}</div>
     <div class="tft"><span class="tag ${domCls(l.domain)}">${esc(l.domain)}</span>${l.clips ? `<span class="clip">▸${l.clips}${off ? ' ✓' : ''}</span>` : ''}${lessonAction(l)}</div></div>`;
 }
 function group(arr) { return F.view === 'tiles' ? `<div class="tgrid">${arr.map(tileHtml).join('')}</div>` : arr.map(rowHtml).join(''); }
@@ -155,10 +174,17 @@ function renderRows() {
   let h = '';
   if (ACTIVE.length) h += `<div class="sec">⏳ Generating <span class="ct">${ACTIVE.length}</span><span class="note">tap to watch</span></div>` +
     ACTIVE.map(j => `<div class="genrow" data-recon="${j.id}"><span class="spinc"></span><div class="gi"><b>${esc(j.subject || j.slug || 'lesson')}</b><small>${j.status === 'queued' ? 'queued…' : (j.phase || 'generating') + '…'}</small></div><span class="chev">›</span></div>`).join('');
+  if (F.only.size && TAURI && !SERVER_DOWN) {   // one tap: put every lesson of the focused tag(s) on the phone
+    const todo = list.filter(l => l.ready && l.bundle && !OFFLINE[slugOf(l.id)]);
+    const st = tagSt([...F.only][0]);
+    h += todo.length ? `<div class="saveall" style="--hlc:${st.color || 'var(--accent)'}" id="saveall">⬇ Save all ${todo.length} to this phone (${Math.round(todo.reduce((a, l) => a + (l.sizeMB || 0), 0))} MB)</div>`
+                     : `<div class="offbanner">✓ Every ${[...F.only].join(' + ')} lesson that can be saved is on this phone.</div>`;
+  }
   if (staged.length) { h += `<div class="reviewband">🟡 Needs Review — ${staged.length} generated, not yet published.</div>` + group(staged); }
   if (ready.length) { const dl = ready.filter(l => l.bundle).length; h += hdr('📚', 'Available', ready.length, dl ? dl + ' downloadable' : 'open to study') + group(ready); }
   if (queued.length) h += hdr('○', 'To generate', queued.length, 'tap Generate') + group(queued.slice(0, 400));
   document.getElementById('rows').innerHTML = h || `<div class="empty">No lessons match${F.hideDom.size || F.hideSys.size ? ' — some domains/systems are hidden (tap ⚑ to unhide)' : ''}.</div>`;
+  const sa = document.getElementById('saveall'); if (sa) sa.onclick = saveAll;
   document.querySelectorAll('#rows [data-open]').forEach(e => e.onclick = ev => { ev.stopPropagation(); openLesson(e.dataset.open); });
   document.querySelectorAll('#rows [data-dl]').forEach(e => e.onclick = ev => { ev.stopPropagation(); download(e.dataset.dl); });
   document.querySelectorAll('#rows [data-acc]').forEach(e => e.onclick = ev => { ev.stopPropagation(); accept(e.dataset.acc); });
@@ -228,8 +254,24 @@ function curPane() { return Math.round(pane.scrollLeft / pane.clientWidth); }
 async function loadLibrary() {
   try {
     const d = await (await fetch(idxUrl() + '?' + Date.now())).json();
-    LESSONS = d.lessons || []; renderChips(); renderSort(); renderRows(); refreshSync();
+    LESSONS = d.lessons || []; SERVER_DOWN = false;
+    try { localStorage.setItem('chiron.idx', JSON.stringify(LESSONS.filter(l => l.ready))); } catch (e) {}
+    try { const c = await (await fetch(LIB + '/library/library.config.json?' + Date.now())).json();
+      TAGSTYLE = (c.facets && c.facets.tags && c.facets.tags.styles) || {}; localStorage.setItem('chiron.tagstyle', JSON.stringify(TAGSTYLE)); } catch (e) {}
+    document.getElementById('offbanner').style.display = 'none';
+    renderChips(); renderFocus(); renderSort(); renderRows(); refreshSync();
   } catch (e) {
+    // Computer off / power cut: fall back to the last library this phone saw, showing only lessons saved on it.
+    let cached = []; try { cached = JSON.parse(localStorage.getItem('chiron.idx') || '[]'); } catch (e2) {}
+    if (TAURI && cached.length) {
+      LESSONS = cached; SERVER_DOWN = true;
+      await refreshOffline();
+      const b = document.getElementById('offbanner'); b.style.display = '';
+      b.innerHTML = `⚡ Your computer isn't reachable — showing the <b>${Object.keys(OFFLINE).length}</b> lessons saved on this phone. They work fully offline.`;
+      renderChips(); renderFocus(); renderSort(); renderRows();
+      document.getElementById('syncedtag').textContent = 'offline';
+      return;
+    }
     document.getElementById('rows').innerHTML = `<div class="empty">Can't reach your library at<br><b>${LIB}</b><br><br>Make sure the computer running Chiron is on, on the same wifi. Set the address in the Offline tab.</div>`;
     document.getElementById('syncedtag').textContent = 'offline';
   }
@@ -271,6 +313,14 @@ async function download(slug) {
     const l = await invoke('import_from_server', { url: catUrl(), file: slug + '.chiron' });
     OFFLINE[slug] = { id: l.id, entry: l.entry }; markSynced(slug); renderRows(); refreshOffline(); toast('Saved offline ✓');
   } catch (e) { toast('Download failed'); }
+}
+async function saveAll() {   // download every bundled lesson of the focused tag(s), one at a time
+  const todo = LESSONS.filter(match).filter(l => l.ready && l.bundle && !OFFLINE[slugOf(l.id)]);
+  let n = 0;
+  for (const l of todo) { const el = document.getElementById('saveall'); if (el) el.textContent = `⬇ Saving ${n + 1} of ${todo.length}: ${l.title.replace(/^Chiron\s*·\s*/, '')}…`;
+    const slug = slugOf(l.id);
+    try { const r = await invoke('import_from_server', { url: catUrl(), file: slug + '.chiron' }); OFFLINE[slug] = { id: r.id, entry: r.entry }; markSynced(slug); n++; } catch (e) {} }
+  toast(`Saved ${n} of ${todo.length} lessons to this phone`); await refreshOffline(); renderRows();
 }
 async function refreshOffline() {
   const box = document.getElementById('offrows');

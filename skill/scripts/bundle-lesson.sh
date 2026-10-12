@@ -119,7 +119,7 @@ CREATED="$(date +%F)"
 # MERGE onto any existing manifest — a re-bundle must NEVER strip the lesson's real category domain
 # or its provenance. The category domain (video-it / language-it / medicine) is authoritative and is
 # preserved: existing chiron.json.domain > content.json.domain (the chain's declaration) > the --domain
-# arg (a theme-ish default, correct only on a FIRST bundle). tags/status/subject/level/source are carried
+# arg (a theme-ish default, correct only on a FIRST bundle). tags/labels (Library tags)/status/subject/level/source are carried
 # forward. (Root cause of the "video-it keeps resetting to medicine on every rebundle" bug.)
 CHIRON_TITLE="${TITLE}" CHIRON_ENTRY="${ENTRY}" CHIRON_DOMAIN_ARG="${DOMAIN}" \
 CHIRON_CLIPS="${CLIPS:-0}" CHIRON_CREATED="${CREATED}" python3 - "${LESSON_DIR}" <<'PY'
@@ -133,7 +133,7 @@ domain = old.get("domain") or content.get("domain") or os.environ.get("CHIRON_DO
 m = {"format": "chiron/1", "title": os.environ["CHIRON_TITLE"], "entry": os.environ["CHIRON_ENTRY"],
      "domain": domain, "created": os.environ["CHIRON_CREATED"],
      "audioClips": int(os.environ.get("CHIRON_CLIPS") or 0), "generator": "chiron"}
-for k in ("tags", "status", "subject", "level", "source", "source_ref", "accepted", "series"):
+for k in ("tags", "labels", "lessonFormat", "status", "subject", "level", "source", "source_ref", "accepted", "series"):
     if old.get(k) is not None: m[k] = old[k]
 json.dump(m, open(cjp, "w"), ensure_ascii=False, indent=2)
 PY
