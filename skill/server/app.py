@@ -2237,6 +2237,10 @@ def resolve_preview(req: ResolveReq):
 # is ONE file the server injects — not copied/assembled per-lesson.
 app.mount("/shell", StaticFiles(directory=str(SKILL / "shell")), name="shell")
 
+# mock oral (OMCeO Italian test): Lucrezia examines by voice — /oral + /api/oral/*
+import mock_oral  # noqa: E402
+app.include_router(mock_oral.router)
+
 
 @app.get("/lessons/{slug}/lesson.html", response_class=HTMLResponse)
 def _lesson_with_tutor(slug: str):

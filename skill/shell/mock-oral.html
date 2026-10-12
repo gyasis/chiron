@@ -1,0 +1,270 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Prova orale simulata</title>
+<style>
+:root{--bg:#f7f3ec;--card:#fffdf8;--fg:#2a2420;--mute:#7a6f66;--line:#e6ddd0;--accent:#8a3b2a;--ok:#2f6b45;--warn:#a5641a;--chip:#f3ece2}
+@media (prefers-color-scheme:dark){:root{--bg:#171513;--card:#1f1c1a;--fg:#f2ece6;--mute:#a99d92;--line:#3a342f;--accent:#e08a6f;--ok:#7cc79a;--warn:#e0a35a;--chip:#2c2724}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:17px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}
+main{max-width:760px;margin:0 auto;padding:24px 16px 80px}
+h1{font-size:24px;margin:0 0 4px}
+.sub{color:var(--mute);margin:0 0 20px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;margin:14px 0}
+label{display:block;margin:10px 0}
+select,button{font:inherit}
+select{padding:6px 8px;border-radius:8px;border:1px solid var(--line);background:var(--card);color:var(--fg)}
+button{border:1px solid var(--line);background:var(--card);color:var(--fg);border-radius:10px;padding:9px 16px;cursor:pointer}
+button.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+button:disabled{opacity:.45;cursor:default}
+.who{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--mute)}
+.lucrezia{font-size:21px;font-weight:600;margin:4px 0 0}
+.hidden-q{color:var(--mute);font-style:italic}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:14px}
+#rec{min-width:190px}
+#rec.on{background:#b3261e;border-color:#b3261e;color:#fff;animation:pulse 1.2s infinite}
+@keyframes pulse{50%{opacity:.7}}
+.state{color:var(--mute);font-size:15px}
+.you{margin-top:12px;padding:10px 12px;border-left:3px solid var(--line);background:var(--chip);border-radius:6px}
+.fb{margin-top:12px;border-top:1px dashed var(--line);padding-top:10px;font-size:15px}
+.score{display:inline-block;background:var(--chip);border-radius:6px;padding:1px 8px;margin-right:6px}
+.err{margin:4px 0}.err s{color:var(--warn)}.err b{color:var(--ok)}
+.muted{color:var(--mute)}
+.log .item{border-top:1px solid var(--line);padding:12px 0}
+.log .item:first-child{border-top:0}
+.status{font-size:13px;color:var(--mute)}
+.bad{color:#b3261e}
+</style>
+</head>
+<body>
+<main>
+  <h1>Prova orale simulata</h1>
+  <p class="sub">Ordine dei Medici di Napoli · Lucrezia fa le domande, tu rispondi a voce.</p>
+
+  <section class="card" id="setup">
+    <label>Domande
+      <select id="count">
+        <option value="5">5 domande, una per lezione (circa 10 minuti)</option>
+        <option value="15">Tutte e 15</option>
+      </select>
+    </label>
+    <label><input type="checkbox" id="showText"> Mostra il testo della domanda (all'esame non c'è)</label>
+    <label><input type="checkbox" id="fbNow" checked> Correzioni dopo ogni risposta (togli per simulare l'esame: le vedi alla fine)</label>
+    <p class="status">La trascrizione è automatica (whisper): gli errori di accordo verbale restano, ma a volte corregge da sola le desinenze (<i>tre anno</i> → <i>tre anni</i>). Quindi qualche errore può sfuggire alle correzioni.</p>
+    <label>Esaminatore (modello)
+      <select id="examiner"></select>
+    </label>
+    <div class="row"><button class="primary" id="start">Inizia il colloquio</button><span class="status" id="health">controllo i servizi…</span></div>
+  </section>
+
+  <section class="card" id="stage" hidden>
+    <div class="who">Lucrezia · <span id="progress"></span></div>
+    <p class="lucrezia" id="said"></p>
+    <div class="row">
+      <button id="rec" class="primary" disabled>🎙 Rispondi</button>
+      <button id="again" disabled>↻ Ripeti la domanda</button>
+      <button id="reveal">Aa testo</button>
+      <span class="state" id="state"></span>
+    </div>
+    <div id="current"></div>
+    <div class="row"><button id="stop">Termina il colloquio</button></div>
+  </section>
+
+  <section class="card" id="report" hidden>
+    <h2 style="margin-top:0">Risultato</h2>
+    <p id="summary"></p>
+    <div class="log" id="log"></div>
+    <div class="row"><button class="primary" onclick="location.reload()">Un altro colloquio</button></div>
+  </section>
+</main>
+<script>
+(function () {
+  'use strict';
+  var $ = function (id) { return document.getElementById(id); };
+  var GREET = "Buongiorno, dottore. Si accomodi pure. Cominciamo il colloquio.";
+  var BYE = "Bene, dottore. Il colloquio è finito. La ringrazio, e arrivederci.";
+  var REPEAT = "Mi scusi, non ho sentito bene. Può ripetere, per favore?";
+  var MAX_SECS = 120;
+
+  var S = { started: new Date().toLocaleString('it-IT'), examiner: '', turns: [] };
+  var plan = [], qi = -1, current = null, audioCache = {}, player = new Audio();
+  var recorder = null, stream = null, chunks = [], recTimer = null, recStart = 0, busy = false, stopped = false;
+
+  function api(path, opts) {
+    return fetch(path, opts).then(function (r) {
+      if (!r.ok) return r.text().then(function (t) { throw new Error(path + ' ' + r.status + ': ' + t.slice(0, 200)); });
+      return r;
+    });
+  }
+  function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+  function state(t, bad) { $('state').textContent = t || ''; $('state').className = 'state' + (bad ? ' bad' : ''); }
+
+  // Lucrezia's voice: cached per text; the next question is fetched while you answer.
+  function voice(text) {
+    if (!audioCache[text]) audioCache[text] = api('/api/oral/say', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text: text }) }).then(function (r) { return r.blob(); }).then(URL.createObjectURL)
+      .catch(function (e) { delete audioCache[text]; throw e; });
+    return audioCache[text];
+  }
+  function speak(text, isQuestion) {
+    $('said').textContent = (isQuestion && !$('showText').checked) ? '' : text;
+    $('said').className = 'lucrezia';
+    if (isQuestion && !$('showText').checked) { $('said').innerHTML = '<span class="hidden-q">(ascolta la domanda)</span>'; }
+    state('Lucrezia sta parlando…');
+    return voice(text).then(function (url) {
+      return new Promise(function (res) { player.src = url; player.onended = res; player.onerror = res; player.play().catch(res); });
+    }, function (e) { state('Voce non disponibile: ' + e.message, true); $('said').textContent = text; })
+      .then(function () { state(''); });
+  }
+
+  function pick(qs, n) {
+    var by = {}, order = [];
+    qs.forEach(function (q) { if (!by[q.slug]) { by[q.slug] = []; order.push(q.slug); } by[q.slug].push(q); });
+    if (n >= qs.length) return qs.slice();
+    // the commission opens with the presentation, then one question from each other lesson
+    var out = [by[order[0]][0]];
+    order.slice(1).forEach(function (s) { var a = by[s]; out.push(a[Math.floor(Math.random() * a.length)]); });
+    return out.slice(0, n);
+  }
+
+  function ask(i) {
+    qi = i;
+    if (stopped) return;
+    if (i >= plan.length) return finish();
+    var q = plan[i];
+    current = { id: q.id, lesson: q.lesson, question: q.q, guidance: q.en, model_answer: q.it, answer: '', followups: [] };
+    current.asking = q.q; current.followup_asked = false;
+    $('progress').textContent = 'domanda ' + (i + 1) + ' di ' + plan.length + ' · ' + q.lesson;
+    $('current').innerHTML = '';
+    if (plan[i + 1]) voice(plan[i + 1].q).catch(function () {});
+    speak(q.q, true).then(ready);
+  }
+  function ready() { $('rec').disabled = false; $('again').disabled = false; state('Tocca a te. Premi “Rispondi” (o la barra spaziatrice).'); }
+
+  function startRec() {
+    if (busy || recorder) return;
+    player.pause();
+    var go = function (s) {
+      stream = s; chunks = [];
+      var r = recorder = new MediaRecorder(stream);
+      r.ondataavailable = function (e) { if (e.data.size) chunks.push(e.data); };
+      r.onstop = function () { sendAnswer(new Blob(chunks, { type: r.mimeType || 'audio/webm' })); };
+      recorder.start();
+      recStart = Date.now();
+      $('rec').classList.add('on');
+      recTimer = setInterval(function () {
+        var s = Math.round((Date.now() - recStart) / 1000);
+        $('rec').textContent = '■ Ho finito (' + s + ' s)';
+        if (s >= MAX_SECS) stopRec();
+      }, 250);
+    };
+    if (stream) return go(stream);
+    navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true } }).then(go, function (e) {
+      state('Microfono non disponibile: ' + e.message + (location.protocol === 'http:' && location.hostname !== 'localhost' && location.hostname !== '127.0.0.1'
+        ? ' — apri la pagina da http://localhost:8911/oral' : ''), true);
+    });
+  }
+  function stopRec() {
+    if (!recorder) return;
+    clearInterval(recTimer);
+    $('rec').classList.remove('on'); $('rec').textContent = '🎙 Rispondi'; $('rec').disabled = true; $('again').disabled = true;
+    var r = recorder; recorder = null; r.stop();
+  }
+
+  function sendAnswer(blob) {
+    busy = true; state('Trascrivo la tua risposta…');
+    var t0 = Date.now();
+    api('/api/oral/hear', { method: 'POST', body: blob }).then(function (r) { return r.json(); }).then(function (h) {
+      var words = (h.text || '').trim().split(/\s+/).filter(Boolean).length;
+      if (words < 2) { busy = false; return speak(REPEAT).then(ready); }
+      var block = document.createElement('div');
+      block.className = 'you';
+      block.innerHTML = '<div class="who">Tu (trascrizione automatica)</div>' + esc(h.text);
+      $('current').appendChild(block);
+      var turn = { question: current.asking, answer: h.text, confidence: h.confidence, asr_secs: h.secs };
+      state('Lucrezia valuta la risposta…');
+      return api('/api/oral/turn', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({
+        examiner: $('examiner').value, question: current.asking, guidance: current.guidance,
+        model_answer: current.model_answer, answer: h.text, followup_asked: current.followup_asked }) })
+        .then(function (r) { return r.json(); }).then(function (fb) {
+          turn.feedback = fb; turn.model_answer = current.model_answer; turn.lesson = current.lesson;
+          turn.total_secs = Math.round((Date.now() - t0) / 100) / 10;
+          S.turns.push(turn);
+          if ($('fbNow').checked) block.insertAdjacentHTML('afterend', feedbackHtml(fb, true));
+          busy = false;
+          return speak(fb.reply, !!fb.followup && !current.followup_asked).then(function () {
+            if (fb.followup && !current.followup_asked) {
+              current.followup_asked = true; current.asking = fb.reply;
+              return ready();
+            }
+            ask(qi + 1);
+          });
+        });
+    }).catch(function (e) { busy = false; state('Errore: ' + e.message, true); $('rec').disabled = false; $('again').disabled = false; });
+  }
+
+  function feedbackHtml(fb, brief) {
+    var h = '<div class="fb"><span class="score">capito ' + esc(fb.understood) + '/5</span><span class="score">correttezza ' + esc(fb.accuracy) + '/5</span>';
+    (fb.errors || []).forEach(function (e) {
+      h += '<div class="err"><s>' + esc(e.said) + '</s> → <b>' + esc(e.better) + '</b> <span class="muted">— ' + esc(e.why) + '</span></div>';
+    });
+    if (fb.better_answer) h += '<div style="margin-top:6px"><span class="who">La tua risposta, corretta</span><br>' + esc(fb.better_answer) + '</div>';
+    if (fb.tip) h += '<div class="muted" style="margin-top:6px">💡 ' + esc(fb.tip) + '</div>';
+    if (!brief) h += '<div class="muted" style="margin-top:6px">Lucrezia: «' + esc(fb.reply) + '»</div>';
+    return h + '</div>';
+  }
+
+  function finish() {
+    stopped = true;
+    if (recorder) { recorder.onstop = null; recorder.stop(); recorder = null; }
+    speak(BYE).then(function () {
+      if (stream) stream.getTracks().forEach(function (t) { t.stop(); });
+      $('stage').hidden = true; $('report').hidden = false;
+      var avg = function (k) { var v = S.turns.map(function (t) { return t.feedback && t.feedback[k]; }).filter(function (x) { return typeof x === 'number'; });
+        return v.length ? (v.reduce(function (a, b) { return a + b; }, 0) / v.length).toFixed(1) : '–'; };
+      $('summary').innerHTML = S.turns.length + ' risposte · capito <b>' + avg('understood') + '/5</b> · correttezza <b>' + avg('accuracy') + '/5</b>';
+      $('log').innerHTML = S.turns.map(function (t) {
+        return '<div class="item"><div class="who">' + esc(t.lesson) + '</div><b>' + esc(t.question) + '</b>' +
+          '<div class="you">' + esc(t.answer) + '</div>' + feedbackHtml(t.feedback || {}, false) +
+          '<details style="margin-top:6px"><summary class="muted">Risposta modello della lezione</summary>' + esc(t.model_answer) + '</details></div>';
+      }).join('') || '<p class="muted">Nessuna risposta registrata.</p>';
+      if (S.turns.length) api('/api/oral/save', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(S) })
+        .then(function (r) { return r.json(); }).then(function (d) { $('summary').insertAdjacentHTML('beforeend', '<br><span class="status">Salvato in ' + esc(d.saved) + '</span>'); })
+        .catch(function (e) { $('summary').insertAdjacentHTML('beforeend', '<br><span class="bad">Salvataggio fallito: ' + esc(e.message) + '</span>'); });
+    });
+  }
+
+  // ── wiring ──
+  api('/api/oral/status').then(function (r) { return r.json(); }).then(function (s) {
+    Object.keys(s.examiners).forEach(function (k) {
+      var o = document.createElement('option'); o.value = k; o.textContent = s.examiners[k]; if (k === s.default) o.selected = true; $('examiner').appendChild(o);
+    });
+    var bad = [];
+    if (!s.tts) bad.push('voce (OmniVoice, Mac)'); if (!s.asr) bad.push('trascrizione (whisper, Mac)'); if (!s.ollama_key) bad.push('chiave modello');
+    $('health').innerHTML = bad.length ? '<span class="bad">Non raggiungibile: ' + bad.join(', ') + '</span>' : s.questions + ' domande pronte · servizi OK';
+  }).catch(function (e) { $('health').innerHTML = '<span class="bad">' + esc(e.message) + '</span>'; });
+
+  $('start').onclick = function () {
+    $('start').disabled = true; $('health').textContent = 'preparo la voce di Lucrezia…';
+    api('/api/oral/questions').then(function (r) { return r.json(); }).then(function (d) {
+      plan = pick(d.questions, +$('count').value);
+      S.examiner = $('examiner').value; S.count = plan.length;
+      return Promise.all([voice(GREET), voice(plan[0].q)]);
+    }).then(function () {
+      $('setup').hidden = true; $('stage').hidden = false;
+      return speak(GREET);
+    }).then(function () { ask(0); }).catch(function (e) { $('start').disabled = false; $('health').innerHTML = '<span class="bad">' + esc(e.message) + '</span>'; });
+  };
+  $('rec').onclick = function () { recorder ? stopRec() : startRec(); };
+  $('again').onclick = function () { $('rec').disabled = true; speak(current.asking, !current.followup_asked).then(ready); };
+  $('reveal').onclick = function () { if (current) { $('said').textContent = current.asking; } };
+  $('stop').onclick = function () { stopped = true; finish(); };
+  document.addEventListener('keydown', function (e) {
+    if (e.code === 'Space' && !$('stage').hidden && !$('rec').disabled && e.target === document.body) { e.preventDefault(); $('rec').click(); }
+  });
+})();
+</script>
+</body>
+</html>
