@@ -13,6 +13,23 @@ app shell is ever public.
 
 ---
 
+## 0. Keep a set of lessons ON the phone (power cut / computer off)
+
+The fast path, in the native app (v0.16.2+), while the phone is on home wifi and the computer is up:
+
+1. **Library** tab → tap a Focus chip under the domain chips (e.g. **🎓 Ordine exam**, **🧱 Verb foundation**).
+2. Tap **⬇ Save all N to this phone**. Each lesson (page + audio) is downloaded and installed on the phone.
+   When the band turns into "✓ Every … lesson that can be saved is on this phone", you are done.
+3. That's it. With the computer off, open the app: a yellow banner says the computer isn't reachable, and the
+   Library lists only the lessons saved on the phone. They open and play fully offline (read-along included).
+
+What does NOT work offline: generating lessons, the page tutor, the mock oral (they need the computer / the
+Mac), and lessons you never saved. Re-run step 2 after new lessons are made with that tag.
+
+The app only offers lessons that have a `.chiron` bundle in the Library (`⬇ <size>` on the card). Tag a lesson
+(`scripts/lesson_tags.py add "<tag>" <lesson>`) and bundle it
+(`node scripts/build-hub-catalog.mjs --only <slug>`); the server bundles automatically on Accept.
+
 ## 1. The two apps
 
 ### A) PWA (web app) — zero install friction

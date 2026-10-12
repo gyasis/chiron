@@ -65,6 +65,14 @@ body{background:var(--bg);color:var(--fg);font-family:var(--fb);height:100vh;ove
 .sec .note{margin-left:auto;font-weight:500;font-size:11px;letter-spacing:0;text-transform:none}
 .reviewband{background:var(--reviewbg);border:1px solid var(--review);border-radius:11px;padding:10px 13px;font-size:12.5px;color:var(--reviewfg);font-weight:600;margin:8px 0 4px}
 .row{display:flex;gap:12px;align-items:center;padding:13px 4px;border-bottom:1px solid var(--divider)}
+/* lesson tags: chip in the tag colour; a highlight tag boxes the card/row; Focus chips narrow the list */
+.ltag{display:inline-block;font-size:9.5px;font-weight:700;padding:1px 7px;border-radius:99px;margin:4px 4px 0 0;color:var(--tagc);background:color-mix(in srgb,var(--tagc) 14%,transparent)}
+.tcard.hl{outline:2px solid var(--hlc);outline-offset:-2px;background:color-mix(in srgb,var(--hlc) 6%,var(--surface))}
+.row.hl{box-shadow:inset 0 0 0 2px var(--hlc);border-radius:10px;padding-left:8px;background:color-mix(in srgb,var(--hlc) 6%,transparent)}
+.chip.fx{background:color-mix(in srgb,var(--hlc) 14%,var(--elevated));color:var(--hlc);font-weight:700}
+.chip.fx.on{background:var(--hlc);color:#fff}
+.saveall{display:block;margin:4px 0 10px;padding:10px 14px;border-radius:12px;background:var(--hlc,var(--accent));color:#fff;font-weight:700;font-size:13.5px;text-align:center}
+.offbanner{background:var(--reviewbg);color:var(--reviewfg);border-radius:12px;padding:10px 12px;font-size:12.5px;margin:2px 0 10px}
 .row .edge{width:5px;align-self:stretch;min-height:38px;border-radius:3px;flex:0 0 auto}
 .row.m .edge{background:var(--med)}.row.mi .edge{background:var(--medit)}.row.l .edge{background:var(--lang)}
 .row .body{flex:1;min-width:0}
@@ -197,6 +205,8 @@ body{background:var(--bg);color:var(--fg);font-family:var(--fb);height:100vh;ove
       <div class="big">Library</div>
       <div class="search">⌕ <input id="q" placeholder="Search lessons, diseases, systems…"></div>
       <div class="chips" id="chips"></div>
+      <div class="chips" id="focus"></div>
+      <div id="offbanner" class="offbanner" style="display:none"></div>
       <div class="sortrow" id="sortrow"></div>
       <div class="hidepanel" id="hidepanel" style="display:none"></div>
       <div id="rows"><div class="empty">Connecting to your library…</div></div>
