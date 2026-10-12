@@ -14,6 +14,10 @@ const saveHide = () => { try{ localStorage.setItem('chiron.hide', JSON.stringify
 try{ F.showSSM = JSON.parse(localStorage.getItem('chiron.showSSM')||'false'); }catch(e){}
 const saveSSM = () => { try{ localStorage.setItem('chiron.showSSM', JSON.stringify(F.showSSM)); }catch(e){} };
 const isSSM = l => l.source==='ssm';
+/* ---- focus switches: a tag with `toggle: true` (library.yaml facets.tags.styles) gets a sidebar switch
+   that narrows the whole wall to that tag, like the SSM switch. Several on = any of them. Persisted. ---- */
+F.only = new Set(); try{ JSON.parse(localStorage.getItem('chiron.onlyTags')||'[]').forEach(t=>F.only.add(t)); }catch(e){}
+const saveOnly = () => { try{ localStorage.setItem('chiron.onlyTags', JSON.stringify([...F.only])); }catch(e){} };
 /* ---- offline engine (lifted from the player): Download → cache, Remove → local-only ---- */
 const LCACHE = 'chiron-lib-lessons-v1';
 const DL = JSON.parse(localStorage.getItem('chiron.dl') || '{}');   // slug → {id, entry}
@@ -115,6 +119,7 @@ const count = pred => LESSONS.filter(l => (F.showSSM || !isSSM(l)) && pred(l)).l
 function match(l){
   // SSM exam questions are OUT by default (they'd bury the curated Chiron subjects) — the sidebar switch flips them in.
   if (isSSM(l) && !F.showSSM) return false;
+  if (F.only.size && !(l.labels||[]).some(t=>F.only.has(t))) return false;
   // W1 hide-filters take precedence — a hidden domain/system is removed everywhere, incl. search.
   if (F.hiddenDom.has(l.domain)) return false;
   if (l.system && F.hiddenSys.has(l.system)) return false;
@@ -167,7 +172,13 @@ function renderFacets(){                                        // (id="facets" 
   const anyDomHidden = [...F.hiddenDom].some(d=>doms.some(([k])=>k===d));
   const anySysHidden = F.hiddenSys.size>0;
   const nssm = LESSONS.filter(isSSM).length;
-  let h = `<div class="hgrp">SSM exam questions</div>`
+  const focus = Object.entries((CONFIG.facets.tags && CONFIG.facets.tags.styles) || {}).filter(([,st])=>st.toggle);
+  let h = focus.length ? `<div class="hgrp">Focus</div>` : '';
+  for (const [t,st] of focus){ const n=LESSONS.filter(l=>(l.labels||[]).includes(t)).length; if(!n) continue; const on=F.only.has(t);
+    h += `<div class="ssmrow ${on?'on':''}" style="--hlc:${st.color||'var(--chiron-accent)'}" onclick="LIB.toggleOnly('${cssq(t)}')" title="${on?'Show everything again':'Show only the '+n+' '+t+' lessons'}">`
+      + `<span class="ssmsw"><span class="ssmknob"></span></span><span class="hn">${st.icon?st.icon+' ':''}${t}</span><span class="hc">${n}</span></div>`; }
+  if (F.only.size) h += `<div class="fhint" style="padding:2px 16px 6px">Showing only: ${[...F.only].join(' + ')}.</div>`;
+  h += `<div class="hgrp">SSM exam questions</div>`
     + `<div class="ssmrow ${F.showSSM?'on':''}" onclick="LIB.toggleSSM()" title="${F.showSSM?'Hide':'Show'} the ${nssm} SSM exam-question lessons">`
       + `<span class="ssmsw"><span class="ssmknob"></span></span><span class="hn">🎯 SSM questions</span><span class="hc">${nssm}</span></div>`
     + `<div class="fhint" style="padding:2px 16px 6px">${F.showSSM?'Shown — mixed in with their subjects.':'Hidden by default so they don’t bury the other Chiron subjects.'}</div>`
@@ -295,6 +306,7 @@ const LIB = {
   unhideSys(){ F.hiddenSys.clear(); saveHide(); renderAll(); },
   unhideOne(t,k){ (t==='dom'?F.hiddenDom:F.hiddenSys).delete(k); saveHide(); renderAll(); },
   unhideAll(){ F.hiddenDom.clear(); F.hiddenSys.clear(); saveHide(); renderAll(); },
+  toggleOnly(t){ F.only.has(t)?F.only.delete(t):F.only.add(t); saveOnly(); renderAll(); },
   toggleSSM(){ F.showSSM=!F.showSSM; saveSSM(); if(!F.showSSM){ F.selected.clear(); } renderAll(); },
   tog(k,v){ const s=F.facets[k]; s.has(v)?s.delete(v):s.add(v);
     // deselecting a parent clears its nested children

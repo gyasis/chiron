@@ -225,7 +225,8 @@ A lesson can carry any number of tags: `chiron.json` → `"labels": ["Ordine exa
 them as coloured chips on the card and as the first filter pills ("Tags"; clicking several shows a lesson
 that has ANY of them). `Pimsleur` is never stamped: the builder derives it from the lesson's audio.
 Per-tag colour and icon live in `library/library.yaml` → `facets.tags.styles`; `highlight: true` boxes the
-whole card in that colour (Ordine exam does).
+whole card in that colour (Ordine exam, Verb foundation); `toggle: true` adds a sidebar **Focus** switch
+that narrows the whole Library to that tag (like the SSM switch; remembered across reloads).
 
     python3 scripts/lesson_tags.py add "Ordine exam" '<lesson-dir-or-glob>'…   # rebuilds the Library
     python3 scripts/lesson_tags.py rm  "Ordine exam" <lesson>…

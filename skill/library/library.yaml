@@ -49,7 +49,8 @@ facets:
     multi: true
     # per-tag look; `highlight: true` boxes the whole card in the tag colour so it stands out on the wall
     styles:
-      "Ordine exam": { color: "#c2410c", icon: "🎓", highlight: true }
+      "Ordine exam":     { color: "#c2410c", icon: "🎓", highlight: true, toggle: true }   # toggle: a sidebar "only these" switch
+      "Verb foundation": { color: "#047857", icon: "🧱", highlight: true, toggle: true }
       Pimsleur:      { color: "#2563eb", icon: "🎧" }
   lang_level:
     label: CEFR level
