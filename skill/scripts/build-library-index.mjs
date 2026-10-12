@@ -186,8 +186,10 @@ for (const d of dirs) {
     const man = JSON.parse(readFileSync(join(d, 'audio', 'manifest.json'), 'utf8'));
     if ((man.clips || []).some(c => c && c.artifact === 'pimsleur')) format = 'Pimsleur';
   } catch {}
+  // tags (multi-valued, shown + filterable in the Library): chiron.json "labels" + the derived format tag
+  const labels = [...new Set([...(Array.isArray(cj.labels) ? cj.labels : []), ...(format === 'Pimsleur' ? ['Pimsleur'] : [])])];
   lessons.push({
-    id: rel, format, title, path: servedPath, domain: tags.dom,
+    id: rel, format, title, labels, path: servedPath, domain: tags.dom,
     system: tags.sys || null, subject: tags.subj || null, topic: tags.topic || null,
     level: tags.level || null, scope: tags.scope || (tags.subj && /diseases|disorders/i.test(title) ? 'subject' : 'disease'),
     trend: tags.trend || null, status: cj.status || 'published', clips, ready: true, mtime,

@@ -42,6 +42,15 @@ facets:
     appliesTo: [language-it]
     source: ai-controlled       # generator picks from this controlled vocab
     values: [Everyday, Grammar, Conversation, Travel, Workplace]
+  tags:
+    label: Tags
+    type: pills
+    source: derived             # multi-valued: a lesson's chiron.json "labels" (+ Pimsleur, derived from its audio)
+    multi: true
+    # per-tag look; `highlight: true` boxes the whole card in the tag colour so it stands out on the wall
+    styles:
+      "Ordine exam": { color: "#c2410c", icon: "🎓", highlight: true }
+      Pimsleur:      { color: "#2563eb", icon: "🎧" }
   lang_level:
     label: CEFR level
     type: pills

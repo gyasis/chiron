@@ -61,6 +61,9 @@ DOMAIN = os.environ.get("CH_DOMAIN", "language-it")
 N_LESSONS = int(os.environ.get("CH_LESSONS", "0"))
 FORCE = os.environ.get("CH_FORCE") == "1"
 FORMAT = os.environ.get("CH_FORMAT", "drill")   # drill | exam (commission questions asked in Italian)
+# Library tags stamped on every lesson of the season (chiron.json "labels"); "Pimsleur" is added by the
+# library builder itself. CH_LABELS="Ordine exam,…" — an exam season is the Ordine test by construction.
+LABELS = [t.strip() for t in os.environ.get("CH_LABELS", "Ordine exam" if FORMAT == "exam" else "").split(",") if t.strip()]
 TOPIC_SLUG = re.sub(r"[^a-z0-9]+", "-", TOPIC.lower()).strip("-")[:40]
 SEASON_FILE = GEN / f"chiron-pimsleur-{TOPIC_SLUG}.season.json"
 
@@ -350,7 +353,8 @@ Return ONLY JSON:
     (out / "content.json").write_text(json.dumps(content, ensure_ascii=False, indent=1))
     (out / "chiron.json").write_text(json.dumps({
         "format": "chiron/1", "title": f"Chiron · {l['titleIt']}", "entry": "lesson.html", "domain": DOMAIN,
-        "created": datetime.date.today().isoformat(), "generator": "chiron", "lessonFormat": "pimsleur"}, indent=2))
+        "created": datetime.date.today().isoformat(), "generator": "chiron", "lessonFormat": "pimsleur",
+        **({"labels": LABELS} if LABELS else {})}, indent=2))
     subprocess.run(["node", str(SKILL / "scripts" / "assemble-language.mjs"), str(out)], check=True)
     subprocess.run([sys.executable, str(SKILL / "scripts" / "upgrade_player_pimsleur.py"), str(out / "lesson.html")], check=True)
     print(f"[P3] {out.name}: lesson.html", flush=True)
