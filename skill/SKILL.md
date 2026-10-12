@@ -219,6 +219,24 @@ timestamped clip-glitch complaints is re-measured automatically (strict ASR + fa
 and becomes `PASS (re-checked …)` only when every flagged clip is clean — read those measurements too.
 Older built lessons need `scripts/upgrade_player_pimsleur.py <lesson.html>` before a drill shows in their player.
 
+## Mock oral (OMCeO Italian test)
+
+`http://localhost:8911/oral` on the computer (the mic needs `localhost`, a secure context). Lucrezia is the
+examiner: she asks the exam questions of the exam Pimsleur seasons (every `kind: exam` item, the
+presentation first, then one per lesson, or all 15), you answer by mic, and she reacts aloud. She never
+corrects aloud; she may ask ONE follow-up per question. The corrections are written: after each
+answer, or only at the end (exam mode).
+
+- Voice: OmniVoice on the Mac, `lucrezia_italian`, **16 steps** (4 s a line, vs 11 s at the drills' 48),
+  cached in `server/state/oral-tts/`. The next question is fetched while you answer.
+- Hearing: whisper on the Mac (`turbo`, Italian forced). It keeps agreement errors (*il paziente devono*)
+  but can smooth word endings (*tre anno* → *tre anni*), so the page says some errors can slip through.
+- Examiner: `gemma4:31b` (the tutor's default) or `deepseek-flash@latest` on Ollama Cloud, `think:false`
+  (verified: 0 reasoning, about 2 s). GLM is not offered: it reasons inside `content` despite the flag.
+- Sessions save to `~/Documents/generated/chiron-mock-oral/<stamp>.{json,md}` with the token usage.
+- Debug: `GET /api/oral/status` (reachability + the last errors). Code: `server/mock_oral.py`,
+  `shell/mock-oral.html`, tests `tests/mock_oral_test.py`.
+
 ## Mode A vs Mode B
 
 - **Mode A — Course-style.** Multi-chapter scroll-snap lesson, Coursera-feel.
