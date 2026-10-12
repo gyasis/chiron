@@ -2,7 +2,7 @@
  * Adding a facet to library.yaml → rebuild → it appears here. Lessons open their own lesson.html
  * (served over http, where audio + nav work). */
 'use strict';
-const FIELD = { system:'system', subject:'subject', series:'subject', topic:'topic', trend:'trend', lang_level:'level', source:'source', format:'format' }; // facet → lesson field (series reuses the subject field = the series name)
+const FIELD = { system:'system', subject:'subject', series:'subject', topic:'topic', trend:'trend', lang_level:'level', source:'source', format:'format', tags:'labels' }; // tags: multi-valued (array field) // facet → lesson field (series reuses the subject field = the series name)
 let CONFIG, LESSONS;
 const F = { q:'', sort:'priority', domain:new Set(), facets:{}, hiddenDom:new Set(), hiddenSys:new Set(), selectMode:false, selected:new Set(), showSSM:false };
 /* stable selection key for a lesson (ready lessons have id; to-generate slots keyed by domain+descriptor) */
@@ -109,6 +109,7 @@ async function boot(){
 }
 const domCls = d => 'dom-'+d;
 const domLabel = d => (CONFIG.domains[d]||{}).label || d;
+const tagStyle = t => (CONFIG.facets.tags && CONFIG.facets.tags.styles && CONFIG.facets.tags.styles[t]) || {};
 const count = pred => LESSONS.filter(l => (F.showSSM || !isSSM(l)) && pred(l)).length;
 
 function match(l){
@@ -117,12 +118,13 @@ function match(l){
   // W1 hide-filters take precedence — a hidden domain/system is removed everywhere, incl. search.
   if (F.hiddenDom.has(l.domain)) return false;
   if (l.system && F.hiddenSys.has(l.system)) return false;
-  if (F.q){ const s=(l.title+' '+(l.system||'')+' '+(l.subject||'')+' '+(l.topic||'')).toLowerCase(); if(!s.includes(F.q.toLowerCase())) return false; }
+  if (F.q){ const s=(l.title+' '+(l.system||'')+' '+(l.subject||'')+' '+(l.topic||'')+' '+(l.labels||[]).join(' ')).toLowerCase(); if(!s.includes(F.q.toLowerCase())) return false; }
   if (F.domain.size && !F.domain.has(l.domain)) return false;
   for (const [k,set] of Object.entries(F.facets)){
     if (!set.size) continue;
     const fld = FIELD[k]; if (!fld) continue;          // range/sparkline facets: not filterable yet
-    if (!(l[fld] && set.has(l[fld]))) return false;
+    const v = l[fld];
+    if (Array.isArray(v) ? !v.some(x=>set.has(x)) : !(v && set.has(v))) return false;   // array field: any selected tag
   }
   return true;
 }
@@ -144,11 +146,12 @@ function renderPills(){
     if (f.type!=='pills' || !FIELD[k]) continue;
     // 'source: derived' facets discover their values from the lessons at runtime (keeps external
     // source names out of the committed config); others use the fixed vocab in library.yaml.
-    const vals = (f.source==='derived') ? [...new Set(LESSONS.map(l=>l[FIELD[k]]).filter(Boolean))].sort() : (f.values||[]);
+    const vals = (f.source==='derived') ? [...new Set(LESSONS.flatMap(l=>[].concat(l[FIELD[k]]||[])).filter(Boolean))].sort() : (f.values||[]);
     if (!vals.length) continue;
     h += `<span class="sep"></span><span class="pgl">${f.label}</span>`;
-    for (const v of vals){ const n=count(l=>l[FIELD[k]]===v); if(!n) continue;
-      const disp = (CONFIG.sources && CONFIG.sources[v] && CONFIG.sources[v].label) || (v[0]+v.slice(1).toLowerCase());
+    for (const v of vals){ const n=count(l=>{ const x=l[FIELD[k]]; return Array.isArray(x)?x.includes(v):x===v; }); if(!n) continue;
+      const st = f.multi ? tagStyle(v) : null;
+      const disp = st ? (st.icon?st.icon+' ':'')+v : (CONFIG.sources && CONFIG.sources[v] && CONFIG.sources[v].label) || (v[0]+v.slice(1).toLowerCase());
       h += `<button class="pill ${F.facets[k].has(v)?'on':''}" onclick="LIB.tog('${k}','${cssq(v)}')">${disp}<span class="ct">${n}</span></button>`; }
   }
   const pel = document.getElementById('pills');
@@ -220,10 +223,11 @@ function tileHtml(l){
               + `<span class="taction open">Open →</span>`;
   const badges = (staged?`<span class="treview">🟡 REVIEW</span>`:'') + (l.bankable>0?`<span class="tbank">💰 ${l.bankable}</span>`:'')
     + (l.scope==='system'?`<span class="tag sys">organ system</span>`:'')
-    + (l.format==='Pimsleur'?`<span class="tag fmt" title="Pimsleur-style audio drill">🎧 Pimsleur</span>`:'');
+    + (l.labels||[]).map(t=>{ const st=tagStyle(t); return `<span class="tag lbl" style="--tagc:${st.color||'var(--chiron-accent)'}">${st.icon?st.icon+' ':''}${t}</span>`; }).join('');
+  const hl = (l.labels||[]).map(t=>[t,tagStyle(t)]).find(([,st])=>st.highlight);
   const onclick = selectable ? ` onclick="LIB.togSel('${cssq(keyOf(l))}')"` : (l.ready ? ` onclick="LIB.open('${slug}')"` : '');
   const selCls = selectable ? ' selectable' + (isSel?' selected':'') : '';
-  return `<div class="tcard ${l.domain}${l.ready?'':' queued'}${l.bankable>0?' bankq':''}${selCls}"${onclick}>
+  return `<div class="tcard ${l.domain}${l.ready?'':' queued'}${l.bankable>0?' bankq':''}${selCls}${hl?' hl':''}"${hl?` style="--hlc:${hl[1].color||'var(--chiron-accent)'}" title="${hl[0]}"`:''}${onclick}>
     ${selectable?`<span class="selmark${isSel?' on':''}">${isSel?'✓':''}</span>`:''}
     <div class="tb"><div class="tt">${l.title}</div><div class="ts">${subtagOf(l)}</div>${badges?`<div class="tbadges">${badges}</div>`:''}</div>
     <div class="tf"><span class="db">${domLabel(l.domain)}</span>${l.ready?(l.clips>0?`<span class="tclips baked" title="audio baked (${l.clips} clips) · click to re-bake (⚡Fast / 🐢Mac)" onclick="event.stopPropagation();LIB.rebake('${slug}')">🔊 ${l.clips}</span>`:`<button class="tbake" title="text-only — bake the audio now (⚡Fast / 🐢Mac)" onclick="event.stopPropagation();LIB.rebake('${slug}')">🔊 Bake audio</button>`):'<span class="tclips">not generated</span>'}${action}</div>

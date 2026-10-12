@@ -219,6 +219,21 @@ timestamped clip-glitch complaints is re-measured automatically (strict ASR + fa
 and becomes `PASS (re-checked …)` only when every flagged clip is clean — read those measurements too.
 Older built lessons need `scripts/upgrade_player_pimsleur.py <lesson.html>` before a drill shows in their player.
 
+## Library tags (several per lesson)
+
+A lesson can carry any number of tags: `chiron.json` → `"labels": ["Ordine exam", …]`. The Library shows
+them as coloured chips on the card and as the first filter pills ("Tags"; clicking several shows a lesson
+that has ANY of them). `Pimsleur` is never stamped: the builder derives it from the lesson's audio.
+Per-tag colour and icon live in `library/library.yaml` → `facets.tags.styles`; `highlight: true` boxes the
+whole card in that colour (Ordine exam does).
+
+    python3 scripts/lesson_tags.py add "Ordine exam" '<lesson-dir-or-glob>'…   # rebuilds the Library
+    python3 scripts/lesson_tags.py rm  "Ordine exam" <lesson>…
+    python3 scripts/lesson_tags.py ls
+
+The Pimsleur chain stamps `CH_LABELS="tag1,tag2"` on every lesson of a season. `CH_FORMAT=exam`
+defaults to `Ordine exam`.
+
 ## Mock oral (OMCeO Italian test)
 
 `http://localhost:8911/oral` on the computer (the mic needs `localhost`, a secure context). Lucrezia is the

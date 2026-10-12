@@ -31,7 +31,7 @@ body{margin:0;font-family:var(--font-b);background:var(--chiron-bg);color:var(--
 .sort select{font:inherit;font-size:13px;border:1px solid var(--chiron-border);border-radius:99px;padding:6px 12px;background:var(--chiron-surface);color:var(--chiron-fg);cursor:pointer}
 .pills{flex:0 0 auto;background:var(--chiron-surface);border-bottom:1px solid var(--chiron-border);padding:9px 18px;display:flex;flex-wrap:wrap;gap:7px;align-items:center}
 .pgl{font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--chiron-muted);margin-right:4px}
-.pill{font:inherit;font-size:12px;padding:4px 12px;border-radius:99px;border:1px solid var(--chiron-border);background:var(--chiron-bg);color:var(--chiron-fg-secondary);cursor:pointer;display:inline-flex;align-items:center;gap:6px}
+.pill{font:inherit;font-size:12px;padding:4px 12px;border-radius:99px;border:1px solid var(--chiron-border);background:var(--chiron-bg);color:var(--chiron-fg-secondary);cursor:pointer;display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
 .pill:hover{border-color:var(--chiron-accent)}.pill.on{background:var(--chiron-accent);color:#fff;border-color:var(--chiron-accent)}
 .pill .ct{opacity:.6;font-size:11px}
 .pill.dom-medicine.on{background:var(--med);border-color:var(--med)}.pill.dom-medical-italian.on{background:var(--medit);border-color:var(--medit)}.pill.dom-italian.on{background:var(--lang);border-color:var(--lang)}.pill.dom-code.on{background:var(--code);border-color:var(--code)}
@@ -147,6 +147,9 @@ body{margin:0;font-family:var(--font-b);background:var(--chiron-bg);color:var(--
 .tcard .tbadges{display:flex;flex-wrap:wrap;gap:5px;margin-top:8px}
 .tcard .tbadges .tag{font-size:9.5px}
 .tcard .tbadges .tag.fmt{background:var(--chiron-elevated);color:var(--chiron-fg);border:1px solid var(--chiron-border);font-weight:600}
+/* lesson tags (chiron.json "labels"): a chip in the tag colour; a highlight tag boxes the whole card */
+.tcard .tbadges .tag.lbl{background:color-mix(in srgb,var(--tagc) 13%,transparent);color:var(--tagc);border:1px solid color-mix(in srgb,var(--tagc) 45%,transparent);font-weight:700}
+.tcard.hl{border:2px solid var(--hlc);box-shadow:0 0 0 3px color-mix(in srgb,var(--hlc) 16%,transparent),var(--sh-sm);background:color-mix(in srgb,var(--hlc) 5%,var(--chiron-surface))}
 .tcard .tf{display:flex;align-items:center;gap:7px;padding:10px 13px 12px;margin-top:6px}
 .tcard .db{font-size:9.5px;font-weight:700;padding:2px 8px;border-radius:99px}
 /* option C — soft domain tint fills the card (no edge); solid domain pill in the footer */
