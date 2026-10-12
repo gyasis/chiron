@@ -94,7 +94,7 @@ html.chiron-tutor-pushed body {
   font-size: 13px;
 }
 .ct-title {
-  flex: none; font-family: var(--font-display, 'Bricolage Grotesque', Georgia, serif); font-weight: 700; font-size: 14px;
+  flex: none; font-family: var(--font-display, sans-serif); font-weight: 700; font-size: 14px;
   color: var(--color-text, #2C2A28);
 }
 /* model select takes the flexible middle and SHRINKS (truncates) so the pinned

@@ -36,6 +36,14 @@ allowed-tools:
 
 # Chiron — Universal Lesson Generator
 
+## ⛔ BLOCKING — SANS-SERIF ONLY (no serif fonts, anywhere)
+
+Gyasi's standing rule (2026-10-12): no serif font in any theme, lesson, builder, chain, player or the phone
+app, and no serif-LOOKING display face either (Bricolage Grotesque was removed for that). Body and headings
+use the system sans stack (`system-ui, …, sans-serif`; DejaVu Sans on Linux). `tests/sans_only_test.py` fails
+on any serif declaration in the source; `scripts/sans_only.py fix <dir>` rewrites generated lessons and
+`check <dir>` audits them.
+
 ## ⛔ BLOCKING — NO HARDCODED PALETTES IN GENERATED LESSONS
 
 When emitting `lesson.html`, the parent agent **MUST**:
