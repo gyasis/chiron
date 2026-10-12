@@ -359,11 +359,16 @@ document.getElementById('impfile').onclick = document.getElementById('importbtn'
   if (!TAURI) { toast('File import works in the installed app'); return; }
   try {
     const { open } = window.__TAURI__.dialog; const { readFile } = window.__TAURI__.fs;
-    const path = await open({ multiple: false, filters: [{ name: 'Chiron', extensions: ['chiron', 'zip'] }] });
-    if (!path) return; toast('Importing…');
-    const bytes = await readFile(path);
-    const l = await invoke('import_lesson', { data: Array.from(bytes) });
-    OFFLINE[l.title] = { id: l.id, entry: l.entry }; refreshOffline(); toast('Imported ✓');
+    // MULTI-select: an offline pack is a folder of .chiron files (lesson_tags.py pack) — pick them all at once.
+    let paths = await open({ multiple: true, filters: [{ name: 'Chiron', extensions: ['chiron', 'zip'] }] });
+    if (!paths) return; if (!Array.isArray(paths)) paths = [paths];
+    let ok = 0;
+    for (let i = 0; i < paths.length; i++) {
+      toast(`Importing ${i + 1} of ${paths.length}…`);
+      try { const l = await invoke('import_lesson', { data: Array.from(await readFile(paths[i])) });
+        OFFLINE[l.title] = { id: l.id, entry: l.entry }; ok++; } catch (e) {}
+    }
+    await refreshOffline(); renderRows(); toast(ok === paths.length ? `Imported ${ok} ✓` : `Imported ${ok} of ${paths.length}`);
   } catch (e) { toast('Import failed'); }
 };
 

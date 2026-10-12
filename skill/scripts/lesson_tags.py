@@ -8,8 +8,14 @@ the builder adds it from the lesson's audio. The Library is rebuilt after a chan
     lesson_tags.py add "Ordine exam" <lesson-dir-or-glob>...
     lesson_tags.py rm  "Ordine exam" <lesson-dir-or-glob>...
     lesson_tags.py ls  [<lesson-dir-or-glob>...]        # default: every lesson that has a tag
+    lesson_tags.py pack "Ordine exam" [<out-dir>]        # offline pack: every bundled lesson with the tag
+
+A pack is a folder of .chiron files (named by lesson title) + the same as one .zip, under
+~/Documents/generated/chiron-packs/<tag>/. Copy the zip to the phone any way (USB, Dropbox, …), extract it,
+then Chiron app → Import → select all the files. No computer needed after that. The zip is also served
+at <server>/library/packs/<tag>.zip for downloading straight from the phone's browser.
 """
-import glob, json, os, subprocess, sys
+import glob, json, os, re, shutil, subprocess, sys, zipfile
 from pathlib import Path
 
 GEN = Path(os.environ.get("CHIRON_GEN", Path.home() / "Documents/generated"))
@@ -47,9 +53,47 @@ def set_labels(d: Path, labels: list[str]) -> None:
     f.write_text(json.dumps(cj, ensure_ascii=False, indent=2))
 
 
+def pack(tag: str, out: Path | None = None) -> Path:
+    """Copy every bundled lesson carrying `tag` into one folder + one zip. Returns the zip path."""
+    lib = GEN / "chiron-library"
+    lessons = json.loads((lib / "library.index.json").read_text())["lessons"]
+    hits = [l for l in lessons if tag in (l.get("labels") or [])]
+    if not hits:
+        sys.exit(f"no lesson in the Library index has the tag {tag!r}")
+    name = re.sub(r"[^a-z0-9]+", "-", tag.lower()).strip("-")
+    out = out or GEN / "chiron-packs" / name
+    out.mkdir(parents=True, exist_ok=True)
+    for old in out.glob("*.chiron"):
+        old.unlink()
+    missing, n = [], 0
+    for i, l in enumerate(sorted(hits, key=lambda l: l["title"]), 1):
+        src = lib / "lessons" / (l["id"].replace("/", "-") + ".chiron")
+        if not src.exists():
+            missing.append(l["id"])
+            continue
+        title = re.sub(r"[^\w\s-]", "", l["title"]).strip()[:70].strip()
+        shutil.copy2(src, out / f"{i:02d} {title}.chiron")
+        n += 1
+    zp = out.parent / f"{name}.zip"
+    with zipfile.ZipFile(zp, "w", zipfile.ZIP_STORED) as z:      # .chiron files are zips already: store, don't recompress
+        for f in sorted(out.glob("*.chiron")):
+            z.write(f, f"{name}/{f.name}")
+    served = lib / "packs" / zp.name          # also downloadable from the phone: <server>/library/packs/<tag>.zip
+    served.parent.mkdir(exist_ok=True)
+    shutil.copy2(zp, served)
+    print(f"{n} lesson(s) -> {out}/  and  {zp}  ({zp.stat().st_size / 1e6:.0f} MB)")
+    print(f"  phone download: http://<computer>:8911/library/packs/{zp.name}")
+    for m in missing:
+        print(f"  not bundled, skipped: {m}  (bundle: node scripts/build-hub-catalog.mjs --only {m.replace('/', '-')})")
+    return zp
+
+
 def main(argv: list[str]) -> int:
     rebuild = "--no-rebuild" not in argv
     argv = [a for a in argv if a != "--no-rebuild"]
+    if argv and argv[0] == "pack" and len(argv) >= 2:
+        pack(argv[1], Path(argv[2]) if len(argv) > 2 else None)
+        return 0
     if not argv or argv[0] not in ("add", "rm", "ls"):
         print(__doc__)
         return 2
