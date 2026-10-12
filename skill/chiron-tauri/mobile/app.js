@@ -17,6 +17,8 @@ let TAGSTYLE = {}, SERVER_DOWN = false;
 try { TAGSTYLE = JSON.parse(localStorage.getItem('chiron.tagstyle') || '{}'); } catch (e) {}
 const tagSt = t => TAGSTYLE[t] || {};
 const hlOf = l => (l.labels || []).map(t => [t, tagSt(t)]).find(([, st]) => st.highlight);
+// a saved lesson is STALE when the computer's copy changed after it was saved (e.g. the sans-only font fix)
+const isStale = l => { const sl = slugOf(l.id); return !!OFFLINE[sl] && l.bundle && (l.mtime || 0) > (DL_TIME[sl] || 0); };
 const tagChips = l => (l.labels || []).map(t => { const st = tagSt(t); return `<span class="ltag" style="--tagc:${st.color || 'var(--accent)'}">${st.icon ? st.icon + ' ' : ''}${esc(t)}</span>`; }).join('');   // slug -> {id,entry} of installed lessons (native)
 
 /* ---------- nav: swipe panes + EDGE DRAWER ---------- */
@@ -174,6 +176,8 @@ function renderRows() {
   let h = '';
   if (ACTIVE.length) h += `<div class="sec">⏳ Generating <span class="ct">${ACTIVE.length}</span><span class="note">tap to watch</span></div>` +
     ACTIVE.map(j => `<div class="genrow" data-recon="${j.id}"><span class="spinc"></span><div class="gi"><b>${esc(j.subject || j.slug || 'lesson')}</b><small>${j.status === 'queued' ? 'queued…' : (j.phase || 'generating') + '…'}</small></div><span class="chev">›</span></div>`).join('');
+  const stale = TAURI && !SERVER_DOWN ? LESSONS.filter(l => l.ready && isStale(l)) : [];
+  if (stale.length) h += `<div class="saveall" id="updsaved">⟳ Update ${stale.length} saved lesson${stale.length > 1 ? 's' : ''} — newer version on your computer</div>`;
   if (F.only.size && TAURI && !SERVER_DOWN) {   // one tap: put every lesson of the focused tag(s) on the phone
     const todo = list.filter(l => l.ready && l.bundle && !OFFLINE[slugOf(l.id)]);
     const st = tagSt([...F.only][0]);
@@ -185,6 +189,7 @@ function renderRows() {
   if (queued.length) h += hdr('○', 'To generate', queued.length, 'tap Generate') + group(queued.slice(0, 400));
   document.getElementById('rows').innerHTML = h || `<div class="empty">No lessons match${F.hideDom.size || F.hideSys.size ? ' — some domains/systems are hidden (tap ⚑ to unhide)' : ''}.</div>`;
   const sa = document.getElementById('saveall'); if (sa) sa.onclick = saveAll;
+  const us = document.getElementById('updsaved'); if (us) us.onclick = updateSaved;
   document.querySelectorAll('#rows [data-open]').forEach(e => e.onclick = ev => { ev.stopPropagation(); openLesson(e.dataset.open); });
   document.querySelectorAll('#rows [data-dl]').forEach(e => e.onclick = ev => { ev.stopPropagation(); download(e.dataset.dl); });
   document.querySelectorAll('#rows [data-acc]').forEach(e => e.onclick = ev => { ev.stopPropagation(); accept(e.dataset.acc); });
@@ -322,12 +327,23 @@ async function saveAll() {   // download every bundled lesson of the focused tag
     try { const r = await invoke('import_from_server', { url: catUrl(), file: slug + '.chiron' }); OFFLINE[slug] = { id: r.id, entry: r.entry }; markSynced(slug); n++; } catch (e) {} }
   toast(`Saved ${n} of ${todo.length} lessons to this phone`); await refreshOffline(); renderRows();
 }
+async function updateSaved() {   // replace each stale saved lesson: install the new copy, then remove the old one
+  const todo = LESSONS.filter(l => l.ready && isStale(l));
+  let n = 0;
+  for (const l of todo) { const el = document.getElementById('updsaved'); if (el) el.textContent = `⟳ Updating ${n + 1} of ${todo.length}: ${l.title.replace(/^Chiron\s*·\s*/, '')}…`;
+    const slug = slugOf(l.id), old = OFFLINE[slug];
+    try { const r = await invoke('import_from_server', { url: catUrl(), file: slug + '.chiron' });
+      if (old && old.id && old.id !== r.id) { try { await invoke('delete_lesson', { id: old.id }); } catch (e) {} }
+      OFFLINE[slug] = { id: r.id, entry: r.entry }; markSynced(slug); n++; } catch (e) {} }
+  toast(`Updated ${n} of ${todo.length}`); await refreshOffline(); renderRows();
+}
 async function refreshOffline() {
   const box = document.getElementById('offrows');
   if (TAURI) {
     try { const ls = await invoke('list_lessons'); OFFLINE = {};
       // map installed back onto library slugs by title where possible
       ls.forEach(o => { const m = LESSONS.find(l => (l.title || '').includes(o.title) || o.title.includes(l.title)); OFFLINE[m ? slugOf(m.id) : o.title] = { id: o.id, entry: o.entry }; });
+      if (LESSONS.length) renderRows();   // the Library's ✓ / ⟳ Update state depends on what is on the phone
       box.innerHTML = ls.length ? ls.map(o => `<div class="row m"><div class="edge"></div><div class="body"><div class="t">${esc(o.title)}</div><div class="meta"><span class="clip">✓ offline</span></div></div><div class="act"><span class="btn" data-oid="${o.id}" data-oentry="${o.entry}">Open →</span></div></div>`).join('') : `<div class="empty">Nothing saved yet. Download lessons from the Library.</div>`;
       box.querySelectorAll('[data-oid]').forEach(e => e.onclick = () => { const base = isAndroid ? 'http://lesson.localhost/' : 'lesson://localhost/'; document.getElementById('l-frame').src = base + e.dataset.oid + '/' + e.dataset.oentry; document.getElementById('l-title').textContent = 'Lesson'; setMode('read'); go(2); });
     } catch (e) { box.innerHTML = `<div class="empty">—</div>`; }

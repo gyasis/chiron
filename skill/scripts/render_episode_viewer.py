@@ -59,10 +59,10 @@ def main():
 TEMPLATE = r"""<meta charset="utf-8"><title>__TITLE__</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;1,400&family=JetBrains+Mono&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono&display=swap');
 :root{--bg:#fbf5ec;--surface:#fff;--elev:#f3e9d8;--fg:#2b1d12;--fg2:#5b4632;--muted:#8a7560;
 --accent:#b3522e;--accentL:#d97a4f;--sage:#6b8e4e;--info:#386b8a;--border:#e6d5b8;--divider:#efe2c9;
---serif:'Lora','Georgia',serif;--mono:'JetBrains Mono',monospace}
+--serif:system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;--mono:'JetBrains Mono',monospace}
 *{box-sizing:border-box}html,body{margin:0;overflow-x:clip}
 body{background:var(--bg);color:var(--fg);font-family:var(--serif);line-height:1.5}
 h1,h2,h3{margin:0;font-family:var(--serif)}.mono{font-family:var(--mono)}.muted{color:var(--muted)}

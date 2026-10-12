@@ -23,8 +23,8 @@
   --chiron-border: #e6d5b8;
   --chiron-divider: #efe2c9;
 
-  --chiron-font-heading: 'Lora', 'Georgia', serif;
-  --chiron-font-body: 'Lora', 'Georgia', serif;
+  --chiron-font-heading: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --chiron-font-body: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
 
   --chiron-is-dark: 0;
 }

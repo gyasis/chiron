@@ -184,7 +184,7 @@ const MOBILE_CSS = `
       .chiron-fs-close:hover { background: var(--chiron-elevated, #f0ebe4); }
 
       .chiron-fs-title {
-        font-family: var(--chiron-font-heading, Georgia, serif); font-size: 1.25rem;
+        font-family: var(--chiron-font-heading, sans-serif); font-size: 1.25rem;
         font-weight: 700; color: var(--chiron-fg, #1a1a1a);
         padding: var(--chiron-space-6, 1.5rem) var(--chiron-space-6, 1.5rem) var(--chiron-space-4, 1rem);
         text-align: center; flex-shrink: 0; line-height: 1.35;

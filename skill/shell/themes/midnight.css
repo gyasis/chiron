@@ -21,7 +21,7 @@
   --chiron-divider: #1f1f35;
 
   --chiron-font-heading: system-ui, -apple-system, sans-serif;
-  --chiron-font-body: 'Georgia', 'Times New Roman', serif;
+  --chiron-font-body: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
 
   --chiron-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
   --chiron-shadow-md: 0 4px 6px rgba(0, 0, 0, 0.4);
