@@ -222,7 +222,7 @@ CHIRON_DECK = os.environ.get("CHIRON_ANKI_DECK", "Chiron")
 
 
 def add_notes(cards: list[dict], deck: str | None = None,
-              tags: list[str] | None = None) -> dict:
+              tags: list[str] | None = None, model: str | None = None) -> dict:
     """Create notes from generated cards. `cards` = [{front, back, ...}].
 
     Duplicates are REFUSED rather than allowed: capturing the same answer twice
@@ -234,14 +234,23 @@ def add_notes(cards: list[dict], deck: str | None = None,
     invoke("createDeck", deck=deck)
     notes = []
     for c in cards:
-        front, back = (c.get("front") or "").strip(), (c.get("back") or "").strip()
-        if not front or not back:
-            continue
+        if model:
+            # Custom note type: the caller supplies the field map itself
+            # (c["fields"]); per-card c["tags"] are added to the shared tags.
+            flds = {k: str(v) for k, v in (c.get("fields") or {}).items()}
+            if not any(v.strip() for v in flds.values()):
+                continue
+            mname, ctags = model, list(c.get("tags") or [])
+        else:
+            front, back = (c.get("front") or "").strip(), (c.get("back") or "").strip()
+            if not front or not back:
+                continue
+            flds, mname, ctags = {"Front": front, "Back": back}, "Basic", []
         notes.append({
             "deckName": deck,
-            "modelName": "Basic",
-            "fields": {"Front": front, "Back": back},
-            "tags": ["chiron"] + list(tags or []),
+            "modelName": mname,
+            "fields": flds,
+            "tags": list(dict.fromkeys(["chiron"] + list(tags or []) + ctags)),
             "options": {"allowDuplicate": False,
                         "duplicateScope": "deck",
                         "duplicateScopeOptions": {"deckName": deck, "checkChildren": True}},
@@ -288,3 +297,80 @@ def add_notes(cards: list[dict], deck: str | None = None,
         "detail": None if not dupes else
         f"{dupes} already existed in {deck} and were not added again.",
     }
+
+
+# ── media, note types, tags (Sessione) ─────────────────────────────────────
+
+PROD_DECK = "Chiron::Produzione"
+QUADERNO_DECK = "Chiron::Quaderno"
+PROD_MODEL = "Chiron Produzione"
+LISTEN_MODEL = "Chiron Ascolto"
+
+_CSS = (".card{font-family:system-ui,sans-serif;font-size:20px;text-align:center;"
+        "color:#222;background:#fff;max-width:640px;margin:0 auto;padding:12px}"
+        ".nightMode .card,.night_mode .card{color:#eee;background:#1e1e1e}"
+        ".chip{display:inline-block;margin:3px;padding:3px 10px;border:1px solid #888;"
+        "border-radius:14px;font-size:17px}.verbs{margin-top:10px;font-size:16px;opacity:.8}"
+        ".note{margin-top:12px;font-size:15px;opacity:.7}.sit{font-size:20px}"
+        ".it{font-size:24px;font-weight:600}.en{opacity:.75}")
+
+_MODELS = {
+    PROD_MODEL: {
+        "fields": ["Situazione", "Banca", "Verbi", "Risposta", "Audio", "Note"],
+        "front": ('<div class="sit">{{Situazione}}</div><div class="bank">{{Banca}}</div>'
+                  '<div class="verbs">{{Verbi}}</div>'),
+        "back": ('{{FrontSide}}<hr id="answer"><div class="it">{{Risposta}}</div>{{Audio}}'
+                 '<div class="note">{{Note}}</div>'),
+    },
+    LISTEN_MODEL: {
+        "fields": ["Audio", "Italiano", "English", "Note"],
+        "front": "{{Audio}}<div class=\"en\">Ascolta e ripeti</div>",
+        "back": ('{{FrontSide}}<hr id="answer"><div class="it">{{Italiano}}</div>'
+                 '<div class="en">{{English}}</div><div class="note">{{Note}}</div>'),
+    },
+}
+
+
+def store_media(filename: str, data: bytes) -> str:
+    import base64
+    invoke("storeMediaFile", filename=filename, data=base64.b64encode(data).decode())
+    return filename
+
+
+def chips(words: list[str]) -> str:
+    """Word bank as HTML chips for the Banca field."""
+    return "".join(f'<span class="chip">{w}</span>' for w in words)
+
+
+def ensure_models() -> dict:
+    """Create the Sessione note types and decks if absent. Idempotent."""
+    have = set(invoke("modelNames") or [])
+    made = []
+    for name, m in _MODELS.items():
+        if name in have:
+            continue
+        invoke("createModel", modelName=name, inOrderFields=m["fields"], css=_CSS,
+               cardTemplates=[{"Name": "Card 1", "Front": m["front"], "Back": m["back"]}])
+        made.append(name)
+    for d in (PROD_DECK, QUADERNO_DECK):
+        invoke("createDeck", deck=d)
+    return {"created": made, "present": sorted(set(_MODELS) & (have | set(made)))}
+
+
+def add_tags(note_ids: list[int], tags: str | list[str]) -> None:
+    if isinstance(tags, (list, tuple)):
+        tags = " ".join(tags)
+    if note_ids:
+        invoke("addTags", notes=[int(n) for n in note_ids], tags=tags)
+
+
+def notes_for_cards(card_ids: list[int]) -> dict[int, dict]:
+    """cardId -> {noteId, tags} (one cardsInfo + one notesInfo call)."""
+    ids = [int(c) for c in card_ids]
+    if not ids:
+        return {}
+    ci = invoke("cardsInfo", cards=ids) or []
+    nmap = {int(c["cardId"]): int(c["note"]) for c in ci if c and c.get("cardId") is not None}
+    ni = invoke("notesInfo", notes=sorted(set(nmap.values()))) or []
+    tg = {int(n["noteId"]): n.get("tags", []) for n in ni if n}
+    return {cid: {"noteId": nid, "tags": tg.get(nid, [])} for cid, nid in nmap.items()}

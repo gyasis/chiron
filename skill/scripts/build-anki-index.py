@@ -44,6 +44,7 @@ DEFAULT_DECKS = [
     "il centro di italia",
     "Italiano",
     "Italian listening exercises with ITA / ENG text",
+    "chiron",   # Pimsleur + generated decks (Anki deck names are case-insensitive: covers "Chiron")
 ]
 
 

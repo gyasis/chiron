@@ -2241,6 +2241,10 @@ app.mount("/shell", StaticFiles(directory=str(SKILL / "shell")), name="shell")
 import mock_oral  # noqa: E402
 app.include_router(mock_oral.router)
 
+# Sessione: search Anki -> study, production / listening cards with Lucrezia audio, tutor router — /sessione + /api/sessione/*
+import sessione  # noqa: E402
+app.include_router(sessione.router)
+
 
 @app.get("/lessons/{slug}/lesson.html", response_class=HTMLResponse)
 def _lesson_with_tutor(slug: str):
