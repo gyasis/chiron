@@ -154,6 +154,15 @@ class Gather(unittest.TestCase):
         self.assertEqual(part["sources"]["gen"], 1)
         self.assertEqual(part["sentences"][-1]["cardId"], 8)
 
+    def test_model_down_returns_partial_not_503(self):
+        self.cands = self.cands[:2]
+        down = P.HTTPException(503, "language model unavailable: gateway 400")
+        with mock.patch.object(P, "generate", side_effect=down):
+            r = P.gather_word({"it": "paziente"}, 5)
+        self.assertEqual(len(r["sentences"]), 2)
+        self.assertEqual(r["short"], 3)
+        self.assertIn("generation unavailable", r["warnings"][0])
+
     def test_dry_creates_nothing(self):
         with mock.patch.object(P, "make_note") as mk, mock.patch.object(P, "cut_clip") as cc:
             r = P.gather_word({"it": "paziente"}, 5, dry=True)

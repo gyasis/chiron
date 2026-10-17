@@ -491,8 +491,9 @@ def _remember(word: str, ids: list[str], reset: bool) -> None:
 
 # ── gather ────────────────────────────────────────────────────────────────────
 
-def fill(word: str, n: int, exclude: set[str], dry: bool) -> tuple[list[dict], dict, int]:
+def fill(word: str, n: int, exclude: set[str], dry: bool, warn: list[str] | None = None) -> tuple[list[dict], dict, int]:
     """Up to `n` sentences for `word`, source by source. -> (sentences, counts per source, still short)."""
+    warn = [] if warn is None else warn
     got: list[dict] = []
     counts = {"anki": 0, "baby": 0, "mm": 0, "gen": 0}
     seen = set(exclude)
@@ -541,7 +542,13 @@ def fill(word: str, n: int, exclude: set[str], dry: bool) -> tuple[list[dict], d
             _log("mm", f"{word!r} {c['it'][:40]!r}: {type(e).__name__}: {e}")
     # 4. generate
     if room() > 0:
-        for c in generate(word, room() + 1, [s["it"] for s in got])[:room() + 1]:
+        try:
+            gen = generate(word, room() + 1, [s["it"] for s in got])
+        except HTTPException as e:               # model down: keep what Anki/Baby/MM gave, report the gap
+            _log("gen", f"{word!r}: model unavailable, returning {len(got)}/{n}: {str(e.detail)[:200]}")
+            warn.append(f"generation unavailable: {str(e.detail)[:200]}")
+            gen = []
+        for c in gen[:room() + 1]:
             if room() <= 0:
                 break
             if c["id"] in seen:
@@ -565,7 +572,8 @@ def gather_word(w: dict, cap: int, more: bool = False, dry: bool = False) -> dic
     with _lock:
         weak_en = (_load(WEAK_F).get(slug(it)) or {}).get("en", "")
     exclude = _gathered(it) if more else set()
-    sents, counts, short = fill(it, cap, exclude, dry)
+    warn: list[str] = []
+    sents, counts, short = fill(it, cap, exclude, dry, warn)
     en = word_en(it, w.get("en") or "", weak_en, dry)
     audio = None
     if not dry:
@@ -573,7 +581,7 @@ def gather_word(w: dict, cap: int, more: bool = False, dry: bool = False) -> dic
             audio = voice.say(it)
         _remember(it, [s["id"] for s in sents], reset=not more)
     _log("gather", f"{it!r} more={more} dry={dry} got={len(sents)}/{cap} {counts}")
-    return {"word": {"it": it, "en": en, "audio": audio}, "sentences": sents, "sources": counts, "short": short}
+    return {"word": {"it": it, "en": en, "audio": audio}, "sentences": sents, "sources": counts, "short": short, "warnings": warn}
 
 
 # ── routes ────────────────────────────────────────────────────────────────────
