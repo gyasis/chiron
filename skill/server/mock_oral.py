@@ -29,14 +29,30 @@ sys.path.insert(0, str(SKILL / "scripts"))
 sys.path.insert(0, str(SKILL / "chains"))
 import pimsleur_drill  # noqa: E402  the same OmniVoice + whisper sidecars and voice refs as the drills
 import chiron_models  # noqa: E402
+sys.path.insert(0, str(SKILL / "server"))
+import local_models  # noqa: E402
 
 ASR_URL = pimsleur_drill.ASR_URL   # same whisper sidecar + env override (CHIRON_WHISPER_URL) as the drills
 
 # Ollama Cloud thinking models whose think:false was verified to emit 0 reasoning.
-EXAMINERS = {
-    "gemma4": {"label": "Gemma 4 31B · cloud", "model": "gemma4:31b"},
-    "deepseek": {"label": "DeepSeek Flash · cloud", "model": "deepseek-flash@latest"},
+_CLOUD_EXAMINERS = {
+    "gemma4": {"label": "Gemma 4 31B · cloud", "model": "gemma4:31b", "group": "Cloud"},
+    "deepseek": {"label": "DeepSeek Flash · cloud", "model": "deepseek-flash@latest", "group": "Cloud"},
 }
+# The two cloud examiners + the Mac's chat-capable models (local_models, cached, static fallback). Refreshed in
+# place by refresh_examiners(); local ones carry "local": True and run through the governor, think:false only
+# when /api/show says the model thinks.
+EXAMINERS = dict(_CLOUD_EXAMINERS)
+
+
+def refresh_examiners() -> dict:
+    fresh = dict(_CLOUD_EXAMINERS)
+    for m in local_models.models():
+        fresh[m["id"]] = {"label": m["label"], "model": m["model"], "group": local_models.GROUP, "local": True}
+    EXAMINERS.clear()
+    EXAMINERS.update(fresh)
+    return EXAMINERS
+
 DEFAULT_EXAMINER = os.environ.get("TUTOR_DEFAULT_MODEL", "gemma4")
 if DEFAULT_EXAMINER not in EXAMINERS:
     DEFAULT_EXAMINER = "gemma4"
@@ -113,12 +129,15 @@ def _examiner_prompt(b: dict) -> str:
             f"Trascrizione del candidato: «{b.get('answer','').strip()}»\n\n{fu}")
 
 
-def _ollama(model: str, system: str, user: str, key: str) -> tuple[str, dict]:
-    body = {"model": chiron_models.resolve(model), "stream": False, "think": False, "format": "json",
+def _ollama(model: str, system: str, user: str, key: str, local: bool = False) -> tuple[str, dict]:
+    body = {"model": model if local else chiron_models.resolve(model), "stream": False, "format": "json",
             "options": {"temperature": 0.4},
             "messages": [{"role": "system", "content": system}, {"role": "user", "content": user}]}
-    req = urllib.request.Request(OLLAMA_CLOUD, json.dumps(body).encode(),
-                                 {"Content-Type": "application/json", "Authorization": "Bearer " + key})
+    if not local or local_models.thinking_off(model):     # cloud: verified think:false; local: only if it thinks
+        body["think"] = False
+    url = local_models.GOVERNOR + "/api/chat" if local else OLLAMA_CLOUD
+    req = urllib.request.Request(url, json.dumps(body).encode(),
+                                 {"Content-Type": "application/json", **({} if local else {"Authorization": "Bearer " + key})})
     d = json.loads(urllib.request.urlopen(req, timeout=90).read())
     msg = d.get("message") or {}
     usage = {"model": d.get("model"), "prompt_tokens": d.get("prompt_eval_count"),
@@ -130,15 +149,19 @@ def _ollama(model: str, system: str, user: str, key: str) -> tuple[str, dict]:
 
 def examine(b: dict) -> dict:
     key = os.environ.get("OLLAMA_API_KEY", "")
-    if not key:
-        raise HTTPException(503, "OLLAMA_API_KEY is not set in the server's environment")
+    refresh_examiners()
     first = b.get("examiner") if b.get("examiner") in EXAMINERS else DEFAULT_EXAMINER
-    order = [first] + [k for k in EXAMINERS if k != first]
+    if not key and not EXAMINERS[first].get("local"):
+        raise HTTPException(503, "OLLAMA_API_KEY is not set in the server's environment")
+    # fallback order: the picked one, then the CLOUD examiners (verified) — not all ~40 local tags
+    order = [first] + [k for k in _CLOUD_EXAMINERS if k != first]
     user, tried = _examiner_prompt(b), []
     for k in order:
         t = time.time()
         try:
-            text, usage = _ollama(EXAMINERS[k]["model"], SYSTEM, user, key)
+            if not key and not EXAMINERS[k].get("local"):
+                raise RuntimeError("OLLAMA_API_KEY not set")
+            text, usage = _ollama(EXAMINERS[k]["model"], SYSTEM, user, key, EXAMINERS[k].get("local", False))
             out = parse_json(text)
             if not str(out.get("reply", "")).strip():
                 raise ValueError("empty reply")
@@ -251,7 +274,8 @@ def status():
         except Exception:
             return False
     return {"tts": up(pimsleur_drill.OV_URL), "asr": up(ASR_URL), "ollama_key": bool(os.environ.get("OLLAMA_API_KEY")),
-            "examiners": {k: v["label"] for k, v in EXAMINERS.items()}, "default": DEFAULT_EXAMINER,
+            "examiners": {k: v["label"] for k, v in refresh_examiners().items()}, "default": DEFAULT_EXAMINER,
+            "examiner_groups": {k: v.get("group", "Cloud") for k, v in EXAMINERS.items()}, "local_models": local_models.info(),
             "questions": len(questions()), "tts_cache": str(TTS_CACHE), "errors": ERRORS[-10:]}
 
 

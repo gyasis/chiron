@@ -29,10 +29,10 @@
   var CHAT_MAX_ENTRIES = 40;
   var CHAT_MAX_BYTES = 200000;
   var FALLBACK_MODELS = [
-    { id: 'gemma4', label: 'Gemma 4 · cloud (fast)' },
-    { id: 'glmflash', label: 'GLM Flash · cloud (latest)' },
-    { id: 'qwen_local', label: 'Qwen3 32B · Mac (local)' },
-    { id: 'agent', label: 'Deep agent (Harrison’s, slower)' }
+    { id: 'gemma4', label: 'Gemma 4 · cloud (fast)', group: 'Cloud' },
+    { id: 'glmflash', label: 'GLM Flash · cloud (latest)', group: 'Cloud' },
+    { id: 'agent', label: 'Deep agent (Harrison’s, slower)', group: 'Cloud' },
+    { id: 'local:qwen3:32b', label: 'Qwen3 32B · Mac (local)', group: 'Mac (local)' }
   ];
   var FILLER_WORDS = [
     'percolating', 'consulting the tomes', 'thinking hard', 'chasing a pathway',
@@ -111,11 +111,19 @@
     var savedModel = null;
     try { savedModel = localStorage.getItem(LS_MODEL); } catch (e) {}
     modelSel.innerHTML = '';
+    // Group by m.group ("Cloud" / "Mac (local)") in first-seen order; entries without a group stay flat.
+    var groups = {}, order = [];
     list.forEach(function (m) {
       var opt = document.createElement('option');
       opt.value = m.id; opt.textContent = m.label;
-      modelSel.appendChild(opt);
+      if (!m.group) { modelSel.appendChild(opt); return; }
+      if (!groups[m.group]) {
+        var og = document.createElement('optgroup'); og.label = m.group;
+        groups[m.group] = og; order.push(og);
+      }
+      groups[m.group].appendChild(opt);
     });
+    order.forEach(function (og) { modelSel.appendChild(og); });
     if (savedModel && list.some(function (m) { return m.id === savedModel; })) {
       modelSel.value = savedModel;
     }
