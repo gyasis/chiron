@@ -417,6 +417,8 @@ document.getElementById('libsave').onclick = () => {
 // Hub = the https reverse proxy on the computer (:8943). Its certificate is mkcert-signed. wry's Android WebViewClient
 // has no onReceivedSslError override, so an in-app iframe/navigation to it is cancelled by the WebView; and the
 // oral page needs a secure context for the mic. So Studio opens in the system browser (Chrome), not an overlay.
+// Exception: Chiedi (/ask/) needs no secure context — its only mic is acolyte's Web Speech input, which Android
+// WebView does not implement on any origin — so in the app it opens in an overlay from plain-HTTP :8911 (openAsk).
 const libHost = () => { try { return new URL(LIB).hostname; } catch (e) { return ''; } };
 const isHub = () => { try { const u = new URL(LIB); return u.protocol === 'https:' && u.port === '8943'; } catch (e) { return false; } };
 const hubBase = () => isHub() ? new URL(LIB).origin : 'https://' + libHost() + ':8943';
@@ -438,7 +440,25 @@ async function openStudio(path) {
     toast('Impossibile aprire il browser: ' + (e && e.message || e));
   }
 }
-document.querySelectorAll('#drawer [data-studio]').forEach(b => b.onclick = () => { drawer(false); openStudio(b.dataset.studio); });
+// Ask's URLs are all root-relative (/ask/*, /library/*, /lessons/*), so loading the page FROM :8911 keeps every call
+// same-origin — no CORS. Never the hub: that is the cert the WebView refuses.
+const askBase = () => isHub() ? 'http://' + libHost() + ':8911' : LIB;
+async function openAsk() {
+  const fr = document.getElementById('ask-frame');
+  const theme = document.documentElement.getAttribute('data-theme') || 'light';
+  const url = askBase() + '/ask/?inapp=1&theme=' + theme;
+  if (fr.dataset.src !== url) {   // keep the open conversation across close/reopen; reload only if the address or theme changed
+    const ac = new AbortController(), t = setTimeout(() => ac.abort(), 2500);
+    const up = await fetch(askBase() + '/ask/', { method: 'HEAD', signal: ac.signal }).then(r => r.ok, () => false);
+    clearTimeout(t);
+    if (!up) { console.warn('chiron ask: unreachable', url); toast('Chiedi needs the library computer — ' + askBase() + ' not reachable'); return; }
+    fr.src = url; fr.dataset.src = url;
+  }
+  document.getElementById('askov').classList.add('open');
+}
+function closeAsk() { document.getElementById('askov').classList.remove('open'); }
+document.querySelectorAll('#drawer [data-studio]').forEach(b => b.onclick = () => { drawer(false);
+  if (TAURI && b.dataset.studio === '/ask/') openAsk(); else openStudio(b.dataset.studio); });
 
 /* ---------- generate wizard ---------- */
 const DEPTHS = { medicine: [['', 'Auto'], ['primer', 'Primer'], ['atlas', 'Atlas'], ['systematic', 'Systematic'], ['drug', 'Drug'], ['amboss', 'AMBOSS']],
