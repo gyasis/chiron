@@ -72,11 +72,13 @@ def resolve_model(model_id: str | None) -> dict:
     """Entry for a picker id; pre-discovery ids (qwen_local...) keep working; unknown -> the default."""
     refresh_models()
     mid = local_models.LEGACY_IDS.get(model_id or "", model_id or DEFAULT_MODEL)
-    return MODELS.get(mid) or MODELS[DEFAULT_MODEL]
+    # A local default may be missing when the governor is down: fall back, never KeyError.
+    return MODELS.get(mid) or MODELS.get(DEFAULT_MODEL) or MODELS["gemma4"]
 DEFAULT_MODEL = os.environ.get("TUTOR_DEFAULT_MODEL", "gemma4")
 # gemini-3-flash-preview (retired 2026-07-15) and deepseek-v4-flash (retired 2026-09-25) were dead rungs here.
 CLASSIFY_SPEC = os.environ.get("TUTOR_CLASSIFY", "cloud:deepseek-flash@latest")
-FALLBACKS = ["cloud:glm-flash@latest", "cloud:gemma4:31b", "gemini", "cloud:deepseek-flash@latest"]
+FALLBACKS = [s.strip() for s in os.environ.get(
+    "TUTOR_FALLBACKS", "cloud:glm-flash@latest,cloud:gemma4:31b,gemini,cloud:deepseek-flash@latest").split(",") if s.strip()]
 
 DEEP = re.compile(r"\b(why|how does|how do|mechanism|pathophysiolog|differential|compare|contrast|"
                   r"cause|etiolog|treat|treatment|manage|management|first.line|dose|deeper|in depth|"

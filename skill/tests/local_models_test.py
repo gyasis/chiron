@@ -168,7 +168,12 @@ class Registry(Base):
             mo.refresh_examiners()
             self.assertIn("gemma4", mo.EXAMINERS)
             self.assertTrue(mo.EXAMINERS["local:ornith-1.5-9b:latest"]["local"])
-            self.assertEqual(mo.DEFAULT_EXAMINER, "gemma4")
+            self.assertEqual(mo.default_examiner(), "gemma4")
+            # A local default is accepted once discovery has run (it was rejected at import before).
+            with mock.patch.object(mo, "_DEFAULT_WANTED", "local:ornith-1.5-9b:latest"):
+                self.assertEqual(mo.default_examiner(), "local:ornith-1.5-9b:latest")
+            with mock.patch.object(mo, "_DEFAULT_WANTED", "local:not-installed:1b"):
+                self.assertEqual(mo.default_examiner(), "gemma4")
 
 
 if __name__ == "__main__":
