@@ -299,7 +299,8 @@ async function libReachable() {
   clearTimeout(t); REACH = { ok, ts: Date.now() }; return ok;
 }
 function offlineSrc(slug) { const o = OFFLINE[slug]; const base = isAndroid ? 'http://lesson.localhost/' : 'lesson://localhost/'; return base + o.id + '/' + o.entry; }
-function lessonSrc(l, slug, up) { return (up || !OFFLINE[slug]) ? LIB + '/lessons/' + l.id + '/lesson.html' : offlineSrc(slug); }
+// ?inapp=1 tells the in-lesson web tutor to stay hidden: the app has its own tutor panel.
+function lessonSrc(l, slug, up) { return (up || !OFFLINE[slug]) ? LIB + '/lessons/' + l.id + '/lesson.html?inapp=1' : offlineSrc(slug); }
 async function openLesson(slug) {
   const l = LESSONS.find(x => slugOf(x.id) === slug) || { id: slug, title: slug, clips: 0 };
   const up = await libReachable();
