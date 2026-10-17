@@ -15,6 +15,25 @@
    ─────────────────────────────────────────────────────────────────────── */
 (function () {
   'use strict';
+
+  /* Tutor backend base URL. A lesson served from the library box (:8911) reaches the tutor at the same
+     host on :8912 (the original behaviour). A lesson served from the phone app's offline origin
+     (lesson.localhost) has no tutor on its own host, so the base is configurable, first match wins:
+       window.CHIRON_TUTOR_BASE  ·  ?tutor=http://host:8912  ·  localStorage chiron.tutor  ·
+       localStorage chiron.lib (its hostname + :8912)  ·  location.hostname + :8912 (default). */
+  function tutorBase() {
+    var b = '';
+    try { b = window.CHIRON_TUTOR_BASE || ''; } catch (e) {}
+    if (!b) { try { b = new URLSearchParams(location.search).get('tutor') || ''; } catch (e) {} }
+    if (!b) { try { b = localStorage.getItem('chiron.tutor') || ''; } catch (e) {} }
+    if (!b) {
+      try {
+        var lib = localStorage.getItem('chiron.lib');
+        if (lib) b = 'http://' + new URL(lib).hostname + ':8912';
+      } catch (e) { console.warn('chiron tutor: bad chiron.lib', e); }
+    }
+    return (b || ('http://' + location.hostname + ':8912')).replace(/\/+$/, '');
+  }
   if (window.__chironTutorLoaded) return;
   window.__chironTutorLoaded = true;
 
@@ -131,7 +150,7 @@
 
   function loadModels() {
     populateModels(FALLBACK_MODELS); // render immediately — no flash of empty select
-    fetch('http://' + location.hostname + ':8912/tutor-models')
+    fetch(tutorBase() + '/tutor-models')
       .then(function (r) { return r.ok ? r.json() : null; })
       .then(function (data) {
         if (!data || !data.models || !data.models.length) return;
@@ -615,7 +634,7 @@
 
   function fetchTestedQuestions(concepts) {
     if (!testedOn || !concepts || !concepts.length) return;
-    fetch('http://' + location.hostname + ':8912/related', {
+    fetch(tutorBase() + '/related', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ concepts: concepts, k: 6 })
@@ -1162,7 +1181,7 @@
     msgs.appendChild(wrap);
     msgs.scrollTop = msgs.scrollHeight;
     renderImageLoading(wrap, concept);
-    fetch('http://' + location.hostname + ':8912/images?q=' + encodeURIComponent(concept) + '&k=8')
+    fetch(tutorBase() + '/images?q=' + encodeURIComponent(concept) + '&k=8')
       .then(function (r) { return r.ok ? r.json() : null; })
       .then(function (data) { renderImageResults(wrap, concept, (data && data.images) || []); })
       .catch(function () { renderImageResults(wrap, concept, []); });
@@ -1823,12 +1842,14 @@
     loadingBub.classList.remove('ct-loading');
     loadingBub.innerHTML = mdToHtml(reply);
     typesetMath(loadingBub);
-    if (data && data.grounded) {
-      var g = document.createElement('span');
-      g.className = 'ct-grounded';
-      g.textContent = typeof data.grounded === 'string' ? data.grounded : '✓ grounded';
-      loadingBub.appendChild(g);
-    }
+    // Where the answer came from. Fields are top-level on /tutor-chat and on the SSE final event;
+    // both transports (and the poll path, which only narrates status) end in this function.
+    var src = (data && data.source) || (data && data.mode === 'ita' ? 'page' : '');
+    var lab = src === 'page' ? (data.grounded ? '📄 dalla lezione' : '📄 risposta generale')
+      : src === 'textbook' ? "📚 Harrison's" : src === 'web' ? '🌐 web' : src === 'agent' ? '🔎 agente' : '';
+    if (!lab) { lab = '❔ fonte sconosciuta'; console.warn('chiron tutor: answer without a known source', data); }
+    var g = document.createElement('span'); g.className = 'ct-grounded'; g.setAttribute('data-src', src || 'unknown'); g.textContent = lab;
+    loadingBub.appendChild(g);
     messages.push({ role: 'assistant', content: reply });
     attachAnswerStar(loadingBub, reply, lastQuestion);
     renderSuggestions(suggestOn && data ? data.suggestions : null);
@@ -1848,7 +1869,7 @@
   /* ── transport A: SSE (/tutor-stream) — default ──────────────────── */
   function sendStream(payload, loadingBub, statusRefs) {
     var finished = false;
-    fetch('http://' + location.hostname + ':8912/tutor-stream', {
+    fetch(tutorBase() + '/tutor-stream', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
@@ -1896,7 +1917,7 @@
     var rid = 'r' + Date.now() + Math.random().toString(36).slice(2);
     payload.rid = rid;
     var pollTimer = setInterval(function () {
-      fetch('http://' + location.hostname + ':8912/tutor-status/' + rid)
+      fetch(tutorBase() + '/tutor-status/' + rid)
         .then(function (r) { return r.ok ? r.json() : null; })
         .then(function (data) {
           if (!data || !data.events || !data.events.length) return;
@@ -1906,7 +1927,7 @@
         .catch(function () {});
     }, 700);
 
-    fetch('http://' + location.hostname + ':8912/tutor-chat', {
+    fetch(tutorBase() + '/tutor-chat', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
