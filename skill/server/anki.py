@@ -11,16 +11,20 @@ cannot be written the card is not shown at all (see `reachable`).
 
 WHERE IT LIVES
 --------------
-AnkiConnect runs inside the Anki app on the MacBook, bound to the LAN
-(`webBindAddress: 0.0.0.0`). It answers only while Anki is open, which is why
-`reachable()` is a first-class part of this module rather than an afterthought.
+AnkiConnect runs inside the Anki app, bound to the LAN (`webBindAddress:
+0.0.0.0`). It answers only while Anki is open, which is why `reachable()` is a
+first-class part of this module rather than an afterthought.
 
-The default host here is deliberately LOCAL. This repo is public, so the real
-LAN address is supplied by CHIRON_ANKI_URL (see ~/.chiron/anki.env) and never
-committed.
+Anki now lives on the ALWAYS-ON Mac Studio (`192.168.0.159:9876` — 8765 there is
+kokoro TTS), with the MacBook (`192.168.0.225:8765`) as a FALLBACK. Both run the
+same collection and the same AnkiConnect apiKey, so Chiron tries them in order
+and uses whichever is up. The repo is public, so the real LAN addresses are
+supplied by the environment (see ~/.chiron/anki.env) and never committed.
 
-    CHIRON_ANKI_URL   default http://127.0.0.1:8765
-    CHIRON_ANKI_KEY   optional; AnkiConnect's apiKey, if one is configured
+    CHIRON_ANKI_URLS  comma-separated hosts, primary first (Studio,MacBook).
+                      Falls back to CHIRON_ANKI_URL, then localhost.
+    CHIRON_ANKI_URL   single host (back-compat); used if CHIRON_ANKI_URLS unset.
+    CHIRON_ANKI_KEY   AnkiConnect's apiKey (shared across hosts), if configured.
 """
 from __future__ import annotations
 
@@ -30,7 +34,23 @@ import re
 import urllib.error
 import urllib.request
 
-URL = os.environ.get("CHIRON_ANKI_URL", "http://127.0.0.1:8765").rstrip("/")
+
+def _hosts() -> list[str]:
+    """Candidate AnkiConnect hosts, primary first. Deduped, trailing / stripped."""
+    raw = os.environ.get("CHIRON_ANKI_URLS") or os.environ.get("CHIRON_ANKI_URL") \
+        or "http://127.0.0.1:8765"
+    seen, out = set(), []
+    for u in raw.split(","):
+        u = u.strip().rstrip("/")
+        if u and u not in seen:
+            seen.add(u)
+            out.append(u)
+    return out
+
+
+HOSTS = _hosts()
+_active = HOSTS[0]
+URL = _active                      # the host in use; updated sticky on failover
 KEY = os.environ.get("CHIRON_ANKI_KEY") or None
 TIMEOUT = float(os.environ.get("CHIRON_ANKI_TIMEOUT", 8))
 
@@ -44,29 +64,62 @@ class AnkiUnavailable(RuntimeError):
     """Anki is closed, asleep, or unreachable. Never studied through."""
 
 
-def invoke(action: str, **params):
+def _post(url: str, action: str, params: dict):
+    """One AnkiConnect call to one host. Raises AnkiUnavailable only on a
+    transport failure (host down / closed), so the caller can fail over."""
     body = {"action": action, "version": 6, "params": params}
     if KEY:
         body["key"] = KEY
     req = urllib.request.Request(
-        URL, data=json.dumps(body).encode(), headers={"Content-Type": "application/json"}
+        url, data=json.dumps(body).encode(), headers={"Content-Type": "application/json"}
     )
     try:
         with urllib.request.urlopen(req, timeout=TIMEOUT) as r:
-            out = json.loads(r.read())
+            return json.loads(r.read())
     except (urllib.error.URLError, OSError, TimeoutError) as e:
         raise AnkiUnavailable(f"{type(e).__name__}: {e}") from e
-    if out.get("error"):
-        raise RuntimeError(f"anki: {out['error']}")
-    return out.get("result")
+
+
+def invoke(action: str, **params):
+    """Call AnkiConnect, failing over across HOSTS (Studio → MacBook).
+
+    The active host is tried first and is sticky: once a fallback answers, it
+    stays the active one so we don't pay a dead-host timeout on every later
+    call. A transport error moves to the next host; an AnkiConnect *error*
+    (a real reply) is raised as-is — it is not a reason to fail over.
+    """
+    global _active, URL
+    order = [_active] + [u for u in HOSTS if u != _active]
+    last: Exception | None = None
+    for url in order:
+        try:
+            out = _post(url, action, params)
+        except AnkiUnavailable as e:
+            last = e
+            continue
+        if url != _active:                 # a fallback answered — make it sticky
+            _active = URL = url
+        if out.get("error"):
+            raise RuntimeError(f"anki: {out['error']}")
+        return out.get("result")
+    raise last or AnkiUnavailable("no Anki host reachable")
+
+
+def active_host() -> str | None:
+    """Which host is currently answering (probes in order), or None if all down."""
+    global _active, URL
+    for url in [_active] + [u for u in HOSTS if u != _active]:
+        try:
+            if not _post(url, "version", {}).get("error"):
+                _active = URL = url
+                return url
+        except AnkiUnavailable:
+            continue
+    return None
 
 
 def reachable() -> bool:
-    try:
-        invoke("version")
-        return True
-    except Exception:
-        return False
+    return active_host() is not None
 
 
 # ── reading ────────────────────────────────────────────────────────────────
