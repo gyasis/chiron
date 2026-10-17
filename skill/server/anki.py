@@ -17,9 +17,10 @@ first-class part of this module rather than an afterthought.
 
 Anki now lives on the ALWAYS-ON Mac Studio (`192.168.0.159:9876` — 8765 there is
 kokoro TTS), with the MacBook (`192.168.0.225:8765`) as a FALLBACK. Both run the
-same collection and the same AnkiConnect apiKey, so Chiron tries them in order
-and uses whichever is up. The repo is public, so the real LAN addresses are
-supplied by the environment (see ~/.chiron/anki.env) and never committed.
+same collection and the same AnkiConnect apiKey. READS fail over to the
+MacBook when the Studio cannot be reached; WRITES never do (see `call`). The
+repo is public, so the real LAN addresses are supplied by the environment (see
+~/.chiron/anki.env) and never committed.
 
     CHIRON_ANKI_URLS  comma-separated hosts, primary first (Studio,MacBook).
                       Falls back to CHIRON_ANKI_URL, then localhost.
@@ -28,11 +29,15 @@ supplied by the environment (see ~/.chiron/anki.env) and never committed.
 """
 from __future__ import annotations
 
+import http.client
 import json
+import logging
 import os
 import re
-import urllib.error
-import urllib.request
+import time
+import urllib.parse
+
+log = logging.getLogger("chiron.anki")
 
 
 def _hosts() -> list[str]:
@@ -49,10 +54,21 @@ def _hosts() -> list[str]:
 
 
 HOSTS = _hosts()
-_active = HOSTS[0]
-URL = _active                      # the host in use; updated sticky on failover
+URL = HOSTS[0]                     # the host that answered last (informational only)
 KEY = os.environ.get("CHIRON_ANKI_KEY") or None
 TIMEOUT = float(os.environ.get("CHIRON_ANKI_TIMEOUT", 8))
+CONNECT_TIMEOUT = 5.0              # a LAN connect takes milliseconds; longer means the host is gone
+PRIMARY_RETRY_S = 30.0             # after the primary refuses a connect, reads skip it this long
+
+# Actions that only READ the collection. Only these may be served by a fallback
+# host: the MacBook copy is a second collection, so a write sent there (a
+# review, a tag) diverges from the Studio and is lost or conflicts at the next
+# sync. Anything not listed — including any action added later — is a write.
+READ_ONLY = frozenset({
+    "version", "deckNames", "deckNamesAndIds", "findNotes", "findCards", "notesInfo",
+    "cardsInfo", "canAddNotes", "modelNames", "modelFieldNames", "retrieveMediaFile",
+    "getTags", "getDeckConfig", "areDue", "getIntervals", "getNumCardsReviewedToday",
+})
 
 # Anki embeds media as [sound:file.mp3] inside a field rather than in a field of
 # its own, so the text and the audio have to be separated before either is used.
@@ -64,54 +80,108 @@ class AnkiUnavailable(RuntimeError):
     """Anki is closed, asleep, or unreachable. Never studied through."""
 
 
-def _post(url: str, action: str, params: dict):
-    """One AnkiConnect call to one host. Raises AnkiUnavailable only on a
-    transport failure (host down / closed), so the caller can fail over."""
+class AnkiNoReply(AnkiUnavailable):
+    """The host accepted the connection but sent no complete reply in time (a big
+    notesInfo, a busy Anki, a reset). The host is UP, so this is never a reason to
+    fail over — and for a write the outcome is unknown: it may have applied."""
+
+
+_primary_down_until = 0.0
+
+
+def host_label(url: str) -> str:
+    """Name of a host for clients: the primary is the Studio, the next the MacBook."""
+    i = HOSTS.index(url) if url in HOSTS else -1
+    return {0: "studio", 1: "macbook"}.get(i, f"fallback{i}")
+
+
+def _post(url: str, action: str, params: dict, timeout: float | None = None):
+    """One AnkiConnect call to one host.
+
+    Raises AnkiUnavailable only when the CONNECTION fails (refused, unreachable,
+    DNS, connect timeout) — nothing was sent, so trying another host is safe.
+    Once connected, any failure (read timeout, reset) is AnkiNoReply: the request
+    may already be running in Anki."""
+    timeout = TIMEOUT if timeout is None else timeout
     body = {"action": action, "version": 6, "params": params}
     if KEY:
         body["key"] = KEY
-    req = urllib.request.Request(
-        url, data=json.dumps(body).encode(), headers={"Content-Type": "application/json"}
-    )
+    u = urllib.parse.urlsplit(url)
+    cls = http.client.HTTPSConnection if u.scheme == "https" else http.client.HTTPConnection
+    conn = cls(u.hostname, u.port, timeout=min(timeout, CONNECT_TIMEOUT))
     try:
-        with urllib.request.urlopen(req, timeout=TIMEOUT) as r:
-            return json.loads(r.read())
-    except (urllib.error.URLError, OSError, TimeoutError) as e:
-        raise AnkiUnavailable(f"{type(e).__name__}: {e}") from e
+        try:
+            conn.connect()
+        except OSError as e:               # ConnectionRefused, gaierror, EHOSTUNREACH, timeout
+            raise AnkiUnavailable(f"{type(e).__name__}: {e}") from e
+        conn.sock.settimeout(timeout)
+        try:
+            conn.request("POST", u.path or "/", body=json.dumps(body).encode(),
+                         headers={"Content-Type": "application/json"})
+            raw = conn.getresponse().read()
+        except (OSError, http.client.HTTPException) as e:
+            raise AnkiNoReply(f"{host_label(url)} took the request but gave no reply within "
+                              f"{timeout:g}s ({type(e).__name__}: {e})") from e
+    finally:
+        conn.close()
+    return json.loads(raw)
 
 
-def invoke(action: str, **params):
-    """Call AnkiConnect, failing over across HOSTS (Studio → MacBook).
+def call(action: str, params: dict | None = None, timeout: float | None = None):
+    """Call AnkiConnect and return (result, url of the host that answered).
 
-    The active host is tried first and is sticky: once a fallback answers, it
-    stays the active one so we don't pay a dead-host timeout on every later
-    call. A transport error moves to the next host; an AnkiConnect *error*
-    (a real reply) is raised as-is — it is not a reason to fail over.
+    The primary (Studio) is tried first on every call — failover is not sticky.
+    Only a READ_ONLY action whose connection to the primary failed moves on to a
+    fallback; after such a failure the primary is skipped (tried last) for
+    PRIMARY_RETRY_S so a dead Studio does not cost a connect timeout per read.
+    Writes go to the primary or raise. A reply that is an AnkiConnect *error*
+    is raised as-is — it is not a reason to fail over.
     """
-    global _active, URL
-    order = [_active] + [u for u in HOSTS if u != _active]
+    global _primary_down_until, URL
+    params = params or {}
+    primary = HOSTS[0]
+    if action in READ_ONLY:
+        order = list(HOSTS)
+        if len(order) > 1 and time.monotonic() < _primary_down_until:
+            order = order[1:] + [primary]
+    else:
+        order = [primary]
     last: Exception | None = None
     for url in order:
         try:
-            out = _post(url, action, params)
+            out = _post(url, action, params, timeout)
+        except AnkiNoReply:
+            raise
         except AnkiUnavailable as e:
             last = e
+            if url == primary:
+                _primary_down_until = time.monotonic() + PRIMARY_RETRY_S
             continue
-        if url != _active:                 # a fallback answered — make it sticky
-            _active = URL = url
+        if url == primary:
+            _primary_down_until = 0.0
+        else:
+            log.warning("anki: %s served by FALLBACK %s (primary unreachable: %s)",
+                        action, host_label(url), last)
+        URL = url
         if out.get("error"):
             raise RuntimeError(f"anki: {out['error']}")
-        return out.get("result")
+        return out.get("result"), url
+    if action not in READ_ONLY and len(HOSTS) > 1:
+        raise AnkiUnavailable(f"{host_label(primary)} unreachable ({last}); {action} is a write "
+                              f"and is never sent to a fallback host")
     raise last or AnkiUnavailable("no Anki host reachable")
 
 
+def invoke(action: str, **params):
+    """AnkiConnect `action` with the failover rules of `call`; returns the result."""
+    return call(action, params)[0]
+
+
 def active_host() -> str | None:
-    """Which host is currently answering (probes in order), or None if all down."""
-    global _active, URL
-    for url in [_active] + [u for u in HOSTS if u != _active]:
+    """Which host is answering now (probes in order, primary first), or None if all down."""
+    for url in HOSTS:
         try:
             if not _post(url, "version", {}).get("error"):
-                _active = URL = url
                 return url
         except AnkiUnavailable:
             continue

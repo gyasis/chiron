@@ -2255,7 +2255,7 @@ app.include_router(pool.router)
 @app.middleware("http")
 async def _pool_private_network(request, call_next):
     resp = await call_next(request)
-    if request.url.path.startswith(("/api/pool", "/api/anki")):
+    if request.url.path.startswith("/api/pool"):
         resp.headers["Access-Control-Allow-Private-Network"] = "true"
     return resp
 
@@ -2492,14 +2492,73 @@ async def cards_media(filename: str):
 
 # ── AnkiConnect proxy for browser/phone clients (Match Madness) ──────────────
 # AnkiConnect demands an apiKey, and that key must never reach a browser or the
-# public repos. Clients post {action, params} here; anki.invoke adds the key and
-# fails over across CHIRON_ANKI_URLS. Only the actions those clients use pass.
-# The reply keeps AnkiConnect's {result, error} shape plus `via`, so a client can
-# tell this proxy from a bare AnkiConnect (which would answer "api key" errors).
+# public repos. Clients post {action, params} here; anki.call adds the key. Reads
+# may fail over to the MacBook; writes only ever go to the Studio (anki.call).
+# Only the actions those clients use pass. The reply keeps AnkiConnect's
+# {result, error} shape plus `via` (so a client can tell this proxy from a bare
+# AnkiConnect) and `host` (which copy answered: "studio" or "macbook").
 ANKI_PROXY_ACTIONS = {
     "version", "deckNames", "createDeck", "canAddNotes", "addNotes", "findNotes",
     "findCards", "notesInfo", "cardsInfo", "addTags", "removeTags", "answerCards",
 }
+ANKI_PROXY_TIMEOUT = 60.0      # the app allows 45-60 s for a deck-sized notesInfo/cardsInfo
+ANKI_PROXY_TIMEOUT_MAX = 90.0  # cap on the client's `timeoutMs` hint
+
+# The rest of this server is CORS `*` (it is the library app's backend). This
+# route WRITES to the Anki collection, so browsers may only reach it from the
+# Match Madness app (Tauri webview origins, plus its loopback dev server) or
+# from a page this server itself serves (same host:port). A request with no
+# Origin — curl, a script, anything not a browser — is not a CORS question and
+# passes, exactly as /cards/answer does.
+ANKI_PROXY_ORIGINS = frozenset({
+    "http://tauri.localhost", "https://tauri.localhost", "tauri://localhost",
+    "http://127.0.0.1:7152", "http://localhost:7152",
+})
+
+
+def _anki_origin_ok(request) -> bool | None:
+    """True = allowed browser origin, None = no Origin (not a browser), False = refuse."""
+    origin = request.headers.get("origin")
+    if origin is None:
+        return None
+    if origin in ANKI_PROXY_ORIGINS:
+        return True
+    from urllib.parse import urlsplit
+    return urlsplit(origin).netloc.lower() == (request.headers.get("host") or "").lower() != ""
+
+
+@app.middleware("http")
+async def _anki_proxy_cors(request, call_next):
+    """Owns CORS for /api/anki/*. Registered after CORSMiddleware, so it runs OUTSIDE
+    it: a preflight is answered here, and the `*` headers the global middleware puts
+    on a response are replaced. A refused origin never reaches the route at all —
+    a text/plain POST needs no preflight, so the browser's own check is not enough."""
+    if not request.url.path.startswith("/api/anki/"):
+        return await call_next(request)
+    ok = _anki_origin_ok(request)
+    if ok is False:
+        print(f"[anki-proxy] refused origin {request.headers.get('origin')!r}", file=sys.stderr, flush=True)
+        return Response(json.dumps({"result": None, "error": "origin not allowed", "via": "chiron"}),
+                        status_code=403, media_type="application/json")
+    if request.method == "OPTIONS" and "access-control-request-method" in request.headers:
+        resp = Response(status_code=204)
+    else:
+        resp = await call_next(request)
+        for k in [k for k in resp.headers.keys() if k.lower().startswith("access-control-")]:
+            del resp.headers[k]
+    if ok:
+        resp.headers["Access-Control-Allow-Origin"] = request.headers["origin"]
+        resp.headers["Access-Control-Allow-Methods"] = "POST, OPTIONS"
+        resp.headers["Access-Control-Allow-Headers"] = "Content-Type"
+        resp.headers["Access-Control-Allow-Private-Network"] = "true"
+        resp.headers["Access-Control-Max-Age"] = "600"
+        resp.headers["Vary"] = "Origin"
+    return resp
+
+
+def _anki_reply(status: int, error: str, host: str | None = None) -> Response:
+    return Response(json.dumps({"result": None, "error": error, "via": "chiron", "host": host}),
+                    status_code=status, media_type="application/json")
 
 
 @app.post("/api/anki/connect")
@@ -2510,24 +2569,33 @@ async def anki_connect(request: Request):
     except Exception:
         req = None
     if not isinstance(req, dict):
-        return Response(json.dumps({"result": None, "error": "JSON object required", "via": "chiron"}),
-                        status_code=400, media_type="application/json")
+        return _anki_reply(400, "JSON object required")
     action, params = req.get("action"), req.get("params") or {}
-    if action not in ANKI_PROXY_ACTIONS or not isinstance(params, dict):
-        return Response(json.dumps({"result": None, "error": f"action not allowed: {action}", "via": "chiron"}),
-                        status_code=403, media_type="application/json")
+    if not isinstance(action, str) or not isinstance(params, dict):
+        return _anki_reply(400, "action must be a string and params an object")
+    if action not in ANKI_PROXY_ACTIONS:
+        return _anki_reply(403, f"action not allowed: {action}")
+    # Finish just inside the client's own deadline so it gets this error, not an abort.
+    timeout = ANKI_PROXY_TIMEOUT
+    hint = req.get("timeoutMs")
+    if isinstance(hint, (int, float)) and not isinstance(hint, bool) and hint > 0:
+        timeout = max(1.0, min(ANKI_PROXY_TIMEOUT_MAX, hint / 1000 - 1))
     try:
-        result = await asyncio.to_thread(anki.invoke, action, **params)
-        return {"result": result, "error": None, "via": "chiron"}
+        result, url = await asyncio.to_thread(anki.call, action, params, timeout)
+        return {"result": result, "error": None, "via": "chiron", "host": anki.host_label(url)}
+    except anki.AnkiNoReply as e:
+        print(f"[anki-proxy] {action}: no reply: {e}", file=sys.stderr, flush=True)
+        what = ("it may have applied — check Anki before retrying" if action not in anki.READ_ONLY
+                else "try again")
+        return _anki_reply(504, f"Anki did not answer in time ({e}); {what}")
     except anki.AnkiUnavailable as e:
         print(f"[anki-proxy] {action}: Anki unreachable: {e}", file=sys.stderr, flush=True)
-        return Response(json.dumps({"result": None, "error": f"Anki unreachable: {e}", "via": "chiron"}),
-                        status_code=503, media_type="application/json")
+        return _anki_reply(503, f"Anki unreachable: {e}")
     except Exception as e:
-        # anki.invoke raises RuntimeError("anki: <AnkiConnect error>") for a real reply.
+        # anki.call raises RuntimeError("anki: <AnkiConnect error>") for a real reply.
         msg = str(e).removeprefix("anki: ")
         print(f"[anki-proxy] {action}: {msg}", file=sys.stderr, flush=True)
-        return {"result": None, "error": msg, "via": "chiron"}
+        return {"result": None, "error": msg, "via": "chiron", "host": None}
 
 
 @app.post("/ask/search")
