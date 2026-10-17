@@ -75,12 +75,14 @@ def llm_json(system: str, user: str, stage: str) -> dict:
         tried.append(f"gateway {GATEWAY_MODEL}: {type(e).__name__}: {e}"[:320])
         _log(stage, "FAILED " + tried[-1])
     key = os.environ.get("OLLAMA_API_KEY", "")
-    if not key:
-        raise HTTPException(503, "language model unavailable: " + " | ".join(tried) + " | OLLAMA_API_KEY not set")
-    for k, ex in mock_oral.EXAMINERS.items():
+    mock_oral.refresh_examiners()
+    for k in mock_oral.fallback_chain(mock_oral.default_examiner(), mock_oral.EXAMINERS):
+        ex = mock_oral.EXAMINERS[k]
         t = time.time()
         try:
-            text, usage = mock_oral._ollama(ex["model"], system, user, key)
+            if not key and not ex.get("local"):
+                raise RuntimeError("OLLAMA_API_KEY not set")
+            text, usage = mock_oral._ollama(ex["model"], system, user, key, ex.get("local", False))
             out = mock_oral.parse_json(text)
             _log(stage, f"{ex['model']} ok {time.time() - t:.1f}s thinking_chars={usage['thinking_chars']}")
             return out
