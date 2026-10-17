@@ -2245,6 +2245,20 @@ app.include_router(mock_oral.router)
 import sessione  # noqa: E402
 app.include_router(sessione.router)
 
+# Pool: words missed in Match Madness -> audio-only listening drills (/ascolto + /api/pool/*).
+# CORS is already allow-all above (the phone app's origin is http://tauri.localhost); Chromium's Private Network
+# Access preflight additionally wants this header when a non-LAN origin calls a LAN address.
+import pool  # noqa: E402
+app.include_router(pool.router)
+
+
+@app.middleware("http")
+async def _pool_private_network(request, call_next):
+    resp = await call_next(request)
+    if request.url.path.startswith("/api/pool"):
+        resp.headers["Access-Control-Allow-Private-Network"] = "true"
+    return resp
+
 
 @app.get("/lessons/{slug}/lesson.html", response_class=HTMLResponse)
 def _lesson_with_tutor(slug: str):

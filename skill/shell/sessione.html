@@ -2,6 +2,7 @@
 <html lang="it"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Chiron · Sessione</title>
 <meta name="theme-color" content="#1e3a5f">
+<script>try{if(new URLSearchParams(location.search).get('mode')==='pool')location.replace('/ascolto'+location.search);}catch(e){}</script>
 <script>try{var _t=localStorage.getItem('chiron.theme');if(_t)document.documentElement.setAttribute('data-theme',_t);}catch(e){}</script>
 <style>
 :root{
@@ -30,7 +31,7 @@ header{display:flex;align-items:center;gap:10px;padding:14px 0 8px}
 header .mk{width:28px;height:28px;border-radius:8px;background:var(--chiron-accent);color:var(--chiron-surface);display:grid;place-items:center;font-size:14px;font-weight:800;flex:none}
 header h1{font:800 16px var(--font-h);color:var(--chiron-accent);margin:0}
 header small{color:var(--chiron-muted)}
-#theme{margin-left:auto;border:1px solid var(--chiron-border);background:var(--chiron-surface);border-radius:8px;padding:5px 9px}
+#theme{border:1px solid var(--chiron-border);background:var(--chiron-surface);border-radius:8px;padding:5px 9px}
 nav{display:flex;gap:4px;border-bottom:1px solid var(--chiron-border);margin-bottom:14px;overflow-x:auto}
 nav button{border:0;background:none;padding:9px 11px;font-weight:600;color:var(--chiron-muted);white-space:nowrap;border-radius:8px 8px 0 0}
 nav button small{display:block;font-weight:400;font-size:10.5px}
@@ -120,7 +121,7 @@ textarea{min-height:110px;resize:vertical}
 @media(max-width:480px){.face .big,.face .sit{font-size:19px}.btn{padding:9px 11px}}
 </style></head><body>
 <div class="wrap">
-<header><div class="mk">S</div><div><h1>Sessione</h1><small>Studio Anki · esame Ordine</small></div><button id="theme" title="Tema">◐</button></header>
+<header><div class="mk">S</div><div><h1>Sessione</h1><small>Studio Anki · esame Ordine</small></div><a href="/ascolto" class="hint" style="margin-left:auto;margin-right:8px">Parole → frasi</a><button id="theme" title="Tema">◐</button></header>
 <div id="banner"></div>
 <nav id="tabs">
   <button data-t="cerca" class="on">Cerca<small>search</small></button>

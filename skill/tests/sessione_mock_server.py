@@ -6,6 +6,7 @@ from pathlib import Path
 from urllib.parse import urlparse
 
 PAGE = Path(__file__).resolve().parent.parent / "shell" / "sessione.html"
+ASCOLTO = Path(__file__).resolve().parent.parent / "shell" / "ascolto.html"
 PORT = int(sys.argv[1]) if len(sys.argv) > 1 else 8977
 FAIL_ANSWER = {"n": 0}
 
@@ -46,6 +47,9 @@ class H(BaseHTTPRequestHandler):
     def do_GET(self):
         p = urlparse(self.path).path
         if p in ("/sessione", "/sessione.html"): return self.send(200, PAGE.read_bytes(), "text/html; charset=utf-8")
+        if p == "/ascolto": return self.send(200, ASCOLTO.read_bytes(), "text/html; charset=utf-8")
+        if p == "/api/pool/weak":
+            return self.send(200, {"words": [{"it": "ricetta", "en": "prescription / recipe", "wrong": 3, "hesitations": 1}, {"it": "paziente", "en": "patient", "wrong": 1, "hesitations": 2}]})
         if p.startswith("/cards/media/"): return self.send(200, wav(), "audio/wav")
         if p == "/api/sessione/deck":
             return self.send(200, {"cards": [{"cardId": q["cardId"], "deck": "Chiron::Quaderno", "front": q["it"], "back": q["en"], "audio": "q.mp3"} for q in QUAD]})
@@ -55,6 +59,14 @@ class H(BaseHTTPRequestHandler):
     def do_POST(self):
         p = urlparse(self.path).path
         body = json.loads(self.rfile.read(int(self.headers.get("content-length", 0)) or 0) or b"{}")
+        if p in ("/api/pool/gather", "/api/pool/more"):
+            w = (body.get("word") or (body.get("words") or [{}])[0]); w = {"it": w.get("it", "ricetta"), "en": w.get("en") or "prescription", "audio": "w.mp3"}
+            ss = [{"id": f"{w['it']}{i}", "it": f"Il medico scrive la {w['it']} per il paziente numero {i}.", "en": f"The doctor writes the {w['en']} for patient number {i}.",
+                   "audio": "s.mp3", "source": "baby" if i == 1 else "anki", "label": "Baby S01E02" if i == 1 else "Anki · Neri's Sentences",
+                   "deck": "Chiron::Pool" if i == 1 else "Neri's Sentences (Read)", "cardId": 400 + i, "noteId": 40 + i, "match": "exact",
+                   **({"clip": {"slug": "chiron-baby-s01e02", "start": 12.0, "end": 15.0, "path": "chiron-library/lessons/chiron-baby-s01e02/episode.mp4"}} if i == 1 else {})}
+                  for i in range(1, 4)]
+            return self.send(200, {"items": [{"word": w, "sentences": ss, "sources": {}, "short": 0}]} if p.endswith("gather") else {"word": w, "sentences": ss[:2], "sources": {}, "short": 0})
         if p == "/api/sessione/search": return self.send(200, {"cards": CARDS})
         if p == "/api/sessione/tag": return self.send(200, {"ok": True, "tagged": len(body.get("cardIds", []))})
         if p == "/api/sessione/produce": time.sleep(2); return self.send(200, {"items": PROD, "anki": {"added": 2, "duplicates": 0, "deck": "Chiron::Produzione"}})
