@@ -2,7 +2,7 @@
 
 Method: Jeremiah "How to Learn Words FAST" — audio-only front, grade on comprehension only, listen-loop.
 
-    POST /api/pool/weak    {device, words:[{it,en,wrong,hesitations,seen,mastered,flavour}]}  merge into state/pool/weak.json
+    POST /api/pool/weak    {device, batch, words:[{it,en,wrong,hesitations,seen,mastered,flavour}]}  ADD deltas into state/pool/weak.json; a repeated batch id is a no-op
     GET  /api/pool/weak    ?limit=                 ranked by wrong*2+hesitations desc, recent first, mastered excluded
     POST /api/pool/gather  {words:[{it,en?}], cap=5, dry?}     -> {items:[{word:{it,en,audio}, sentences:[...], sources, short}]}
     POST /api/pool/more    {word:{it,en?}, add=5}              the next batch for one word, never repeating
@@ -215,19 +215,30 @@ def _source_label(tags: list[str], deck: str, note_text: str) -> tuple[str, str]
 CLIP_RE = re.compile(r"clip=([\w.-]+)\|([\d.]+)\|([\d.]+)")
 
 
+def pick_audio_card(cards: list[dict], audio: str) -> dict | None:
+    """The card whose question side plays the audio. Cards come sorted by ord.
+    A "Basic (and reversed card)" note with Italian on the Back asks with audio on ord 1, not ord 0.
+    No question shows the audio: use the lowest ord."""
+    for c in cards:
+        q = c.get("question") or ""
+        if "[sound:" in q or (audio and audio in q):
+            return c
+    return cards[0] if cards else None
+
+
 def finish_anki(cands: list[dict], word: str, tag: bool) -> list[dict]:
     """Attach cardId + deck, tag the notes, shape for the API."""
     if not cands:
         return []
     nids = [c["noteId"] for c in cands]
     cards = anki.invoke("cardsInfo", cards=anki.invoke("findCards", query="nid:" + ",".join(map(str, nids)))) or []
-    first = {}
+    by_note: dict[int, list[dict]] = {}
     for c in sorted(cards, key=lambda c: c.get("ord", 0)):
-        first.setdefault(int(c["note"]), c)
+        by_note.setdefault(int(c["note"]), []).append(c)
     notes = {int(n["noteId"]): n for n in (anki.invoke("notesInfo", notes=nids) or []) if n}
     out = []
     for c in cands:
-        card = first.get(c["noteId"])
+        card = pick_audio_card(by_note.get(c["noteId"], []), c["audio"])
         if not card:
             continue
         note_text = _val(notes.get(c["noteId"], {}), "Note")
@@ -447,25 +458,47 @@ def _save(p: Path, d: dict) -> None:
     tmp.replace(p)
 
 
-def merge_weak(device: str, words: list[dict]) -> dict:
+BATCH_KEEP = 500
+
+
+def _batches_file() -> Path:
+    return WEAK_F.with_name(WEAK_F.stem + ".batches.json")
+
+
+def merge_weak(device: str, words: list[dict], batch: str | None = None) -> dict:
+    """Add one session's per-word DELTAS to the stored counters.
+    A repeated `batch` id is a no-op. Only a word with wrong>0 or hesitations>0 creates an entry.
+    Any delta updates an existing entry. `mastered:true` removes the word from the ranking."""
     now = time.time()
     n = 0
     with _lock:
+        ids = []
+        if batch:
+            ids = _load(_batches_file()).get("ids", [])
+            if batch in ids:
+                _log("weak", f"duplicate batch {batch}")
+                return {"ok": True, "stored": 0, "duplicate": True}
         store = _load(WEAK_F)
         for w in words or []:
             it = str((w or {}).get("it") or "").strip()
             if not it:
                 continue
-            old = store.get(slug(it), {})
+            wrong, hes, seen = (max(0, int(w.get(k) or 0)) for k in ("wrong", "hesitations", "seen"))
+            old = store.get(slug(it))
+            if old is None and not (wrong or hes):
+                continue                                  # a clean word is not a weak word
+            old = old or {}
             store[slug(it)] = {
                 "it": it, "en": str(w.get("en") or old.get("en") or ""),
-                "wrong": int(w.get("wrong") or 0), "hesitations": int(w.get("hesitations") or 0),
-                "seen": int(w.get("seen") or 0), "mastered": bool(w.get("mastered")),
+                "wrong": old.get("wrong", 0) + wrong, "hesitations": old.get("hesitations", 0) + hes,
+                "seen": old.get("seen", 0) + seen, "mastered": bool(w["mastered"]) if "mastered" in w else bool(old.get("mastered")),
                 "flavour": str(w.get("flavour") or old.get("flavour") or ""),
                 "device": device or old.get("device", ""), "last_seen": now,
             }
             n += 1
         _save(WEAK_F, store)
+        if batch:
+            _save(_batches_file(), {"ids": (ids + [batch])[-BATCH_KEEP:]})
     return {"ok": True, "stored": n}
 
 
@@ -596,7 +629,8 @@ def page():
 def api_weak_post(b: dict):
     if not isinstance(b.get("words"), list):
         raise HTTPException(400, "words must be a list")
-    return sessione._guard("pool-weak", merge_weak, str(b.get("device") or ""), b["words"])
+    return sessione._guard("pool-weak", merge_weak, str(b.get("device") or ""), b["words"],
+                             str(b["batch"]) if b.get("batch") else None)
 
 
 @router.get("/api/pool/weak")

@@ -47,6 +47,23 @@ class FieldMap(unittest.TestCase):
         self.assertEqual(x["audio"], "f.mp3")
 
 
+class PickCard(unittest.TestCase):
+    def cards(self, q0, q1):
+        return [{"ord": 0, "cardId": 10, "note": 1, "question": q0}, {"ord": 1, "cardId": 11, "note": 1, "question": q1}]
+
+    def test_audio_on_front_picks_ord0(self):
+        c = P.pick_audio_card(self.cards("Da quanto abiti qui? [sound:d.mp3]", "How long?"), "d.mp3")
+        self.assertEqual(c["cardId"], 10)
+
+    def test_pimsleur_audio_on_back_picks_ord1(self):
+        c = P.pick_audio_card(self.cards("Do you think it works?", "Pensa che funzioni? [sound:e.mp3]"), "e.mp3")
+        self.assertEqual(c["cardId"], 11)
+
+    def test_no_question_info_falls_back_to_lowest_ord(self):
+        self.assertEqual(P.pick_audio_card(self.cards("", ""), "e.mp3")["cardId"], 10)
+        self.assertIsNone(P.pick_audio_card([], "e.mp3"))
+
+
 class Matching(unittest.TestCase):
     def test_whole_word_not_substring(self):
         self.assertEqual(P.match_kind("consenso", "Il consenso deve essere libero."), "exact")
@@ -87,11 +104,39 @@ class Weak(unittest.TestCase):
 
     def test_rank_merge_exclude_mastered(self):
         P.merge_weak("phone", [{"it": "ricetta", "wrong": 1, "hesitations": 1}, {"it": "paziente", "wrong": 3},
-                               {"it": "farmaco", "wrong": 9, "mastered": True}, {"it": "dolore", "wrong": 0, "hesitations": 2}])
+                               {"it": "farmaco", "wrong": 9, "mastered": True}, {"it": "dolore", "wrong": 0, "hesitations": 2},
+                               {"it": "pulita", "wrong": 0, "seen": 4}])
         self.assertEqual([w["it"] for w in P.weak_ranked()], ["paziente", "ricetta", "dolore"])   # 6, 3, 2
+        self.assertNotIn("pulita", P._load(P.WEAK_F))          # a clean word creates no entry
         self.assertEqual(P.merge_weak("phone", [{"it": "dolore", "wrong": 5, "en": "pain"}, {"it": " "}])["stored"], 1)
         top = P.weak_ranked(1)[0]
-        self.assertEqual((top["it"], top["en"], top["device"]), ("dolore", "pain", "phone"))
+        self.assertEqual((top["it"], top["en"], top["device"], top["hesitations"]), ("dolore", "pain", "phone", 2))
+
+    def test_deltas_accumulate_clean_pass_keeps_misses(self):
+        P.merge_weak("d", [{"it": "uno", "wrong": 3, "seen": 3}], batch="b1")
+        P.merge_weak("d", [{"it": "uno", "wrong": 0, "hesitations": 0, "seen": 5}], batch="b2")
+        P.merge_weak("d", [{"it": "uno", "wrong": 1, "hesitations": 2, "seen": 1}], batch="b3")
+        w = P._load(P.WEAK_F)["uno"]
+        self.assertEqual((w["wrong"], w["hesitations"], w["seen"]), (4, 2, 9))
+
+    def test_duplicate_batch_is_noop(self):
+        self.assertEqual(P.merge_weak("d", [{"it": "uno", "wrong": 2}], batch="x")["stored"], 1)
+        r = P.merge_weak("d", [{"it": "uno", "wrong": 2}], batch="x")
+        self.assertEqual(r, {"ok": True, "stored": 0, "duplicate": True})
+        self.assertEqual(P._load(P.WEAK_F)["uno"]["wrong"], 2)
+        P.merge_weak("d", [{"it": "uno", "wrong": 1}])             # no batch id (old client) still merges
+        self.assertEqual(P._load(P.WEAK_F)["uno"]["wrong"], 3)
+
+    def test_batch_ids_bounded(self):
+        for i in range(P.BATCH_KEEP + 20):
+            P.merge_weak("d", [{"it": "uno", "wrong": 1}], batch=f"b{i}")
+        ids = P._load(P._batches_file())["ids"]
+        self.assertEqual((len(ids), ids[-1]), (P.BATCH_KEEP, f"b{P.BATCH_KEEP + 19}"))
+
+    def test_mastered_flag_excludes_existing(self):
+        P.merge_weak("d", [{"it": "uno", "wrong": 2}])
+        P.merge_weak("d", [{"it": "uno", "mastered": True}])
+        self.assertEqual(P.weak_ranked(), [])
 
     def test_ties_recent_first(self):
         with mock.patch.object(P.time, "time", return_value=100.0):
