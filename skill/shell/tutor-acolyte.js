@@ -54,6 +54,8 @@ function token() {
 }
 
 (async function () {
+  // Inside the Chiron phone app the app's own tutor panel is used; skip this one (as shell/tutor.js does).
+  if (/[?&]inapp=1\b/.test(location.search)) return;
   const HOST = location.hostname || '127.0.0.1';
   const TUTOR = `http://${HOST}:8912`;
 

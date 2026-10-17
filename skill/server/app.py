@@ -23,7 +23,7 @@ from pathlib import Path
 import httpx
 from fastapi import FastAPI, File, HTTPException, Request, Response, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import HTMLResponse
+from fastapi.responses import FileResponse, HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
@@ -2279,6 +2279,24 @@ def _lesson_with_tutor(slug: str):
         rep = f'<script src="/shell/select-report.js?v={rv}" defer></script>'
         html = html.replace("</body>", rep + "</body>", 1) if "</body>" in html else html + rep
     return HTMLResponse(html)
+
+
+# The acolyte tutor adapter is COPIED into each lesson dir (scripts/deploy-lesson-tutor.mjs), so a fix to it
+# would otherwise need every copy redeployed. Streamed lessons get the canonical shell/ copy instead.
+def _acolyte_adapter(slug: str, name: str, media_type: str):
+    if not (GEN / slug / name).exists():
+        raise HTTPException(404, "not found")
+    return FileResponse(SKILL / "shell" / name, media_type=media_type)
+
+
+@app.get("/lessons/{slug}/tutor-acolyte.css")
+def _lesson_acolyte_css(slug: str):
+    return _acolyte_adapter(slug, "tutor-acolyte.css", "text/css")
+
+
+@app.get("/lessons/{slug}/tutor-acolyte.js")
+def _lesson_acolyte_js(slug: str):
+    return _acolyte_adapter(slug, "tutor-acolyte.js", "text/javascript")
 
 
 # ── Chiron · Ask (tier 1 of the acolyte model, PRD §8) ────────────────────────
