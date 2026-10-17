@@ -1,0 +1,15 @@
+[package]
+name = "tauri-plugin-chiron-llm"
+version = "0.1.0"
+description = "Chiron on-device tutor: LiteRT-LM (Gemma 4 E2B) + offline Android STT/TTS"
+edition = "2021"
+rust-version = "1.77.2"
+links = "tauri-plugin-chiron-llm"
+
+[dependencies]
+tauri = "2"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+
+[build-dependencies]
+tauri-plugin = { version = "2", features = ["build"] }

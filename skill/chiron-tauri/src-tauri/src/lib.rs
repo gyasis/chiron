@@ -164,6 +164,19 @@ fn server_lessons(url: String) -> Result<serde_json::Value, String> {
     serde_json::from_str(&body).map_err(|e| format!("bad lessons.json: {e}"))
 }
 
+// GET a small JSON document natively (no CORS): the :8910 static server that hosts the on-device model
+// manifest sends no Access-Control-Allow-Origin, so the webview cannot fetch() it.
+#[tauri::command]
+fn fetch_json(url: String) -> Result<serde_json::Value, String> {
+    let body = ureq::get(&url)
+        .timeout(std::time::Duration::from_secs(6))
+        .call()
+        .map_err(|e| format!("fetch {url}: {e}"))?
+        .into_string()
+        .map_err(|e| e.to_string())?;
+    serde_json::from_str(&body).map_err(|e| format!("bad JSON from {url}: {e}"))
+}
+
 // Download a .chiron from the server and import it.
 #[tauri::command]
 fn import_from_server(app: tauri::AppHandle, url: String, file: String) -> Result<Lesson, String> {
@@ -176,12 +189,114 @@ fn import_from_server(app: tauri::AppHandle, url: String, file: String) -> Resul
     import_zip_bytes(&app, bytes)
 }
 
+// ---- on-device tutor grounding: bounded plain text of a SAVED (offline) lesson --------------------------------
+// Mirrors skill/server/tutor_server.py slug_text(): strip markup, keep text blocks (> 25 chars), prefer the
+// blocks that share the most >=4-char words with the question, else the head of the lesson. Bounded: file read
+// capped at 2 MB, result capped at `cap` chars. Returns "" on any miss so the tutor still answers (ungrounded).
+fn strip_blocks(html: &str, tags: &[&str]) -> String {
+    let mut out = html.to_string();
+    for t in tags {
+        loop {
+            let low = out.to_lowercase();
+            let open = format!("<{t}");
+            let close = format!("</{t}>");
+            let Some(a) = low.find(&open) else { break };
+            // `<head` must not match `<header`: require a delimiter after the tag name
+            let after = low[a + open.len()..].chars().next().unwrap_or(' ');
+            if !(after == '>' || after == ' ' || after == '\n' || after == '\t' || after == '/') {
+                // skip this false match by blanking the '<' and re-scanning
+                out.replace_range(a..a + 1, " ");
+                continue;
+            }
+            let end = low[a..].find(&close).map(|e| a + e + close.len()).unwrap_or(out.len());
+            out.replace_range(a..end, " ");
+        }
+    }
+    out
+}
+
+fn words4(s: &str) -> std::collections::HashSet<String> {
+    s.to_lowercase()
+        .split(|c: char| !c.is_alphanumeric() && c != '_')
+        .filter(|w| w.chars().count() >= 4)
+        .map(|w| w.to_string())
+        .collect()
+}
+
+#[tauri::command]
+fn lesson_text(app: tauri::AppHandle, id: String, entry: String, question: Option<String>, cap: Option<usize>) -> Result<String, String> {
+    let ok_id = !id.is_empty() && id.chars().all(|c| c.is_ascii_alphanumeric() || c == '_' || c == '-' || c == '.') && !id.contains("..");
+    if !ok_id || entry.contains("..") || entry.starts_with('/') {
+        return Err("lesson_text: bad id/entry".into());
+    }
+    let cap = cap.unwrap_or(2000).clamp(200, 6000);
+    let path = lessons_dir(&app).join(&id).join(&entry);
+    let mut raw = Vec::new();
+    fs::File::open(&path)
+        .map_err(|e| format!("lesson_text: open {}: {e}", path.display()))?
+        .take(2_000_000)
+        .read_to_end(&mut raw)
+        .map_err(|e| e.to_string())?;
+    let html = strip_blocks(&String::from_utf8_lossy(&raw), &["script", "style", "svg", "head"]);
+    let mut txt = String::with_capacity(html.len());
+    let (mut in_tag, mut tag) = (false, String::new());
+    for c in html.chars() {
+        if in_tag {
+            if c == '>' {
+                in_tag = false;
+                let t = tag.trim_start_matches('/').split(|x: char| !x.is_ascii_alphanumeric()).next().unwrap_or("").to_lowercase();
+                if matches!(t.as_str(), "p" | "div" | "li" | "h1" | "h2" | "h3" | "h4" | "h5" | "h6" | "tr" | "section" | "article" | "br") {
+                    txt.push('\n');
+                } else {
+                    txt.push(' ');
+                }
+                tag.clear();
+            } else if tag.len() < 24 {
+                tag.push(c);
+            }
+        } else if c == '<' {
+            in_tag = true;
+        } else {
+            txt.push(c);
+        }
+    }
+    let txt = txt.replace("&nbsp;", " ").replace("&lt;", "<").replace("&gt;", ">").replace("&quot;", "\"").replace("&#39;", "'").replace("&amp;", "&");
+    let blocks: Vec<String> = txt
+        .split('\n')
+        .map(|b| b.split_whitespace().collect::<Vec<_>>().join(" "))
+        .filter(|b| b.chars().count() > 25)
+        .collect();
+    if blocks.is_empty() {
+        return Ok(String::new());
+    }
+    let qw = words4(question.as_deref().unwrap_or(""));
+    if !qw.is_empty() {
+        let mut scored: Vec<(usize, usize)> = blocks.iter().enumerate().map(|(i, b)| (i, qw.intersection(&words4(b)).count())).collect();
+        scored.sort_by(|a, b| b.1.cmp(&a.1).then(a.0.cmp(&b.0)));
+        let (mut pick, mut used) = (Vec::new(), 0usize);
+        for (i, sc) in scored {
+            if sc == 0 || used >= cap {
+                break;
+            }
+            pick.push(i);
+            used += blocks[i].chars().count() + 1;
+        }
+        if !pick.is_empty() {
+            pick.sort();
+            let joined = pick.iter().map(|&i| blocks[i].chars().take(900).collect::<String>()).collect::<Vec<_>>().join("\n");
+            return Ok(joined.chars().take(cap).collect());
+        }
+    }
+    Ok(blocks.join("\n").chars().take(cap).collect())
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_opener::init())
+        .plugin(tauri_plugin_chiron_llm::init())   // on-device tutor (Veloce) + offline STT/TTS (Android only)
         .setup(|app| {
             if cfg!(debug_assertions) {
                 app.handle().plugin(
@@ -244,7 +359,9 @@ pub fn run() {
             import_lesson,
             delete_lesson,
             server_lessons,
-            import_from_server
+            import_from_server,
+            lesson_text,
+            fetch_json
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

@@ -1,0 +1,13 @@
+# Automatically generated - DO NOT EDIT!
+
+"$schema" = "../../schemas/schema.json"
+
+[[permission]]
+identifier = "allow-llm-download-cancel"
+description = "Enables the llm_download_cancel command without any pre-configured scope."
+commands.allow = ["llm_download_cancel"]
+
+[[permission]]
+identifier = "deny-llm-download-cancel"
+description = "Denies the llm_download_cancel command without any pre-configured scope."
+commands.deny = ["llm_download_cancel"]

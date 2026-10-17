@@ -1,0 +1,7 @@
+[default]
+description = "Chiron on-device tutor (LiteRT-LM) and offline voice: all commands."
+permissions = [
+  "allow-llm-status", "allow-llm-download", "allow-llm-download-cancel", "allow-llm-load",
+  "allow-llm-generate", "allow-llm-cancel", "allow-llm-unload", "allow-llm-delete",
+  "allow-voice-status", "allow-stt-listen", "allow-stt-stop", "allow-tts-speak", "allow-tts-stop",
+]

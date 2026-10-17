@@ -1,0 +1,13 @@
+# Automatically generated - DO NOT EDIT!
+
+"$schema" = "../../schemas/schema.json"
+
+[[permission]]
+identifier = "allow-llm-delete"
+description = "Enables the llm_delete command without any pre-configured scope."
+commands.allow = ["llm_delete"]
+
+[[permission]]
+identifier = "deny-llm-delete"
+description = "Denies the llm_delete command without any pre-configured scope."
+commands.deny = ["llm_delete"]

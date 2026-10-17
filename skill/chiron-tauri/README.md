@@ -60,6 +60,21 @@ The phone covers the web library + tutor extras over the same chiron-server rout
 - **Audio** — bake one / batch / all with engine choice + cost estimate (`/bake*`); lesson ⋯ menu: regenerate, corpus status.
 The https hub (`chiron-https-serve`) only proxies some of these routes; on the plain-http LAN address all of them work.
 
+## ⚡ Veloce — on-device tutor (plugin `chiron-llm`)
+`src-tauri/plugins/tauri-plugin-chiron-llm` (Rust shim + Kotlin `LlmPlugin`) runs **Gemma 4 E2B (`.litertlm`) on the phone**
+with Google **LiteRT-LM** (`com.google.ai.edge.litertlm:litertlm-android:0.18.0`, GPU first, CPU fallback). The Engine is
+loaded once and kept; each question is a fresh Conversation (thinking OFF). Logcat tag `ChironLLM`.
+- Commands (`window.__TAURI__.core.invoke('plugin:chiron-llm|<cmd>')`): `llm_status`, `llm_download` (Channel progress,
+  resumable HTTP Range → `<file>.part`, sha256, atomic rename), `llm_download_cancel`, `llm_load`, `llm_generate` (Channel
+  tokens), `llm_cancel`, `llm_unload`, `llm_delete`; voice: `voice_status`, `stt_listen`/`stt_stop` (SpeechRecognizer, it-IT/en-US,
+  prefers on-device, partial results), `tts_speak`/`tts_stop` (TextToSpeech).
+- Model file: `<getExternalFilesDir>/gemma-4-E2B-it.litertlm` (`/sdcard/Android/data/com.gyasi.chiron/files/`; `adb push` works for a dev loop).
+- Hosting: the Razer serves `~/Documents/generated/models/` on :8910 (`gemma-4-E2B-it.litertlm` + `manifest.json`
+  `{name,file,size,sha256}`). The app reads `http://<LIB host>:8910/models/manifest.json`; override in localStorage `chiron.llm.url`
+  (the ✎ Indirizzo button on the download card).
+- Grounding: `GET :8912/lesson-text/<slug>?q=&cap=&t=&scene=` (tutor_server) for streamed lessons; the `lesson_text` Rust command
+  for saved copies. Panel: `mobile/tutor-panel.js` (⚡ Veloce / 🧠 Approfondita switch, download card, "🧠 Chiedi meglio").
+
 ## Roadmap
 - Read `chiron.json` (chiron/1 manifest) for title/domain instead of scraping `<title>`.
 - Register `.chiron` as an Android file association (intent-filter) so tapping a
