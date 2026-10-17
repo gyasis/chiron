@@ -428,17 +428,23 @@
   const llmRun = args => { const r = llmQ.then(() => PLUG('llm_generate', args)); llmQ = r.catch(() => {}); return r; };
   // Double tap on a Veloce bubble shows its translation (IT -> EN, EN -> IT). Translated in the background after the
   // answer, so the tap is instant; a tap before that waits for it. Same 320-token runaway guard as FAST_MAX_TOKENS.
+  // Revealing it also has Lucrezia read it aloud (her English voice for English, see /api/oral/say); 🔊 replays it.
   function addTranslation(el, text) {
     const to = guessLang(text) === 'it' ? 'inglese' : 'italiano';
     const tr = document.createElement('div'); tr.className = 'tp-tr'; tr.hidden = true; tr.textContent = '↔ traduco…'; el.appendChild(tr);
+    let out = '';
     const job = llmRun({ system: 'Traduci in ' + to + ' il testo dell’utente. Rispondi solo con la traduzione.', prompt: text, maxTokens: FAST_MAX_TOKENS, onEvent: newChannel(() => {}) })
-      .then(r => { tr.innerHTML = '↔ ' + md(((r && r.text) || '').trim() || '(traduzione vuota)'); })
+      .then(r => {
+        out = ((r && r.text) || '').trim();
+        tr.innerHTML = '↔ ' + md(out || '(traduzione vuota)') + (out ? '<button class="tp-say">🔊 Ascolta</button>' : '');
+        const b = tr.querySelector('.tp-say'); if (b) b.onclick = () => { unlockAudio(); speak(out); };
+      })
       .catch(e => { warn('translate', e); tr.textContent = '↔ traduzione non riuscita'; });
     let last = 0;
     el.addEventListener('pointerup', ev => {
       if (ev.target.closest('button')) return;
       const now = Date.now();
-      if (now - last < 350) { tr.hidden = !tr.hidden; last = 0; if (!tr.hidden) job.then(() => { msgsEl.scrollTop = Math.max(msgsEl.scrollTop, tr.offsetTop + tr.offsetHeight - msgsEl.clientHeight + 8); }); }
+      if (now - last < 350) { tr.hidden = !tr.hidden; last = 0; if (tr.hidden) stopSpeaking(); else { unlockAudio(); job.then(() => { if (!tr.hidden && out) speak(out); }); } if (!tr.hidden) job.then(() => { msgsEl.scrollTop = Math.max(msgsEl.scrollTop, tr.offsetTop + tr.offsetHeight - msgsEl.clientHeight + 8); }); }
       else last = now;
     });
   }
