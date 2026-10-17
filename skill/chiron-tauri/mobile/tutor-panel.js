@@ -110,6 +110,8 @@
 .tp-card .tp-cb{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
 .tp-card .tp-cb button{border:none;border-radius:99px;background:var(--accent);color:#fff;font-family:var(--fh);font-weight:800;font-size:13.5px;padding:11px 16px}
 .tp-card .tp-cb button.sec{background:var(--surface);color:var(--accent)}
+.tp-tr{margin-top:8px;padding-top:8px;border-top:1px dashed var(--muted);color:var(--muted);font-size:.95em}
+.tp-tr[hidden]{display:none}
 .tp-badge-fast{display:inline-block;margin:6px 8px 0 0;font-family:var(--fh);font-weight:700;font-size:11.5px;color:var(--accent);background:var(--surface);border-radius:99px;padding:3px 10px}
 .tp-caret{opacity:.5;animation:tppulse 1s steps(2) infinite}
 .tp-mic.rec.ph{background:#1f7a4d}
@@ -421,6 +423,25 @@
   const manifestUrl = () => llmUrl().replace(/[^/]*$/, 'manifest.json');
   const phoneVoiceOn = () => !!PLUG && llmAvail !== false && (macDown || (mode === 'fast' && voiceSrc === 'phone'));
   const mb = n => (n / 1048576).toFixed(n >= 1e9 ? 0 : 1) + ' MB';
+  // One engine, one generation at a time: answers and translations queue behind each other.
+  let llmQ = Promise.resolve();
+  const llmRun = args => { const r = llmQ.then(() => PLUG('llm_generate', args)); llmQ = r.catch(() => {}); return r; };
+  // Double tap on a Veloce bubble shows its translation (IT -> EN, EN -> IT). Translated in the background after the
+  // answer, so the tap is instant; a tap before that waits for it. Same 320-token runaway guard as FAST_MAX_TOKENS.
+  function addTranslation(el, text) {
+    const to = guessLang(text) === 'it' ? 'inglese' : 'italiano';
+    const tr = document.createElement('div'); tr.className = 'tp-tr'; tr.hidden = true; tr.textContent = '↔ traduco…'; el.appendChild(tr);
+    const job = llmRun({ system: 'Traduci in ' + to + ' il testo dell’utente. Rispondi solo con la traduzione.', prompt: text, maxTokens: FAST_MAX_TOKENS, onEvent: newChannel(() => {}) })
+      .then(r => { tr.innerHTML = '↔ ' + md(((r && r.text) || '').trim() || '(traduzione vuota)'); })
+      .catch(e => { warn('translate', e); tr.textContent = '↔ traduzione non riuscita'; });
+    let last = 0;
+    el.addEventListener('pointerup', ev => {
+      if (ev.target.closest('button')) return;
+      const now = Date.now();
+      if (now - last < 350) { tr.hidden = !tr.hidden; last = 0; if (!tr.hidden) job.then(() => { msgsEl.scrollTop = Math.max(msgsEl.scrollTop, tr.offsetTop + tr.offsetHeight - msgsEl.clientHeight + 8); }); }
+      else last = now;
+    });
+  }
   async function fetchT(url, ms, opt) { const ac = new AbortController(), t = setTimeout(() => ac.abort(), ms); try { return await fetch(url, Object.assign({ signal: ac.signal }, opt || {})); } finally { clearTimeout(t); } }
 
   async function fastInit() {       // probe the plugin once: absent on desktop/web (and on a build without it) -> no Veloce UI
@@ -531,7 +552,7 @@
     busy = true; sendBtn.disabled = true; unlockAudio(); stopSpeaking(true);
     if (hlOpen) { hlOpen = false; paintHl(); }
     textEl.value = ''; textEl.style.height = 'auto';
-    history.push({ role: 'user', content: text }); if (!o.reask) addMsg('u', esc(text));
+    history.push({ role: 'user', content: text }); const uEl = o.reask ? null : addMsg('u', esc(text));
     const stEl = addMsg('st', '<span class="spinc"></span><span class="stt">⚡ Preparo…</span><button class="tp-chip" id="tp-fx" style="margin-left:8px">⏹ Interrompi</button>');
     const setSt = t => { const x = stEl.querySelector('.stt'); if (x) x.textContent = t; };
     stEl.querySelector('#tp-fx').onclick = () => { PLUG('llm_cancel').catch(() => {}); };
@@ -549,7 +570,7 @@
       setSt('⚡ Lucrezia sta rispondendo…');
       const paint = cursor => { if (!box) { stEl.remove(); box = addMsg('a', ''); } box.innerHTML = md(acc) + (cursor ? '<span class="tp-caret">▍</span>' : ''); msgsEl.scrollTop = msgsEl.scrollHeight; };
       const ch = newChannel(ev => { if (ev.type === 'token') { acc += ev.text; if (!raf) raf = requestAnimationFrame(() => { raf = 0; paint(true); }); } });
-      const res = await PLUG('llm_generate', { system: FAST_SYS, prompt, maxTokens: FAST_MAX_TOKENS, onEvent: ch });
+      const res = await llmRun({ system: FAST_SYS, prompt, maxTokens: FAST_MAX_TOKENS, onEvent: ch });
       if (raf) cancelAnimationFrame(raf);
       acc = (res && res.text) || acc;
       if (!acc.trim()) throw new Error('il modello non ha prodotto testo' + (res && res.cancelled ? ' (interrotto)' : ''));
@@ -558,7 +579,9 @@
       history.push({ role: 'assistant', content: acc });
       box.insertAdjacentHTML('beforeend', '<div class="tp-badge-fast" data-src="phone">⚡ sul telefono · ' + String(res.backend || llmSt.backend || '').toUpperCase() + ' · ' + (res.total_ms / 1000).toFixed(1) + ' s</div>'
         + (ctx.src ? '<div class="tp-src" data-src="ctx">' + (ctx.src === 'selezione' ? '✎ dalla selezione' : '📄 dalla ' + ctx.src) + '</div>' : '<div class="tp-src">❔ senza contesto</div>')
-        + '<button class="tp-say">🔊 Ascolta</button><div class="tp-tools"><button data-t="better">🧠 Chiedi meglio</button></div>');
+        + '<button class="tp-say">🔊 Ascolta</button><div class="tp-tools"><button data-t="better">🧠 Chiedi meglio</button></div>'
+        + '<div class="tp-src">👆👆 doppio tocco: traduzione</div>');
+      addTranslation(box, acc); if (uEl) addTranslation(uEl, text);
       box.querySelector('.tp-say').onclick = () => { unlockAudio(); speak(acc); };
       box.querySelector('[data-t="better"]').onclick = () => { history.splice(-2); ask(text, { deep: true, reask: true }); };
       if (speakOn) speak(acc);
