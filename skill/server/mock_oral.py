@@ -152,14 +152,30 @@ def _ollama(model: str, system: str, user: str, key: str, local: bool = False) -
     return msg.get("content") or "", usage
 
 
+MAX_ATTEMPTS = 4
+
+
+def fallback_chain(first: str, examiners: dict, fallbacks: str | None = None) -> list[str]:
+    """Picked examiner, then the local entries of TUTOR_FALLBACKS, then cloud last. At most MAX_ATTEMPTS.
+    TUTOR_FALLBACKS names `governor:<tag>` (or `local:<tag>`). Both map to examiner id `local:<tag>`."""
+    raw = os.environ.get("TUTOR_FALLBACKS", "") if fallbacks is None else fallbacks
+    order = [first]
+    for spec in (s.strip() for s in raw.split(",")):
+        if spec.startswith(("governor:", "local:")):
+            eid = "local:" + spec.split(":", 1)[1]
+            if eid in examiners and eid not in order:
+                order.append(eid)
+    order += [k for k in _CLOUD_EXAMINERS if k not in order]
+    return order[:MAX_ATTEMPTS]
+
+
 def examine(b: dict) -> dict:
     key = os.environ.get("OLLAMA_API_KEY", "")
     refresh_examiners()
     first = b.get("examiner") if b.get("examiner") in EXAMINERS else default_examiner()
     if not key and not EXAMINERS[first].get("local"):
         raise HTTPException(503, "OLLAMA_API_KEY is not set in the server's environment")
-    # fallback order: the picked one, then the CLOUD examiners (verified) — not all ~40 local tags
-    order = [first] + [k for k in _CLOUD_EXAMINERS if k != first]
+    order = fallback_chain(first, EXAMINERS)
     user, tried = _examiner_prompt(b), []
     for k in order:
         t = time.time()

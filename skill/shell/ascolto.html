@@ -124,6 +124,7 @@ textarea{min-height:110px;resize:vertical}
 .front{display:grid;gap:22px;justify-items:center;padding:56px 0 40px}
 .front .ear{font-size:64px;line-height:1}
 .front .acts .btn{padding:14px 22px;font-size:17px}
+.btn.big{padding:20px 36px;font-size:22px;min-width:220px}
 .dot{width:9px;height:9px;border-radius:50%;background:var(--chiron-accent);animation:pl 1s ease-in-out infinite}
 @keyframes pl{50%{opacity:.25}}
 .pair{display:grid;gap:2px}.pair .it{font:600 24px/1.3 var(--font-h);overflow-wrap:anywhere}.pair .en{color:var(--chiron-fg-secondary);font-size:16px}
@@ -164,19 +165,26 @@ async function api(path,body){
 const setBanner=m=>{$('#banner').innerHTML=m?`<div class="err">${esc(m)}</div>`:'';};
 const GR=[['Non ho capito','again','1'],['A fatica','hard','2'],['Capito','good','3'],['Capito subito','easy','4']];
 const PAUSE=600,LOOPGAP=1500;
-const Q={items:[],i:0,res:[],revealed:false,loading:false,waiting:false,tok:0,audio:null,timer:null,loop:true,cap:5};
+let unlocked=false;   // set by the first tap or key: browsers refuse audio.play() before one
+['pointerdown','keydown','touchend'].forEach(ev=>addEventListener(ev,()=>{unlocked=true;},true));
+const Q={blocked:false,items:[],i:0,res:[],revealed:false,loading:false,waiting:false,tok:0,audio:null,timer:null,loop:true,cap:5};
 try{Q.loop=localStorage.getItem('chiron.ascolto.loop')!=='0'}catch(e){}
 
 // ---------- audio: word, pause, sentence (loops until revealed) ----------
 function stopAudio(){Q.tok++;clearTimeout(Q.timer);if(Q.audio){Q.audio.onended=Q.audio.onerror=null;Q.audio.pause();Q.audio=null;}}
-function playFile(f,tok){return new Promise(res=>{if(!f||tok!==Q.tok)return res();const a=new Audio(media(f));Q.audio=a;a.onended=a.onerror=()=>res();a.play().catch(()=>res());});}
+function playFile(f,tok){return new Promise(res=>{if(!f||tok!==Q.tok||Q.blocked)return res();const a=new Audio(media(f));Q.audio=a;a.onended=a.onerror=()=>res();
+  a.play().catch(()=>{if(tok!==Q.tok)return res();Q.blocked=true;tapNeeded();res();});});}
+// play() was refused: show a visible retry button. Never continue silently.
+function tapNeeded(){const slot=$('#tapslot');if(!slot)return;
+  slot.innerHTML='<button class="btn pri big" id="tap">🔊 Tocca per ascoltare</button>';
+  $('#tap').onclick=()=>{Q.blocked=false;unlocked=true;slot.innerHTML='';if(Q.revealed)replay();else listen();};}
 const wait=ms=>new Promise(r=>{Q.timer=setTimeout(r,ms);});
 async function listen(){
   stopAudio();const tok=Q.tok,c=Q.items[Q.i];if(!c)return;
   do{
-    await playFile(c.word.audio,tok);if(tok!==Q.tok)return;
+    await playFile(c.word.audio,tok);if(tok!==Q.tok||Q.blocked)return;
     await wait(PAUSE);if(tok!==Q.tok)return;
-    await playFile(c.s.audio,tok);if(tok!==Q.tok)return;
+    await playFile(c.s.audio,tok);if(tok!==Q.tok||Q.blocked)return;
     if(!Q.loop||Q.revealed)return;
     await wait(LOOPGAP);
   }while(tok===Q.tok&&Q.loop&&!Q.revealed);
@@ -197,7 +205,7 @@ function keyH(e){
 function replay(){const c=Q.items[Q.i];if(!c)return;
   if(Q.revealed){stopAudio();const tok=Q.tok;playFile(c.word.audio,tok).then(()=>wait(PAUSE)).then(()=>playFile(c.s.audio,tok));}else listen();}
 function renderCard(){
-  stopAudio();Q.revealed=false;Q.waiting=false;
+  stopAudio();Q.revealed=false;Q.waiting=false;Q.blocked=false;
   const n=Q.items.length;
   if(Q.i>=n){
     if(Q.loading){Q.waiting=true;$('#drill').innerHTML=`<div class="dh"><button class="x" id="dx">✕</button></div><div class="spin"><i></i><span>Preparo altre frasi…</span></div>`;$('#dx').onclick=()=>{closeDrill();summary(true)};return;}
@@ -207,13 +215,16 @@ function renderCard(){
   $('#drill').innerHTML=`<div class="dh">${Q.loading?'<span class="dot"></span>':''}<button class="x" id="dx" title="Chiudi">✕</button></div>
     <div class="bar"><i style="width:${Q.i/Math.max(n,1)*100}%"></i></div>
     <div class="front"><div class="ear" aria-hidden="true">🎧</div>
+      <div id="tapslot">${unlocked?'':'<button class="btn pri big" id="start">▶ Inizia</button>'}</div>
       <div class="acts"><button class="btn" id="rp">🔁 Riascolta</button><button class="btn pri" id="rv">Mostra</button></div>
       <div class="acts"><button class="btn tog" id="lp" aria-pressed="${Q.loop}">↻ Ripeti in loop</button></div></div>
     <div class="hint" style="text-align:center">spazio = riascolta · invio = mostra</div>`;
   $('#dx').onclick=()=>{closeDrill();summary(true)};
   $('#rp').onclick=replay;$('#rv').onclick=reveal;
   $('#lp').onclick=e=>{Q.loop=!Q.loop;try{localStorage.setItem('chiron.ascolto.loop',Q.loop?'1':'0')}catch(x){}e.target.setAttribute('aria-pressed',Q.loop);if(Q.loop&&!Q.revealed)listen();};
-  listen();
+  const st=$('#start');
+  if(st)st.onclick=()=>{unlocked=true;st.remove();listen();};   // first audio only after a tap
+  else listen();
 }
 function reveal(){
   if(Q.revealed)return;Q.revealed=true;stopAudio();
@@ -226,7 +237,7 @@ function reveal(){
       <div class="pair"><div class="it">${esc(s.it)}</div><div class="en">${esc(s.en)}</div></div>
       <div class="src">${esc(s.label||s.source)}${s.deck?' · '+esc(s.deck.replace(/^.*::/,'')):''}</div>
       <div class="acts"><button class="btn" id="rp">🔊 Riascolta</button><button class="btn" id="more">+ Altre frasi per «${esc(w.it)}»</button></div>
-      ${clip}<div id="mst" class="hint"></div>
+      <div id="tapslot"></div>${clip}<div id="mst" class="hint"></div>
     </div>
     <div class="wstate" id="ws"></div>
     <div class="grades" id="gr">${GR.map(([t,,k])=>`<button data-g="${k}">${t}<small>${k}</small></button>`).join('')}</div>
@@ -234,7 +245,9 @@ function reveal(){
   $('#dx').onclick=()=>{closeDrill();summary(true)};
   $('#rp').onclick=replay;$('#more').onclick=()=>more(c);
   $$('#gr button').forEach((b,k)=>b.onclick=()=>grade(k));
-  if(clip)$('#clipb').onclick=()=>{const u=location.protocol+'//'+location.hostname+':8910/'+s.clip.path+'#t='+s.clip.start+','+s.clip.end;
+  if(clip)$('#clipb').onclick=()=>{const sp='#t='+s.clip.start+','+s.clip.end;
+    // hub (https :8943): same-origin /lessons/<slug>/ has Range support; plain :8910 has none and is mixed content on https
+    const u=location.port==='8943'?'/lessons/'+encodeURIComponent(s.clip.slug)+'/episode.mp4'+sp:location.protocol+'//'+location.hostname+':8910/'+s.clip.path+sp;
     $('#clipv').innerHTML=`<video class="clip" src="${esc(u)}" controls playsinline autoplay></video>`;};
 }
 async function more(c){

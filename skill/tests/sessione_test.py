@@ -163,5 +163,26 @@ class Produce(unittest.TestCase):
         self.assertEqual(c.exception.status_code, 503)
 
 
+class LlmJsonChain(unittest.TestCase):
+    def test_local_tags_go_local_chain_capped(self):
+        import mock_oral as mo
+        ex = {"local:a:1": {"model": "a:1", "local": True}, "local:b:2": {"model": "b:2", "local": True},
+              "local:c:3": {"model": "c:3", "local": True}, "gemma4": {"model": "g", "local": False},
+              "deepseek": {"model": "d", "local": False}}
+        calls = []
+
+        def fake(model, system, user, key, local=False):
+            calls.append((model, local))
+            raise RuntimeError("down")
+        env = {"TUTOR_FALLBACKS": "governor:b:2,governor:c:3", "OLLAMA_API_KEY": "k"}
+        with mock.patch.dict(mo.EXAMINERS, ex, clear=True), mock.patch.object(mo, "refresh_examiners"), \
+             mock.patch.object(mo, "default_examiner", return_value="local:a:1"), \
+             mock.patch.object(mo, "_ollama", fake), mock.patch.object(S, "_gateway_json", side_effect=RuntimeError("gw")), \
+             mock.patch.dict(os.environ, env):
+            with self.assertRaises(HTTPException):
+                S.llm_json("s", "u", "t")
+        self.assertEqual(calls, [("a:1", True), ("b:2", True), ("c:3", True), ("g", False)])
+
+
 if __name__ == "__main__":
     unittest.main()
