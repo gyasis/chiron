@@ -2274,6 +2274,10 @@ def _lesson_with_tutor(slug: str):
         sv = int((SKILL / "shell" / "scene-report.js").stat().st_mtime)
         rep = f'<script src="/shell/scene-report.js?v={sv}" defer></script>'
         html = html.replace("</body>", rep + "</body>", 1) if "</body>" in html else html + rep
+    if "select-report.js" not in html:       # phone app: report the learner's text selection out of the cross-origin iframe
+        rv = int((SKILL / "shell" / "select-report.js").stat().st_mtime)
+        rep = f'<script src="/shell/select-report.js?v={rv}" defer></script>'
+        html = html.replace("</body>", rep + "</body>", 1) if "</body>" in html else html + rep
     return HTMLResponse(html)
 
 
