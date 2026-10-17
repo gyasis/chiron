@@ -283,21 +283,35 @@ async function loadLibrary() {
 }
 
 /* ---------- open a lesson (offline lesson:// when installed, else stream from the box) ---------- */
-function lessonSrc(l, slug) {
-  if (OFFLINE[slug]) { const o = OFFLINE[slug]; const base = isAndroid ? 'http://lesson.localhost/' : 'lesson://localhost/'; return base + o.id + '/' + o.entry; }
-  return LIB + '/lessons/' + l.id + '/lesson.html';
+// Lessons STREAM from the library computer by default (always current, and the server injects the tutor);
+// a saved offline copy is only the fallback when the computer is unreachable. Reachability is probed with a
+// ~2 s HEAD and cached for 60 s.
+let REACH = { ok: null, ts: 0 };
+async function libReachable() {
+  if (REACH.ok !== null && Date.now() - REACH.ts < 60000) return REACH.ok;
+  const ac = new AbortController(), t = setTimeout(() => ac.abort(), 2000);
+  let ok = false;
+  try { const r = await fetch(LIB + '/ask/', { method: 'HEAD', signal: ac.signal }); ok = r.ok; }   // a tiny static route served by both :8911 and the hub
+  catch (e) { console.warn('chiron: library unreachable, using offline copies', LIB, e && e.name); }
+  clearTimeout(t); REACH = { ok, ts: Date.now() }; return ok;
 }
-function openLesson(slug) {
+function offlineSrc(slug) { const o = OFFLINE[slug]; const base = isAndroid ? 'http://lesson.localhost/' : 'lesson://localhost/'; return base + o.id + '/' + o.entry; }
+function lessonSrc(l, slug, up) { return (up || !OFFLINE[slug]) ? LIB + '/lessons/' + l.id + '/lesson.html' : offlineSrc(slug); }
+async function openLesson(slug) {
   const l = LESSONS.find(x => slugOf(x.id) === slug) || { id: slug, title: slug, clips: 0 };
+  const up = await libReachable();
+  const streaming = up || !OFFLINE[slug];
   document.getElementById('l-title').textContent = l.title.replace(/^Chiron\s*·\s*/, '');
-  document.getElementById('l-frame').src = lessonSrc(l, slug);
+  const tag = document.getElementById('l-mode');
+  tag.textContent = streaming ? '▶ in streaming' : '📥 offline'; tag.className = 'lmode ' + (streaming ? 'st' : 'off'); tag.style.display = '';
+  document.getElementById('l-frame').src = lessonSrc(l, slug, up);
   document.getElementById('pl-cover').textContent = l.title.replace(/^Chiron\s*·\s*/, '');
   document.getElementById('pl-t').textContent = l.system || l.topic || 'Lesson';
   const r = document.getElementById('l-resume'); const pos = localStorage.getItem('chiron.pos.' + slug);
   r.style.display = pos ? '' : 'none'; if (pos) r.innerHTML = '↩ Continue where you left off';
   localStorage.setItem('chiron.pos.' + slug, '1');
   OPEN_SLUG = slug; setMode('read');
-  // show "save offline" only when it isn't already on the device
+  // "save offline" stays available whenever there is no saved copy (a saved copy is the fallback, not the default)
   document.getElementById('l-save').style.display = OFFLINE[slug] ? 'none' : '';
   document.getElementById('lesson').classList.add('open');
 }
@@ -394,6 +408,33 @@ document.getElementById('libsave').onclick = () => {
   let v = document.getElementById('liburl').value.trim().replace(/\/$/, '');
   if (v) { LIB = v; localStorage.setItem('chiron.lib', v); toast('Saved — reconnecting'); loadLibrary(); }
 };
+
+/* ---------- tutor address + Studio (web pages of the library, opened in the system browser) ---------- */
+// Hub = the https reverse proxy on the computer (:8943). Its certificate is mkcert-signed. wry's Android WebViewClient
+// has no onReceivedSslError override, so an in-app iframe/navigation to it is cancelled by the WebView; and the
+// oral page needs a secure context for the mic. So Studio opens in the system browser (Chrome), not an overlay.
+const libHost = () => { try { return new URL(LIB).hostname; } catch (e) { return ''; } };
+const isHub = () => { try { const u = new URL(LIB); return u.protocol === 'https:' && u.port === '8943'; } catch (e) { return false; } };
+const hubBase = () => isHub() ? new URL(LIB).origin : 'https://' + libHost() + ':8943';
+const tutorUrlEl = document.getElementById('tutorurl');
+tutorUrlEl.value = localStorage.getItem('chiron.tutor') || '';
+document.getElementById('tutorsave').onclick = () => {
+  const v = tutorUrlEl.value.trim().replace(/\/$/, '');
+  if (v) localStorage.setItem('chiron.tutor', v); else localStorage.removeItem('chiron.tutor');
+  toast(v ? 'Tutor address saved' : 'Tutor address: automatic');
+};
+async function openStudio(path) {
+  const url = hubBase() + path;
+  try {
+    if (TAURI) await invoke('plugin:opener|open_url', { url });
+    else window.open(url, '_blank');
+    toast('Aperto nel browser — ' + path.split('?')[0]);
+  } catch (e) {
+    console.warn('chiron studio: could not open', url, e);
+    toast('Impossibile aprire il browser: ' + (e && e.message || e));
+  }
+}
+document.querySelectorAll('#drawer [data-studio]').forEach(b => b.onclick = () => { drawer(false); openStudio(b.dataset.studio); });
 
 /* ---------- generate wizard ---------- */
 const DEPTHS = { medicine: [['', 'Auto'], ['primer', 'Primer'], ['atlas', 'Atlas'], ['systematic', 'Systematic'], ['drug', 'Drug'], ['amboss', 'AMBOSS']],

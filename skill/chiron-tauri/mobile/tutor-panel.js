@@ -12,7 +12,9 @@
   const lsGet = (k, d) => { try { const v = localStorage.getItem(k); return v === null ? d : v; } catch (e) { return d; } };
   const lsSet = (k, v) => { try { localStorage.setItem(k, v); } catch (e) {} };
   const host = () => { try { return new URL(LIB).hostname; } catch (e) { return ''; } };
-  const tutorBase = () => (lsGet('chiron.tutor', '') || ('http://' + host() + ':8912')).replace(/\/+$/, '');   // chiron.tutor = optional override
+  // Tutor base: explicit override (Offline tab "Tutor address" = localStorage chiron.tutor) > the https hub when LIB
+  // is the hub (it reverse-proxies /tutor-* to :8912) > http://<LIB host>:8912.
+  const tutorBase = () => (lsGet('chiron.tutor', '') || (isHub() ? new URL(LIB).origin : 'http://' + host() + ':8912')).replace(/\/+$/, '');
   const warn = (what, e) => console.warn('chiron tutor-panel: ' + what, e && (e.message || e), { lib: LIB, slug: typeof OPEN_SLUG !== 'undefined' ? OPEN_SLUG : null });
 
   const css = `
@@ -78,6 +80,13 @@
   document.body.appendChild(panel);
   const $ = id => document.getElementById(id);
   const msgsEl = $('tp-msgs'), textEl = $('tp-text'), sendBtn = $('tp-send'), micBtn = $('tp-mic'), stopBtn = $('tp-stop');
+
+  // ---- video lessons: the lesson page (scene-report.js) posts {type:'chiron-scene', scene, time} to us
+  let NOW = null;
+  window.addEventListener('message', ev => {
+    const fr = document.getElementById('l-frame');
+    if (ev.data && ev.data.type === 'chiron-scene' && fr && ev.source === fr.contentWindow) NOW = { scene: ev.data.scene | 0, time: +ev.data.time || 0, slug: OPEN_SLUG };
+  });
 
   // ---- state
   let convoSlug = null, history = [], busy = false, speakOn = lsGet(LSK_SPEAK, '1') === '1', asrLang = lsGet(LSK_ASR, 'auto');
@@ -214,12 +223,13 @@
       const body = { lesson_slug: OPEN_SLUG || '', section_id: '', section_text: '', selection: '',
         messages: history.slice(-8), model: $('tp-model').value || undefined,
         mode: isItalianLesson() ? 'ita' : 'med', lang: guessLang(text), rid };
+      if (NOW && NOW.slug === OPEN_SLUG) { body.lesson_time = NOW.time; body.scene = NOW.scene; }   // video lesson: current scene
       const r = await fetch(tutorBase() + '/tutor-chat', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
       let d = null; try { d = await r.json(); } catch (e) {}
       if (!r.ok || !d || d.error || !d.reply) throw new Error((d && d.error) || ('HTTP ' + r.status));
       stEl.remove(); history.push({ role: 'assistant', content: d.reply });
       const src = d.source || (d.mode === 'ita' ? 'page' : '');   // top-level field of /tutor-chat
-      let lab = src === 'page' ? (d.grounded ? '📄 dalla lezione' : '📄 risposta generale') : src === 'textbook' ? "📚 Harrison's"
+      let lab = src === 'scene' ? '🎬 dalla scena' : src === 'page' ? (d.grounded ? '📄 dalla lezione' : '📄 risposta generale') : src === 'textbook' ? "📚 Harrison's"
         : src === 'web' ? '🌐 web' : src === 'agent' ? '🔎 agente' : '';
       if (!lab) { lab = '❔ fonte sconosciuta'; warn('answer without a known source', d); }
       const box = addMsg('a', md(d.reply) + `<div class="tp-src" data-src="${esc(src || 'unknown')}">${esc(lab)}</div>` + '<button class="tp-say">🔊 Ascolta</button>');
