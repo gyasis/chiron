@@ -53,9 +53,14 @@ def refresh_examiners() -> dict:
     EXAMINERS.update(fresh)
     return EXAMINERS
 
-DEFAULT_EXAMINER = os.environ.get("TUTOR_DEFAULT_MODEL", "gemma4")
-if DEFAULT_EXAMINER not in EXAMINERS:
-    DEFAULT_EXAMINER = "gemma4"
+_DEFAULT_WANTED = os.environ.get("TUTOR_DEFAULT_MODEL", "gemma4")
+
+
+def default_examiner() -> str:
+    """The configured default, checked AFTER local discovery. A `local:<tag>` id
+    only exists once refresh_examiners() has run, so a check at import time
+    rejected it and silently fell back to the cloud examiner."""
+    return _DEFAULT_WANTED if _DEFAULT_WANTED in refresh_examiners() else "gemma4"
 
 ERRORS: list[dict] = []          # last few failures, newest last — surfaced by /api/oral/status
 
@@ -150,7 +155,7 @@ def _ollama(model: str, system: str, user: str, key: str, local: bool = False) -
 def examine(b: dict) -> dict:
     key = os.environ.get("OLLAMA_API_KEY", "")
     refresh_examiners()
-    first = b.get("examiner") if b.get("examiner") in EXAMINERS else DEFAULT_EXAMINER
+    first = b.get("examiner") if b.get("examiner") in EXAMINERS else default_examiner()
     if not key and not EXAMINERS[first].get("local"):
         raise HTTPException(503, "OLLAMA_API_KEY is not set in the server's environment")
     # fallback order: the picked one, then the CLOUD examiners (verified) — not all ~40 local tags
@@ -274,7 +279,7 @@ def status():
         except Exception:
             return False
     return {"tts": up(pimsleur_drill.OV_URL), "asr": up(ASR_URL), "ollama_key": bool(os.environ.get("OLLAMA_API_KEY")),
-            "examiners": {k: v["label"] for k, v in refresh_examiners().items()}, "default": DEFAULT_EXAMINER,
+            "examiners": {k: v["label"] for k, v in refresh_examiners().items()}, "default": default_examiner(),
             "examiner_groups": {k: v.get("group", "Cloud") for k, v in EXAMINERS.items()}, "local_models": local_models.info(),
             "questions": len(questions()), "tts_cache": str(TTS_CACHE), "errors": ERRORS[-10:]}
 

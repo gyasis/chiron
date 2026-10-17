@@ -45,10 +45,16 @@ GATEWAY_MODEL = os.environ.get("CHIRON_SESSIONE_MODEL", "gpt-4o-mini")
 def _gateway_json(system: str, user: str) -> tuple[dict, dict]:
     """Local LiteLLM gateway (OpenAI-compatible). gpt-4o-mini is a non-reasoning model:
     verified 2026-10-14 reasoning_tokens=0, ~1.4 s. Primary since Ollama Cloud hit its weekly cap."""
-    body = json.dumps({"model": GATEWAY_MODEL, "temperature": 0.4,
-                       "response_format": {"type": "json_object"},
-                       "messages": [{"role": "system", "content": system},
-                                    {"role": "user", "content": user}]}).encode()
+    payload = {"model": GATEWAY_MODEL, "temperature": 0.4,
+               "response_format": {"type": "json_object"},
+               "messages": [{"role": "system", "content": system},
+                            {"role": "user", "content": user}]}
+    # Thinking models (e.g. gemma4 on the Mac) need thinking OFF on /v1/chat/completions.
+    # Set CHIRON_SESSIONE_REASONING_EFFORT="" to omit it for a gateway that rejects the field.
+    effort = os.environ.get("CHIRON_SESSIONE_REASONING_EFFORT", "none")
+    if effort:
+        payload["reasoning_effort"] = effort
+    body = json.dumps(payload).encode()
     req = urllib.request.Request(f"{GATEWAY_URL}/chat/completions", body, {"content-type": "application/json"})
     with urllib.request.urlopen(req, timeout=90) as r:
         d = json.loads(r.read())
