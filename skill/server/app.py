@@ -2270,6 +2270,10 @@ def _lesson_with_tutor(slug: str):
     tags = f'<link rel="stylesheet" href="/shell/tutor.css?v={v}"><script src="/shell/tutor.js?v={v}" defer></script>'
     if "/shell/tutor.js" not in html:
         html = html.replace("</body>", tags + "</body>", 1) if "</body>" in html else html + tags
+    if "scene-report.js" not in html:        # video lessons: report the playing scene/time to the tutor and the phone app
+        sv = int((SKILL / "shell" / "scene-report.js").stat().st_mtime)
+        rep = f'<script src="/shell/scene-report.js?v={sv}" defer></script>'
+        html = html.replace("</body>", rep + "</body>", 1) if "</body>" in html else html + rep
     return HTMLResponse(html)
 
 
