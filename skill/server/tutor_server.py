@@ -275,6 +275,21 @@ class H(BaseHTTPRequestHandler):
                 return self._json({"images": ims, "q": q})
             except Exception as e:
                 return self._json({"images": [], "q": q, "error": str(e)}, 502)
+        if self.path.startswith("/lesson-text/"):           # on-device tutor (Veloce): bounded grounding text by slug
+            from urllib.parse import urlparse, parse_qs, unquote
+            u = urlparse(self.path)
+            slug = unquote(u.path.split("/lesson-text/", 1)[1])
+            qs = parse_qs(u.query)
+            try:
+                cap = max(200, min(int(qs.get("cap", ["2000"])[0] or 2000), 6000))
+            except ValueError:
+                cap = 2000
+            txt, scene_known = "", False
+            if qs.get("t") or qs.get("scene"):                # video lesson: the scene being played
+                txt, scene_known = video_text(slug, (qs.get("t", [None])[0]), (qs.get("scene", [None])[0]), cap)
+            if not txt:
+                txt = slug_text(slug, (qs.get("q", [""])[0] or ""), cap)
+            return self._json({"slug": slug, "text": txt, "grounded": bool(txt), "scene": scene_known})
         if self.path.startswith("/tutor-status/"):          # transport B — poll
             rid = self.path.split("/tutor-status/", 1)[1].split("?")[0]
             with _SLOCK:

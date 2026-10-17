@@ -1,0 +1,13 @@
+# Automatically generated - DO NOT EDIT!
+
+"$schema" = "../../schemas/schema.json"
+
+[[permission]]
+identifier = "allow-stt-stop"
+description = "Enables the stt_stop command without any pre-configured scope."
+commands.allow = ["stt_stop"]
+
+[[permission]]
+identifier = "deny-stt-stop"
+description = "Denies the stt_stop command without any pre-configured scope."
+commands.deny = ["stt_stop"]

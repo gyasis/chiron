@@ -5,6 +5,9 @@
  *   tutor     <LIB host>:8912   GET /tutor-models · POST /tutor-chat · GET /tutor-status/<rid>
  *   voice     <LIB>             POST /api/oral/hear?lang=it|en|auto  (body = recorded audio -> {text})
  *                               POST /api/oral/say {text, lang}      (-> audio/wav, Lucrezia)
+ * ⚡ Veloce (on-device): a second engine — Gemma 4 E2B via LiteRT-LM in the Tauri plugin `chiron-llm` (Kotlin) — answers
+ * short questions on the phone with no Mac; 🧠 Approfondita is the original Mac tutor. The same plugin also exposes
+ * Android SpeechRecognizer/TextToSpeech, used when the Mac is unreachable or "voce del telefono" is chosen.
  * Uses globals from app.js: LIB, OPEN_SLUG, toast().  Grounding: the lesson slug (+title) is sent; the
  * tutor service reads that lesson's text server-side (tutor_server.slug_text). */
 (function () {
@@ -98,6 +101,18 @@
 .tp-rel a{display:inline-block;border-radius:99px;background:var(--medbg);color:var(--med);font-size:12px;font-weight:600;padding:6px 11px;text-decoration:none}
 .tp-rel a.direct{background:var(--accent);color:#fff}
 .tp-m.tp-wide{align-self:stretch;max-width:100%}
+.tp-mode{display:flex;flex:1 1 100%;gap:0;background:var(--elevated);border-radius:12px;padding:3px}
+.tp-mode button{flex:1;border:none;border-radius:10px;background:none;color:var(--fg2);font-family:var(--fh);font-weight:800;font-size:13.5px;padding:10px 6px}
+.tp-mode button.on{background:var(--accent);color:#fff}
+.tp-pb{height:10px;border-radius:99px;background:var(--surface);overflow:hidden;margin:10px 0 6px}
+.tp-pb i{display:block;height:100%;width:0;background:var(--accent);transition:width .25s linear}
+.tp-card small{display:block;color:var(--muted);font-size:12.5px;line-height:1.45}
+.tp-card .tp-cb{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.tp-card .tp-cb button{border:none;border-radius:99px;background:var(--accent);color:#fff;font-family:var(--fh);font-weight:800;font-size:13.5px;padding:11px 16px}
+.tp-card .tp-cb button.sec{background:var(--surface);color:var(--accent)}
+.tp-badge-fast{display:inline-block;margin:6px 8px 0 0;font-family:var(--fh);font-weight:700;font-size:11.5px;color:var(--accent);background:var(--surface);border-radius:99px;padding:3px 10px}
+.tp-caret{opacity:.5;animation:tppulse 1s steps(2) infinite}
+.tp-mic.rec.ph{background:#1f7a4d}
 `;
   const ICO_MIC = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 14a3 3 0 0 0 3-3V5a3 3 0 1 0-6 0v6a3 3 0 0 0 3 3zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.92V21h2v-3.08A7 7 0 0 0 19 11h-2z"/></svg>';
 
@@ -111,7 +126,8 @@
   const panel = document.createElement('div'); panel.className = 'tp-panel'; panel.id = 'tpanel';
   panel.innerHTML = `
   <div class="tp-head"><b><span id="tp-t">Lucrezia</span><small id="tp-sub"></small></b><button class="tp-x" id="tp-close" aria-label="Chiudi">✕</button></div>
-  <div class="tp-opts"><select id="tp-model" aria-label="Modello"></select>
+  <div class="tp-opts"><div class="tp-mode" id="tp-mode" style="display:none"><button id="tp-m-fast">⚡ Veloce</button><button id="tp-m-deep">🧠 Approfondita</button></div><select id="tp-model" aria-label="Modello"></select>
+    <button class="tp-chip" id="tp-vsrc" style="display:none" title="Chi parla e ascolta">Voce: Mac</button>
     <button class="tp-chip on" id="tp-speak">🔊 Voce</button><button class="tp-chip" id="tp-asr" title="Lingua del microfono">Mic: auto</button>
     <button class="tp-chip" id="tp-manbtn" title="Aggiungi un'evidenziazione scrivendo il testo">✎ Evidenzia</button><button class="tp-chip on" id="tp-tested" title="Dove si testa (domande collegate)">Dove si testa</button></div>
   <div class="tp-man" id="tp-man"><input id="tp-mant" placeholder="Scrivi o incolla il termine da evidenziare" maxlength="400"><button id="tp-mana">Aggiungi</button></div>
@@ -333,7 +349,7 @@
     msgsEl.innerHTML = `<div class="tp-hint">Chiedi a Lucrezia di spiegarti qualcosa di <b>questa lezione</b>.<br>Scrivi, oppure tieni premuto il microfono e parla.</div>`;
     $('tp-sub').textContent = lessonTitle();
   }
-  function openPanel() { resetIfNewLesson(); if (hlSlug !== OPEN_SLUG && highlights.length) { highlights = []; hlSlug = null; paintHl(); } panel.classList.add('open'); fab.classList.add('hide'); loadModels(); warmMic(); }
+  function openPanel() { resetIfNewLesson(); if (hlSlug !== OPEN_SLUG && highlights.length) { highlights = []; hlSlug = null; paintHl(); } panel.classList.add('open'); fab.classList.add('hide'); loadModels(); fastInit(); if (!phoneVoiceOn()) warmMic(); }
   function closePanel() { panel.classList.remove('open'); stopSpeaking(); releaseMic(); if (document.getElementById('lesson').classList.contains('open')) fab.classList.remove('hide'); }
   $('tp-close').onclick = closePanel;
 
@@ -383,20 +399,215 @@
       modelsLoaded = true;
     } catch (e) {
       sel.innerHTML = '<option value="">modello: predefinito del Mac</option>';
-      showErr(netMsg(e, 'elenco modelli non caricato'), e, 'tutor-models');
+      if (mode !== 'fast') showErr(netMsg(e, 'elenco modelli non caricato'), e, 'tutor-models');
+      if (e && e.name === 'TypeError') { macDown = true; fastInit().then(() => suggestFast(null)); }
     }
   }
   $('tp-model').onchange = e => lsSet(LSK_MODEL, e.target.value);
   $('tp-speak').onclick = e => { speakOn = !speakOn; lsSet(LSK_SPEAK, speakOn ? '1' : '0'); e.currentTarget.classList.toggle('on', speakOn); if (!speakOn) stopSpeaking(); };
   $('tp-asr').onclick = () => { asrLang = ({ auto: 'it', it: 'en', en: 'auto' })[asrLang]; lsSet(LSK_ASR, asrLang); asrLabel(); };
 
+  // ---- ⚡ Veloce — on-device tutor (plugin chiron-llm: Gemma 4 E2B .litertlm via LiteRT-LM; Kotlin side in src-tauri/plugins)
+  const LSK_MODE = 'chiron.tutor.mode', LSK_VSRC = 'chiron.tutor.voicesrc', LSK_LLMURL = 'chiron.llm.url';
+  const PLUG = (typeof TAURI !== 'undefined' && TAURI) ? (cmd, args) => invoke('plugin:chiron-llm|' + cmd, args) : null;
+  const FAST_SYS = 'Sei Lucrezia, tutor di italiano medico. Rispondi in modo breve e corretto (massimo 3 frasi), usando il contesto. Se la risposta non è nel contesto, dillo.';
+  // Why capped: latency. Veloce is a 3-sentence tutor; 320 tokens is ~20 s at the measured ~14 tok/s, far above a 3-sentence
+  // answer (~60 tokens), so it only guards a runaway generation. Source: ~/models/phone-bench/results.md (2026-10-17).
+  const FAST_MAX_TOKENS = 320, CTX_CHARS = 2000;
+  let mode = lsGet(LSK_MODE, 'deep') === 'fast' ? 'fast' : 'deep', voiceSrc = lsGet(LSK_VSRC, 'mac') === 'phone' ? 'phone' : 'mac';
+  let llmAvail = null, llmSt = null, macDown = false, phoneSpoke = false, sttActive = false;
+  const newChannel = fn => { const c = new window.__TAURI__.core.Channel(); c.onmessage = fn; return c; };
+  const llmUrl = () => lsGet(LSK_LLMURL, '') || ('http://' + host() + ':8910/models/gemma-4-E2B-it.litertlm');
+  const manifestUrl = () => llmUrl().replace(/[^/]*$/, 'manifest.json');
+  const phoneVoiceOn = () => !!PLUG && llmAvail !== false && (macDown || (mode === 'fast' && voiceSrc === 'phone'));
+  const mb = n => (n / 1048576).toFixed(n >= 1e9 ? 0 : 1) + ' MB';
+  async function fetchT(url, ms, opt) { const ac = new AbortController(), t = setTimeout(() => ac.abort(), ms); try { return await fetch(url, Object.assign({ signal: ac.signal }, opt || {})); } finally { clearTimeout(t); } }
+
+  async function fastInit() {       // probe the plugin once: absent on desktop/web (and on a build without it) -> no Veloce UI
+    if (!PLUG) { llmAvail = false; paintMode(); return; }
+    try { llmSt = await PLUG('llm_status'); llmAvail = true; } catch (e) { llmAvail = false; warn('chiron-llm plugin not available', e); }
+    paintMode();
+  }
+  function paintMode() {
+    const avail = llmAvail === true;
+    $('tp-mode').style.display = avail ? '' : 'none';
+    $('tp-m-fast').classList.toggle('on', mode === 'fast'); $('tp-m-deep').classList.toggle('on', mode !== 'fast');
+    $('tp-model').style.display = mode === 'fast' && avail ? 'none' : '';
+    const v = $('tp-vsrc'); v.style.display = mode === 'fast' && avail ? '' : 'none';
+    v.textContent = 'Voce: ' + (voiceSrc === 'phone' ? 'telefono' : 'Mac'); v.classList.toggle('on', voiceSrc === 'phone');
+    micBtn.classList.toggle('ph', phoneVoiceOn());
+    textEl.placeholder = mode === 'fast' && avail ? '⚡ Domanda veloce (sul telefono)…' : 'Chiedi qualcosa su questa lezione…';
+  }
+  function setMode(m) {
+    mode = m; lsSet(LSK_MODE, m); paintMode();
+    if (m === 'fast') { if (phoneVoiceOn()) releaseMic(); ensureFastReady(); }
+  }
+  $('tp-m-fast').onclick = () => setMode('fast'); $('tp-m-deep').onclick = () => setMode('deep');
+  $('tp-vsrc').onclick = () => { voiceSrc = voiceSrc === 'phone' ? 'mac' : 'phone'; lsSet(LSK_VSRC, voiceSrc); paintMode(); if (voiceSrc === 'phone') releaseMic(); else warmMic().catch(() => {}); };
+
+  // -- download card
+  let dl = { state: 'idle', received: 0, total: 0, bps: 0, err: '', man: null }, dlBox = null;
+  function dlPaint() {
+    if (!dlBox || !dlBox.isConnected) return;
+    const m = dl.man, size = m && m.size ? mb(m.size) : '≈ 2,6 GB';
+    const pct = dl.total ? Math.min(100, dl.received / dl.total * 100) : 0;
+    let line = '', btns = '';
+    if (dl.state === 'idle') btns = '<button data-a="go">Scarica sul telefono (Wi-Fi)</button><button class="sec" data-a="url">✎ Indirizzo</button>';
+    else if (dl.state === 'run') { line = mb(dl.received) + ' / ' + mb(dl.total) + (dl.bps ? ' · ' + mb(dl.bps) + '/s · ~' + Math.max(1, Math.round((dl.total - dl.received) / dl.bps / 60)) + ' min' : ''); btns = '<button class="sec" data-a="pause">⏸ Pausa</button>'; }
+    else if (dl.state === 'verify') line = '🔒 Controllo l’integrità del file… ' + Math.round(pct) + '%';
+    else if (dl.state === 'paused') { line = 'In pausa a ' + mb(dl.received) + (dl.total ? ' / ' + mb(dl.total) : ''); btns = '<button data-a="go">▶ Riprendi</button>'; }
+    else if (dl.state === 'err') { line = '⚠ ' + esc(dl.err); btns = '<button data-a="go">↻ Riprova</button><button class="sec" data-a="url">✎ Indirizzo</button>'; }
+    dlBox.innerHTML = '<b>⚡ Veloce — il tutor sul telefono</b><small>Gemma 4 E2B · ' + size + ' · risponde in pochi secondi anche senza Mac. È un tutor <i>rapido</i>: per le risposte complete resta 🧠 Approfondita. Si scarica una volta sola; usa il Wi-Fi.</small>'
+      + (dl.state === 'idle' ? '' : '<div class="tp-pb"><i style="width:' + pct + '%"></i></div><small>' + line + '</small>') + '<div class="tp-cb">' + btns + '</div>';
+    dlBox.querySelectorAll('[data-a]').forEach(b => b.onclick = () => ({ go: dlStart, pause: () => PLUG('llm_download_cancel'), url: dlSetUrl })[b.dataset.a]());
+  }
+  function dlSetUrl() { const v = prompt('Indirizzo del modello (.litertlm)', llmUrl()); if (v && /^https?:\/\//.test(v.trim())) { lsSet(LSK_LLMURL, v.trim()); dl.man = null; toast('Indirizzo salvato'); } }
+  async function dlStart() {
+    if (dl.state === 'run' || dl.state === 'verify') return;
+    try {
+      if (llmSt && llmSt.wifi === false && !confirm('Sei su una rete a consumo (dati mobili?). Il modello pesa circa 2,6 GB. Scaricare lo stesso?')) return;
+      dl.state = 'run'; dl.err = ''; dlPaint();
+      if (!dl.man) {
+        const r = await fetchT(manifestUrl(), 6000);
+        if (!r.ok) throw new Error('manifest HTTP ' + r.status + ' (' + manifestUrl() + ')');
+        dl.man = await r.json();
+        if (!dl.man.file || !dl.man.sha256) throw new Error('manifest incompleto (servono file e sha256)');
+      }
+      const url = manifestUrl().replace(/[^/]*$/, dl.man.file);
+      const ch = newChannel(ev => {
+        if (ev.phase === 'download') { dl.state = 'run'; dl.received = ev.received; dl.total = ev.total; dl.bps = ev.bps || 0; }
+        else if (ev.phase === 'verify') { dl.state = 'verify'; dl.received = ev.received; dl.total = ev.total; }
+        dlPaint();
+      });
+      const res = await PLUG('llm_download', { url, sha256: dl.man.sha256, onEvent: ch });
+      if (res && res.status === 'paused') { dl.state = 'paused'; dlPaint(); return; }
+      dl.state = 'idle'; llmSt = await PLUG('llm_status'); toast('Veloce pronto ⚡');
+      if (dlBox) { dlBox.remove(); dlBox = null; }
+    } catch (e) {
+      const m = (e && (e.name === 'TypeError' || e.name === 'AbortError')) ? 'Server modello non raggiungibile (' + manifestUrl() + ')' : String((e && e.message) || e);
+      dl.state = 'err'; dl.err = m; warn('llm download', e); dlPaint();
+    }
+  }
+  async function ensureFastReady() {      // true when the model file is on the phone; otherwise shows the download card
+    if (llmAvail !== true) { await fastInit(); if (llmAvail !== true) { showErr('Veloce non è disponibile su questo dispositivo (serve l’app Android Chiron aggiornata).'); return false; } }
+    try { llmSt = await PLUG('llm_status'); } catch (e) { warn('llm_status', e); }
+    if (llmSt && llmSt.downloaded) return true;
+    if (!dlBox || !dlBox.isConnected) { dlBox = addMsg('a tp-wide tp-card', ''); dlBox.innerHTML = ''; }
+    if (llmSt && llmSt.partial_bytes && dl.state === 'idle') { dl.state = 'paused'; dl.received = llmSt.partial_bytes; dl.total = (dl.man && dl.man.size) || 0; }
+    dlPaint();
+    return false;
+  }
+  function suggestFast(text) {            // Mac unreachable -> offer the phone tutor
+    if (llmAvail !== true || mode === 'fast') return;
+    const ready = llmSt && llmSt.downloaded;
+    const box = addMsg('a tp-wide tp-card', '<b>Il Mac non risponde.</b><small>' + (ready ? 'Puoi usare ⚡ Veloce: risponde sul telefono, senza rete.' : '⚡ Veloce funziona senza Mac, ma va scaricato una volta (Wi-Fi).') + '</small><div class="tp-cb"><button>' + (ready && text ? '⚡ Rispondi con Veloce' : ready ? '⚡ Passa a Veloce' : '⚡ Scarica Veloce') + '</button></div>');
+    box.querySelector('button').onclick = () => { box.remove(); setMode('fast'); if (ready && text) ask(text, { reask: true }); };
+  }
+
+  // -- grounding: ≤ ~2000 chars from the section the learner is on, else the lesson text (server by slug, or the saved copy)
+  const offlineRef = () => { const fr = document.getElementById('l-frame'), m = fr && /^(?:https?:\/\/lesson\.localhost|lesson:\/\/localhost)\/([^/]+)\/([^?#]+)/.exec(fr.src || ''); return m ? { id: m[1], entry: decodeURIComponent(m[2]) } : null; };
+  async function fastContext(q) {
+    const sel = highlights.filter(h => h.sel);
+    if (sel.length) return { text: sel.map(h => (h.context || h.text)).join('\n').slice(0, CTX_CHARS), src: 'selezione' };
+    if (pending && (pending.context || pending.text)) return { text: (pending.context || pending.text).slice(0, CTX_CHARS), src: 'selezione' };
+    const off = offlineRef();
+    if (off) {                                    // lesson opened from the phone's saved copy: read it natively
+      try { return { text: await invoke('lesson_text', { id: off.id, entry: off.entry, question: q, cap: CTX_CHARS }), src: 'copia offline' }; }
+      catch (e) { warn('lesson_text', e); return { text: '', src: '' }; }
+    }
+    if (OPEN_SLUG) {
+      try {
+        let u = tutorBase() + '/lesson-text/' + encodeURIComponent(OPEN_SLUG) + '?cap=' + CTX_CHARS + '&q=' + encodeURIComponent(q);
+        if (NOW && NOW.slug === OPEN_SLUG) u += '&t=' + NOW.time + '&scene=' + NOW.scene;
+        const r = await fetchT(u, 3000); if (r.ok) { const d = await r.json(); if (d.text) return { text: d.text.slice(0, CTX_CHARS), src: 'lezione' }; }
+      } catch (e) { warn('/lesson-text', e); }
+      const o = OFFLINE && OFFLINE[OPEN_SLUG];
+      if (o) { try { return { text: await invoke('lesson_text', { id: o.id, entry: o.entry, question: q, cap: CTX_CHARS }), src: 'copia offline' }; } catch (e) { warn('lesson_text', e); } }
+    }
+    return { text: '', src: '' };
+  }
+
+  async function askFast(text, o) {
+    if (!(await ensureFastReady())) return;
+    busy = true; sendBtn.disabled = true; unlockAudio(); stopSpeaking(true);
+    if (hlOpen) { hlOpen = false; paintHl(); }
+    textEl.value = ''; textEl.style.height = 'auto';
+    history.push({ role: 'user', content: text }); if (!o.reask) addMsg('u', esc(text));
+    const stEl = addMsg('st', '<span class="spinc"></span><span class="stt">⚡ Preparo…</span><button class="tp-chip" id="tp-fx" style="margin-left:8px">⏹ Interrompi</button>');
+    const setSt = t => { const x = stEl.querySelector('.stt'); if (x) x.textContent = t; };
+    stEl.querySelector('#tp-fx').onclick = () => { PLUG('llm_cancel').catch(() => {}); };
+    let box = null, acc = '', raf = 0;
+    try {
+      if (!llmSt || !llmSt.loaded) {
+        setSt('⚡ Carico il modello sul telefono (la prima volta ci mette qualche secondo)…');
+        const r = await PLUG('llm_load', { backend: 'gpu' });
+        llmSt = Object.assign(llmSt || {}, { loaded: true, backend: r.backend });
+        if (r.fell_back) toast('GPU non disponibile: uso la CPU');
+      }
+      setSt('⚡ Leggo la lezione…');
+      const ctx = await fastContext(text);
+      const prompt = 'Contesto della lezione:\n' + (ctx.text || '(nessun contesto disponibile)') + '\n\nDomanda: ' + text;
+      setSt('⚡ Lucrezia sta rispondendo…');
+      const paint = cursor => { if (!box) { stEl.remove(); box = addMsg('a', ''); } box.innerHTML = md(acc) + (cursor ? '<span class="tp-caret">▍</span>' : ''); msgsEl.scrollTop = msgsEl.scrollHeight; };
+      const ch = newChannel(ev => { if (ev.type === 'token') { acc += ev.text; if (!raf) raf = requestAnimationFrame(() => { raf = 0; paint(true); }); } });
+      const res = await PLUG('llm_generate', { system: FAST_SYS, prompt, maxTokens: FAST_MAX_TOKENS, onEvent: ch });
+      if (raf) cancelAnimationFrame(raf);
+      acc = (res && res.text) || acc;
+      if (!acc.trim()) throw new Error('il modello non ha prodotto testo' + (res && res.cancelled ? ' (interrotto)' : ''));
+      paint(false); stEl.remove();
+      if (res && res.thinking_chars) warn('thinking text was emitted by the model (should be 0)', res.thinking_chars);
+      history.push({ role: 'assistant', content: acc });
+      box.insertAdjacentHTML('beforeend', '<div class="tp-badge-fast" data-src="phone">⚡ sul telefono · ' + String(res.backend || llmSt.backend || '').toUpperCase() + ' · ' + (res.total_ms / 1000).toFixed(1) + ' s</div>'
+        + (ctx.src ? '<div class="tp-src" data-src="ctx">' + (ctx.src === 'selezione' ? '✎ dalla selezione' : '📄 dalla ' + ctx.src) + '</div>' : '<div class="tp-src">❔ senza contesto</div>')
+        + '<button class="tp-say">🔊 Ascolta</button><div class="tp-tools"><button data-t="better">🧠 Chiedi meglio</button></div>');
+      box.querySelector('.tp-say').onclick = () => { unlockAudio(); speak(acc); };
+      box.querySelector('[data-t="better"]').onclick = () => { history.splice(-2); ask(text, { deep: true, reask: true }); };
+      if (speakOn) speak(acc);
+    } catch (e) {
+      if (raf) cancelAnimationFrame(raf);
+      stEl.remove(); history.pop(); if (box && !acc) box.remove();
+      showErr('Veloce non ha risposto: ' + String((e && e.message) || e), e, 'veloce');
+    } finally { busy = false; sendBtn.disabled = false; }
+  }
+
+  // -- phone voice (Android SpeechRecognizer / TextToSpeech through the plugin)
+  async function speakPhone(t) {
+    const tok = ++speakTok; stopBtn.textContent = '⏹ Ferma audio'; stopBtn.classList.add('on'); phoneSpoke = true;
+    try { await PLUG('tts_speak', { text: t, lang: guessLang(t) === 'it' ? 'it-IT' : 'en-US' }); }
+    catch (e) { if (tok === speakTok) showErr(String((e && e.message) || e), e, 'tts_speak'); }
+    finally { if (tok === speakTok) { stopBtn.classList.remove('on'); phoneSpoke = false; } }
+  }
+  function sttUi(on) {
+    micBtn.classList.toggle('rec', on); micBtn.classList.remove('arming'); if (!on) levelEl.style.width = '0';
+    labEl.textContent = on ? '● Ascolto (telefono) — rilascia per inviare' : 'Tieni premuto per parlare';
+  }
+  async function sttStart() {
+    sttActive = true; sttUi(true); heard('');
+    const ch = newChannel(ev => {
+      if (ev.type === 'partial') heard('… <span class="h-q">' + esc(ev.text) + '</span>');
+      else if (ev.type === 'level') levelEl.style.width = Math.max(0, Math.min(100, (ev.rms + 2) / 12 * 100)) + '%';
+    });
+    try {
+      const r = await PLUG('stt_listen', { lang: asrLang === 'en' ? 'en-US' : 'it-IT', preferOffline: true, onEvent: ch });
+      sttActive = false; sttUi(false);
+      const txt = ((r && r.text) || '').trim();
+      if (!txt) { heard('Non ho capito niente — riprova più vicino al microfono.', 'err'); return; }
+      offerHeard(txt, r.onDevice ? 'offline' : 'rete');
+    } catch (e) {
+      sttActive = false; sttUi(false);
+      const m = String((e && e.message) || e); heard(esc(m), 'err'); showErr(m, e, 'stt_listen');
+    }
+  }
+
   // ---- ask the tutor
-  async function ask(text) {
+  async function ask(text, o) {
+    o = o || {};
     text = (text || '').trim(); if (!text || busy) return;
+    if (mode === 'fast' && !o.deep) return askFast(text, o);
     busy = true; sendBtn.disabled = true; unlockAudio(); stopSpeaking(true);
     if (hlOpen) { hlOpen = false; paintHl(); }   // give the answer the room (chips stay one tap away)
     textEl.value = ''; textEl.style.height = 'auto';
-    history.push({ role: 'user', content: text }); addMsg('u', esc(text));
+    history.push({ role: 'user', content: text }); if (!o.reask) addMsg('u', esc(text));
     const rid = 'ph' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
     const stEl = addMsg('st', '<span class="spinc"></span><span class="stt">Lucrezia sta pensando…</span>');
     const poll = setInterval(async () => {
@@ -412,6 +623,7 @@
       let d = null; try { d = await r.json(); } catch (e) {}
       if (!r.ok || !d || d.error || !d.reply) throw new Error((d && d.error) || ('HTTP ' + r.status));
       stEl.remove(); history.push({ role: 'assistant', content: d.reply });
+      if (macDown) { macDown = false; paintMode(); }   // the Mac answered: back to the Mac voice
       const src = d.source || (d.mode === 'ita' ? 'page' : '');   // top-level field of /tutor-chat
       let lab = src === 'scene' ? '🎬 dalla scena' : src === 'page' ? (d.grounded ? '📄 dalla lezione' : '📄 risposta generale') : src === 'textbook' ? "📚 Harrison's"
         : src === 'web' ? '🌐 web' : src === 'agent' ? '🔎 agente' : '';
@@ -424,6 +636,7 @@
     } catch (e) {
       stEl.remove(); history.pop();
       showErr(netMsg(e, 'il tutor non ha risposto'), e, '/tutor-chat');
+      if (e && e.name === 'TypeError') { macDown = true; fastInit().then(() => suggestFast(text)); }
     } finally { clearInterval(poll); busy = false; sendBtn.disabled = false; }
   }
   sendBtn.onclick = () => ask(textEl.value);
@@ -438,9 +651,10 @@
     return t;
   }
   let speakTok = 0, curUrl = null;
-  function stopSpeaking(silent) { speakTok++; try { player.pause(); } catch (e) {} if (curUrl) { URL.revokeObjectURL(curUrl); curUrl = null; } stopBtn.classList.remove('on'); }
+  function stopSpeaking(silent) { speakTok++; try { player.pause(); } catch (e) {} if (phoneSpoke && PLUG) { PLUG('tts_stop').catch(() => {}); phoneSpoke = false; } if (curUrl) { URL.revokeObjectURL(curUrl); curUrl = null; } stopBtn.classList.remove('on'); }
   async function speak(text) {
     const t = speakable(text); if (!t) return;
+    if (phoneVoiceOn()) return speakPhone(t);
     const tok = ++speakTok; stopBtn.textContent = '⏳ Preparo la voce…'; stopBtn.classList.add('on');
     try {
       const r = await fetch(LIB + '/api/oral/say', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text: t, lang: guessLang(t) }) });
@@ -452,7 +666,11 @@
       stopBtn.textContent = '⏹ Ferma audio';
       await player.play();
     } catch (e) {
-      if (tok === speakTok) { stopSpeaking(); showErr(netMsg(e, 'voce non riprodotta (TTS)'), e, '/api/oral/say'); }
+      if (tok === speakTok) {
+        stopSpeaking();
+        if (e && e.name === 'TypeError' && PLUG) { macDown = true; return speakPhone(t); }   // Mac unreachable -> phone voice
+        showErr(netMsg(e, 'voce non riprodotta (TTS)'), e, '/api/oral/say');
+      }
     }
   }
   stopBtn.onclick = () => stopSpeaking();
@@ -505,8 +723,9 @@
     } else labEl.textContent = 'Tieni premuto per parlare';
   }
   async function micStart() {
-    if (busy || rec) return;
+    if (busy || rec || sttActive) return;
     unlockAudio(); stopSpeaking(true); clearTimeout(sendTimer); wantStop = false;
+    if (phoneVoiceOn()) return sttStart();
     if (!streamLive()) {
       micBtn.classList.add('arming'); labEl.textContent = 'Attivo il microfono…';
       try { await warmMic(); }
@@ -522,7 +741,20 @@
   }
   function micStop() {
     wantStop = true;
+    if (sttActive) { PLUG('stt_stop').catch(() => {}); return; }
     if (rec && rec.state !== 'inactive') rec.stop();
+  }
+  // Show what was heard, right above the mic, and send after a short countdown.
+  function offerHeard(txt, via) {
+    textEl.value = txt;
+    let n = 3;
+    const show = () => heard('Ho sentito' + (via ? ' (' + via + ')' : '') + ': <span class="h-q">«' + esc(txt) + '»</span><span class="h-act"><button id="tp-h-send">Invia ora (' + n + ')</button><button id="tp-h-edit">✎ Modifica</button></span>');
+    show();
+    const go = () => { clearInterval(sendTimer); heard(''); ask(textEl.value.trim() || txt); };
+    heardEl.querySelector('#tp-h-send').onclick = go;
+    heardEl.querySelector('#tp-h-edit').onclick = () => { clearInterval(sendTimer); heard('Correggi il testo e premi ➤.'); textEl.focus(); };
+    clearInterval(sendTimer);
+    sendTimer = setInterval(() => { n--; if (n <= 0) go(); else { const b = heardEl.querySelector('#tp-h-send'); if (b) b.textContent = 'Invia ora (' + n + ')'; } }, 1000);
   }
   async function onRecorded() {
     const mime = (rec && rec.mimeType) || 'audio/webm', ms = Date.now() - recStart; rec = null;
@@ -535,17 +767,12 @@
       if (!r.ok) throw new Error('ASR HTTP ' + r.status + ' ' + (await r.text()).slice(0, 140));
       const d = await r.json(); const txt = (d.text || '').trim();
       if (!txt) { heard('Non ho capito niente — riprova più vicino al microfono.', 'err'); return; }
-      textEl.value = txt;
-      // Show what was heard, right above the mic, and send after a short countdown.
-      let n = 3;
-      const show = () => heard('Ho sentito: <span class="h-q">«' + esc(txt) + '»</span><span class="h-act"><button id="tp-h-send">Invia ora (' + n + ')</button><button id="tp-h-edit">✎ Modifica</button></span>');
-      show();
-      const go = () => { clearInterval(sendTimer); heard(''); ask(textEl.value.trim() || txt); };
-      heardEl.querySelector('#tp-h-send').onclick = go;
-      heardEl.querySelector('#tp-h-edit').onclick = () => { clearInterval(sendTimer); heard('Correggi il testo e premi ➤.'); textEl.focus(); };
-      clearInterval(sendTimer);
-      sendTimer = setInterval(() => { n--; if (n <= 0) go(); else { const b = heardEl.querySelector('#tp-h-send'); if (b) b.textContent = 'Invia ora (' + n + ')'; } }, 1000);
-    } catch (e) { heard(esc(netMsg(e, 'trascrizione non riuscita (ASR)')), 'err'); showErr(netMsg(e, 'trascrizione non riuscita (ASR)'), e, '/api/oral/hear'); }
+      offerHeard(txt);
+    } catch (e) {
+      heard(esc(netMsg(e, 'trascrizione non riuscita (ASR)')) + (PLUG && e && e.name === 'TypeError' ? ' — passo alla voce del telefono: ripremi il microfono.' : ''), 'err');
+      showErr(netMsg(e, 'trascrizione non riuscita (ASR)'), e, '/api/oral/hear');
+      if (e && e.name === 'TypeError' && PLUG) { macDown = true; paintMode(); }
+    }
     finally { micBtn.disabled = false; if (!rec) labEl.textContent = 'Tieni premuto per parlare'; }
   }
   micBtn.addEventListener('pointerdown', e => { e.preventDefault(); micBtn.setPointerCapture(e.pointerId); micStart(); });

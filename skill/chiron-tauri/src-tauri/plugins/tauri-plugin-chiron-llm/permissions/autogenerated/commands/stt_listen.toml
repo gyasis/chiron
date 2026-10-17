@@ -1,0 +1,13 @@
+# Automatically generated - DO NOT EDIT!
+
+"$schema" = "../../schemas/schema.json"
+
+[[permission]]
+identifier = "allow-stt-listen"
+description = "Enables the stt_listen command without any pre-configured scope."
+commands.allow = ["stt_listen"]
+
+[[permission]]
+identifier = "deny-stt-listen"
+description = "Denies the stt_listen command without any pre-configured scope."
+commands.deny = ["stt_listen"]
