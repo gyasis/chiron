@@ -215,5 +215,20 @@ class Gather(unittest.TestCase):
         self.assertIsNone(r["word"]["audio"])
 
 
+class PickAudioCardTemplateTest(unittest.TestCase):
+    """The live AnkiConnect `question` has no [sound:] (checked 2026-10-17): the card
+    must come from the note-type template that shows the audio field."""
+
+    def test_template_decides_the_card(self):
+        cards = [{"cardId": 10, "ord": 0, "question": "<div>Hello</div>"},
+                 {"cardId": 11, "ord": 1, "question": "<div>Ciao</div>"}]
+        tmpl = ["{{Front}}", "{{Back}}"]
+        back = {"fields": {"Front": {"value": "Hello"}, "Back": {"value": "Ciao [sound:x.mp3]"}}}
+        front = {"fields": {"Front": {"value": "Ciao [sound:x.mp3]"}, "Back": {"value": "Hello"}}}
+        self.assertEqual(P.pick_audio_card(cards, "x.mp3", back, tmpl)["cardId"], 11)
+        self.assertEqual(P.pick_audio_card(cards, "x.mp3", front, tmpl)["cardId"], 10)
+        self.assertEqual(P.pick_audio_card(cards, "x.mp3")["cardId"], 10)
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)

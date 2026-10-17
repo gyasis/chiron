@@ -215,14 +215,43 @@ def _source_label(tags: list[str], deck: str, note_text: str) -> tuple[str, str]
 CLIP_RE = re.compile(r"clip=([\w.-]+)\|([\d.]+)\|([\d.]+)")
 
 
-def pick_audio_card(cards: list[dict], audio: str) -> dict | None:
+_TEMPLATES: dict[str, list[str]] = {}
+
+
+def _question_templates(model: str) -> list[str]:
+    """Question-side templates of a note type, in card order (ord 0, 1, ...). Cached."""
+    if model not in _TEMPLATES:
+        try:
+            t = anki.invoke("modelTemplates", modelName=model) or {}
+            _TEMPLATES[model] = [v.get("Front", "") for v in t.values()]
+        except Exception as e:
+            _log("anki", f"modelTemplates({model}) failed: {type(e).__name__}: {e}")
+            return []
+    return _TEMPLATES[model]
+
+
+def pick_audio_card(cards: list[dict], audio: str, note: dict | None = None,
+                    templates: list[str] | None = None) -> dict | None:
     """The card whose question side plays the audio. Cards come sorted by ord.
     A "Basic (and reversed card)" note with Italian on the Back asks with audio on ord 1, not ord 0.
-    No question shows the audio: use the lowest ord."""
+
+    The rendered `question` from AnkiConnect does not contain [sound:] (checked on the
+    live collection, 2026-10-17), so the reliable test is the TEMPLATE: find the field
+    that holds the audio, then the card whose question template shows that field.
+    No match: use the lowest ord."""
     for c in cards:
         q = c.get("question") or ""
         if "[sound:" in q or (audio and audio in q):
             return c
+    if note and templates:
+        fields = note.get("fields") or {}
+        audio_field = next((k for k, v in fields.items()
+                            if "[sound:" in (v.get("value") if isinstance(v, dict) else str(v))), None)
+        if audio_field:
+            for c in cards:
+                o = int(c.get("ord", 0))
+                if o < len(templates) and ("{{" + audio_field + "}}") in templates[o]:
+                    return c
     return cards[0] if cards else None
 
 
@@ -238,7 +267,9 @@ def finish_anki(cands: list[dict], word: str, tag: bool) -> list[dict]:
     notes = {int(n["noteId"]): n for n in (anki.invoke("notesInfo", notes=nids) or []) if n}
     out = []
     for c in cands:
-        card = pick_audio_card(by_note.get(c["noteId"], []), c["audio"])
+        note = notes.get(c["noteId"])
+        card = pick_audio_card(by_note.get(c["noteId"], []), c["audio"], note,
+                               _question_templates(note["modelName"]) if note else None)
         if not card:
             continue
         note_text = _val(notes.get(c["noteId"], {}), "Note")
