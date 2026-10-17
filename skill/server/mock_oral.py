@@ -203,13 +203,16 @@ def examine(b: dict) -> dict:
 ORAL_STEPS = 16
 
 
-def synth(text: str) -> str:
-    """Lucrezia says `text` -> cached wav path."""
-    ref = json.load(open(pimsleur_drill.VOICES_FILE))["lucrezia_italian"]
-    path = TTS_CACHE / (hashlib.sha256(f"lucrezia_italian|{ORAL_STEPS}|{text}".encode()).hexdigest()[:16] + ".wav")
+def synth(text: str, lang: str = "it") -> str:
+    """Lucrezia says `text` -> cached wav path. lang "en" uses her English voice ref (`lucrezia_english`)."""
+    lang = "en" if lang == "en" else "it"
+    voice = "lucrezia_english" if lang == "en" else "lucrezia_italian"
+    ref = json.load(open(pimsleur_drill.VOICES_FILE))[voice]
+    # Italian keeps its historical cache key so the existing cached wavs stay valid.
+    path = TTS_CACHE / (hashlib.sha256(f"{voice}|{ORAL_STEPS}|{text}".encode()).hexdigest()[:16] + ".wav")
     if not path.exists():
         TTS_CACHE.mkdir(parents=True, exist_ok=True)
-        body = json.dumps({"text": text, "ref_audio": ref["refAudio"], "ref_text": ref["refText"], "language": "it",
+        body = json.dumps({"text": text, "ref_audio": ref["refAudio"], "ref_text": ref["refText"], "language": lang,
                            "num_step": ORAL_STEPS, "guidance_scale": 2.0, "class_temperature": 0.3,
                            "pitch_semitones": 0}).encode()
         req = urllib.request.Request(f"{pimsleur_drill.OV_URL}/tts", body, {"content-type": "application/json"})
@@ -222,8 +225,10 @@ def synth(text: str) -> str:
     return str(path)
 
 
-def transcribe(audio: bytes, filename: str = "answer.webm") -> dict:
-    """whisper on the Mac, Italian forced. The sidecar self-restarts (exit 42) — an empty reply is retried."""
+def transcribe(audio: bytes, filename: str = "answer.webm", lang: str = "it") -> dict:
+    """whisper on the Mac, Italian forced by default; lang="auto" omits the language so whisper detects it
+    (the phone tutor takes questions in English too). The sidecar self-restarts (exit 42) — an empty reply is retried."""
+    lang_args = [] if lang in ("auto", "", None) else ["-F", f"language={lang}"]
     with tempfile.NamedTemporaryFile(suffix=Path(filename).suffix or ".webm", delete=False) as f:
         f.write(audio)
         path = f.name
@@ -231,7 +236,7 @@ def transcribe(audio: bytes, filename: str = "answer.webm") -> dict:
         last = ""
         for wait in (3, 8, None):
             t = time.time()
-            last = subprocess.run(["curl", "-s", "--max-time", "120", "-F", f"file=@{path}", "-F", "language=it",
+            last = subprocess.run(["curl", "-s", "--max-time", "120", "-F", f"file=@{path}", *lang_args,
                                    "-F", "model=turbo", f"{ASR_URL}/transcribe"],
                                   capture_output=True, text=True).stdout
             try:
@@ -307,12 +312,13 @@ def get_questions():
 
 @router.post("/api/oral/say")
 async def say(req: Request):
-    text = ((await req.json()).get("text") or "").strip()
+    body = await req.json()
+    text = (body.get("text") or "").strip()
     if not text:
         raise HTTPException(400, "text is required")
     try:
         from starlette.concurrency import run_in_threadpool
-        path = await run_in_threadpool(synth, text)
+        path = await run_in_threadpool(synth, text, body.get("lang") or "it")
     except Exception as e:
         _err("say", f"{type(e).__name__}: {e}")
         raise HTTPException(502, f"TTS failed: {e}")
@@ -326,7 +332,9 @@ async def hear(req: Request):
         return {"text": "", "confidence": None, "secs": 0, "note": "recording too short"}
     try:
         from starlette.concurrency import run_in_threadpool
-        return await run_in_threadpool(transcribe, audio)
+        ct = (req.headers.get("content-type") or "").lower()      # the phone's MediaRecorder: webm (Chromium) or mp4/ogg
+        ext = ".mp4" if "mp4" in ct else ".ogg" if "ogg" in ct else ".webm"
+        return await run_in_threadpool(transcribe, audio, "answer" + ext, req.query_params.get("lang") or "it")
     except Exception as e:
         _err("hear", str(e))
         raise HTTPException(502, str(e))

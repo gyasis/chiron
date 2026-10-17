@@ -25,7 +25,7 @@ teaching acolyte a bespoke contract — the adapter belongs on the service, not 
 widget. Grounding that has no OpenAI equivalent rides in the optional `chiron` object; a plain
 OpenAI client that omits it still gets a working answer from the messages alone.
 """
-import asyncio, json, os, queue, threading, time, urllib.request
+import asyncio, html as _html, json, os, queue, re, threading, time, urllib.request
 from http.server import ThreadingHTTPServer, BaseHTTPRequestHandler
 from tutor_chain import (answer_turn, suggestions, decompose, cards, mcqs, train_path,
                          MODELS, DEFAULT_MODEL, LAST_ERRORS, refresh_models)
@@ -62,9 +62,54 @@ def _status_gc() -> None:
             _STATUS.pop(k, None)
 
 
+LESSONS_DIR = os.environ.get("CHIRON_LESSONS_DIR",
+                             os.path.expanduser("~/Documents/generated/chiron-library/lessons"))
+_SLUG_OK = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,200}$")
+_STOP = re.compile(r"<(script|style|svg|head)\b.*?</\1>", re.S | re.I)
+
+
+def slug_text(slug: str, question: str = "", cap: int = 3800) -> str:
+    """Ground a turn from the lesson the phone has open: the phone (esp. an offline lesson in a
+    cross-origin iframe) cannot hand us the page text, only the slug. Reads
+    <LESSONS_DIR>/<slug>/lesson.html, strips markup, and returns <= `cap` chars — the text blocks that
+    share the most words with the question (original order), else the head of the lesson. Bounded:
+    file read capped at 2 MB; '' on any miss (bad slug, no file) so the turn still answers ungrounded."""
+    if not slug or not _SLUG_OK.match(slug) or ".." in slug:
+        return ""
+    path = os.path.join(LESSONS_DIR, slug, "lesson.html")
+    try:
+        with open(path, "rb") as f:
+            html = f.read(2_000_000).decode("utf-8", "replace")
+    except OSError:
+        return ""
+    html = _STOP.sub(" ", html)
+    html = re.sub(r"</(p|div|li|h[1-6]|tr|section|article)>|<br\s*/?>", "\n", html, flags=re.I)
+    txt = _html.unescape(re.sub(r"<[^>]+>", " ", html))
+    blocks = [re.sub(r"\s+", " ", b).strip() for b in txt.split("\n")]
+    blocks = [b for b in blocks if len(b) > 25]
+    if not blocks:
+        return ""
+    words = {w for w in re.findall(r"\w{4,}", question.lower())}
+    if words:
+        scored = sorted(range(len(blocks)), key=lambda i: -len(words & set(re.findall(r"\w{4,}", blocks[i].lower()))))
+        pick, used = [], 0
+        for i in scored:
+            if len(words & set(re.findall(r"\w{4,}", blocks[i].lower()))) == 0 or used >= cap:
+                break
+            pick.append(i); used += len(blocks[i]) + 1
+        if pick:
+            return "\n".join(blocks[i][:900] for i in sorted(pick))[:cap]
+    return "\n".join(blocks)[:cap]
+
+
 def _run_answer(body: dict, on_status=None) -> dict:
     """One turn: route → answer (with live status) → optional follow-up suggestions."""
     msgs = body.get("messages") or []
+    if not (body.get("section_text") or "").strip() and body.get("lesson_slug"):
+        q = next((m.get("content", "") for m in reversed(msgs) if m.get("role") == "user"), "")
+        body = {**body, "section_text": slug_text(body["lesson_slug"], q)}
+        if not body["section_text"]:
+            print(f"tutor: no lesson text for slug {body.get('lesson_slug')!r} under {LESSONS_DIR}", flush=True)
     out = asyncio.run(answer_turn(
         section_text=body.get("section_text", ""), selection=body.get("selection", ""),
         section_id=body.get("section_id", ""), lesson_slug=body.get("lesson_slug", ""),
@@ -94,6 +139,9 @@ class H(BaseHTTPRequestHandler):
         # The service is LAN-local and unauthenticated; the header is ignored.
         self.send_header("Access-Control-Allow-Headers", "Content-Type, Authorization")
         self.send_header("Access-Control-Allow-Methods", "POST, GET, OPTIONS")
+        # Chromium/Android WebView preflight a LAN target from a "less private" origin
+        # (http://tauri.localhost -> 192.168.x.x) with this header; answering it keeps the phone app working.
+        self.send_header("Access-Control-Allow-Private-Network", "true")
 
     def _json(self, obj, code=200):
         b = json.dumps(obj, ensure_ascii=False).encode()
