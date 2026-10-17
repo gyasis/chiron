@@ -1,6 +1,7 @@
 """mock_oral_test — the mock oral's pure parts (no network: no TTS, ASR or model calls).
 Run: python3 skill/tests/mock_oral_test.py"""
 import json, os, sys, tempfile, unittest
+from unittest import mock
 from pathlib import Path
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "server"))
@@ -51,6 +52,35 @@ class Report(unittest.TestCase):
         self.assertIn("accuracy 3.5/5", md)
         self.assertIn("~~devono~~ → **deve**", md)
         self.assertIn("_(nothing heard)_", md)
+
+
+class FallbackChain(unittest.TestCase):
+    EX = {"gemma4": {}, "deepseek": {}, "local:a:1": {"local": True}, "local:b:2": {"local": True},
+          "local:c:3": {"local": True}, "local:other": {"local": True}}
+
+    def test_local_fallbacks_then_cloud_capped_at_four(self):
+        o = mo.fallback_chain("local:a:1", self.EX, "governor:b:2,governor:c:3,cloud:glm-flash@latest")
+        self.assertEqual(o, ["local:a:1", "local:b:2", "local:c:3", "gemma4"])
+
+    def test_unknown_and_duplicate_entries_skipped(self):
+        o = mo.fallback_chain("gemma4", self.EX, "governor:nope,governor:b:2,local:b:2")
+        self.assertEqual(o, ["gemma4", "local:b:2", "deepseek"])
+
+    def test_examine_goes_local_before_cloud(self):
+        calls = []
+
+        def fake(model, system, user, key, local=False):
+            calls.append((model, local))
+            if model != "b:2":
+                raise RuntimeError("down")
+            return '{"reply": "Bene."}', {}
+        ex = {"local:a:1": {"model": "a:1", "local": True}, "local:b:2": {"model": "b:2", "local": True},
+              "gemma4": {"model": "g", "local": False}}
+        with mock.patch.dict(mo.EXAMINERS, ex, clear=True), mock.patch.object(mo, "refresh_examiners"), \
+             mock.patch.object(mo, "_ollama", fake), mock.patch.dict(os.environ, {"TUTOR_FALLBACKS": "governor:b:2"}):
+            out = mo.examine({"examiner": "local:a:1"})
+        self.assertEqual(calls, [("a:1", True), ("b:2", True)])
+        self.assertEqual(out["examiner"], "local:b:2")
 
 
 if __name__ == "__main__":
