@@ -48,6 +48,18 @@ npm run tauri android build --debug --apk --target aarch64
   Symptom: lesson HTML + Listen buttons render fine, but no sound. Fixed in `src/lib.rs`
   (`parse_range` + the 206 branch), 2026-06-24.
 
+## Web-parity screens (mobile/extras.js, mobile/tutor-panel.js)
+The phone covers the web library + tutor extras over the same chiron-server routes:
+- **Tutor panel** — select text in a lesson (streamed lessons report it through `shell/select-report.js`, injected by the
+  server next to `scene-report.js`; offline copies use the manual "✎ Evidenzia" box) → numbered highlights → ⭐ `/capture`,
+  cards/quiz/drill/lesson via `/captures/cards`, real images (`:8912 /images`, `/images/keep`), "Dove si testa" pills
+  (`:8912 /related`), and per-answer deep tools (`:8912 /decompose` → `/mcqs` `/train` `/cards`).
+- **Captures** (drawer) — `/captures`, delete, cards/quiz/lesson from a capture.
+- **Activity** — cancel, clear failed, pause/resume + provider rotation (`/gen/*`), step-by-step job detail (`/jobs/{slug}/steps|recovery`).
+- **Generate** — grounding notes, "skip audio bake" (`stage: audio`), select + batch generate, "generate next N".
+- **Audio** — bake one / batch / all with engine choice + cost estimate (`/bake*`); lesson ⋯ menu: regenerate, corpus status.
+The https hub (`chiron-https-serve`) only proxies some of these routes; on the plain-http LAN address all of them work.
+
 ## Roadmap
 - Read `chiron.json` (chiron/1 manifest) for title/domain instead of scraping `<title>`.
 - Register `.chiron` as an Android file association (intent-filter) so tapping a

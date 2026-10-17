@@ -169,6 +169,7 @@ body{background:var(--bg);color:var(--fg);font-family:var(--fb);height:100vh;ove
 .toast{position:fixed;left:50%;bottom:calc(90px + env(safe-area-inset-bottom));transform:translateX(-50%);background:var(--fg);color:var(--bg);font-size:13px;padding:10px 16px;border-radius:99px;z-index:60;opacity:0;transition:opacity .2s;pointer-events:none;max-width:88vw;text-align:center}
 .toast.show{opacity:.95}
 /* ---- Activity ---- */
+.chk{display:flex;gap:10px;align-items:flex-start;margin-top:14px;font-size:14px;font-family:var(--fh);font-weight:600}.chk input{width:22px;height:22px;accent-color:var(--accent);flex:0 0 auto;margin-top:1px}.chk small{display:block;font-family:var(--fb);font-weight:400;font-size:12px;color:var(--muted)}
 .actsum{display:flex;gap:8px;margin:10px 0 6px}
 .actsum .pill2{flex:1;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:10px;text-align:center}
 .actsum .pill2 b{display:block;font-family:var(--fh);font-weight:800;font-size:20px}
@@ -211,7 +212,9 @@ body{background:var(--bg);color:var(--fg);font-family:var(--fb);height:100vh;ove
       <div id="offbanner" class="offbanner" style="display:none"></div>
       <div class="sortrow" id="sortrow"></div>
       <div class="hidepanel" id="hidepanel" style="display:none"></div>
+      <div class="xbar" id="xbar"></div>
       <div id="rows"><div class="empty">Connecting to your library…</div></div>
+      <div class="selbar" id="selbar"></div>
     </div></section>
     <!-- GENERATE -->
     <section class="scr" id="s-gen"><div class="pad">
@@ -224,6 +227,9 @@ body{background:var(--bg);color:var(--fg);font-family:var(--fb);height:100vh;ove
         <div class="hintline" id="w-hint"></div>
         <div id="w-sysrow" style="display:none"><label class="fl">System <span style="font-weight:400;color:var(--muted)">— auto-detected, edit if it's off</span></label>
           <div class="fieldwrap"><input id="w-system" class="fi" placeholder="detecting specialty…"><span class="wspin" id="w-sysspin"></span></div></div>
+        <label class="fl">Grounding notes <span style="font-weight:400;color:var(--muted)">optional · paste facts the lesson must rest on</span></label>
+        <textarea id="w-grounding" class="fi" rows="3" placeholder="Reference text, guideline excerpt, your own notes…" style="resize:vertical"></textarea>
+        <label class="chk"><input type="checkbox" id="w-nobake"><span>Skip audio bake <small>text + transcripts only; bake later from Library → 🔊 Audio</small></span></label>
         <label class="fl">Pages → OCR <span style="font-weight:400;color:var(--muted)">optional · use as context</span></label>
         <div class="cap"><label class="capb">📷 Camera<input id="w-cam" type="file" accept="image/*" capture="environment" hidden></label>
           <label class="capb">🖼 Gallery<input id="w-gal" type="file" accept="image/*" multiple hidden></label></div>
@@ -258,6 +264,14 @@ body{background:var(--bg);color:var(--fg);font-family:var(--fb);height:100vh;ove
       <div class="big">Activity<small id="act-sub">Every lesson generation — live &amp; historical</small></div>
       <div id="act-body"><div class="empty">Loading activity…</div></div>
     </div></section>
+    <!-- CAPTURES -->
+    <section class="scr" id="s-cap"><div class="pad">
+      <div class="big">Captures<small id="cap-sub">Terms and answers you flagged with the tutor</small></div>
+      <div class="search">⌕ <input id="cap-q" placeholder="Search captures…"></div>
+      <div class="cap-bar"><div class="chip sm" id="cap-unp">Unprocessed only</div></div>
+      <div id="cap-body"><div class="empty">Loading captures…</div></div>
+      <div class="cap-disp" id="cap-disp"></div>
+    </div></section>
   </div>
 
   <!-- edge drawer: invisible full-height left TAP strip + region swipe -->
@@ -269,6 +283,7 @@ body{background:var(--bg);color:var(--fg);font-family:var(--fb);height:100vh;ove
     <button class="ditem" data-nav="1">✦ &nbsp;Generate</button>
     <button class="ditem" data-nav="2">⤓ &nbsp;Offline</button>
     <button class="ditem" data-nav="3">◷ &nbsp;Activity</button>
+    <button class="ditem" data-nav="4">⭐ &nbsp;Captures</button>
     <div class="dsep"></div>
     <div class="dh2">Studio</div>
     <button class="ditem" data-studio="/sessione">🎯 &nbsp;Sessione</button>
@@ -282,7 +297,7 @@ body{background:var(--bg);color:var(--fg);font-family:var(--fb);height:100vh;ove
 
   <!-- LESSON overlay -->
   <div class="lesson" id="lesson">
-    <div class="lbar"><span class="back" onclick="closeLesson()">‹</span><span class="lttl" id="l-title">Lesson</span><span class="lmode" id="l-mode" style="display:none"></span>
+    <div class="lbar"><span class="back" onclick="closeLesson()">‹</span><span class="lttl" id="l-title">Lesson</span><span class="lmode" id="l-mode" style="display:none"></span><span class="lmore" id="l-more" aria-label="More">⋯</span>
       <div class="modeseg"><button class="mon" id="m-read" onclick="setMode('read')">📖 Read</button><button id="m-play" onclick="setMode('play')">▸ Play</button></div></div>
     <div class="resume" id="l-resume" style="display:none">↩ Continue where you left off</div>
     <div id="mread"><iframe class="lessonframe" id="l-frame" title="lesson"></iframe></div>
@@ -297,5 +312,6 @@ body{background:var(--bg);color:var(--fg);font-family:var(--fb);height:100vh;ove
   </div>
   <div class="toast" id="toast"></div>
 <script src="app.js"></script>
+<script src="extras.js"></script>
 <script src="tutor-panel.js"></script>
 </body></html>

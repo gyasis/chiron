@@ -33,7 +33,7 @@ pane.addEventListener('scroll', () => requestAnimationFrame(() => syncNav()), { 
 function drawer(open) { drawerEl.classList.toggle('open', open); scrimEl.classList.toggle('on', open); }
 scrimEl.onclick = () => drawer(false);
 document.getElementById('ereg').onclick = () => drawer(true);          // TAP the invisible left strip → always opens (no gesture conflict)
-dItems.forEach(b => b.onclick = () => { const n = +b.dataset.nav; go(n); drawer(false); if (n === 3) renderActivity(); });
+dItems.forEach(b => b.onclick = () => { const n = +b.dataset.nav; go(n); drawer(false); if (n === 3) renderActivity(); if (n === 4 && window.ChironX) ChironX.renderCaptures(); });
 // SWIPE to open — mid-band ONLY (30–62% height). Top + BOTTOM-LEFT stay free for Android system gestures (back/home).
 let _sx = null, _sy = null;
 document.body.addEventListener('touchstart', e => { const t = e.touches[0], h = innerHeight;
@@ -120,6 +120,7 @@ function match(l) {
 }
 function lessonAction(l) {   // shared by the list (Index) rows and the Tiles cards
   const slug = slugOf(l.id), off = !!OFFLINE[slug];
+  if (window.ChironX && ChironX.selMode) { const sa = ChironX.selAction(l); if (sa) return sa; }   // select mode (batch generate / bake)
   if (!l.ready) { const gs = l.subject || l.system || l.topic || l.title, aj = activeFor(gs);
     return aj ? `<span class="btn spin" data-recon="${aj.id}"><span class="spinc"></span>Generating</span>`
               : `<span class="btn gen" data-gen="${esc(gs)}" data-dom="${l.domain}">✦ Generate</span>`; }
@@ -195,6 +196,7 @@ function renderRows() {
   document.querySelectorAll('#rows [data-acc]').forEach(e => e.onclick = ev => { ev.stopPropagation(); accept(e.dataset.acc); });
   document.querySelectorAll('#rows [data-gen]').forEach(e => e.onclick = ev => { ev.stopPropagation(); quickGen(e.dataset.gen, e.dataset.dom); });
   document.querySelectorAll('#rows [data-recon]').forEach(e => e.onclick = ev => { ev.stopPropagation(); reconnect(ACTIVE.find(j => j.id === e.dataset.recon)); });
+  if (window.ChironX) ChironX.afterRows();
 }
 document.getElementById('q').oninput = e => { F.q = e.target.value; renderRows(); };
 
@@ -205,7 +207,7 @@ function relTime(iso) { if (!iso) return ''; const t = Date.parse(iso); if (!t) 
   if (d < 60) return 'just now'; if (d < 3600) return Math.floor(d / 60) + 'm ago'; if (d < 86400) return Math.floor(d / 3600) + 'h ago'; return Math.floor(d / 86400) + 'd ago'; }
 function actCard(j) {
   const src = j.source || (j.external ? 'External' : 'App'), srcCls = (j.external || (j.source && j.source !== 'App')) ? 'ext' : 'app';
-  const live = j.status === 'queued' || j.status === 'running';
+  const live = j.status === 'queued' || j.status === 'running' || j.status === 'baking';
   const ci = PHASES.findIndex(([p]) => p === j.phase);
   const curIdx = (j.status === 'ready' || j.status === 'published') ? PHASES.length : (ci < 0 ? 0 : ci);
   if (live) {
@@ -245,12 +247,13 @@ async function renderActivity() {
     body.innerHTML = h;
     const all = [...d.active, ...d.history];
     body.querySelectorAll('.acard').forEach((el, i) => { const j = all[i]; if (!j) return;
-      if (j.status === 'queued' || j.status === 'running') el.onclick = () => reconnect(j);
+      if (j.status === 'queued' || j.status === 'running' || j.status === 'baking') el.onclick = () => reconnect(j);
       const on = (sel, fn) => { const b = el.querySelector(sel); if (b) b.onclick = ev => { ev.stopPropagation(); fn(); }; };
       on('.retry', () => retryJob(j));
       on('.preview', () => openLesson(j.slug));
       on('.open', () => openLesson(j.slug));
       on('.accept', () => acceptJob(j)); });
+    if (window.ChironX) ChironX.afterActivity(d, body, all);
     const sub = document.getElementById('act-sub'); if (sub) sub.textContent = `${c.active} live · ${c.done} done · ${c.error} failed`;
   } catch (e) { body.innerHTML = `<div class="empty">Can't reach your library for activity.<br>Is the computer running Chiron on the same wifi?</div>`; }
   ACT_BUSY = false;
@@ -509,11 +512,19 @@ document.getElementById('w-go').onclick = async () => {
   if (!subject) { toast(G.paths.length ? 'Reading your photos — one moment, then Generate' : 'Type a subject, or add a photo'); return; }
   const btn = document.getElementById('w-go'); btn.disabled = true; btn.textContent = 'Starting…';
   try {
-    const r = await (await fetch(LIB + '/generate', { method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ domain: G.dom, subject, depth: G.dep || null, images: G.paths.length ? G.paths : null, stage: 'all', extra: (G.dom === 'medicine' && G.system) ? { system: G.system } : {} }) })).json();
-    if (!r.job_id) throw 0;
+    // same params as the web wizard: grounding notes + "skip audio bake" (stage 'audio' = text + narration transcripts, no synth; bake later)
+    const grounding = document.getElementById('w-grounding').value.trim() || null;
+    const stage = document.getElementById('w-nobake').checked ? 'audio' : 'all';
+    const send = depth => fetch(LIB + '/generate', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ domain: G.dom, subject, depth, grounding, images: G.paths.length ? G.paths : null, stage, extra: (G.dom === 'medicine' && G.system) ? { system: G.system } : {} }) }).then(x => x.json());
+    let r = await send(G.dep || null);
+    if (r && r.needs_switch) {   // Atlas pre-validation: not an organ-system overview → offer the suggested depth
+      if (await ChironX.ask('Different depth suggested', ChironX.esc(r.reason || 'This subject fits another depth better.'), 'Switch to ' + (r.suggested_depth || 'systematic'))) r = await send(r.suggested_depth || 'systematic');
+      else { btn.disabled = false; btn.textContent = '✦ Generate'; return; }
+    }
+    if (!r.job_id) throw new Error(r.detail || r.reason || 'generate failed');
     showProg(r); poll(r.job_id);
-  } catch (e) { toast('Generate failed — is the library reachable?'); }
+  } catch (e) { toast('Generate failed — ' + (e && e.message ? e.message : 'is the library reachable?')); }
   btn.disabled = false; btn.textContent = '✦ Generate';
 };
 function showProg(r) { document.getElementById('genform').style.display = 'none'; document.getElementById('genprog').style.display = '';
