@@ -1,0 +1,489 @@
+<!doctype html>
+<html lang="it"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Chiron · Sessione</title>
+<meta name="theme-color" content="#1e3a5f">
+<script>try{var _t=localStorage.getItem('chiron.theme');if(_t)document.documentElement.setAttribute('data-theme',_t);}catch(e){}</script>
+<style>
+:root{
+  --chiron-bg:#faf8f5;--chiron-surface:#fff;--chiron-elevated:#f0ebe4;
+  --chiron-fg:#1a1a1a;--chiron-fg-secondary:#4a4a4a;--chiron-muted:#7a7a7a;
+  --chiron-accent:#1e3a5f;--chiron-border:#e5e0d8;--chiron-divider:#ede8df;
+  --med:#1e6fbf;--medit:#b3522e;--lang:#6b8e4e;--vid:#8a5a83;
+  --medbg:#eef4fb;--meditbg:#f3e9d8;--langbg:#eef3e6;--vidbg:#f3ecf2;
+  --ok:#2e7d32;--bad:#a33;--badbg:#fbeaea;--amber:#a86200;
+  --font-h:'Inter',system-ui,sans-serif;--font-b:'Inter',system-ui,sans-serif;
+}
+[data-theme="dark"]{
+  --chiron-bg:#14171c;--chiron-surface:#1b1f26;--chiron-elevated:#232830;
+  --chiron-fg:#e9e6e1;--chiron-fg-secondary:#bdb8b1;--chiron-muted:#8b8781;
+  --chiron-accent:#7fb0e8;--chiron-border:#2c323b;--chiron-divider:#242931;
+  --medbg:#16252f;--meditbg:#2b211a;--langbg:#1b2418;--vidbg:#241b23;
+  --ok:#7fc784;--bad:#e58a8a;--badbg:#2e1b1b;--amber:#e3a94a;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{font-family:var(--font-b);background:var(--chiron-bg);color:var(--chiron-fg);font-size:15px;line-height:1.45;overflow-x:hidden}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+.wrap{max-width:760px;margin:0 auto;padding:0 16px 60px}
+header{display:flex;align-items:center;gap:10px;padding:14px 0 8px}
+header .mk{width:28px;height:28px;border-radius:8px;background:var(--chiron-accent);color:var(--chiron-surface);display:grid;place-items:center;font-size:14px;font-weight:800;flex:none}
+header h1{font:800 16px var(--font-h);color:var(--chiron-accent);margin:0}
+header small{color:var(--chiron-muted)}
+#theme{margin-left:auto;border:1px solid var(--chiron-border);background:var(--chiron-surface);border-radius:8px;padding:5px 9px}
+nav{display:flex;gap:4px;border-bottom:1px solid var(--chiron-border);margin-bottom:14px;overflow-x:auto}
+nav button{border:0;background:none;padding:9px 11px;font-weight:600;color:var(--chiron-muted);white-space:nowrap;border-radius:8px 8px 0 0}
+nav button small{display:block;font-weight:400;font-size:10.5px}
+nav button.on{background:var(--chiron-surface);color:var(--chiron-accent);box-shadow:inset 0 -1px 0 var(--chiron-accent)}
+.panel{display:none}.panel.on{display:block}
+.card{background:var(--chiron-surface);border:1px solid var(--chiron-border);border-radius:12px;padding:14px;margin-bottom:12px}
+label.l{display:block;font:700 10.5px var(--font-h);letter-spacing:.08em;text-transform:uppercase;color:var(--chiron-muted);margin:0 0 5px}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end}
+.row>*{min-width:0}
+.grow{flex:1 1 160px}
+input[type=text],input[type=number],select,textarea{width:100%;padding:9px 10px;border:1px solid var(--chiron-border);border-radius:9px;background:var(--chiron-bg)}
+textarea{min-height:110px;resize:vertical}
+.btn{border:1px solid var(--chiron-border);background:var(--chiron-surface);border-radius:9px;padding:9px 13px;font-weight:600}
+.btn:hover{border-color:var(--chiron-accent);color:var(--chiron-accent)}
+.btn.pri{background:var(--chiron-accent);border-color:var(--chiron-accent);color:var(--chiron-surface)}
+.btn.pri:hover{color:var(--chiron-surface);opacity:.9}
+.btn:disabled{opacity:.5;cursor:default}
+.hint{color:var(--chiron-muted);font-size:12px}
+.chip{display:inline-block;border-radius:99px;padding:3px 10px;background:var(--chiron-elevated);font-size:12.5px;margin:2px 3px 2px 0}
+.chip.deck{background:var(--medbg);color:var(--med);font-weight:600;font-size:11px}
+.chip.v{background:var(--vidbg);color:var(--vid);font-weight:600}
+.err{background:var(--badbg);color:var(--bad);border:1px solid var(--chiron-border);border-radius:9px;padding:9px 12px;margin:10px 0;font-weight:600}
+.ok{color:var(--ok);font-weight:600}
+.spin{display:flex;align-items:center;gap:9px;color:var(--chiron-muted);padding:10px 0}
+.spin i{width:16px;height:16px;border:2px solid var(--chiron-border);border-top-color:var(--chiron-accent);border-radius:50%;animation:r .8s linear infinite}
+@keyframes r{to{transform:rotate(360deg)}}
+.res-h{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:10px 0}
+.res{display:flex;gap:10px;padding:10px 4px;border-top:1px solid var(--chiron-divider)}
+.res input{margin-top:4px;flex:none;width:18px;height:18px}
+.res .t{min-width:0;flex:1}
+.res .f{font-weight:600;overflow-wrap:anywhere}
+.res .b{color:var(--chiron-fg-secondary);font-size:13.5px;overflow-wrap:anywhere}
+.corr{border-top:1px solid var(--chiron-divider);padding:9px 0}
+.corr .it{font-weight:600}.corr .en{color:var(--chiron-fg-secondary)}.corr .nt{font-size:12.5px;color:var(--chiron-muted)}
+.chat{display:grid;gap:8px;margin-bottom:10px}
+.msg{padding:9px 12px;border-radius:12px;max-width:90%;overflow-wrap:anywhere;white-space:pre-wrap}
+.msg.me{justify-self:end;background:var(--chiron-accent);color:var(--chiron-surface)}
+.msg.bot{justify-self:start;background:var(--chiron-elevated)}
+/* drill */
+#drill{display:none}
+#drill.on{display:block}
+.dh{display:flex;align-items:center;gap:9px;margin-bottom:8px}
+.dh b{font:700 12.5px var(--font-h)}
+.dh .x{margin-left:auto;border:0;background:none;font-size:16px;color:var(--chiron-muted)}
+.bar{height:3px;background:var(--chiron-divider);border-radius:2px;margin-bottom:12px}
+.bar i{display:block;height:100%;background:var(--chiron-accent);transition:width .25s}
+.face{text-align:center;display:grid;gap:12px;padding:18px 6px}
+.face .big{font:600 22px/1.35 var(--font-h);overflow-wrap:anywhere}
+.face .sit{font:600 21px/1.35 var(--font-h)}
+.face .sec{color:var(--chiron-fg-secondary);font-size:16px}
+.face .note{font-size:12.5px;color:var(--chiron-muted)}
+.bank{display:flex;flex-wrap:wrap;gap:6px;justify-content:center}
+.bank .chip{background:var(--langbg);color:var(--lang);font-weight:600;font-size:14px}
+.verbs .chip{font-size:14px}
+.ear{font-size:44px}
+.acts{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+.grades{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-top:6px}
+.grades button{border:1px solid var(--chiron-border);background:var(--chiron-surface);border-radius:9px;padding:9px 2px;font-weight:700}
+.grades button small{display:block;font-weight:400;font-size:10px;color:var(--chiron-muted)}
+.grades button:hover{border-color:var(--chiron-accent)}
+.wstate{font-size:12px;text-align:center;min-height:18px;color:var(--chiron-muted)}
+.hide{display:none!important}
+.tally{display:flex;gap:6px;justify-content:center;flex-wrap:wrap}
+.seg{display:inline-flex;border:1px solid var(--chiron-border);border-radius:9px;overflow:hidden;background:var(--chiron-surface);max-width:100%}
+.seg button{border:0;background:none;padding:9px 11px;font-weight:600;color:var(--chiron-muted);white-space:nowrap}
+.seg button.on{background:var(--chiron-accent);color:var(--chiron-surface)}
+.dict{display:grid;gap:12px;text-align:left}
+.dict textarea{min-height:96px;font-size:16px}
+.dict .acts{justify-content:flex-start}
+.btn.tog[aria-pressed=true]{background:var(--chiron-elevated);color:var(--chiron-accent);border-color:var(--chiron-accent)}
+.diff{font:600 19px/2.1 var(--font-b);overflow-wrap:anywhere}
+.dw{display:inline-block;vertical-align:bottom;text-align:center;margin:0 1px;line-height:1.25;padding-top:2px}
+.dw s{display:block;font-size:12.5px;font-weight:500;color:var(--chiron-muted)}
+.dw.ok{color:var(--ok)}
+.dw.accent{color:var(--amber)}.dw.accent s{color:var(--amber)}
+.dw.sub,.dw.del{color:var(--bad)}.dw.sub s{color:var(--bad)}
+.dw.del b{font-weight:600;text-decoration:underline wavy;text-underline-offset:4px}
+.dw.ins{color:var(--chiron-muted);text-decoration:line-through;font-weight:500}
+.dw.j{margin-right:0}
+.score{font:700 14px var(--font-h)}
+.legend{margin-top:6px;font-size:11.5px;color:var(--chiron-muted)}
+.legend .ok{font-weight:600}
+.grades button.sug{background:var(--chiron-accent);color:var(--chiron-surface);border-color:var(--chiron-accent)}
+.grades button.sug small{color:inherit;opacity:.8}
+.miss{display:flex;flex-wrap:wrap;gap:6px;justify-content:center}
+.miss .chip{background:var(--badbg);color:var(--bad);font-weight:600}
+@media(max-width:480px){.face .big,.face .sit{font-size:19px}.btn{padding:9px 11px}}
+</style></head><body>
+<div class="wrap">
+<header><div class="mk">S</div><div><h1>Sessione</h1><small>Studio Anki · esame Ordine</small></div><button id="theme" title="Tema">◐</button></header>
+<div id="banner"></div>
+<nav id="tabs">
+  <button data-t="cerca" class="on">Cerca<small>search</small></button>
+  <button data-t="prod">Produzione<small>speak</small></button>
+  <button data-t="asc">Ascolto<small>listen</small></button>
+  <button data-t="tutor">Tutor<small>Lucrezia</small></button>
+</nav>
+
+<div id="drill" class="card"></div>
+
+<section class="panel on" id="p-cerca">
+  <div class="card">
+    <label class="l" for="q">Parole da cercare · search words</label>
+    <div class="row"><div class="grow"><input type="text" id="q" placeholder="es. consenso informato, dolore toracico"></div><button class="btn pri" id="qgo">Cerca</button></div>
+    <div id="s-status"></div>
+    <div id="s-res" class="hide">
+      <div class="res-h">
+        <label><input type="checkbox" id="selall"> Seleziona tutto <span class="hint">select all</span></label>
+        <span class="hint" id="selcount"></span>
+      </div>
+      <div id="s-list"></div>
+      <div class="row" style="margin-top:10px">
+        <button class="btn pri" id="study">Studia selezionate <span class="hint" style="color:inherit">study</span></button>
+        <button class="btn" id="tag">Tagga in Anki <span class="hint">tag</span></button>
+        <button class="btn" id="sdict">Dettato <span class="hint">dictation</span></button>
+        <span class="seg msw" role="group" aria-label="Modalità"><button data-m="ripeti">Ascolta e ripeti</button><button data-m="dettato">Dettato</button></span>
+      </div>
+      <div id="tag-status"></div>
+    </div>
+  </div>
+</section>
+
+<section class="panel" id="p-prod">
+  <div class="card">
+    <div class="row">
+      <div class="grow" style="flex-basis:220px"><label class="l" for="topic">Argomento · topic</label><input type="text" id="topic" placeholder="es. anamnesi al pronto soccorso"></div>
+      <div class="grow"><label class="l" for="focus">Focus</label>
+        <select id="focus"><option value="">libero</option><option>passato prossimo</option><option>futuro</option><option>imperfetto</option><option>verbi irregolari</option><option>preposizioni/articoli</option></select></div>
+      <div style="width:76px"><label class="l" for="pn">N</label><input type="number" id="pn" value="8" min="1" max="20"></div>
+    </div>
+    <div class="row" style="margin-top:10px"><button class="btn pri" id="pgo">Genera frasi <span class="hint" style="color:inherit">generate</span></button><button class="btn" id="pdeck">Ripassa il mazzo <span class="hint">review deck</span></button><span class="seg msw" role="group" aria-label="Modalità"><button data-m="ripeti">Ascolta e ripeti</button><button data-m="dettato">Dettato</button></span></div>
+    <div id="p-status"></div>
+  </div>
+</section>
+
+<section class="panel" id="p-asc">
+  <div class="card">
+    <label class="l" for="qlines">Quaderno · una frase per riga (one sentence per line)</label>
+    <textarea id="qlines" placeholder="Ho mal di testa da due giorni.&#10;Mi faccia vedere la gola.&#10;Prende farmaci?"></textarea>
+    <div class="row" style="margin-top:10px"><button class="btn pri" id="ago">Correggi e crea audio <span class="hint" style="color:inherit">correct + audio</span></button><button class="btn" id="adeck">Ripassa <span class="hint">review Quaderno</span></button><button class="btn" id="adict">Dettato <span class="hint">dictation</span></button><span class="seg msw" role="group" aria-label="Modalità"><button data-m="ripeti">Ascolta e ripeti</button><button data-m="dettato">Dettato</button></span></div>
+    <div id="a-status"></div>
+  </div>
+  <div id="a-corr"></div>
+</section>
+
+<section class="panel" id="p-tutor">
+  <div class="card">
+    <div class="chat" id="chat"><div class="msg bot">Ciao! Chiedi, ad esempio: “Lucrezia, dammi 8 frasi sul consenso informato” o “fammi una lezione sul futuro”.</div></div>
+    <div class="row"><div class="grow"><input type="text" id="tmsg" placeholder="Scrivi a Lucrezia…"></div><button class="btn pri" id="tgo">Invia</button></div>
+    <div id="t-status"></div>
+  </div>
+</section>
+</div>
+
+<script>
+const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const media=f=>'/cards/media/'+encodeURIComponent(f);
+
+// theme
+$('#theme').onclick=()=>{const n=document.documentElement.getAttribute('data-theme')==='dark'?'light':'dark';
+  document.documentElement.setAttribute('data-theme',n);try{localStorage.setItem('chiron.theme',n)}catch(e){}};
+// tabs
+function tab(t){$$('#tabs button').forEach(b=>b.classList.toggle('on',b.dataset.t===t));$$('.panel').forEach(p=>p.classList.toggle('on',p.id==='p-'+t));}
+$$('#tabs button').forEach(b=>b.onclick=()=>tab(b.dataset.t));
+
+// api
+async function api(path,opts){
+  const r=await fetch(path,opts?{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(opts)}:undefined);
+  let d=null;try{d=await r.json()}catch(e){}
+  if(!r.ok){const m=(d&&(d.detail||d.error||d.message))||r.statusText;
+    const e=new Error(typeof m==='string'?m:JSON.stringify(m));e.status=r.status;throw e;}
+  return d;
+}
+function busy(el,label){ // spinner + elapsed seconds; returns stop()
+  const t0=Date.now();el.innerHTML=`<div class="spin"><i></i><span>${esc(label)} <b>0 s</b></span></div>`;
+  const b=el.querySelector('b');const iv=setInterval(()=>{b.textContent=Math.round((Date.now()-t0)/1000)+' s'},500);
+  return ()=>{clearInterval(iv);el.innerHTML='';};
+}
+const showErr=(el,e)=>{el.innerHTML=`<div class="err">${esc(e.message||e)}</div>`};
+async function guarded(el,label,fn){const stop=busy(el,label);try{const r=await fn();stop();return r;}catch(e){stop();showErr(el,e);return null;}}
+
+// ---------- normalize to drill items ----------
+const clean=s=>{const t=String(s??'').replace(/\[sound:[^\]]*\]/g,' ').replace(/<br\s*\/?>|<\/(div|p|li)>/gi,' ').replace(/<[^>]*>/g,'');
+  const d=new DOMParser().parseFromString(t,'text/html').body.textContent;return d.replace(/\s+/g,' ').trim();};
+function fromCard(c){
+  if(c.situation_en||c.situazione) return fromProd(c);
+  const base={cardId:c.cardId,deck:c.deck||''};
+  if(c.audio){const enFirst=/^en/i.test(c.direction||'');return {...base,kind:'listen',it:enFirst?c.back:c.front,en:enFirst?c.front:c.back,audio:c.audio};}
+  return {...base,kind:'flip',front:c.front,back:c.back};
+}
+function fromProd(p){return {cardId:p.cardId,deck:'Produzione',kind:'prod',sit:p.situation_en||p.situazione,bank:p.word_bank||[],verbs:Array.isArray(p.verbs)?p.verbs:[],ans:p.answer_it||p.risposta||'',notes:p.notes||'',audio:p.audio};}
+function fromQuad(q){return {cardId:q.cardId,deck:'Quaderno',kind:'listen',it:q.it,en:q.en,audio:q.audio,notes:q.note||''};}
+function fromListen(q){return fromQuad(q);}
+
+// ---------- drill ----------
+const D={items:[],i:0,res:[],audio:null,replays:0,revealed:false,onKey:null,slow:false,skipped:0,dict:false};
+let MODE='ripeti';try{if(localStorage.getItem('chiron.dmode')==='dettato')MODE='dettato';}catch(e){}
+function paintMode(){$$('.msw button').forEach(b=>b.classList.toggle('on',b.dataset.m===MODE));}
+$$('.msw button').forEach(b=>b.onclick=()=>{MODE=b.dataset.m;try{localStorage.setItem('chiron.dmode',MODE)}catch(e){}paintMode();});
+paintMode();
+const GR=[['Again','again','1'],['Hard','hard','2'],['Good','good','3'],['Easy','easy','4']];
+function startDrill(items,title,mode){
+  items=items.filter(x=>x&&x.cardId!=null);
+  const dict=(mode||MODE)==='dettato';let skipped=0;
+  if(dict){ // dictation: only cards with audio + an Italian text
+    const all=items.length;
+    items=items.map(x=>({...x,target:clean(x.it||x.ans||'')})).filter(x=>x.audio&&x.target&&(x.kind==='listen'||x.kind==='prod')).map(x=>({...x,kind:'dict'}));
+    skipped=all-items.length;
+    if(!items.length){alert('Dettato: nessuna carta con audio ('+skipped+' saltate) · no audio cards');return;}
+  }
+  if(!items.length){alert('Nessuna carta da studiare · no cards');return;}
+  Object.assign(D,{items,i:0,res:[],title:title||'',dict,skipped});
+  $('#drill').classList.add('on');window.scrollTo({top:0});
+  document.removeEventListener('keydown',D.onKey||(()=>{}));D.onKey=keyH;document.addEventListener('keydown',keyH);
+  renderCard();
+}
+function closeDrill(){stopAudio();$('#drill').classList.remove('on');$('#drill').innerHTML='';document.removeEventListener('keydown',keyH);}
+function stopAudio(){if(D.audio){D.audio.pause();D.audio=null;}}
+function play(f){stopAudio();if(!f)return;D.audio=new Audio(media(f));D.audio.playbackRate=D.slow?0.75:1;D.audio.play().catch(()=>{});}
+function keyH(e){
+  if(!$('#drill').classList.contains('on'))return;
+  const cc=D.items[D.i];
+  if(cc&&cc.kind==='dict'&&!D.revealed&&(e.ctrlKey||e.metaKey)){
+    if(e.key==='Enter'){e.preventDefault();reveal();return;}
+    if(e.key===' '){e.preventDefault();D.replays++;updReplay();play(cc.audio);return;}
+  }
+  if(/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName))return;
+  const c=D.items[D.i];if(!c)return;
+  if(e.key===' '){e.preventDefault();if(c.audio&&(c.kind==='listen'||c.kind==='dict'||D.revealed)){D.replays++;updReplay();play(c.audio);}}
+  else if(e.key==='Enter'){e.preventDefault();if(!D.revealed)reveal();}
+  else if('1234'.includes(e.key)&&D.revealed)grade(+e.key-1);
+}
+function updReplay(){const n=$('#rc');if(n)n.textContent=D.replays;}
+function renderCard(){
+  const c=D.items[D.i],n=D.items.length;D.revealed=false;D.replays=0;stopAudio();
+  let face='',pre='';
+  if(c.kind==='listen'){
+    face=`<div class="ear">🎧</div><div class="hint">Ascolta e ripeti ad alta voce · listen, repeat aloud</div>
+      <div class="acts"><button class="btn" id="rp">🔁 Riascolta (<span id="rc">0</span>)</button><button class="btn pri" id="rv">Ho ripetuto</button></div>
+      <div id="ans" class="hide"><div class="big">${esc(c.it)}</div><div class="sec">${esc(c.en)}</div>${c.notes?`<div class="note">${esc(c.notes)}</div>`:''}</div>`;
+  }else if(c.kind==='dict'){
+    face=`<div class="dict"><div class="acts"><button class="btn" id="rp">🔁 Riascolta (<span id="rc">0</span>)</button><button class="btn tog" id="slow" aria-pressed="${D.slow}">0.75×</button></div>
+      <div><label class="l" for="dt">Scrivi quello che senti · write what you hear</label><textarea id="dt" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Scrivi quello che senti"></textarea></div>
+      <div class="acts"><button class="btn pri" id="rv">Controlla</button></div>
+      <div id="ans" class="hide"></div></div>`;
+  }else if(c.kind==='prod'){
+    face=`<div class="sit">${esc(c.sit)}</div>
+      ${c.bank.length?`<div class="bank">${c.bank.map(w=>`<span class="chip">${esc(w)}</span>`).join('')}</div>`:''}
+      ${c.verbs.length?`<div class="verbs">${c.verbs.map(v=>`<span class="chip v">${esc(v.inf)} → ?</span>`).join('')}</div>`:''}
+      <div class="hint">Dillo ad alta voce · say it aloud</div>
+      <div class="acts"><button class="btn pri" id="rv">Mostra risposta</button></div>
+      <div id="ans" class="hide"><div class="big">${esc(c.ans)}</div>${c.verbs.length?`<div class="verbs">${c.verbs.map(v=>`<span class="chip v">${esc(v.inf)} → ${esc(v.form)}</span>`).join('')}</div>`:''}${c.notes?`<div class="note">${esc(c.notes)}</div>`:''}
+      ${c.audio?`<div class="acts"><button class="btn" id="rp">🔊 Riascolta (<span id="rc">0</span>)</button></div>`:''}</div>`;
+  }else{
+    face=`<div class="big">${esc(c.front)}</div><div class="acts"><button class="btn pri" id="rv">Mostra risposta</button></div>
+      <div id="ans" class="hide"><div class="sec">${esc(c.back)}</div></div>`;
+  }
+  $('#drill').innerHTML=`<div class="dh"><b>Carta ${D.i+1} di ${n}</b><span class="chip deck">${esc((c.deck||'').replace(/^.*::/,''))}</span>${D.dict?'<span class="chip v">Dettato</span>':''}<button class="x" id="dx" title="Chiudi">✕</button></div>${D.dict&&D.skipped&&D.i===0?`<div class="hint" style="margin-bottom:8px">${D.skipped} carte senza audio saltate · skipped</div>`:''}
+    <div class="bar"><i style="width:${D.i/n*100}%"></i></div>
+    <div class="face">${face}</div>
+    <div class="wstate" id="ws"></div>
+    <div class="grades hide" id="gr">${GR.map(([t,,k])=>`<button data-g="${k}">${t}<small>${k}</small></button>`).join('')}</div>
+    <div class="hint" style="text-align:center;margin-top:8px">${c.kind==='dict'?'Ctrl+Spazio = riascolta · Ctrl+Invio = controlla · 1-4 = voto':'spazio = riascolta · invio = mostra · 1-4 = voto'}</div>`;
+  $('#dx').onclick=()=>{closeDrill();summary(true)};
+  const rv=$('#rv');if(rv)rv.onclick=reveal;
+  const rp=$('#rp');if(rp)rp.onclick=()=>{D.replays++;updReplay();play(c.audio);};
+  $$('#gr button').forEach((b,k)=>b.onclick=()=>grade(k));
+  const sl=$('#slow');if(sl)sl.onclick=()=>{D.slow=!D.slow;sl.setAttribute('aria-pressed',D.slow);if(D.audio)D.audio.playbackRate=D.slow?0.75:1;};
+  if(c.kind==='listen'||c.kind==='dict')play(c.audio);
+  if(c.kind==='dict')$('#dt').focus();
+}
+// ---------- dictation diff ----------
+const noAcc=w=>w.normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+function toks(t){ // words, lowercase, ' normalised, elisions split (l'ospedale -> l' + ospedale)
+  t=String(t||'').replace(/[’‘`´]/g,"'").replace(/(\p{L})'(?=\p{L})/gu,'$1\' ');
+  return t.split(/\s+/).map(w=>w.replace(/^[^\p{L}\p{N}]+/u,'').replace(/[^\p{L}\p{N}']+$/u,'').replace(/[^\p{L}\p{N}']/gu,'')).filter(Boolean)
+    .map(w=>({raw:w,n:w.toLowerCase(),k:noAcc(w.toLowerCase())}));
+}
+function align(ref,hyp){ // edit distance over tokens (LCS-style DP), backtrack to ops
+  const R=ref.length,H=hyp.length,C=[...Array(R+1)].map(()=>new Float64Array(H+1));
+  const sc=(a,b)=>a.n===b.n?0:a.k===b.k?0.3:1;
+  for(let i=1;i<=R;i++)C[i][0]=i;for(let j=1;j<=H;j++)C[0][j]=j;
+  for(let i=1;i<=R;i++)for(let j=1;j<=H;j++)C[i][j]=Math.min(C[i-1][j-1]+sc(ref[i-1],hyp[j-1]),C[i-1][j]+1,C[i][j-1]+1);
+  const ops=[];let i=R,j=H;
+  while(i>0||j>0){
+    if(i>0&&j>0&&C[i][j]===C[i-1][j-1]+sc(ref[i-1],hyp[j-1])){const s=sc(ref[i-1],hyp[j-1]);ops.push({t:s===0?'ok':s<1?'accent':'sub',r:ref[i-1],h:hyp[j-1]});i--;j--;}
+    else if(i>0&&C[i][j]===C[i-1][j]+1){ops.push({t:'del',r:ref[i-1]});i--;}
+    else{ops.push({t:'ins',h:hyp[j-1]});j--;}
+  }
+  return ops.reverse();
+}
+function checkDict(c,typed){
+  const ops=align(toks(c.target),toks(typed)),N=ops.filter(o=>o.r).length;
+  const n=t=>ops.filter(o=>o.t===t).length,ok=n('ok'),ac=n('accent'),sub=n('sub'),del=n('del'),ins=n('ins');
+  const acc=N?Math.max(0,(ok+0.5*ac-0.5*ins)/N):0;
+  const miss=ops.filter(o=>o.t==='sub'||o.t==='del').map(o=>o.r.n);
+  return {ops,N,ok,ac,sub,del,ins,acc,miss};
+}
+function diffHtml(ops){
+  return ops.map(o=>{
+    const j=o.r&&o.r.raw.endsWith("'")?' j':''; // elision: no gap before the next word
+    if(o.t==='ok')return `<span class="dw ok${j}">${esc(o.r.raw)}</span>`;
+    if(o.t==='accent')return `<span class="dw accent${j}"><s>${esc(o.h.raw)}</s>${esc(o.r.raw)}</span>`;
+    if(o.t==='sub')return `<span class="dw sub${j}"><s>${esc(o.h.raw)}</s>${esc(o.r.raw)}</span>`;
+    if(o.t==='del')return `<span class="dw del${j}"><b>${esc(o.r.raw)}</b></span>`;
+    return `<span class="dw ins">${esc(o.h.raw)}</span>`;
+  }).join(' ').replace(/(class="dw [a-z]+ j">[^<]*(?:<\/span>)?<\/span>) /g,'$1');
+}
+function reveal(){
+  if(D.revealed)return;D.revealed=true;const c=D.items[D.i];
+  if(c.kind==='dict'){
+    const ta=$('#dt'),r=checkDict(c,ta.value);D.cur=r;ta.disabled=true;ta.blur();
+    const parts=[`${r.ok}/${r.N} parole`];if(r.ac)parts.push(`${r.ac} accent${r.ac>1?'i':'o'}`);if(r.sub)parts.push(`${r.sub} sbagliat${r.sub>1?'e':'a'}`);if(r.del)parts.push(`${r.del} mancant${r.del>1?'i':'e'}`);if(r.ins)parts.push(`${r.ins} in più`);
+    const sug=r.acc>=0.95?2:r.acc>=0.8?1:0;
+    $('#ans').innerHTML=`<div class="score">${parts.join(' · ')} <span class="hint">(${Math.round(r.acc*100)}%)</span></div>
+      <div class="diff">${diffHtml(r.ops)}</div>
+      <div class="legend"><span class="ok">giusta</span> · <span style="color:var(--amber);font-weight:600">accento</span> · <span style="color:var(--bad);font-weight:600">sbagliata / mancante</span> · <s>in più</s></div>
+      <div class="sec">${esc(c.en||c.sit||'')}</div>${c.notes?`<div class="note">${esc(c.notes)}</div>`:''}`;
+    $('#ans').classList.remove('hide');$('#gr').classList.remove('hide');
+    $$('#gr button')[sug].classList.add('sug');
+    const rv=$('#rv');if(rv)rv.remove();
+    return;
+  }
+  $('#ans').classList.remove('hide');$('#gr').classList.remove('hide');
+  const rv=$('#rv');if(rv)rv.remove();
+  if(c.kind==='prod'&&c.audio)play(c.audio);
+  if(c.kind==='listen'&&!c.audio){}
+}
+let pending=Promise.resolve();
+async function grade(k){
+  if(!D.revealed)return;
+  const c=D.items[D.i],ease=GR[k][1],rec={card:c,ease,written:null,msg:'',dict:c.kind==='dict'?D.cur:null};D.res.push(rec);
+  pending=pending.then(()=>post(rec));
+  D.i++;
+  if(D.i<D.items.length)renderCard();else{closeDrill();summary(false);}
+}
+async function post(rec){
+  try{
+    const d=await api('/cards/answer',{reviews:[{cardId:rec.card.cardId,ease:rec.ease}]});
+    const r=(d.results&&d.results[0]);
+    rec.written=r?!!r.written:(d.ok!==false&&(d.written??1)>0);
+    if(!rec.written)rec.msg=(r&&(r.error||r.detail))||d.detail||'';
+    setBanner('');
+  }catch(e){
+    rec.written=false;rec.msg=e.message;
+    if(e.status===503)setBanner('Anki non raggiungibile — apri Anki sul MacBook');
+    else setBanner('Voti non scritti: '+e.message);
+  }
+  const ws=$('#ws');if(ws&&$('#drill').classList.contains('on'))ws.innerHTML=rec.written?'<span class="ok">✓ scritto</span>':'<span style="color:var(--bad);font-weight:600">⚠ non scritto</span>';
+}
+function setBanner(m){$('#banner').innerHTML=m?`<div class="err">${esc(m)}</div>`:'';}
+async function summary(early){
+  await pending;
+  const t={};D.res.forEach(r=>t[r.ease]=(t[r.ease]||0)+1);
+  const nw=D.res.filter(r=>!r.written);
+  const dr=D.res.filter(r=>r.dict),mc={};dr.forEach(r=>r.dict.miss.forEach(w=>mc[w]=(mc[w]||0)+1));
+  const ml=Object.entries(mc).sort((a,b)=>b[1]-a[1]||a[0].localeCompare(b[0]));
+  const dsum=dr.length?`<div class="score">Precisione media · ${Math.round(dr.reduce((a,r)=>a+r.dict.acc,0)/dr.length*100)}%</div>
+    ${D.skipped?`<div class="hint">${D.skipped} carte senza audio saltate</div>`:''}
+    <div><label class="l">Parole che hai sbagliato · da riascoltare</label>${ml.length?`<div class="miss">${ml.map(([w,n])=>`<span class="chip">${esc(w)}${n>1?' × '+n:''}</span>`).join('')}</div>`:'<span class="ok">Nessuna parola sbagliata</span>'}</div>`:'';
+  $('#drill').classList.add('on');
+  $('#drill').innerHTML=`<div class="dh"><b>${early?'Sessione interrotta':'Sessione completata'}</b><span class="hint">${D.res.length} di ${D.items.length} carte</span><button class="x" id="dx2">✕</button></div>
+    <div class="bar"><i style="width:${D.res.length/D.items.length*100}%"></i></div>
+    <div class="face">${dsum}<div class="tally">${GR.map(([T,k])=>`<span class="chip">${T} × ${t[k]||0}</span>`).join('')}</div>
+    <div>${nw.length?`<span style="color:var(--bad);font-weight:600">⚠ ${nw.length} non scritte in Anki</span><div class="hint">${nw.map(r=>esc((r.card.it||r.card.target||r.card.sit||r.card.front||'').slice(0,40))+(r.msg?' — '+esc(r.msg):'')).join('<br>')}</div>`:'<span class="ok">✓ tutte le revisioni scritte in Anki</span>'}</div></div>`;
+  $('#dx2').onclick=closeDrill;
+}
+
+// ---------- Cerca ----------
+let found=[];
+async function doSearch(){
+  const q=$('#q').value.trim();if(!q)return;
+  $('#s-res').classList.add('hide');$('#tag-status').innerHTML='';
+  const d=await guarded($('#s-status'),'Cerco…',()=>api('/api/sessione/search',{query:q,k:40}));
+  if(!d)return;found=d.cards||[];
+  $('#s-status').innerHTML=`<div class="hint" style="margin-top:8px">${found.length} carte trovate</div>`;
+  $('#s-list').innerHTML=found.map((c,i)=>`<label class="res"><input type="checkbox" data-i="${i}"><span class="t"><span class="chip deck">${esc((c.deck||'').replace(/^.*::/,''))}</span>${c.audio?' 🔊':''}<div class="f">${esc(c.front)}</div><div class="b">${esc(c.back)}</div></span></label>`).join('')||'<div class="hint">Nessun risultato</div>';
+  $('#selall').checked=false;$('#s-res').classList.toggle('hide',!found.length);
+  $$('#s-list input').forEach(x=>x.onchange=cnt);cnt();
+}
+const sel=()=>$$('#s-list input:checked').map(x=>found[+x.dataset.i]);
+function cnt(){$('#selcount').textContent=sel().length+' / '+found.length;}
+$('#qgo').onclick=doSearch;$('#q').onkeydown=e=>{if(e.key==='Enter')doSearch()};
+$('#selall').onchange=e=>{$$('#s-list input').forEach(x=>x.checked=e.target.checked);cnt();};
+$('#study').onclick=()=>{const s=sel();if(!s.length){$('#tag-status').innerHTML='<div class="err">Seleziona almeno una carta</div>';return;}startDrill(s.map(fromCard),'Cerca');};
+$('#sdict').onclick=()=>{const s=sel();if(!s.length){$('#tag-status').innerHTML='<div class="err">Seleziona almeno una carta</div>';return;}
+  const n=s.filter(c=>c.audio).length;if(!n){$('#tag-status').innerHTML='<div class="err">Nessuna carta selezionata ha audio ('+s.length+' saltate)</div>';return;}
+  $('#tag-status').innerHTML='';startDrill(s.map(fromCard),'Cerca','dettato');};
+$('#tag').onclick=async()=>{
+  const s=sel();if(!s.length){$('#tag-status').innerHTML='<div class="err">Seleziona almeno una carta</div>';return;}
+  const tg=prompt('Nome del tag · tag name (es. esame::consenso)');if(!tg)return;
+  const d=await guarded($('#tag-status'),'Taggo…',()=>api('/api/sessione/tag',{cardIds:s.map(c=>c.cardId),tag:tg.trim()}));
+  if(d)$('#tag-status').innerHTML=`<div class="ok" style="margin-top:8px">✓ ${esc(d.tagged??s.length)} note taggate “${esc(tg)}”</div>`;
+};
+
+// ---------- Produzione ----------
+$('#pgo').onclick=async()=>{
+  const topic=$('#topic').value.trim();if(!topic)return;
+  const body={topic,n:+$('#pn').value||8};const f=$('#focus').value;if(f)body.focus=f;
+  const d=await guarded($('#p-status'),'Genero frasi con audio (può richiedere 5–20 s a frase)…',()=>api('/api/sessione/produce',body));
+  if(!d)return;
+  $('#p-status').innerHTML=`<div class="hint" style="margin-top:8px">${(d.items||[]).length} carte${d.anki?` · Anki: ${esc(d.anki.added)} aggiunte, ${esc(d.anki.duplicates)} duplicate`:''}</div>`;
+  startDrill((d.items||[]).map(fromProd),'Produzione');
+};
+async function deckDrill(name,st,mapper,mode){
+  const d=await guarded(st,'Carico il mazzo…',()=>api('/api/sessione/deck?name='+encodeURIComponent(name)));
+  if(d)startDrill((d.cards||[]).map(mapper),name,mode);
+}
+$('#pdeck').onclick=()=>deckDrill('Chiron::Produzione',$('#p-status'),fromCard);
+const quadMap=c=>c.audio||c.it?(c.it?fromQuad(c):fromCard(c)):fromCard(c);
+$('#adeck').onclick=()=>deckDrill('Chiron::Quaderno',$('#a-status'),quadMap);
+$('#adict').onclick=()=>deckDrill('Chiron::Quaderno',$('#a-status'),quadMap,'dettato');
+
+// ---------- Ascolto / Quaderno ----------
+$('#ago').onclick=async()=>{
+  const lines=$('#qlines').value.split('\n').map(s=>s.trim()).filter(Boolean);if(!lines.length)return;
+  const d=await guarded($('#a-status'),'Correggo e genero l\'audio (5–20 s a frase)…',()=>api('/api/sessione/quaderno',{lines}));
+  if(!d)return;const it=d.items||[];
+  $('#a-status').innerHTML=`<div class="hint" style="margin-top:8px">${it.length} frasi${d.anki?` · Anki: ${esc(d.anki.added)} aggiunte, ${esc(d.anki.duplicates)} duplicate`:''}</div>`;
+  $('#a-corr').innerHTML=`<div class="card"><label class="l">Correzioni · corrections</label>${it.map(x=>`<div class="corr"><div class="it">${esc(x.it)}</div><div class="en">${esc(x.en)}</div>${x.note?`<div class="nt">${esc(x.note)}</div>`:''}</div>`).join('')}<div class="row" style="margin-top:10px"><button class="btn pri" id="alisten">Esercizio di ascolto <span class="hint" style="color:inherit">listening drill</span></button></div></div>`;
+  $('#alisten').onclick=()=>startDrill(it.map(fromQuad),'Quaderno');
+  startDrill(it.map(fromQuad),'Quaderno');
+};
+
+// ---------- Tutor ----------
+function say(cls,html){const m=document.createElement('div');m.className='msg '+cls;m.innerHTML=html;$('#chat').appendChild(m);return m;}
+async function sendTutor(){
+  const msg=$('#tmsg').value.trim();if(!msg)return;$('#tmsg').value='';say('me',esc(msg));
+  const d=await guarded($('#t-status'),'Lucrezia sta pensando…',()=>api('/api/sessione/tutor',{message:msg}));
+  if(!d)return;
+  if(d.intent==='produce'){const it=d.items||[];say('bot',`${it.length} frasi di produzione pronte.`);startDrill(it.map(fromProd),'Produzione');}
+  else if(d.intent==='listen'){const it=d.items||[];say('bot',`${it.length} frasi di ascolto pronte.`);startDrill(it.map(fromQuad),'Ascolto');}
+  else if(d.intent==='lesson'){
+    const m=say('bot','Lezione in preparazione…');
+    if(d.lesson_url&&!d.job_id)m.innerHTML=`Lezione pronta: <a href="${esc(d.lesson_url)}" target="_blank">apri</a>`;
+    else pollJob(d.job_id,m,d.lesson_url);
+  }else say('bot',esc(d.text||d.answer||d.message||JSON.stringify(d)));
+}
+async function pollJob(id,m,url){
+  const t0=Date.now();
+  for(;;){
+    try{
+      const j=await api('/jobs/'+encodeURIComponent(id));
+      const st=j.status||j.state||'';
+      if(/ready|done|complete/i.test(st)){const u=j.lesson_url||url;m.innerHTML=u?`Lezione pronta: <a href="${esc(u)}" target="_blank">apri la lezione</a>`:'Lezione pronta.';return;}
+      if(/fail|error/i.test(st)){m.innerHTML=`<span style="color:var(--bad)">Lezione fallita: ${esc(j.error||j.detail||st)}</span>`;return;}
+      m.textContent=`Lezione in preparazione… (${esc(st||'in coda')}, ${Math.round((Date.now()-t0)/1000)} s)`;
+    }catch(e){m.innerHTML=`<span style="color:var(--bad)">${esc(e.message)}</span>`;return;}
+    await new Promise(r=>setTimeout(r,3000));
+  }
+}
+$('#tgo').onclick=sendTutor;$('#tmsg').onkeydown=e=>{if(e.key==='Enter')sendTutor()};
+window.__sessione={startDrill};
+</script>
+</body></html>

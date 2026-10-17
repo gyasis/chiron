@@ -11,16 +11,20 @@ cannot be written the card is not shown at all (see `reachable`).
 
 WHERE IT LIVES
 --------------
-AnkiConnect runs inside the Anki app on the MacBook, bound to the LAN
-(`webBindAddress: 0.0.0.0`). It answers only while Anki is open, which is why
-`reachable()` is a first-class part of this module rather than an afterthought.
+AnkiConnect runs inside the Anki app, bound to the LAN (`webBindAddress:
+0.0.0.0`). It answers only while Anki is open, which is why `reachable()` is a
+first-class part of this module rather than an afterthought.
 
-The default host here is deliberately LOCAL. This repo is public, so the real
-LAN address is supplied by CHIRON_ANKI_URL (see ~/.chiron/anki.env) and never
-committed.
+Anki now lives on the ALWAYS-ON Mac Studio (`192.168.0.159:9876` — 8765 there is
+kokoro TTS), with the MacBook (`192.168.0.225:8765`) as a FALLBACK. Both run the
+same collection and the same AnkiConnect apiKey, so Chiron tries them in order
+and uses whichever is up. The repo is public, so the real LAN addresses are
+supplied by the environment (see ~/.chiron/anki.env) and never committed.
 
-    CHIRON_ANKI_URL   default http://127.0.0.1:8765
-    CHIRON_ANKI_KEY   optional; AnkiConnect's apiKey, if one is configured
+    CHIRON_ANKI_URLS  comma-separated hosts, primary first (Studio,MacBook).
+                      Falls back to CHIRON_ANKI_URL, then localhost.
+    CHIRON_ANKI_URL   single host (back-compat); used if CHIRON_ANKI_URLS unset.
+    CHIRON_ANKI_KEY   AnkiConnect's apiKey (shared across hosts), if configured.
 """
 from __future__ import annotations
 
@@ -30,7 +34,23 @@ import re
 import urllib.error
 import urllib.request
 
-URL = os.environ.get("CHIRON_ANKI_URL", "http://127.0.0.1:8765").rstrip("/")
+
+def _hosts() -> list[str]:
+    """Candidate AnkiConnect hosts, primary first. Deduped, trailing / stripped."""
+    raw = os.environ.get("CHIRON_ANKI_URLS") or os.environ.get("CHIRON_ANKI_URL") \
+        or "http://127.0.0.1:8765"
+    seen, out = set(), []
+    for u in raw.split(","):
+        u = u.strip().rstrip("/")
+        if u and u not in seen:
+            seen.add(u)
+            out.append(u)
+    return out
+
+
+HOSTS = _hosts()
+_active = HOSTS[0]
+URL = _active                      # the host in use; updated sticky on failover
 KEY = os.environ.get("CHIRON_ANKI_KEY") or None
 TIMEOUT = float(os.environ.get("CHIRON_ANKI_TIMEOUT", 8))
 
@@ -44,29 +64,62 @@ class AnkiUnavailable(RuntimeError):
     """Anki is closed, asleep, or unreachable. Never studied through."""
 
 
-def invoke(action: str, **params):
+def _post(url: str, action: str, params: dict):
+    """One AnkiConnect call to one host. Raises AnkiUnavailable only on a
+    transport failure (host down / closed), so the caller can fail over."""
     body = {"action": action, "version": 6, "params": params}
     if KEY:
         body["key"] = KEY
     req = urllib.request.Request(
-        URL, data=json.dumps(body).encode(), headers={"Content-Type": "application/json"}
+        url, data=json.dumps(body).encode(), headers={"Content-Type": "application/json"}
     )
     try:
         with urllib.request.urlopen(req, timeout=TIMEOUT) as r:
-            out = json.loads(r.read())
+            return json.loads(r.read())
     except (urllib.error.URLError, OSError, TimeoutError) as e:
         raise AnkiUnavailable(f"{type(e).__name__}: {e}") from e
-    if out.get("error"):
-        raise RuntimeError(f"anki: {out['error']}")
-    return out.get("result")
+
+
+def invoke(action: str, **params):
+    """Call AnkiConnect, failing over across HOSTS (Studio → MacBook).
+
+    The active host is tried first and is sticky: once a fallback answers, it
+    stays the active one so we don't pay a dead-host timeout on every later
+    call. A transport error moves to the next host; an AnkiConnect *error*
+    (a real reply) is raised as-is — it is not a reason to fail over.
+    """
+    global _active, URL
+    order = [_active] + [u for u in HOSTS if u != _active]
+    last: Exception | None = None
+    for url in order:
+        try:
+            out = _post(url, action, params)
+        except AnkiUnavailable as e:
+            last = e
+            continue
+        if url != _active:                 # a fallback answered — make it sticky
+            _active = URL = url
+        if out.get("error"):
+            raise RuntimeError(f"anki: {out['error']}")
+        return out.get("result")
+    raise last or AnkiUnavailable("no Anki host reachable")
+
+
+def active_host() -> str | None:
+    """Which host is currently answering (probes in order), or None if all down."""
+    global _active, URL
+    for url in [_active] + [u for u in HOSTS if u != _active]:
+        try:
+            if not _post(url, "version", {}).get("error"):
+                _active = URL = url
+                return url
+        except AnkiUnavailable:
+            continue
+    return None
 
 
 def reachable() -> bool:
-    try:
-        invoke("version")
-        return True
-    except Exception:
-        return False
+    return active_host() is not None
 
 
 # ── reading ────────────────────────────────────────────────────────────────
@@ -222,7 +275,7 @@ CHIRON_DECK = os.environ.get("CHIRON_ANKI_DECK", "Chiron")
 
 
 def add_notes(cards: list[dict], deck: str | None = None,
-              tags: list[str] | None = None) -> dict:
+              tags: list[str] | None = None, model: str | None = None) -> dict:
     """Create notes from generated cards. `cards` = [{front, back, ...}].
 
     Duplicates are REFUSED rather than allowed: capturing the same answer twice
@@ -234,14 +287,23 @@ def add_notes(cards: list[dict], deck: str | None = None,
     invoke("createDeck", deck=deck)
     notes = []
     for c in cards:
-        front, back = (c.get("front") or "").strip(), (c.get("back") or "").strip()
-        if not front or not back:
-            continue
+        if model:
+            # Custom note type: the caller supplies the field map itself
+            # (c["fields"]); per-card c["tags"] are added to the shared tags.
+            flds = {k: str(v) for k, v in (c.get("fields") or {}).items()}
+            if not any(v.strip() for v in flds.values()):
+                continue
+            mname, ctags = model, list(c.get("tags") or [])
+        else:
+            front, back = (c.get("front") or "").strip(), (c.get("back") or "").strip()
+            if not front or not back:
+                continue
+            flds, mname, ctags = {"Front": front, "Back": back}, "Basic", []
         notes.append({
             "deckName": deck,
-            "modelName": "Basic",
-            "fields": {"Front": front, "Back": back},
-            "tags": ["chiron"] + list(tags or []),
+            "modelName": mname,
+            "fields": flds,
+            "tags": list(dict.fromkeys(["chiron"] + list(tags or []) + ctags)),
             "options": {"allowDuplicate": False,
                         "duplicateScope": "deck",
                         "duplicateScopeOptions": {"deckName": deck, "checkChildren": True}},
@@ -288,3 +350,80 @@ def add_notes(cards: list[dict], deck: str | None = None,
         "detail": None if not dupes else
         f"{dupes} already existed in {deck} and were not added again.",
     }
+
+
+# ── media, note types, tags (Sessione) ─────────────────────────────────────
+
+PROD_DECK = "Chiron::Produzione"
+QUADERNO_DECK = "Chiron::Quaderno"
+PROD_MODEL = "Chiron Produzione"
+LISTEN_MODEL = "Chiron Ascolto"
+
+_CSS = (".card{font-family:system-ui,sans-serif;font-size:20px;text-align:center;"
+        "color:#222;background:#fff;max-width:640px;margin:0 auto;padding:12px}"
+        ".nightMode .card,.night_mode .card{color:#eee;background:#1e1e1e}"
+        ".chip{display:inline-block;margin:3px;padding:3px 10px;border:1px solid #888;"
+        "border-radius:14px;font-size:17px}.verbs{margin-top:10px;font-size:16px;opacity:.8}"
+        ".note{margin-top:12px;font-size:15px;opacity:.7}.sit{font-size:20px}"
+        ".it{font-size:24px;font-weight:600}.en{opacity:.75}")
+
+_MODELS = {
+    PROD_MODEL: {
+        "fields": ["Situazione", "Banca", "Verbi", "Risposta", "Audio", "Note"],
+        "front": ('<div class="sit">{{Situazione}}</div><div class="bank">{{Banca}}</div>'
+                  '<div class="verbs">{{Verbi}}</div>'),
+        "back": ('{{FrontSide}}<hr id="answer"><div class="it">{{Risposta}}</div>{{Audio}}'
+                 '<div class="note">{{Note}}</div>'),
+    },
+    LISTEN_MODEL: {
+        "fields": ["Audio", "Italiano", "English", "Note"],
+        "front": "{{Audio}}<div class=\"en\">Ascolta e ripeti</div>",
+        "back": ('{{FrontSide}}<hr id="answer"><div class="it">{{Italiano}}</div>'
+                 '<div class="en">{{English}}</div><div class="note">{{Note}}</div>'),
+    },
+}
+
+
+def store_media(filename: str, data: bytes) -> str:
+    import base64
+    invoke("storeMediaFile", filename=filename, data=base64.b64encode(data).decode())
+    return filename
+
+
+def chips(words: list[str]) -> str:
+    """Word bank as HTML chips for the Banca field."""
+    return "".join(f'<span class="chip">{w}</span>' for w in words)
+
+
+def ensure_models() -> dict:
+    """Create the Sessione note types and decks if absent. Idempotent."""
+    have = set(invoke("modelNames") or [])
+    made = []
+    for name, m in _MODELS.items():
+        if name in have:
+            continue
+        invoke("createModel", modelName=name, inOrderFields=m["fields"], css=_CSS,
+               cardTemplates=[{"Name": "Card 1", "Front": m["front"], "Back": m["back"]}])
+        made.append(name)
+    for d in (PROD_DECK, QUADERNO_DECK):
+        invoke("createDeck", deck=d)
+    return {"created": made, "present": sorted(set(_MODELS) & (have | set(made)))}
+
+
+def add_tags(note_ids: list[int], tags: str | list[str]) -> None:
+    if isinstance(tags, (list, tuple)):
+        tags = " ".join(tags)
+    if note_ids:
+        invoke("addTags", notes=[int(n) for n in note_ids], tags=tags)
+
+
+def notes_for_cards(card_ids: list[int]) -> dict[int, dict]:
+    """cardId -> {noteId, tags} (one cardsInfo + one notesInfo call)."""
+    ids = [int(c) for c in card_ids]
+    if not ids:
+        return {}
+    ci = invoke("cardsInfo", cards=ids) or []
+    nmap = {int(c["cardId"]): int(c["note"]) for c in ci if c and c.get("cardId") is not None}
+    ni = invoke("notesInfo", notes=sorted(set(nmap.values()))) or []
+    tg = {int(n["noteId"]): n.get("tags", []) for n in ni if n}
+    return {cid: {"noteId": nid, "tags": tg.get(nid, [])} for cid, nid in nmap.items()}
