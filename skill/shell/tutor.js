@@ -1845,7 +1845,7 @@
     // Where the answer came from. Fields are top-level on /tutor-chat and on the SSE final event;
     // both transports (and the poll path, which only narrates status) end in this function.
     var src = (data && data.source) || (data && data.mode === 'ita' ? 'page' : '');
-    var lab = src === 'page' ? (data.grounded ? '📄 dalla lezione' : '📄 risposta generale')
+    var lab = src === 'scene' ? '🎬 dalla scena' : src === 'page' ? (data.grounded ? '📄 dalla lezione' : '📄 risposta generale')
       : src === 'textbook' ? "📚 Harrison's" : src === 'web' ? '🌐 web' : src === 'agent' ? '🔎 agente' : '';
     if (!lab) { lab = '❔ fonte sconosciuta'; console.warn('chiron tutor: answer without a known source', data); }
     var g = document.createElement('span'); g.className = 'ct-grounded'; g.setAttribute('data-src', src || 'unknown'); g.textContent = lab;
@@ -1968,6 +1968,10 @@
       lang: mode === 'ita' ? 'it' : 'en',
       suggest: suggestOn
     };
+    try {   // video lessons (scene-report.js): ground the answer on the scene being watched
+      var np = window.CHIRON_NOW && window.CHIRON_NOW();
+      if (np && (np.time || np.scene)) { payload.lesson_time = np.time; payload.scene = np.scene; }
+    } catch (e) { console.warn('chiron tutor: CHIRON_NOW failed', e); }
 
     if (transportMode === 'poll') sendPoll(payload, loadingBub, statusRefs);
     else sendStream(payload, loadingBub, statusRefs);

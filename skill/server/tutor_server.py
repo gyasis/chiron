@@ -102,12 +102,85 @@ def slug_text(slug: str, question: str = "", cap: int = 3800) -> str:
     return "\n".join(blocks)[:cap]
 
 
+def _fmt_t(t: float) -> str:
+    return f"{int(t) // 60}:{int(t) % 60:02d}"
+
+
+def video_text(slug: str, t=None, scene=None, cap: int = 3800) -> tuple[str, bool]:
+    """Ground on a video-it lesson's transcript.json (scenes[].lines[]). Returns (text, scene_known).
+    The CURRENT scene (found by playback time `t`, else the 1-based `scene` index the page reports) goes in
+    full — situation, target structures, every line with its gloss and teaching note, the line being
+    played marked — followed by the video summary and the other scenes' titles. Without a time or scene the
+    whole episode's scene list is returned instead (bounded). ('', False) when there is no transcript."""
+    if not slug or not _SLUG_OK.match(slug) or ".." in slug:
+        return "", False
+    try:
+        with open(os.path.join(LESSONS_DIR, slug, "transcript.json"), "rb") as f:
+            tr = json.loads(f.read(4_000_000).decode("utf-8", "replace"))
+    except (OSError, ValueError):
+        return "", False
+    scenes = tr.get("scenes") or []
+    if not scenes:
+        return "", False
+    cur = None
+    try:
+        if t is not None and t != "":
+            tf = float(t)
+            cur = next((i for i, sc in enumerate(scenes) if sc.get("start", 0) <= tf < sc.get("end", 0)), None)
+        if cur is None and scene not in (None, "", 0):
+            i = int(scene) - 1
+            cur = i if 0 <= i < len(scenes) else None
+    except (TypeError, ValueError):
+        cur = None
+    out = []
+    summ = tr.get("video_summary")
+    if isinstance(summ, dict):
+        summ = summ.get("en") or summ.get("it") or ""
+    if summ:
+        out.append("EPISODE SUMMARY: " + str(summ)[:500])
+    if cur is not None:
+        sc = scenes[cur]
+        tf = float(t) if t not in (None, "") else None
+        out.append(f"CURRENT SCENE {cur + 1}/{len(scenes)} — {sc.get('title', '')} "
+                   f"({_fmt_t(sc.get('start', 0))}–{_fmt_t(sc.get('end', 0))}). Situation: {sc.get('situation', '')}")
+        ts = sc.get("target_structures")
+        if ts:
+            out.append("Target structures: " + "; ".join(map(str, ts if isinstance(ts, list) else [ts])))
+        now = -1
+        if tf is not None:
+            for i, ln in enumerate(sc.get("lines") or []):
+                if tf >= ln.get("start", 0) - 0.05:
+                    now = i
+        lines = sc.get("lines") or []
+        rows = []
+        for i, ln in enumerate(lines):
+            note = re.sub(r"<[^>]+>", "", ln.get("teaching_note") or "")
+            rows.append(("▶ NOW PLAYING " if i == now else "") + f"[{_fmt_t(ln.get('start', 0))}] {ln.get('character', '')}: "
+                        f"{ln.get('italian_text', '')} = {ln.get('en_gloss', '')}" + (f" (note: {note})" if note else ""))
+        if sum(map(len, rows)) > 2300:                  # long scene: keep the lines around the playhead, bounded
+            c = now if now >= 0 else 0
+            lo = max(0, c - 7)
+            out.append(f"(lines {lo + 1}-{min(len(rows), lo + 15)} of {len(rows)} in this scene, around the playhead)")
+            rows = rows[lo:lo + 15]
+        out.extend(rows)
+        others = [f"{i + 1}. {x.get('title', '')}" for i, x in enumerate(scenes) if i != cur]
+        out.append("OTHER SCENES: " + " | ".join(others))
+    else:
+        out.append("SCENES: " + " | ".join(
+            f"{i + 1}. {x.get('title', '')} — {x.get('situation', '')}" for i, x in enumerate(scenes)))
+    return "\n".join(out)[:cap], cur is not None
+
+
 def _run_answer(body: dict, on_status=None) -> dict:
     """One turn: route → answer (with live status) → optional follow-up suggestions."""
     msgs = body.get("messages") or []
-    if not (body.get("section_text") or "").strip() and body.get("lesson_slug"):
+    scene_grounded = False
+    # A video lesson that reports its playhead/scene is grounded on that scene even if the page also sent text.
+    has_pos = body.get("lesson_time") not in (None, "") or body.get("scene") not in (None, "", 0)
+    if body.get("lesson_slug") and (has_pos or not (body.get("section_text") or "").strip()):
         q = next((m.get("content", "") for m in reversed(msgs) if m.get("role") == "user"), "")
-        body = {**body, "section_text": slug_text(body["lesson_slug"], q)}
+        vt, scene_grounded = video_text(body["lesson_slug"], body.get("lesson_time"), body.get("scene"))
+        body = {**body, "section_text": vt or body.get("section_text") or slug_text(body["lesson_slug"], q)}
         if not body["section_text"]:
             print(f"tutor: no lesson text for slug {body.get('lesson_slug')!r} under {LESSONS_DIR}", flush=True)
     out = asyncio.run(answer_turn(
@@ -116,6 +189,8 @@ def _run_answer(body: dict, on_status=None) -> dict:
         messages=msgs, lang=body.get("lang", "en"), model=body.get("model"),
         mode=body.get("mode", "med"), on_status=on_status,
         client_system=body.get("client_system")))
+    if scene_grounded and out.get("source") == "page" and out.get("grounded"):
+        out["source"] = "scene"          # answer grounded on the scene the learner is watching
     if body.get("suggest") and out.get("reply"):
         q = next((m.get("content", "") for m in reversed(msgs) if m.get("role") == "user"), "")
         if on_status:
