@@ -31,7 +31,6 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 SIDECARS = {"omnivoice": 8770, "whisper": 8766}
 # Atelier sidecar host. Set CHIRON_ATELIER_HOST to the Mac Studio on your LAN.
 ATELIER_HOST = os.getenv("CHIRON_ATELIER_HOST", "localhost")
-ANKI = "http://127.0.0.1:8765"
 
 
 def preflight(day: str) -> bool:
@@ -77,13 +76,11 @@ def preflight(day: str) -> bool:
 
 
 def anki(action, **params):
-    req = urllib.request.Request(
-        ANKI, data=json.dumps({"action": action, "version": 6, "params": params}).encode(),
-        headers={"Content-Type": "application/json"})
-    d = json.load(urllib.request.urlopen(req, timeout=60))
-    if d.get("error"):
-        raise RuntimeError(f"{action}: {d['error']}")
-    return d["result"]
+    """AnkiConnect through push_cards.inv: hosts, failover and apiKey come from ~/.chiron/anki.env
+    (Anki moved to the Mac Studio, which requires the key; 127.0.0.1:8765 no longer answers)."""
+    sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+    import push_cards
+    return push_cards.inv(action, **params)
 
 
 def attach_anki(day: str, audio_src: str) -> None:

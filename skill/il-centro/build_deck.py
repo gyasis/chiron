@@ -1,15 +1,12 @@
 #!/usr/bin/env python3
 """Build the Barbara Cavallaro lesson deck: write TSV, then push via AnkiConnect."""
 
-import json
 import os
 import sys
-import urllib.request
 
 DECK = "Italiano::Barbara 2026-08-03"
 MODEL = "Basic (and reversed card)"
 LESSON_TAG = "lezione-2026-08-03"
-ENDPOINT = "http://127.0.0.1:8765"
 OUT_DIR = os.path.dirname(os.path.abspath(__file__))
 TSV_PATH = os.path.join(OUT_DIR, "barbara-2026-08-03.tsv")
 
@@ -124,14 +121,10 @@ NOTES = [
 
 
 def invoke(action, **params):
-    payload = json.dumps({"action": action, "version": 6, "params": params}).encode()
-    req = urllib.request.Request(ENDPOINT, data=payload,
-                                 headers={"Content-Type": "application/json"})
-    with urllib.request.urlopen(req, timeout=20) as r:
-        resp = json.load(r)
-    if resp.get("error"):
-        raise RuntimeError(f"{action}: {resp['error']}")
-    return resp["result"]
+    """AnkiConnect through push_cards.inv: hosts, failover and apiKey come from ~/.chiron/anki.env."""
+    sys.path.insert(0, OUT_DIR)
+    import push_cards
+    return push_cards.inv(action, **params)
 
 
 def write_tsv():

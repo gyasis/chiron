@@ -2333,6 +2333,12 @@ def ask_config():
     return {"provider": c["provider"], "base": "/ask/llm", "model": c["model"], "models": models}
 
 
+import ask_proxy  # noqa: E402  streaming /ask/llm: disconnect cancel + one in-flight call per session
+import fail_fast  # noqa: E402
+
+ASK_READ_S = float(os.environ.get("CHIRON_ASK_READ_S") or 180)
+
+
 @app.api_route("/ask/llm/{path:path}", methods=["GET", "POST"])
 async def ask_llm_proxy(path: str, request: Request):
     """Passthrough to the configured ollama-compatible endpoint (governor by default).
@@ -2360,12 +2366,24 @@ async def ask_llm_proxy(path: str, request: Request):
                 body = json.dumps(_b).encode()
         except (ValueError, AttributeError):
             pass          # not JSON, or not a shape we recognise — forward it untouched
+    # Ollama's server default context is 131K, which thrashed the Studio's swap on 2026-10-17 (Ask's gemma4:12b
+    # call ran 22m42s). Pin a window sized to the request unless the page set one itself.
+    if body and path.rstrip("/").endswith(("api/chat", "api/generate")):
+        try:
+            _b = json.loads(body)
+            if isinstance(_b, dict) and not (_b.get("options") or {}).get("num_ctx"):
+                _b.setdefault("options", {})["num_ctx"] = fail_fast.num_ctx_for(len(body))
+                body = json.dumps(_b).encode()
+        except (ValueError, AttributeError):
+            pass
+    # Streamed through; a browser disconnect or a newer question from the same tab cancels the upstream call
+    # (ask_proxy). X-Governor-Max-Seconds = the read timeout: past it nobody is waiting for the answer.
     try:
-        async with httpx.AsyncClient(timeout=httpx.Timeout(connect=3.0, read=180.0, write=30.0, pool=5.0)) as cx:
-            r = await cx.request(request.method, f"{base}/{path}", content=body or None,
-                                 headers={"content-type": request.headers.get("content-type", "application/json")})
-            return Response(content=r.content, status_code=r.status_code,
-                            media_type=r.headers.get("content-type", "application/json"))
+        return await ask_proxy.forward(
+            request, f"{base}/{path}", body,
+            {"content-type": request.headers.get("content-type", "application/json"),
+             **fail_fast.governor_headers(ASK_READ_S)},
+            httpx.Timeout(connect=3.0, read=ASK_READ_S, write=30.0, pool=5.0))
     except httpx.ConnectError:
         raise HTTPException(502, f"model endpoint unreachable — set CHIRON_ASK_LLM_URL or ~/.chiron/ask.json")
     except httpx.ReadTimeout:
