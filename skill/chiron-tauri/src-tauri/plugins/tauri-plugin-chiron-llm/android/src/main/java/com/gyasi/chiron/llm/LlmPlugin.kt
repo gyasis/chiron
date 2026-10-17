@@ -39,9 +39,9 @@ import java.util.concurrent.atomic.AtomicBoolean
 @InvokeArg class SpeakArgs { var text: String = ""; var lang: String = "it-IT" }
 @InvokeArg class StatusArgs { var verify: Boolean = false }
 
-private fun obj(m: Map<String, Any?>): JSObject {
+private fun obj(m: Map<*, *>): JSObject {
     val o = JSObject()
-    for ((k, v) in m) o.put(k, v)
+    for ((k, v) in m) o.put(k.toString(), if (v is Map<*, *>) obj(v) else v)   // nested maps must become JSON objects, not toString()
     return o
 }
 
@@ -324,8 +324,8 @@ class LlmPlugin(private val activity: Activity) : Plugin(activity) {
                 ch?.send(obj(mapOf("type" to "error", "message" to err)))
                 invoke.reject(err)
             } else {
-                ch?.send(obj(mapOf("type" to "final") + (res ?: emptyMap())))
-                invoke.resolve(obj(res ?: emptyMap()))
+                ch?.send(obj(mapOf<String, Any>("type" to "final") + (res ?: emptyMap<String, Any>())))
+                invoke.resolve(obj(res ?: emptyMap<String, Any>()))
             }
         }
     }

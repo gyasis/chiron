@@ -35,15 +35,23 @@ macro_rules! passthru {
 }
 
 passthru! {
-    llm_status => "llmStatus",
     llm_download_cancel => "llmDownloadCancel",
-    llm_load => "llmLoad",
     llm_cancel => "llmCancel",
     llm_unload => "llmUnload",
     llm_delete => "llmDelete",
     voice_status => "voiceStatus",
     stt_stop => "sttStop",
     tts_stop => "ttsStop",
+}
+
+#[tauri::command]
+async fn llm_status<R: Runtime>(_app: AppHandle<R>, llm: State<'_, Llm<R>>, verify: Option<bool>) -> Result<Value, String> {
+    fwd(&llm, "llmStatus", json!({ "verify": verify.unwrap_or(false) })).await
+}
+
+#[tauri::command]
+async fn llm_load<R: Runtime>(_app: AppHandle<R>, llm: State<'_, Llm<R>>, backend: Option<String>) -> Result<Value, String> {
+    fwd(&llm, "llmLoad", json!({ "backend": backend.unwrap_or_else(|| "gpu".into()) })).await
 }
 
 #[tauri::command]

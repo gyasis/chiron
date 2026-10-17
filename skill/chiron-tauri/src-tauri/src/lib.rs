@@ -164,6 +164,19 @@ fn server_lessons(url: String) -> Result<serde_json::Value, String> {
     serde_json::from_str(&body).map_err(|e| format!("bad lessons.json: {e}"))
 }
 
+// GET a small JSON document natively (no CORS): the :8910 static server that hosts the on-device model
+// manifest sends no Access-Control-Allow-Origin, so the webview cannot fetch() it.
+#[tauri::command]
+fn fetch_json(url: String) -> Result<serde_json::Value, String> {
+    let body = ureq::get(&url)
+        .timeout(std::time::Duration::from_secs(6))
+        .call()
+        .map_err(|e| format!("fetch {url}: {e}"))?
+        .into_string()
+        .map_err(|e| e.to_string())?;
+    serde_json::from_str(&body).map_err(|e| format!("bad JSON from {url}: {e}"))
+}
+
 // Download a .chiron from the server and import it.
 #[tauri::command]
 fn import_from_server(app: tauri::AppHandle, url: String, file: String) -> Result<Lesson, String> {
@@ -347,7 +360,8 @@ pub fn run() {
             delete_lesson,
             server_lessons,
             import_from_server,
-            lesson_text
+            lesson_text,
+            fetch_json
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

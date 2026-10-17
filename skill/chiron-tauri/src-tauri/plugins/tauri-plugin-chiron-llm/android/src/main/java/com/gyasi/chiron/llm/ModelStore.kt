@@ -27,9 +27,10 @@ internal class ModelStore(private val ctx: Context) {
     private val part: File get() = File(dir, "$FILE_NAME.part")
     private val marker: File get() = File(dir, "$FILE_NAME.verified")
 
-    fun wifi(): Boolean = try {
+    /** true = unmetered (Wi-Fi), false = metered, null = could not tell (JS only warns on an explicit false). */
+    fun wifi(): Boolean? = try {
         !(ctx.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager).isActiveNetworkMetered
-    } catch (e: Exception) { false }
+    } catch (e: Exception) { Log.w(TAG, "wifi() unknown: ${e.message}"); null }
 
     fun freeBytes(): Long = try { dir.usableSpace } catch (e: Exception) { -1 }
 

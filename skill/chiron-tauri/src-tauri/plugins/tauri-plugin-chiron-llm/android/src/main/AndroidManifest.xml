@@ -1,6 +1,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
     <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <!-- Android 11+ package visibility: SpeechRecognizer / TextToSpeech must see their engines -->
     <queries>
         <intent><action android:name="android.speech.RecognitionService" /></intent>

@@ -468,9 +468,8 @@
       if (llmSt && llmSt.wifi === false && !confirm('Sei su una rete a consumo (dati mobili?). Il modello pesa circa 2,6 GB. Scaricare lo stesso?')) return;
       dl.state = 'run'; dl.err = ''; dlPaint();
       if (!dl.man) {
-        const r = await fetchT(manifestUrl(), 6000);
-        if (!r.ok) throw new Error('manifest HTTP ' + r.status + ' (' + manifestUrl() + ')');
-        dl.man = await r.json();
+        try { dl.man = await invoke('fetch_json', { url: manifestUrl() }); }   // native fetch: :8910 sends no CORS headers
+        catch (e) { throw new Error('manifest non raggiungibile (' + manifestUrl() + '): ' + String((e && e.message) || e)); }
         if (!dl.man.file || !dl.man.sha256) throw new Error('manifest incompleto (servono file e sha256)');
       }
       const url = manifestUrl().replace(/[^/]*$/, dl.man.file);
@@ -484,7 +483,7 @@
       dl.state = 'idle'; llmSt = await PLUG('llm_status'); toast('Veloce pronto ⚡');
       if (dlBox) { dlBox.remove(); dlBox = null; }
     } catch (e) {
-      const m = (e && (e.name === 'TypeError' || e.name === 'AbortError')) ? 'Server modello non raggiungibile (' + manifestUrl() + ')' : String((e && e.message) || e);
+      const m = String((e && e.message) || e);
       dl.state = 'err'; dl.err = m; warn('llm download', e); dlPaint();
     }
   }
