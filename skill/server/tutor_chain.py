@@ -21,6 +21,7 @@ from promptchain.utils.promptchaining import PromptChain
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'chains'))
 import local_models  # noqa: E402  live discovery of the Mac's chat-capable models
 import chiron_models  # noqa: E402  live-catalog resolver: 'cloud:<family>@latest' + heals retired names
+import fail_fast  # noqa: E402  one deadline per turn + governor lease pre-check + num_ctx
 from promptchain.utils.agentic_step_processor import AgenticStepProcessor
 
 AGENT_MODEL = os.environ.get("TUTOR_AGENT_MODEL", "gemini/gemini-flash-latest")
@@ -75,6 +76,7 @@ def resolve_model(model_id: str | None) -> dict:
     # A local default may be missing when the governor is down: fall back, never KeyError.
     return MODELS.get(mid) or MODELS.get(DEFAULT_MODEL) or MODELS["gemma4"]
 DEFAULT_MODEL = os.environ.get("TUTOR_DEFAULT_MODEL", "gemma4")
+TUTOR_DEADLINE_S = float(os.environ.get("TUTOR_DEADLINE_S") or 90)   # one total budget per tutor turn
 # gemini-3-flash-preview (retired 2026-07-15) and deepseek-v4-flash (retired 2026-09-25) were dead rungs here.
 CLASSIFY_SPEC = os.environ.get("TUTOR_CLASSIFY", "cloud:deepseek-flash@latest")
 FALLBACKS = [s.strip() for s in os.environ.get(
@@ -103,11 +105,11 @@ def _gemini(system: str, history: list[dict], user: str) -> str:
             "generationConfig": {"temperature": 0.3}}
     req = urllib.request.Request(GEMINI_URL, data=json.dumps(body).encode(),
         headers={"Content-Type": "application/json", "x-goog-api-key": GEMINI_KEY})
-    d = json.loads(urllib.request.urlopen(req, timeout=90).read())
+    d = json.loads(urllib.request.urlopen(req, timeout=fail_fast.attempt_timeout(90)).read())
     return d["candidates"][0]["content"]["parts"][0]["text"].strip()
 
 def _ollama_chat(url: str, model: str, headers: dict, system: str, history: list[dict], user: str,
-                 think_off: bool = False) -> str:
+                 think_off: bool = False, governed: bool = False) -> str:
     msgs = [{"role": "system", "content": system}] if system else []
     for m in history[-10:]:
         r = "assistant" if m.get("role") == "assistant" else "user"
@@ -115,8 +117,13 @@ def _ollama_chat(url: str, model: str, headers: dict, system: str, history: list
     if user: msgs.append({"role": "user", "content": user})
     b = {"model": model, "stream": False, "options": {"temperature": 0.3}, "messages": msgs}
     if think_off: b["think"] = False       # /api/chat's off-switch (the OpenAI path takes reasoning_effort instead)
+    timeout = fail_fast.attempt_timeout(140)            # min(140 s, what is left of the turn's deadline)
+    if governed:
+        fail_fast.check_governor(model)                 # a lease older than ~120 s: skip, don't queue behind it
+        b["options"]["num_ctx"] = fail_fast.num_ctx_for(sum(len(m["content"]) for m in msgs))
+        headers = {**headers, **fail_fast.governor_headers(timeout)}
     req = urllib.request.Request(url, data=json.dumps(b).encode(), headers={"Content-Type": "application/json", **headers})
-    msg = json.loads(urllib.request.urlopen(req, timeout=140).read())["message"]
+    msg = json.loads(urllib.request.urlopen(req, timeout=timeout).read())["message"]
     if think_off and (msg.get("thinking") or "").strip():     # a flag is not evidence: surface a model that ignores it
         sys.stderr.write(f"[tutor] {model} emitted {len(msg['thinking'])} chars of thinking despite think:false\n")
     c = (msg.get("content") or "").strip()
@@ -129,7 +136,8 @@ def _call(spec: str, system: str, history: list[dict], user: str) -> str:
     if prov == "governor":
         model = model or "gemma3:27b"
         return _ollama_chat(GOVERNOR + "/api/chat", model, {}, system, history, user,
-                            think_off=local_models.thinking_off(model))   # only when /api/show says it thinks
+                            think_off=local_models.thinking_off(model),   # only when /api/show says it thinks
+                            governed=True)
     return _gemini(system, history, user)
 
 # The last thing that went wrong on the answer path, per provider spec. The
@@ -149,6 +157,9 @@ def _answer(spec: str, system: str, history: list[dict], user: str) -> str:
             if r:
                 return r
             errs.append((s, "empty response"))
+        except fail_fast.DeadlineExceeded as e:
+            errs.append((s, f"DeadlineExceeded: {e}"))
+            break                                       # the turn's time is spent: no more attempts
         except Exception as e:
             errs.append((s, f"{type(e).__name__}: {e}"))
     LAST_ERRORS[:] = errs
@@ -509,7 +520,15 @@ async def answer_turn(section_text: str, selection: str, section_id: str, lesson
                       messages: list[dict], lang: str, model: str | None = None, mode: str = "med",
                       on_status=None, client_system: str | None = None) -> dict:
     """`on_status(text)` (optional) receives REAL live progress — the router's verdict, each actual search
-    with its query, drafting/reconciling — so the UI can narrate the wait instead of showing a dead spinner."""
+    with its query, drafting/reconciling — so the UI can narrate the wait instead of showing a dead spinner.
+    Every model call in the turn shares ONE deadline (TUTOR_DEADLINE_S; a caller's enclosing scope wins)."""
+    with fail_fast.scope(TUTOR_DEADLINE_S, "tutor turn"):
+        return await _answer_turn(section_text, selection, section_id, lesson_slug, messages, lang, model, mode,
+                                  on_status, client_system)
+
+
+async def _answer_turn(section_text, selection, section_id, lesson_slug, messages, lang, model, mode,
+                       on_status, client_system) -> dict:
     spec = resolve_model(model)["spec"]
     hist = _window([m for m in messages if m.get("role") in ("user", "assistant")])
     user = next((m.get("content", "").strip() for m in reversed(hist) if m.get("role") == "user"), "")

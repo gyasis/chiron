@@ -100,9 +100,12 @@ async function boot() {
   $('#scope').value = scope;
 
   // The proxy is shape-agnostic; the server says which shape the upstream speaks.
+  // X-Ask-Session: one id per tab, kept across reloads, so the proxy runs ONE model call per tab and a
+  // reload cancels the call it replaced (2026-10-17: four reloads ran four calls on the Mac for nobody).
+  const headers = { 'X-Ask-Session': askSession() };
   const llm = cfg.provider === 'ollama'
-    ? { provider: 'ollama', host: cfg.base, model: cfg.model }
-    : { provider: 'openai-compatible', baseUrl: cfg.base, model: cfg.model, apiKey: 'proxied' };
+    ? { provider: 'ollama', host: cfg.base, model: cfg.model, headers }
+    : { provider: 'openai-compatible', baseUrl: cfg.base, model: cfg.model, apiKey: 'proxied', headers };
 
   let corpusCache = null;
   const semantic = createSemanticSource({
@@ -861,6 +864,14 @@ function lessonForm(panel, msg, row) {
       f.querySelector('button').disabled = false;
     }
   });
+}
+
+function askSession() {
+  try {
+    let id = sessionStorage.getItem('chiron.ask.session');
+    if (!id) sessionStorage.setItem('chiron.ask.session', id = Math.random().toString(36).slice(2, 12));
+    return id;
+  } catch { return 'tab'; }      // storage blocked: the proxy falls back to the client address
 }
 
 async function post(path, body) {

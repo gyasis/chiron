@@ -31,6 +31,7 @@ import pimsleur_drill  # noqa: E402  the same OmniVoice + whisper sidecars and v
 import chiron_models  # noqa: E402
 sys.path.insert(0, str(SKILL / "server"))
 import local_models  # noqa: E402
+import fail_fast  # noqa: E402
 
 ASR_URL = pimsleur_drill.ASR_URL   # same whisper sidecar + env override (CHIRON_WHISPER_URL) as the drills
 
@@ -140,10 +141,16 @@ def _ollama(model: str, system: str, user: str, key: str, local: bool = False) -
             "messages": [{"role": "system", "content": system}, {"role": "user", "content": user}]}
     if not local or local_models.thinking_off(model):     # cloud: verified think:false; local: only if it thinks
         body["think"] = False
+    timeout = fail_fast.attempt_timeout(90, fail_fast.modal_reserve())
+    if local:
+        fail_fast.check_governor(model)                    # a lease older than ~120 s: skip, don't queue behind it
+        body["options"]["num_ctx"] = fail_fast.num_ctx_for(len(system) + len(user))   # not Ollama's 131K default
+        headers = fail_fast.governor_headers(timeout)
+    else:
+        headers = {"Authorization": "Bearer " + key}
     url = local_models.GOVERNOR + "/api/chat" if local else OLLAMA_CLOUD
-    req = urllib.request.Request(url, json.dumps(body).encode(),
-                                 {"Content-Type": "application/json", **({} if local else {"Authorization": "Bearer " + key})})
-    d = json.loads(urllib.request.urlopen(req, timeout=90).read())
+    req = urllib.request.Request(url, json.dumps(body).encode(), {"Content-Type": "application/json", **headers})
+    d = json.loads(urllib.request.urlopen(req, timeout=timeout).read())
     msg = d.get("message") or {}
     usage = {"model": d.get("model"), "prompt_tokens": d.get("prompt_eval_count"),
              "output_tokens": d.get("eval_count"), "thinking_chars": len(msg.get("thinking") or "")}
@@ -169,7 +176,21 @@ def fallback_chain(first: str, examiners: dict, fallbacks: str | None = None) ->
     return order[:MAX_ATTEMPTS]
 
 
+ORAL_DEADLINE_S = float(os.environ.get("CHIRON_ORAL_DEADLINE_S") or 60)
+
+
+def _turn_reply(text: str, b: dict) -> dict:
+    out = parse_json(text)
+    if not str(out.get("reply", "")).strip():
+        raise ValueError("empty reply")
+    if b.get("followup_asked"):
+        out["followup"] = False
+    return out
+
+
 def examine(b: dict) -> dict:
+    """One examiner turn under ONE deadline (ORAL_DEADLINE_S) across the whole chain: picked examiner,
+    TUTOR_FALLBACKS, cloud, then the Modal lane, which is the only rung that is not the governor."""
     key = os.environ.get("OLLAMA_API_KEY", "")
     refresh_examiners()
     first = b.get("examiner") if b.get("examiner") in EXAMINERS else default_examiner()
@@ -177,23 +198,34 @@ def examine(b: dict) -> dict:
         raise HTTPException(503, "OLLAMA_API_KEY is not set in the server's environment")
     order = fallback_chain(first, EXAMINERS)
     user, tried = _examiner_prompt(b), []
-    for k in order:
+    with fail_fast.scope(ORAL_DEADLINE_S, "oral turn"):
+        for k in order:
+            t = time.time()
+            try:
+                if not key and not EXAMINERS[k].get("local"):
+                    raise RuntimeError("OLLAMA_API_KEY not set")
+                text, usage = _ollama(EXAMINERS[k]["model"], SYSTEM, user, key, EXAMINERS[k].get("local", False))
+                out = _turn_reply(text, b)
+                out["examiner"], out["usage"], out["secs"] = k, usage, round(time.time() - t, 1)
+                if tried:
+                    out["fallback_from"] = tried
+                return out
+            except fail_fast.DeadlineExceeded as e:
+                tried.append(f"{k}: {e}"[:200])
+                _err("turn", tried[-1])
+                break                                       # no time for another governor/cloud attempt
+            except Exception as e:
+                tried.append(f"{k}: {type(e).__name__}: {e}"[:200])
+                _err("turn", tried[-1])
         t = time.time()
         try:
-            if not key and not EXAMINERS[k].get("local"):
-                raise RuntimeError("OLLAMA_API_KEY not set")
-            text, usage = _ollama(EXAMINERS[k]["model"], SYSTEM, user, key, EXAMINERS[k].get("local", False))
-            out = parse_json(text)
-            if not str(out.get("reply", "")).strip():
-                raise ValueError("empty reply")
-            if b.get("followup_asked"):
-                out["followup"] = False
-            out["examiner"], out["usage"], out["secs"] = k, usage, round(time.time() - t, 1)
-            if tried:
-                out["fallback_from"] = tried
+            text, usage = fail_fast.modal_chat(SYSTEM, user)
+            out = _turn_reply(text, b)
+            out["examiner"], out["usage"], out["secs"] = fail_fast.MODAL_MODEL, usage, round(time.time() - t, 1)
+            out["fallback_from"] = tried
             return out
         except Exception as e:
-            tried.append(f"{k}: {type(e).__name__}: {e}"[:200])
+            tried.append(f"modal: {type(e).__name__}: {e}"[:200])
             _err("turn", tried[-1])
     raise HTTPException(502, "every examiner model failed: " + " | ".join(tried))
 
