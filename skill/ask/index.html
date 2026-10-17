@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,interactive-widget=resizes-content">
 <title>Chiron · Ask</title>
 <meta name="theme-color" content="#1e3a5f">
 <script>try{var _t=localStorage.getItem('chiron.theme');if(_t)document.documentElement.setAttribute('data-theme',_t);}catch(e){}</script>
@@ -20,7 +20,7 @@
   --medbg:#16252f;--meditbg:#2b211a;--langbg:#1b2418;--vidbg:#241b23;--codebg:#221c33;
 }
 *{box-sizing:border-box}
-html,body{height:100%;margin:0}
+html,body{height:100%;height:100dvh;margin:0}
 body{font-family:var(--font-b);background:var(--chiron-bg);color:var(--chiron-fg);display:flex;overflow:hidden}
 button{font:inherit;cursor:pointer}
 
@@ -97,10 +97,29 @@ button{font:inherit;cursor:pointer}
 .boot{flex:1;display:grid;place-items:center;color:var(--chiron-muted);font-size:14px}
 .boot .err{max-width:520px;text-align:center;line-height:1.6}
 .boot code{background:var(--chiron-elevated);padding:2px 6px;border-radius:5px;font-size:12.5px}
-@media(max-width:860px){.rail{display:none}}
+/* PHONE (<=768px): the 258px rail becomes a slide-in drawer (☰ in the topbar), chat takes the full width.
+   100dvh + interactive-widget=resizes-content (above) keep the composer above the soft keyboard. */
+.menubtn,.scrim{display:none}
+@media(max-width:768px){
+  body{overflow:hidden}
+  .rail{position:fixed;z-index:30;left:0;top:0;bottom:0;width:min(84vw,300px);flex:none;transform:translateX(-103%);transition:transform .26s cubic-bezier(.2,.7,.2,1);padding-top:env(safe-area-inset-top)}
+  body.rail-open .rail{transform:none;box-shadow:6px 0 30px rgba(0,0,0,.25)}
+  .railfoot{flex-wrap:wrap}
+  .scrim{display:block;position:fixed;inset:0;z-index:25;background:rgba(0,0,0,.4);opacity:0;pointer-events:none;transition:opacity .2s}
+  body.rail-open .scrim{opacity:1;pointer-events:auto}
+  .menubtn{display:grid;place-items:center;flex:0 0 auto;width:40px;height:40px;border-radius:50%;border:1px solid var(--chiron-border);background:var(--chiron-surface);color:var(--chiron-fg);font-size:18px}
+  .main{width:100%}
+  .topbar{padding:0 10px;gap:8px;height:56px}
+  .ttl,.tsub{max-width:none}
+  .topbar .tt{flex:1}
+  .topbar .tools{flex:0 0 auto;display:flex;gap:6px}
+  #openlesson{display:none}
+  #voicebtn{padding:7px 10px}
+}
 </style></head>
 <body>
 
+<div class="scrim" id="scrim"></div>
 <aside class="rail">
   <a class="brand" href="/library/" title="Back to the library"><div class="mk">◈</div> Chiron · Ask</a>
   <button class="newchat" onclick="chironAsk.newThread()">＋ New question</button>
@@ -125,6 +144,7 @@ button{font:inherit;cursor:pointer}
 
 <main class="main">
   <div class="topbar">
+    <button class="menubtn" id="menubtn" aria-label="Conversations">☰</button>
     <div class="tt">
       <div class="ttl" id="ttl">New question</div>
       <div class="tsub" id="tsub">Scope: everything · grounded in your library</div>
@@ -142,5 +162,14 @@ button{font:inherit;cursor:pointer}
   </div>
 </main>
 
+<script>
+/* phone drawer: ☰ opens the rail, scrim / a thread / New question closes it */
+(function () {
+  var b = document.body, close = function () { b.classList.remove('rail-open'); };
+  document.getElementById('menubtn').onclick = function () { b.classList.toggle('rail-open'); };
+  document.getElementById('scrim').onclick = close;
+  document.querySelector('.rail').addEventListener('click', function (e) { if (e.target.closest('.th, .newchat')) close(); });
+})();
+</script>
 <script type="module" src="./ask.js"></script>
 </body></html>
