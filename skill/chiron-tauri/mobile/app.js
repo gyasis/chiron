@@ -41,7 +41,9 @@ document.body.addEventListener('touchstart', e => { const t = e.touches[0], h = 
 document.body.addEventListener('touchmove', e => { if (_sx === null) return; const t = e.touches[0];
   if (t.clientX - _sx > 34 && Math.abs(t.clientY - _sy) < 44) { drawer(true); _sx = null; } }, { passive: true });
 document.body.addEventListener('touchend', () => { _sx = null; });
-function closeLesson() { document.getElementById('lesson').classList.remove('open'); }
+// Overlays (lesson, Chiedi) sit on a history stack so Android back closes them — see nav.js.
+const NAV = ChironNav.overlayStack(window, document);
+function closeLesson() { NAV.close('lesson'); }
 function toast(m) { const t = document.getElementById('toast'); t.textContent = m; t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 2200); }
 
 /* ---------- theme ---------- */
@@ -50,7 +52,7 @@ function paintTheme() { const dark = document.documentElement.getAttribute('data
 document.getElementById('themebtn').onclick = () => {
   const dark = document.documentElement.getAttribute('data-theme') === 'dark', nx = dark ? 'light' : 'dark';
   document.documentElement.setAttribute('data-theme', nx); try { localStorage.setItem('chiron.theme', nx); } catch (e2) {}
-  paintTheme(); drawer(false); };
+  paintTheme(); drawer(false); ASK.theme(nx); };   // by message, so the Ask conversation is not reloaded away
 paintTheme();
 
 /* ---------- library ---------- */
@@ -300,15 +302,15 @@ async function libReachable() {
 }
 function offlineSrc(slug) { const o = OFFLINE[slug]; const base = isAndroid ? 'http://lesson.localhost/' : 'lesson://localhost/'; return base + o.id + '/' + o.entry; }
 // ?inapp=1 tells the in-lesson web tutor to stay hidden: the app has its own tutor panel.
-function lessonSrc(l, slug, up) { return (up || !OFFLINE[slug]) ? LIB + '/lessons/' + l.id + '/lesson.html?inapp=1' : offlineSrc(slug); }
-async function openLesson(slug) {
+function lessonSrc(l, slug, up, hash) { return ((up || !OFFLINE[slug]) ? LIB + '/lessons/' + l.id + '/lesson.html?inapp=1' : offlineSrc(slug)) + (hash || ''); }
+async function openLesson(slug, hash) {   // hash: e.g. '#t=42' from an Ask citation
   const l = LESSONS.find(x => slugOf(x.id) === slug) || { id: slug, title: slug, clips: 0 };
   const up = await libReachable();
   const streaming = up || !OFFLINE[slug];
   document.getElementById('l-title').textContent = l.title.replace(/^Chiron\s*·\s*/, '');
   const tag = document.getElementById('l-mode');
   tag.textContent = streaming ? '▶ in streaming' : '📥 offline'; tag.className = 'lmode ' + (streaming ? 'st' : 'off'); tag.style.display = '';
-  document.getElementById('l-frame').src = lessonSrc(l, slug, up);
+  ChironNav.loadFrame(document, 'l-frame', lessonSrc(l, slug, up, hash));
   document.getElementById('pl-cover').textContent = l.title.replace(/^Chiron\s*·\s*/, '');
   document.getElementById('pl-t').textContent = l.system || l.topic || 'Lesson';
   const r = document.getElementById('l-resume'); const pos = localStorage.getItem('chiron.pos.' + slug);
@@ -317,7 +319,7 @@ async function openLesson(slug) {
   OPEN_SLUG = slug; setMode('read');
   // "save offline" stays available whenever there is no saved copy (a saved copy is the fallback, not the default)
   document.getElementById('l-save').style.display = OFFLINE[slug] ? 'none' : '';
-  document.getElementById('lesson').classList.add('open');
+  NAV.open('lesson');
 }
 function setMode(m) {
   document.getElementById('mread').style.display = m === 'read' ? '' : 'none';
@@ -363,7 +365,7 @@ async function refreshOffline() {
       ls.forEach(o => { const m = LESSONS.find(l => (l.title || '').includes(o.title) || o.title.includes(l.title)); OFFLINE[m ? slugOf(m.id) : o.title] = { id: o.id, entry: o.entry }; });
       if (LESSONS.length) renderRows();   // the Library's ✓ / ⟳ Update state depends on what is on the phone
       box.innerHTML = ls.length ? ls.map(o => `<div class="row m"><div class="edge"></div><div class="body"><div class="t">${esc(o.title)}</div><div class="meta"><span class="clip">✓ offline</span></div></div><div class="act"><span class="btn" data-oid="${o.id}" data-oentry="${o.entry}">Open →</span></div></div>`).join('') : `<div class="empty">Nothing saved yet. Download lessons from the Library.</div>`;
-      box.querySelectorAll('[data-oid]').forEach(e => e.onclick = () => { const base = isAndroid ? 'http://lesson.localhost/' : 'lesson://localhost/'; document.getElementById('l-frame').src = base + e.dataset.oid + '/' + e.dataset.oentry; document.getElementById('l-title').textContent = 'Lesson'; setMode('read'); go(2); });
+      box.querySelectorAll('[data-oid]').forEach(e => e.onclick = () => { const base = isAndroid ? 'http://lesson.localhost/' : 'lesson://localhost/'; ChironNav.loadFrame(document, 'l-frame', base + e.dataset.oid + '/' + e.dataset.oentry); document.getElementById('l-title').textContent = 'Lesson'; setMode('read'); go(2); });
     } catch (e) { box.innerHTML = `<div class="empty">—</div>`; }
   } else box.innerHTML = `<div class="empty">Offline install works in the installed app. In the browser, lessons stream from your library.</div>`;
 }
@@ -417,6 +419,8 @@ document.getElementById('libsave').onclick = () => {
 // Hub = the https reverse proxy on the computer (:8943). Its certificate is mkcert-signed. wry's Android WebViewClient
 // has no onReceivedSslError override, so an in-app iframe/navigation to it is cancelled by the WebView; and the
 // oral page needs a secure context for the mic. So Studio opens in the system browser (Chrome), not an overlay.
+// Exception: Chiedi (/ask/) needs no secure context — its only mic is acolyte's Web Speech input, which Android
+// WebView does not implement on any origin — so in the app it opens in an overlay from plain-HTTP :8911 (openAsk).
 const libHost = () => { try { return new URL(LIB).hostname; } catch (e) { return ''; } };
 const isHub = () => { try { const u = new URL(LIB); return u.protocol === 'https:' && u.port === '8943'; } catch (e) { return false; } };
 const hubBase = () => isHub() ? new URL(LIB).origin : 'https://' + libHost() + ':8943';
@@ -438,7 +442,40 @@ async function openStudio(path) {
     toast('Impossibile aprire il browser: ' + (e && e.message || e));
   }
 }
-document.querySelectorAll('#drawer [data-studio]').forEach(b => b.onclick = () => { drawer(false); openStudio(b.dataset.studio); });
+// Ask's URLs are all root-relative (/ask/*, /library/*, /lessons/*), so loading the page FROM :8911 keeps every call
+// same-origin — no CORS. Never the hub: that is the cert the WebView refuses.
+const askBase = () => isHub() ? 'http://' + libHost() + ':8911' : LIB;
+const askOrigin = () => { try { return new URL(askBase()).origin; } catch (e) { return ''; } };
+// Ask asks US to open what would leave it: a new window inside the iframe would replace this whole WebView.
+const ASK = ChironNav.askBridge(window, { frame: () => document.getElementById('ask-frame'), origin: askOrigin,
+  openLesson: (id, hash) => openLesson(slugOf(id), hash),
+  currentTheme: () => document.documentElement.getAttribute('data-theme') || 'light',
+  openExternal: async url => { try { if (TAURI) await invoke('plugin:opener|open_url', { url }); else window.open(url, '_blank'); }
+    catch (e) { console.warn('chiron ask: could not open', url, e); toast('Impossibile aprire il browser: ' + (e && e.message || e)); } } });
+// Reachability: 6 s and one retry — slow home Wi-Fi took longer than the old 2.5 s and raised a false "not reachable".
+async function askUp() {
+  for (let i = 0; i < 2; i++) {
+    const ac = new AbortController(), t = setTimeout(() => ac.abort(), 6000);
+    const r = await fetch(askBase() + '/ask/', { method: 'HEAD', signal: ac.signal }).then(r => r.ok ? 'ok' : 'bad', e => (console.warn('chiron ask: HEAD failed', i + 1, e && e.name), 'err'));
+    clearTimeout(t);
+    if (r === 'ok') return true;
+    if (r === 'bad') return false;   // the server answered: retrying will not change it
+  }
+  return false;
+}
+async function openAsk() {
+  const theme = document.documentElement.getAttribute('data-theme') || 'light';
+  const key = askBase() + '/ask/?inapp=1';
+  const fr = document.getElementById('ask-frame');
+  if (fr.dataset.src !== key) {   // keep the open conversation across close/reopen; reload only if the address changed
+    if (!await askUp()) { console.warn('chiron ask: unreachable', key); toast('Chiedi needs the library computer — ' + askBase() + ' not reachable'); return; }
+    ChironNav.loadFrame(document, 'ask-frame', key + '&theme=' + theme).dataset.src = key;
+  } else ASK.theme(theme);
+  NAV.open('askov');
+}
+function closeAsk() { NAV.close('askov'); }
+document.querySelectorAll('#drawer [data-studio]').forEach(b => b.onclick = () => { drawer(false);
+  if (TAURI && b.dataset.studio === '/ask/') openAsk(); else openStudio(b.dataset.studio); });
 
 /* ---------- generate wizard ---------- */
 const DEPTHS = { medicine: [['', 'Auto'], ['primer', 'Primer'], ['atlas', 'Atlas'], ['systematic', 'Systematic'], ['drug', 'Drug'], ['amboss', 'AMBOSS']],
