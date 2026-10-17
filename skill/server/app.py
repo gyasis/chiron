@@ -2255,7 +2255,7 @@ app.include_router(pool.router)
 @app.middleware("http")
 async def _pool_private_network(request, call_next):
     resp = await call_next(request)
-    if request.url.path.startswith("/api/pool"):
+    if request.url.path.startswith(("/api/pool", "/api/anki")):
         resp.headers["Access-Control-Allow-Private-Network"] = "true"
     return resp
 
@@ -2488,6 +2488,46 @@ async def cards_media(filename: str):
             "m4a": "audio/mp4", "opus": "audio/opus"}.get(ext, "application/octet-stream")
     return Response(content=data, media_type=mime,
                     headers={"cache-control": "public, max-age=86400"})
+
+
+# ── AnkiConnect proxy for browser/phone clients (Match Madness) ──────────────
+# AnkiConnect demands an apiKey, and that key must never reach a browser or the
+# public repos. Clients post {action, params} here; anki.invoke adds the key and
+# fails over across CHIRON_ANKI_URLS. Only the actions those clients use pass.
+# The reply keeps AnkiConnect's {result, error} shape plus `via`, so a client can
+# tell this proxy from a bare AnkiConnect (which would answer "api key" errors).
+ANKI_PROXY_ACTIONS = {
+    "version", "deckNames", "createDeck", "canAddNotes", "addNotes", "findNotes",
+    "findCards", "notesInfo", "cardsInfo", "addTags", "removeTags", "answerCards",
+}
+
+
+@app.post("/api/anki/connect")
+async def anki_connect(request: Request):
+    import asyncio, anki
+    try:
+        req = await request.json()
+    except Exception:
+        req = None
+    if not isinstance(req, dict):
+        return Response(json.dumps({"result": None, "error": "JSON object required", "via": "chiron"}),
+                        status_code=400, media_type="application/json")
+    action, params = req.get("action"), req.get("params") or {}
+    if action not in ANKI_PROXY_ACTIONS or not isinstance(params, dict):
+        return Response(json.dumps({"result": None, "error": f"action not allowed: {action}", "via": "chiron"}),
+                        status_code=403, media_type="application/json")
+    try:
+        result = await asyncio.to_thread(anki.invoke, action, **params)
+        return {"result": result, "error": None, "via": "chiron"}
+    except anki.AnkiUnavailable as e:
+        print(f"[anki-proxy] {action}: Anki unreachable: {e}", file=sys.stderr, flush=True)
+        return Response(json.dumps({"result": None, "error": f"Anki unreachable: {e}", "via": "chiron"}),
+                        status_code=503, media_type="application/json")
+    except Exception as e:
+        # anki.invoke raises RuntimeError("anki: <AnkiConnect error>") for a real reply.
+        msg = str(e).removeprefix("anki: ")
+        print(f"[anki-proxy] {action}: {msg}", file=sys.stderr, flush=True)
+        return {"result": None, "error": msg, "via": "chiron"}
 
 
 @app.post("/ask/search")

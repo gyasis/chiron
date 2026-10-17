@@ -29,14 +29,15 @@ from __future__ import annotations
 
 import argparse
 import base64
+import importlib.util
 import json
 import os
 import re
 import unicodedata
-import urllib.request
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-ANKI = "http://127.0.0.1:8765"
+ENV_FILE = os.path.expanduser("~/.chiron/anki.env")    # AnkiConnect URLs + apiKey; never committed
+ANKI_PY = os.path.join(HERE, "..", "server", "anki.py")
 PARENT = "il centro di italia"
 MODEL = "Basic (and reversed card)"
 
@@ -52,14 +53,28 @@ def slug(s: str) -> str:
     return re.sub(r"[^a-z0-9]+", "-", s.lower()).strip("-")
 
 
+_anki = None
+
+
 def inv(action: str, **params):
-    req = urllib.request.Request(
-        ANKI, data=json.dumps({"action": action, "version": 6, "params": params}).encode(),
-        headers={"Content-Type": "application/json"})
-    d = json.load(urllib.request.urlopen(req, timeout=120))
-    if d.get("error"):
-        raise RuntimeError(f"{action}: {d['error']}")
-    return d["result"]
+    """AnkiConnect via server/anki.py, so the host list, failover and apiKey come from
+    ~/.chiron/anki.env (Anki moved to the Mac Studio, which requires the key)."""
+    global _anki
+    if _anki is None:
+        if os.path.exists(ENV_FILE):
+            for line in open(ENV_FILE):
+                line = line.strip().removeprefix("export ")
+                if "=" in line and not line.startswith("#"):
+                    k, v = line.split("=", 1)
+                    os.environ.setdefault(k.strip(), v.strip().strip("'\""))
+        os.environ.setdefault("CHIRON_ANKI_TIMEOUT", "120")
+        spec = importlib.util.spec_from_file_location("chiron_anki", ANKI_PY)
+        _anki = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(_anki)
+    try:
+        return _anki.invoke(action, **params)
+    except RuntimeError as e:
+        raise RuntimeError(f"{action}: {str(e).removeprefix('anki: ')}") from e
 
 
 def main() -> int:
