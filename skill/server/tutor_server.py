@@ -28,7 +28,8 @@ OpenAI client that omits it still gets a working answer from the messages alone.
 import asyncio, json, os, queue, threading, time, urllib.request
 from http.server import ThreadingHTTPServer, BaseHTTPRequestHandler
 from tutor_chain import (answer_turn, suggestions, decompose, cards, mcqs, train_path,
-                         MODELS, DEFAULT_MODEL, LAST_ERRORS)
+                         MODELS, DEFAULT_MODEL, LAST_ERRORS, refresh_models)
+import local_models
 
 PORT = 8912
 
@@ -118,13 +119,16 @@ class H(BaseHTTPRequestHandler):
             return self._json({"ok": True, "port": PORT})
         if self.path.startswith("/v1/models"):
             # MODELS is a dict keyed by id, not a list of records.
+            refresh_models()
             return self._json({"object": "list", "data": [
                 {"id": mid, "object": "model", "owned_by": "chiron",
                  "created": 0, "name": (m or {}).get("label", mid)}
                 for mid, m in MODELS.items()]})
         if self.path.startswith("/tutor-models"):
-            return self._json({"default": DEFAULT_MODEL,
-                               "models": [{"id": k, "label": v["label"]} for k, v in MODELS.items()]})
+            refresh_models()
+            return self._json({"default": DEFAULT_MODEL, "local": local_models.info(),
+                               "models": [{"id": k, "label": v["label"], "group": v.get("group", "Cloud")}
+                                          for k, v in MODELS.items()]})
         if self.path.startswith("/images"):                 # 🖼 highlight → real medical images (hypersearch)
             from urllib.parse import urlparse, parse_qs
             qs = parse_qs(urlparse(self.path).query)

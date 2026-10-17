@@ -19,6 +19,7 @@ import sys
 import json, os, re, subprocess, urllib.request
 from promptchain.utils.promptchaining import PromptChain
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'chains'))
+import local_models  # noqa: E402  live discovery of the Mac's chat-capable models
 import chiron_models  # noqa: E402  live-catalog resolver: 'cloud:<family>@latest' + heals retired names
 from promptchain.utils.agentic_step_processor import AgenticStepProcessor
 
@@ -43,16 +44,35 @@ GOVERNOR = os.environ.get("ATELIER_GOVERNOR", "http://192.168.0.159:8799/llm/oll
 
 # ── SWITCHABLE model registry (pick in the lesson; passed per request) ─────────────
 # spec = 'cloud:<model>' (Ollama Cloud, fast) | 'gemini' (direct API) | 'governor:<model>' (Mac, local)
-MODELS = {
-    "gemma4":     {"label": "Gemma 4 31B · cloud (fast, default)", "spec": "cloud:gemma4:31b"},
-    "glmflash":   {"label": "GLM Flash · cloud (latest)",         "spec": "cloud:glm-flash@latest"},
-    "deepseek":   {"label": "DeepSeek Flash · cloud (latest)",    "spec": "cloud:deepseek-flash@latest"},
-    "gptoss":     {"label": "GPT-OSS 120B · cloud",               "spec": "cloud:gpt-oss:120b"},
-    "gemini_api": {"label": "Gemini Flash · direct API",          "spec": "gemini"},
-    "qwen_local": {"label": "Qwen3 32B · Mac (local)",            "spec": "governor:qwen3:32b"},
-    "gemma_local":{"label": "Gemma3 27B · Mac (local)",           "spec": "governor:gemma3:27b"},
-    "agent":      {"label": "Deep agent · tool-calling (slower)", "spec": "agent"},
+_CURATED = {
+    "gemma4":     {"label": "Gemma 4 31B · cloud (fast, default)", "spec": "cloud:gemma4:31b", "group": "Cloud"},
+    "glmflash":   {"label": "GLM Flash · cloud (latest)",         "spec": "cloud:glm-flash@latest", "group": "Cloud"},
+    "deepseek":   {"label": "DeepSeek Flash · cloud (latest)",    "spec": "cloud:deepseek-flash@latest", "group": "Cloud"},
+    "gptoss":     {"label": "GPT-OSS 120B · cloud",               "spec": "cloud:gpt-oss:120b", "group": "Cloud"},
+    "gemini_api": {"label": "Gemini Flash · direct API",          "spec": "gemini", "group": "Cloud"},
+    "agent":      {"label": "Deep agent · tool-calling (slower)", "spec": "agent", "group": "Cloud"},
 }
+# MODELS = curated cloud entries + the Mac's chat-capable models discovered live (local_models, cached
+# ~10 min, static fallback when the governor is unreachable). One dict object, refreshed IN PLACE by
+# refresh_models(), so importers holding a reference (tutor_server) always see the current list.
+MODELS: dict = dict(_CURATED)
+
+
+def refresh_models() -> dict:
+    """Rebuild the local part of MODELS from the (cached) discovery. Cheap on a cache hit; never raises."""
+    fresh = dict(_CURATED)
+    for m in local_models.models():
+        fresh[m["id"]] = {"label": m["label"], "spec": "governor:" + m["model"], "group": local_models.GROUP}
+    MODELS.clear()
+    MODELS.update(fresh)
+    return MODELS
+
+
+def resolve_model(model_id: str | None) -> dict:
+    """Entry for a picker id; pre-discovery ids (qwen_local...) keep working; unknown -> the default."""
+    refresh_models()
+    mid = local_models.LEGACY_IDS.get(model_id or "", model_id or DEFAULT_MODEL)
+    return MODELS.get(mid) or MODELS[DEFAULT_MODEL]
 DEFAULT_MODEL = os.environ.get("TUTOR_DEFAULT_MODEL", "gemma4")
 # gemini-3-flash-preview (retired 2026-07-15) and deepseek-v4-flash (retired 2026-09-25) were dead rungs here.
 CLASSIFY_SPEC = os.environ.get("TUTOR_CLASSIFY", "cloud:deepseek-flash@latest")
@@ -84,22 +104,30 @@ def _gemini(system: str, history: list[dict], user: str) -> str:
     d = json.loads(urllib.request.urlopen(req, timeout=90).read())
     return d["candidates"][0]["content"]["parts"][0]["text"].strip()
 
-def _ollama_chat(url: str, model: str, headers: dict, system: str, history: list[dict], user: str) -> str:
+def _ollama_chat(url: str, model: str, headers: dict, system: str, history: list[dict], user: str,
+                 think_off: bool = False) -> str:
     msgs = [{"role": "system", "content": system}] if system else []
     for m in history[-10:]:
         r = "assistant" if m.get("role") == "assistant" else "user"
         if (m.get("content") or "").strip(): msgs.append({"role": r, "content": m["content"]})
     if user: msgs.append({"role": "user", "content": user})
-    body = json.dumps({"model": model, "stream": False, "options": {"temperature": 0.3}, "messages": msgs}).encode()
-    req = urllib.request.Request(url, data=body, headers={"Content-Type": "application/json", **headers})
-    c = json.loads(urllib.request.urlopen(req, timeout=140).read())["message"]["content"].strip()
-    if not c: raise RuntimeError("empty response")
+    b = {"model": model, "stream": False, "options": {"temperature": 0.3}, "messages": msgs}
+    if think_off: b["think"] = False       # /api/chat's off-switch (the OpenAI path takes reasoning_effort instead)
+    req = urllib.request.Request(url, data=json.dumps(b).encode(), headers={"Content-Type": "application/json", **headers})
+    msg = json.loads(urllib.request.urlopen(req, timeout=140).read())["message"]
+    if think_off and (msg.get("thinking") or "").strip():     # a flag is not evidence: surface a model that ignores it
+        sys.stderr.write(f"[tutor] {model} emitted {len(msg['thinking'])} chars of thinking despite think:false\n")
+    c = (msg.get("content") or "").strip()
+    if not c: raise RuntimeError(f"empty response from {model}" + (" (reasoning only)" if msg.get("thinking") else ""))
     return c
 
 def _call(spec: str, system: str, history: list[dict], user: str) -> str:
     prov, _, model = spec.partition(":")
     if prov == "cloud":    return _ollama_chat(OLLAMA_CLOUD, chiron_models.resolve(model), {"Authorization": "Bearer " + OLLAMA_KEY}, system, history, user)
-    if prov == "governor": return _ollama_chat(GOVERNOR + "/api/chat", model or "gemma3:27b", {}, system, history, user)
+    if prov == "governor":
+        model = model or "gemma3:27b"
+        return _ollama_chat(GOVERNOR + "/api/chat", model, {}, system, history, user,
+                            think_off=local_models.thinking_off(model))   # only when /api/show says it thinks
     return _gemini(system, history, user)
 
 # The last thing that went wrong on the answer path, per provider spec. The
@@ -480,7 +508,7 @@ async def answer_turn(section_text: str, selection: str, section_id: str, lesson
                       on_status=None, client_system: str | None = None) -> dict:
     """`on_status(text)` (optional) receives REAL live progress — the router's verdict, each actual search
     with its query, drafting/reconciling — so the UI can narrate the wait instead of showing a dead spinner."""
-    spec = MODELS.get(model or DEFAULT_MODEL, MODELS[DEFAULT_MODEL])["spec"]
+    spec = resolve_model(model)["spec"]
     hist = _window([m for m in messages if m.get("role") in ("user", "assistant")])
     user = next((m.get("content", "").strip() for m in reversed(hist) if m.get("role") == "user"), "")
     if hist and hist[-1].get("role") == "user": hist = hist[:-1]

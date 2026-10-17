@@ -238,8 +238,13 @@ button:disabled{opacity:.45;cursor:default}
 
   // ── wiring ──
   api('/api/oral/status').then(function (r) { return r.json(); }).then(function (s) {
+    var grp = {};   // optgroups "Cloud" / "Mac (local)", first-seen order
     Object.keys(s.examiners).forEach(function (k) {
-      var o = document.createElement('option'); o.value = k; o.textContent = s.examiners[k]; if (k === s.default) o.selected = true; $('examiner').appendChild(o);
+      var o = document.createElement('option'); o.value = k; o.textContent = s.examiners[k]; if (k === s.default) o.selected = true;
+      var g = (s.examiner_groups || {})[k];
+      if (!g) { $('examiner').appendChild(o); return; }
+      if (!grp[g]) { grp[g] = document.createElement('optgroup'); grp[g].label = g; $('examiner').appendChild(grp[g]); }
+      grp[g].appendChild(o);
     });
     var bad = [];
     if (!s.tts) bad.push('voce (OmniVoice, Mac)'); if (!s.asr) bad.push('trascrizione (whisper, Mac)'); if (!s.ollama_key) bad.push('chiave modello');
