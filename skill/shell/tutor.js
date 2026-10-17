@@ -15,6 +15,8 @@
    ─────────────────────────────────────────────────────────────────────── */
 (function () {
   'use strict';
+  // Inside the Chiron phone app the app's own tutor panel is used; skip this one.
+  if (/[?&]inapp=1\b/.test(location.search)) return;
 
   /* Tutor backend base URL. A lesson served from the library box (:8911) reaches the tutor at the same
      host on :8912 (the original behaviour). A lesson served from the phone app's offline origin

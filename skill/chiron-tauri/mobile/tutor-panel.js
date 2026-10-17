@@ -54,6 +54,15 @@
   display:flex;align-items:center;justify-content:center;gap:10px;touch-action:none;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
 .tp-mic svg{width:26px;height:26px}
 .tp-mic.rec{background:#c0392b;color:#fff;animation:tppulse 1s ease-in-out infinite}
+.tp-mic.arming{background:#e67e22;color:#fff}
+.tp-mic{position:relative;overflow:hidden}
+.tp-level{position:absolute;left:0;bottom:0;height:6px;width:0;background:#fff;opacity:.85;transition:width .08s linear}
+.tp-heard{flex:0 0 auto;margin:2px 14px 0;font-size:15px;line-height:1.35;min-height:0;color:var(--fg)}
+.tp-heard:empty{display:none}
+.tp-heard .h-q{font-weight:700}
+.tp-heard .h-act{display:inline-flex;gap:8px;margin-left:8px}
+.tp-heard button{border:1px solid var(--line,#ccc);background:var(--elevated);color:var(--fg);border-radius:999px;padding:3px 10px;font:inherit;font-size:13px}
+.tp-heard.err{color:#c0392b;font-weight:700}
 .tp-mic:disabled{opacity:.5}
 @keyframes tppulse{50%{box-shadow:0 0 0 10px rgba(192,57,43,.22)}}
 .tp-stop{display:none;flex:0 0 auto;margin:0 14px 6px;border:none;border-radius:12px;background:var(--ok);color:#fff;font-family:var(--fh);font-weight:700;font-size:14px;padding:12px}
@@ -111,7 +120,8 @@
   <div class="tp-msgs" id="tp-msgs"></div>
   <button class="tp-stop" id="tp-stop">⏹ Ferma audio</button>
   <div class="tp-bar"><textarea id="tp-text" rows="1" placeholder="Chiedi qualcosa su questa lezione…"></textarea><button class="tp-send" id="tp-send" aria-label="Invia">➤</button></div>
-  <button class="tp-mic" id="tp-mic">${ICO_MIC}<span id="tp-miclab">Tieni premuto per parlare</span></button>`;
+  <div class="tp-heard" id="tp-heard" aria-live="polite"></div>
+  <button class="tp-mic" id="tp-mic">${ICO_MIC}<span id="tp-miclab">Tieni premuto per parlare</span><span class="tp-level" id="tp-level"></span></button>`;
   document.body.appendChild(panel);
   const selPop = document.createElement('button'); selPop.className = 'tp-selpop'; selPop.id = 'tp-selpop'; document.body.appendChild(selPop);
   const $ = id => document.getElementById(id);
@@ -323,8 +333,8 @@
     msgsEl.innerHTML = `<div class="tp-hint">Chiedi a Lucrezia di spiegarti qualcosa di <b>questa lezione</b>.<br>Scrivi, oppure tieni premuto il microfono e parla.</div>`;
     $('tp-sub').textContent = lessonTitle();
   }
-  function openPanel() { resetIfNewLesson(); if (hlSlug !== OPEN_SLUG && highlights.length) { highlights = []; hlSlug = null; paintHl(); } panel.classList.add('open'); fab.classList.add('hide'); loadModels(); }
-  function closePanel() { panel.classList.remove('open'); stopSpeaking(); if (document.getElementById('lesson').classList.contains('open')) fab.classList.remove('hide'); }
+  function openPanel() { resetIfNewLesson(); if (hlSlug !== OPEN_SLUG && highlights.length) { highlights = []; hlSlug = null; paintHl(); } panel.classList.add('open'); fab.classList.add('hide'); loadModels(); warmMic(); }
+  function closePanel() { panel.classList.remove('open'); stopSpeaking(); releaseMic(); if (document.getElementById('lesson').classList.contains('open')) fab.classList.remove('hide'); }
   $('tp-close').onclick = closePanel;
 
   // FAB visibility follows the lesson overlay (class toggled by app.js openLesson/closeLesson).
@@ -448,7 +458,11 @@
   stopBtn.onclick = () => stopSpeaking();
 
   // ---- voice IN (hold to talk)
-  let rec = null, stream = null, chunks = [], recStart = 0, wantStop = false, starting = false;
+  // The mic stays open while the panel is open. Opening it on every press lost the
+  // first second of speech, which garbled the transcript (seen on the Fold, 2026-10-17).
+  let rec = null, stream = null, warming = null, chunks = [], recStart = 0, wantStop = false;
+  let actx = null, analyser = null, levelRaf = 0, timerIv = 0, sendTimer = 0;
+  const heardEl = $('tp-heard'), levelEl = $('tp-level'), labEl = $('tp-miclab');
   const pickMime = () => (['audio/webm;codecs=opus', 'audio/webm', 'audio/mp4', 'audio/ogg;codecs=opus'].find(m => window.MediaRecorder && MediaRecorder.isTypeSupported(m))) || '';
   function micErr(e) {
     const n = e && e.name;
@@ -457,21 +471,54 @@
     if (n === 'NotReadableError') return 'Il microfono è in uso da un’altra app.';
     return 'Microfono non disponibile: ' + (e && e.message || e);
   }
+  function heard(html, cls) { heardEl.className = 'tp-heard' + (cls ? ' ' + cls : ''); heardEl.innerHTML = html; }
+  function streamLive() { return stream && stream.getAudioTracks().some(t => t.readyState === 'live'); }
+  function warmMic() {
+    if (streamLive()) return Promise.resolve(stream);
+    if (warming) return warming;
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia || !window.MediaRecorder) return Promise.reject(new Error('unsupported'));
+    warming = navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true } })
+      .then(st => { stream = st; warming = null; try { actx = actx || new (window.AudioContext || window.webkitAudioContext)(); analyser = actx.createAnalyser(); analyser.fftSize = 512; actx.createMediaStreamSource(st).connect(analyser); } catch (e) { warn('level meter', e); } return st; })
+      .catch(e => { warming = null; throw e; });
+    warming.catch(() => {});
+    return warming;
+  }
+  function releaseMic() {
+    if (rec && rec.state !== 'inactive') { wantStop = true; rec.stop(); }
+    if (stream) { stream.getTracks().forEach(t => t.stop()); stream = null; }
+    try { if (actx) actx.close(); } catch (e) {} actx = null; analyser = null;
+  }
+  function meter() {
+    if (!analyser || !rec) { levelEl.style.width = '0'; return; }
+    const d = new Uint8Array(analyser.fftSize); analyser.getByteTimeDomainData(d);
+    let peak = 0; for (const v of d) peak = Math.max(peak, Math.abs(v - 128));
+    levelEl.style.width = Math.min(100, peak / 64 * 100) + '%';
+    levelRaf = requestAnimationFrame(meter);
+  }
+  function recUi(on) {
+    clearInterval(timerIv); cancelAnimationFrame(levelRaf); levelEl.style.width = '0';
+    micBtn.classList.toggle('rec', on); micBtn.classList.remove('arming');
+    if (on) {
+      const t0 = Date.now();
+      const tick = () => { labEl.textContent = '● REC ' + Math.floor((Date.now() - t0) / 1000) + 's — rilascia per inviare'; };
+      tick(); timerIv = setInterval(tick, 250); meter();
+    } else labEl.textContent = 'Tieni premuto per parlare';
+  }
   async function micStart() {
-    if (busy || starting || rec) return;
-    unlockAudio(); stopSpeaking(true);
-    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia || !window.MediaRecorder) { showErr('Registrazione non supportata in questa WebView (contesto non sicuro o MediaRecorder assente).', null); return; }
-    starting = true; wantStop = false;
-    try { stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true } }); }
-    catch (e) { starting = false; showErr(micErr(e), e, 'getUserMedia'); return; }
-    starting = false;
-    if (wantStop) { stream.getTracks().forEach(t => t.stop()); stream = null; toast('Tieni premuto mentre parli'); return; }   // released during the permission prompt
+    if (busy || rec) return;
+    unlockAudio(); stopSpeaking(true); clearTimeout(sendTimer); wantStop = false;
+    if (!streamLive()) {
+      micBtn.classList.add('arming'); labEl.textContent = 'Attivo il microfono…';
+      try { await warmMic(); }
+      catch (e) { micBtn.classList.remove('arming'); labEl.textContent = 'Tieni premuto per parlare'; heard(esc(e.message === 'unsupported' ? 'Registrazione non supportata in questa WebView.' : micErr(e)), 'err'); showErr(micErr(e), e, 'getUserMedia'); return; }
+      if (wantStop) { micBtn.classList.remove('arming'); labEl.textContent = 'Tieni premuto per parlare'; heard('Microfono pronto — ora tieni premuto mentre parli.'); return; }
+    }
     const mime = pickMime(); chunks = [];
     try { rec = new MediaRecorder(stream, mime ? { mimeType: mime } : undefined); }
-    catch (e) { stream.getTracks().forEach(t => t.stop()); stream = null; showErr('Registrazione non avviata: ' + e.message, e, 'MediaRecorder'); return; }
+    catch (e) { heard(esc('Registrazione non avviata: ' + e.message), 'err'); showErr('Registrazione non avviata: ' + e.message, e, 'MediaRecorder'); return; }
     rec.ondataavailable = ev => { if (ev.data && ev.data.size) chunks.push(ev.data); };
     rec.onstop = onRecorded; rec.start(); recStart = Date.now();
-    micBtn.classList.add('rec'); $('tp-miclab').textContent = 'Sto ascoltando… rilascia per inviare';
+    heard(''); recUi(true);
   }
   function micStop() {
     wantStop = true;
@@ -479,24 +526,34 @@
   }
   async function onRecorded() {
     const mime = (rec && rec.mimeType) || 'audio/webm', ms = Date.now() - recStart; rec = null;
-    if (stream) { stream.getTracks().forEach(t => t.stop()); stream = null; }
-    micBtn.classList.remove('rec'); $('tp-miclab').textContent = 'Tieni premuto per parlare';
+    recUi(false);
     const blob = new Blob(chunks, { type: mime });
-    if (ms < 500 || blob.size < 1000) { toast('Troppo breve — tieni premuto mentre parli'); return; }
-    micBtn.disabled = true; $('tp-miclab').textContent = 'Trascrivo…';
+    if (ms < 500 || blob.size < 1000) { heard('Troppo breve — tieni premuto mentre parli.', 'err'); return; }
+    micBtn.disabled = true; labEl.textContent = 'Trascrivo…'; heard('⏳ Trascrivo quello che hai detto…');
     try {
       const r = await fetch(LIB + '/api/oral/hear?lang=' + asrLang, { method: 'POST', headers: { 'Content-Type': mime }, body: blob });
       if (!r.ok) throw new Error('ASR HTTP ' + r.status + ' ' + (await r.text()).slice(0, 140));
       const d = await r.json(); const txt = (d.text || '').trim();
-      if (!txt) { showErr('Non ho capito niente — riprova più vicino al microfono.' + (d.note ? ' (' + d.note + ')' : ''), null); return; }
-      textEl.value = txt; ask(txt);
-    } catch (e) { showErr(netMsg(e, 'trascrizione non riuscita (ASR)'), e, '/api/oral/hear'); }
-    finally { micBtn.disabled = false; $('tp-miclab').textContent = 'Tieni premuto per parlare'; }
+      if (!txt) { heard('Non ho capito niente — riprova più vicino al microfono.', 'err'); return; }
+      textEl.value = txt;
+      // Show what was heard, right above the mic, and send after a short countdown.
+      let n = 3;
+      const show = () => heard('Ho sentito: <span class="h-q">«' + esc(txt) + '»</span><span class="h-act"><button id="tp-h-send">Invia ora (' + n + ')</button><button id="tp-h-edit">✎ Modifica</button></span>');
+      show();
+      const go = () => { clearInterval(sendTimer); heard(''); ask(textEl.value.trim() || txt); };
+      heardEl.querySelector('#tp-h-send').onclick = go;
+      heardEl.querySelector('#tp-h-edit').onclick = () => { clearInterval(sendTimer); heard('Correggi il testo e premi ➤.'); textEl.focus(); };
+      clearInterval(sendTimer);
+      sendTimer = setInterval(() => { n--; if (n <= 0) go(); else { const b = heardEl.querySelector('#tp-h-send'); if (b) b.textContent = 'Invia ora (' + n + ')'; } }, 1000);
+    } catch (e) { heard(esc(netMsg(e, 'trascrizione non riuscita (ASR)')), 'err'); showErr(netMsg(e, 'trascrizione non riuscita (ASR)'), e, '/api/oral/hear'); }
+    finally { micBtn.disabled = false; if (!rec) labEl.textContent = 'Tieni premuto per parlare'; }
   }
   micBtn.addEventListener('pointerdown', e => { e.preventDefault(); micBtn.setPointerCapture(e.pointerId); micStart(); });
   micBtn.addEventListener('pointerup', micStop);
   micBtn.addEventListener('pointercancel', micStop);
   micBtn.addEventListener('contextmenu', e => e.preventDefault());
+  micBtn.style.touchAction = 'none';
+  textEl.addEventListener('input', () => { if (sendTimer) { clearInterval(sendTimer); sendTimer = 0; heard('Correggi il testo e premi ➤.'); } });
 
   window.ChironTutorPanel = { open: openPanel, close: closePanel, ask, speak, player };   // test/debug hook
 })();
