@@ -80,3 +80,9 @@ loaded once and kept; each question is a fresh Conversation (thinking OFF). Logc
 - Register `.chiron` as an Android file association (intent-filter) so tapping a
   `.chiron` in Files opens it straight in Chiron.
 - iOS target (Tauri mobile supports it) + a signed release build (smaller APK).
+
+## Ascolta (the lesson's Play tab)
+One playlist player per lesson (`mobile/play.js`): riepilogo → section clips → drill Pimsleur → lezione completa, built from the lesson's
+`audio/manifest.js` (parsed as JSON, never eval'd; `manifest.json` / a `<script>` tag as fallbacks for `lesson://` copies). A single `<audio>`
+lives in the app shell, outside the lesson iframe, with MediaSession lock-screen controls, 0,75/1/1,25x, ±15 s, auto-advance, and a resume
+position per lesson (localStorage + hub progress key `chiron-play-<slug>`). Tests: `node --test skill/tests/play-playlist.test.mjs`.

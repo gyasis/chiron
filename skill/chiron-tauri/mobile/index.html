@@ -168,16 +168,31 @@ body{background:var(--bg);color:var(--fg);font-family:var(--fb);height:100vh;ove
 .resume{margin:0 12px 8px;background:var(--medbg);color:var(--med);border-radius:10px;padding:9px 13px;font-size:12.5px}
 #mread,#askwrap,#studiowrap{flex:1;min-height:0;display:flex;padding:0 10px 10px}
 .lessonframe{flex:1;width:100%;border:1px solid var(--border);border-radius:14px;background:#fff}
-#mplay{flex:1;overflow-y:auto;padding:6px 16px 20px}
-.cover{height:160px;border-radius:18px;background:linear-gradient(135deg,var(--med),var(--accent));display:grid;place-items:center;color:#fff;font-family:var(--fh);font-weight:800;font-size:15px;margin:6px 0 18px;text-align:center;padding:16px}
-.np-t{font-family:var(--fh);font-weight:800;font-size:20px}.np-s{color:var(--muted);font-size:13.5px;margin-top:4px}
-.scrub{height:6px;border-radius:99px;background:var(--elevated);margin:22px 0 6px;overflow:hidden}.scrub i{display:block;height:100%;width:0;background:var(--accent)}
+#mplay{flex:1;min-height:0;display:flex;flex-direction:column;padding:6px 16px 66px}   /* bottom room for the floating Chiedi button */
+.cover{flex:0 0 auto;border-radius:16px;background:var(--elevated);color:var(--fg);display:grid;place-items:center;font-family:var(--fh);font-weight:800;font-size:13.5px;margin:4px 0 12px;text-align:center;padding:12px 16px}
+.np-t{font-family:var(--fh);font-weight:800;font-size:19px;line-height:1.25}.np-s{color:var(--muted);font-size:12.5px;margin-top:3px;min-height:1.2em}
+.seek{-webkit-appearance:none;appearance:none;width:100%;height:28px;background:none;margin:10px 0 0;--p:0%}
+.seek::-webkit-slider-runnable-track{height:6px;border-radius:99px;background:linear-gradient(to right,var(--accent) var(--p),var(--elevated) var(--p))}
+.seek::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;border-radius:50%;background:var(--accent);margin-top:-6px;border:none}
+.seek::-moz-range-track{height:6px;border-radius:99px;background:var(--elevated)}.seek::-moz-range-progress{height:6px;border-radius:99px;background:var(--accent)}
+.seek::-moz-range-thumb{width:18px;height:18px;border-radius:50%;background:var(--accent);border:none}
 .tspan{display:flex;justify-content:space-between;font-size:11.5px;color:var(--muted)}
-.transport{display:flex;align-items:center;justify-content:center;gap:28px;margin:22px 0}
-.transport .b{font-size:27px;color:var(--fg)}
-.transport .play{width:76px;height:76px;border-radius:50%;background:var(--accent);color:#fff;display:grid;place-items:center;font-size:31px}
-.autonote{background:var(--elevated);border-radius:11px;padding:12px 14px;font-size:12.5px;color:var(--fg2)}
-.savebtn{margin-top:14px;width:100%;border:1px solid var(--ok);background:none;color:var(--ok);border-radius:11px;font-family:var(--fh);font-weight:700;font-size:14px;padding:12px}
+.transport{flex:0 0 auto;display:flex;align-items:center;justify-content:center;gap:14px;margin:10px 0 8px}
+.transport button{border:none;background:none;color:var(--fg);padding:8px;display:grid;place-items:center;font:inherit}
+.transport button:disabled{opacity:.3}
+.transport .t15{font-family:var(--fh);font-weight:700;font-size:12.5px;color:var(--muted)}
+.transport .play{width:64px;height:64px;border-radius:50%;background:var(--accent);color:#fff;padding:0}
+.speed{display:flex;justify-content:center;gap:8px;margin:0 0 10px}
+.speed button{border:1px solid var(--border);background:none;color:var(--fg2);font-family:var(--fh);font-weight:700;font-size:12px;padding:6px 12px;border-radius:99px}
+.speed button.on{background:var(--elevated);color:var(--accent);border-color:var(--accent)}
+.pllist{flex:1;min-height:60px;overflow-y:auto;border-top:1px solid var(--divider);padding-top:4px}
+.plg{font-family:var(--fh);font-weight:700;font-size:10.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin:10px 4px 2px}
+.pli{display:flex;align-items:center;gap:10px;width:100%;text-align:left;border:none;background:none;color:var(--fg);font:inherit;font-size:13.5px;padding:9px 6px;border-radius:9px}
+.pli .pln{flex:0 0 22px;color:var(--muted);font-size:11.5px;text-align:right}
+.pli .plt{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pli .pld{flex:0 0 auto;color:var(--muted);font-size:11.5px}
+.pli.cur{background:var(--elevated);color:var(--accent);font-weight:700}
+.savebtn{flex:0 0 auto;margin-top:10px;width:100%;border:1px solid var(--ok);background:none;color:var(--ok);border-radius:11px;font-family:var(--fh);font-weight:700;font-size:14px;padding:12px}
 .toast{position:fixed;left:50%;bottom:calc(90px + env(safe-area-inset-bottom));transform:translateX(-50%);background:var(--fg);color:var(--bg);font-size:13px;padding:10px 16px;border-radius:99px;z-index:60;opacity:0;transition:opacity .2s;pointer-events:none;max-width:88vw;text-align:center}
 .toast.show{opacity:.95}
 /* ---- Activity ---- */
@@ -325,21 +340,30 @@ body{background:var(--bg);color:var(--fg);font-family:var(--fb);height:100vh;ove
   <!-- LESSON overlay -->
   <div class="lesson" id="lesson">
     <div class="lbar"><span class="back" onclick="closeLesson()">‹</span><span class="lttl" id="l-title">Lesson</span><span class="lmode" id="l-mode" style="display:none"></span><span class="lmore" id="l-more" aria-label="More">⋯</span>
-      <div class="modeseg"><button class="mon" id="m-read" onclick="setMode('read')">📖 Read</button><button id="m-play" onclick="setMode('play')">▸ Play</button></div></div>
+      <div class="modeseg"><button class="mon" id="m-read" onclick="setMode('read')">Leggi</button><button id="m-play" onclick="setMode('play')">Ascolta</button></div></div>
     <div class="resume" id="l-resume" style="display:none">↩ Continue where you left off</div>
     <div id="mread"><iframe class="lessonframe" id="l-frame" title="lesson"></iframe></div>
     <div id="mplay" style="display:none">
       <div class="cover" id="pl-cover">—</div>
-      <div class="np-t" id="pl-t">—</div><div class="np-s" id="pl-s">autoplay · saves your spot</div>
-      <div class="scrub"><i id="pl-bar"></i></div><div class="tspan"><span id="pl-cur">0:00</span><span id="pl-rem">—</span></div>
-      <div class="transport"><span class="b">⏮</span><span class="play" id="pl-btn">❚❚</span><span class="b">⏭</span></div>
-      <div class="autonote">▸ Autoplay plays each chapter hands-free and <b>saves your spot</b> — reading + listening share one position.</div>
-      <button class="savebtn" id="l-save">⬇ Save this lesson offline</button>
+      <div class="np-t" id="pl-t">—</div><div class="np-s" id="pl-s"></div>
+      <input type="range" class="seek" id="pl-seek" min="0" max="1" value="0" step="any" aria-label="Posizione">
+      <div class="tspan"><span id="pl-cur">0:00</span><span id="pl-rem">—</span></div>
+      <div class="transport">
+        <button id="pl-back" aria-label="Indietro di 15 secondi" class="t15">-15</button>
+        <button id="pl-prev" aria-label="Traccia precedente"><svg viewBox="0 0 24 24" width="26" height="26"><path d="M6 5h2v14H6zM20 5v14L9.5 12z" fill="currentColor"/></svg></button>
+        <button class="play" id="pl-btn" aria-label="Riproduci"></button>
+        <button id="pl-next" aria-label="Traccia successiva"><svg viewBox="0 0 24 24" width="26" height="26"><path d="M16 5h2v14h-2zM4 5v14l10.5-7z" fill="currentColor"/></svg></button>
+        <button id="pl-fwd" aria-label="Avanti di 15 secondi" class="t15">+15</button>
+      </div>
+      <div class="speed" id="pl-speed" role="group" aria-label="Velocità"><button data-r="0.75">0,75x</button><button data-r="1" class="on">1x</button><button data-r="1.25">1,25x</button></div>
+      <div class="pllist" id="pl-list"></div>
+      <button class="savebtn" id="l-save">Salva questa lezione offline</button>
     </div>
   </div>
   <div class="toast" id="toast"></div>
 <script src="nav.js"></script>
 <script src="app.js"></script>
+<script src="play.js"></script>
 <script src="extras.js"></script>
 <script src="handoff.js"></script>
 <script src="tutor-panel.js"></script>
