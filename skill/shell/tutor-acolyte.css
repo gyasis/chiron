@@ -21,8 +21,12 @@
 
 /* The panel is a column; the hand-up belongs at its foot, under the composer,
    where it reads as "and if this isn't here…" rather than competing with the
-   answer. Acolyte owns the panel's layout, so this only pins the order. */
-.acolyte-panel { display: flex; flex-direction: column; }
+   answer. Acolyte owns the panel's layout, so this only pins the order.
+   NO `display` here: acolyte hides the panel with display:none and shows it with
+   .open. This file loads after acolyte's runtime <style>, so a display:flex here
+   won — the panel could never close, and at phone width it covered the whole
+   lesson, its own FAB, the hamburger and the theme picker. */
+.acolyte-panel { flex-direction: column; }
 .acolyte-panel > .chiron-tutor-out { order: 999; flex: 0 0 auto; }
 
 /* Send is the app's paper plane, matching shell/tutor.js's icon so Chiron has
