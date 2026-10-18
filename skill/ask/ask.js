@@ -12,6 +12,7 @@ import { mount } from './vendor/acolyte.js';
 import { createSemanticSource } from './semantic.js';
 import * as cards from './cards.js';
 import * as steps from './steps.js';
+import { installInAppBridge } from './inapp.js';
 
 const $ = s => document.querySelector(s);
 const LS_SCOPE = 'chiron.ask.scope';
@@ -211,9 +212,19 @@ async function boot() {
   // Acolyte asks the host before navigating. Handle it: open the cited lesson in
   // a new tab so the conversation (and any playing audio) is not thrown away —
   // the citation was a reference, not a request to leave.
+  // In the phone app (?inapp=1) a new window would replace the app's WebView, so
+  // the app opens it instead (lesson overlay / system browser) — see inapp.js.
+  // acolyte writes tokens() onto its panel as inline --acolyte-* values at mount, so a theme switch must re-write them.
+  const applyTheme = t => {
+    document.documentElement.setAttribute('data-theme', t);
+    const p = document.querySelector('#host .acolyte-panel');
+    if (p) for (const [k, v] of Object.entries(tokens())) p.style.setProperty('--acolyte-' + k, v);
+  };
+  const appOpen = installInAppBridge(window, { onTheme: applyTheme });
   document.addEventListener('acolyte:navigate', ev => {
     ev.preventDefault();
-    window.open(ev.detail.url, '_blank', 'noopener');
+    if (appOpen) appOpen(ev.detail.url);
+    else window.open(ev.detail.url, '_blank', 'noopener');
   });
 
   window.chironAsk = {
@@ -222,7 +233,7 @@ async function boot() {
     theme() {
       const r = document.documentElement;
       const next = r.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
-      r.setAttribute('data-theme', next);
+      applyTheme(next);
       try { localStorage.setItem('chiron.theme', next); } catch {}
     },
   };
