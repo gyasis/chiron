@@ -28,7 +28,8 @@ OpenAI client that omits it still gets a working answer from the messages alone.
 import asyncio, html as _html, json, os, queue, re, threading, time, urllib.request
 from http.server import ThreadingHTTPServer, BaseHTTPRequestHandler
 from tutor_chain import (answer_turn, suggestions, decompose, cards, mcqs, train_path,
-                         MODELS, DEFAULT_MODEL, LAST_ERRORS, refresh_models)
+                         MODELS, DEFAULT_MODEL, LAST_ERRORS, TUTOR_DEADLINE_S, refresh_models)
+import fail_fast
 import local_models
 
 PORT = 8912
@@ -183,6 +184,11 @@ def _run_answer(body: dict, on_status=None) -> dict:
         body = {**body, "section_text": vt or body.get("section_text") or slug_text(body["lesson_slug"], q)}
         if not body["section_text"]:
             print(f"tutor: no lesson text for slug {body.get('lesson_slug')!r} under {LESSONS_DIR}", flush=True)
+    with fail_fast.scope(TUTOR_DEADLINE_S, "tutor turn"):     # the answer AND the suggestions: one deadline
+        return _run_answer_in_scope(body, msgs, scene_grounded, on_status)
+
+
+def _run_answer_in_scope(body: dict, msgs: list, scene_grounded: bool, on_status) -> dict:
     out = asyncio.run(answer_turn(
         section_text=body.get("section_text", ""), selection=body.get("selection", ""),
         section_id=body.get("section_id", ""), lesson_slug=body.get("lesson_slug", ""),

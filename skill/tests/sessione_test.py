@@ -178,10 +178,13 @@ class LlmJsonChain(unittest.TestCase):
         with mock.patch.dict(mo.EXAMINERS, ex, clear=True), mock.patch.object(mo, "refresh_examiners"), \
              mock.patch.object(mo, "default_examiner", return_value="local:a:1"), \
              mock.patch.object(mo, "_ollama", fake), mock.patch.object(S, "_gateway_json", side_effect=RuntimeError("gw")), \
+             mock.patch.object(S.fail_fast, "modal_chat", side_effect=RuntimeError("no lane session")) as modal, \
              mock.patch.dict(os.environ, env):
-            with self.assertRaises(HTTPException):
+            with self.assertRaises(HTTPException) as cm:
                 S.llm_json("s", "u", "t")
         self.assertEqual(calls, [("a:1", True), ("b:2", True), ("c:3", True), ("g", False)])
+        self.assertEqual(modal.call_count, 1)                 # the non-governor rung comes last
+        self.assertIn("modal: RuntimeError: no lane session", cm.exception.detail)
 
 
 if __name__ == "__main__":

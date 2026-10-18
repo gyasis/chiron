@@ -19,6 +19,8 @@ from fastapi import APIRouter, HTTPException
 from fastapi.responses import HTMLResponse
 
 import anki
+import fail_fast
+import local_models
 import mock_oral
 import voice
 
@@ -40,11 +42,21 @@ def _log(stage: str, msg: str) -> None:
 
 GATEWAY_URL = os.environ.get("CHIRON_SESSIONE_LLM_URL", "http://127.0.0.1:37400/v1").rstrip("/")
 GATEWAY_MODEL = os.environ.get("CHIRON_SESSIONE_MODEL", "gpt-4o-mini")
+SESSIONE_DEADLINE_S = float(os.environ.get("CHIRON_SESSIONE_DEADLINE_S") or 60)
+
+
+def _gateway_is_governor() -> bool:
+    """The gateway is the governor's ollama (…/llm/ollama/v1). Its /v1 path cannot carry num_ctx, so the
+    call goes to the native /api/chat instead (the examiner path: num_ctx, lease check, think:false)."""
+    return GATEWAY_URL.startswith(local_models.GOVERNOR.rstrip("/"))
 
 
 def _gateway_json(system: str, user: str) -> tuple[dict, dict]:
     """Local LiteLLM gateway (OpenAI-compatible). gpt-4o-mini is a non-reasoning model:
     verified 2026-10-14 reasoning_tokens=0, ~1.4 s. Primary since Ollama Cloud hit its weekly cap."""
+    if _gateway_is_governor():
+        text, usage = mock_oral._ollama(GATEWAY_MODEL, system, user, "", local=True)
+        return mock_oral.parse_json(text), usage
     payload = {"model": GATEWAY_MODEL, "temperature": 0.4,
                "response_format": {"type": "json_object"},
                "messages": [{"role": "system", "content": system},
@@ -56,28 +68,41 @@ def _gateway_json(system: str, user: str) -> tuple[dict, dict]:
         payload["reasoning_effort"] = effort
     body = json.dumps(payload).encode()
     req = urllib.request.Request(f"{GATEWAY_URL}/chat/completions", body, {"content-type": "application/json"})
-    with urllib.request.urlopen(req, timeout=90) as r:
+    with urllib.request.urlopen(req, timeout=fail_fast.attempt_timeout(90, fail_fast.modal_reserve())) as r:
         d = json.loads(r.read())
     usage = d.get("usage") or {}
     return json.loads(d["choices"][0]["message"]["content"]), usage
 
 
 def llm_json(system: str, user: str, stage: str) -> dict:
-    """One JSON object: local gateway first, then the examiner-path models (thinking off). 503 if none works."""
+    """One JSON object: local gateway first, then the examiner-path models (thinking off), then the Modal
+    lane — all under ONE deadline (SESSIONE_DEADLINE_S; an enclosing action's scope wins). 503 if none works."""
+    with fail_fast.scope(SESSIONE_DEADLINE_S, "sessione"):
+        return _llm_json(system, user, stage)
+
+
+def _llm_json(system: str, user: str, stage: str) -> dict:
     tried = []
     t = time.time()
+    out_of_time = False
     try:
         out, usage = _gateway_json(system, user)
         rt = (usage.get("completion_tokens_details") or {}).get("reasoning_tokens", 0)
         _log(stage, f"{GATEWAY_MODEL} ok {time.time() - t:.1f}s reasoning_tokens={rt}")
         return out
+    except fail_fast.DeadlineExceeded as e:
+        tried.append(f"gateway {GATEWAY_MODEL}: {e}"[:320])
+        _log(stage, "FAILED " + tried[-1])
+        out_of_time = True
     except Exception as e:
         tried.append(f"gateway {GATEWAY_MODEL}: {type(e).__name__}: {e}"[:320])
         _log(stage, "FAILED " + tried[-1])
     key = os.environ.get("OLLAMA_API_KEY", "")
     mock_oral.refresh_examiners()
-    for k in mock_oral.fallback_chain(mock_oral.default_examiner(), mock_oral.EXAMINERS):
+    for k in [] if out_of_time else mock_oral.fallback_chain(mock_oral.default_examiner(), mock_oral.EXAMINERS):
         ex = mock_oral.EXAMINERS[k]
+        if ex.get("local") and _gateway_is_governor() and ex["model"] == GATEWAY_MODEL:
+            continue                                    # the gateway attempt above was this exact model
         t = time.time()
         try:
             if not key and not ex.get("local"):
@@ -86,6 +111,10 @@ def llm_json(system: str, user: str, stage: str) -> dict:
             out = mock_oral.parse_json(text)
             _log(stage, f"{ex['model']} ok {time.time() - t:.1f}s thinking_chars={usage['thinking_chars']}")
             return out
+        except fail_fast.DeadlineExceeded as e:
+            tried.append(f"{k}: {e}"[:320])
+            _log(stage, "FAILED " + tried[-1])
+            break                                       # no time for another governor/cloud attempt
         except Exception as e:
             body = ""
             if hasattr(e, "read"):                      # HTTPError: the body says WHY (e.g. weekly usage limit)
@@ -95,6 +124,15 @@ def llm_json(system: str, user: str, stage: str) -> dict:
                     pass
             tried.append(f"{k}: {type(e).__name__}: {e}{body}"[:320])
             _log(stage, "FAILED " + tried[-1])
+    t = time.time()
+    try:                                                # the one rung that is not the governor
+        text, usage = fail_fast.modal_chat(system, user)
+        out = mock_oral.parse_json(text)
+        _log(stage, f"{fail_fast.MODAL_MODEL} ok {time.time() - t:.1f}s reasoning_chars={usage['reasoning_chars']}")
+        return out
+    except Exception as e:
+        tried.append(f"modal: {type(e).__name__}: {e}"[:320])
+        _log(stage, "FAILED " + tried[-1])
     raise HTTPException(503, "language model unavailable: " + " | ".join(tried))
 
 
@@ -401,6 +439,11 @@ def tutor(message: str) -> dict:
     message = (message or "").strip()
     if not message:
         raise ValueError("message is required")
+    with fail_fast.scope(SESSIONE_DEADLINE_S, "sessione tutor"):   # intent + answer share one deadline
+        return _tutor(message)
+
+
+def _tutor(message: str) -> dict:
     r = llm_json(INTENT_SYS, message, "tutor.intent")
     intent = r.get("intent") if r.get("intent") in ("produce", "listen", "lesson", "explain") else "explain"
     topic = str(r.get("topic") or message).strip()
