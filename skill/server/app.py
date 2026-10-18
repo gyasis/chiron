@@ -2267,6 +2267,10 @@ app.include_router(mm_study.router)
 # through generate() above, so the job shows in Jobs/Activity like any other.
 import raccolte  # noqa: E402
 app.include_router(raccolte.router)
+
+# Practice-exam grading (OMCeO Ordine simulator lesson): /api/exam/grade via the Claude CLI, tools off.
+import exam_grade  # noqa: E402
+app.include_router(exam_grade.router)
 raccolte.GENERATE = lambda d: generate(GenReq(**d))
 threading.Thread(target=lambda: mm_study._load(), daemon=True, name="mm-study-warm").start()   # first tap must not pay the ~4 s index load
 
