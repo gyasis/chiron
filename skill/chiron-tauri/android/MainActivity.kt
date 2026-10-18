@@ -44,6 +44,9 @@ class MainActivity : TauriActivity() {
   override fun onWebViewCreate(webView: WebView) {
     web = webView
     webView.addJavascriptInterface(Bridge(), "ChironAudio")
+    webView.addJavascriptInterface(OpenBridge(), "ChironOpen")
+    // Debug builds only: lets chrome://inspect attach (there was no webview_devtools socket when MM handoff was debugged).
+    if ((applicationInfo.flags and android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE) != 0) WebView.setWebContentsDebuggingEnabled(true)
     // wry's RustWebChromeClient answers onShowCustomView with callback.onCustomViewHidden(): every <video> fullscreen
     // button did nothing (2026-10-18). Wrap it once wry has installed it (post = after setup), keeping all its behaviour.
     webView.post { wrapChromeClient(webView) }
@@ -126,6 +129,22 @@ class MainActivity : TauriActivity() {
     @JavascriptInterface fun stopped() {
       active = false
       stopService(Intent(this@MainActivity, PlaybackService::class.java))
+    }
+  }
+
+  /** Hands a matchmadness:// URL to the Match Madness app. The opener plugin is scope-checked and swallowed the call silently;
+   *  a direct ACTION_VIEW intent is the robust path. Only that one scheme is accepted. Returns false if nothing handles it. */
+  inner class OpenBridge {
+    /** Diagnostics from the page into logcat (tag ChironPlayback) — the WebView has no devtools in a release/debug Tauri build. */
+    @JavascriptInterface fun log(msg: String?) { Log.i(PlaybackService.TAG, "web: $msg") }
+    @JavascriptInterface fun open(url: String?): Boolean {
+      val u = try { Uri.parse(url ?: "") } catch (e: Exception) { null }
+      if (u == null || u.scheme != "matchmadness") { Log.w(PlaybackService.TAG, "ChironOpen refused: $url"); return false }
+      return try {
+        runOnUiThread { try { startActivity(Intent(Intent.ACTION_VIEW, u).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)); Log.i(PlaybackService.TAG, "ChironOpen -> $u") }
+                        catch (e: Exception) { Log.w(PlaybackService.TAG, "ChironOpen failed: ${e.message}") } }
+        true
+      } catch (e: Exception) { false }
     }
   }
 
