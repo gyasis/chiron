@@ -956,3 +956,31 @@ window.LIB = LIB;
 LIB.ssm.init();   // SSM connection indicator: discover base address + reachability
 LIB._jobsHeartbeat(); setInterval(()=>LIB._jobsHeartbeat(), 15000);   // light the ⚡Jobs dot when something's baking
 boot().catch(e=>{ document.getElementById('rows').innerHTML = `<div class="empty">Failed to load library: ${e.message}<br>Run the index builder + serve over http.</div>`; });
+
+/* "Riprendi" banner: the phone (or another tab) set hub slot now-studying/cur — offer to pick up there. Same slot the
+   phone app and shell/handoff.js use. API is '' on :8911 (relayed to the hub), else the ⚙ server address. */
+(function(){
+  const SLOT=(API||'')+'/api/progress/now-studying', DK='chiron.hf.dismissed';
+  const lg=k=>{try{return localStorage.getItem(k)}catch(e){return null}}, ls=(k,v)=>{try{localStorage.setItem(k,v)}catch(e){}};
+  const esc=s=>String(s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+  const ago=ts=>{const m=Math.max(0,Math.round((Date.now()-ts)/60000));return m<1?'adesso':m<60?m+' min fa':m<1440?Math.round(m/60)+' h fa':Math.round(m/1440)+' g fa'};
+  let bn=null;
+  async function poll(){
+    try{
+      const r=await fetch(SLOT,{cache:'no-store'}); if(!r.ok) throw new Error('HTTP '+r.status);
+      const e=((await r.json()).entries||{}).cur, p=e&&e.v;
+      if(!p||!p.lesson||p.from!=='phone'||p.ts<=+(lg(DK)||0)){ if(bn) bn.style.display='none'; return; }
+      if(!bn){ bn=document.createElement('div'); bn.id='hf-banner';
+        bn.setAttribute('style','display:flex;align-items:center;gap:12px;margin:0 0 12px;padding:10px 14px;border-radius:12px;border:1px solid rgba(127,127,127,.3);background:rgba(127,127,127,.1);font:13px system-ui,-apple-system,"Segoe UI",Roboto,sans-serif');
+        const rows=document.getElementById('rows'); rows.parentNode.insertBefore(bn,rows); }
+      bn.innerHTML=`<div style="flex:1;min-width:0"><div style="opacity:.65;font-size:11px">Dal telefono · ${ago(p.ts)}</div><div style="font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(p.title)}${p.section?' § '+esc(p.section):''}</div></div><button id="hf-go" style="font:inherit;font-weight:600;padding:6px 12px;border-radius:8px;border:1px solid rgba(127,127,127,.35);background:transparent;color:inherit;cursor:pointer">Riprendi</button><button id="hf-x" aria-label="Chiudi" style="font:inherit;border:0;background:transparent;color:inherit;cursor:pointer;opacity:.6">✕</button>`;
+      bn.style.display='flex';
+      bn.querySelector('#hf-x').onclick=()=>{bn.style.display='none'; ls(DK,String(p.ts));};
+      bn.querySelector('#hf-go').onclick=()=>{ ls(DK,String(p.ts)); bn.style.display='none';
+        const a=String(p.anchor||'').replace(/[^\w.-]/g,'');
+        window.open((API||'')+'/lessons/'+p.lesson+'/lesson.html'+(a?'#'+a:(p.scroll>0?'#sf='+p.scroll:'')),'_blank'); };
+    }catch(e){ console.warn('chiron handoff: could not read the slot —',e.message); }
+  }
+  setTimeout(poll,1500); setInterval(()=>{if(!document.hidden)poll()},30000);
+  document.addEventListener('visibilitychange',()=>{if(!document.hidden)poll()});
+})();

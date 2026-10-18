@@ -471,7 +471,7 @@
     const l = LESSONS.find(x => slugOf(x.id) === slug);
     const title = (document.getElementById('l-title') || {}).textContent || slug;
     const s = sheet(clipOf(title, 40));
-    s.body.innerHTML = `<div class="xs-row" style="margin-top:2px"><button class="xs-btn" data-a="bake">🔊 Bake / rebake audio</button><button class="xs-btn ghost" data-a="img">🖼 Real images</button><button class="xs-btn ghost" data-a="corpus">⛁ Corpus</button></div>
+    s.body.innerHTML = `<div class="xs-row" style="margin-top:2px"><button class="xs-btn" data-a="bake">🔊 Bake / rebake audio</button><button class="xs-btn ghost" data-a="img">🖼 Real images</button><button class="xs-btn ghost" data-a="corpus">⛁ Corpus</button><button class="xs-btn ghost" data-a="web">💻 Continua sul web</button></div>
       <div style="font-family:var(--fh);font-weight:700;font-size:13px;margin:18px 0 6px">Regenerate this lesson</div>
       <textarea class="xs-ta" id="rg-note" placeholder="Reviewer note (optional) — what should change? e.g. “more on the discriminating features”"></textarea>
       <div class="xs-row"><button class="xs-btn warn" data-a="regen">↻ Regenerate</button></div>`;
@@ -480,6 +480,7 @@
       if (a === 'bake') { s.close(); bakeSlugs([slug], 'Bake audio for this lesson — pick an engine:'); }
       else if (a === 'img') { s.close(); imagesSheet(l ? (l.subject || l.topic || title) : title); }
       else if (a === 'corpus') { s.close(); corpusSheet(); }
+      else if (a === 'web') { s.close(); if (window.ChironHandoff) ChironHandoff.toWeb(); }
       else if (a === 'regen') {
         const note = s.body.querySelector('#rg-note').value.trim();
         if (!(await ask('Regenerate this lesson?', 'It runs the whole generation again (uses model tokens) and replaces the current text.', 'Regenerate', true))) return;
