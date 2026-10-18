@@ -133,8 +133,7 @@
 }
 
 .option.selected {
-  outline: 2px solid var(--chiron-accent);
-  outline-offset: -2px;
+  background: color-mix(in srgb, var(--chiron-accent) 12%, var(--chiron-surface));
 }
 
 .option.selected-correct {
@@ -641,7 +640,7 @@
 
 .boss {
   background: var(--chiron-surface);
-  border: 2px solid var(--chiron-accent);
+  border: 1px solid var(--chiron-border);
   border-radius: var(--chiron-radius-lg);
   padding: var(--chiron-space-6);
   margin: var(--chiron-space-6) 0;
@@ -824,9 +823,7 @@
 
 .prompt-item.selected,
 .match-item.selected {
-  outline: 2px solid var(--chiron-accent);
-  outline-offset: -2px;
-  background: color-mix(in srgb, var(--chiron-accent) 8%, var(--chiron-surface));
+  background: color-mix(in srgb, var(--chiron-accent) 14%, var(--chiron-surface));
 }
 
 .prompt-item.paired,

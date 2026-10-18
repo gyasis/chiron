@@ -80,7 +80,7 @@
 .tp-hlh button{border:none;background:none;color:var(--accent);font-family:var(--fh);font-weight:700;font-size:12px;padding:4px 2px}
 .tp-chips{display:flex;flex-wrap:wrap;gap:6px;max-height:80px;overflow-y:auto;margin-top:2px}
 .tp-hc{display:inline-flex;align-items:center;gap:6px;max-width:100%;border-radius:99px;background:var(--elevated);color:var(--fg);font-size:12.5px;padding:3px 4px 3px 4px;border:2px solid transparent}
-.tp-hc.sel{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 14%,var(--elevated))}
+.tp-hc.sel{background:color-mix(in srgb,var(--accent) 24%,var(--elevated))}
 .tp-hc .n{width:22px;height:22px;border-radius:50%;background:var(--accent);color:#fff;font-size:11.5px;font-weight:800;display:grid;place-items:center;flex:0 0 auto}
 .tp-hc .t{min-width:0;max-width:150px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:6px 0}
 .tp-hc button{border:none;background:none;color:var(--muted);font-size:15px;width:26px;height:28px;padding:0}
