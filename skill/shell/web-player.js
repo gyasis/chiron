@@ -9,7 +9,13 @@
 (function () {
   'use strict';
   if (window.__chironWebPlayer) return; window.__chironWebPlayer = true;
-  if (/[?&]inapp=1\b/.test(location.search) || window.parent !== window) return;
+  if (/[?&]inapp=1\b/.test(location.search)) return;          // the phone app frames lessons and has its own player
+  /* Framed is fine when the frame is the web LIBRARY's lesson overlay (same origin, /library/): that is how lessons are
+     normally opened on the web, and skipping it left the old restart-on-click panels there (2026-10-18). */
+  if (window.parent !== window) {
+    var lib = false; try { lib = window.parent.location.origin === location.origin && /^\/library\//.test(window.parent.location.pathname); } catch (e) {}
+    if (!lib) return;
+  }
   if (document.querySelector('.subsbar')) return;
   var m = location.pathname.match(/^\/lessons\/(.+)\/lesson\.html$/); if (!m) return;
   var slug = m[1].split('/').map(decodeURIComponent).join('/');
