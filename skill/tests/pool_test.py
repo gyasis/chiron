@@ -1,6 +1,6 @@
 """pool_test — Pool backend with Anki / OmniVoice / the model all mocked. Never touches the live Anki.
 Run: ~/miniconda3/bin/python tests/pool_test.py"""
-import os, sys, tempfile, unittest
+import json, os, sys, tempfile, unittest
 from pathlib import Path
 from unittest import mock
 
@@ -151,8 +151,9 @@ class Gather(unittest.TestCase):
 
     def setUp(self):
         d = Path(tempfile.mkdtemp())
-        for n in ("WEAK_F", "GATHERED_F", "WORDS_F"):
+        for n in ("WEAK_F", "GATHERED_F", "WORDS_F", "LESSON_NOTES_F"):
             p = mock.patch.object(P, n, d / (n + ".json")); p.start(); self.addCleanup(p.stop)
+        p = mock.patch.object(P, "LISTEN_INDEX", d / "none.json"); p.start(); self.addCleanup(p.stop)   # never the real index
         self.cands = [{"id": f"id{i}", "it": f"Questo e il paziente numero {i}.", "en": f"en{i}", "audio": f"a{i}.mp3",
                        "noteId": 100 + i, "tags": [], "kind": "exact", "key": (0, 0, i, 5), "difficulty": i} for i in range(8)]
 
@@ -213,6 +214,141 @@ class Gather(unittest.TestCase):
             r = P.gather_word({"it": "paziente"}, 5, dry=True)
         self.assertFalse(mk.called or cc.called or P.voice.say.called)
         self.assertIsNone(r["word"]["audio"])
+
+
+def _card(it, en, source="pimsleur", kind="sentence", lesson="verbi-1", title="Verbi irregolari", tags=("Verb foundation",), **x):
+    return {"id": "h" + str(abs(hash(it)))[:6], "it": it, "en": en, "kind": kind, "source": source, "lesson": lesson,
+            "lesson_title": title, "tags": list(tags), **x}
+
+
+class LessonCards(unittest.TestCase):
+    """listening.index.json -> lesson-first ranking in gather, and GET /api/pool/lesson."""
+
+    def setUp(self):
+        d = Path(tempfile.mkdtemp())
+        for n in ("WEAK_F", "GATHERED_F", "WORDS_F", "LESSON_NOTES_F"):
+            p = mock.patch.object(P, n, d / (n + ".json")); p.start(); self.addCleanup(p.stop)
+        cards = [_card("Ho detto la verità.", "I told the truth."),
+                 _card("Ieri sono andato al mercato con mia madre.", "Yesterday I went to the market with my mother.", source="script"),
+                 _card("Ho già detto tutto al medico stamattina.", "I already told the doctor everything this morning.", source="vocab"),
+                 _card("andato", "gone", kind="word", source="flashcard"),
+                 _card("io vado", "I go", kind="phrase", source="flashcard"),
+                 _card("Il consenso è libero.", "Consent is free.", lesson="ordine-1", title="Ordine: consenso", tags=("Ordine exam",),
+                       source="vocab"),
+                 _card("fatto", "done", kind="word", example_it="Ho fatto colazione alle sette.", example_en="I had breakfast at seven.",
+                       lesson="verbi-1", source="flashcard")]
+        (d / "idx.json").write_text(json.dumps({"lessons": {
+            "verbi-1": {"count": 6, "title": "Verbi irregolari", "tags": ["Verb foundation", "language-it"]},
+            "ordine-1": {"count": 1, "title": "Ordine: consenso", "tags": ["Ordine exam"]}}, "cards": cards}))
+        p = mock.patch.object(P, "LISTEN_INDEX", d / "idx.json"); p.start(); self.addCleanup(p.stop)
+        P._li["mtime"] = None
+        self.say = mock.patch.object(P.voice, "say", side_effect=lambda t, v="x", sp=1.0: "a_" + str(len(t)) + ".mp3"); self.say.start()
+        self.addCleanup(self.say.stop)
+        self.mk = mock.patch.object(P, "make_note", side_effect=lambda *a, **k: (500 + len(a[0]), 900 + len(a[0]))); self.mk.start()
+        self.addCleanup(self.mk.stop)
+        p = mock.patch.object(P.voice, "pick", return_value=("v", 1.0)); p.start(); self.addCleanup(p.stop)
+        p = mock.patch.object(P, "word_en", return_value="x"); p.start(); self.addCleanup(p.stop)     # never a real model call
+
+    def test_candidates_exact_then_rank_and_no_words_as_sentences(self):
+        c = P.lesson_candidates("ho detto", set())
+        self.assertEqual([x["it"] for x in c], ["Ho detto la verità."])        # "ho già detto" is not the phrase "ho detto"
+        self.assertEqual(c[0]["kind"], "exact")
+        a = P.lesson_candidates("andato", set())
+        self.assertEqual([x["it"] for x in a], ["Ieri sono andato al mercato con mia madre."])   # the bare word card is not a sentence
+        self.assertEqual(P.lesson_candidates("andato", {a[0]["id"]}), [])                          # exclude honoured
+        f = P.lesson_candidates("fatto", set())                                                     # example pair becomes a sentence
+        self.assertEqual([x["it"] for x in f], ["Ho fatto colazione alle sette."])
+
+    def test_pimsleur_before_script_among_equals(self):
+        a = _card("Ho preso il caffè al bar con te.", "x", source="script")
+        b = _card("Ho preso il caffè al bar con lui.", "y", source="pimsleur")
+        with mock.patch.dict(P._li, {"mtime": P._li["mtime"], "sents": [a, b]}):
+            with mock.patch.object(P, "listen_index", return_value={}):
+                self.assertEqual([x["source"] for x in P.lesson_candidates("caffè", set())], ["pimsleur", "script"])
+
+    def test_gather_puts_lesson_before_anki_and_creates_in_lezioni_deck(self):
+        anki_c = [{"id": "ak1", "it": "Ho detto di no a tutti.", "en": "I said no.", "audio": "z.mp3", "noteId": 1, "tags": [],
+                   "kind": "exact", "key": (0, 0, 1, 5), "difficulty": 1}]
+        fin = lambda c, w, tag: [{"id": x["id"], "it": x["it"], "en": x["en"], "audio": "z.mp3", "source": "anki", "label": "Anki",
+                                  "deck": "D", "cardId": 77, "noteId": 1, "match": "exact"} for x in c]
+        with mock.patch.object(P, "anki_candidates", return_value=anki_c) as ac, mock.patch.object(P, "finish_anki", side_effect=fin), \
+             mock.patch.object(P, "baby_candidates", return_value=[]), mock.patch.object(P, "mm_candidates", return_value=[]), \
+             mock.patch.object(P, "generate", return_value=[]):
+            r = P.gather_word({"it": "ho detto"}, 3)
+        src = [s["source"] for s in r["sentences"]]
+        self.assertEqual(src[0], "lesson")                                  # lesson sentence ranked before Anki
+        self.assertEqual(src.index("anki"), src.index("lesson") + len([x for x in src if x == "lesson"]))
+        self.assertEqual(r["sources"]["lesson"], src.count("lesson"))
+        kw = P.make_note.call_args.kwargs
+        self.assertEqual(kw["deck"], "Chiron::Lezioni::Verbi irregolari")
+        self.assertIn("pool::tag::verb-foundation", kw["extra_tags"])
+        self.assertEqual(P.make_note.call_args.args[4], "lesson")
+        self.assertEqual(r["sentences"][0]["deck"], "Chiron::Lezioni::Verbi irregolari")
+        self.assertTrue(r["sentences"][0]["label"].startswith("Lezione · "))
+        self.assertEqual(ac.call_args.args[1] & {s["id"] for s in r["sentences"] if s["source"] == "lesson"},
+                         {s["id"] for s in r["sentences"] if s["source"] == "lesson"})   # Anki is told what lesson already gave
+
+    def test_lesson_full_cap_skips_anki_entirely(self):
+        with mock.patch.object(P, "anki_candidates") as ac:
+            r = P.gather_word({"it": "detto"}, 2)
+        self.assertEqual(len(r["sentences"]), 2)
+        self.assertFalse(ac.called)
+
+    def test_note_made_once_per_card(self):
+        P.gather_word({"it": "ho detto"}, 1)
+        P.gather_word({"it": "ho detto"}, 1)
+        self.assertEqual(P.make_note.call_count, 1)                           # second time: remembered in lesson_notes.json
+
+    def test_dry_creates_nothing(self):
+        with mock.patch.object(P, "anki_candidates", return_value=[]):
+            r = P.gather_word({"it": "ho detto"}, 3, dry=True)
+        self.assertFalse(P.make_note.called or P.voice.say.called)
+        self.assertEqual((r["sentences"][0]["source"], r["sentences"][0]["cardId"]), ("lesson", None))
+
+    def test_lesson_endpoint_shape(self):
+        r = P.lesson_cards("verbi-1", None, 3, 0, False)
+        self.assertEqual(r["lesson"]["title"], "Verbi irregolari")
+        self.assertEqual(r["lesson"]["deck"], "Chiron::Lezioni::Verbi irregolari")
+        self.assertEqual((r["total"], r["offset"], r["next"], r["dry"]), (6, 0, 3, False))
+        s = r["sentences"][0]
+        self.assertEqual(set(s) >= {"id", "it", "en", "audio", "source", "label", "deck", "cardId", "noteId", "match"}, True)
+        self.assertEqual((s["source"], s["it"], s["lesson"]), ("lesson", "Ho detto la verità.", "verbi-1"))   # pimsleur sentence first
+        self.assertEqual([x["kind"] for x in r["sentences"]].count("word"), 0)           # words sort after phrases/sentences
+        last = P.lesson_cards("verbi-1", None, 3, 3, True)
+        self.assertIsNone(last["next"])
+        self.assertTrue(all(x["cardId"] is None for x in last["sentences"]))           # dry: no audio, no notes
+
+    def test_lesson_endpoint_uses_lucrezia(self):
+        P.lesson_cards("verbi-1", None, 1, 0, False)
+        self.assertEqual(P.voice.say.call_args.args[1:], (P.voice.DEFAULT_VOICE, 1.0))
+
+    def test_lesson_endpoint_focus_flat_slug_and_errors(self):
+        self.assertEqual(P.lesson_cards(None, "ordine EXAM", 5, 0, True)["total"], 1)
+        self.assertEqual(P.lesson_cards("verbi-1", None, 1, 0, True)["lesson"]["id"], "verbi-1")
+        with self.assertRaises(P.HTTPException) as e:
+            P.lesson_cards("nope", None, 5, 0, True)
+        self.assertEqual(e.exception.status_code, 404)
+        with self.assertRaises(P.HTTPException) as e:
+            P.lesson_cards(None, None, 5, 0, True)
+        self.assertEqual(e.exception.status_code, 400)
+        with self.assertRaises(P.HTTPException) as e:
+            P.lesson_cards(None, "no such tag", 5, 0, True)
+        self.assertEqual(e.exception.status_code, 404)
+
+    def test_nested_lesson_found_by_flat_slug(self):
+        idx = json.loads(P.LISTEN_INDEX.read_text())
+        idx["lessons"]["a/b/c"] = {"count": 1, "title": "Nested", "tags": []}
+        idx["cards"].append(_card("Ciao a tutti voi.", "Hello all.", lesson="a/b/c", title="Nested", tags=()))
+        P.LISTEN_INDEX.write_text(json.dumps(idx))
+        self.assertEqual(P.lesson_cards("a-b-c", None, 5, 0, True)["lesson"]["id"], "a/b/c")
+
+    def test_unreadable_index_is_a_warning_not_a_failed_gather(self):
+        P.LISTEN_INDEX.write_text("{not json")
+        P._li["mtime"] = None
+        with mock.patch.object(P, "anki_candidates", return_value=[]), mock.patch.object(P, "baby_candidates", return_value=[]), \
+             mock.patch.object(P, "mm_candidates", return_value=[]), mock.patch.object(P, "generate", return_value=[]):
+            r = P.gather_word({"it": "ho detto"}, 3)
+        self.assertTrue(any("lesson cards unavailable" in w for w in r["warnings"]))
 
 
 class PickAudioCardTemplateTest(unittest.TestCase):

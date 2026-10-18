@@ -168,7 +168,7 @@ const GR=[['Non ho capito','again','1'],['A fatica','hard','2'],['Capito','good'
 const PAUSE=600,LOOPGAP=1500;
 let unlocked=false;   // set by the first tap or key: browsers refuse audio.play() before one
 ['pointerdown','keydown','touchend'].forEach(ev=>addEventListener(ev,()=>{unlocked=true;},true));
-const Q={blocked:false,items:[],i:0,res:[],revealed:false,loading:false,waiting:false,tok:0,audio:null,timer:null,loop:true,cap:5};
+const Q={lessonMode:false,lesson:null,fetching:false,blocked:false,items:[],i:0,res:[],revealed:false,loading:false,waiting:false,tok:0,audio:null,timer:null,loop:true,cap:5};
 try{Q.loop=localStorage.getItem('chiron.ascolto.loop')!=='0'}catch(e){}
 
 // ---------- audio: word, pause, sentence (loops until revealed) ----------
@@ -234,17 +234,17 @@ function reveal(){
   $('#drill').innerHTML=`<div class="dh"><b>${esc(w.it)}</b><span class="hint">frase ${c.k+1} di ${c.of}</span><button class="x" id="dx" title="Chiudi">✕</button></div>
     <div class="bar"><i style="width:${(Q.i+1)/n*100}%"></i></div>
     <div class="face">
-      <div class="wordbox pair"><div class="it">${esc(w.it)}</div><div class="en">${esc(w.en||'')}</div></div>
+      ${Q.lessonMode?'':`<div class="wordbox pair"><div class="it">${esc(w.it)}</div><div class="en">${esc(w.en||'')}</div></div>`}
       <div class="pair"><div class="it">${esc(s.it)}</div><div class="en">${esc(s.en)}</div></div>
       <div class="src">${esc(s.label||s.source)}${s.deck?' · '+esc(s.deck.replace(/^.*::/,'')):''}</div>
-      <div class="acts"><button class="btn" id="rp">🔊 Riascolta</button><button class="btn" id="more">+ Altre frasi per «${esc(w.it)}»</button></div>
+      <div class="acts"><button class="btn" id="rp">🔊 Riascolta</button>${Q.lessonMode?'':`<button class="btn" id="more">+ Altre frasi per «${esc(w.it)}»</button>`}</div>
       <div id="tapslot"></div>${clip}<div id="mst" class="hint"></div>
     </div>
     <div class="wstate" id="ws"></div>
     <div class="grades" id="gr">${GR.map(([t,,k])=>`<button data-g="${k}">${t}<small>${k}</small></button>`).join('')}</div>
     <div class="hint" style="text-align:center;margin-top:8px">valuta solo se hai CAPITO l'audio · 1-4</div>`;
   $('#dx').onclick=()=>{closeDrill();summary(true)};
-  $('#rp').onclick=replay;$('#more').onclick=()=>more(c);
+  $('#rp').onclick=replay;if($('#more'))$('#more').onclick=()=>more(c);
   $$('#gr button').forEach((b,k)=>b.onclick=()=>grade(k));
   if(clip)$('#clipb').onclick=()=>{const sp='#t='+s.clip.start+','+s.clip.end;
     // hub (https :8943): same-origin /lessons/<slug>/ has Range support; plain :8910 has none and is mixed content on https
@@ -268,7 +268,7 @@ async function more(c){
 let pending=Promise.resolve();
 function grade(k){
   if(!Q.revealed)return;const c=Q.items[Q.i],ease=GR[k][1],rec={c,ease,written:null,msg:''};Q.res.push(rec);
-  pending=pending.then(()=>post(rec));Q.i++;renderCard();
+  pending=pending.then(()=>post(rec));Q.i++;lessonMore();renderCard();
 }
 async function post(rec){
   if(rec.c.s.cardId==null){rec.written=false;rec.msg='nessuna carta Anki';return;}
@@ -280,13 +280,39 @@ async function post(rec){
 }
 async function summary(early){
   await pending;const t={};Q.res.forEach(r=>t[r.ease]=(t[r.ease]||0)+1);
-  const nw=Q.res.filter(r=>!r.written),weak=[...new Set(Q.res.filter(r=>r.ease==='again'||r.ease==='hard').map(r=>r.c.word.it))];
+  const nw=Q.res.filter(r=>!r.written),weak=[...new Set(Q.res.filter(r=>r.ease==='again'||r.ease==='hard').map(r=>Q.lessonMode?r.c.s.it:r.c.word.it))];
   $('#drill').innerHTML=`<div class="dh"><b>${early?'Sessione interrotta':'Sessione completata'}</b><span class="hint">${Q.res.length} di ${Q.items.length} frasi</span><button class="x" id="dx">✕</button></div>
     <div class="face"><div class="tally">${GR.map(([T,k])=>`<span class="chip">${T} × ${t[k]||0}</span>`).join('')}</div>
     ${weak.length?`<div><label class="l">Da riascoltare</label><div class="wlist" style="justify-content:center">${weak.map(w=>`<span class="chip">${esc(w)}</span>`).join('')}</div></div>`:''}
     <div>${nw.length?`<span style="color:var(--bad);font-weight:600">⚠ ${nw.length} non scritte in Anki</span><div class="hint">${nw.map(r=>esc(r.c.s.it.slice(0,40))+(r.msg?' — '+esc(r.msg):'')).join('<br>')}</div>`:'<span class="ok">✓ tutti i voti scritti in Anki</span>'}</div>
     <div class="acts"><button class="btn pri" id="again">Nuova sessione</button></div></div>`;
   $('#dx').onclick=closeDrill;$('#again').onclick=closeDrill;
+}
+// ---------- lesson mode: /ascolto?lesson=<id> or ?focus=<tag> ----------
+// Cards come from the lessons themselves (listening.index.json), a page at a time: each page is voiced + noted
+// server-side, so only fetch the next one when the learner is nearly through the queue.
+const LPAGE=5;
+async function lessonMore(){
+  const L=Q.lesson;if(!L||L.next==null||Q.fetching||Q.items.length-Q.i>3)return;
+  Q.fetching=Q.loading=true;
+  try{
+    const p=new URLSearchParams({n:LPAGE,offset:L.next});
+    if(L.id)p.set('id',L.id);else p.set('focus',L.focus);
+    const d=await api('/api/pool/lesson?'+p);
+    Q.items.push(...d.sentences.map((s,k)=>({word:{it:d.lesson.title,en:'',audio:null},s,k:d.offset+k,of:d.total})));
+    L.next=d.next;
+  }catch(e){L.next=null;setBanner(e.message);}
+  Q.fetching=Q.loading=false;
+  if(Q.waiting)renderCard();
+  else if(Q.items.length-Q.i<=3&&L.next!=null)lessonMore();
+}
+async function startLesson(id,focus){
+  Q.lessonMode=true;Q.lesson={id,focus,next:0};Q.cap=LPAGE;setBanner('');
+  $('#setup').classList.add('hide');
+  $('#drill').innerHTML='<div class="spin"><i></i><span>Preparo le carte della lezione…</span></div>';
+  await lessonMore();
+  if(!Q.items.length){$('#drill').innerHTML='';$('#setup').classList.remove('hide');return;}
+  startDrill();
 }
 // ---------- setup ----------
 function parseWords(){return $('#words').value.split('\n').map(l=>l.trim()).filter(Boolean).map(l=>{const [it,en]=l.split('|').map(x=>x.trim());return {it,en:en||''};});}
@@ -301,7 +327,7 @@ async function loadWeak(){
 }
 async function go(){
   const ws=parseWords();if(!ws.length){$('#status').innerHTML='<div class="err">Scrivi almeno una parola</div>';return;}
-  Object.assign(Q,{items:[],i:0,res:[],cap:+$('#cap').value||5,loading:true});setBanner('');
+  Object.assign(Q,{lessonMode:false,lesson:null,items:[],i:0,res:[],cap:+$('#cap').value||5,loading:true});setBanner('');
   $('#go').disabled=true;let started=false;const failed=[];
   const st=$('#status');st.innerHTML=`<div class="spin"><i></i><span>Raccolgo le frasi… <b>0</b>/${ws.length}</span></div>`;
   for(let n=0;n<ws.length;n++){
@@ -321,5 +347,6 @@ async function go(){
 }
 $('#mm').onclick=loadWeak;$('#go').onclick=go;
 // ?mode=pool&from=mm  -> load the weak list and start straight away
-if(QS.get('from')==='mm')loadWeak().then(ws=>{if(ws.length)go();});
+if(QS.get('lesson')||QS.get('focus'))startLesson(QS.get('lesson'),QS.get('focus'));
+else if(QS.get('from')==='mm')loadWeak().then(ws=>{if(ws.length)go();});
 </script></body></html>

@@ -6,9 +6,12 @@ Method: Jeremiah "How to Learn Words FAST" — audio-only front, grade on compre
     GET  /api/pool/weak    ?limit=                 ranked by wrong*2+hesitations desc, recent first, mastered excluded
     POST /api/pool/gather  {words:[{it,en?}], cap=5, dry?}     -> {items:[{word:{it,en,audio}, sentences:[...], sources, short}]}
     POST /api/pool/more    {word:{it,en?}, add=5}              the next batch for one word, never repeating
-    GET  /ascolto          the drill page (shell/ascolto.html)
+    GET  /api/pool/lesson  ?id=<lesson>|focus=<tag>&n=&offset=&dry=   the cards of what you are STUDYING (listening.index.json), audio-only drill shape
+    GET  /ascolto          the drill page (shell/ascolto.html); ?lesson=<id> or ?focus=<tag> drills a lesson / tag directly
 
 Sentence sources, in priority order, until the cap is met:
+  0 lesson cards harvested from the lessons themselves (scripts/harvest_listening_cards.py -> listening.index.json);
+           a new note goes to Chiron::Lezioni::<lesson title>
   1 anki   existing cards in the Italian decks (reused first; the cardId is returned so grades write to that card)
   2 baby   Baby S01 transcript lines -> ffmpeg clip -> new `Chiron Ascolto` note in Chiron::Pool
   3 mm     Match Madness corpora (data/*.json frasi) -> OmniVoice -> new note
@@ -31,6 +34,9 @@ STATE = SKILL / "server" / "state" / "pool"
 WEAK_F, GATHERED_F, WORDS_F = STATE / "weak.json", STATE / "gathered.json", STATE / "words.json"
 POOL_DECK = "Chiron::Pool"
 BABY_ROOT = Path(os.environ.get("CHIRON_LIBRARY", Path.home() / "Documents/generated/chiron-library")) / "lessons"
+LISTEN_INDEX = BABY_ROOT.parent / "listening.index.json"
+LESSON_NOTES_F = STATE / "lesson_notes.json"    # card id -> {noteId, cardId, audio, deck}: a card is voiced + noted once
+LESSON_DECK = "Chiron::Lezioni::"
 MM_DATA = Path(os.environ.get("CHIRON_MM_DATA", Path.home() / "Documents/code/match-madness/data"))
 DEFAULT_CAP = 5
 MIN_WORDS, MAX_WORDS = 3, 25            # a "sentence" for this drill: not a fragment, not a paragraph
@@ -203,6 +209,8 @@ def anki_candidates(word: str, exclude: set[str]) -> list[dict]:
 def _source_label(tags: list[str], deck: str, note_text: str) -> tuple[str, str]:
     """(source, label) for an Anki-hosted sentence."""
     t = " ".join(tags)
+    if "pool::src::lesson" in t:
+        return "lesson", "Lezione"
     if "pool::src::baby" in t:
         return "baby", "Baby S01" + (re.search(r"E\d\d", note_text or "").group(0) if re.search(r"E\d\d", note_text or "") else "")
     if "pool::src::gen" in t:
@@ -443,32 +451,160 @@ def word_en(word: str, given: str = "", known: str = "", dry: bool = False) -> s
 
 # ── notes ─────────────────────────────────────────────────────────────────────
 
-def make_note(it: str, en: str, audio: str, word: str, src: str, note: str) -> tuple[int, int]:
+def make_note(it: str, en: str, audio: str, word: str, src: str, note: str,
+              deck: str = POOL_DECK, extra_tags: list[str] | None = None) -> tuple[int, int]:
     """Create (or find, when it already exists) the `Chiron Ascolto` note; returns (noteId, cardId)."""
     anki.ensure_models()
-    tags = ["pool::it::audio", f"pool::word::{slug(word)}", "pool::new", f"pool::src::{src}"]
+    tags = ["pool::it::audio", f"pool::word::{slug(word)}", "pool::new", f"pool::src::{src}"] + list(extra_tags or [])
     fields = {"Audio": f"[sound:{audio}]", "Italiano": it, "English": en, "Note": note}
-    res = anki.add_notes([{"fields": fields}], deck=POOL_DECK, tags=tags, model=anki.LISTEN_MODEL)
+    res = anki.add_notes([{"fields": fields}], deck=deck, tags=tags, model=anki.LISTEN_MODEL)
     if res["noteIds"]:
         nid = int(res["noteIds"][0])
     else:                                     # duplicate in the pool deck: reuse it and attach this word's tag
-        found = anki.invoke("findNotes", query=f'"deck:{POOL_DECK}" "Italiano:{it.replace(chr(34), "")}"') or []
+        found = anki.invoke("findNotes", query=f'"deck:{deck}" "Italiano:{it.replace(chr(34), "")}"') or []
         if not found:
             raise RuntimeError(f"note for {it!r} was refused as a duplicate but cannot be found")
         nid = int(found[0])
-        anki.add_tags([nid], ["pool::it::audio", f"pool::word::{slug(word)}"])
+        anki.add_tags([nid], ["pool::it::audio", f"pool::word::{slug(word)}"] + list(extra_tags or []))
     cards = anki.invoke("findCards", query=f"nid:{nid}") or []
     if not cards:
         raise RuntimeError(f"note {nid} has no card")
     return nid, int(cards[0])
 
 
-def _sentence(c: dict, source: str, label: str, nid: int, cid: int, audio: str, clip: dict | None = None) -> dict:
+def _sentence(c: dict, source: str, label: str, nid: int, cid: int, audio: str, clip: dict | None = None,
+              deck: str = POOL_DECK) -> dict:
     s = {"id": c["id"], "it": c["it"], "en": c["en"], "audio": audio, "source": source, "label": label,
-         "deck": POOL_DECK, "cardId": cid, "noteId": nid, "match": c["kind"]}
+         "deck": deck, "cardId": cid, "noteId": nid, "match": c["kind"]}
     if clip:
         s["clip"] = clip
     return s
+
+
+# ── lesson cards: what the learner is STUDYING ────────────────────────────────
+
+LESSON_SRC_RANK = {"pimsleur": 0, "flashcard": 1, "vocab": 2, "script": 3}   # same order as the harvester
+_li: dict = {"mtime": None, "sents": [], "index": {"lessons": {}, "cards": []}}
+
+
+def listen_index() -> dict:
+    """listening.index.json, re-read only when the file changed. Missing = no lesson cards yet, not an error."""
+    try:
+        m = LISTEN_INDEX.stat().st_mtime
+    except FileNotFoundError:
+        return {"lessons": {}, "cards": []}
+    with _lock:
+        if _li["mtime"] != m:
+            try:
+                idx = json.loads(LISTEN_INDEX.read_text())
+            except Exception as e:
+                raise RuntimeError(f"{LISTEN_INDEX} is unreadable: {type(e).__name__}: {e}")
+            sents = []
+            for c in idx.get("cards", []):
+                if sentence_ok(c["it"]):
+                    sents.append(c)
+                elif c.get("example_it") and c.get("example_en") and sentence_ok(c["example_it"]):
+                    sents.append({**c, "it": c["example_it"], "en": c["example_en"], "kind": "sentence"})
+            _li.update(mtime=m, sents=sents, index=idx)
+            _log("lesson", f"indexed {len(idx.get('cards', []))} cards ({len(sents)} usable as sentences) from {LISTEN_INDEX}")
+        return _li["index"]
+
+
+def lesson_candidates(word: str, exclude: set[str]) -> list[dict]:
+    """Sentences from the lessons being studied that contain `word`: exact before inflected, pimsleur before
+    flashcards/vocab before dialogue, short first. Ranked before Anki and Baby by `fill`."""
+    listen_index()
+    out, seen = [], set(exclude)
+    for c in _li["sents"]:
+        kind = match_kind(word, c["it"])
+        t = tid(c["it"])
+        if kind and t not in seen:
+            seen.add(t)
+            n = len(tokens(c["it"]))
+            out.append({**c, "id": t, "kind": kind,
+                        "key": (0 if kind == "exact" else 1, LESSON_SRC_RANK.get(c.get("source"), 9), min(n, 14) // 3, n)})
+    out.sort(key=lambda c: c["key"])
+    return out
+
+
+def lesson_deck(title: str) -> str:
+    return LESSON_DECK + (re.sub(r'[:"\\]+', "-", title or "").strip() or "Lezione")
+
+
+def lesson_tags(c: dict) -> list[str]:
+    return [f"pool::lesson::{slug(c.get('lesson_title') or c.get('lesson', ''))}"] + \
+           [f"pool::tag::{slug(t)}" for t in c.get("tags", []) if t]
+
+
+def finish_lesson(cands: list[dict], word: str, dry: bool, start: int = 0, lucrezia: bool = False) -> list[dict]:
+    """Shape lesson cards as drill sentences. A card gets its note ONCE (Lucrezia/pool voice -> make_note into
+    Chiron::Lezioni::<title>), remembered in lesson_notes.json so grading always lands on the same Anki card.
+    `dry`: no TTS, no note; cardId/audio are None unless the card was already voiced."""
+    out, errs = [], []
+    for i, c in enumerate(cands):
+        deck = lesson_deck(c.get("lesson_title", ""))
+        label = "Lezione · " + (c.get("lesson_title") or c.get("lesson", ""))
+        with _lock:
+            st = _load(LESSON_NOTES_F).get(c["id"])
+        try:
+            if st:
+                nid, cid, audio, deck = st["noteId"], st["cardId"], st["audio"], st.get("deck", deck)
+            elif dry:
+                nid = cid = audio = None
+            else:
+                with _tts:
+                    v, sp = (voice.DEFAULT_VOICE, 1.0) if lucrezia else voice.pick(start + i, word)
+                    audio = voice.say(c["it"].replace("→", ","), v, sp)     # a spoken arrow is noise
+                note = f"{label} | {c.get('source', '')}"
+                nid, cid = make_note(c["it"], c["en"], audio, word, "lesson", note, deck=deck, extra_tags=lesson_tags(c))
+                with _lock:
+                    m = _load(LESSON_NOTES_F)
+                    m[c["id"]] = {"noteId": nid, "cardId": cid, "audio": audio, "deck": deck}
+                    _save(LESSON_NOTES_F, m)
+        except Exception as e:
+            _log("lesson", f"{word!r} {c['it'][:40]!r}: {type(e).__name__}: {e}")
+            errs.append(e)
+            continue
+        s = _sentence(c, "lesson", label, nid, cid, audio, deck=deck)
+        s.update(lesson=c.get("lesson"), kind=c.get("kind"))
+        out.append(s)
+    if errs and not out:
+        raise errs[-1]                       # nothing usable and a reason: surface it (the guard maps Anki/voice to 503)
+    return out
+
+
+def lesson_cards(lesson: str | None, focus: str | None, n: int, offset: int, dry: bool) -> dict:
+    """The cards of one lesson (or every lesson tagged `focus`), as drill sentences with Lucrezia audio.
+    Phrases/sentences first (pimsleur, then flashcards, vocab, dialogue), single words after."""
+    idx = listen_index()
+    lessons = idx.get("lessons", {})
+    if lesson:
+        if lesson not in lessons:         # the Library names a nested lesson by its flat slug (a/b/c -> a-b-c)
+            lesson = next((k for k in lessons if k.replace("/", "-") == lesson), lesson)
+        if lesson not in lessons:
+            raise HTTPException(404, f"no listening cards for lesson {lesson!r} — run scripts/harvest_listening_cards.py {lesson}")
+        ids, title, tags = {lesson}, lessons[lesson]["title"], lessons[lesson].get("tags", [])
+    elif focus:
+        ids = {k for k, v in lessons.items() if fold(focus) in [fold(t) for t in v.get("tags", [])]}
+        if not ids:
+            raise HTTPException(404, f"no harvested lesson carries the tag {focus!r}")
+        title, tags = focus, [focus]
+    else:
+        raise HTTPException(400, "id=<lesson> or focus=<tag> is required")
+    seen, cards = set(), []
+    for c in idx.get("cards", []):
+        t = tid(c["it"])
+        if c.get("lesson") in ids and t not in seen:
+            seen.add(t)
+            cards.append({**c, "id": t})
+    cards.sort(key=lambda c: (c.get("kind") == "word", LESSON_SRC_RANK.get(c.get("source"), 9)))   # stable: lesson order kept
+    n, offset = max(1, min(int(n or 10), 40)), max(0, int(offset or 0))
+    page = cards[offset:offset + n]
+    sents = finish_lesson(page, title, dry, offset, lucrezia=True)
+    _log("lesson", f"{lesson or focus!r} offset={offset} n={n} dry={dry} -> {len(sents)}/{len(page)} of {len(cards)}")
+    return {"lesson": {"id": lesson, "focus": focus, "title": title, "tags": tags, "deck": lesson_deck(title) if lesson else None},
+            "sentences": sents, "total": len(cards), "offset": offset,
+            "next": offset + len(page) if offset + len(page) < len(cards) else None, "dry": dry}
 
 
 # ── state ─────────────────────────────────────────────────────────────────────
@@ -559,7 +695,7 @@ def fill(word: str, n: int, exclude: set[str], dry: bool, warn: list[str] | None
     """Up to `n` sentences for `word`, source by source. -> (sentences, counts per source, still short)."""
     warn = [] if warn is None else warn
     got: list[dict] = []
-    counts = {"anki": 0, "baby": 0, "mm": 0, "gen": 0}
+    counts = {"lesson": 0, "anki": 0, "baby": 0, "mm": 0, "gen": 0}
     seen = set(exclude)
 
     def add(items: list[dict], src_key: str | None = None):
@@ -568,14 +704,20 @@ def fill(word: str, n: int, exclude: set[str], dry: bool, warn: list[str] | None
             got.append(s)
             counts[src_key or s["source"]] = counts.get(src_key or s["source"], 0) + 1
 
-    # 1. existing Anki cards (this includes earlier pool notes: reuse before create)
-    cands = anki_candidates(word, seen)[:n]
-    add(finish_anki(cands, word, tag=not dry))
-    if dry:
-        return got, counts, max(n - len(got), 0)
-
     def room():
         return n - len(got)
+
+    # 0. the lessons being studied: always first (a card here is a word/phrase the learner is learning RIGHT NOW)
+    try:
+        add(finish_lesson(lesson_candidates(word, seen)[:n], word, dry, len(got)))
+    except Exception as e:                       # unreadable index / voice down: keep going with the other sources, say so
+        _log("lesson", f"{word!r}: {type(e).__name__}: {e}")
+        warn.append(f"lesson cards unavailable: {str(getattr(e, 'detail', e))[:200]}")
+    # 1. existing Anki cards (this includes earlier pool notes: reuse before create)
+    if room() > 0:
+        add(finish_anki(anki_candidates(word, seen)[:room()], word, tag=not dry))
+    if dry:
+        return got, counts, max(room(), 0)
 
     # 2. Baby clips
     for c in baby_candidates(word, seen):
@@ -654,6 +796,11 @@ def gather_word(w: dict, cap: int, more: bool = False, dry: bool = False) -> dic
 def page():
     return HTMLResponse((SKILL / "shell" / "ascolto.html").read_text(),
                         headers={"Cache-Control": "no-cache, must-revalidate"})
+
+
+@router.get("/api/pool/lesson")
+def api_lesson(id: str | None = None, focus: str | None = None, n: int = 10, offset: int = 0, dry: bool = False):
+    return sessione._guard("pool-lesson", lesson_cards, id, focus, n, offset, dry)
 
 
 @router.post("/api/pool/weak")
