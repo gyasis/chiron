@@ -2255,6 +2255,10 @@ app.include_router(mazzi.router)
 import pool  # noqa: E402
 app.include_router(pool.router)
 
+# Match Madness "Il compito": define the words/phrases the decks lack, one batched call (/api/mm/define).
+import mm_define  # noqa: E402
+app.include_router(mm_define.router)
+
 
 @app.middleware("http")
 async def _pool_private_network(request, call_next):
