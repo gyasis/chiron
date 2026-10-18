@@ -56,6 +56,7 @@ let skipDialogues = false;
 let skipPassage = false;
 let dryRun = false;
 let noQc = false;
+let onlyKinds = null;   // --only summary,shortened : bake just these artifact kinds
 
 for (let i = 1; i < argv.length; i++) {
   if (argv[i] === '--persona' && argv[i + 1]) { personaIdArg = argv[++i]; continue; }
@@ -64,6 +65,7 @@ for (let i = 1; i < argv.length; i++) {
   if (argv[i] === '--no-dialogues') { skipDialogues = true; continue; }
   if (argv[i] === '--no-passage') { skipPassage = true; continue; }
   if (argv[i] === '--no-qc') { noQc = true; continue; }
+  if (argv[i] === '--only' && argv[i + 1]) { onlyKinds = new Set(argv[++i].split(',')); continue; }
   if (argv[i] === '--dry-run') { dryRun = true; continue; }
 }
 
@@ -487,7 +489,7 @@ if (toResolve.length > 0) {
 // Dialogue artifacts are pre-resolved — strip the private bookkeeping fields before passing to bakeAudio
 const preResolvedDialogues = dialogueArtifacts.map(({ _preResolved, _voiced, _skipped, ...rest }) => rest);
 
-const allArtifacts = [...resolvedArtifacts, ...preResolvedDialogues];
+const allArtifacts = [...resolvedArtifacts, ...preResolvedDialogues].filter(a => !onlyKinds || onlyKinds.has(a.kind));
 
 // ---------------------------------------------------------------------------
 // One-pass collapse: merge adjacent SAME-VOICE segments into a single synth call.
