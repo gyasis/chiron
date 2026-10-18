@@ -2307,6 +2307,10 @@ def _lesson_with_tutor(slug: str):
         nv = int((SKILL / "shell" / "lesson-nav.js").stat().st_mtime)
         rep = f'<script src="/shell/lesson-nav.js?v={nv}" defer></script>'
         html = html.replace("</body>", rep + "</body>", 1) if "</body>" in html else html + rep
+    if "chiron-lang-switch" not in html and "lang-switch.js" not in html:   # IT · IT+EN · EN switch (a lesson with its own inline copy keeps it, for offline)
+        lv = int((SKILL / "shell" / "lang-switch.js").stat().st_mtime)
+        rep = f'<script src="/shell/lang-switch.js?v={lv}" defer></script>'
+        html = html.replace("</body>", rep + "</body>", 1) if "</body>" in html else html + rep
     if "handoff.js" not in html:             # Riprendi: report the reading position (web: 📱 button; in-app: postMessage)
         hv = int((SKILL / "shell" / "handoff.js").stat().st_mtime)
         rep = f'<script src="/shell/handoff.js?v={hv}" defer></script>'
@@ -2410,6 +2414,25 @@ import fail_fast  # noqa: E402
 ASK_READ_S = float(os.environ.get("CHIRON_ASK_READ_S") or 180)
 
 
+_ASK_THINKS: dict[str, bool] = {}
+
+
+async def _ask_model_thinks(base: str, model: str) -> bool:
+    """True if the upstream's /api/show lists the "thinking" capability. Cached per model; unknown -> False."""
+    if not model:
+        return False
+    if model not in _ASK_THINKS:
+        try:
+            async with httpx.AsyncClient(timeout=httpx.Timeout(8.0, connect=3.0)) as cx:
+                r = await cx.post(f"{base}/api/show", json={"model": model})
+            caps = r.json().get("capabilities") or [] if r.status_code == 200 else []
+            _ASK_THINKS[model] = "thinking" in caps
+        except (httpx.HTTPError, ValueError) as e:
+            print(f"[ask] could not read capabilities for {model}: {e}", flush=True)
+            return False
+    return _ASK_THINKS[model]
+
+
 @app.api_route("/ask/llm/{path:path}", methods=["GET", "POST"])
 async def ask_llm_proxy(path: str, request: Request):
     """Passthrough to the configured ollama-compatible endpoint (governor by default).
@@ -2444,6 +2467,18 @@ async def ask_llm_proxy(path: str, request: Request):
             _b = json.loads(body)
             if isinstance(_b, dict) and not (_b.get("options") or {}).get("num_ctx"):
                 _b.setdefault("options", {})["num_ctx"] = fail_fast.num_ctx_for(len(body))
+                body = json.dumps(_b).encode()
+        except (ValueError, AttributeError):
+            pass
+    # Thinking models (gemma4, ornith, qwen3 …) reason before answering when Ollama's /api/chat is not told
+    # think:false. Over a grounded Ask prompt that ran past the governor's 180 s cap: gemma4:12b loaded fine, then
+    # 504'd with no answer (2026-10-18, Galaxy). A grounded answer does not need the reasoning pass, so turn it off
+    # unless the page asked for it — only for models whose /api/show lists "thinking" (R-TM1: never infer from the name).
+    if body and path.rstrip("/").endswith("api/chat"):
+        try:
+            _b = json.loads(body)
+            if isinstance(_b, dict) and "think" not in _b and await _ask_model_thinks(base, _b.get("model") or ""):
+                _b["think"] = False
                 body = json.dumps(_b).encode()
         except (ValueError, AttributeError):
             pass
