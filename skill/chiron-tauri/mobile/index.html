@@ -332,13 +332,13 @@ body{background:var(--bg);color:var(--fg);font-family:var(--fb);height:100vh;ove
   <!-- ASK (Chiedi) overlay — the library's /ask/ page, in-app over plain HTTP -->
   <div class="lesson" id="askov">
     <div class="lbar"><span class="back" onclick="closeAsk()">‹</span><span class="lttl">💬 Chiedi</span></div>
-    <div id="askwrap"><iframe class="lessonframe" id="ask-frame" title="Chiedi"></iframe></div>
+    <div id="askwrap"><iframe class="lessonframe" allow="fullscreen; autoplay" allowfullscreen id="ask-frame" title="Chiedi"></iframe></div>
   </div>
 
   <!-- STUDIO overlay — Sessione / Ascolto / Mazzi from the library host, in-app over plain HTTP (title set per page) -->
   <div class="lesson" id="studioov">
     <div class="lbar"><span class="back" onclick="closeStudioIn()">‹</span><span class="lttl" id="studio-title">Studio</span></div>
-    <div id="studiowrap"><iframe class="lessonframe" id="studio-frame" title="Studio"></iframe></div>
+    <div id="studiowrap"><iframe class="lessonframe" allow="fullscreen; autoplay" allowfullscreen id="studio-frame" title="Studio"></iframe></div>
   </div>
 
   <!-- LESSON overlay -->
@@ -346,7 +346,7 @@ body{background:var(--bg);color:var(--fg);font-family:var(--fb);height:100vh;ove
     <div class="lbar"><span class="back" onclick="closeLesson()">‹</span><span class="lttl" id="l-title">Lesson</span><span class="lmode" id="l-mode" style="display:none"></span><span class="lmore" id="l-more" aria-label="More">⋯</span>
       <div class="modeseg"><button class="mon" id="m-read" onclick="setMode('read')">Leggi</button><button id="m-play" onclick="setMode('play')">Ascolta</button></div></div>
     <div class="resume" id="l-resume" style="display:none">↩ Continue where you left off</div>
-    <div id="mread"><iframe class="lessonframe" id="l-frame" title="lesson"></iframe></div>
+    <div id="mread"><iframe class="lessonframe" allow="fullscreen; autoplay" allowfullscreen id="l-frame" title="lesson"></iframe></div>
     <div id="mplay" style="display:none">
       <div class="cover" id="pl-cover">—</div>
       <div class="np-t" id="pl-t">—</div><div class="np-s" id="pl-s"></div>

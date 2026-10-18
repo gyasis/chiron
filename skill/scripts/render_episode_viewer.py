@@ -215,6 +215,25 @@ body.mode-podcast #podbar{display:block;position:fixed;left:0;right:0;bottom:0;z
 .ps-dlg .l{padding:6px 0;border-bottom:1px solid var(--divider)}
 .ps-dlg .who{font-family:var(--mono);font-size:10px;text-transform:uppercase;color:var(--info)}
 .ps-dlg .it{font-size:15px}.ps-dlg .en{font-size:12.5px;color:var(--muted);font-style:italic}
+/* Phone (Galaxy portrait ≈412 css px, 2026-10-18): the title was cut off, the player block filled two thirds of the
+   screen and the app's floating buttons covered the script. Compact header, short video, full-width cues. */
+@media(max-width:600px){
+  .bar{padding:44px 12px 8px}.bar .in{gap:6px}   /* top: clear the shell's floating "‹ Library" tab */
+  .bar b{flex:1 1 100%;font-size:14px;line-height:1.25;padding-right:96px}   /* room for the app's floating controls */
+  .bar .pill{display:none}
+  .modes{margin-left:0!important;display:flex;overflow-x:auto;scrollbar-width:none;max-width:100%}
+  .mbtn{padding:4px 9px!important;font-size:10px!important;white-space:nowrap}
+  #clock{font-size:11px!important}
+  .wrap{padding:8px 8px 120px}
+  video{max-height:34vh;object-fit:contain}
+  .sub-it{font-size:15px}.sub-en{font-size:13px}
+  .subsbar{padding:5px 10px;gap:6px;flex-wrap:nowrap}.sb-lbl{display:none}.subtog{padding:3px 9px}
+  .listenbar .hint{display:none}
+  .cue{grid-template-columns:1fr!important;padding:7px 10px}   /* !important: beats the per-mode body.mode-* .cue grids */
+  .cue .who-c,.cue .it-c,.cue .en-c{grid-column:1!important;grid-row:auto!important}
+  .cue .who{text-align:left}
+  #cueHdr{display:none}
+}
 </style>
 <link rel="stylesheet" href="tutor.css">
 <div class="bar"><div class="in"><b>__TITLE__</b><span class="pill">player · click a line → seek</span>
@@ -458,6 +477,31 @@ document.getElementById('subIt').onclick=()=>{ subIT=!subIT; setSubBtns(); refre
 document.getElementById('subEn').onclick=()=>{ subEN=!subEN; setSubBtns(); refreshSubs(); };
 document.getElementById('subOff').onclick=()=>{ subIT=false; subEN=false; setSubBtns(); refreshSubs(); };
 (()=>{ let v=''; try{v=localStorage.getItem('chiron_subs')||'';}catch(e){} subIT=v.includes('i'); subEN=v.includes('e'); setSubBtns(); })();
+// ── the same choice as a real <track>, for FULLSCREEN: native fullscreen shows only the <video>, so the #subs overlay
+// vanishes there. A WebVTT track built from the transcript follows the IT/EN/Off toggle and is shown only in fullscreen
+// (the overlay covers the inline player, so they never double up). ──
+let subTrack=null;
+function buildTrack(){
+  const esc=x=>String(x||'').replace(/<[^>]*>/g,'').replace(/-->/g,'→');
+  const ts=x=>{x=Math.max(0,x);const h=Math.floor(x/3600),m=Math.floor(x%3600/60),sec=(x%60).toFixed(3).padStart(6,'0');return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${sec}`;};
+  let vtt='WEBVTT\n\n', n=0;
+  scenes.forEach(sc=>sc.lines.forEach((l,i)=>{
+    const txt=[subIT&&l.italian_text?esc(l.italian_text):'', subEN&&l.en_gloss?esc(l.en_gloss):''].filter(Boolean).join('\n');
+    if(!txt) return; const nx=sc.lines[i+1], end=l.end||(nx?nx.start:l.start+4);
+    vtt+=`${++n}\n${ts(l.start)} --> ${ts(Math.max(end,l.start+0.8))}\n${txt}\n\n`; }));
+  if(subTrack){ URL.revokeObjectURL(subTrack.src); subTrack.remove(); subTrack=null; }
+  if(!n) return;
+  subTrack=document.createElement('track'); subTrack.kind='subtitles'; subTrack.label=subIT&&subEN?'IT + EN':subIT?'Italiano':'English';
+  subTrack.srclang=subIT?'it':'en'; subTrack.src=URL.createObjectURL(new Blob([vtt],{type:'text/vtt'}));
+  vid.appendChild(subTrack); syncTrack();
+}
+function syncTrack(){ const fs=!!(document.fullscreenElement||document.webkitFullscreenElement);
+  for(const t of vid.textTracks) t.mode=(subTrack&&fs)?'showing':'hidden'; }
+['fullscreenchange','webkitfullscreenchange'].forEach(e=>document.addEventListener(e,syncTrack));
+vid.addEventListener('webkitbeginfullscreen',()=>{for(const t of vid.textTracks) t.mode='showing';});
+vid.addEventListener('webkitendfullscreen',syncTrack);
+['subIt','subEn','subOff'].forEach(id=>document.getElementById(id).addEventListener('click',buildTrack));
+buildTrack();
 // ── Podcast mini-player (audio-first / mobile): plays the spliced per-scene podcasts, auto-advances ──
 const pod=document.getElementById('pod'); let podI=0;
 const $=id=>document.getElementById(id);
@@ -512,7 +556,7 @@ selectScene(0);
 // Deep link "#t=<seconds>" (Ask's "open the lesson ↗" on a video citation): jump straight to that moment. The
 // timeupdate handler then selects the scene that contains it. play() may be refused without a gesture; the seek stays.
 (function(){const m=location.hash.match(/^#t=(\d+(?:\.\d+)?)/); if(!m) return;
-  const t=+m[1], si=scenes.findIndex(s=>t>=s.start && t<s.end); if(si>=0) selectScene(si);
+  const t=+m[1], si=scenes.findIndex(s=>t>=s.start && t<s.end); setMode('cinema'); if(si>=0) selectScene(si);   // a scene link wants the video: Cinema
   const go=()=>seek(si>=0?scenes[si].start:t); if(vid.readyState>=1) go(); else vid.addEventListener('loadedmetadata',go,{once:true});})();
 </script>
 <script src="tutor.js"></script>
