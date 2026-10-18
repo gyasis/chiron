@@ -288,7 +288,7 @@ async function summary(early){
     <div class="acts"><button class="btn pri" id="again">Nuova sessione</button></div></div>`;
   $('#dx').onclick=closeDrill;$('#again').onclick=closeDrill;
 }
-// ---------- lesson mode: /ascolto?lesson=<id> or ?focus=<tag> ----------
+// ---------- lesson mode: /ascolto?lesson=<id> or ?focus=<tag> or ?collection=<id> (a Raccolta, /api/collections/<id>/cards) ----------
 // Cards come from the lessons themselves (listening.index.json), a page at a time: each page is voiced + noted
 // server-side, so only fetch the next one when the learner is nearly through the queue.
 const LPAGE=5;
@@ -297,8 +297,9 @@ async function lessonMore(){
   Q.fetching=Q.loading=true;
   try{
     const p=new URLSearchParams({n:LPAGE,offset:L.next});
-    if(L.id)p.set('id',L.id);else p.set('focus',L.focus);
-    const d=await api('/api/pool/lesson?'+p);
+    if(QS.get('dry'))p.set('dry','1');   // ?dry=1: no voice, no Anki note (checks / demos)
+    if(L.id)p.set('id',L.id);else if(L.focus)p.set('focus',L.focus);
+    const d=await api(L.coll?'/api/collections/'+encodeURIComponent(L.coll)+'/cards?'+p:'/api/pool/lesson?'+p);
     Q.items.push(...d.sentences.map((s,k)=>({word:{it:d.lesson.title,en:'',audio:null},s,k:d.offset+k,of:d.total})));
     L.next=d.next;
   }catch(e){L.next=null;setBanner(e.message);}
@@ -306,8 +307,8 @@ async function lessonMore(){
   if(Q.waiting)renderCard();
   else if(Q.items.length-Q.i<=3&&L.next!=null)lessonMore();
 }
-async function startLesson(id,focus){
-  Q.lessonMode=true;Q.lesson={id,focus,next:0};Q.cap=LPAGE;setBanner('');
+async function startLesson(id,focus,coll){
+  Q.lessonMode=true;Q.lesson={id,focus,coll,next:0};Q.cap=LPAGE;setBanner('');
   $('#setup').classList.add('hide');
   $('#drill').innerHTML='<div class="spin"><i></i><span>Preparo le carte della lezione…</span></div>';
   await lessonMore();
@@ -347,7 +348,8 @@ async function go(){
 }
 $('#mm').onclick=loadWeak;$('#go').onclick=go;
 // ?mode=pool&from=mm  -> load the weak list and start straight away
-if(QS.get('lesson')||QS.get('focus'))startLesson(QS.get('lesson'),QS.get('focus'));
+if(QS.get('collection'))startLesson(null,null,QS.get('collection'));
+else if(QS.get('lesson')||QS.get('focus'))startLesson(QS.get('lesson'),QS.get('focus'));
 // ?w=<it>|<en>&w=...  -> drill exactly these words (Match Madness end-card "Ascolta queste parole"); nothing is pushed or counted
 else if(QS.getAll('w').length){$('#words').value=QS.getAll('w').join('\n');go();}
 else if(QS.get('from')==='mm')loadWeak().then(ws=>{if(ws.length)go();});

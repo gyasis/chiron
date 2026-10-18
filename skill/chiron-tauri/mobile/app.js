@@ -527,7 +527,7 @@ async function openAsk() {
 function closeAsk() { NAV.close('askov'); }
 // Sessione / Ascolto / Mazzi: same pattern as Ask — the page from :8911 in an overlay frame, ?inapp=1 (+ &theme) appended
 // correctly whether or not the path already has a query. Prova orale stays external: it needs an https mic.
-const STUDIO_PAGES = { '/sessione': '🎯 Sessione', '/ascolto': '🎧 Ascolto', '/mazzi': '🎴 Mazzi' };
+const STUDIO_PAGES = { '/sessione': '🎯 Sessione', '/ascolto': '🎧 Ascolto', '/mazzi': '🎴 Mazzi', '/raccolte': '⭐ Raccolte' };
 async function openStudioIn(path) {
   const theme = document.documentElement.getAttribute('data-theme') || 'light';
   const key = askBase() + path + (path.includes('?') ? '&' : '?') + 'inapp=1';

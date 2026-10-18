@@ -536,13 +536,13 @@ def lesson_tags(c: dict) -> list[str]:
            [f"pool::tag::{slug(t)}" for t in c.get("tags", []) if t]
 
 
-def finish_lesson(cands: list[dict], word: str, dry: bool, start: int = 0, lucrezia: bool = False) -> list[dict]:
+def finish_lesson(cands: list[dict], word: str, dry: bool, start: int = 0, lucrezia: bool = False, deck_for: str | None = None) -> list[dict]:
     """Shape lesson cards as drill sentences. A card gets its note ONCE (Lucrezia/pool voice -> make_note into
     Chiron::Lezioni::<title>), remembered in lesson_notes.json so grading always lands on the same Anki card.
     `dry`: no TTS, no note; cardId/audio are None unless the card was already voiced."""
     out, errs = [], []
     for i, c in enumerate(cands):
-        deck = lesson_deck(c.get("lesson_title", ""))
+        deck = deck_for or lesson_deck(c.get("lesson_title", ""))
         label = "Lezione · " + (c.get("lesson_title") or c.get("lesson", ""))
         with _lock:
             st = _load(LESSON_NOTES_F).get(c["id"])
