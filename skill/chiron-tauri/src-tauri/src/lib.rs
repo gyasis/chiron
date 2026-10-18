@@ -296,6 +296,7 @@ pub fn run() {
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_opener::init())
+        .plugin(tauri_plugin_deep_link::init())   // chiron://lesson?id=&s= and chiron://ascolto?... (Match Madness "Studia")
         .plugin(tauri_plugin_chiron_llm::init())   // on-device tutor (Veloce) + offline STT/TTS (Android only)
         .setup(|app| {
             if cfg!(debug_assertions) {

@@ -2259,6 +2259,10 @@ app.include_router(pool.router)
 import mm_define  # noqa: E402
 app.include_router(mm_define.router)
 
+# Match Madness "Studia nella lezione": which lesson section teaches a word (/api/mm/study). Plain-text ranking, no model.
+import mm_study  # noqa: E402
+app.include_router(mm_study.router)
+
 
 @app.middleware("http")
 async def _pool_private_network(request, call_next):
