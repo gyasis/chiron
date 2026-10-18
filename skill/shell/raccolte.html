@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="it"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Chiron · Raccolte</title>
+<meta name="theme-color" content="#1e3a5f">
+<script>try{var _t=localStorage.getItem('chiron.theme');if(_t)document.documentElement.setAttribute('data-theme',_t);}catch(e){}</script>
+<script src="/shell/inapp-boot.js"></script>
+<style>
+:root{
+  --chiron-bg:#faf8f5;--chiron-surface:#fff;--chiron-elevated:#f0ebe4;
+  --chiron-fg:#1a1a1a;--chiron-fg-secondary:#4a4a4a;--chiron-muted:#7a7a7a;
+  --chiron-accent:#1e3a5f;--chiron-border:#e5e0d8;--chiron-divider:#ede8df;
+  --medbg:#eef4fb;--med:#1e6fbf;--bad:#a33;--badbg:#fbeaea;
+  --font-h:'Inter',system-ui,sans-serif;--font-b:'Inter',system-ui,sans-serif;
+}
+[data-theme="dark"]{
+  --chiron-bg:#14171c;--chiron-surface:#1b1f26;--chiron-elevated:#232830;
+  --chiron-fg:#e9e6e1;--chiron-fg-secondary:#bdb8b1;--chiron-muted:#8b8781;
+  --chiron-accent:#7fb0e8;--chiron-border:#2c323b;--chiron-divider:#242931;
+  --medbg:#16252f;--med:#7fb0e8;--bad:#e58a8a;--badbg:#2e1b1b;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{font-family:var(--font-b);background:var(--chiron-bg);color:var(--chiron-fg);font-size:15px;line-height:1.45;overflow-x:hidden}
+button,input{font:inherit;color:inherit}button{cursor:pointer}
+a{color:inherit;text-decoration:none}
+.wrap{max-width:760px;margin:0 auto;padding:0 16px 60px}
+header{display:flex;align-items:center;gap:10px;padding:14px 0 8px}
+header .mk{width:28px;height:28px;border-radius:8px;background:var(--chiron-accent);color:var(--chiron-surface);display:grid;place-items:center;font-size:14px;font-weight:800;flex:none}
+header h1{font:800 16px var(--font-h);color:var(--chiron-accent);margin:0}
+header small{color:var(--chiron-muted)}
+header .hint{margin-left:auto;font-size:12px;color:var(--chiron-muted)}
+#theme{border:1px solid var(--chiron-border);background:var(--chiron-surface);border-radius:8px;padding:5px 9px}
+.btn{border:1px solid var(--chiron-border);background:var(--chiron-surface);border-radius:99px;padding:8px 13px;font-size:12.5px;font-weight:600;color:var(--chiron-fg-secondary);white-space:nowrap;text-decoration:none;display:inline-block}
+.btn.pri{background:var(--medbg);color:var(--med);border-color:transparent}
+.btn:disabled{opacity:.5}
+.bar{display:flex;gap:8px;margin:6px 0 12px}
+.bar input{flex:1;min-width:0;border:1px solid var(--chiron-border);background:var(--chiron-surface);border-radius:99px;padding:9px 14px;outline:none}
+.col{background:var(--chiron-surface);border:1px solid var(--chiron-border);border-radius:12px;margin-bottom:10px;overflow:hidden}
+.ch{display:flex;align-items:center;gap:8px;padding:12px 12px;cursor:pointer}
+.ch .nm{flex:1;min-width:0;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ch .ct{font-size:12px;font-weight:700;color:var(--med);background:var(--medbg);border-radius:99px;padding:2px 9px}
+.cb{display:none;border-top:1px solid var(--chiron-divider);padding:10px 12px}
+.col.open .cb{display:block}
+.acts{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
+.it{display:flex;align-items:center;gap:8px;padding:7px 0;border-top:1px solid var(--chiron-divider)}
+.it:first-of-type{border-top:0}
+.it .w{flex:1;min-width:0}.it .w small{display:block;color:var(--chiron-muted)}
+.it .x{border:0;background:none;color:var(--chiron-muted);font-size:16px;padding:2px 8px}
+.msg{padding:14px;color:var(--chiron-muted);font-size:13px}
+.out{margin:8px 0;padding:10px;background:var(--chiron-elevated);border-radius:10px;font-size:13px}
+.out a{color:var(--med);font-weight:600}
+.err{background:var(--badbg);color:var(--bad);border-radius:12px;padding:12px;margin:8px 0}
+.spin{display:flex;gap:10px;align-items:center;color:var(--chiron-muted);padding:18px}
+.spin i{width:16px;height:16px;border-radius:50%;border:2px solid var(--chiron-border);border-top-color:var(--chiron-accent);animation:r .8s linear infinite}
+@keyframes r{to{transform:rotate(360deg)}}
+</style></head><body>
+<div class="wrap">
+<header><div class="mk">R</div><div><h1>Raccolte</h1><small>⭐ parole da rinforzare</small></div><a href="/mazzi" class="hint">Mazzi</a><button id="theme" title="Tema">◐</button></header>
+<form class="bar" id="nf"><input id="nn" placeholder="Nuova raccolta…" aria-label="Nome della nuova raccolta" maxlength="60"><button class="btn pri">Crea</button></form>
+<div id="out"><div class="spin"><i></i><span>Carico le raccolte…</span></div></div>
+</div>
+<script>
+const $=s=>document.querySelector(s),esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+$('#theme').onclick=()=>{const d=document.documentElement,n=d.getAttribute('data-theme')==='dark'?'light':'dark';d.setAttribute('data-theme',n);try{localStorage.setItem('chiron.theme',n)}catch(e){}};
+const INAPP=document.documentElement.hasAttribute('data-inapp');
+async function api(p,body,method){
+  const r=await fetch(p,body||method?{method:method||'POST',headers:{'Content-Type':'application/json'},body:body?JSON.stringify(body):undefined}:undefined);
+  const j=await r.json().catch(()=>({}));
+  if(!r.ok)throw new Error(j.detail||('HTTP '+r.status));return j;
+}
+let OPEN=new Set(['parole-deboli']),LAST={};
+function mmUrl(id){let b='';try{b=localStorage.getItem('chiron.mmurl')||''}catch(e){}
+  b=b||location.protocol+'//'+location.hostname+':7152/ui/index.html';
+  return b+'?flavour=raccolte&collection='+encodeURIComponent(id)+'&chiron='+encodeURIComponent(location.origin);}
+async function load(){
+  try{const d=await api('/api/collections');
+    const full=await Promise.all(d.collections.map(c=>OPEN.has(c.id)?api('/api/collections/'+encodeURIComponent(c.id)).then(x=>({...c,items:x.items})):c));
+    $('#out').innerHTML=full.map(card).join('')||'<div class="msg">Nessuna raccolta.</div>';
+    bind();
+  }catch(e){$('#out').innerHTML=`<div class="err">${esc(e.message)}<br><button class="btn" onclick="load()">Riprova</button></div>`;}
+}
+function card(c){
+  const o=OPEN.has(c.id),id=encodeURIComponent(c.id),n=c.count,dis=n?'':' disabled';
+  let body='';
+  if(o){
+    body=`<div class="acts">
+<a class="btn pri${n?'':' off'}" href="/ascolto?collection=${id}" data-a="ascolto"${dis}>🎧 Schede audio</a>
+<a class="btn pri" href="${esc(mmUrl(c.id))}" target="_blank" rel="noopener" data-a="mm">🎮 Match Madness</a>
+<button class="btn pri" data-a="study" data-id="${esc(c.id)}"${dis}>📖 Studia</button>
+<button class="btn" data-a="lesson" data-id="${esc(c.id)}"${dis}>📚 Lezione</button></div>
+<div class="res" id="res-${esc(c.id)}"></div>`+
+    ((c.items||[]).map(i=>`<div class="it"><div class="w"><b>${esc(i.it)}</b><small>${esc(i.en||'—')}</small></div><button class="x" title="Togli" data-rm="${esc(c.id)}" data-it="${esc(i.it)}">✕</button></div>`).join('')||'<div class="msg">Vuota. Raccogli parole da Match Madness o dalle lezioni.</div>');
+  }
+  return `<div class="col${o?' open':''}" data-id="${esc(c.id)}"><div class="ch" data-t="${esc(c.id)}"><span class="nm">${c.default?'⭐ ':''}${esc(c.name)}</span><span class="ct">${n}</span></div><div class="cb">${body}</div></div>`;
+}
+function bind(){
+  document.querySelectorAll('[data-t]').forEach(e=>e.onclick=()=>{const id=e.dataset.t;OPEN.has(id)?OPEN.delete(id):OPEN.add(id);load();});
+  document.querySelectorAll('[data-rm]').forEach(b=>b.onclick=async()=>{try{await api('/api/collections/'+encodeURIComponent(b.dataset.rm)+'/items?it='+encodeURIComponent(b.dataset.it),null,'DELETE');load();}catch(e){alert(e.message)}});
+  document.querySelectorAll('[data-a=study]').forEach(b=>b.onclick=()=>study(b.dataset.id));
+  document.querySelectorAll('[data-a=lesson]').forEach(b=>b.onclick=()=>lesson(b.dataset.id));
+  document.querySelectorAll('a[data-a=ascolto]').forEach(a=>a.onclick=e=>{if(a.hasAttribute('disabled'))e.preventDefault();});
+}
+async function study(id){
+  const box=$('#res-'+CSS.escape(id));box.innerHTML='<div class="spin"><i></i><span>Cerco le sezioni…</span></div>';
+  try{const c=await api('/api/collections/'+encodeURIComponent(id));
+    const r=await api('/api/mm/study',{words:c.items.slice(0,40).map(i=>({it:i.it,en:i.en}))});
+    box.innerHTML='<div class="out">'+r.items.map(i=>`<div><b>${esc(i.it)}</b> → <a href="${esc(i.path)}">${esc(i.lesson_title)}${i.section_title?' — '+esc(i.section_title):''}</a></div>`).join('')+
+      (r.unmatched.length?`<div style="color:var(--chiron-muted);margin-top:6px">Nessuna lezione per: ${r.unmatched.map(esc).join(' · ')}</div>`:'')+'</div>';
+  }catch(e){box.innerHTML=`<div class="err">${esc(e.message)}</div>`;}
+}
+async function lesson(id){
+  const box=$('#res-'+CSS.escape(id));
+  let q;try{q=await api('/api/collections/'+encodeURIComponent(id)+'/lesson',{confirm:true,dry:true});}catch(e){box.innerHTML=`<div class="err">${esc(e.message)}</div>`;return;}
+  box.innerHTML=`<div class="out">Creare una lezione su questa raccolta? Costa una generazione (usa il modello).<div class="acts" style="margin:8px 0 0"><button class="btn pri" id="go-${esc(id)}">Sì, genera</button><button class="btn" id="no-${esc(id)}">Annulla</button></div></div>`;
+  $('#no-'+CSS.escape(id)).onclick=()=>box.innerHTML='';
+  $('#go-'+CSS.escape(id)).onclick=async()=>{
+    box.innerHTML='<div class="spin"><i></i><span>Invio il lavoro…</span></div>';
+    try{const r=await api('/api/collections/'+encodeURIComponent(id)+'/lesson',{confirm:true});
+      box.innerHTML=`<div class="out">✓ Lavoro ${esc(r.status||'inviato')}${r.duplicate?' (già presente)':''} — lo trovi in Library › Jobs. <code>${esc(r.job_id||'')}</code></div>`;
+    }catch(e){box.innerHTML=`<div class="err">${esc(e.message)}</div>`;}
+  };
+}
+$('#nf').onsubmit=async e=>{e.preventDefault();const n=$('#nn').value.trim();if(!n)return;
+  try{const c=await api('/api/collections',{name:n});OPEN.add(c.id);$('#nn').value='';load();}catch(x){alert(x.message)}};
+load();
+</script></body></html>

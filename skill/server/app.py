@@ -2262,6 +2262,12 @@ app.include_router(mm_define.router)
 # Match Madness "Studia nella lezione": which lesson section teaches a word (/api/mm/study). Plain-text ranking, no model.
 import mm_study  # noqa: E402
 app.include_router(mm_study.router)
+
+# Raccolte: "⭐ Raccogli" collections shared by every device (/raccolte, /api/collections). Its lesson action submits
+# through generate() above, so the job shows in Jobs/Activity like any other.
+import raccolte  # noqa: E402
+app.include_router(raccolte.router)
+raccolte.GENERATE = lambda d: generate(GenReq(**d))
 threading.Thread(target=lambda: mm_study._load(), daemon=True, name="mm-study-warm").start()   # first tap must not pay the ~4 s index load
 
 
