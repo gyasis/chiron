@@ -333,7 +333,7 @@ const LIB = {
         +'<iframe class="lov-frame" referrerpolicy="no-referrer"></iframe>';
       document.body.appendChild(ov);
       const st=document.createElement('style'); st.textContent=
-        '#lessonOverlay{position:fixed;inset:0;z-index:99999;display:none;flex-direction:column;background:#0c1117}'
+        '#lessonOverlay{position:fixed;inset:0;width:100vw;max-width:100%;z-index:99999;display:none;flex-direction:column;background:#0c1117}'
         +'#lessonOverlay.show{display:flex}'
         +'.lov-bar{display:flex;align-items:center;gap:12px;padding:10px 14px;background:#0f172a;color:#e5e7eb;border-bottom:1px solid #1f2a37;flex:none;padding-top:calc(10px + env(safe-area-inset-top))}'
         +'.lov-back{background:#14b8a6;color:#04211d;border:0;border-radius:9px;padding:8px 14px;font:700 14px system-ui;cursor:pointer;white-space:nowrap}'

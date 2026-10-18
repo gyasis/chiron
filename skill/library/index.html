@@ -175,6 +175,16 @@ body{margin:0;font-family:var(--font-b);background:var(--chiron-bg);color:var(--
 .mbar{display:none}
 .sheet-backdrop{display:none}
 .sheet-apply{display:none}
+/* Fold inner screen / tablets (761-1200px): the full header was ~1156px wide, so mobile Chrome laid the whole page out
+   at 1156px and everything — including a lesson opened in the overlay — ran off the right edge (2026-10-18). */
+@media (max-width:1200px){
+  html,body{max-width:100%;overflow-x:hidden}
+  .topbar{gap:8px;min-width:0}
+  .topbar .genbtn .glbl{display:none}
+  .topbar .genbtn{padding:8px 11px}
+  .topbar .search{flex:1 1 120px;min-width:0}
+  .sort select{max-width:140px}
+}
 @media (max-width:760px){
   .topbar{height:52px;gap:8px;padding:0 12px}
   .brand .lbl{display:none}
