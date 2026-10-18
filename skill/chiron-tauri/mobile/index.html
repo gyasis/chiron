@@ -27,6 +27,10 @@ body{background:var(--bg);color:var(--fg);font-family:var(--fb);height:100vh;ove
 .scr::-webkit-scrollbar{display:none}
 .pad{padding:calc(18px + env(safe-area-inset-top)) 15px 96px}
 .big{font-family:var(--fh);font-weight:800;font-size:25px;letter-spacing:-.02em;margin:4px 2px 3px}
+.libhead{display:flex;align-items:center;gap:10px}
+.libhead .big{flex:1}
+.hbtn{border:1px solid var(--border);background:var(--surface);color:var(--fg);border-radius:12px;height:40px;min-width:40px;padding:0 12px;font-family:var(--fh);font-weight:700;font-size:15px;cursor:pointer}
+.hbtn#menubtn{font-size:19px;padding:0}
 .big small{display:block;font-weight:500;font-size:13px;color:var(--muted);margin-top:4px}
 .search{display:flex;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--border);border-radius:99px;padding:11px 15px;color:var(--fg);font-size:14px;margin:12px 0 8px}
 .search input{border:none;background:none;flex:1;font:inherit;color:var(--fg);outline:none}
@@ -205,7 +209,7 @@ body{background:var(--bg);color:var(--fg);font-family:var(--fb);height:100vh;ove
   <div class="pane" id="pane">
     <!-- LIBRARY -->
     <section class="scr" id="s-lib"><div class="pad">
-      <div class="big">Library</div>
+      <div class="libhead"><button class="hbtn" id="menubtn" aria-label="Menu">☰</button><div class="big">Library</div><button class="hbtn hask" id="askbtn">💬 Chiedi</button></div>
       <div class="search">⌕ <input id="q" placeholder="Search lessons, diseases, systems…"></div>
       <div class="chips" id="chips"></div>
       <div class="chips" id="focus"></div>

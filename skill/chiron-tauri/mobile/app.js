@@ -476,6 +476,9 @@ async function openAsk() {
 function closeAsk() { NAV.close('askov'); }
 document.querySelectorAll('#drawer [data-studio]').forEach(b => b.onclick = () => { drawer(false);
   if (TAURI && b.dataset.studio === '/ask/') openAsk(); else openStudio(b.dataset.studio); });
+// Visible ways in: the drawer and Chiedi were reachable only by an invisible edge strip or a swipe (2026-10-18).
+document.getElementById('menubtn').onclick = () => drawer(true);
+document.getElementById('askbtn').onclick = () => document.querySelector('#drawer [data-studio="/ask/"]').click();
 
 /* ---------- generate wizard ---------- */
 const DEPTHS = { medicine: [['', 'Auto'], ['primer', 'Primer'], ['atlas', 'Atlas'], ['systematic', 'Systematic'], ['drug', 'Drug'], ['amboss', 'AMBOSS']],
