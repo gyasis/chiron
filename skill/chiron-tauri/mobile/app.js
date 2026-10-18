@@ -501,7 +501,7 @@ const ASK = ChironNav.askBridge(window, { frames: () => ['ask-frame', 'studio-fr
     const q = new URLSearchParams(u.search); q.delete('inapp'); q.delete('theme');
     openStudioIn(u.pathname + (q.toString() ? '?' + q : '')); return true; },
   currentTheme: () => document.documentElement.getAttribute('data-theme') || 'light',
-  openExternal: async url => { try { if (TAURI) await invoke('plugin:opener|open_url', { url }); else window.open(url, '_blank'); }
+  openExternal: async url => { try { if (/^matchmadness:/.test(url) && window.ChironOpen && window.ChironOpen.open(url)) return; if (TAURI) await invoke('plugin:opener|open_url', { url }); else window.open(url, '_blank'); }
     catch (e) { console.warn('chiron ask: could not open', url, e); toast('Impossibile aprire il browser: ' + (e && e.message || e)); } } });
 // Reachability: 6 s and one retry — slow home Wi-Fi took longer than the old 2.5 s and raised a false "not reachable".
 async function askUp() {
