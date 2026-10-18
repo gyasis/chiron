@@ -59,7 +59,17 @@
     '#wp-sheet .pli:hover{background:var(--wp-el)}#wp-sheet .pli.cur{background:var(--wp-el);color:var(--wp-acc);font-weight:700}',
     '#wp-sheet .pln{flex:0 0 22px;color:var(--wp-mut);font-size:12px;text-align:right}#wp-sheet .plt{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}',
     '#wp-sheet .pld{color:var(--wp-mut);font-size:12px}#wp-sheet .empty{color:var(--wp-mut);padding:14px 4px}',
+    '#wp-mini .wp-ttl{border:none;background:none;color:inherit;font:inherit;font-weight:700;font-size:13px;padding:0;cursor:pointer;max-width:100%;text-align:left}',
+    '#wp-chap{position:fixed;z-index:9999;left:50%;transform:translateX(-50%);bottom:76px;width:min(560px,calc(100vw - 20px));max-height:60vh;overflow-y:auto;',
+    'background:var(--wp-bg);color:var(--wp-fg);border:1px solid var(--wp-bd);border-radius:14px;box-shadow:0 12px 36px rgba(0,0,0,.2);padding:6px;display:none;',
+    'font:14px/1.3 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}',
+    '#wp-chap.on{display:block}#wp-chap .g{font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--wp-mut);margin:10px 8px 4px}',
+    '#wp-chap button{display:flex;gap:10px;width:100%;text-align:left;border:none;background:none;color:inherit;font:inherit;padding:10px 8px;border-radius:9px;cursor:pointer}',
+    '#wp-chap button:hover{background:var(--wp-el)}#wp-chap button.cur{background:var(--wp-el);color:var(--wp-acc);font-weight:700}',
+    '#wp-chap .d{margin-left:auto;color:var(--wp-mut);font-size:12px}',
     'body{padding-bottom:84px}',
+    /* phones: dock left and leave the bottom-right corner to the tutor's round button, so ⤢ is never covered */
+    '@media (max-width:700px){#wp-mini{left:8px;right:84px;transform:none;width:auto;bottom:10px}#wp-mini .wp-row span{display:none}}',
     '@media print{#wp-mini,#wp-sheet{display:none!important}}'
   ].join('');
   document.head.appendChild(css);
@@ -69,10 +79,13 @@
 
   var mini = document.createElement('div'); mini.id = 'wp-mini'; mini.setAttribute('role', 'region'); mini.setAttribute('aria-label', 'Ascolta');
   mini.innerHTML = '<button class="wp-pp" type="button" aria-label="Riproduci">' + PLAY + '</button>' +
-    '<div class="wp-mid"><div class="wp-ttl">🎧 Ascolta</div><div class="wp-row"><span class="wp-cur">0:00</span>' +
+    '<div class="wp-mid"><button class="wp-ttl" type="button" aria-haspopup="true" title="Capitoli: riepilogo, sezioni, lezione completa">🎧 Ascolta ▾</button><div class="wp-row"><span class="wp-cur">0:00</span>' +
     '<input type="range" min="0" max="1" step="any" value="0" aria-label="Posizione"><span class="wp-tot">—</span></div></div>' +
     '<button class="wp-x" type="button" title="Apri il lettore (podcast)" aria-label="Apri il lettore">⤢</button>';
 
+  /* CHAPTERS on the mini bar: Riepilogo / every section clip / Drill / Lezione completa — switching between the summary
+     and the full lesson must not need the big view (Gyasi, 2026-10-18). Built from play.js's own #pl-list. */
+  var chap = document.createElement('div'); chap.id = 'wp-chap'; chap.setAttribute('role', 'menu');
   var sheet = document.createElement('div'); sheet.id = 'wp-sheet';
   sheet.innerHTML = '<div class="wp-card" role="dialog" aria-label="Ascolta la lezione"><div class="wp-top"><b>Ascolta la lezione</b>' +
     '<button class="wp-close" type="button">Chiudi ✕</button></div>' +
@@ -90,7 +103,7 @@
     '<div class="pllist" id="pl-list"></div></div>';
 
   function mount() {
-    document.body.appendChild(sheet); document.body.appendChild(mini);
+    document.body.appendChild(sheet); document.body.appendChild(mini); document.body.appendChild(chap);
     var s = document.createElement('script'); s.src = '/shell/play.js';
     s.onload = start; s.onerror = function () { console.warn('chiron web-player: /shell/play.js failed to load'); mini.remove(); };
     document.head.appendChild(s);
@@ -111,7 +124,7 @@
       pp.innerHTML = a.paused ? PLAY : PAUSE; pp.setAttribute('aria-label', a.paused ? 'Riproduci' : 'Pausa');
       if (!dragging) { seek.max = String(d || 1); seek.value = String(a.currentTime || 0); }
       cur.textContent = fmt(dragging ? +seek.value : a.currentTime); tot.textContent = d ? fmt(d) : '—';
-      var t = document.getElementById('pl-t'); ttl.textContent = '🎧 ' + (t && t.textContent && t.textContent !== '—' ? t.textContent : 'Ascolta');
+      var t = document.getElementById('pl-t'); ttl.textContent = '🎧 ' + (t && t.textContent && t.textContent !== '—' ? t.textContent : 'Ascolta') + ' ▾';
     };
     ['play', 'pause', 'timeupdate', 'loadedmetadata', 'durationchange', 'ended', 'emptied'].forEach(function (e) { a.addEventListener(e, sync); });
     // the mini button is play.js's own toggle (the same one the sheet uses), so behaviour is identical everywhere
@@ -119,11 +132,25 @@
     seek.addEventListener('input', function () { dragging = true; sync(); });
     seek.addEventListener('change', function () { a.currentTime = +seek.value; dragging = false; sync(); });
     mini.querySelector('.wp-x').onclick = open;
+    var buildChap = function () {
+      var list = document.getElementById('pl-list'), h = '';
+      list.querySelectorAll('.plg, .pli').forEach(function (el) {
+        if (el.classList.contains('plg')) h += '<div class="g">' + el.textContent + '</div>';
+        else h += '<button type="button" role="menuitem" data-i="' + el.dataset.i + '"' + (el.classList.contains('cur') ? ' class="cur"' : '') + '>' +
+          '<span>' + (el.querySelector('.plt') || el).textContent + '</span><span class="d">' + ((el.querySelector('.pld') || {}).textContent || '') + '</span></button>';
+      });
+      chap.innerHTML = h || '<div class="g">Nessun audio</div>';
+      chap.querySelectorAll('button').forEach(function (b) {
+        b.onclick = function () { var src = list.querySelector('.pli[data-i="' + b.dataset.i + '"]'); if (src) src.click(); chap.classList.remove('on'); };
+      });
+    };
+    ttl.onclick = function (e) { e.stopPropagation(); if (chap.classList.toggle('on')) buildChap(); };
+    document.addEventListener('click', function (e) { if (!chap.contains(e.target) && e.target !== ttl) chap.classList.remove('on'); });
     sheet.querySelector('.wp-close').onclick = close;
     sheet.addEventListener('click', function (e) { if (e.target === sheet) close(); });
     document.addEventListener('keydown', function (e) {
       if (!sheet.classList.contains('on')) return;
-      if (e.key === 'Escape') close();
+      if (e.key === 'Escape') { close(); chap.classList.remove('on'); }
       else if (e.key === ' ' && !/INPUT|TEXTAREA|SELECT/.test((e.target || {}).tagName || '')) { e.preventDefault(); pp.click(); }
     });
     // one sound at a time: the lesson's own inline buttons pause the player, and the player pauses them

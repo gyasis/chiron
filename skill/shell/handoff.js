@@ -12,6 +12,32 @@
   var inapp = /[?&]inapp=1\b/.test(location.search), framed = window.parent !== window;
   var API = '/api/progress/now-studying', last = '', timer = 0;
 
+  /* RESCUE: a lesson loaded as the WHOLE page inside the Chiron phone app's WebView (a target=_blank link in an in-app
+     page replaced the app; seen on the Galaxy 2026-10-18 — web pills over the status bar, "Continua sul telefono" on
+     the phone). Pin this lesson in the hand-off slot and go back to the app, whose Riprendi banner reopens it in the
+     app's own lesson screen (with its Ascolta tab). Android WebView user agents carry "; wv)"; Chrome does not. */
+  if (!inapp && !framed && /; wv\)/.test(navigator.userAgent)) {
+    var rp = { lesson: lesson, anchor: (location.hash || '').replace(/^#/, ''), section: '', scroll: 0,
+               title: (document.title || lesson).replace(/^Chiron\s*·\s*/, '').slice(0, 140), ts: Date.now(), from: 'web' };
+    var back = function () { location.replace('http://tauri.localhost/'); };
+    fetch(API, { method: 'PUT', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ entries: { cur: { v: rp, t: rp.ts }, pin: { v: rp, t: rp.ts } } }) }).then(back, back);
+    setTimeout(back, 2500);
+    return;
+  }
+
+  /* In the app, a link that would open a NEW window (target=_blank) replaces the whole app WebView. Keep it in this
+     frame instead: the app's lesson screen stays, and back returns to the page that linked. */
+  if (inapp && framed) document.addEventListener('click', function (e) {
+    var a = e.target && e.target.closest && e.target.closest('a[target]');
+    if (!a || !/^_(blank|top|parent)$/i.test(a.getAttribute('target') || '')) return;
+    var u; try { u = new URL(a.href, location.href); } catch (err) { return; }
+    if (u.origin !== location.origin) return;            // external sites: leave to the app's own handling
+    e.preventDefault();
+    if (/\/lesson\.html$/.test(u.pathname) && !/[?&]inapp=1\b/.test(u.search)) u.searchParams.set('inapp', '1');
+    location.href = u.href;
+  }, true);
+
   var sf = location.hash.match(/^#sf=([\d.]+)/);       // restore a bare scroll fraction (no section anchor to jump to)
   if (sf) addEventListener('load', function () {
     var h = document.documentElement.scrollHeight - innerHeight; if (h > 0) scrollTo(0, h * Math.min(1, +sf[1] || 0));
@@ -61,6 +87,7 @@
       setTimeout(function () { b.textContent = '📱 Continua sul telefono'; }, 2600);
     });
   };
-  var st = document.createElement('style'); st.textContent = '@media print{#chiron-handoff-btn{display:none}}';
+  // "Continue on the phone" means nothing when this IS a phone (touch + narrow screen)
+  var st = document.createElement('style'); st.textContent = '@media print{#chiron-handoff-btn{display:none}}@media (pointer:coarse) and (max-width:900px){#chiron-handoff-btn{display:none}}';
   document.head.appendChild(st); document.body.appendChild(b);
 })();
