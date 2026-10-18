@@ -2297,7 +2297,31 @@ def _lesson_with_tutor(slug: str):
         nv = int((SKILL / "shell" / "lesson-nav.js").stat().st_mtime)
         rep = f'<script src="/shell/lesson-nav.js?v={nv}" defer></script>'
         html = html.replace("</body>", rep + "</body>", 1) if "</body>" in html else html + rep
+    if "handoff.js" not in html:             # Riprendi: report the reading position (web: 📱 button; in-app: postMessage)
+        hv = int((SKILL / "shell" / "handoff.js").stat().st_mtime)
+        rep = f'<script src="/shell/handoff.js?v={hv}" defer></script>'
+        html = html.replace("</body>", rep + "</body>", 1) if "</body>" in html else html + rep
     return HTMLResponse(html)
+
+
+# Hand-off slot: the hub (chiron-https-serve, plain-HTTP instance) owns /api/progress/<key> (LWW per field). Pages and the
+# phone app are same-origin / CORS-open on THIS server, but cannot reach the hub (no CORS; the phone WebView refuses its
+# cert), so relay GET/PUT to it. Served via the hub itself, the hub answers /api/progress locally and never gets here.
+HUB_PLAIN = os.environ.get("CHIRON_HUB_PLAIN", "http://127.0.0.1:8910")
+
+
+@app.api_route("/api/progress/{key}", methods=["GET", "PUT"])
+async def _progress_relay(key: str, request: Request):
+    if not re.fullmatch(r"[A-Za-z0-9:._-]{1,160}", key):
+        raise HTTPException(400, "bad key")
+    body = await request.body() if request.method == "PUT" else None
+    try:
+        async with httpx.AsyncClient(timeout=10) as c:
+            r = await c.request(request.method, f"{HUB_PLAIN}/api/progress/{key}", content=body,
+                                headers={"Content-Type": "application/json"} if body else None)
+    except httpx.HTTPError as e:
+        raise HTTPException(502, f"hub unreachable at {HUB_PLAIN}: {e}")
+    return Response(r.content, status_code=r.status_code, media_type="application/json", headers={"Cache-Control": "no-store"})
 
 
 # The acolyte tutor adapter is COPIED into each lesson dir (scripts/deploy-lesson-tutor.mjs), so a fix to it
