@@ -2235,6 +2235,12 @@ def resolve_preview(req: ResolveReq):
 # tutor injection: serve the shared shell/tutor.js + tutor.css at /shell/**, and
 # inject <link>/<script> tags into every lesson.html at serve-time so the tutor
 # is ONE file the server injects — not copied/assembled per-lesson.
+@app.get("/shell/play.js")
+async def shell_play_js():
+    """The phone app's Ascolta player, served to the web lessons too (shell/web-player.js) — ONE player, one file."""
+    return FileResponse(SKILL / "chiron-tauri" / "mobile" / "play.js", media_type="text/javascript")
+
+
 app.mount("/shell", StaticFiles(directory=str(SKILL / "shell")), name="shell")
 
 # mock oral (OMCeO Italian test): Lucrezia examines by voice — /oral + /api/oral/*
@@ -2311,9 +2317,10 @@ def _lesson_with_tutor(slug: str):
         lv = int((SKILL / "shell" / "lang-switch.js").stat().st_mtime)
         rep = f'<script src="/shell/lang-switch.js?v={lv}" defer></script>'
         html = html.replace("</body>", rep + "</body>", 1) if "</body>" in html else html + rep
-    if "listen-size.js" not in html and "chiron-listen" in html:   # ⤢ enlarge the floating 🎧 Listen panel (desktop web)
-        zv = int((SKILL / "shell" / "listen-size.js").stat().st_mtime)
-        rep = f'<script src="/shell/listen-size.js?v={zv}" defer></script>'
+    if "web-player.js" not in html and 'class="subsbar"' not in html and (GEN / slug / "audio").is_dir():
+        # ONE audio player (the phone app's play.js): mini bar + podcast view with scrubber/resume; retires old panels
+        wv = int((SKILL / "shell" / "web-player.js").stat().st_mtime) + int((SKILL / "chiron-tauri" / "mobile" / "play.js").stat().st_mtime)
+        rep = f'<script src="/shell/web-player.js?v={wv}" defer></script>'
         html = html.replace("</body>", rep + "</body>", 1) if "</body>" in html else html + rep
     if "handoff.js" not in html:             # Riprendi: report the reading position (web: 📱 button; in-app: postMessage)
         hv = int((SKILL / "shell" / "handoff.js").stat().st_mtime)
