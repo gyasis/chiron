@@ -358,11 +358,11 @@ async function openLesson(slug, hash, rawId) {   // hash: e.g. '#t=42' from an A
   tag.textContent = streaming ? '▶ in streaming' : '📥 offline'; tag.className = 'lmode ' + (streaming ? 'st' : 'off'); tag.style.display = '';
   ChironNav.loadFrame(document, 'l-frame', lessonSrc(l, slug, up, hash));
   document.getElementById('pl-cover').textContent = l.title.replace(/^Chiron\s*·\s*/, '');
-  document.getElementById('pl-t').textContent = l.system || l.topic || 'Lesson';
   const r = document.getElementById('l-resume'); const pos = localStorage.getItem('chiron.pos.' + slug);
   r.style.display = pos ? '' : 'none'; if (pos) r.innerHTML = '↩ Continue where you left off';
   localStorage.setItem('chiron.pos.' + slug, '1');
   OPEN_SLUG = slug; setMode('read');
+  if (window.ChironPlay && ChironPlay.load) ChironPlay.load({ slug, title: l.title.replace(/^Chiron\s*·\s*/, ''), sub: l.system || l.topic || '', pageUrl: lessonSrc(l, slug, up, '') });
   // "save offline" stays available whenever there is no saved copy (a saved copy is the fallback, not the default)
   document.getElementById('l-save').style.display = OFFLINE[slug] ? 'none' : '';
   NAV.open('lesson');
@@ -373,7 +373,6 @@ function setMode(m) {
   document.getElementById('m-read').classList.toggle('mon', m === 'read');
   document.getElementById('m-play').classList.toggle('mon', m === 'play');
 }
-document.getElementById('pl-btn').onclick = e => { e.currentTarget.textContent = e.currentTarget.textContent === '▶' ? '❚❚' : '▶'; };
 document.getElementById('l-save').onclick = () => { if (OPEN_SLUG) download(OPEN_SLUG); };   // cache the streaming lesson for offline
 
 /* ---------- download / sync from the live library (native) ---------- */
@@ -411,7 +410,8 @@ async function refreshOffline() {
       ls.forEach(o => { const m = LESSONS.find(l => (l.title || '').includes(o.title) || o.title.includes(l.title)); OFFLINE[m ? slugOf(m.id) : o.title] = { id: o.id, entry: o.entry }; });
       if (LESSONS.length) renderRows();   // the Library's ✓ / ⟳ Update state depends on what is on the phone
       box.innerHTML = ls.length ? ls.map(o => `<div class="row m"><div class="edge"></div><div class="body"><div class="t">${esc(o.title)}</div><div class="meta"><span class="clip">✓ offline</span></div></div><div class="act"><span class="btn" data-oid="${o.id}" data-oentry="${o.entry}">Open →</span></div></div>`).join('') : `<div class="empty">Nothing saved yet. Download lessons from the Library.</div>`;
-      box.querySelectorAll('[data-oid]').forEach(e => e.onclick = () => { const base = isAndroid ? 'http://lesson.localhost/' : 'lesson://localhost/'; ChironNav.loadFrame(document, 'l-frame', base + e.dataset.oid + '/' + e.dataset.oentry); document.getElementById('l-title').textContent = 'Lesson'; setMode('read'); go(2); });
+      box.querySelectorAll('[data-oid]').forEach(e => e.onclick = () => { const base = isAndroid ? 'http://lesson.localhost/' : 'lesson://localhost/'; const pu = base + e.dataset.oid + '/' + e.dataset.oentry; ChironNav.loadFrame(document, 'l-frame', pu); document.getElementById('l-title').textContent = 'Lesson'; setMode('read');
+        if (window.ChironPlay) ChironPlay.load({ slug: 'offline-' + e.dataset.oid, title: (e.closest('.row').querySelector('.t') || {}).textContent || 'Lezione', sub: '', pageUrl: pu }); go(2); });
     } catch (e) { box.innerHTML = `<div class="empty">—</div>`; }
   } else box.innerHTML = `<div class="empty">Offline install works in the installed app. In the browser, lessons stream from your library.</div>`;
 }
