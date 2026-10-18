@@ -968,7 +968,8 @@ boot().catch(e=>{ document.getElementById('rows').innerHTML = `<div class="empty
   async function poll(){
     try{
       const r=await fetch(SLOT,{cache:'no-store'}); if(!r.ok) throw new Error('HTTP '+r.status);
-      const e=((await r.json()).entries||{}).cur, p=e&&e.v;
+      const en=(await r.json()).entries||{}, pin=en.pin&&en.pin.v, cur=en.cur&&en.cur.v;
+      const p=pin&&pin.lesson&&Date.now()-pin.ts<30*60000?pin:cur;   // a deliberate hand-off beats automatic reports
       if(!p||!p.lesson||p.from!=='phone'||p.ts<=+(lg(DK)||0)){ if(bn) bn.style.display='none'; return; }
       if(!bn){ bn=document.createElement('div'); bn.id='hf-banner';
         bn.setAttribute('style','display:flex;align-items:center;gap:12px;margin:0 0 12px;padding:10px 14px;border-radius:12px;border:1px solid rgba(127,127,127,.3);background:rgba(127,127,127,.1);font:13px system-ui,-apple-system,"Segoe UI",Roboto,sans-serif');
