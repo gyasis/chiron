@@ -38,6 +38,9 @@
       if (d.type === 'chiron-ask:ready') { api.theme(currentTheme(), fr); return; }   // a theme change made while Ask was loading
       if (d.type !== 'chiron-ask:open' || typeof d.url !== 'string') return;
       let u; try { u = new URL(d.url); } catch (e) { return; }
+      /* matchmadness:// is the one custom scheme a page may ask for: the lesson's "Gioca in Match Madness" button hands its
+       * collection to the Match Madness app. Anything else that is not http(s) stays refused. */
+      if (u.protocol === 'matchmadness:') { openExternal(u.href); return; }
       if (u.protocol !== 'http:' && u.protocol !== 'https:') { console.warn('chiron ask: refused to open', d.url); return; }
       const m = u.origin === ev.origin && u.pathname.match(/^\/lessons\/(.+)\/lesson\.html$/);
       if (m) openLesson(m[1].split('/').map(decodeURIComponent).join('/'), u.hash);
