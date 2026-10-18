@@ -66,7 +66,7 @@ class Study(unittest.TestCase):
         j = post(["Consenso Informato"]).json()                       # case folded
         it = j["items"][0]
         self.assertEqual((it["lesson"], it["section"], it["why"]), ("it/consenso", "legge-219", "card"))
-        self.assertEqual(it["path"], "/lessons/it-consenso/lesson.html#legge-219")
+        self.assertEqual(it["path"], "/lessons/it/consenso/lesson.html#legge-219")
         self.assertTrue(it["url"].endswith(it["path"]) and it["url"].startswith("http"))
         self.assertIn("consenso informato", it["snippet"].lower())
         self.assertTrue(it["listen"]); self.assertEqual(it["listen_path"], "/ascolto?lesson=it%2Fconsenso")

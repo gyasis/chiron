@@ -2262,6 +2262,7 @@ app.include_router(mm_define.router)
 # Match Madness "Studia nella lezione": which lesson section teaches a word (/api/mm/study). Plain-text ranking, no model.
 import mm_study  # noqa: E402
 app.include_router(mm_study.router)
+threading.Thread(target=lambda: mm_study._load(), daemon=True, name="mm-study-warm").start()   # first tap must not pay the ~4 s index load
 
 
 @app.middleware("http")

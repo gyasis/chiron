@@ -110,10 +110,11 @@ def _load() -> dict:
                 m = r.get("meta") or {}
                 lid = m.get("lessonId") or str(r["id"]).split("#")[0]
                 href = m.get("href") or f"/lessons/{lid.replace('/', '-')}/lesson.html"
-                path, _, anchor = href.partition("#")
+                anchor = href.partition("#")[2]
+                path = f"/lessons/{lid}/lesson.html" + (f"#{anchor}" if anchor else "")   # the NESTED id: the flat href 404s
                 row = {"domain": c, "lesson": lid, "lesson_title": m.get("lesson") or lid,
                        "section": anchor, "section_title": _section_title(r.get("title", "")),
-                       "path": href, "text": r.get("text", ""), "ftext": fold(r.get("text", "")),
+                       "path": path, "text": r.get("text", ""), "ftext": fold(r.get("text", "")),
                        "flesson": fold(m.get("lesson") or ""), "fsec": fold(_section_title(r.get("title", "")))}
                 passages.append(row)
                 by_lesson.setdefault(lid, []).append(row)
@@ -217,7 +218,7 @@ def find(word: dict, idx: dict) -> dict | None:
             found.append(_shape(secs[0], "card", idx))
         else:                                      # the lesson owns the card but no passage shows it: the lesson itself
             rows = idx["by_lesson"].get(lid) or []
-            path = rows[0]["path"].split("#")[0] if rows else f"/lessons/{lid.replace('/', '-')}/lesson.html"
+            path = f"/lessons/{lid}/lesson.html"
             found.append({"lesson": lid, "lesson_title": c.get("lesson_title") or lid, "section": "",
                           "section_title": "", "path": path, "why": "card", "snippet": c.get("it", ""),
                           "listen": lid in idx["lessons"], "listen_path": f"/ascolto?lesson={quote(lid, safe='')}"})
