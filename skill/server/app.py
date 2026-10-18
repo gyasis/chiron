@@ -2245,6 +2245,10 @@ app.include_router(mock_oral.router)
 import sessione  # noqa: E402
 app.include_router(sessione.router)
 
+# Mazzi: the Anki deck tree with card counts; a tap drills the deck in Sessione (/mazzi + /api/anki/decks).
+import mazzi  # noqa: E402
+app.include_router(mazzi.router)
+
 # Pool: words missed in Match Madness -> audio-only listening drills (/ascolto + /api/pool/*).
 # CORS is already allow-all above (the phone app's origin is http://tauri.localhost); Chromium's Private Network
 # Access preflight additionally wants this header when a non-LAN origin calls a LAN address.

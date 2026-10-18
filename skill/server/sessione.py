@@ -6,7 +6,7 @@
     POST /api/sessione/produce      {topic, n=8, level, focus?}      LLM -> "Chiron Produzione" notes + Lucrezia audio
     POST /api/sessione/quaderno     {lines, deck?}                   LLM-corrected lines -> "Chiron Ascolto" notes + audio
     POST /api/sessione/tutor        {message}                        intent router: produce|listen|lesson|explain
-    GET  /api/sessione/deck?name=   cards of a deck, for drilling
+    GET  /api/sessione/deck?name=[&limit=N]  cards of a deck (and sub-decks), for drilling; limit = due first
 
 Every failure names its cause: 503 when Anki / OmniVoice / the model is down, 400 on bad input.
 The model is the mock-oral examiner path (Ollama Cloud, gemma4:31b -> deepseek fallback) with
@@ -260,10 +260,13 @@ def _strip(html: str) -> str:
     return " ".join(anki.TAG.sub(" ", anki.SOUND.sub("", html or "")).replace("&nbsp;", " ").split())
 
 
-def deck_cards(name: str) -> list[dict]:
+def deck_cards(name: str, limit: int | None = None) -> list[dict]:
     if not name:
         raise ValueError("name is required")
     ids = anki.invoke("findCards", query=f'"deck:{name}"') or []
+    if limit and len(ids) > limit:   # a big deck (35k cards) cannot be drilled whole: due/learning first, then the rest
+        due = set(anki.invoke("findCards", query=f'"deck:{name}" (is:due or is:learn)') or [])
+        ids = ([i for i in ids if i in due] + [i for i in ids if i not in due])[:limit]
     out = []
     for c in anki.invoke("cardsInfo", cards=ids) if ids else []:
         f = {k: v.get("value", "") for k, v in (c.get("fields") or {}).items()}
@@ -502,5 +505,5 @@ def api_tutor(b: dict):
 
 
 @router.get("/api/sessione/deck")
-def api_deck(name: str = ""):
-    return {"cards": _guard("deck", deck_cards, name)}
+def api_deck(name: str = "", limit: int = 0):
+    return {"cards": _guard("deck", deck_cards, name, limit or None)}

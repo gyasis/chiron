@@ -53,6 +53,13 @@ body{background:var(--bg);color:var(--fg);font-family:var(--fb);height:100vh;ove
 .hidepanel .hwrap{display:flex;flex-wrap:wrap;gap:6px}
 .hchip{font-size:12px;padding:6px 12px;border-radius:99px;background:var(--elevated);color:var(--fg2);display:inline-flex;align-items:center;gap:6px}
 .hchip .bx{width:13px;height:13px;border-radius:4px;background:var(--muted);flex:0 0 auto}
+.hidepanel .fgh{display:flex;align-items:center;justify-content:space-between;font-family:var(--fh);font-weight:700;font-size:13px;color:var(--fg);padding:9px 2px;border-top:1px solid var(--border);cursor:pointer}
+.hidepanel .fgh b{font-size:11px;color:#fff;background:var(--accent);border-radius:99px;padding:1px 7px;margin-left:4px}
+.hidepanel .fgh .fc{color:var(--muted)}
+.hidepanel .fw{padding:2px 0 8px;max-height:200px;overflow-y:auto}
+.fpill{font-size:12px;padding:6px 12px;border-radius:99px;background:var(--elevated);color:var(--fg2);display:inline-flex;align-items:center;gap:6px}
+.fpill .ct{font-size:10.5px;opacity:.6}.fpill.on{background:var(--accent);color:#fff}.fpill.on .ct{opacity:.85}
+.fhint{font-size:12px;color:var(--muted);padding:6px 2px}
 .hchip.on .bx{background:var(--ok)}.hchip.off{opacity:.5}.hchip.off .hn{text-decoration:line-through}
 /* tiles */
 .tgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:8px}
@@ -159,7 +166,7 @@ body{background:var(--bg);color:var(--fg);font-family:var(--fb);height:100vh;ove
 .modeseg button{border:none;background:none;font:inherit;font-family:var(--fh);font-weight:700;font-size:12.5px;color:var(--muted);padding:8px 13px;border-radius:7px}
 .modeseg button.mon{background:var(--surface);color:var(--accent)}
 .resume{margin:0 12px 8px;background:var(--medbg);color:var(--med);border-radius:10px;padding:9px 13px;font-size:12.5px}
-#mread,#askwrap{flex:1;min-height:0;display:flex;padding:0 10px 10px}
+#mread,#askwrap,#studiowrap{flex:1;min-height:0;display:flex;padding:0 10px 10px}
 .lessonframe{flex:1;width:100%;border:1px solid var(--border);border-radius:14px;background:#fff}
 #mplay{flex:1;overflow-y:auto;padding:6px 16px 20px}
 .cover{height:160px;border-radius:18px;background:linear-gradient(135deg,var(--med),var(--accent));display:grid;place-items:center;color:#fff;font-family:var(--fh);font-weight:800;font-size:15px;margin:6px 0 18px;text-align:center;padding:16px}
@@ -210,12 +217,13 @@ body{background:var(--bg);color:var(--fg);font-family:var(--fb);height:100vh;ove
   <div class="pane" id="pane">
     <!-- LIBRARY -->
     <section class="scr" id="s-lib"><div class="pad">
-      <div class="libhead"><button class="hbtn" id="menubtn" aria-label="Menu">☰</button><div class="big">Library</div><button class="hbtn hask" id="askbtn">💬 Chiedi</button></div>
+      <div class="libhead"><button class="hbtn" id="menubtn" aria-label="Menu">☰</button><div class="big">Library</div><button class="hbtn hask" id="mazzibtn">🎴 Mazzi</button><button class="hbtn hask" id="askbtn">💬 Chiedi</button></div>
       <div class="search">⌕ <input id="q" placeholder="Search lessons, diseases, systems…"></div>
       <div class="chips" id="chips"></div>
       <div class="chips" id="focus"></div>
       <div id="offbanner" class="offbanner" style="display:none"></div>
       <div class="sortrow" id="sortrow"></div>
+      <div class="hidepanel" id="facetpanel" style="display:none"></div>
       <div class="hidepanel" id="hidepanel" style="display:none"></div>
       <div class="xbar" id="xbar"></div>
       <div id="rows"><div class="empty">Connecting to your library…</div></div>
@@ -294,6 +302,7 @@ body{background:var(--bg);color:var(--fg);font-family:var(--fb);height:100vh;ove
     <button class="ditem" data-studio="/sessione">🎯 &nbsp;Sessione</button>
     <button class="ditem" data-studio="/ascolto?mode=pool&amp;from=mm">🎧 &nbsp;Ascolto · Parole → frasi</button>
     <button class="ditem" data-studio="/oral">🗣 &nbsp;Prova orale</button>
+    <button class="ditem" data-studio="/mazzi">🎴 &nbsp;Mazzi · Anki</button>
     <button class="ditem" data-studio="/ask/">💬 &nbsp;Chiedi</button>
     <div class="dsep"></div>
     <button class="ditem" id="importbtn">⬆ &nbsp;Import a lesson</button>
@@ -304,6 +313,12 @@ body{background:var(--bg);color:var(--fg);font-family:var(--fb);height:100vh;ove
   <div class="lesson" id="askov">
     <div class="lbar"><span class="back" onclick="closeAsk()">‹</span><span class="lttl">💬 Chiedi</span></div>
     <div id="askwrap"><iframe class="lessonframe" id="ask-frame" title="Chiedi"></iframe></div>
+  </div>
+
+  <!-- STUDIO overlay — Sessione / Ascolto / Mazzi from the library host, in-app over plain HTTP (title set per page) -->
+  <div class="lesson" id="studioov">
+    <div class="lbar"><span class="back" onclick="closeStudioIn()">‹</span><span class="lttl" id="studio-title">Studio</span></div>
+    <div id="studiowrap"><iframe class="lessonframe" id="studio-frame" title="Studio"></iframe></div>
   </div>
 
   <!-- LESSON overlay -->

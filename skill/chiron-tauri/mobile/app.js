@@ -64,7 +64,8 @@ function markSynced(slug) { if (!slug) return; DL_TIME[slug] = Date.now(); try {
 const SORTS = [['domain', 'By domain'], ['generated', 'Recently made'], ['synced', 'Recently synced']];
 function renderSort() { const el = document.getElementById('sortrow'); if (!el) return;
   const nHidden = F.hideDom.size + F.hideSys.size;
-  el.innerHTML = '<span class="sortlab">Sort</span>'
+  el.innerHTML = `<div class="chip sm hf ${nFacets() ? 'act' : ''}" id="ffbtn" title="Filtri: CEFR, formato, fonte, argomento">☷ Filtri${nFacets() ? ' ' + nFacets() : ''}</div>`   // first: always on screen
+    + '<span class="sortlab">Sort</span>'
     + SORTS.map(([v, l]) => `<div class="chip sm ${F.sort === v ? 'on' : ''}" data-s="${v}">${l}</div>`).join('')
     + '<span class="ctrlsp"></span>'
     + `<div class="chip vt ${F.view === 'tiles' ? 'on' : ''}" data-view="tiles" title="Tiles">▦</div>`
@@ -72,6 +73,7 @@ function renderSort() { const el = document.getElementById('sortrow'); if (!el) 
     + `<div class="chip sm hf ${nHidden ? 'act' : ''}" id="hfbtn" title="Hide domains / systems">⚑${nHidden ? ' ' + nHidden : ''}</div>`;
   el.querySelectorAll('[data-s]').forEach(c => c.onclick = () => { F.sort = c.dataset.s; renderSort(); renderRows(); });
   el.querySelectorAll('[data-view]').forEach(c => c.onclick = () => { F.view = c.dataset.view; localStorage.setItem('chiron.view', F.view); renderSort(); renderRows(); });
+  el.querySelector('#ffbtn').onclick = () => { FACET_OPEN = !FACET_OPEN; renderFacetPanel(); };
   const hf = el.querySelector('#hfbtn'); if (hf) hf.onclick = () => { HIDE_OPEN = !HIDE_OPEN; renderHidePanel(); };
 }
 let HIDE_OPEN = false;
@@ -106,17 +108,60 @@ function renderChips() {
 function renderFocus() {   // one chip per tag marked toggle:true — like the Library sidebar's Focus switches
   const el = document.getElementById('focus'); if (!el) return;
   const tags = Object.entries(TAGSTYLE).filter(([t, st]) => st.toggle && LESSONS.some(l => (l.labels || []).includes(t)));
-  el.style.display = tags.length ? '' : 'none';
-  el.innerHTML = tags.map(([t, st]) => `<div class="chip fx ${F.only.has(t) ? 'on' : ''}" style="--hlc:${st.color || 'var(--accent)'}" data-t="${esc(t)}">${st.icon ? st.icon + ' ' : ''}${esc(t)} ${LESSONS.filter(l => (l.labels || []).includes(t)).length}</div>`).join('');
+  const nssm = LESSONS.filter(isSSM).length;
+  el.style.display = tags.length || nssm ? '' : 'none';
+  el.innerHTML = (nssm ? `<div class="chip fx ${F.showSSM ? 'on' : ''}" style="--hlc:var(--accent)" id="ssmchip" title="${F.showSSM ? 'Nascondi' : 'Mostra'} le ${nssm} domande d'esame SSM">🎯 SSM ${nssm}</div>` : '') + tags.map(([t, st]) => `<div class="chip fx ${F.only.has(t) ? 'on' : ''}" style="--hlc:${st.color || 'var(--accent)'}" data-t="${esc(t)}">${st.icon ? st.icon + ' ' : ''}${esc(t)} ${LESSONS.filter(l => (l.labels || []).includes(t)).length}</div>`).join('');
+  const sc = el.querySelector('#ssmchip'); if (sc) sc.onclick = () => { F.showSSM = !F.showSSM;
+    try { localStorage.setItem('chiron.showSSM', JSON.stringify(F.showSSM)); } catch (e) {} renderFocus(); renderFacetPanel(); renderRows(); };
   el.querySelectorAll('[data-t]').forEach(c => c.onclick = () => { const t = c.dataset.t; F.only.has(t) ? F.only.delete(t) : F.only.add(t);
     localStorage.setItem('chiron.onlyTags', JSON.stringify([...F.only])); renderFocus(); renderRows(); });
 }
+/* ---------- facet filters: the web library's pill facets (CEFR, Format, Source, Subject), same fields + semantics ----------
+ * Only fields that exist in library.index.json. Within a facet any selected value matches, across facets all must.
+ * SSM exam questions default OUT (they bury the curated subjects); the switch shares the web page's key chiron.showSSM. */
+const FACETS = [['lang_level', 'CEFR', 'level'], ['format', 'Format', 'format'], ['source', 'Source', 'source'], ['subject', 'Subject', 'subject']];
+const isSSM = l => l.source === 'ssm';
+F.facets = {}; FACETS.forEach(([k]) => F.facets[k] = new Set());
+try { const P = JSON.parse(localStorage.getItem('chiron.pfacets') || '{}'); FACETS.forEach(([k]) => (P[k] || []).forEach(v => F.facets[k].add(v))); } catch (e) {}
+try { F.showSSM = JSON.parse(localStorage.getItem('chiron.showSSM') || 'false') === true; } catch (e) { F.showSSM = false; }
+const saveFacets = () => { try { localStorage.setItem('chiron.pfacets', JSON.stringify(Object.fromEntries(FACETS.map(([k]) => [k, [...F.facets[k]]])))); } catch (e) {} };
+const nFacets = () => FACETS.reduce((n, [k]) => n + F.facets[k].size, 0);
+let SOURCES = {}; try { SOURCES = JSON.parse(localStorage.getItem('chiron.sources') || '{}'); } catch (e) {}
+const FACET_ORDER = { lang_level: ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'], format: ['Course', 'Passage', 'Pimsleur'] };
+const visLessons = () => LESSONS.filter(l => F.showSSM || !isSSM(l));   // counts, like the web page, ignore the other filters but not SSM
+const facetVals = (k, fld) => { const c = {};
+  visLessons().forEach(l => [].concat(l[fld] || []).forEach(v => { if (v) c[v] = (c[v] || 0) + 1; }));
+  const ord = FACET_ORDER[k] || [];
+  return Object.entries(c).sort((a, b) => { const ia = ord.indexOf(a[0]), ib = ord.indexOf(b[0]);
+    return (ia < 0 ? 99 : ia) - (ib < 0 ? 99 : ib) || b[1] - a[1] || a[0].localeCompare(b[0]); }); };
+const facetLabel = (k, v) => k === 'source' ? ((SOURCES[v] && SOURCES[v].label) || v[0].toUpperCase() + v.slice(1)) : v;
+let FACET_OPEN = false; const FACET_GRP = new Set();   // panel open? · which groups are expanded
+function renderFacetPanel() {
+  const el = document.getElementById('facetpanel'); if (!el) return;
+  el.style.display = FACET_OPEN ? '' : 'none';
+  if (!FACET_OPEN) { el.innerHTML = ''; return; }
+  let h = `<div class="hgh">Filtri <span class="un ${nFacets() ? '' : 'dim'}" data-fclr="1">Azzera</span></div>`, any = false;
+  for (const [k, lab, fld] of FACETS) { const vals = facetVals(k, fld); if (!vals.length) continue; any = true;
+    const sel = F.facets[k].size, open = FACET_GRP.has(k);
+    h += `<div class="fgh" data-fg="${k}"><span>${lab}${sel ? ` <b>${sel}</b>` : ''}</span><span class="fc">${open ? '▾' : '▸'}</span></div>`;
+    if (open) h += `<div class="hwrap fw">${vals.map(([v, n]) => `<div class="fpill ${F.facets[k].has(v) ? 'on' : ''}" data-fk="${k}" data-fv="${esc(v)}">${esc(facetLabel(k, v))}<span class="ct">${n}</span></div>`).join('')}</div>`;
+  }
+  if (!any) h += '<div class="fhint">Nessun filtro disponibile.</div>';
+  el.innerHTML = h;
+  const refresh = () => { saveFacets(); renderFacetPanel(); renderSort(); renderRows(); };
+  el.querySelectorAll('[data-fg]').forEach(b => b.onclick = () => { const k = b.dataset.fg; FACET_GRP.has(k) ? FACET_GRP.delete(k) : FACET_GRP.add(k); renderFacetPanel(); });
+  el.querySelectorAll('[data-fk]').forEach(b => b.onclick = () => { const set = F.facets[b.dataset.fk], v = b.dataset.fv; set.has(v) ? set.delete(v) : set.add(v); refresh(); });
+  el.querySelector('[data-fclr]').onclick = () => { FACETS.forEach(([k]) => F.facets[k].clear()); refresh(); };
+}
 function match(l) {
   if (SERVER_DOWN && !OFFLINE[slugOf(l.id)]) return false;  // computer unreachable: only what is ON the phone opens
+  if (isSSM(l) && !F.showSSM) return false;                  // SSM exam questions are OUT by default, like the web library
   if (F.only.size && !(l.labels || []).some(t => F.only.has(t))) return false;
   if (F.hideDom.has(l.domain)) return false;                 // hide-filters win, incl. over search
   if (l.system && F.hideSys.has(l.system)) return false;
   if (F.dom && l.domain !== F.dom) return false;
+  for (const [k, , fld] of FACETS) { const set = F.facets[k]; if (!set.size) continue;   // across facets AND, within one OR
+    const v = l[fld]; if (Array.isArray(v) ? !v.some(x => set.has(x)) : !(v && set.has(v))) return false; }
   if (F.q) { const s = (l.title + ' ' + (l.system || '') + ' ' + (l.subject || '') + ' ' + (l.topic || '') + ' ' + (l.labels || []).join(' ')).toLowerCase();
     if (!s.includes(F.q.toLowerCase())) return false; } return true;
 }
@@ -190,7 +235,7 @@ function renderRows() {
   if (staged.length) { h += `<div class="reviewband">🟡 Needs Review — ${staged.length} generated, not yet published.</div>` + group(staged); }
   if (ready.length) { const dl = ready.filter(l => l.bundle).length; h += hdr('📚', 'Available', ready.length, dl ? dl + ' downloadable' : 'open to study') + group(ready); }
   if (queued.length) h += hdr('○', 'To generate', queued.length, 'tap Generate') + group(queued.slice(0, 400));
-  document.getElementById('rows').innerHTML = h || `<div class="empty">No lessons match${F.hideDom.size || F.hideSys.size ? ' — some domains/systems are hidden (tap ⚑ to unhide)' : ''}.</div>`;
+  document.getElementById('rows').innerHTML = h || `<div class="empty">No lessons match${F.hideDom.size || F.hideSys.size ? ' — some domains/systems are hidden (tap ⚑ to unhide)' : ''}${nFacets() ? ' — filtri attivi (☷ Filtri › Azzera)' : ''}${!F.showSSM && LESSONS.some(isSSM) ? ' — domande SSM nascoste (🎯)' : ''}.</div>`;
   const sa = document.getElementById('saveall'); if (sa) sa.onclick = saveAll;
   const us = document.getElementById('updsaved'); if (us) us.onclick = updateSaved;
   document.querySelectorAll('#rows [data-open]').forEach(e => e.onclick = ev => { ev.stopPropagation(); openLesson(e.dataset.open); });
@@ -267,9 +312,10 @@ async function loadLibrary() {
     LESSONS = d.lessons || []; SERVER_DOWN = false;
     try { localStorage.setItem('chiron.idx', JSON.stringify(LESSONS.filter(l => l.ready))); } catch (e) {}
     try { const c = await (await fetch(LIB + '/library/library.config.json?' + Date.now())).json();
-      TAGSTYLE = (c.facets && c.facets.tags && c.facets.tags.styles) || {}; localStorage.setItem('chiron.tagstyle', JSON.stringify(TAGSTYLE)); } catch (e) {}
+      TAGSTYLE = (c.facets && c.facets.tags && c.facets.tags.styles) || {}; localStorage.setItem('chiron.tagstyle', JSON.stringify(TAGSTYLE));
+      SOURCES = c.sources || {}; localStorage.setItem('chiron.sources', JSON.stringify(SOURCES)); } catch (e) {}
     document.getElementById('offbanner').style.display = 'none';
-    renderChips(); renderFocus(); renderSort(); renderRows(); refreshSync();
+    renderChips(); renderFocus(); renderSort(); renderFacetPanel(); renderRows(); refreshSync();
   } catch (e) {
     // Computer off / power cut: fall back to the last library this phone saw, showing only lessons saved on it.
     let cached = []; try { cached = JSON.parse(localStorage.getItem('chiron.idx') || '[]'); } catch (e2) {}
@@ -278,7 +324,7 @@ async function loadLibrary() {
       await refreshOffline();
       const b = document.getElementById('offbanner'); b.style.display = '';
       b.innerHTML = `⚡ Your computer isn't reachable — showing the <b>${Object.keys(OFFLINE).length}</b> lessons saved on this phone. They work fully offline.`;
-      renderChips(); renderFocus(); renderSort(); renderRows();
+      renderChips(); renderFocus(); renderSort(); renderFacetPanel(); renderRows();
       document.getElementById('syncedtag').textContent = 'offline';
       return;
     }
@@ -447,8 +493,13 @@ async function openStudio(path) {
 const askBase = () => isHub() ? 'http://' + libHost() + ':8911' : LIB;
 const askOrigin = () => { try { return new URL(askBase()).origin; } catch (e) { return ''; } };
 // Ask asks US to open what would leave it: a new window inside the iframe would replace this whole WebView.
-const ASK = ChironNav.askBridge(window, { frame: () => document.getElementById('ask-frame'), origin: askOrigin,
+const ASK = ChironNav.askBridge(window, { frames: () => ['ask-frame', 'studio-frame'].map(i => document.getElementById(i)), origin: askOrigin,
   openLesson: (id, hash) => openLesson(slugOf(id), hash),
+  // another in-app page (Sessione ↔ Ascolto, a Mazzi deck → its drill, Ask): load it here instead of the system browser
+  openStudio: u => { if (u.pathname.startsWith('/ask/')) { openAsk(); return true; }
+    if (!STUDIO_PAGES[u.pathname]) return false;
+    const q = new URLSearchParams(u.search); q.delete('inapp'); q.delete('theme');
+    openStudioIn(u.pathname + (q.toString() ? '?' + q : '')); return true; },
   currentTheme: () => document.documentElement.getAttribute('data-theme') || 'light',
   openExternal: async url => { try { if (TAURI) await invoke('plugin:opener|open_url', { url }); else window.open(url, '_blank'); }
     catch (e) { console.warn('chiron ask: could not open', url, e); toast('Impossibile aprire il browser: ' + (e && e.message || e)); } } });
@@ -474,11 +525,28 @@ async function openAsk() {
   NAV.open('askov');
 }
 function closeAsk() { NAV.close('askov'); }
+// Sessione / Ascolto / Mazzi: same pattern as Ask — the page from :8911 in an overlay frame, ?inapp=1 (+ &theme) appended
+// correctly whether or not the path already has a query. Prova orale stays external: it needs an https mic.
+const STUDIO_PAGES = { '/sessione': '🎯 Sessione', '/ascolto': '🎧 Ascolto', '/mazzi': '🎴 Mazzi' };
+async function openStudioIn(path) {
+  const theme = document.documentElement.getAttribute('data-theme') || 'light';
+  const key = askBase() + path + (path.includes('?') ? '&' : '?') + 'inapp=1';
+  const fr = document.getElementById('studio-frame');
+  document.getElementById('studio-title').textContent = STUDIO_PAGES[path.split('?')[0]] || 'Studio';
+  if (fr.dataset.src !== key) {   // reopening the same page keeps its state; a different page/deck reloads
+    if (!await askUp()) { console.warn('chiron studio: unreachable', key); toast('Serve il computer della libreria — ' + askBase() + ' non raggiungibile'); return; }
+    ChironNav.loadFrame(document, 'studio-frame', key + '&theme=' + theme).dataset.src = key;
+  } else ASK.theme(theme);
+  NAV.open('studioov');
+}
+function closeStudioIn() { NAV.close('studioov'); }
 document.querySelectorAll('#drawer [data-studio]').forEach(b => b.onclick = () => { drawer(false);
-  if (TAURI && b.dataset.studio === '/ask/') openAsk(); else openStudio(b.dataset.studio); });
+  const p = b.dataset.studio, base = p.split('?')[0];
+  if (TAURI && p === '/ask/') openAsk(); else if (TAURI && STUDIO_PAGES[base]) openStudioIn(p); else openStudio(p); });
 // Visible ways in: the drawer and Chiedi were reachable only by an invisible edge strip or a swipe (2026-10-18).
 document.getElementById('menubtn').onclick = () => drawer(true);
 document.getElementById('askbtn').onclick = () => document.querySelector('#drawer [data-studio="/ask/"]').click();
+document.getElementById('mazzibtn').onclick = () => document.querySelector('#drawer [data-studio="/mazzi"]').click();
 
 /* ---------- generate wizard ---------- */
 const DEPTHS = { medicine: [['', 'Auto'], ['primer', 'Primer'], ['atlas', 'Atlas'], ['systematic', 'Systematic'], ['drug', 'Drug'], ['amboss', 'AMBOSS']],
