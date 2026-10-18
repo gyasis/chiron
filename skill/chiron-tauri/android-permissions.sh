@@ -4,6 +4,15 @@
 set -euo pipefail
 M="$(dirname "$0")/src-tauri/gen/android/app/src/main/AndroidManifest.xml"
 [ -f "$M" ] || { echo "no manifest at $M — run: npm run tauri android init" >&2; exit 1; }
-grep -q RECORD_AUDIO "$M" && { echo "already has RECORD_AUDIO"; exit 0; }
+if grep -q RECORD_AUDIO "$M"; then echo "already has RECORD_AUDIO"; else
 sed -i 's#<uses-permission android:name="android.permission.INTERNET" />#&\n    <uses-permission android:name="android.permission.RECORD_AUDIO" />\n    <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />\n    <uses-feature android:name="android.hardware.microphone" android:required="false" />#' "$M"
 grep -q RECORD_AUDIO "$M" && echo "patched $M"
+fi
+
+# chiron:// deep link (Match Madness "Studia nella lezione"). tauri-plugin-deep-link writes this intent-filter itself from
+# tauri.conf.json plugins.deep-link on every `tauri android build/dev`; this is the belt-and-braces re-apply for a build
+# that skipped it. Idempotent. NB the RECORD_AUDIO early-exit above must not skip this, so it lives in its own script step.
+if grep -q 'android:scheme="chiron"' "$M"; then echo "already has the chiron:// intent-filter"; else
+  sed -i '0,/<\/activity>/s##    <intent-filter>\n                <action android:name="android.intent.action.VIEW" />\n                <category android:name="android.intent.category.DEFAULT" />\n                <category android:name="android.intent.category.BROWSABLE" />\n                <data android:scheme="chiron" />\n            </intent-filter>\n        </activity>#' "$M"
+  grep -q 'android:scheme="chiron"' "$M" && echo "patched chiron:// intent-filter into $M" || { echo "could not add the chiron:// intent-filter to $M" >&2; exit 1; }
+fi

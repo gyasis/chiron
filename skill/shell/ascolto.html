@@ -348,5 +348,7 @@ async function go(){
 $('#mm').onclick=loadWeak;$('#go').onclick=go;
 // ?mode=pool&from=mm  -> load the weak list and start straight away
 if(QS.get('lesson')||QS.get('focus'))startLesson(QS.get('lesson'),QS.get('focus'));
+// ?w=<it>|<en>&w=...  -> drill exactly these words (Match Madness end-card "Ascolta queste parole"); nothing is pushed or counted
+else if(QS.getAll('w').length){$('#words').value=QS.getAll('w').join('\n');go();}
 else if(QS.get('from')==='mm')loadWeak().then(ws=>{if(ws.length)go();});
 </script></body></html>

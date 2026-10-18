@@ -675,3 +675,24 @@ setInterval(() => { pollActive(); if (curPane() === 3) renderActivity(); }, 4000
     ind.style.height = '0'; ind.style.opacity = '0'; startY = null; dy = 0;
   }, { passive: true });
 })();
+
+/* ---------- deep links: chiron://lesson?id=<lesson id>&s=<section id>  |  chiron://ascolto?lesson=<id> or ?w=<it>|<en>&w=... ----------
+   Match Madness's end card ("📖 Studia nella lezione", "🎧 Ascolta queste parole") opens these. Cold start: the launch URL
+   (getCurrent); app already running: onOpenUrl. Only the two hosts below are honoured; anything else is logged and ignored. */
+function handleDeepLink(raw) {
+  let u; try { u = new URL(raw); } catch (e) { console.warn('chiron: bad deep link', raw); return; }
+  if (u.protocol !== 'chiron:') return;
+  const q = u.searchParams;
+  if (u.hostname === 'lesson' && q.get('id')) {
+    const s = (q.get('s') || '').replace(/[^\w.-]/g, '');
+    openLesson(slugOf(q.get('id')), s ? '#' + s : '');
+  } else if (u.hostname === 'ascolto' && TAURI) {
+    const out = new URLSearchParams(); q.forEach((v, k) => { if (k === 'lesson' || k === 'focus' || k === 'w' || k === 'from' || k === 'mode') out.append(k, v); });
+    openStudioIn('/ascolto' + (out.toString() ? '?' + out : ''));
+  } else console.warn('chiron: unhandled deep link', raw);
+}
+(function () {
+  const dl = window.__TAURI__ && window.__TAURI__.deepLink; if (!dl) return;
+  dl.getCurrent().then(urls => (urls || []).forEach(handleDeepLink)).catch(e => console.warn('chiron: deep-link getCurrent failed', e));
+  dl.onOpenUrl(urls => (urls || []).forEach(handleDeepLink)).catch(e => console.warn('chiron: deep-link listener failed', e));
+})();
