@@ -1379,6 +1379,9 @@
     group('🎧 Pimsleur drill', clips.filter(function (c) { return c.artifact === 'pimsleur'; }));
     group('Whole lesson', clips.filter(function (c) { return c.artifact === 'summary' || c.artifact === 'shortened'; }));
     group('By section', clips.filter(function (c) { return c.artifact === 'section'; }));
+    // A lesson upgraded with the newer "Ascolta" player already has a panel: never stack a second one on it
+    // (two overlapping boxes, the top one swallowing clicks — 106 lessons, 2026-10-18).
+    if (document.querySelector('.chiron-listen')) return;
     document.body.appendChild(panel);
   }
 

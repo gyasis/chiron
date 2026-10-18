@@ -2311,6 +2311,10 @@ def _lesson_with_tutor(slug: str):
         lv = int((SKILL / "shell" / "lang-switch.js").stat().st_mtime)
         rep = f'<script src="/shell/lang-switch.js?v={lv}" defer></script>'
         html = html.replace("</body>", rep + "</body>", 1) if "</body>" in html else html + rep
+    if "listen-size.js" not in html and "chiron-listen" in html:   # ⤢ enlarge the floating 🎧 Listen panel (desktop web)
+        zv = int((SKILL / "shell" / "listen-size.js").stat().st_mtime)
+        rep = f'<script src="/shell/listen-size.js?v={zv}" defer></script>'
+        html = html.replace("</body>", rep + "</body>", 1) if "</body>" in html else html + rep
     if "handoff.js" not in html:             # Riprendi: report the reading position (web: 📱 button; in-app: postMessage)
         hv = int((SKILL / "shell" / "handoff.js").stat().st_mtime)
         rep = f'<script src="/shell/handoff.js?v={hv}" defer></script>'
