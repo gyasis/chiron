@@ -349,8 +349,8 @@ async function libReachable() {
 function offlineSrc(slug) { const o = OFFLINE[slug]; const base = isAndroid ? 'http://lesson.localhost/' : 'lesson://localhost/'; return base + o.id + '/' + o.entry; }
 // ?inapp=1 tells the in-lesson web tutor to stay hidden: the app has its own tutor panel.
 function lessonSrc(l, slug, up, hash) { return ((up || !OFFLINE[slug]) ? LIB + '/lessons/' + l.id + '/lesson.html?inapp=1' : offlineSrc(slug)) + (hash || ''); }
-async function openLesson(slug, hash) {   // hash: e.g. '#t=42' from an Ask citation
-  const l = LESSONS.find(x => slugOf(x.id) === slug) || { id: slug, title: slug, clips: 0 };
+async function openLesson(slug, hash, rawId) {   // hash: e.g. '#t=42' from an Ask citation; rawId: the nested library id, if known
+  const l = LESSONS.find(x => slugOf(x.id) === slug) || { id: rawId || slug, title: slug, clips: 0 };
   const up = await libReachable();
   const streaming = up || !OFFLINE[slug];
   document.getElementById('l-title').textContent = l.title.replace(/^Chiron\s*·\s*/, '');
@@ -684,8 +684,11 @@ function handleDeepLink(raw) {
   if (u.protocol !== 'chiron:') return;
   const q = u.searchParams;
   if (u.hostname === 'lesson' && q.get('id')) {
-    const s = (q.get('s') || '').replace(/[^\w.-]/g, '');
-    openLesson(slugOf(q.get('id')), s ? '#' + s : '');
+    const s = (q.get('s') || '').replace(/[^\w.-]/g, ''), id = q.get('id');
+    /* A cold-start link arrives before the library has loaded: wait for it (≤8 s) so the lesson resolves to its real
+       title and nested id; a flattened slug 404s on the server (2026-10-18). */
+    (async () => { for (let i = 0; i < 40 && !LESSONS.length; i++) await new Promise(r => setTimeout(r, 200));
+      openLesson(slugOf(id), s ? '#' + s : '', id); })();
   } else if (u.hostname === 'ascolto' && TAURI) {
     const out = new URLSearchParams(); q.forEach((v, k) => { if (k === 'lesson' || k === 'focus' || k === 'w' || k === 'from' || k === 'mode') out.append(k, v); });
     openStudioIn('/ascolto' + (out.toString() ? '?' + out : ''));
