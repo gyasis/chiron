@@ -2260,10 +2260,12 @@ async def _pool_private_network(request, call_next):
     return resp
 
 
-@app.get("/lessons/{slug}/lesson.html", response_class=HTMLResponse)
+# {slug:path}: library ids can be nested (chiron-medicina-italiana/situazioni/<x>); a one-segment {slug} let those
+# fall through to the static mount, unpatched (found 2026-10-18).
+@app.get("/lessons/{slug:path}/lesson.html", response_class=HTMLResponse)
 def _lesson_with_tutor(slug: str):
     p = GEN / slug / "lesson.html"
-    if not p.exists():
+    if ".." in Path(slug).parts or not p.exists():
         raise HTTPException(404, "lesson not found")
     html = p.read_text(encoding="utf-8")
     v = int((SKILL / "shell" / "tutor.js").stat().st_mtime)
@@ -2277,6 +2279,10 @@ def _lesson_with_tutor(slug: str):
     if "select-report.js" not in html:       # phone app: report the learner's text selection out of the cross-origin iframe
         rv = int((SKILL / "shell" / "select-report.js").stat().st_mtime)
         rep = f'<script src="/shell/select-report.js?v={rv}" defer></script>'
+        html = html.replace("</body>", rep + "</body>", 1) if "</body>" in html else html + rep
+    if "lesson-nav.js" not in html:          # a ☰ (sections + theme) whenever the lesson hides its sidebar without one
+        nv = int((SKILL / "shell" / "lesson-nav.js").stat().st_mtime)
+        rep = f'<script src="/shell/lesson-nav.js?v={nv}" defer></script>'
         html = html.replace("</body>", rep + "</body>", 1) if "</body>" in html else html + rep
     return HTMLResponse(html)
 
