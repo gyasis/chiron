@@ -2307,7 +2307,7 @@ def _lesson_with_tutor(slug: str):
         nv = int((SKILL / "shell" / "lesson-nav.js").stat().st_mtime)
         rep = f'<script src="/shell/lesson-nav.js?v={nv}" defer></script>'
         html = html.replace("</body>", rep + "</body>", 1) if "</body>" in html else html + rep
-    if "chiron-lang-switch" not in html and "lang-switch.js" not in html:   # IT · IT+EN · EN switch (a lesson with its own inline copy keeps it, for offline)
+    if "chiron-lang-switch" not in html and "lang-switch.js" not in html and 'class="subsbar"' not in html:   # IT · IT+EN · EN switch (a lesson with its own inline copy keeps it, for offline)
         lv = int((SKILL / "shell" / "lang-switch.js").stat().st_mtime)
         rep = f'<script src="/shell/lang-switch.js?v={lv}" defer></script>'
         html = html.replace("</body>", rep + "</body>", 1) if "</body>" in html else html + rep
