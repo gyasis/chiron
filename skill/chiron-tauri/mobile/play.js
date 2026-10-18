@@ -153,9 +153,22 @@
 
   audio.addEventListener('loadedmetadata', () => { if (S.resumeAt > 0 && S.resumeAt < audio.duration - 1) audio.currentTime = S.resumeAt; S.resumeAt = 0; audio.playbackRate = S.rate; progress(); });
   audio.addEventListener('timeupdate', () => { progress(); save(false); });
-  audio.addEventListener('play', () => { S.errs = 0; render(); if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'playing'; });
-  audio.addEventListener('pause', () => { render(); save(true); if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'paused'; });
-  audio.addEventListener('ended', () => { if (S.idx < S.items.length - 1) select(S.idx + 1, 0, true); else { render(); save(true); } });
+  /* Android background playback (android/MainActivity.kt ChironAudio bridge → PlaybackService): playing keeps the app alive
+     with the screen off / Fold closed; a pause keeps the notification (Riprendi) for 10 min, the playlist's end drops it. */
+  const nat = () => (typeof root.ChironAudio !== 'undefined' ? root.ChironAudio : null);
+  let natStop = 0;
+  function natSay(paused) {
+    const n = nat(); if (!n) return; clearTimeout(natStop);
+    const it = S.items[S.idx], t = (it ? it.title + ' · ' : '') + (S.title || 'Chiron');
+    try { n.playing(t, !!paused); } catch (e) { console.warn('chiron play: native bridge failed —', e.message); }
+    if (paused) natStop = setTimeout(natEnd, 10 * 60000);
+  }
+  function natEnd() { const n = nat(); clearTimeout(natStop); if (n) try { n.stopped(); } catch (e) { console.warn('chiron play: native bridge failed —', e.message); } }
+  api.remote = cmd => { if (cmd === 'next') step(1); else if (cmd === 'prev') step(-1); else toggle(); };   // notification buttons (MainActivity.relay)
+
+  audio.addEventListener('play', () => { S.errs = 0; render(); natSay(false); if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'playing'; });
+  audio.addEventListener('pause', () => { render(); save(true); if (!audio.ended) natSay(true); if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'paused'; });
+  audio.addEventListener('ended', () => { if (S.idx < S.items.length - 1) select(S.idx + 1, 0, true); else { render(); save(true); natEnd(); } });
   audio.addEventListener('error', () => {   // a missing / unreadable clip is skipped, but never loop through a dead library
     const it = S.items[S.idx]; console.warn('chiron play: cannot load', it && it.url, audio.error && audio.error.code);
     if (++S.errs >= 3) { say('Audio non raggiungibile'); render(); return; }
