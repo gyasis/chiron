@@ -26,23 +26,26 @@
     return { open, close, isOpen, stack };
   }
 
-  /* Ask posts {type:'chiron-ask:open', url} for anything that would leave Ask (a new window would replace the app's
-   * WebView). Accept it only from the Ask frame itself, at the origin it was loaded from. */
-  function askBridge(win, { frame, origin, openLesson, openExternal, currentTheme }) {
+  /* Ask (and the studio pages: Sessione / Ascolto / Mazzi) post {type:'chiron-ask:open', url} for anything that would
+   * leave them (a new window would replace the app's WebView). Accept it only from one of OUR frames, at the origin it
+   * was loaded from. `frames` lists them all; `frame` (one) is kept for the single-frame form. */
+  function askBridge(win, { frame, frames, origin, openLesson, openStudio, openExternal, currentTheme }) {
+    const all = () => frames ? frames() : [frame()];
     win.addEventListener('message', ev => {
-      const fr = frame();
-      if (!fr || ev.source !== fr.contentWindow || ev.origin !== origin()) return;
+      const fr = all().find(f => f && f.contentWindow && ev.source === f.contentWindow);
+      if (!fr || ev.origin !== origin()) return;
       const d = ev.data || {};
-      if (d.type === 'chiron-ask:ready') { api.theme(currentTheme()); return; }   // a theme change made while Ask was loading
+      if (d.type === 'chiron-ask:ready') { api.theme(currentTheme(), fr); return; }   // a theme change made while Ask was loading
       if (d.type !== 'chiron-ask:open' || typeof d.url !== 'string') return;
       let u; try { u = new URL(d.url); } catch (e) { return; }
       if (u.protocol !== 'http:' && u.protocol !== 'https:') { console.warn('chiron ask: refused to open', d.url); return; }
       const m = u.origin === ev.origin && u.pathname.match(/^\/lessons\/(.+)\/lesson\.html$/);
       if (m) openLesson(m[1].split('/').map(decodeURIComponent).join('/'), u.hash);
+      else if (u.origin === ev.origin && openStudio && openStudio(u)) return;   // another in-app page (Sessione ↔ Ascolto, Mazzi → drill)
       else openExternal(u.href);
     });
     const api = {
-      theme(t) { const fr = frame(); if (fr && fr.contentWindow && fr.dataset.src) fr.contentWindow.postMessage({ type: 'chiron-app:theme', theme: t }, origin()); },
+      theme(t, only) { (only ? [only] : all()).forEach(fr => { if (fr && fr.contentWindow && fr.dataset.src) fr.contentWindow.postMessage({ type: 'chiron-app:theme', theme: t }, origin()); }); },
     };
     return api;
   }

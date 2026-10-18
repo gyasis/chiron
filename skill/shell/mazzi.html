@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="it"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Chiron · Mazzi</title>
+<meta name="theme-color" content="#1e3a5f">
+<script>try{var _t=localStorage.getItem('chiron.theme');if(_t)document.documentElement.setAttribute('data-theme',_t);}catch(e){}</script>
+<script src="/shell/inapp-boot.js"></script>
+<style>
+:root{
+  --chiron-bg:#faf8f5;--chiron-surface:#fff;--chiron-elevated:#f0ebe4;
+  --chiron-fg:#1a1a1a;--chiron-fg-secondary:#4a4a4a;--chiron-muted:#7a7a7a;
+  --chiron-accent:#1e3a5f;--chiron-border:#e5e0d8;--chiron-divider:#ede8df;
+  --medbg:#eef4fb;--med:#1e6fbf;--bad:#a33;--badbg:#fbeaea;
+  --font-h:'Inter',system-ui,sans-serif;--font-b:'Inter',system-ui,sans-serif;
+}
+[data-theme="dark"]{
+  --chiron-bg:#14171c;--chiron-surface:#1b1f26;--chiron-elevated:#232830;
+  --chiron-fg:#e9e6e1;--chiron-fg-secondary:#bdb8b1;--chiron-muted:#8b8781;
+  --chiron-accent:#7fb0e8;--chiron-border:#2c323b;--chiron-divider:#242931;
+  --medbg:#16252f;--med:#7fb0e8;--bad:#e58a8a;--badbg:#2e1b1b;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{font-family:var(--font-b);background:var(--chiron-bg);color:var(--chiron-fg);font-size:15px;line-height:1.45;overflow-x:hidden}
+button,input{font:inherit;color:inherit}button{cursor:pointer}
+a{color:inherit;text-decoration:none}
+.wrap{max-width:760px;margin:0 auto;padding:0 16px 60px}
+header{display:flex;align-items:center;gap:10px;padding:14px 0 8px}
+header .mk{width:28px;height:28px;border-radius:8px;background:var(--chiron-accent);color:var(--chiron-surface);display:grid;place-items:center;font-size:14px;font-weight:800;flex:none}
+header h1{font:800 16px var(--font-h);color:var(--chiron-accent);margin:0}
+header small{color:var(--chiron-muted)}
+header .hint{margin-left:auto;font-size:12px;color:var(--chiron-muted)}
+#theme{border:1px solid var(--chiron-border);background:var(--chiron-surface);border-radius:8px;padding:5px 9px}
+.bar{display:flex;gap:8px;align-items:center;margin:6px 0 12px}
+.bar input{flex:1;min-width:0;border:1px solid var(--chiron-border);background:var(--chiron-surface);border-radius:99px;padding:9px 14px;outline:none}
+.btn{border:1px solid var(--chiron-border);background:var(--chiron-surface);border-radius:99px;padding:8px 13px;font-size:12.5px;font-weight:600;color:var(--chiron-fg-secondary);white-space:nowrap}
+.sum{font-size:12px;color:var(--chiron-muted);margin:0 2px 8px}
+.tree{background:var(--chiron-surface);border:1px solid var(--chiron-border);border-radius:12px;overflow:hidden}
+.d{display:flex;align-items:center;gap:6px;min-height:46px;padding:0 10px 0 6px;border-top:1px solid var(--chiron-divider)}
+.d:first-child{border-top:0}
+.d .tg{width:30px;height:34px;border:0;background:none;color:var(--chiron-muted);font-size:13px;flex:none}
+.d .tg:disabled{visibility:hidden}
+.d .nm{flex:1;min-width:0;padding:10px 0;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.d .nm small{font-weight:400;color:var(--chiron-muted)}
+.d .ct{font-size:12px;font-weight:700;color:var(--med);background:var(--medbg);border-radius:99px;padding:2px 9px;flex:none}
+.d.empty .nm{color:var(--chiron-muted);font-weight:500}
+.d.empty .ct{color:var(--chiron-muted);background:var(--chiron-elevated);font-weight:600}
+.d a.nm:hover{color:var(--chiron-accent)}
+.msg{padding:18px;text-align:center;color:var(--chiron-muted)}
+.err{background:var(--badbg);color:var(--bad);border-radius:12px;padding:14px;margin:8px 0}
+.err .btn{margin-top:10px}
+.spin{display:flex;gap:10px;align-items:center;color:var(--chiron-muted);padding:18px}
+.spin i{width:16px;height:16px;border-radius:50%;border:2px solid var(--chiron-border);border-top-color:var(--chiron-accent);animation:r .8s linear infinite}
+@keyframes r{to{transform:rotate(360deg)}}
+</style></head><body>
+<div class="wrap">
+<header><div class="mk">M</div><div><h1>Mazzi</h1><small>Anki · tutti i mazzi</small></div><a href="/sessione" class="hint">Sessione</a><a href="/library/" class="hint" id="liblink">Library</a><button id="theme" title="Tema">◐</button></header>
+<div class="bar"><input id="q" type="search" placeholder="Cerca un mazzo…" aria-label="Cerca un mazzo"><button class="btn" id="all">Espandi</button></div>
+<div id="sum" class="sum"></div>
+<div id="out"><div class="spin"><i></i><span>Carico i mazzi da Anki…</span></div></div>
+</div>
+<script>
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+$('#theme').onclick=()=>{const n=document.documentElement.getAttribute('data-theme')==='dark'?'light':'dark';
+  document.documentElement.setAttribute('data-theme',n);try{localStorage.setItem('chiron.theme',n)}catch(e){}};
+if(document.documentElement.hasAttribute('data-inapp'))$('#liblink').style.display='none';   // the app has its own library
+let DECKS=[],OPEN=new Set(),ALL=false;
+// flat "A::B::C" names -> tree; the API already gives each deck's total (itself + sub-decks)
+function build(list){const root={kids:[]},by={};
+  list.forEach(d=>{const parts=d.name.split('::');let par=root;
+    parts.forEach((p,i)=>{const full=parts.slice(0,i+1).join('::');
+      if(!by[full]){by[full]={label:p,full,kids:[],d:null};par.kids.push(by[full]);}
+      par=by[full];});
+    par.d=d;});
+  return root;}
+const hit=(n,q)=>n.full.toLowerCase().includes(q)||n.kids.some(k=>hit(k,q));
+function row(n,depth,q){
+  const d=n.d||{cards:0,total:0,empty:true},open=q||ALL||OPEN.has(n.full),kids=q?n.kids.filter(k=>hit(k,q)):n.kids;
+  const sub=n.kids.length&&d.total!==d.cards?` <small>· ${d.cards} qui</small>`:'';
+  const label=d.empty?`<span class="nm" title="${esc(n.full)}">${esc(n.label)}${sub}</span>`
+    :`<a class="nm" href="/sessione?deck=${encodeURIComponent(n.full)}" title="Ripassa ${esc(n.full)}">${esc(n.label)}${sub}</a>`;
+  let h=`<div class="d${d.empty?' empty':''}" style="padding-left:${6+depth*18}px"><button class="tg" data-t="${esc(n.full)}" ${kids.length?'':'disabled'} aria-label="Apri">${open?'▾':'▸'}</button>${label}<span class="ct">${d.empty?'vuoto':d.total.toLocaleString('it-IT')}</span></div>`;
+  if(open)h+=kids.map(k=>row(k,depth+1,q)).join('');
+  return h;}
+function paint(){const q=$('#q').value.trim().toLowerCase(),root=build(DECKS);
+  const tops=q?root.kids.filter(k=>hit(k,q)):root.kids;
+  const empties=DECKS.filter(d=>d.empty).length;
+  $('#sum').textContent=`${DECKS.length} mazzi · ${DECKS.reduce((a,d)=>a+d.cards,0).toLocaleString('it-IT')} carte${empties?' · '+empties+' vuoti':''}`;
+  $('#out').innerHTML=tops.length?`<div class="tree">${tops.map(k=>row(k,0,q)).join('')}</div>`:'<div class="msg">Nessun mazzo trovato.</div>';
+  document.querySelectorAll('#out .tg').forEach(b=>b.onclick=()=>{const k=b.dataset.t;OPEN.has(k)?OPEN.delete(k):OPEN.add(k);paint();});}
+async function load(fresh){
+  $('#out').innerHTML='<div class="spin"><i></i><span>Carico i mazzi da Anki…</span></div>';
+  try{const r=await fetch('/api/anki/decks'+(fresh?'?fresh=1':''));let d=null;try{d=await r.json()}catch(e){}
+    if(!r.ok)throw new Error((d&&d.detail)||r.statusText);
+    DECKS=d.decks||[];paint();
+  }catch(e){$('#sum').textContent='';$('#out').innerHTML=`<div class="err"><b>Impossibile leggere i mazzi.</b><br>${esc(e.message||e)}<br><button class="btn" id="retry">Riprova</button></div>`;$('#retry').onclick=()=>load(true);}}
+$('#q').oninput=paint;
+$('#all').onclick=()=>{ALL=!ALL;$('#all').textContent=ALL?'Comprimi':'Espandi';paint();};
+load();
+</script>
+</body></html>

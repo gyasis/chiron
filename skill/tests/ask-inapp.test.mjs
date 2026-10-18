@@ -14,11 +14,11 @@ function listeners() {
   const m = {};
   return { on: (t, f) => (m[t] ||= []).push(f), fire: (t, ev) => (m[t] || []).forEach(f => f(ev)) };
 }
-function askWindow({ search = '?inapp=1', ancestor = APP, framed = true } = {}) {
+function askWindow({ search = '?inapp=1', ancestor = APP, framed = true, path = '/ask/' } = {}) {
   const docL = listeners(), winL = listeners(), posted = [], attrs = {};
   const parent = { postMessage: (data, origin) => posted.push({ data, origin }) };
   const win = {
-    location: { search, href: LIB + '/ask/' + search, origin: LIB, ancestorOrigins: ancestor ? [ancestor] : [] },
+    location: { search, pathname: path, href: LIB + path + search, origin: LIB, ancestorOrigins: ancestor ? [ancestor] : [] },
     document: { referrer: '', addEventListener: docL.on, documentElement: { setAttribute: (k, v) => { attrs[k] = v; } } },
     addEventListener: winL.on, open: () => 'native-window',
   };
@@ -165,4 +165,41 @@ test('app bridge: theme is posted to the Ask frame at its origin, also on ready'
   api.theme('light');
   send({ type: 'chiron-ask:ready' });
   assert.deepEqual(opened, [['post', { type: 'chiron-app:theme', theme: 'light' }, LIB], ['post', { type: 'chiron-app:theme', theme: 'dark' }, LIB]]);
+});
+
+/* ---------- studio pages (Sessione / Ascolto / Mazzi) reuse the same bridge ---------- */
+test('studio page: links to OTHER pages (incl. /ask/) and _blank go to the app; in-page anchors stay', () => {
+  const { win, posted, docL } = askWindow({ path: '/mazzi', search: '?inapp=1' });
+  installInAppBridge(win);
+  posted.length = 0;
+  assert.equal(click(docL, anchor('/sessione?deck=Chiron%3A%3AQuaderno')), true);
+  assert.equal(click(docL, anchor('/ask/')), true);
+  assert.equal(click(docL, anchor('/ascolto', '_blank')), true);
+  assert.equal(click(docL, anchor('#top')), false);
+  assert.deepEqual(posted.map(p => p.data.url), [LIB + '/sessione?deck=Chiron%3A%3AQuaderno', LIB + '/ask/', LIB + '/ascolto']);
+});
+
+test('ask page keeps navigating inside /ask/ natively (unchanged)', () => {
+  const { win, posted, docL } = askWindow();
+  installInAppBridge(win); posted.length = 0;
+  assert.equal(click(docL, anchor('/ask/?q=x')), false);
+  assert.equal(click(docL, anchor('/sessione')), true);
+});
+
+test('app bridge, several frames: the message must come from one of OUR frames; studio paths load in-app', () => {
+  const a = appWindow(), seen = [];
+  const mk = src => ({ contentWindow: { postMessage: (d, o) => seen.push([src, JSON.parse(JSON.stringify(d)), o]) }, dataset: { src } });
+  const askF = mk('ask'), studioF = mk('studio'), idle = { contentWindow: { postMessage: () => seen.push(['idle']) }, dataset: {} };
+  const handled = [];
+  const api = a.Nav.askBridge(a.win, { frames: () => [askF, studioF, idle], origin: () => LIB, currentTheme: () => 'dark',
+    openLesson: () => {}, openExternal: url => handled.push(['ext', url]),
+    openStudio: u => (['/sessione', '/mazzi'].includes(u.pathname) ? (handled.push(['studio', u.pathname + u.search]), true) : false) });
+  const send = (src, url) => a.winL.fire('message', { source: src.contentWindow, origin: LIB, data: { type: 'chiron-ask:open', url } });
+  send(studioF, LIB + '/sessione?deck=Chiron');
+  send(studioF, LIB + '/oral');                       // not an in-app page -> system browser
+  send(askF, 'https://example.org/x');
+  send({ contentWindow: {} }, LIB + '/sessione');     // a stranger frame is ignored
+  assert.deepEqual(handled, [['studio', '/sessione?deck=Chiron'], ['ext', LIB + '/oral'], ['ext', 'https://example.org/x']]);
+  api.theme('light');                                 // every LOADED frame, not the idle one
+  assert.deepEqual(seen.map(x => x[0]), ['ask', 'studio']);
 });

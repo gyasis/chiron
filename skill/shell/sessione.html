@@ -4,6 +4,7 @@
 <meta name="theme-color" content="#1e3a5f">
 <script>try{if(new URLSearchParams(location.search).get('mode')==='pool')location.replace('/ascolto'+location.search);}catch(e){}</script>
 <script>try{var _t=localStorage.getItem('chiron.theme');if(_t)document.documentElement.setAttribute('data-theme',_t);}catch(e){}</script>
+<script src="/shell/inapp-boot.js"></script>
 <style>
 :root{
   --chiron-bg:#faf8f5;--chiron-surface:#fff;--chiron-elevated:#f0ebe4;
@@ -437,14 +438,16 @@ $('#pgo').onclick=async()=>{
   $('#p-status').innerHTML=`<div class="hint" style="margin-top:8px">${(d.items||[]).length} carte${d.anki?` · Anki: ${esc(d.anki.added)} aggiunte, ${esc(d.anki.duplicates)} duplicate`:''}</div>`;
   startDrill((d.items||[]).map(fromProd),'Produzione');
 };
-async function deckDrill(name,st,mapper,mode){
-  const d=await guarded(st,'Carico il mazzo…',()=>api('/api/sessione/deck?name='+encodeURIComponent(name)));
+async function deckDrill(name,st,mapper,mode,limit){
+  const d=await guarded(st,'Carico il mazzo…',()=>api('/api/sessione/deck?name='+encodeURIComponent(name)+(limit?'&limit='+limit:'')));
   if(d)startDrill((d.cards||[]).map(mapper),name,mode);
 }
 $('#pdeck').onclick=()=>deckDrill('Chiron::Produzione',$('#p-status'),fromCard);
 const quadMap=c=>c.audio||c.it?(c.it?fromQuad(c):fromCard(c)):fromCard(c);
 $('#adeck').onclick=()=>deckDrill('Chiron::Quaderno',$('#a-status'),quadMap);
 $('#adict').onclick=()=>deckDrill('Chiron::Quaderno',$('#a-status'),quadMap,'dettato');
+// /mazzi links here with ?deck=<name>: drill that deck now (due cards first, 40 at a time — a deck can hold 35k)
+try{const dk=new URLSearchParams(location.search).get('deck');if(dk)deckDrill(dk,$('#s-status'),fromCard,null,40);}catch(e){}
 
 // ---------- Ascolto / Quaderno ----------
 $('#ago').onclick=async()=>{

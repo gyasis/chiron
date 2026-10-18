@@ -36,13 +36,16 @@ export function installInAppBridge(win, { origins = APP_ORIGINS, onTheme } = {})
   };
   // Safety net for anything that calls window.open directly.
   win.open = url => { if (url) open(String(url)); return null; };
-  // Links that would leave Ask: a new window, or a page outside /ask/ (which would nest the app inside the frame).
+  // Links that would leave this page: a new window, or any other page (which would nest the app inside the frame).
+  // On /ask/ the whole /ask/ app counts as "this page"; Sessione / Ascolto / Mazzi reuse this bridge and are single pages,
+  // so their links to each other go to the app, which loads them into its own studio overlay.
   doc.addEventListener('click', ev => {
     const a = ev.target && ev.target.closest && ev.target.closest('a[href]');
     if (!a || ev.defaultPrevented) return;
     const u = new URL(a.getAttribute('href'), win.location.href);
     if (u.href.split('#')[0] === win.location.href.split('#')[0]) return;   // in-page anchor
-    if (a.target !== '_blank' && u.origin === win.location.origin && u.pathname.startsWith('/ask/')) return;
+    const scope = win.location.pathname.startsWith('/ask/') ? '/ask/' : win.location.pathname;
+    if (a.target !== '_blank' && u.origin === win.location.origin && u.pathname.startsWith(scope)) return;
     ev.preventDefault();
     open(u.href);
   }, true);
