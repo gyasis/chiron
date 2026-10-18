@@ -57,6 +57,7 @@ let skipPassage = false;
 let dryRun = false;
 let noQc = false;
 let onlyKinds = null;   // --only summary,shortened : bake just these artifact kinds
+let learnerVoice = null; // --learner-voice it_giuseppe : VOICE the learner's dialogue turns with this voice instead of skipping them
 
 for (let i = 1; i < argv.length; i++) {
   if (argv[i] === '--persona' && argv[i + 1]) { personaIdArg = argv[++i]; continue; }
@@ -66,6 +67,7 @@ for (let i = 1; i < argv.length; i++) {
   if (argv[i] === '--no-passage') { skipPassage = true; continue; }
   if (argv[i] === '--no-qc') { noQc = true; continue; }
   if (argv[i] === '--only' && argv[i + 1]) { onlyKinds = new Set(argv[++i].split(',')); continue; }
+  if (argv[i] === '--learner-voice' && argv[i + 1]) { learnerVoice = argv[++i]; continue; }
   if (argv[i] === '--dry-run') { dryRun = true; continue; }
 }
 
@@ -109,6 +111,12 @@ for (const voiceId of Object.values(persona.voices)) {
     continue;
   }
   voices[voiceId] = voiceRegistry[voiceId];
+}
+/* --learner-voice: Gyasi, 2026-10-18 — "voice my lines, but with one of the male Italian personas". Opt-in per bake;
+   without it the domain rule stands (learner turns are not voiced). */
+if (learnerVoice) {
+  if (!voiceRegistry[learnerVoice]) { process.stderr.write(`bake-lesson-audio: --learner-voice '${learnerVoice}' is not in the voice registry\n`); process.exit(1); }
+  voices[learnerVoice] = voiceRegistry[learnerVoice];
 }
 
 // Learner name for the name-merge pass (Fix 3) — env first (set by the chain), else
@@ -272,7 +280,7 @@ if (!skipDialogues) {
     const dlgId = dlg.id;
     const inner = dlg.inner;
     let voiced = 0;
-    let skipped = 0;
+    let skipped = 0, learnerVoiced = 0;
     const segments = [];
 
     // Find each turn div within the dialogue inner HTML
@@ -289,7 +297,8 @@ if (!skipDialogues) {
 
       if (!isPersonaA && !isPersonaB && !hasDataLearner) continue; // not a turn div
 
-      if (!isPersonaA || isPersonaB || hasDataLearner) {
+      const isLearner = !isPersonaA || isPersonaB || hasDataLearner;
+      if (isLearner && !learnerVoice) {
         // Learner turn — count and skip
         skipped++;
         continue;
@@ -327,11 +336,12 @@ if (!skipDialogues) {
       segments.push({
         lang: 'it',
         text,
-        voice: persona.voices.it,
+        voice: isLearner ? learnerVoice : persona.voices.it,
         gapAfterMs: 1700,
         pitchSemitones: 0,
       });
       voiced++;
+      if (isLearner) learnerVoiced++;
     }
 
     if (segments.length === 0) {
@@ -342,7 +352,7 @@ if (!skipDialogues) {
     // Last segment gets 0 gap
     segments[segments.length - 1].gapAfterMs = 0;
 
-    process.stderr.write(`[bake-lesson-audio] dlg ${dlgId}: voiced=${voiced} skipped(learner)=${skipped}\n`);
+    process.stderr.write(`[bake-lesson-audio] dlg ${dlgId}: voiced=${voiced} skipped(learner)=${skipped}${learnerVoice ? ` learner-voiced(${learnerVoice})=${learnerVoiced}` : ''}\n`);
     totalVoiced += voiced;
     totalSkipped += skipped;
 
