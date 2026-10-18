@@ -13,7 +13,9 @@ for nobody (241 s, 172 s, 125 s after Chiron had already given up).
 Only model calls (POST …/api/chat, …/chat/completions, …) are single-flight; GET /api/tags etc. pass through.
 """
 from __future__ import annotations
-import asyncio, contextlib, sys
+import asyncio
+import json
+import re, contextlib, sys
 
 import httpx
 from fastapi import HTTPException
@@ -53,6 +55,48 @@ async def _watch_disconnect(request: Request, gone: asyncio.Event, cancel: async
             gone.set()
             cancel.set()
             return
+
+
+_SPEAK_OPEN = re.compile(r"\[\[\s*SPEAK\s*\]\]", re.I)
+_SPEAK_CLOSE = re.compile(r"\[\[\s*/\s*SPEAK\s*\]\]", re.I)
+
+
+class SpeakCloser:
+    """Ask voices the text between [[SPEAK]] and [[/SPEAK]]. Some models (gemma4:12b, 2026-10-18) open the block and
+    never close it, so acolyte shows the raw tag and has nothing to speak. Watching Ollama's /api/chat NDJSON, this
+    adds the missing [[/SPEAK]] just before the final done:true line (or to the content of a non-streamed reply)."""
+
+    def __init__(self) -> None:
+        self.buf, self.text = b"", ""
+
+    def _fix(self, line: bytes) -> list[bytes]:
+        try:
+            obj = json.loads(line)
+        except ValueError:
+            return [line]
+        if not isinstance(obj, dict):
+            return [line]
+        msg = obj.get("message") if isinstance(obj.get("message"), dict) else None
+        if msg and isinstance(msg.get("content"), str):
+            self.text += msg["content"]
+        if obj.get("done") and len(_SPEAK_OPEN.findall(self.text)) > len(_SPEAK_CLOSE.findall(self.text)):
+            _log("closing an unterminated [[SPEAK]] block so Ask can voice it")
+            if msg and msg.get("content"):                 # non-streamed: the whole reply is in this one object
+                msg["content"] += "\n[[/SPEAK]]"
+                return [json.dumps(obj).encode()]
+            extra = {"model": obj.get("model"), "created_at": obj.get("created_at"),
+                     "message": {"role": "assistant", "content": "\n[[/SPEAK]]"}, "done": False}
+            return [json.dumps(extra).encode(), line]
+        return [line]
+
+    def feed(self, chunk: bytes) -> bytes:
+        self.buf += chunk
+        *lines, self.buf = self.buf.split(b"\n")
+        return b"".join(l + b"\n" for line in lines for l in self._fix(line))
+
+    def flush(self) -> bytes:
+        rest, self.buf = self.buf, b""
+        return b"".join(self._fix(rest)) if rest.strip() else rest
 
 
 async def forward(request: Request, url: str, body: bytes | None, headers: dict, timeout: httpx.Timeout) -> Response:
@@ -102,6 +146,8 @@ async def forward(request: Request, url: str, body: bytes | None, headers: dict,
         raise
 
     # 2. stream it through; a disconnect or a newer request closes the upstream mid-stream
+    closer = SpeakCloser() if url.rstrip("/").endswith("api/chat") and r.status_code == 200 else None
+
     async def chunks():
         it = r.aiter_raw().__aiter__()
         stop = asyncio.ensure_future(cancel.wait())
@@ -116,9 +162,14 @@ async def forward(request: Request, url: str, body: bytes | None, headers: dict,
                     _log(f"{key or url}: upstream closed mid-stream — {why()}")
                     return
                 try:
-                    yield nxt.result()
+                    data = nxt.result()
                 except StopAsyncIteration:
+                    if closer:
+                        tail = closer.flush()
+                        if tail:
+                            yield tail
                     return
+                yield closer.feed(data) if closer else data
         except httpx.HTTPError as e:                       # e.g. a >read-timeout gap between chunks
             _log(f"{key or url}: upstream stream failed: {type(e).__name__}: {e}")
         finally:

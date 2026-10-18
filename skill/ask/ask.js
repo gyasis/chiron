@@ -141,7 +141,9 @@ async function boot() {
       // only supplies cosine-scored passages, and returns nothing at all when
       // the sidecar is missing, partial, or the embedder is down.
       plugins: [semantic.plugin],
-      voice: { enabled: true },
+      // autoSpeak: the [[SPEAK]] block of every reply goes to Lucrezia (OmniVoice via say-shim.js in the app) and plays
+      // by itself — Gyasi, 2026-10-18: "anything under the speak tag, it automatically does that".
+      voice: { enabled: true, autoSpeak: true },
       // dbName, NOT namespace — StorageConfig has no `namespace`, so the old
       // key was silently ignored and this instance shared the default
       // IndexedDB with any other acolyte mounted on the same origin.
