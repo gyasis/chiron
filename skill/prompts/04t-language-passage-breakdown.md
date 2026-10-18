@@ -115,9 +115,9 @@ answer set.
   <full source passage, all sentences, verbatim>
 </blockquote>
 ```
-Token-based CSS only (`.passage-full{…border-left:4px solid var(--chiron-accent);
+Token-based CSS only (`.passage-full{…border:1px solid var(--chiron-border);
 background:var(--chiron-surface);font-size:1.25rem;line-height:1.85;…}`, no hex,
-`quotes:none` + suppressed `::before/::after`). Order in section 1:
+`quotes:none` + suppressed `::before/::after`; NEVER a thick coloured left/top edge on a box — design rule R-DT3). Order in section 1:
 **full passage (read) → read-first audio (hear) → annotated-passage (dissect).**
 
 ## Read-first passage reader (top of section 1 — BEFORE the breakdown)

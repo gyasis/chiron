@@ -1007,7 +1007,7 @@
         .mm-col-label { font-family: var(--chiron-font-heading); font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--chiron-muted); padding-bottom: var(--chiron-space-2); border-bottom: 1px solid var(--chiron-divider); margin-bottom: var(--chiron-space-1); }
         .mm-tile { font-family: var(--chiron-font-heading); font-size: 0.95em; font-weight: 600; padding: var(--chiron-space-3) var(--chiron-space-4); border: 1.5px solid var(--chiron-border); border-radius: var(--chiron-radius-md); background: var(--chiron-surface); color: var(--chiron-fg); cursor: pointer; transition: background 0.15s ease, border-color 0.15s ease, transform 0.1s ease; text-align: left; line-height: 1.3; }
         .mm-tile:hover:not([disabled]) { background: var(--chiron-elevated); border-color: var(--chiron-accent-light); transform: translateY(-1px); }
-        .mm-tile.mm-selected { border-color: var(--chiron-accent); background: var(--chiron-elevated); box-shadow: 0 0 0 2px var(--chiron-accent); }
+        .mm-tile.mm-selected { border-color: var(--chiron-accent); background: color-mix(in srgb, var(--chiron-accent) 14%, var(--chiron-elevated)); }
         .mm-tile.mm-matched { border-color: var(--chiron-success); background: var(--chiron-elevated); color: var(--chiron-success); opacity: 0.7; cursor: default; }
         .mm-tile.mm-wrong { border-color: var(--chiron-error); background: var(--chiron-elevated); animation: mm-shake 0.35s ease; }
         @keyframes mm-shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-4px); } 75% { transform: translateX(4px); } }

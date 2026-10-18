@@ -426,9 +426,7 @@ html.chiron-tutor-pushed body {
 
 /* Selectable / saved highlight-chip states (batch dispatch) */
 .ct-chip.selected {
-  border-color: var(--color-accent, #D94F30);
   background: var(--color-accent-light, #FDEEE9);
-  box-shadow: 0 0 0 2px var(--color-accent-light, #FDEEE9);
 }
 .ct-chip.saved {
   background: #fde68a;
@@ -633,8 +631,8 @@ html.chiron-tutor-pushed body {
 }
 .ct-imgcell.broken { display: none; }
 .ct-imgcell.sel {
-  border-color: var(--color-accent, #D94F30);
-  box-shadow: 0 0 0 2px var(--color-accent, #D94F30);
+  /* selected state is carried by the star badge, not a coloured ring (R-DT3) */
+  border-color: transparent;
 }
 .ct-imgcell-star {
   position: absolute;

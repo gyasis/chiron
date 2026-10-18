@@ -52,8 +52,9 @@ body{background:var(--bg);color:var(--fg);font-family:var(--fb);height:100vh;ove
 .hchip.on .bx{background:var(--ok)}.hchip.off{opacity:.5}.hchip.off .hn{text-decoration:line-through}
 /* tiles */
 .tgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:8px}
-.tcard{background:var(--surface);border-radius:14px;overflow:hidden;display:flex;flex-direction:column}
-.tcard .tstrip{height:5px}.tcard.m .tstrip{background:var(--med)}.tcard.mi .tstrip{background:var(--medit)}.tcard.l .tstrip{background:var(--lang)}.tcard.q .tstrip{background:var(--border)}
+.tcard{background:var(--surface);border:1px solid var(--divider);border-radius:14px;overflow:hidden;display:flex;flex-direction:column}
+/* no accent edge on cards (R-DT3): domain is carried by the .tag chip; the old coloured top strip is now an inert spacer */
+.tcard .tstrip{height:4px}
 .tcard .tbd{padding:10px 11px 0;flex:1}
 .tcard .tt{font-family:var(--fh);font-weight:700;font-size:13px;line-height:1.25;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
 .tcard .tsub{font-size:10px;color:var(--muted);margin-top:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -67,13 +68,13 @@ body{background:var(--bg);color:var(--fg);font-family:var(--fb);height:100vh;ove
 .row{display:flex;gap:12px;align-items:center;padding:13px 4px;border-bottom:1px solid var(--divider)}
 /* lesson tags: chip in the tag colour; a highlight tag boxes the card/row; Focus chips narrow the list */
 .ltag{display:inline-block;font-size:9.5px;font-weight:700;padding:1px 7px;border-radius:99px;margin:4px 4px 0 0;color:var(--tagc);background:color-mix(in srgb,var(--tagc) 14%,transparent)}
-.tcard.hl{outline:2px solid var(--hlc);outline-offset:-2px;background:color-mix(in srgb,var(--hlc) 6%,var(--surface))}
-.row.hl{box-shadow:inset 0 0 0 2px var(--hlc);border-radius:10px;padding-left:8px;background:color-mix(in srgb,var(--hlc) 6%,transparent)}
+.tcard.hl{background:color-mix(in srgb,var(--hlc) 10%,var(--surface))}
+.row.hl{border-radius:10px;padding-left:8px;background:color-mix(in srgb,var(--hlc) 10%,transparent)}
 .chip.fx{background:color-mix(in srgb,var(--hlc) 14%,var(--elevated));color:var(--hlc);font-weight:700}
 .chip.fx.on{background:var(--hlc);color:#fff}
 .saveall{display:block;margin:4px 0 10px;padding:10px 14px;border-radius:12px;background:var(--hlc,var(--accent));color:#fff;font-weight:700;font-size:13.5px;text-align:center}
 .offbanner{background:var(--reviewbg);color:var(--reviewfg);border-radius:12px;padding:10px 12px;font-size:12.5px;margin:2px 0 10px}
-.row .edge{width:5px;align-self:stretch;min-height:38px;border-radius:3px;flex:0 0 auto}
+.row .edge{width:9px;height:9px;align-self:flex-start;margin-top:8px;border-radius:50%;flex:0 0 auto}
 .row.m .edge{background:var(--med)}.row.mi .edge{background:var(--medit)}.row.l .edge{background:var(--lang)}
 .row .body{flex:1;min-width:0}
 .row .t{font-family:var(--fh);font-weight:600;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -176,7 +177,7 @@ body{background:var(--bg);color:var(--fg);font-family:var(--fb);height:100vh;ove
 .actsum .pill2 span{font-size:10.5px;color:var(--muted)}
 .actsum .pill2.live b{color:var(--accent)}.actsum .pill2.ok b{color:var(--ok)}.actsum .pill2.err b{color:#dc2626}
 .acard{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:13px 14px;margin-bottom:10px}
-.acard.live{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent) inset}
+.acard.live{background:color-mix(in srgb,var(--accent) 7%,var(--surface))}
 .acard .ah{display:flex;align-items:center;gap:9px}
 .acard .ah .sp{width:14px;height:14px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin360 .7s linear infinite;flex:0 0 auto}
 .acard .ah .ico{width:20px;height:20px;border-radius:6px;display:grid;place-items:center;font-size:12px;flex:0 0 auto}
