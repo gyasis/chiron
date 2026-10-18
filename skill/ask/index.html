@@ -5,6 +5,7 @@
 <script>try{var _t=localStorage.getItem('chiron.theme');if(_t)document.documentElement.setAttribute('data-theme',_t);}catch(e){}
 /* ?inapp=1 = embedded in the phone app's Chiedi overlay: the app owns navigation + theme, and Android WebView has no Web Speech input */
 try{var _q=new URLSearchParams(location.search);if(_q.get('inapp')==='1'){document.documentElement.setAttribute('data-inapp','');var _th=_q.get('theme');if(_th)document.documentElement.setAttribute('data-theme',_th);}}catch(e){}</script>
+<script src="./say-shim.js"></script><!-- no Web Speech output in Android WebView: 🔊 → Lucrezia via /api/oral/say -->
 <link rel="stylesheet" href="./skin.css">
 <style>
 :root{
