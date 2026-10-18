@@ -165,6 +165,28 @@ class Themes(unittest.TestCase):
         self.assertTrue(st["reachable"], st)
         ctx.close()
 
+    def test_hidden_sidebar_always_has_a_menu(self):
+        """769-880 px: the lessons hide the theme bar and add no ☰ of their own (the Pixel Fold's inner screen,
+        2026-10-18). shell/lesson-nav.js must add one; elsewhere exactly one way in must exist."""
+        vis = """s => { const e = document.querySelector(s); if (!e) return false; const c = getComputedStyle(e);
+                   if (c.display === 'none' || c.visibility === 'hidden') return false;
+                   const r = e.getBoundingClientRect(); return r.width > 0 && r.height > 0 && r.left < innerWidth; }"""
+        for slug in ("lang", "med"):
+            for w in (412, 830, 1200):
+                with self.subTest(slug=slug, width=w):
+                    ctx, pg, errs = self.page(slug, w, "?inapp=1")
+                    ours, theirs = pg.evaluate(f"[({vis})('.cl-nav-btn'), ({vis})('.chiron-hamburger')]")
+                    bar = pg.evaluate(f"({vis})('.theme-bar') || ({vis})('.theme-switcher')")
+                    self.assertLessEqual(int(ours) + int(theirs), 1, f"{w}px: two ☰ buttons")
+                    self.assertTrue(ours or theirs or bar, f"{w}px: no way to reach the theme picker")
+                    if ours:
+                        pg.click(".cl-nav-btn")
+                        t = pg.evaluate("document.querySelector('.cl-nav-themes button:not([aria-pressed=true])').dataset.t")
+                        pg.click(f'.cl-nav-themes button[data-t="{t}"]')
+                        self.assertEqual(pg.evaluate("document.documentElement.dataset.theme"), t)
+                    self.assertEqual(errs, [])
+                    ctx.close()
+
 
 if __name__ == "__main__":
     unittest.main()

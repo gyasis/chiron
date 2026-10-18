@@ -22,7 +22,7 @@
 
   const css = `
 .tp-fab{position:absolute;z-index:45;left:14px;bottom:calc(14px + env(safe-area-inset-bottom));display:flex;align-items:center;gap:8px;border:none;border-radius:99px;
-  background:var(--accent);color:#fff;font-family:var(--fh);font-weight:700;font-size:14px;padding:12px 18px 12px 14px;box-shadow:0 6px 20px rgba(0,0,0,.28);touch-action:none;user-select:none;-webkit-user-select:none}
+  background:var(--accent);color:#fff;font-family:var(--fh);font-weight:700;font-size:14px;padding:12px 18px 12px 14px;box-shadow:0 6px 20px rgba(0,0,0,.28);white-space:nowrap;touch-action:none;user-select:none;-webkit-user-select:none}
 .tp-fab svg{width:20px;height:20px;flex:0 0 auto}
 .tp-fab.hide{display:none}
 .tp-panel{position:fixed;z-index:50;right:0;bottom:0;left:0;margin:0 auto;width:100%;max-width:720px;height:min(82vh,820px);background:var(--surface);color:var(--fg);
@@ -352,7 +352,7 @@
     $('tp-sub').textContent = lessonTitle();
   }
   function openPanel() { resetIfNewLesson(); if (hlSlug !== OPEN_SLUG && highlights.length) { highlights = []; hlSlug = null; paintHl(); } panel.classList.add('open'); fab.classList.add('hide'); loadModels(); fastInit(); if (!phoneVoiceOn()) warmMic(); }
-  function closePanel() { panel.classList.remove('open'); stopSpeaking(); releaseMic(); if (document.getElementById('lesson').classList.contains('open')) fab.classList.remove('hide'); }
+  function closePanel() { panel.classList.remove('open'); stopSpeaking(); releaseMic(); if (document.getElementById('lesson').classList.contains('open')) { fab.classList.remove('hide'); placeFab(); } }
   $('tp-close').onclick = closePanel;
 
   // FAB visibility follows the lesson overlay (class toggled by app.js openLesson/closeLesson).
@@ -360,13 +360,27 @@
     const open = document.getElementById('lesson').classList.contains('open');
     if (!open) { panel.classList.remove('open'); stopSpeaking(); }
     fab.classList.toggle('hide', !open || panel.classList.contains('open'));
+    placeFab();
     if (!open) pending = null; paintPop();
   }).observe(document.getElementById('lesson'), { attributes: true, attributeFilter: ['class'] });
 
   // FAB: tap opens, drag moves it (so it can be parked off a lesson's own controls); position persists.
+  // The saved spot is re-fitted into the current screen every time the button shows and on resize: the Fold's
+  // two screens differ in size, and an unfitted spot left the button off-screen (2026-10-18). The fitted spot
+  // is not saved, so the saved one still applies when the bigger screen comes back.
+  let fabPos = null;
+  try { const p = JSON.parse(lsGet(LSK_POS, 'null')); if (p && isFinite(p.l) && isFinite(p.t)) fabPos = p; } catch (e) {}
+  function placeFab() {
+    if (!fabPos || fab.classList.contains('hide')) return;
+    const pr = fab.parentElement.getBoundingClientRect();
+    if (!pr.width || !pr.height) return;
+    fab.style.bottom = 'auto';
+    fab.style.left = Math.max(4, Math.min(fabPos.l, pr.width - fab.offsetWidth - 4)) + 'px';
+    fab.style.top = Math.max(4, Math.min(fabPos.t, pr.height - fab.offsetHeight - 4)) + 'px';
+  }
+  window.addEventListener('resize', placeFab);
   (function () {
     let sx, sy, ox, oy, moved = false, dragging = false;
-    try { const p = JSON.parse(lsGet(LSK_POS, 'null')); if (p) { fab.style.left = p.l + 'px'; fab.style.bottom = 'auto'; fab.style.top = p.t + 'px'; } } catch (e) {}
     fab.addEventListener('pointerdown', e => { dragging = true; moved = false; sx = e.clientX; sy = e.clientY; const r = fab.getBoundingClientRect(), pr = fab.parentElement.getBoundingClientRect(); ox = r.left - pr.left; oy = r.top - pr.top; fab.setPointerCapture(e.pointerId); });
     fab.addEventListener('pointermove', e => {
       if (!dragging) return; const dx = e.clientX - sx, dy = e.clientY - sy;
@@ -377,7 +391,7 @@
     });
     fab.addEventListener('pointerup', e => {
       dragging = false;
-      if (moved) { lsSet(LSK_POS, JSON.stringify({ l: parseFloat(fab.style.left), t: parseFloat(fab.style.top) })); return; }
+      if (moved) { fabPos = { l: parseFloat(fab.style.left), t: parseFloat(fab.style.top) }; lsSet(LSK_POS, JSON.stringify(fabPos)); return; }
       openPanel();
     });
   })();
