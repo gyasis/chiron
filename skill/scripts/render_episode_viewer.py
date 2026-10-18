@@ -509,6 +509,11 @@ _setBarH(); addEventListener('resize',_setBarH); addEventListener('orientationch
 setMode((()=>{try{return localStorage.getItem('chiron_mode')||'reader';}catch(e){return 'reader';}})());
 _setBarH();   // re-measure after setMode (mode can change bar layout)
 selectScene(0);
+// Deep link "#t=<seconds>" (Ask's "open the lesson ↗" on a video citation): jump straight to that moment. The
+// timeupdate handler then selects the scene that contains it. play() may be refused without a gesture; the seek stays.
+(function(){const m=location.hash.match(/^#t=(\d+(?:\.\d+)?)/); if(!m) return;
+  const t=+m[1], si=scenes.findIndex(s=>t>=s.start && t<s.end); if(si>=0) selectScene(si);
+  const go=()=>seek(si>=0?scenes[si].start:t); if(vid.readyState>=1) go(); else vid.addEventListener('loadedmetadata',go,{once:true});})();
 </script>
 <script src="tutor.js"></script>
 """
