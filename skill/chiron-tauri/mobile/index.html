@@ -185,6 +185,10 @@ body{background:var(--bg);color:var(--fg);font-family:var(--fb);height:100vh;ove
 .speed{display:flex;justify-content:center;gap:8px;margin:0 0 10px}
 .speed button{border:1px solid var(--border);background:none;color:var(--fg2);font-family:var(--fh);font-weight:700;font-size:12px;padding:6px 12px;border-radius:99px}
 .speed button.on{background:var(--elevated);color:var(--accent);border-color:var(--accent)}
+.plcap{margin:0 0 10px;padding:12px 14px;border-radius:14px;background:var(--elevated);min-height:3.2em}
+.plcap-it{font-weight:600;font-size:16px;line-height:1.4}.plcap-en{color:var(--muted);font-size:14px;line-height:1.4;margin-top:4px}
+.plcap .now{color:var(--fg)}.plcap .was{opacity:.55}
+.speed button.captog[aria-pressed="true"]{background:var(--elevated);color:var(--accent);border-color:var(--accent)}
 .pllist{flex:1;min-height:60px;overflow-y:auto;border-top:1px solid var(--divider);padding-top:4px}
 .plg{font-family:var(--fh);font-weight:700;font-size:10.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin:10px 4px 2px}
 .pli{display:flex;align-items:center;gap:10px;width:100%;text-align:left;border:none;background:none;color:var(--fg);font:inherit;font-size:13.5px;padding:9px 6px;border-radius:9px}
@@ -355,7 +359,8 @@ body{background:var(--bg);color:var(--fg);font-family:var(--fb);height:100vh;ove
         <button id="pl-next" aria-label="Traccia successiva"><svg viewBox="0 0 24 24" width="26" height="26"><path d="M16 5h2v14h-2zM4 5v14l10.5-7z" fill="currentColor"/></svg></button>
         <button id="pl-fwd" aria-label="Avanti di 15 secondi" class="t15">+15</button>
       </div>
-      <div class="speed" id="pl-speed" role="group" aria-label="Velocità"><button data-r="0.75">0,75x</button><button data-r="1" class="on">1x</button><button data-r="1.25">1,25x</button></div>
+      <div class="speed" id="pl-speed" role="group" aria-label="Velocità"><button data-r="0.75">0,75x</button><button data-r="1" class="on">1x</button><button data-r="1.25">1,25x</button><button id="pl-captog" class="captog" aria-pressed="false" hidden>Aa testo</button></div>
+      <div class="plcap" id="pl-cap" hidden aria-live="polite"><div class="plcap-it" id="pl-cap-it"></div><div class="plcap-en" id="pl-cap-en"></div></div>
       <div class="pllist" id="pl-list"></div>
       <button class="savebtn" id="l-save">Salva questa lezione offline</button>
     </div>
