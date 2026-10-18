@@ -133,6 +133,38 @@
       try { navigator.mediaSession.setPositionState({ duration: tot, playbackRate: audio.playbackRate || 1, position: Math.min(cur, tot) }); } catch (e) {}
     }
   }
+  /* Subtitles ("Aa testo"): the drill's audio/pimsleur.timeline.json and the Riepilogo / Lezione completa
+     audio/<kind>.timeline.json (scripts/clip-timeline.py) — {durationS, timeline:[{t, who: target|cue|…, text}]}.
+     Shows the latest Italian (target) line and the latest English (cue) line up to the playhead. */
+  const TL = new Map();   // timeline url -> Promise<timeline array | null>
+  let capOn = ls.get('chiron.play.captions') !== '0', capKey = '';
+  const tlUrl = it => it && /^(pimsleur|summary|shortened)$/.test(it.kind) ? it.url.replace(/\.mp3(?=$|[?#])/, '.timeline.json') : null;
+  function timeline(it) {
+    const u = tlUrl(it); if (!u) return Promise.resolve(null);
+    if (!TL.has(u)) TL.set(u, fetch(u, { cache: 'no-store' }).then(r => r.ok ? r.json() : null)
+      .then(j => (j && Array.isArray(j.timeline) && j.timeline.length ? j.timeline : null))
+      .catch(e => { console.warn('chiron play: no timeline', u, e.message); return null; }));
+    return TL.get(u);
+  }
+  let capLines = null;
+  function caption() {
+    const it = S.items[S.idx], show = !!(capOn && capLines);
+    $('pl-cap').hidden = !show; $('pl-captog').hidden = !capLines; $('pl-captog').setAttribute('aria-pressed', String(capOn));
+    if (!show) return;
+    const t = audio.currentTime || 0; let lastIt = null, lastEn = null, cur = null;
+    for (const e of capLines) { if (e.t > t) break; cur = e; if (e.who === 'target') lastIt = e; else lastEn = e; }
+    const key = (lastIt ? lastIt.t : -1) + '|' + (lastEn ? lastEn.t : -1);
+    if (key === capKey) return; capKey = key;
+    $('pl-cap-it').textContent = lastIt ? lastIt.text : ''; $('pl-cap-it').className = 'plcap-it ' + (cur === lastIt ? 'now' : 'was');
+    $('pl-cap-en').textContent = lastEn ? lastEn.text : ''; $('pl-cap-en').className = 'plcap-en ' + (cur === lastEn ? 'now' : 'was');
+    if (!lastIt && !lastEn) $('pl-cap-it').textContent = it ? it.title : '';
+  }
+  function loadCaptions() {
+    const it = S.items[S.idx]; capLines = null; capKey = ''; caption();
+    timeline(it).then(lines => { if (S.items[S.idx] === it) { capLines = lines; capKey = ''; caption(); } });
+  }
+  $('pl-captog').onclick = () => { capOn = !capOn; ls.set('chiron.play.captions', capOn ? '1' : '0'); capKey = ''; caption(); };
+
   function meta() {
     if (!('mediaSession' in navigator) || typeof MediaMetadata === 'undefined') return;
     const it = S.items[S.idx]; if (!it) return;
@@ -145,14 +177,15 @@
     audio.src = S.items[i].url; audio.playbackRate = S.rate;
     audio.load();
     if (play) audio.play().catch(e => console.warn('chiron play: play() refused —', e && e.name));
-    meta(); render(); progress(); save(true);
+    meta(); render(); progress(); save(true); loadCaptions();
     const cur = document.querySelector('#pl-list .pli.cur'); if (cur && cur.scrollIntoView) cur.scrollIntoView({ block: 'nearest' });
   }
   const toggle = () => { if (S.idx < 0) { if (S.items.length) select(0, 0, true); return; } if (audio.paused) audio.play().catch(() => {}); else audio.pause(); };
   const step = d => { if (S.idx + d >= 0 && S.idx + d < S.items.length) select(S.idx + d, 0, true); };
 
   audio.addEventListener('loadedmetadata', () => { if (S.resumeAt > 0 && S.resumeAt < audio.duration - 1) audio.currentTime = S.resumeAt; S.resumeAt = 0; audio.playbackRate = S.rate; progress(); });
-  audio.addEventListener('timeupdate', () => { progress(); save(false); });
+  audio.addEventListener('timeupdate', () => { progress(); save(false); caption(); });
+  audio.addEventListener('seeked', () => { capKey = ''; caption(); });
   /* Android background playback (android/MainActivity.kt ChironAudio bridge → PlaybackService): playing keeps the app alive
      with the screen off / Fold closed; a pause keeps the notification (Riprendi) for 10 min, the playlist's end drops it. */
   const nat = () => (typeof root.ChironAudio !== 'undefined' ? root.ChironAudio : null);
