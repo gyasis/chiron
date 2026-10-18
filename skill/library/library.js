@@ -231,6 +231,7 @@ function tileHtml(l){
           : (l.bundle ? `<span class="taction dl" onclick="event.stopPropagation();LIB.download('${slug}')">⬇ Get</span>`
                       : `<span class="taction open" onclick="event.stopPropagation();LIB.open('${slug}')">Open →</span>`));
   else action = (l.bundle ? `<span class="taction dl" title="download .chiron bundle" onclick="event.stopPropagation();LIB.dlfile('${slug}')">⬇</span>` : '')
+              + (/^(language-it|medical-italian)$/.test(l.domain) ? `<span class="taction open" title="Listening cards from this lesson (Ascolto)" onclick="event.stopPropagation();location.href='/ascolto?lesson=${encodeURIComponent(slug)}'">🎧 Ascolta</span>` : '')
               + `<span class="taction open">Open →</span>`;
   const badges = (staged?`<span class="treview">🟡 REVIEW</span>`:'') + (l.bankable>0?`<span class="tbank">💰 ${l.bankable}</span>`:'')
     + (l.scope==='system'?`<span class="tag sys">organ system</span>`:'')
