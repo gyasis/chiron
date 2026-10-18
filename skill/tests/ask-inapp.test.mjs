@@ -160,6 +160,14 @@ test('app bridge: origin + source checked; non-http schemes refused', () => {
   assert.deepEqual(opened, []);
 });
 
+test('app bridge: matchmadness:// (the lesson "Gioca in Match Madness" button) is opened; other custom schemes stay refused', () => {
+  const { send, opened } = bridge();
+  send({ type: 'chiron-ask:open', url: 'matchmadness://raccolta?id=perche-l-anestesia&chiron=' + encodeURIComponent(LIB) });
+  send({ type: 'chiron-ask:open', url: 'chiron://lesson?id=x' });
+  send({ type: 'chiron-ask:open', url: 'matchmadness://raccolta?id=x' }, { origin: 'https://evil.example' });   // origin still checked
+  assert.deepEqual(opened, [['ext', 'matchmadness://raccolta?id=perche-l-anestesia&chiron=' + encodeURIComponent(LIB)]]);
+});
+
 test('app bridge: theme is posted to the Ask frame at its origin, also on ready', () => {
   const { api, send, opened } = bridge();
   api.theme('light');

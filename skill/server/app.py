@@ -2337,6 +2337,10 @@ def _lesson_with_tutor(slug: str, request: Request):
         nv = int((SKILL / "shell" / "lesson-nav.js").stat().st_mtime)
         rep = f'<script src="/shell/lesson-nav.js?v={nv}" defer></script>'
         html = html.replace("</body>", rep + "</body>", 1) if "</body>" in html else html + rep
+    if "mm-send.js" not in html and 'id="match-madness"' in html:     # "🎮 Gioca in Match Madness": send this lesson's pairs to the MM app
+        mv = int((SKILL / "shell" / "mm-send.js").stat().st_mtime)
+        rep = f'<script src="/shell/mm-send.js?v={mv}" defer></script>'
+        html = html.replace("</body>", rep + "</body>", 1) if "</body>" in html else html + rep
     if "chiron-lang-switch" not in html and "lang-switch.js" not in html and 'class="subsbar"' not in html:   # IT · IT+EN · EN switch (a lesson with its own inline copy keeps it, for offline)
         lv = int((SKILL / "shell" / "lang-switch.js").stat().st_mtime)
         rep = f'<script src="/shell/lang-switch.js?v={lv}" defer></script>'

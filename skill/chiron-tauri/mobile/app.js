@@ -493,7 +493,7 @@ async function openStudio(path) {
 const askBase = () => isHub() ? 'http://' + libHost() + ':8911' : LIB;
 const askOrigin = () => { try { return new URL(askBase()).origin; } catch (e) { return ''; } };
 // Ask asks US to open what would leave it: a new window inside the iframe would replace this whole WebView.
-const ASK = ChironNav.askBridge(window, { frames: () => ['ask-frame', 'studio-frame'].map(i => document.getElementById(i)), origin: askOrigin,
+const ASK = ChironNav.askBridge(window, { frames: () => ['ask-frame', 'studio-frame', 'l-frame'].map(i => document.getElementById(i)), origin: askOrigin,
   openLesson: (id, hash) => openLesson(slugOf(id), hash),
   // another in-app page (Sessione ↔ Ascolto, a Mazzi deck → its drill, Ask): load it here instead of the system browser
   openStudio: u => { if (u.pathname.startsWith('/ask/')) { openAsk(); return true; }

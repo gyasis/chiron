@@ -13,6 +13,9 @@ so Pixel, Galaxy and the web are one learner. (Named raccolte, not collections: 
     GET    /api/collections/{id}/pairs             [{it,en}] for Match Madness "Le mie raccolte"
     GET    /api/collections/{id}/cards             ?n=&offset=&dry=  audio cards, same shape as /api/pool/lesson, deck
                                                    Chiron::Raccolte::<name>; lesson-first sentences from listening.index.json
+    POST   /api/collections/from-lesson     {lesson:"<lesson id/path>"} upsert the collection of THAT lesson's Match Madness pairs
+                                                   (named after the lesson title, keyed by the lesson so a re-send updates it, never
+                                                   duplicates) -> {id,name,count,existing}; the lesson page's "Gioca in Match Madness"
     POST   /api/collections/{id}/lesson            {confirm:true, dry?} submit a lesson ON the collection through the
                                                    existing /generate job path (it shows in Jobs/Activity). No model call here.
 
@@ -27,6 +30,7 @@ from fastapi import APIRouter, HTTPException
 from fastapi.responses import HTMLResponse
 
 SKILL = Path(__file__).resolve().parent.parent
+GEN = Path(os.environ.get("CHIRON_GEN", Path.home() / "Documents/generated"))
 STATE_F = Path(os.environ.get("CHIRON_COLLECTIONS_FILE", SKILL / "server" / "state" / "collections.json"))
 DEFAULT_ID, DEFAULT_NAME = "parole-deboli", "Parole deboli"
 SOURCES = {"mm", "lesson", "ascolto", "capture", "manual"}
@@ -212,6 +216,103 @@ def lesson_request(col: dict) -> dict:
             "grounding": brief, "stage": "all", "source": "raccolte", "source_ref": col["id"], "extra": {}}
 
 
+# ── a lesson's Match Madness pairs → a collection ─────────────────────────────
+_JS_STR = r"""("(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*')"""
+
+
+def _js_str(lit: str) -> str:
+    """A JS string literal -> its value ('…' literals are re-quoted for the JSON parser)."""
+    if lit[0] == "'":
+        lit = '"' + lit[1:-1].replace("\\'", "'").replace('"', '\\"') + '"'
+    return json.loads(lit)
+
+
+def lesson_mm_pairs(html: str) -> list[dict]:
+    """The pairs a lesson's #match-madness section holds: the multi-set `const CONFIG = {...sets:[{pairs:[{left,right}]}]}`
+    form, or the single-set inline `var PAIRS = [{id, it, en}]` form. [] when the section or its data is absent."""
+    if 'id="match-madness"' not in html:
+        return []
+    out = []
+    i = html.find("const CONFIG = ")
+    if i >= 0:
+        try:
+            cfg, _ = json.JSONDecoder().raw_decode(html[i + len("const CONFIG = "):])
+            for st in cfg.get("sets", []):
+                out += [{"it": p.get("left", ""), "en": p.get("right", "")} for p in st.get("pairs", [])]
+        except ValueError as e:
+            _log(f"lesson CONFIG unreadable: {e}")
+    if not out:
+        m = re.search(r"var PAIRS\s*=\s*\[(.*?)\n\s*\];", html, re.S)
+        if m:
+            for blk in re.findall(r"\{[^{}]*\}", m.group(1)):
+                a = re.search(r"\bit\s*:\s*" + _JS_STR, blk)
+                b = re.search(r"\ben\s*:\s*" + _JS_STR, blk)
+                if a:
+                    try:
+                        out.append({"it": _js_str(a.group(1)), "en": _js_str(b.group(1)) if b else ""})
+                    except ValueError as e:
+                        _log(f"PAIRS entry skipped: {e}")
+    seen, rows = set(), []
+    for p in out:
+        it, en = re.sub(r"\s+", " ", p["it"]).strip(), re.sub(r"\s+", " ", p["en"]).strip()
+        if it and fold(it) not in seen:
+            seen.add(fold(it))
+            rows.append({"it": it, "en": en})
+    return rows
+
+
+def lesson_title(html: str, fallback: str) -> str:
+    import html as H
+    m = re.search(r"<title>(.*?)</title>", html, re.S | re.I)
+    t = H.unescape(re.sub(r"<[^>]+>", "", m.group(1))) if m else ""
+    t = re.sub(r"^\s*Chiron\s*·\s*", "", t)
+    return re.sub(r"\s+", " ", t).strip()[:60] or fallback
+
+
+def collection_from_lesson(lesson: str) -> dict:
+    """Idempotent: the collection is found by the lesson it came from (`lesson` field), so re-sending updates it;
+    items dedupe by folded Italian and an English that changed in the lesson is refreshed."""
+    parts = Path(str(lesson or "").strip("/")).parts
+    if not parts or ".." in parts:
+        raise HTTPException(400, "lesson is required (the lesson's id/path)")
+    key = "/".join(parts)
+    f = GEN / key / "lesson.html"
+    if not f.is_file():
+        raise HTTPException(404, f"no lesson {key!r}")
+    html = f.read_text(encoding="utf-8", errors="replace")
+    pairs = lesson_mm_pairs(html)
+    if not pairs:
+        raise HTTPException(404, f"lesson {key!r} has no Match Madness pairs")
+    name = lesson_title(html, parts[-1])
+    with _lock:
+        d = _load()
+        col = next((c for c in d["collections"] if c.get("lesson") == key), None)
+        existing = col is not None
+        if not col:
+            taken = {fold(c["name"]) for c in d["collections"]}
+            nm = name if fold(name) not in taken else f"{name} ({parts[-1][:24]})"
+            cid, base, n = slug(nm), slug(nm), 2
+            while any(c["id"] == cid for c in d["collections"]):
+                cid, n = f"{base}-{n}", n + 1
+            col = {"id": cid, "name": nm, "created_at": _now(), "lesson": key, "items": []}
+            d["collections"].append(col)
+        else:
+            by = {fold(i["it"]): i for i in col["items"]}
+            for p in pairs:                 # refresh an English the lesson has since corrected
+                cur = by.get(fold(p["it"]))
+                if cur and p["en"] and cur.get("en") != p["en"]:
+                    cur["en"] = p["en"]
+        _save(d)
+        cid, name = col["id"], col["name"]
+    for k in range(0, len(pairs), MAX_ITEMS_PER_POST):
+        add_items(cid, [{**p, "source": "lesson", "lesson": key, "section": "match-madness"}
+                        for p in pairs[k:k + MAX_ITEMS_PER_POST]])
+    with _lock:
+        count = len(_active(_get(_load(), cid)))
+    _log(f"from-lesson {key}: {cid} {count} pairs ({'updated' if existing else 'created'})")
+    return {"id": cid, "name": name, "count": count, "existing": existing}
+
+
 # ── routes ────────────────────────────────────────────────────────────────────
 def _guard(fn, *a):
     try:
@@ -251,6 +352,11 @@ def api_create(b: dict):
         d["collections"].append(col)
         _save(d)
         return {**_summary(col), "existing": False}
+
+
+@router.post("/api/collections/from-lesson")
+def api_from_lesson(b: dict):
+    return _guard(collection_from_lesson, b.get("lesson"))
 
 
 @router.get("/api/collections/{cid}")

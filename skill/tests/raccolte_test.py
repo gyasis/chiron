@@ -82,6 +82,37 @@ class T(unittest.TestCase):
         self.assertIsNone(d["next"])
         self.assertIsNone(d["sentences"][0]["noteId"])                            # dry: no Anki note
 
+    def test_from_lesson_is_idempotent_and_reads_both_formats(self):
+        gen = TMP / "gen"
+        (gen / "a" / "x").mkdir(parents=True)
+        (gen / "b").mkdir()
+        (gen / "a" / "x" / "lesson.html").write_text(
+            '<title>Chiron · Passaggio di consegne</title><section id="match-madness"><script>'
+            "var PAIRS = [\n { id: 'p1', it: \"il medico curante\", en: \"the GP\" },\n"
+            " { id: 'p2', it: 'l\\'ospedale', en: 'the hospital' },\n ];</script></section>")
+        (gen / "b" / "lesson.html").write_text(
+            "<title>Chiron · Perch\u00e9 l'anestesia?</title><section id=\"match-madness\"><script>const CONFIG = "
+            + json.dumps({"sets": [{"pairs": [{"left": "Ho intubato", "right": "I intubated"},
+                                                 {"left": "ho intubato", "right": "dup"}]}]}) + ";</script></section>")
+        R.GEN = gen
+        u = f"{D}/from-lesson"
+        a = c.post(u, json={"lesson": "a/x"}).json()
+        self.assertEqual((a["name"], a["count"], a["existing"]), ("Passaggio di consegne", 2, False))
+        self.assertEqual(c.get(f"{D}/{a['id']}/pairs").json()["pairs"],
+                         [{"it": "il medico curante", "en": "the GP"}, {"it": "l'ospedale", "en": "the hospital"}])
+        b = c.post(u, json={"lesson": "a/x"}).json()                       # re-send: same collection, no duplicates
+        self.assertEqual((b["id"], b["count"], b["existing"]), (a["id"], 2, True))
+        self.assertEqual(len([x for x in c.get(D).json()["collections"] if x["id"] == a["id"]]), 1)
+        (gen / "a" / "x" / "lesson.html").write_text((gen / "a" / "x" / "lesson.html").read_text().replace("the GP", "the family doctor"))
+        c.post(u, json={"lesson": "a/x"})                                  # a corrected English is refreshed
+        self.assertEqual(c.get(f"{D}/{a['id']}/pairs").json()["pairs"][0]["en"], "the family doctor")
+        m = c.post(u, json={"lesson": "b"}).json()                         # CONFIG form, deduped by folded Italian
+        self.assertEqual((m["name"], m["count"]), ("Perché l'anestesia?", 1))
+        self.assertEqual(c.post(u, json={"lesson": "nope"}).status_code, 404)
+        self.assertEqual(c.post(u, json={"lesson": "../etc"}).status_code, 400)
+        (gen / "b" / "lesson.html").write_text("<title>x</title>")
+        self.assertEqual(c.post(u, json={"lesson": "b"}).status_code, 404)  # no match-madness section
+
 
 if __name__ == "__main__":
     unittest.main()
