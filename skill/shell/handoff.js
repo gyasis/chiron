@@ -22,21 +22,24 @@
     for (var i = 0; i < hs.length; i++) { if (hs[i].getBoundingClientRect().top <= 90) cur = hs[i]; else break; }
     if (!cur) return { anchor: '', section: '' };
     var t = /^SECTION$/i.test(cur.tagName) ? (cur.querySelector('h1,h2,h3,h4') || cur) : cur;
-    return { anchor: cur.id, section: (t.textContent || '').replace(/\s+/g, ' ').trim().slice(0, 120) };
+    return { anchor: cur.id, section: (t.textContent || '').replace(/\s+/g, ' ').trim().replace(/^\d{1,2}\.?\s*(?=\S)/, '').slice(0, 120) };   // drop the TOC number ("4DAT in pratica")
   }
   function pos() {
     var h = document.documentElement.scrollHeight - innerHeight, s = section();
     return { lesson: lesson, anchor: s.anchor, section: s.section, scroll: h > 0 ? Math.round(scrollY / h * 1000) / 1000 : 0,
              title: (document.title || lesson).replace(/^Chiron\s*·\s*/, '').slice(0, 140), ts: Date.now() };
   }
-  function send(manual) {
+  /* force: write even without a section change (page hide). explicit: the learner pressed the button — that also writes
+     field "pin", which every Riprendi banner prefers for 30 min, so a tab left open elsewhere cannot overwrite a
+     deliberate hand-off with its automatic reports (seen 2026-10-18). */
+  function send(force, explicit) {
     var p = pos(), key = p.lesson + '#' + p.anchor;
-    if (!manual && key === last) return;               // throttle: only on a section change (or a pause after a move)
+    if (!force && key === last) return;               // throttle: only on a section change (or a pause after a move)
     last = key;
     if (inapp && framed) { try { parent.postMessage(Object.assign({ type: 'chiron-handoff:pos' }, p), '*'); } catch (e) { console.warn('chiron handoff: postMessage failed', e); } return Promise.resolve(true); }
     p.from = 'web';
     return fetch(API, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, keepalive: true,
-      body: JSON.stringify({ entries: { cur: { v: p, t: p.ts } } }) })
+      body: JSON.stringify({ entries: explicit ? { cur: { v: p, t: p.ts }, pin: { v: p, t: p.ts } } : { cur: { v: p, t: p.ts } } }) })
       .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return true; })
       .catch(function (e) { console.warn('chiron handoff: could not save position —', e.message); return false; });
   }
@@ -53,7 +56,7 @@
     'padding:9px 14px;border-radius:999px;border:1px solid rgba(127,127,127,.35);background:rgba(127,127,127,.12);color:inherit;' +
     'backdrop-filter:blur(6px);cursor:pointer');
   b.onclick = function () {
-    b.textContent = '…'; send(true).then(function (ok) {
+    b.textContent = '…'; send(true, true).then(function (ok) {
       b.textContent = ok ? '✓ Salvato — riprendi sul telefono' : '⚠ Non salvato';
       setTimeout(function () { b.textContent = '📱 Continua sul telefono'; }, 2600);
     });

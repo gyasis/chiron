@@ -10,10 +10,13 @@
 
   async function read() {
     const r = await fetch(SLOT(), { cache: 'no-store' }); if (!r.ok) throw new Error('HTTP ' + r.status);
-    const e = ((await r.json()).entries || {}).cur; return e && e.v && e.v.lesson ? e.v : null;
+    const en = (await r.json()).entries || {}, cur = en.cur && en.cur.v, pin = en.pin && en.pin.v;
+    // A deliberate hand-off ("pin", ≤30 min old) beats automatic position reports from other open screens.
+    const p = pin && pin.lesson && Date.now() - pin.ts < 30 * 60000 ? pin : cur; return p && p.lesson ? p : null;
   }
-  async function write(p) {
-    const r = await fetch(SLOT(), { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ entries: { cur: { v: p, t: p.ts } } }) });
+  async function write(p, explicit) {
+    const entries = explicit ? { cur: { v: p, t: p.ts }, pin: { v: p, t: p.ts } } : { cur: { v: p, t: p.ts } };
+    const r = await fetch(SLOT(), { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ entries }) });
     if (!r.ok) throw new Error('HTTP ' + r.status);
   }
   const ago = ts => { const m = Math.max(0, Math.round((Date.now() - ts) / 60000)); return m < 1 ? 'adesso' : m < 60 ? m + ' min fa' : m < 1440 ? Math.round(m / 60) + ' h fa' : Math.round(m / 1440) + ' g fa'; };
@@ -58,7 +61,7 @@
       const l = LESSONS.find(x => slugOf(x.id) === slug);
       const p = lastPos && slugOf(lastPos.lesson) === slug ? { ...lastPos, ts: Date.now() }
         : { lesson: l ? l.id : slug, anchor: '', section: '', scroll: 0, title: l ? l.title.replace(/^Chiron\s*·\s*/, '') : slug, ts: Date.now(), from: 'phone' };
-      try { await write(p); toast('Salvato — riprendi sul web'); } catch (e) { toast('Non salvato: ' + e.message); }
+      try { await write(p, true); toast('Salvato — riprendi sul web'); } catch (e) { toast('Non salvato: ' + e.message); }
     }, poll,
   };
   const tick = () => { if (!document.hidden) poll(); };
