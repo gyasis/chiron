@@ -23,7 +23,7 @@ from pathlib import Path
 import httpx
 from fastapi import FastAPI, File, HTTPException, Request, Response, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse, HTMLResponse
+from fastapi.responses import FileResponse, HTMLResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
@@ -2291,10 +2291,34 @@ async def _pool_private_network(request, call_next):
 
 # {slug:path}: library ids can be nested (chiron-medicina-italiana/situazioni/<x>); a one-segment {slug} let those
 # fall through to the static mount, unpatched (found 2026-10-18).
+def _flat_to_nested(slug: str) -> str | None:
+    """Nested lesson id whose flattened form (slashes -> dashes) is `slug`, from the library index; None if none."""
+    try:
+        idx = json.loads((GEN / "chiron-library" / "library.index.json").read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return None
+    items = idx.get("lessons") or idx.get("items") or idx
+    items = list(items.values()) if isinstance(items, dict) else items
+    for it in items if isinstance(items, list) else []:
+        lid = isinstance(it, dict) and it.get("id")
+        if lid and "/" in lid and lid.replace("/", "-") == slug and (GEN / lid / "lesson.html").exists():
+            return lid
+    return None
+
+
 @app.get("/lessons/{slug:path}/lesson.html", response_class=HTMLResponse)
-def _lesson_with_tutor(slug: str):
+def _lesson_with_tutor(slug: str, request: Request):
     p = GEN / slug / "lesson.html"
-    if ".." in Path(slug).parts or not p.exists():
+    if ".." in Path(slug).parts:
+        raise HTTPException(404, "lesson not found")
+    if not p.exists():
+        # A FLATTENED id ("chiron-medicina-italiana-situazioni-ordine-consegne", the phone app's slug and the library
+        # mirror's folder name) for a NESTED lesson ("chiron-medicina-italiana/situazioni/ordine-consegne"): redirect to
+        # the real path so the lesson AND its relative assets (audio/, themes/) resolve. Seen 2026-10-18 on the Fold.
+        nested = _flat_to_nested(slug)
+        if nested:
+            q = request.url.query
+            return RedirectResponse(f"/lessons/{nested}/lesson.html" + (f"?{q}" if q else ""), status_code=307)
         raise HTTPException(404, "lesson not found")
     html = p.read_text(encoding="utf-8")
     v = int((SKILL / "shell" / "tutor.js").stat().st_mtime)
