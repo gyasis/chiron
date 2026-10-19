@@ -26,13 +26,26 @@
     return;
   }
 
-  /* In the app, a link that would open a NEW window (target=_blank) replaces the whole app WebView. Keep it in this
-     frame instead: the app's lesson screen stays, and back returns to the page that linked. */
+  /* A lesson inside the app's lesson frame that lost ?inapp=1 (reached by a plain link or a script navigation) would
+     render the web chrome in the app — Tutor tab, "Continua sul telefono" (seen 2026-10-18 after a hub link). Reload
+     it with the marker. Framed + WebView UA = the app; a desktop page framing a lesson has no "; wv)". */
+  if (!inapp && framed && /; wv\)/.test(navigator.userAgent) && /\/lesson\.html$/.test(location.pathname)) {
+    var fix = new URL(location.href); fix.searchParams.set('inapp', '1');
+    location.replace(fix.href);
+    return;
+  }
+
+  /* In the app, keep every same-origin lesson link in this frame and carry ?inapp=1: a target=_blank link would replace
+     the whole app WebView, and a plain link would drop the marker. Back returns to the page that linked. */
   if (inapp && framed) document.addEventListener('click', function (e) {
-    var a = e.target && e.target.closest && e.target.closest('a[target]');
-    if (!a || !/^_(blank|top|parent)$/i.test(a.getAttribute('target') || '')) return;
+    var a = e.target && e.target.closest && e.target.closest('a[href]');
+    if (!a) return;
+    var t = a.getAttribute('target') || '';
+    if (t && !/^_(blank|top|parent|self)$/i.test(t)) return;   // a named frame: not ours
     var u; try { u = new URL(a.href, location.href); } catch (err) { return; }
     if (u.origin !== location.origin) return;            // external sites: leave to the app's own handling
+    if (!t && !/\/lesson\.html$/.test(u.pathname)) return;   // plain non-lesson links (anchors, assets) work as they are
+    if (!t && u.pathname === location.pathname) return;  // same-page anchor
     e.preventDefault();
     if (/\/lesson\.html$/.test(u.pathname) && !/[?&]inapp=1\b/.test(u.search)) u.searchParams.set('inapp', '1');
     location.href = u.href;

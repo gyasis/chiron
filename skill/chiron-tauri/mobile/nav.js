@@ -9,19 +9,26 @@
     const stack = [];   // ids of open overlays, in the order their history entries were pushed
     const el = id => doc.getElementById(id);
     const isOpen = id => el(id).classList.contains('open');
+    let z = 0;
     function open(id) {
       if (!isOpen(id)) el(id).classList.add('open');
+      // The newest overlay on top: they share one z-index, so DOM order won and an open lesson hid an Ascolto drill
+      // opened from Match Madness (2026-10-18). Inline z-index above the shared value, rising with each open.
+      el(id).style.zIndex = '';
+      const base = parseInt(win.getComputedStyle(el(id)).zIndex, 10) || 0;
+      el(id).style.zIndex = String(base + (++z));
       if (stack[stack.length - 1] === id) return;   // already the top entry (e.g. a second lesson replacing the first)
       stack.push(id); win.history.pushState({ chironOverlay: id, depth: stack.length }, '');
     }
     function close(id) {
+      el(id).style.zIndex = '';
       if (stack[stack.length - 1] === id) { win.history.back(); return; }   // popstate does the closing
       const i = stack.indexOf(id); if (i >= 0) stack.splice(i, 1);
       el(id).classList.remove('open');
     }
     win.addEventListener('popstate', ev => {
       const depth = (ev.state && ev.state.depth) || 0;
-      while (stack.length > depth) el(stack.pop()).classList.remove('open');
+      while (stack.length > depth) { const e = el(stack.pop()); e.classList.remove('open'); e.style.zIndex = ''; }
     });
     return { open, close, isOpen, stack };
   }

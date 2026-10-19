@@ -29,7 +29,17 @@
   border-radius:20px 20px 0 0;box-shadow:0 -8px 40px rgba(0,0,0,.3);display:flex;flex-direction:column;transform:translateY(105%);transition:transform .28s cubic-bezier(.2,.7,.2,1);
   padding-bottom:env(safe-area-inset-bottom);font-family:var(--fb)}
 .tp-panel.open{transform:none}
-@media (min-width:900px){.tp-panel{left:auto;right:18px;bottom:18px;border-radius:20px;height:min(86vh,900px)}}
+.tp-panel{height:min(75vh,820px)}
+.tp-panel.max{height:100%;max-width:none;border-radius:0;padding-top:env(safe-area-inset-top)}   /* full height reaches the status bar */
+@media (min-width:700px){
+  :root{--tpw:clamp(340px,42vw,460px)}
+  .tp-panel{left:auto;right:0;top:0;bottom:0;height:auto;width:var(--tpw);max-width:none;margin:0;border-radius:0;padding-top:env(safe-area-inset-top);box-shadow:-8px 0 30px rgba(0,0,0,.25);transform:translateX(105%);transition:transform .28s cubic-bezier(.2,.7,.2,1),width .28s cubic-bezier(.2,.7,.2,1)}
+  .tp-panel.open{transform:none}
+  .tp-panel.max{width:100%;height:auto}
+  #lesson{transition:transform .3s cubic-bezier(.2,.7,.2,1),right .28s cubic-bezier(.2,.7,.2,1)}
+  body.tp-open:not(.tp-max) #lesson{right:var(--tpw)}
+}
+.tp-mx{width:38px;height:38px;border-radius:50%;border:none;background:var(--elevated);color:var(--fg);font-size:18px;font-family:var(--fb);flex:0 0 auto}
 .tp-head{flex:0 0 auto;display:flex;align-items:center;gap:8px;padding:12px 14px 8px}
 .tp-head b{font-family:var(--fh);font-weight:800;font-size:15px;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .tp-head b small{display:block;font-weight:500;font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -127,7 +137,7 @@
 
   const panel = document.createElement('div'); panel.className = 'tp-panel'; panel.id = 'tpanel';
   panel.innerHTML = `
-  <div class="tp-head"><b><span id="tp-t">Lucrezia</span><small id="tp-sub"></small></b><button class="tp-x" id="tp-close" aria-label="Chiudi">✕</button></div>
+  <div class="tp-head"><b><span id="tp-t">Lucrezia</span><small id="tp-sub"></small></b><button class="tp-mx" id="tp-max" aria-label="Ingrandisci" title="Ingrandisci">⤢</button><button class="tp-x" id="tp-close" aria-label="Chiudi">✕</button></div>
   <div class="tp-opts"><div class="tp-mode" id="tp-mode" style="display:none"><button id="tp-m-fast">⚡ Veloce</button><button id="tp-m-deep">🧠 Approfondita</button></div><select id="tp-model" aria-label="Modello"></select>
     <button class="tp-chip" id="tp-vsrc" style="display:none" title="Chi parla e ascolta">Voce: Mac</button>
     <button class="tp-chip on" id="tp-speak">🔊 Voce</button><button class="tp-chip" id="tp-asr" title="Lingua del microfono">Mic: auto</button>
@@ -351,14 +361,20 @@
     msgsEl.innerHTML = `<div class="tp-hint">Chiedi a Lucrezia di spiegarti qualcosa di <b>questa lezione</b>.<br>Scrivi, oppure tieni premuto il microfono e parla.</div>`;
     $('tp-sub').textContent = lessonTitle();
   }
-  function openPanel() { resetIfNewLesson(); if (hlSlug !== OPEN_SLUG && highlights.length) { highlights = []; hlSlug = null; paintHl(); } panel.classList.add('open'); fab.classList.add('hide'); loadModels(); fastInit(); if (!phoneVoiceOn()) warmMic(); }
-  function closePanel() { panel.classList.remove('open'); stopSpeaking(); releaseMic(); if (document.getElementById('lesson').classList.contains('open')) { fab.classList.remove('hide'); placeFab(); } }
+  function openPanel() { resetIfNewLesson(); if (hlSlug !== OPEN_SLUG && highlights.length) { highlights = []; hlSlug = null; paintHl(); } panel.classList.add('open'); document.body.classList.add('tp-open'); fab.classList.add('hide'); loadModels(); fastInit(); if (!phoneVoiceOn()) warmMic(); }
+  function closePanel() { panel.classList.remove('open'); document.body.classList.remove('tp-open'); stopSpeaking(); releaseMic(); if (document.getElementById('lesson').classList.contains('open')) { fab.classList.remove('hide'); placeFab(); } }
   $('tp-close').onclick = closePanel;
+  function setMax(on) {
+    panel.classList.toggle('max', on); document.body.classList.toggle('tp-max', on);
+    const b = $('tp-max'), t = on ? 'Riduci' : 'Ingrandisci'; b.textContent = on ? '⤡' : '⤢'; b.title = t; b.setAttribute('aria-label', t);
+  }
+  setMax(lsGet('chiron.tutor.max', '0') === '1');
+  $('tp-max').onclick = () => { const on = !panel.classList.contains('max'); setMax(on); lsSet('chiron.tutor.max', on ? '1' : '0'); };
 
   // FAB visibility follows the lesson overlay (class toggled by app.js openLesson/closeLesson).
   new MutationObserver(() => {
     const open = document.getElementById('lesson').classList.contains('open');
-    if (!open) { panel.classList.remove('open'); stopSpeaking(); }
+    if (!open) { panel.classList.remove('open'); document.body.classList.remove('tp-open'); stopSpeaking(); }
     fab.classList.toggle('hide', !open || panel.classList.contains('open'));
     placeFab();
     if (!open) pending = null; paintPop();
