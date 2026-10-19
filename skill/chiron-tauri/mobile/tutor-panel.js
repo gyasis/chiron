@@ -30,10 +30,10 @@
   padding-bottom:env(safe-area-inset-bottom);font-family:var(--fb)}
 .tp-panel.open{transform:none}
 .tp-panel{height:min(75vh,820px)}
-.tp-panel.max{height:100%;max-width:none;border-radius:0}
+.tp-panel.max{height:100%;max-width:none;border-radius:0;padding-top:env(safe-area-inset-top)}   /* full height reaches the status bar */
 @media (min-width:700px){
   :root{--tpw:clamp(340px,42vw,460px)}
-  .tp-panel{left:auto;right:0;top:0;bottom:0;height:auto;width:var(--tpw);max-width:none;margin:0;border-radius:0;box-shadow:-8px 0 30px rgba(0,0,0,.25);transform:translateX(105%);transition:transform .28s cubic-bezier(.2,.7,.2,1),width .28s cubic-bezier(.2,.7,.2,1)}
+  .tp-panel{left:auto;right:0;top:0;bottom:0;height:auto;width:var(--tpw);max-width:none;margin:0;border-radius:0;padding-top:env(safe-area-inset-top);box-shadow:-8px 0 30px rgba(0,0,0,.25);transform:translateX(105%);transition:transform .28s cubic-bezier(.2,.7,.2,1),width .28s cubic-bezier(.2,.7,.2,1)}
   .tp-panel.open{transform:none}
   .tp-panel.max{width:100%;height:auto}
   #lesson{transition:transform .3s cubic-bezier(.2,.7,.2,1),right .28s cubic-bezier(.2,.7,.2,1)}
