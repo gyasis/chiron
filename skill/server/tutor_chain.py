@@ -81,10 +81,17 @@ def cloud_models() -> list:
     try:
         mt = os.path.getmtime(CLOUD_CATALOG)
         if mt != _cloud_cache["mtime"]:
+            # Two writers share this file: --write records {id, cloud_tag, capabilities}; --manifest records
+            # {name: '<tag>' e.g. 'glm-5.3:cloud' / 'gpt-oss:120b-cloud', capabilities}. Accept both.
             ms = json.load(open(CLOUD_CATALOG)).get("models", [])
+            ids = {}
+            for m in ms:
+                mid = m.get("id") or re.sub(r"(:cloud|-cloud)$", "", m.get("name") or "")
+                if mid and "completion" in (m.get("capabilities") or []):
+                    ids[mid] = True
             _cloud_cache.update(mtime=mt, models=sorted(
-                ({"id": "cloud:" + m["id"], "label": _cloud_label(m["id"]), "spec": "cloud:" + m["id"]}
-                 for m in ms if "completion" in (m.get("capabilities") or [])), key=lambda m: m["label"].lower()))
+                ({"id": "cloud:" + mid, "label": _cloud_label(mid), "spec": "cloud:" + mid} for mid in ids),
+                key=lambda m: m["label"].lower()))
     except Exception as e:
         sys.stderr.write(f"[tutor] cloud catalog {CLOUD_CATALOG} unreadable — no catalog cloud models: {type(e).__name__}: {e}\n")
         _cloud_cache.update(mtime=None, models=[])
