@@ -2354,6 +2354,10 @@ def _lesson_with_tutor(slug: str, request: Request):
         hv = int((SKILL / "shell" / "handoff.js").stat().st_mtime)
         rep = f'<script src="/shell/handoff.js?v={hv}" defer></script>'
         html = html.replace("</body>", rep + "</body>", 1) if "</body>" in html else html + rep
+    if "chrome-lanes.js" not in html:        # PILOT lanes layout for the floating controls; a no-op unless ?lanes=1 / localStorage chiron.lanes=1
+        cv = int((SKILL / "shell" / "chrome-lanes.js").stat().st_mtime)
+        rep = f'<script src="/shell/chrome-lanes.js?v={cv}" defer></script>'
+        html = html.replace("</body>", rep + "</body>", 1) if "</body>" in html else html + rep
     return HTMLResponse(html)
 
 
