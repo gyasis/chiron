@@ -1,5 +1,5 @@
-/* chrome-lanes.js — PILOT "lanes" layout for the floating controls of a lesson page. OPT-IN: a no-op unless the URL has
- * ?lanes=1 (or &lanes=1) or localStorage 'chiron.lanes' === '1'.  Rule (2026-10-18): every floating control lives in its own
+/* chrome-lanes.js — "lanes" layout for the floating controls of a lesson page. ON by default (approved 2026-10-19); opt out
+ * with ?lanes=0 or localStorage 'chiron.lanes' === '0'.  Rule (2026-10-18): every floating control lives in its own
  * lane — never over another control, a title or an interactive element; only the ☰ (.cl-nav-btn / .chiron-hamburger) may cover content.
  *   - bottom dock #chiron-dock adopts #chiron-handoff-btn | #wp-mini | .cl-lang (app mode: .cl-lang only, right, >=84px for the app's own pill)
  *   - --chiron-dock-h (on <html>) is the dock's height; body/scroll padding reserves it; .cra (Pimsleur read-along) sits above it
@@ -7,8 +7,8 @@
  * Server-injected into /lessons/**\/lesson.html (server/app.py). window.__chironLanes = {dockH(), report()} for the audit. */
 (function () {
   'use strict';
-  var on = /[?&]lanes=1(&|$)/.test(location.search);
-  if (!on) { try { on = localStorage.getItem('chiron.lanes') === '1'; } catch (e) { /* private window: stay off */ } }
+  var on = !/[?&]lanes=0(&|$)/.test(location.search);
+  if (on) { try { on = localStorage.getItem('chiron.lanes') !== '0'; } catch (e) { /* private window: keep the default */ } }
   if (!on || window.__chironLanes) return;
   if (window.parent !== window && !/[?&]inapp=1/.test(location.search)) return;   // library iframes: leave alone
   var inapp = /[?&]inapp=1/.test(location.search);
