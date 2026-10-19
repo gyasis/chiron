@@ -254,7 +254,7 @@ class H(BaseHTTPRequestHandler):
                  "created": 0, "name": (m or {}).get("label", mid)}
                 for mid, m in MODELS.items()]})
         if self.path.startswith("/tutor-models"):
-            refresh_models()
+            refresh_models(force="refresh=1" in self.path)   # ?refresh=1: re-ask the Mac now (just pulled a model)
             return self._json({"default": DEFAULT_MODEL, "local": local_models.info(),
                                "models": [{"id": k, "label": v["label"], "group": v.get("group", "Cloud")}
                                           for k, v in MODELS.items()]})

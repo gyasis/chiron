@@ -47,22 +47,63 @@ GOVERNOR = os.environ.get("ATELIER_GOVERNOR", "http://192.168.0.159:8799/llm/oll
 # spec = 'cloud:<model>' (Ollama Cloud, fast) | 'gemini' (direct API) | 'governor:<model>' (Mac, local)
 _CURATED = {
     "gemma4":     {"label": "Gemma 4 31B · cloud (fast, default)", "spec": "cloud:gemma4:31b", "group": "Cloud"},
-    "glmflash":   {"label": "GLM Flash · cloud (latest)",         "spec": "cloud:glm-flash@latest", "group": "Cloud"},
-    "deepseek":   {"label": "DeepSeek Flash · cloud (latest)",    "spec": "cloud:deepseek-flash@latest", "group": "Cloud"},
-    "gptoss":     {"label": "GPT-OSS 120B · cloud",               "spec": "cloud:gpt-oss:120b", "group": "Cloud"},
     "gemini_api": {"label": "Gemini Flash · direct API",          "spec": "gemini", "group": "Cloud"},
     "agent":      {"label": "Deep agent · tool-calling (slower)", "spec": "agent", "group": "Cloud"},
 }
-# MODELS = curated cloud entries + the Mac's chat-capable models discovered live (local_models, cached
-# ~10 min, static fallback when the governor is unreachable). One dict object, refreshed IN PLACE by
-# refresh_models(), so importers holding a reference (tutor_server) always see the current list.
+# Ids the picker offered before the cloud list came from the catalog; a saved selection keeps working
+# (resolved, not shown).
+_LEGACY_CLOUD = {
+    "glmflash":   {"label": "GLM Flash · cloud (latest)",      "spec": "cloud:glm-flash@latest", "group": "Cloud"},
+    "deepseek":   {"label": "DeepSeek Flash · cloud (latest)", "spec": "cloud:deepseek-flash@latest", "group": "Cloud"},
+    "gptoss":     {"label": "GPT-OSS 120B · cloud",            "spec": "cloud:gpt-oss:120b", "group": "Cloud"},
+}
+# Ollama Cloud models come from the fleet catalog, regenerated daily by `ollama-cloud-models --manifest`
+# (capabilities probed against a live host). Re-read whenever the file changes; only completion-capable
+# entries are offered. Ids are stable: `cloud:<ollama.com model id>`.
+CLOUD_CATALOG = os.path.expanduser(os.environ.get("OLLAMA_CLOUD_CATALOG", "~/.config/ollama-cloud/models.json"))
+_cloud_cache = {"mtime": None, "models": []}
+
+
+_CLOUD_WORDS = {"glm": "GLM", "gpt": "GPT", "oss": "OSS", "deepseek": "DeepSeek", "minimax": "MiniMax"}
+
+
+def _cloud_label(mid: str) -> str:
+    """'glm-5.3-flash' -> 'GLM 5.3 Flash · cloud'; 'gpt-oss:120b' -> 'GPT OSS 120B · cloud'."""
+    name, _, ver = mid.partition(":")
+    words = [_CLOUD_WORDS.get(w, w if w[:1].isdigit() else w[:1].upper() + w[1:]) for w in name.split("-")]
+    if ver:
+        words.append(ver.upper() if re.fullmatch(r"\d+(\.\d+)?[bm]", ver, re.I) else ver)
+    return " ".join(words) + " · cloud"
+
+
+def cloud_models() -> list:
+    """Completion-capable Ollama Cloud models from the catalog. Never raises: a missing/bad file -> [] and logged."""
+    try:
+        mt = os.path.getmtime(CLOUD_CATALOG)
+        if mt != _cloud_cache["mtime"]:
+            ms = json.load(open(CLOUD_CATALOG)).get("models", [])
+            _cloud_cache.update(mtime=mt, models=sorted(
+                ({"id": "cloud:" + m["id"], "label": _cloud_label(m["id"]), "spec": "cloud:" + m["id"]}
+                 for m in ms if "completion" in (m.get("capabilities") or [])), key=lambda m: m["label"].lower()))
+    except Exception as e:
+        sys.stderr.write(f"[tutor] cloud catalog {CLOUD_CATALOG} unreadable — no catalog cloud models: {type(e).__name__}: {e}\n")
+        _cloud_cache.update(mtime=None, models=[])
+    return _cloud_cache["models"]
+
+
+# MODELS = curated entries + the catalog's cloud models + the Mac's chat-capable models discovered live
+# (local_models, cached ~10 min, static fallback when the governor is unreachable). One dict object,
+# refreshed IN PLACE by refresh_models(), so importers holding a reference (tutor_server) always see it.
 MODELS: dict = dict(_CURATED)
 
 
-def refresh_models() -> dict:
-    """Rebuild the local part of MODELS from the (cached) discovery. Cheap on a cache hit; never raises."""
+def refresh_models(force: bool = False) -> dict:
+    """Rebuild MODELS from the catalog + the (cached) local discovery. Cheap on a cache hit; never raises."""
     fresh = dict(_CURATED)
-    for m in local_models.models():
+    for m in cloud_models():
+        if m["spec"] != fresh["gemma4"]["spec"]:          # the default already offers this one
+            fresh[m["id"]] = {"label": m["label"], "spec": m["spec"], "group": "Cloud"}
+    for m in local_models.models(force):
         fresh[m["id"]] = {"label": m["label"], "spec": "governor:" + m["model"], "group": local_models.GROUP}
     MODELS.clear()
     MODELS.update(fresh)
@@ -74,7 +115,7 @@ def resolve_model(model_id: str | None) -> dict:
     refresh_models()
     mid = local_models.LEGACY_IDS.get(model_id or "", model_id or DEFAULT_MODEL)
     # A local default may be missing when the governor is down: fall back, never KeyError.
-    return MODELS.get(mid) or MODELS.get(DEFAULT_MODEL) or MODELS["gemma4"]
+    return MODELS.get(mid) or _LEGACY_CLOUD.get(mid) or MODELS.get(DEFAULT_MODEL) or MODELS["gemma4"]
 DEFAULT_MODEL = os.environ.get("TUTOR_DEFAULT_MODEL", "gemma4")
 TUTOR_DEADLINE_S = float(os.environ.get("TUTOR_DEADLINE_S") or 90)   # one total budget per tutor turn
 # gemini-3-flash-preview (retired 2026-07-15) and deepseek-v4-flash (retired 2026-09-25) were dead rungs here.
