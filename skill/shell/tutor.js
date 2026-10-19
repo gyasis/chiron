@@ -42,6 +42,7 @@
   var LS_MODEL = 'chiron.tutormodel';
   var LS_MODE = 'chiron.tutormode';
   var LS_WIDTH = 'chiron.tutorwidth';
+  var LS_MAX = 'chiron.tutormax';
   var LS_SCOPE = 'chiron.tutorscope';
   var LS_SUGGEST = 'chiron.tutorsuggest';
   var LS_TRANSPORT = 'chiron.tutortransport';
@@ -70,7 +71,7 @@
   var lastQuestion = null; // most recent user turn — paired with the next assistant reply for capture
   var mathBlocks = []; // per-render array of math→HTML fragments (sub/sup/frac), placeholder-swapped like codeBlocks (reset per mdToHtml call)
 
-  var tab, scrim, drawer, head, badge, title, modelSel, modeBtn, penBtn, newChatBtn, gearBtn, closeBtn,
+  var tab, scrim, drawer, head, badge, title, modelSel, modeBtn, penBtn, newChatBtn, gearBtn, maxBtn, closeBtn,
       scope, chips, msgs, dispatchBar, dispatchLabel, dispatchSpin, dispatchKeepBtn, dispatchCardsBtn,
       dispatchMcqsBtn, dispatchTrainBtn, dispatchLessonBtn, dispatchImagesBtn,
       dispatchClearBtn, dispatchMsg, inputRow, textarea, sendBtn, tabPen, resizeHandle,
@@ -230,12 +231,14 @@
     gearBtn.type = 'button'; gearBtn.className = 'ct-gear'; gearBtn.title = 'Settings';
     gearBtn.setAttribute('aria-label', 'Settings');
     gearBtn.textContent = '⚙'; // ⚙
+    maxBtn = document.createElement('button');
+    maxBtn.type = 'button'; maxBtn.className = 'ct-max-btn';
     closeBtn = document.createElement('button');
     closeBtn.type = 'button'; closeBtn.className = 'ct-close'; closeBtn.setAttribute('aria-label', 'Close');
     closeBtn.textContent = '✕';
     head.appendChild(badge); head.appendChild(title); head.appendChild(modelSel);
     head.appendChild(modeBtn); head.appendChild(penBtn); head.appendChild(newChatBtn);
-    head.appendChild(gearBtn); head.appendChild(closeBtn);
+    head.appendChild(gearBtn); head.appendChild(maxBtn); head.appendChild(closeBtn);
 
     /* ── settings popover (⚙) — small, extensible list of drawer settings ── */
     settingsPop = document.createElement('div'); settingsPop.className = 'ct-settings';
@@ -447,6 +450,16 @@
       if (drawer.classList.contains('open')) closeDrawer(); else openDrawer();
     });
     closeBtn.addEventListener('click', closeDrawer);
+
+    /* ── maximize (⤢) — full window on desktop, full height on the phone sheet; remembered ── */
+    maxBtn.addEventListener('click', function () {
+      var on = !drawer.classList.contains('ct-max');
+      try { localStorage.setItem(LS_MAX, on ? '1' : '0'); } catch (e) { /* private mode: not remembered */ }
+      applyMax(on);
+    });
+    var savedMax = false;
+    try { savedMax = localStorage.getItem(LS_MAX) === '1'; } catch (e) {}
+    applyMax(savedMax);
     scrim.addEventListener('click', closeDrawer);
     document.addEventListener('keydown', function (e) {   // Escape always closes — belt-and-suspenders
       if (e.key !== 'Escape') return;
@@ -668,9 +681,18 @@
     }, 2500);
   }
 
+  function applyMax(on) {
+    drawer.classList.toggle('ct-max', on);
+    document.documentElement.classList.toggle('chiron-tutor-max', on);   // a maximized drawer covers the page: stop pushing it
+    maxBtn.textContent = on ? '⤡' : '⤢';
+    maxBtn.title = on ? 'Restore size' : 'Maximize';
+    maxBtn.setAttribute('aria-label', maxBtn.title);
+  }
+
   /* ── open/close — desktop PUSHES content, narrow viewports OVERLAY ──── */
   function openDrawer() {
     drawer.classList.add('open');
+    document.documentElement.classList.add('chiron-tutor-open');   // tutor.css moves the IT/EN switch off the header
     collapseAudio(true);
     if (window.innerWidth >= 760) {
       document.documentElement.classList.add('chiron-tutor-pushed');
@@ -682,6 +704,7 @@
   }
   function closeDrawer() {
     drawer.classList.remove('open');
+    document.documentElement.classList.remove('chiron-tutor-open');
     scrim.classList.remove('open');
     document.documentElement.classList.remove('chiron-tutor-pushed');
   }
