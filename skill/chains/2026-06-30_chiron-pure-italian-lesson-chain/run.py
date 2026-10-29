@@ -24,7 +24,7 @@ loop with a rich validator + a whole-lesson QC judge.
 Run:  cd ~/Documents/PromptChain && CH_TOPIC="how to use the word appunto" CH_STAGE=assemble \
         bash scripts/observe.sh runs/2026-06-30_chiron-pure-italian-lesson-chain
 Env:  OLLAMA_API_KEY ; CH_TOPIC (required) ; CH_STAGE (author|assemble|audio|all) ;
-      CH_AUTHOR_LADDER (glm-5.1,claude,deepseek-v4-flash) ; CH_MODEL_REASON/STRUCT/QC ; CH_QC_ROUNDS ; CH_FORCE.
+      CH_AUTHOR_LADDER (glm@latest,claude,deepseek-flash@latest) ; CH_MODEL_REASON/STRUCT/QC ; CH_QC_ROUNDS ; CH_FORCE.
 """
 from promptchain.observability import init_mlflow
 init_mlflow()
@@ -66,7 +66,7 @@ LEARNER = os.environ.get("CH_LEARNER", "Gyasi")
 TOPIC = os.environ.get("CH_TOPIC", "")
 STAGE = os.environ.get("CH_STAGE", "author")
 
-# Models (per role). glm-5.1 primary (glm-5.2 was flaky on Ollama Cloud); QC is a DIFFERENT family
+# Models (per role). glm@latest primary (glm-5.2 was flaky on Ollama Cloud); QC is a DIFFERENT family
 # (gemini-flash) so the judge doesn't share the author's blind spots. max_tokens AUTOMATIC.
 MODEL_REASON = os.environ.get("CH_MODEL_REASON", "glm@latest")     # Phase 1 plan
 MODEL_STRUCT = os.environ.get("CH_MODEL_STRUCT", "glm@latest")     # Phase 2 per-section author
