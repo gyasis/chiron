@@ -9,12 +9,12 @@ null teaching slots the Player renders:
 
 "Teach the Italian OF the dialogue" (PRD §2 step 4). One LLM call per SCENE (the FSI unit) so the
 model sees the whole situation. Uses the SAME house pattern as the chains: PromptChain single-step
-calls, model FALLBACK ladder (glm-5.1 → deepseek-v4-flash, both Ollama Cloud — NO Gemini), self-repair on bad JSON/validation,
+calls, model FALLBACK ladder (glm@latest → deepseek-flash@latest, both Ollama Cloud — NO Gemini), self-repair on bad JSON/validation,
 `over_worklist` bounded loop. Per-scene RESUME (skip already-enriched scenes unless CH_FORCE=1),
 one-time `.bak` before writing. NOT hand-rolled orchestration (R-PC1).
 
 Run:  ~/miniconda3/bin/python3 episode_enrich.py <episode_dir_or_transcript.json>
-        [--force] [--concurrent] [--ladder glm-5.1,deepseek-v4-flash]
+        [--force] [--concurrent] [--ladder glm@latest,deepseek-flash@latest]
 Env:  OLLAMA_API_KEY / GEMINI_API_KEY|GOOGLE_API_KEY / OPENAI_API_KEY (else read from ~/dev/.env);
       CH_ENRICH_LADDER · CH_FORCE · CH_LEARNER (default Gyasi)
 """
@@ -75,7 +75,7 @@ def load_persona_register(name: str | None = None, limit: int = 2500) -> str:
             pass
     return ""
 
-# Model ladder: glm-5.1 primary (Ollama Cloud), gemini-flash a DIFFERENT family fallback (mirrors the chains).
+# Model ladder: glm@latest primary (Ollama Cloud), gemini-flash a DIFFERENT family fallback (mirrors the chains).
 _DEFAULT_LADDER = os.environ.get("CH_ENRICH_LADDER", "glm@latest,deepseek-flash@latest")
 
 
@@ -313,7 +313,7 @@ def main():
     ap.add_argument("target", help="episode dir OR path to transcript.json")
     ap.add_argument("--force", action="store_true", help="re-enrich every scene (ignore resume)")
     ap.add_argument("--concurrent", action="store_true", help="run scenes in parallel (sem=4)")
-    ap.add_argument("--ladder", default="", help="override model ladder, e.g. glm-5.1,deepseek-v4-flash")
+    ap.add_argument("--ladder", default="", help="override model ladder, e.g. glm@latest,deepseek-flash@latest")
     ap.add_argument("--lang", default="", help="target language code (it/de/es/fr…); default it")
     ap.add_argument("--persona", default="", help="tutor persona pack name; default lucrezia")
     args = ap.parse_args()

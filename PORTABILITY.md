@@ -86,7 +86,7 @@ Copy `~/dev/.env` (never commit it). What generation actually reads:
 
 | Var | Used for |
 |---|---|
-| `OLLAMA_API_KEY` | the **primary** authoring model (`glm-5.1`, Ollama Cloud) |
+| `OLLAMA_API_KEY` | the **primary** authoring model (`glm@latest` = newest live glm, currently glm-5.3; Ollama Cloud) |
 | `CH_LOCAL_BASE` | governor OpenAI-compat lane — the free `local/*` fallback rung |
 | `OPENAI_API_KEY` | the paid last-resort rung only |
 | `GEMINI_API_KEY` | **not** in the default ladder — opt-in per run (see below) |
@@ -191,7 +191,7 @@ Move individual lessons as bundles; don't try to rsync the whole tree.
 A fresh machine is exactly where a bad default gets expensive. Before a bulk run:
 
 ```bash
-CH_MODEL_FALLBACKS="local/gemma4:12b,deepseek-v4-flash"   # free rungs only, no paid rung
+CH_MODEL_FALLBACKS="local/gemma4:12b,deepseek-flash@latest"   # free rungs only, no paid rung
 # CHIRON_AUDIO_QC is OFF by default — set =1 only for a sample bake, never a bulk one
 ```
 

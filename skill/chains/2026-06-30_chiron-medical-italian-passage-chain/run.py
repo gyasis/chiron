@@ -70,7 +70,7 @@ LEARNER = os.environ.get("CH_LEARNER", "Gyasi")
 SSM_QID = os.environ.get("SSM_QID", "")     # explicit item, else random
 STAGE = os.environ.get("CH_STAGE", "ingest")  # ingest | plan | author | assemble | audio | all
 
-# Models (glm-5.1 primary — glm-5.2 was flaky on Ollama Cloud; max_tokens AUTOMATIC).
+# Models (glm@latest primary — glm-5.2 was flaky on Ollama Cloud; max_tokens AUTOMATIC).
 MODEL_REASON = os.environ.get("CH_MODEL_REASON", "glm@latest")
 MODEL_STRUCT = os.environ.get("CH_MODEL_STRUCT", "glm@latest")
 
@@ -81,7 +81,7 @@ def ollama(model: str, temperature: float = 0.4) -> dict:
 
 
 # Model FALLBACK ladder: when the primary can't produce valid JSON after its repairs, try the next model.
-# Default: deepseek-v4-flash (Ollama Cloud, different family) → gpt-5-mini (OpenAI, reliable last resort).
+# Default: deepseek-flash@latest (Ollama Cloud, different family) → gpt-5-mini (OpenAI, reliable last resort).
 # Claude is intentionally absent (no Anthropic key on this box). gpt-* entries auto-dropped if no OpenAI key.
 _FB = [m.strip() for m in os.environ.get("CH_MODEL_FALLBACKS", "local/gemma4:12b,deepseek-flash@latest,gpt-5-mini").split(",") if m.strip()]
 FALLBACKS = [m for m in _FB if not (m.startswith("gpt-") and not OPENAI_KEY) and not (m.startswith("gemini") and not GEMINI_KEY) and not (m.startswith("local/") and not os.environ.get("CH_LOCAL_BASE"))]

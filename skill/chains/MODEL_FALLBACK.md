@@ -17,10 +17,12 @@ the lesson.
 
 ## The ladder
 
+`glm@latest` / `deepseek-flash@latest` are family aliases resolved against the live Ollama Cloud catalog by `chiron_models.py` (today: glm-5.3, deepseek-v4.1-flash). Do not hard-code versioned ids; Ollama retires them (glm-5.1 and deepseek-v4-flash went on 2026-09-25).
+
 ```
-primary (per-chain, e.g. glm-5.1)  ──(N JSON-repair tries fail)──▶
+primary (per-chain, e.g. glm@latest)  ──(N JSON-repair tries fail)──▶
   local/gemma4:12b (Atelier governor, FREE)  ──(fail)──▶
-    deepseek-v4-flash     (Ollama Cloud)            ──(fail)──▶
+    deepseek-flash@latest     (Ollama Cloud)            ──(fail)──▶
       gpt-5-mini   (OpenAI, paid)            ──(fail)──▶
         needs_review  (flagged, chain CONTINUES)
 ```
@@ -46,14 +48,14 @@ primary (per-chain, e.g. glm-5.1)  ──(N JSON-repair tries fail)──▶
 
 | Env var | Default | Meaning |
 |---|---|---|
-| `CH_MODEL_FALLBACKS` | `local/gemma4:12b,deepseek-v4-flash,gpt-5-mini` | Comma-separated ladder, tried in order after the chain's primary model |
+| `CH_MODEL_FALLBACKS` | `local/gemma4:12b,deepseek-flash@latest,gpt-5-mini` | Comma-separated ladder, tried in order after the chain's primary model |
 | `CH_LOCAL_BASE` | *(unset)* | Governor OpenAI-compat base for `local/*` rungs. Unset → those rungs are skipped. Set in `~/dev/.env`, never in-repo. |
 
 The chain's own primary model is unchanged and is always tried first — this is purely additive.
 
 ```bash
-CH_MODEL_FALLBACKS="local/gemma4:12b,deepseek-v4-flash"            # free-only, never spend
-CH_MODEL_FALLBACKS="local/gemma4:12b,deepseek-v4-flash,gpt-5-mini" # default
+CH_MODEL_FALLBACKS="local/gemma4:12b,deepseek-flash@latest"            # free-only, never spend
+CH_MODEL_FALLBACKS="local/gemma4:12b,deepseek-flash@latest,gpt-5-mini" # default
 CH_MODEL_FALLBACKS=""                                       # disable the ladder entirely
 ```
 
@@ -62,7 +64,7 @@ CH_MODEL_FALLBACKS=""                                       # disable the ladder
 Before queuing a large batch (dozens of lessons), pin the free ladder and skip the paid audio QC:
 
 ```bash
-CH_MODEL_FALLBACKS="local/gemma4:12b,deepseek-v4-flash"   # no paid rung at all
+CH_MODEL_FALLBACKS="local/gemma4:12b,deepseek-flash@latest"   # no paid rung at all
 # CHIRON_AUDIO_QC is OFF by default; set =1 only for a sample bake, never a bulk one
 ```
 
