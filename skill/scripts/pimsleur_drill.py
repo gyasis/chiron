@@ -28,6 +28,13 @@ ITEM BANK — <lesson-dir>/pimsleur.json
            "secs": int? }     # talk only: free-speech pause (default 20)
   For "talk", "en" is the prompt and "it" is the model answer.
 
+SOURCE-AUDIO MODE — "source_audio": true, every phrase/question ITEM carries
+  "audio": {"it": "audio/clips/<x>.wav", "en": "audio/clips/<y>.wav"}   (paths relative to the lesson dir)
+  The drill is assembled from the source's own recordings: the cue is the source's English clip after a soft
+  tone (no "How do you say" carrier), the answer is the source's Italian clip. Nothing a source already says is
+  synthesized. The only generated lines are the framing ones (intro, "review", outro), written in Italian
+  and voiced by the target voice. Source clips skip ASR-QC: they are the original recording.
+
 AUDIO TRAPS (measured 2026-10-10, see memory finding-pimsleur-audio-builder)
   * raw OmniVoice voices sit ~26 dB apart -> every clip is levelled (cue -18 LUFS, target -20 LUFS)
   * a one-word English line synthesizes as garbage -> cue lines always carry a carrier phrase
@@ -84,6 +91,10 @@ def validate(bank: dict) -> list[str]:
                 errs.append(f"{tag}: an exam item needs `q` (the examiner's question, in Italian)")
             if kind == "talk" and where == "review":
                 errs.append(f"{tag}: talk prompts cannot be review items")
+            if bank.get("source_audio") and kind in ("phrase", "question"):
+                au = it.get("audio") or {}
+                if not (isinstance(au.get("it"), str) and isinstance(au.get("en"), str)):
+                    errs.append(f"{tag}: source_audio needs audio.it and audio.en clip paths")
             full = _words(it.get("it", ""))
             prev = 0
             for piece in it.get("build") or []:
@@ -118,6 +129,8 @@ def schedule(bank: dict) -> list[tuple]:
          ("repeat_pause",)      fixed silence after a model answer
          ("talk_pause", secs)   free-speech silence
     """
+    if bank.get("source_audio"):
+        return _schedule_source(bank)
     s: list[tuple] = []
     n = 0                                   # rotates cue phrasings
 
@@ -173,6 +186,36 @@ def schedule(bank: dict) -> list[tuple]:
     return s
 
 
+def _schedule_source(bank: dict) -> list[tuple]:
+    """Running order built only from source clips, plus Italian framing lines ("frame", text).
+         ("tone",)              soft tone: a cue follows
+         ("cue", en)            the source's English clip
+         ("target", it)         the source's Italian clip
+    Same method as schedule(): anticipation, graduated recall after 1, 2 and 4 new items, interleaved review."""
+    s: list[tuple] = [("frame", line) for line in bank.get("intro") or []]
+
+    def recall(item):
+        s.extend([("tone",), ("cue", item["en"]), ("answer_pause", item["it"]), ("target", item["it"]), ("repeat_pause",)])
+
+    teach = [i for i in bank["items"] if i.get("kind", "phrase") in ("phrase", "question")]
+    due: list[tuple[int, dict]] = []
+    for n, item in enumerate(teach, 1):
+        s.extend([("cue", item["en"]), ("target", item["it"]), ("repeat_pause",), ("target", item["it"]), ("repeat_pause",)])
+        recall(item)
+        due += [(n + k, item) for k in RECALL_AFTER]
+        for d in sorted([x for x in due if x[0] <= n], key=lambda x: x[0]):
+            if d[1] is not item:
+                recall(d[1])
+        due = [x for x in due if x[0] > n]
+    final = teach + [i for i in bank.get("review") or [] if i.get("audio")]
+    if final:
+        s.append(("frame", bank.get("review_line") or "Ripassiamo tutto."))
+        for item in final[1::2] + final[0::2]:
+            recall(item)
+    s.append(("frame", bank.get("outro") or "Bravo. Fine della lezione."))
+    return s
+
+
 # ---------------------------------------------------------------- audio
 
 def _run(*a):
@@ -185,13 +228,18 @@ def _dur(p: str) -> float:
 
 
 class Baker:
-    def __init__(self, cache: str, voices: dict):
+    def __init__(self, cache: str, voices: dict, source: dict | None = None):
         self.cache, self.voices = cache, {**DEFAULT_VOICES, **(voices or {})}
+        self.voices.setdefault("frame", self.voices["target"])   # Italian framing lines: the target voice
+        self.source = source or {}           # (role, text) -> absolute path of a recorded source clip
         self.refs = json.load(open(VOICES_FILE))
         os.makedirs(cache, exist_ok=True)
-        for role in ("cue", "target"):
+        for role in ("cue", "target", "frame"):
             if self.voices[role] not in self.refs:
                 sys.exit(f"voice {self.voices[role]!r} ({role}) not in {VOICES_FILE}")
+
+    def is_source(self, role: str, text: str) -> bool:
+        return (role, text) in self.source
 
     def key(self, role: str, text: str) -> str:
         return hashlib.sha256(f"{self.voices[role]}|{text}".encode()).hexdigest()[:16]
@@ -200,8 +248,17 @@ class Baker:
         return f"{self.cache}/{self.key(role, text)}.wav"
 
     def clip(self, role: str, text: str) -> str:
-        """Synthesized, cached, levelled clip for one line."""
-        raw, lev = self.raw(role, text), f"{self.cache}/{self.key(role, text)}.lev{LUFS[role]}.wav"
+        """Cached, levelled clip for one line: the recorded source clip when there is one, else synthesized."""
+        lufs = LUFS["cue" if role == "cue" else "target"]
+        if self.is_source(role, text):
+            src = self.source[(role, text)]
+            lev = f"{self.cache}/src-{hashlib.sha256(src.encode()).hexdigest()[:16]}.lev{lufs}.wav"
+            if not os.path.exists(lev):
+                _run("tts-normalize", src, lev, lufs)
+                _run("ffmpeg", "-y", "-loglevel", "error", "-i", lev, "-ar", str(RATE), "-ac", "1", lev + ".tmp.wav")
+                os.replace(lev + ".tmp.wav", lev)
+            return lev
+        raw, lev = self.raw(role, text), f"{self.cache}/{self.key(role, text)}.lev{lufs}.wav"
         if not os.path.exists(raw):
             ref = self.refs[self.voices[role]]
             lang = "en" if role == "cue" else "it"
@@ -217,13 +274,13 @@ class Baker:
             os.remove(raw + ".in")
             print(f"  synth {role:6} {_dur(raw):5.2f}s  {text}", flush=True)
         if not os.path.exists(lev):
-            _run("tts-normalize", raw, lev, LUFS[role])
+            _run("tts-normalize", raw, lev, lufs)
             _run("ffmpeg", "-y", "-loglevel", "error", "-i", lev, "-ar", str(RATE), "-ac", "1", lev + ".tmp.wav")
             os.replace(lev + ".tmp.wav", lev)
         return lev
 
     def forget(self, role: str, text: str):
-        for p in (self.raw(role, text), f"{self.cache}/{self.key(role, text)}.lev{LUFS[role]}.wav"):
+        for p in (self.raw(role, text), f"{self.cache}/{self.key(role, text)}.lev{LUFS['cue' if role == 'cue' else 'target']}.wav"):
             if os.path.exists(p):
                 os.remove(p)
 
@@ -373,10 +430,21 @@ def build(lesson_dir: str, qc: bool, engine: str = "mac") -> dict:
         sys.exit("pimsleur.json invalid:\n  " + "\n  ".join(errs))
     steps = schedule(bank)
     audio_dir = os.path.join(lesson_dir, "audio")
-    baker = Baker(os.path.join(audio_dir, "pimsleur-cache"), bank.get("voices"))
+    source = {}
+    if bank.get("source_audio"):
+        for item in list(bank["items"]) + list(bank.get("review") or []):
+            for role, lang in (("target", "it"), ("cue", "en")):
+                p = (item.get("audio") or {}).get(lang)
+                if p:
+                    ap = os.path.join(lesson_dir, p)
+                    if not os.path.exists(ap):
+                        sys.exit(f"source clip missing for {item['id']}: {ap}")
+                    source.setdefault((role, item[lang]), ap)
+    baker = Baker(os.path.join(audio_dir, "pimsleur-cache"), bank.get("voices"), source)
 
-    lines = {(st[0], st[1]) for st in steps if st[0] in ("cue", "target")}
+    lines = {(st[0], st[1]) for st in steps if st[0] in ("cue", "target", "frame")}
     lines |= {("target", st[1]) for st in steps if st[0] == "answer_pause"}
+    lines = {ln for ln in lines if not baker.is_source(*ln)}   # recorded clips are never synthesized or ASR-checked
     report = {"checked": 0, "resynth": [], "failed": []}
     synth(baker, sorted(lines), engine, os.path.basename(os.path.normpath(lesson_dir)), report)
     if qc:
@@ -398,11 +466,14 @@ def build(lesson_dir: str, qc: bool, engine: str = "mac") -> dict:
     parts, timeline, t = [], [], 0.0
     for st in steps:
         kind = st[0]
-        if kind in ("cue", "target"):
+        if kind in ("cue", "target", "frame"):
             p = baker.clip(kind, st[1])
             parts += [p, baker.silence(GAP_AFTER_SPEECH)]
-            timeline.append({"t": round(t, 1), "who": kind, "text": st[1]})
+            # a framing line is Italian speech: the read-along shows it as an Italian line
+            timeline.append({"t": round(t, 1), "who": "target" if kind == "frame" else kind, "text": st[1]})
             t += _dur(p) + GAP_AFTER_SPEECH
+        elif kind == "tone":
+            parts += [baker.tone(880), baker.silence(0.35)]; t += 0.5
         elif kind == "answer_pause":
             d = answer_pause(_dur(baker.clip("target", st[1])))
             # "answer": the learner answers from the cue (read-along shows "your turn"); "repeat": say it after the model
