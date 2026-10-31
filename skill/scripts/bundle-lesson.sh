@@ -105,6 +105,15 @@ if [[ "${NOFIX}" -eq 0 ]]; then
     awk -v c="${_clamp}" 'BEGIN{d=0} /<\/body>/ && !d {print c; d=1} {print}' \
       "${ENTRY_HTML}" > "${ENTRY_HTML}.tmp" && mv "${ENTRY_HTML}.tmp" "${ENTRY_HTML}"
   fi
+  # 4. Offline lesson-to-lesson links. A saved copy lives at lesson.localhost/<timestamp id>/, so a link like
+  #    ../<other lesson>/lesson.html finds nothing. When running from saved storage, ask the app to open that lesson
+  #    (it picks the saved copy when the computer is unreachable). A no-op anywhere else. No backslashes: awk -v eats them.
+  if ! grep -q 'CHIRON_OFFLINE_LINKS' "${ENTRY_HTML}" 2>/dev/null && grep -q '</body>' "${ENTRY_HTML}" 2>/dev/null; then
+    _ol="<script>/*CHIRON_OFFLINE_LINKS*/(function(){if(location.hostname!=='lesson.localhost'&&location.protocol!=='lesson:')return;document.addEventListener('click',function(e){var a=e.target&&e.target.closest&&e.target.closest('a[href]');if(!a)return;var u;try{u=new URL(a.getAttribute('href'),location.href)}catch(x){return}var p=u.pathname.split('/');if(p[p.length-1]!=='lesson.html')return;var id='';if(u.origin===location.origin){id=p.slice(1,-1).join('/')}else{var li=p.indexOf('lessons');if(li<0)return;id=p.slice(li+1,-1).join('/')}id=decodeURIComponent(id);if(!id||id===location.pathname.split('/')[1])return;e.preventDefault();e.stopPropagation();parent.postMessage({type:'chiron-open-lesson',id:id,hash:u.hash||''},'*')},true)})();</script>"
+    # insert right before the </body> TAG, not before its line: </body> often shares a line with the end of a script
+    awk -v c="${_ol}" 'BEGIN{d=0} !d && (i = index($0, "</body>")) {print substr($0, 1, i-1) c substr($0, i); d=1; next} {print}' \
+      "${ENTRY_HTML}" > "${ENTRY_HTML}.tmp" && mv "${ENTRY_HTML}.tmp" "${ENTRY_HTML}"
+  fi
 fi
 
 # --- write the chiron/1 manifest into the lesson dir ---------------------------
