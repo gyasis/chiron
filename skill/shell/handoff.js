@@ -2,7 +2,7 @@
  * next can pick up there. Injected into every streamed lesson (server/app.py, next to select-report.js).
  *   in the phone app (?inapp=1)  postMessage({type:'chiron-handoff:pos', ...}) to the app, which owns the hub write
  *   in a browser tab             a quiet "📱 Continua sul telefono" chip + an automatic report (section change, pause)
- * Slot: GET/PUT /api/progress/now-studying, field "cur" = {lesson, anchor, scroll, title, section, ts, from}.
+ * Slot: GET/PUT /api/progress/now-studying, field "cur" = {lesson, anchor, scroll, title, section, ts, from, mm?}; mm = {id, name, count} of a ready Match Madness set.
  * Same-origin on :8911 (relayed to the hub) and on the hub itself. A "#sf=0.42" hash restores a scroll fraction. */
 (function () {
   'use strict';
@@ -71,8 +71,8 @@
   /* force: write even without a section change (page hide). explicit: the learner pressed the button — that also writes
      field "pin", which every Riprendi banner prefers for 30 min, so a tab left open elsewhere cannot overwrite a
      deliberate hand-off with its automatic reports (seen 2026-10-18). */
-  function send(force, explicit) {
-    var p = pos(), key = p.lesson + '#' + p.anchor;
+  function send(force, explicit, extra) {
+    var p = Object.assign(pos(), extra || {}), key = p.lesson + '#' + p.anchor;
     if (!force && key === last) return;               // throttle: only on a section change (or a pause after a move)
     last = key;
     if (inapp && framed) { try { parent.postMessage(Object.assign({ type: 'chiron-handoff:pos' }, p), '*'); } catch (e) { console.warn('chiron handoff: postMessage failed', e); } return Promise.resolve(true); }
@@ -94,10 +94,24 @@
   b.setAttribute('style', 'position:fixed;left:14px;bottom:14px;z-index:2147483000;font:500 13px/1 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;' +
     'padding:9px 14px;border-radius:999px;border:1px solid rgba(127,127,127,.35);background:rgba(127,127,127,.12);color:inherit;' +
     'backdrop-filter:blur(6px);cursor:pointer');
+  /* A lesson with Match Madness also hands over a ready game: the same collection "🎮 Gioca in Match Madness" builds
+     (POST /api/collections/from-lesson, one per lesson, re-sends update it). The phone's Riprendi banner then offers
+     "▶ Gioca" straight into the Match Madness app. If the collection cannot be made, the plain hand-off still goes. */
+  function mmSet() {
+    if (!document.getElementById('match-madness')) return Promise.resolve(null);
+    return fetch('/api/collections/from-lesson', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+                                                   body: JSON.stringify({ lesson: lesson }) })
+      .then(function (r) { return r.json().then(function (j) { if (!r.ok) throw new Error(j.detail || ('HTTP ' + r.status)); return j; }); })
+      .then(function (j) { return { id: j.id, name: j.name, count: j.count }; })
+      .catch(function (e) { console.warn('chiron handoff: no Match Madness set —', e.message); return null; });
+  }
   b.onclick = function () {
-    b.textContent = '…'; send(true, true).then(function (ok) {
-      b.textContent = ok ? '✓ Salvato — riprendi sul telefono' : '⚠ Non salvato';
-      setTimeout(function () { b.textContent = '📱 Continua sul telefono'; }, 2600);
+    b.textContent = '…';
+    mmSet().then(function (mm) {
+      return send(true, true, mm ? { mm: mm } : null).then(function (ok) {
+        b.textContent = !ok ? '⚠ Non salvato' : mm ? '✓ Sul telefono: Match Madness pronto (' + mm.count + ' coppie)' : '✓ Salvato — riprendi sul telefono';
+        setTimeout(function () { b.textContent = '📱 Continua sul telefono'; }, 3200);
+      });
     });
   };
   // "Continue on the phone" means nothing when this IS a phone (touch + narrow screen)
