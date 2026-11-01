@@ -287,7 +287,11 @@ function applyMode() {
   const llm = phrase
     ? { provider: 'ollama', host: PHRASE_HOST, model: PHRASE_MODEL, headers: modeCtl.llm.headers }
     : { ...modeCtl.llm, model: modeCtl.model };
-  modeCtl.handle.configure({ llm, storage: { dbName: 'chiron-ask', historyEnabled: true, cacheEnabled: !phrase } });
+  // Every [[SPEAK]] in phrase mode is Italian: naming the Italian voice makes acolyte stamp it-IT on each
+  // utterance, which say-shim reads as its language hint. configure() replaces the voice object whole.
+  const voice = { enabled: $('#voicebtn')?.classList.contains('on') !== false, autoSpeak: true,
+                  voiceName: phrase ? 'Lucrezia' : undefined, accent: phrase ? 'it-IT' : undefined };
+  modeCtl.handle.configure({ llm, voice, storage: { dbName: 'chiron-ask', historyEnabled: true, cacheEnabled: !phrase } });
   if (phrase) modeCtl.handle.configure({ rag: { enabled: false } });
   else modeCtl.pickChannel();
 }
