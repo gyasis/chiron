@@ -270,7 +270,7 @@ def load_persona_block() -> str:
     """Lucrezia's register for {{personaContextBlock}} (activePersonaFor:language-it)."""
     for p in (HOME / ".chiron/packs/lucrezia/persona.md", HOME / ".chiron/packs/language-it/persona.md"):
         if p.exists():
-            return p.read_text()[:4000]
+            return p.read_text()
     return "Persona: Lucrezia — warm Italian medical tutor; greets the learner by name; bilingual (English instruction, perfect Italian for target words); rigorous on clinical facts; never voices the learner's own turns."
 
 
@@ -283,7 +283,10 @@ def _user_ctx() -> str:
         except Exception:
             t = ""
         if t:
-            return f"## USER-PROVIDED SOURCE (OCR'd pages / notes — prioritize, weave in):\n{t[:4000]}"
+            print(f"[grounding] CH_GROUNDING passed in full: {len(t)} chars", flush=True)
+            try: obs.phase("User grounding loaded", "start", chars=len(t)); obs.phase("User grounding loaded", "end", chars=len(t))
+            except Exception: pass
+            return f"## USER-PROVIDED SOURCE (OCR'd pages / notes — prioritize, weave in):\n{t}"
     return ""
 
 
