@@ -57,6 +57,7 @@
       if (job.first) fire(job.u, 'start');
       return a.play();
     }).catch(function (e) {
+      if (queue[0] !== job) { console.warn('chiron say-shim: cancelled utterance failed, ignored —', e.message); return; }
       console.warn('chiron say-shim: could not speak —', e.message);
       if (queue[0] === job) queue.shift();
       busy = false; fire(job.u, 'error', { utterance: job.u, error: e.message });
