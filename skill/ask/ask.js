@@ -13,9 +13,15 @@ import { createSemanticSource } from './semantic.js';
 import * as cards from './cards.js';
 import * as steps from './steps.js';
 import { installInAppBridge } from './inapp.js';
+import { isPhraseRequest, parsePhraseBlock, PHRASE_SYSTEM_PROMPT } from './phrase-mode.js';
 
 const $ = s => document.querySelector(s);
 const LS_SCOPE = 'chiron.ask.scope';
+const LS_MODE = 'chiron.ask.mode';
+
+/** Which prompt answers: 'librarian' (the library-grounded companion) or 'phrase' (the phrase builder). */
+let MODE = 'librarian';
+try { if (localStorage.getItem(LS_MODE) === 'phrase') MODE = 'phrase'; } catch (e) { console.warn('[chiron] ask mode not readable:', e && e.message || e); }
 
 const DOMAIN_LABEL = {
   medicine: 'Medicine',
@@ -112,6 +118,7 @@ async function boot() {
   const semantic = createSemanticSource({
     scope: () => $('#scope').value,
     focus: () => FOCUS,
+    enabled: () => MODE !== 'phrase',
     corpusById: id => corpusCache?.get(id),
     embedUrl: '/ask/embed',
   });
@@ -143,6 +150,23 @@ async function boot() {
   };
   let corpusReady = primeCorpus();
 
+  // Phrase mode replaces the whole system message at send time, so the librarian persona, its retrieval
+  // context and its speak instructions never reach the model. beforeSend is the one hook that sees the
+  // final message list for every send path (composer, hero cards, handle.send).
+  const phrasePlugin = {
+    name: 'chiron-phrase-mode',
+    version: '1.0.0',
+    beforeSend(ctx) {
+      if (MODE !== 'phrase') return ctx;
+      const [first, ...rest] = ctx.messages;
+      if (!first || first.role !== 'system') {
+        console.warn('[chiron] phrase mode: first message is not the system prompt; leaving the request unchanged');
+        return ctx;
+      }
+      return { ...ctx, messages: [{ role: 'system', content: PHRASE_SYSTEM_PROMPT }, ...rest] };
+    },
+  };
+
   let handle;
   try {
     handle = mount({
@@ -158,7 +182,7 @@ async function boot() {
       // The semantic channel. Acolyte fuses it with its own BM25 via RRF; this
       // only supplies cosine-scored passages, and returns nothing at all when
       // the sidecar is missing, partial, or the embedder is down.
-      plugins: [semantic.plugin],
+      plugins: [semantic.plugin, phrasePlugin],
       // autoSpeak: the [[SPEAK]] block of every reply goes to Lucrezia (OmniVoice via say-shim.js in the app) and plays
       // by itself — Gyasi, 2026-10-18: "anything under the speak tag, it automatically does that".
       voice: { enabled: true, autoSpeak: true },
@@ -187,6 +211,7 @@ async function boot() {
   }
 
   $('#boot')?.remove();
+  modeCtl = { handle, pickChannel: null };
   renderHero(handle);   // inline panels open themselves — no handle.open() here
   adoptControls(handle, stats);
 
@@ -211,6 +236,7 @@ async function boot() {
     if (dense && !(await corpusReady)) dense = false;
     if ($('#scope').value !== sc) return DENSE;   // a newer pickChannel for the new scope owns the config
     DENSE = dense;
+    if (MODE === 'phrase') return dense;   // phrase mode keeps retrieval off; applyMode() restores it
     handle.configure({ rag: { enabled: !dense } });
     const st = semantic.status();
     $('#grounded').title = dense
@@ -218,6 +244,8 @@ async function boot() {
       : `keyword search — ${corpusFailure || st.detail || 'no vectors for this scope'}`;
     return dense;
   };
+  modeCtl.pickChannel = pickChannel;
+  applyMode();
   pickChannel().then(d => console.info('[chiron] retrieval:', d ? 'dense (bge-m3)' : 'bm25'));
 
   $('#scope').addEventListener('change', () => {
@@ -264,6 +292,49 @@ async function boot() {
   };
 }
 
+/* ─── answer mode ─── */
+
+let modeCtl = null;     // { handle, pickChannel, select, note } — set at boot (pickChannel once defined)
+
+/** Push the current mode into acolyte: retrieval and the response cache are off in phrase mode, so every
+ *  phrase turn reaches the proxy. configure() replaces the storage object whole, hence the full literal. */
+function applyMode() {
+  const phrase = MODE === 'phrase';
+  modeCtl.handle.configure({ storage: { dbName: 'chiron-ask', historyEnabled: true, cacheEnabled: !phrase } });
+  if (phrase) modeCtl.handle.configure({ rag: { enabled: false } });
+  else modeCtl.pickChannel();
+}
+
+/** Change mode and start a fresh thread (setPersona-style changes only redraw the greeting on an empty
+ *  history, and a mixed thread would carry two prompts' worth of context). */
+function switchMode(next, note, hero = true) {
+  if (next === MODE) return;
+  MODE = next;
+  try { localStorage.setItem(LS_MODE, MODE); } catch (e) { console.warn('[chiron] ask mode not saved:', e && e.message || e); }
+  if (modeCtl.select) modeCtl.select.value = MODE;
+  applyMode();
+  modeCtl.handle.history.start();
+  setTitle('New question');
+  if (hero) renderHero(modeCtl.handle);
+  if (note && modeCtl.note) {
+    modeCtl.note.textContent = note;
+    setTimeout(() => { if (modeCtl.note.textContent === note) modeCtl.note.textContent = ''; }, 6000);
+  }
+}
+
+/** Phrase replies end with a fenced `phrase` JSON block. It is machine data: parse it into the message's
+ *  dataset for the send buttons, and hide it from the rendered reply. Runs once per finished reply. */
+function bindPhrase(msg) {
+  const raw = msg.dataset.raw || '';
+  const res = parsePhraseBlock(raw);
+  if (res.ok) msg.dataset.phrase = JSON.stringify(res.data);
+  else console.warn('[chiron] phrase block not bound:', res.reason);
+  for (const pre of msg.querySelectorAll('pre')) {
+    const t = pre.textContent;
+    if (pre.querySelector('code.language-phrase') || (t.includes('"en_intent"') && t.trim().startsWith('{'))) pre.hidden = true;
+  }
+}
+
 /* ─── adopt acolyte's controls into the pilot's chrome ───
  * The pilot puts the model picker under the composer, settings in the rail, and
  * a title + scope line in the topbar — not acolyte's header strip. Rather than
@@ -301,12 +372,40 @@ function adoptControls(handle, stats) {
     new MutationObserver(() => markCloudModels(picker)).observe(picker, { childList: true });
   }
 
-  // persona picker is ours — acolyte has no UI for it
+  // mode switch is ours — acolyte has no UI for it. Switching starts a new thread so the two prompts
+  // never share a conversation.
   const persona = document.createElement('select');
   persona.title = 'Who answers';
-  persona.innerHTML = '<option>Chiron · study companion</option>';
-  persona.disabled = true;           // one persona for now; a real switcher is step 2
+  persona.setAttribute('aria-label', 'Answer mode');
+  persona.innerHTML = '<option value="librarian">Chiron · librarian</option>' +
+                      '<option value="phrase">Come si dice · phrase builder</option>';
+  persona.value = MODE;
+  persona.addEventListener('change', () => switchMode(persona.value));
   picker?.after(persona);
+  const note = document.createElement('span');
+  note.id = 'modenote';
+  note.setAttribute('role', 'status');
+  persona.after(note);
+  modeCtl.select = persona;
+  modeCtl.note = note;
+
+  // A message that opens like a phrase request moves to the phrase builder before it is sent. The
+  // composer's own Enter / Send handlers live in a closure inside acolyte, so the interception sits on
+  // the panel in the capture phase, ahead of them.
+  const route = (e, text) => {
+    if (MODE !== 'librarian' || !isPhraseRequest(text)) return;
+    if (panel.querySelector('.acolyte-msg.thinking, .acolyte-msg[data-streaming="1"]')) return;   // a send is in flight
+    e.preventDefault();
+    e.stopPropagation();
+    switchMode('phrase', 'Switched to phrase builder', false);
+    handle.send(text.trim());
+  };
+  panel.addEventListener('keydown', e => {
+    if (e.key === 'Enter' && !e.shiftKey && !e.isComposing && e.target.matches?.('.acolyte-input')) route(e, e.target.value);
+  }, true);
+  panel.addEventListener('click', e => {
+    if (e.target.closest?.('.acolyte-send')) route(e, panel.querySelector('.acolyte-input')?.value);
+  }, true);
 
   // settings gear → the rail footer, where the pilot put it
   const gear = panel.querySelector('.acolyte-header .acolyte-iconbtn[title^="Settings"]');
@@ -405,22 +504,31 @@ const SUGGESTIONS = [
    'Make a ward lesson on hyperkalemia.'],
 ];
 
+const PHRASE_SUGGESTIONS = [
+  ['Say what you came for', "How do I say I'm here for my specialization?", 'Register and breakdown included.'],
+  ['Ask your way', 'How do I ask where the train station is?', 'The way a local would ask.'],
+  ['Repair a conversation', "How would I say I'm sorry, I didn't understand?", 'Formal and informal.'],
+];
+
 function renderHero(handle) {
   const box = document.querySelector('#host .acolyte-messages');
   if (!box || box.childElementCount) return;
+  const phrase = MODE === 'phrase';
+  const sugg = phrase ? PHRASE_SUGGESTIONS : SUGGESTIONS;
 
   const hero = document.createElement('div');
   hero.className = 'ask-hero';
   hero.innerHTML = `
     <div class="mk">◈</div>
-    <h1>What do you want to work on?</h1>
-    <p>Ask anything. Answers are grounded in your own lessons — and cite them.</p>
-    <div class="sugg">${SUGGESTIONS.map(([t, q, sub], i) =>
+    <h1>${phrase ? 'What do you want to say?' : 'What do you want to work on?'}</h1>
+    <p>${phrase ? 'Say it in English. You get the Italian a native would use, and why.'
+                : 'Ask anything. Answers are grounded in your own lessons — and cite them.'}</p>
+    <div class="sugg">${sugg.map(([t, q, sub], i) =>
       `<button class="sg" data-i="${i}"><b>${escapeHtml(t)}</b><span>${sub}</span></button>`).join('')}</div>`;
   box.appendChild(hero);
 
   hero.querySelectorAll('.sg').forEach(btn => btn.addEventListener('click', () => {
-    const q = SUGGESTIONS[+btn.dataset.i][1];
+    const q = sugg[+btn.dataset.i][1];
     hero.remove();
     handle.send(q);
   }));
@@ -608,6 +716,14 @@ function wireDispatch(handle, panel) {
     // An answer streams in token by token; wait for it to settle rather than
     // rebuilding the row on every chunk.
     timer = setTimeout(() => {
+      if (MODE === 'phrase') {
+        box.querySelectorAll('.acolyte-msg.assistant:not([data-phrase-bound])').forEach(msg => {
+          // The debounce can fire between tokens; only a finished reply is parsed.
+          if (msg.dataset.streaming === '1' || !msg.dataset.raw) return;
+          msg.dataset.phraseBound = '1';
+          bindPhrase(msg);
+        });
+      }
       box.querySelectorAll('.acolyte-msg.assistant:not([data-acts])').forEach(msg => {
         if (!msg.querySelector('.acolyte-msg-body')?.textContent.trim()) return;
         msg.dataset.acts = '1';
@@ -615,7 +731,7 @@ function wireDispatch(handle, panel) {
         msg.appendChild(buildActs(handle, panel, msg));
       });
     }, DISPATCH_DEBOUNCE);
-  }).observe(box, { childList: true, subtree: true, characterData: true });
+  }).observe(box, { childList: true, subtree: true, characterData: true, attributes: true, attributeFilter: ['data-streaming'] });
 }
 
 /** What this answer was about — the question, the answer, and where it came from. */
