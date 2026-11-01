@@ -7,7 +7,7 @@ Record shapes (one JSON object per line):
   {"kind":"event","phase":"<parent phase>","event_type":"MODEL_CALL_START|...","model_name":...,
    "step_instruction":...,"metadata":{"tokens_used":...,"execution_time_ms":...,"error":...},"ts":ISO,"seq":N}
 """
-import json, threading
+import json, sys, threading
 from datetime import datetime
 from pathlib import Path
 
@@ -25,6 +25,11 @@ def set_out(out_dir) -> None:
         _state["seq"] = 0
     except Exception:
         _state["path"] = None
+    try:
+        import ledger
+        ledger.set_context(run_id=ledger.new_run_id(), lesson_id=Path(out_dir).name)
+    except Exception as e:
+        sys.stderr.write(f"[obs] ledger context not set: {type(e).__name__}: {e}\n")
 
 
 def _write(rec: dict) -> None:

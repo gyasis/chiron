@@ -16,12 +16,13 @@ Static orchestration — a Callable/classifier decides control flow, never the a
 """
 from __future__ import annotations
 import sys
-import json, os, re, subprocess, urllib.request
+import json, os, re, subprocess, time, urllib.request
 from promptchain.utils.promptchaining import PromptChain
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'chains'))
 import local_models  # noqa: E402  live discovery of the Mac's chat-capable models
 import chiron_models  # noqa: E402  live-catalog resolver: 'cloud:<family>@latest' + heals retired names
 import fail_fast  # noqa: E402  one deadline per turn + governor lease pre-check + num_ctx
+import ledger  # noqa: E402  one full prompt/response record per model call
 from promptchain.utils.agentic_step_processor import AgenticStepProcessor
 
 AGENT_MODEL = os.environ.get("TUTOR_AGENT_MODEL", "gemini/gemini-flash-latest")
@@ -179,6 +180,20 @@ def _ollama_chat(url: str, model: str, headers: dict, system: str, history: list
     return c
 
 def _call(spec: str, system: str, history: list[dict], user: str) -> str:
+    """One provider call, recorded in the prompt ledger (system + history + user, and the reply)."""
+    msgs = [{"role": "system", "content": system}, *history[-10:]] + ([{"role": "user", "content": user}] if user else [])
+    prov = spec.partition(":")[0]
+    t0 = time.time()
+    try:
+        out = _dispatch(spec, system, history, user)
+    except BaseException as e:
+        ledger.record(f"tutor:{prov}", spec, msgs, None, params={"spec": spec}, status="error",
+                      error=f"{type(e).__name__}: {e}"[:500], latency_ms=int((time.time() - t0) * 1000))
+        raise
+    ledger.record(f"tutor:{prov}", spec, msgs, out, params={"spec": spec}, latency_ms=int((time.time() - t0) * 1000))
+    return out
+
+def _dispatch(spec: str, system: str, history: list[dict], user: str) -> str:
     prov, _, model = spec.partition(":")
     if prov == "cloud":    return _ollama_chat(OLLAMA_CLOUD, chiron_models.resolve(model), {"Authorization": "Bearer " + OLLAMA_KEY}, system, history, user)
     if prov == "governor":
@@ -538,8 +553,16 @@ async def _agentic_answer(question: str, history: list[dict], lang: str, sysprom
         {"type": "function", "function": {"name": "web_search",
             "description": "Search the web for CURRENT info beyond a 2022 textbook (recent guidelines, new drugs, recent trials, epidemiology) or non-internal-medicine facts.",
             "parameters": {"type": "object", "properties": {"query": {"type": "string", "description": "Concise web query"}}, "required": ["query"]}}}])
-    out = await chain.process_prompt_async(question or "?")
-    return out if isinstance(out, str) else str(out)
+    t0 = time.time()
+    try:
+        out = await chain.process_prompt_async(question or "?")
+    except BaseException as e:
+        ledger.record("tutor:agent", AGENT_MODEL, objective, None, status="error",
+                      error=f"{type(e).__name__}: {e}"[:500], latency_ms=int((time.time() - t0) * 1000))
+        raise
+    out = out if isinstance(out, str) else str(out)
+    ledger.record("tutor:agent", AGENT_MODEL, objective, out, latency_ms=int((time.time() - t0) * 1000))
+    return out
 
 def _static_synth(spec: str, question: str, history: list[dict], sysprompt: str, topic_hint: str, source: str,
                   on_status=None):

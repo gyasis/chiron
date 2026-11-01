@@ -17,7 +17,7 @@ for f in (SKILL / "server").iterdir():
     if f.name not in ("state", "__pycache__"):
         os.symlink(f, TMP / "skill" / "server" / f.name)
 (TMP / "gen").mkdir()
-os.environ.update(CHIRON_SKILL=str(TMP / "skill"), CHIRON_GEN=str(TMP / "gen"),
+os.environ.update(CHIRON_SKILL=str(TMP / "skill"), CHIRON_GEN=str(TMP / "gen"), CHIRON_LEDGER_DIR=str(TMP / "ledger"),
                   CHIRON_ASK_LLM_URL="http://upstream.test", CHIRON_ASK_PROVIDER="ollama", CHIRON_ASK_MODEL="m")
 sys.path.insert(0, str(SKILL / "server"))
 
@@ -122,6 +122,50 @@ class AskProxy(unittest.TestCase):
         self.assertEqual(UP[0]["body"]["options"]["num_ctx"], 8192)     # never the server's 131K default
         self.assertEqual(UP[0]["headers"]["x-governor-max-seconds"], "180")
         self.assertEqual(ask_proxy._inflight, {})                     # slot released
+
+    def _ledger_rows(self):
+        return [json.loads(l) for f in sorted((TMP / "ledger").glob("*.jsonl")) for l in f.read_text().splitlines()]
+
+    def test_ledger_records_streamed_reply_and_request(self):
+        before = len(self._ledger_rows())
+        out = self.run_(call("fast", "tabL"))
+        self.assertEqual(out["body"], b'{"message":{"content":"Ciao"}}\n{"done":true}\n')   # stream untouched
+        rec = self._ledger_rows()[before]
+        self.assertEqual((rec["source"], rec["session_id"], rec["status"], rec["response"], rec["model"]),
+                         ("ask", "s:tabL", "ok", "Ciao", "fast"))
+        self.assertIn('"hi"', rec["prompt"])
+        self.assertEqual(rec["params"]["stream"], True)
+
+    def test_ledger_records_cancelled_mid_stream(self):
+        before = len(self._ledger_rows())
+        self.run_(call("stream", "tabC", disconnect_after=0.3))
+        self.run_(settle())
+        rec = self._ledger_rows()[before]
+        self.assertEqual((rec["status"], rec["response"]), ("cancelled", "Ci"))
+
+    def _get(self, path: str, client_host: str) -> int:
+        async def go():
+            st = []
+
+            async def receive():
+                return {"type": "http.request", "body": b"", "more_body": False}
+
+            async def send(m):
+                if m["type"] == "http.response.start":
+                    st.append(m["status"])
+            scope = {"type": "http", "asgi": {"version": "3.0", "spec_version": "2.3"}, "http_version": "1.1",
+                     "method": "GET", "scheme": "http", "path": path, "raw_path": path.encode(), "query_string": b"",
+                     "root_path": "", "headers": [], "client": (client_host, 50000), "server": ("test", 80)}
+            await A.app(scope, receive, send)
+            return st[0]
+        return self.run_(go())
+
+    def test_ledger_endpoints_are_loopback_only(self):
+        for path in ("/api/ledger", "/api/ledger/status"):
+            self.assertEqual(self._get(path, "192.168.0.50"), 403, path)
+            self.assertEqual(self._get(path, "::ffff:10.0.0.1"), 403, path)
+        self.assertEqual(self._get("/api/ledger/status", "127.0.0.1"), 200)
+        self.assertEqual(self._get("/api/ledger/status", "::1"), 200)
 
     def test_page_num_ctx_is_kept(self):
         self.run_(call("fast", "tab1", extra={"options": {"num_ctx": 4096}}))
