@@ -141,6 +141,7 @@ class Run:
                                              if t["role"] == "assistant") if p), None)
         self.steps: list[dict] = []
         self.understand = self.build = self.check = None
+        self.overrides: list[dict] = []
         self.content = ""
         self.t0 = time.time()
 
@@ -272,6 +273,134 @@ End with a fenced block tagged meta holding ONLY this JSON (the system builds th
 ```"""
 
 
+# ── deterministic register rule ──────────────────────────────────────────────────
+
+_WORD = re.compile(r"[^\W\d_]+", re.UNICODE)
+_SENT = re.compile(r"[^.!?;:\n]+")
+_LEI_CAPS = {"Lei", "La", "Le", "Sua", "Suo", "Suoi", "Sue", "Glielo", "Gliela"}
+_LEI_LOWER = re.compile(r"(?<![^\W\d_])(?:scusi|senta|dica|può|potrebbe|saprebbe|vuole|vorrebbe|permetta|sa|si accomodi)(?![^\W\d_])")
+_TU_WORDS = {"tu", "ti", "te", "tuo", "tua", "tuoi", "tue", "scusa", "senti", "dimmi", "puoi", "potresti", "sai",
+             "sapresti", "vuoi", "vorresti", "hai", "sei", "fai", "vai", "devi", "permettimi"}
+# "La ringrazio" / "Le chiedo": a capitalised La/Le opening a sentence is Lei only before one of these first-person
+# verbs; before anything else it is the article ("La casa è grande").
+_LEI_OPENER_VERBS = {"ringrazio", "prego", "chiedo", "domando", "saluto", "informo", "avviso", "disturbo", "auguro",
+                     "ammiro", "stimo", "presento", "scrivo", "telefono", "richiamo", "contatto", "mando", "ricordo",
+                     "consiglio", "spiego", "mostro", "dico", "do", "faccio", "devo", "posso", "vorrei"}
+# "Dove le fa male?": lowercase "le" before one of these verbs is the formal indirect object but looks like the
+# plural article, so the sentence is ambiguous (no label from the rule) unless another marker settles it.
+_LE_CLITIC_VERBS = {"fa", "fanno", "dà", "dice", "serve", "piace", "dispiace", "passa", "può", "posso", "devo",
+                    "vorrei", "spiego", "mostro", "chiedo", "ricordo", "consiglio", "faccio", "do", "dico", "fa'"}
+_CLOCK_BEFORE = {"le", "alle", "dalle", "entro", "verso"}      # "sono le sei": six o'clock, not "tu sei"
+
+
+def register_of(it: str):
+    """The register an Italian sentence shows by explicit markers: "lei", "tu", "neutral" (no address form), or None
+    when it is empty, mixed (both kinds of marker) or ambiguous (a lowercase clitic "le" before a verb, which is
+    the formal "to you" but looks like the plural article)."""
+    text = (it or "").replace("’", "'").replace("‘", "'").strip()
+    if not text:
+        return None
+    lei = tu = ambiguous = False
+    for sent in _SENT.findall(text):
+        words = _WORD.findall(sent)
+        low = [w.lower() for w in words]
+        for i, w in enumerate(words):
+            nxt = low[i + 1] if i + 1 < len(low) else ""
+            if i == 0:
+                if low[0] == "lei":
+                    lei = True
+                elif w in ("La", "Le") and nxt in _LEI_OPENER_VERBS:
+                    lei = True
+            elif w in _LEI_CAPS:
+                lei = True
+            if w == "le" and nxt in _LE_CLITIC_VERBS:
+                ambiguous = True
+            if len(w) >= 7 and low[i].endswith(("arla", "erla", "irla")):    # conoscerla, ringraziarla, conoscerLa
+                lei = True
+            if low[i] in _TU_WORDS and not (low[i] == "sei" and i and low[i - 1] in _CLOCK_BEFORE):
+                tu = True
+        if _LEI_LOWER.search(sent.lower()):
+            lei = True
+    if lei and tu:
+        return None
+    if lei:
+        return "lei"
+    if tu:
+        return None if ambiguous else "tu"
+    return None if ambiguous else "neutral"
+
+
+_REG_PREFIX = {"lei": "Formal (Lei):", "tu": "Informal (tu):", "neutral": "Alternative (neutral):"}
+_REG_NOTE = {"lei": "it contains a Lei form", "tu": "it contains a tu form",
+             "neutral": "it has no Lei or tu form, so it suits any listener"}
+
+
+def _line_label(line: str):
+    low = line.lower()
+    found = {k for k, pat in (("neutral", r"\bneutral\b"), ("lei", r"\blei\b|\bformal\b"), ("tu", r"\btu\b|\binformal\b"))
+             if re.search(pat, low)}
+    return found.pop() if len(found) == 1 else None
+
+
+def apply_register_rule(it: str, label: str, what: str, overrides: list) -> str:
+    """The rule's label when it has one, else the model's. A change is logged and recorded in `overrides`."""
+    rule = register_of(it)
+    if rule is None:
+        log(f"[register] rule has no answer for {it!r}; keeping the model's {label!r}")
+        return label
+    if rule != label:
+        log(f'[register] override {label}->{rule} for "{it}"')
+        overrides.append({"what": what, "it": it, "model": label, "rule": rule})
+    return rule
+
+
+def correct_build_registers(build: dict, overrides: list) -> None:
+    """Fix the main sentence's and each variant's register label from the rule, refresh the note when the label
+    changed, and drop variants that repeat the main sentence or one another."""
+    n0 = len(overrides)
+    build["register"] = apply_register_rule(build["it"], build["register"], "main", overrides)
+    if len(overrides) > n0:
+        build["register_note"] = _REG_NOTE[build["register"]]
+    seen = {_norm(build["it"])}
+    keep = []
+    for v in build["variants"]:
+        v["register"] = apply_register_rule(v["it"], v["register"], "variant", overrides)
+        if _norm(v["it"]) in seen:
+            log(f"[register] dropped variant that repeats an earlier sentence: {v['it']!r}")
+            continue
+        seen.add(_norm(v["it"]))
+        keep.append(v)
+    build["variants"] = keep
+
+
+def fix_register_lines(body: str, label: str, note: str | None, variants: list, main_it: str) -> str:
+    """Make the rendered Register line and the variant lines agree with the corrected labels: a line whose stated
+    register differs is rewritten, a variant line that repeats the main sentence is removed."""
+    out = []
+    for line in body.split("\n"):
+        plain = line.strip()
+        if re.match(r"^Register\s*:", plain):
+            first = re.match(r"^Register\s*:\s*([A-Za-z]+)", plain).group(1).lower()
+            stated = {"neutral": "neutral", "lei": "lei", "formal": "lei", "tu": "tu", "informal": "tu"}.get(first) or _line_label(plain)
+            if stated != label:
+                log(f"[register] rewrote the Register line to {label!r}")
+                line = f"Register: {label if label == 'neutral' else ('Lei (formal)' if label == 'lei' else 'tu (informal)')}." + (f" {note}" if note else "")
+        else:
+            m = re.match(r"^(Formal \(Lei\)|Informal \(tu\)|Neutral|Alternative \(neutral\))\s*:\s*(.+)$", plain)
+            if m:
+                rest = _norm(m.group(2))
+                if _norm(main_it) and _norm(main_it) in rest and not any(_norm(v["it"]) in rest for v in variants):
+                    log("[register] removed a variant line that repeats the main sentence")
+                    continue
+                for v in variants:
+                    if _norm(v["it"]) and _norm(v["it"]) in rest and _line_label(m.group(1)) != v["register"]:
+                        log(f"[register] rewrote a variant line to {v['register']!r}")
+                        line = f"{_REG_PREFIX[v['register']]} {m.group(2)}"
+                        break
+        out.append(line)
+    return "\n".join(out)
+
+
 # ── steps ────────────────────────────────────────────────────────────────────────
 
 def _valid_understand(o):
@@ -350,6 +479,9 @@ async def step_check(run: Run, _prev: str) -> str:
         run.build = await json_step(run, "build_fix", MODEL_THINK, BUILD_SYS, _build_user(run, fixes), _valid_build)
     else:
         log("check: ok")
+    correct_build_registers(run.build, run.overrides)
+    run.steps.append({"step": "register", "model": "rule", "done_reason": "n/a", "latency_ms": 0,
+                      "thinking_chars": 0, "overrides": list(run.overrides)})
     return json.dumps(run.build, ensure_ascii=False)
 
 
@@ -434,6 +566,8 @@ async def step_teach(run: Run, _prev: str) -> str:
                 f"EARLIER TURNS:\n{run.transcript()}\n\nLEARNER'S ITALIAN ATTEMPT:\n{run.user}")
         body, meta = await _markdown_step(run, "coach", COACH_SYS, user, ("corrected", "practice"))
         reg = meta.get("register") if meta.get("register") in REGISTERS else "neutral"
+        reg = apply_register_rule(meta["corrected"], reg, "corrected", run.overrides)
+        body = fix_register_lines(body, reg, _REG_NOTE[reg], [], meta["corrected"])
         data = {"it": meta["corrected"], "en_intent": lp.get("practice") or "", "register": reg, "variants": [],
                 "breakdown": meta.get("breakdown") or [], "pattern": meta.get("pattern") or lp.get("pattern") or "",
                 "slots": meta.get("slots") or [], "practice": meta["practice"]}
@@ -447,6 +581,7 @@ async def step_teach(run: Run, _prev: str) -> str:
         user += "\n\nThe literal trap is not different from the main sentence: leave the Watch out section out."
     body, meta = await _markdown_step(run, "teach", TEACH_SYS, user, ("pattern", "practice"))
     body = drop_same_string_watch_out(body, b["it"], b["literal_trap"]["it"])
+    body = fix_register_lines(body, b["register"], b.get("register_note"), b["variants"], b["it"])
     data = {"it": b["it"], "en_intent": run.understand.get("meaning") or run.user, "register": b["register"],
             "variants": [{"it": v["it"], "register": v["register"]} for v in b["variants"]],
             "breakdown": meta.get("breakdown") or [], "pattern": meta["pattern"], "slots": meta.get("slots") or [],
@@ -469,7 +604,7 @@ async def coach(messages: list[dict], session_id: str | None = None) -> dict:
     chain = PromptChain(models=[], instructions=[s1, s2, s3, s4], verbose=False)
     with ledger.context(session_id=session_id, run_id=ledger.new_run_id()):
         await chain.process_prompt_async(run.user)
-    return {"content": run.content, "kind": run.understand["kind"], "steps": run.steps,
+    return {"content": run.content, "kind": run.understand["kind"], "steps": run.steps, "register_overrides": run.overrides,
             "total_ms": int((time.time() - run.t0) * 1000)}
 
 

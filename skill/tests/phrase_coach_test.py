@@ -92,8 +92,8 @@ class Chain(unittest.TestCase):
         self.assertEqual(blk["practice"], "I'm here for my interview.")
         self.assertEqual(blk["variants"][0]["it"], "Sono qui per fare la specializzazione.")
         self.assertNotIn("```meta", c)
-        self.assertEqual([x["step"] for x in r["steps"]], ["understand", "build", "check", "teach"])
-        self.assertTrue(all(x["done_reason"] == "stop" and "latency_ms" in x for x in r["steps"]))
+        self.assertEqual([x["step"] for x in r["steps"]], ["understand", "build", "check", "register", "teach"])
+        self.assertTrue(all(x["done_reason"] == "stop" and "latency_ms" in x for x in r["steps"] if x["step"] != "register"))
 
     def test_ledger_has_one_record_per_call(self):
         def rows():
@@ -217,6 +217,78 @@ class Chain(unittest.TestCase):
                 self.assertFalse({"num_predict", "num_ctx", "max_tokens"} & set(body.get("options", {})))
         finally:
             chain.httpx.AsyncClient = real
+
+
+REGISTER_TABLE = [
+    ("Sono qui per la specializzazione.", "neutral"),
+    ("Mi scusi, sa dov'è la stazione?", "lei"),
+    ("Scusa, sai dov'è la stazione?", "tu"),
+    ("Vorrei aprire un conto corrente.", "neutral"),
+    ("Dove le fa male?", None),                       # lowercase "le" before a verb: formal "to you" or plural article, so ambiguous
+    ("Posso prenotare un appuntamento per martedì mattina?", "neutral"),
+    ("Potrebbe ripetere più lentamente?", "lei"),
+    ("Puoi ripetere?", "tu"),
+    ("Ho mal di testa.", "neutral"),
+    ("La ringrazio.", "lei"),                         # opening La before a first-person verb is the Lei pronoun
+    ("La casa è grande.", "neutral"),                 # opening La before anything else is the article
+    ("Piacere di conoscerla.", "lei"),
+    ("Spero di rivederLa presto.", "lei"),
+    ("Lavorerò con voi.", "neutral"),                 # plural "voi" is not a register
+    ("Sono a casa, non in cassa.", "neutral"),        # "sa" inside casa/cassa is not the formal verb
+    ("Scusi, sai dov'è?", None),                      # Lei and tu together: leave the model's label alone
+    ("Lei è il dottore?", "lei"),
+    ("Grazie. La ringrazio davvero.", "lei"),
+    ("Sono le sei.", "neutral"),                      # "sei" after "le" is six o'clock
+    ("Dove sei?", "tu"),
+    ("Si accomodi pure.", "lei"),
+    ("Mi dica.", "lei"),
+    ("L’ho già detto a Sua moglie.", "lei"),          # curly apostrophe, capitalised Sua mid-sentence
+    ("", None),
+    ("   ", None),
+]
+
+
+class Register(unittest.TestCase):
+    def test_register_of_table(self):
+        for it, want in REGISTER_TABLE:
+            self.assertEqual(chain.register_of(it), want, it)
+
+    def test_override_flows_to_the_phrase_json_and_the_register_line(self):
+        b = dict(BUILD, register="lei", register_note="Lei", variants=[
+            {"it": "Sono qui per iscrivermi alla specializzazione.", "register": "lei", "why": "enroll"},
+            {"it": "Sono qui per la specializzazione.", "register": "neutral", "why": "dup of the main sentence"}])
+        teach = TEACH.replace("Register: neutral. No Lei or tu form.",
+                              "Register: Lei (formal). Mi scusi sets the frame.\nFormal (Lei): Sono qui per iscrivermi alla specializzazione.\n"
+                              "Formal (Lei): Sono qui per la specializzazione.")
+        s = Script(NEW, answers={"build": json.dumps(b), "teach": teach})
+        r = run_coach(s, [{"role": "user", "content": "how do I say I'm here for my specialization"}])
+        blk = chain.phrase_block(r["content"])
+        self.assertEqual(blk["register"], "neutral")
+        self.assertEqual([v["it"] for v in blk["variants"]], ["Sono qui per iscrivermi alla specializzazione."])
+        self.assertEqual(blk["variants"][0]["register"], "neutral")
+        self.assertIn("Register: neutral.", r["content"])
+        self.assertNotIn("Register: Lei", r["content"])
+        self.assertIn("Alternative (neutral): Sono qui per iscrivermi", r["content"])
+        self.assertNotIn("Formal (Lei): Sono qui per la specializzazione.", r["content"])
+        self.assertEqual([o["what"] for o in r["register_overrides"]], ["main", "variant"])
+        self.assertEqual(r["register_overrides"][0]["model"], "lei")
+        reg_step = [x for x in r["steps"] if x["step"] == "register"][0]
+        self.assertEqual(len(reg_step["overrides"]), 2)
+        teach_user = [c for c in s.calls if c[0] == "teach"][0][2]
+        self.assertIn("REGISTER (use exactly): neutral", teach_user)
+
+    def test_unsure_rule_keeps_the_model_label(self):
+        b = dict(BUILD, it="Scusi, sai dov'è?", register="lei", variants=[])
+        r = run_coach(Script(NEW, answers={"build": json.dumps(b)}), [{"role": "user", "content": "x"}])
+        self.assertEqual(chain.phrase_block(r["content"])["register"], "lei")
+        self.assertEqual(r["register_overrides"], [])
+
+    def test_coach_corrected_sentence_register_is_ruled(self):
+        coach = COACH.replace('"register": "neutral"', '"register": "lei"')
+        r = run_coach(Script({"kind": "attempt"}, answers={"coach": coach}),
+                      prior_turns() + [{"role": "user", "content": "Sono qui per colloquio"}])
+        self.assertEqual(chain.phrase_block(r["content"])["register"], "neutral")
+        self.assertEqual(r["register_overrides"][0]["what"], "corrected")
 
 
 class Route(unittest.TestCase):
