@@ -87,6 +87,20 @@ class SourcePack(unittest.TestCase):
         self.assertIn(body.strip(), seen["prompt"])
 
 
+class PimsleurSource(unittest.TestCase):
+    def test_source_block_is_whole(self):
+        mod = load("2026-10-11_chiron-pimsleur-lesson-chain")
+        body = "".join(f"riga{i:05d} " for i in range(3000))[:30000]
+        with tempfile.TemporaryDirectory() as d:
+            f = Path(d) / "pack.md"
+            f.write_text(body)
+            buf = io.StringIO()
+            with mock.patch.dict(os.environ, {"CH_SOURCE": str(f)}), redirect_stdout(buf):
+                got = mod.source_block()
+        self.assertIn(body.strip(), got)
+        self.assertIn("1 file(s)", buf.getvalue())
+
+
 class ClaudeP(unittest.TestCase):
     def run_with(self, chain, rc, out, err):
         mod = load(chain)

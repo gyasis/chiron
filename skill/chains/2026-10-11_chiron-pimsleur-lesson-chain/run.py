@@ -94,7 +94,7 @@ def point_at(out: Path):
 
 
 def source_block() -> str:
-    """CH_SOURCE grounding (a file or a dir of text files), capped. Empty when the topic is general grammar."""
+    """CH_SOURCE grounding (a file or a dir of text files), passed whole. Empty when the topic is general grammar."""
     p = os.environ.get("CH_SOURCE")
     if not p:
         return ""
@@ -102,7 +102,8 @@ def source_block() -> str:
     files = [p] if p.is_file() else sorted(f for f in p.rglob("*") if f.suffix in (".md", ".txt", ".json"))
     text = "\n\n".join(f"### {f.name}\n{f.read_text(errors='ignore')}" for f in files)
     text = re.sub(r"<[^>]+>", " ", text)
-    return f"\n## SOURCE — ground every Italian line in this; do not invent facts it does not support\n{text[:24000]}\n"
+    print(f"[source] CH_SOURCE passed in full: {len(text)} chars from {len(files)} file(s)", flush=True)
+    return f"\n## SOURCE — ground every Italian line in this; do not invent facts it does not support\n{text}\n"
 
 
 SRC = source_block()
