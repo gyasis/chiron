@@ -52,6 +52,11 @@ async def upstream(request: httpx.Request) -> httpx.Response:
             finally:
                 rec["events"].append("closed")
         return httpx.Response(200, headers={"content-type": "application/x-ndjson"}, content=gen())
+    if body["model"] == "timeout":                     # a read timeout between chunks
+        async def cut():
+            yield b'{"message":{"content":"Ci"}}\n'
+            raise httpx.ReadTimeout("read timed out")
+        return httpx.Response(200, headers={"content-type": "application/x-ndjson"}, content=cut())
     async def two():
         yield b'{"message":{"content":"Ciao"}}\n'
         yield b'{"done":true}\n'
@@ -135,6 +140,54 @@ class AskProxy(unittest.TestCase):
                          ("ask", "s:tabL", "ok", "Ciao", "fast"))
         self.assertIn('"hi"', rec["prompt"])
         self.assertEqual(rec["params"]["stream"], True)
+
+    def test_timeout_mid_stream_ends_with_ndjson_error_line(self):
+        out = self.run_(call("timeout", "tabT"))
+        self.assertEqual(out["status"], 200)
+        lines = [json.loads(l) for l in out["body"].splitlines()]
+        self.assertEqual(lines[0], {"message": {"content": "Ci"}})
+        self.assertTrue(lines[-1]["done"])
+        self.assertIn("ReadTimeout", lines[-1]["error"])
+
+    def test_timeout_mid_stream_on_chat_completions_ends_with_sse_error(self):
+        out = self.run_(call("timeout", "tabS", path="/ask/llm/chat/completions"))
+        self.assertTrue(out["body"].endswith(b"\n\n"))
+        last = out["body"].strip().splitlines()[-1]
+        self.assertIn("ReadTimeout", json.loads(last[len(b"data: "):])["error"]["message"])
+
+    def test_superseded_mid_stream_ends_with_error_line(self):
+        async def go():
+            first = asyncio.ensure_future(call("stream", "tabU"))
+            await asyncio.sleep(0.4)
+            await call("fast", "tabU")
+            return await asyncio.wait_for(first, 3)
+        first = self.run_(go())
+        self.assertEqual(first["status"], 200)
+        last = json.loads(first["body"].splitlines()[-1])
+        self.assertTrue(last["done"])
+        self.assertIn("superseded", last["error"])
+
+    def test_browser_gone_mid_stream_writes_no_error_line(self):
+        out = self.run_(call("stream", "tabG", disconnect_after=0.3))
+        self.assertNotIn(b"error", out["body"])
+
+    def test_capability_lookup_failure_is_not_cached(self):
+        answers = [(503, {}), (200, {"capabilities": ["completion", "thinking"]})]
+        real = httpx.AsyncClient
+
+        def handler(request):
+            code, js = answers.pop(0)
+            return httpx.Response(code, json=js)
+        A.httpx.AsyncClient = lambda **kw: real(transport=httpx.MockTransport(handler), **kw)
+        A._ASK_THINKS.pop("thinker", None)
+        try:
+            self.assertFalse(self.run_(A._ask_model_thinks("http://x", "thinker")))   # 503 -> False ...
+            self.assertNotIn("thinker", A._ASK_THINKS)                                 # ... and not remembered
+            self.assertTrue(self.run_(A._ask_model_thinks("http://x", "thinker")))    # the next call asks again
+            self.assertTrue(A._ASK_THINKS["thinker"])
+        finally:
+            A.httpx.AsyncClient = real
+            A._ASK_THINKS.pop("thinker", None)
 
     def test_ledger_records_cancelled_mid_stream(self):
         before = len(self._ledger_rows())

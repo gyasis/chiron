@@ -22,7 +22,7 @@ so Pixel, Galaxy and the web are one learner. (Named raccolte, not collections: 
 Storage: state/collections.json  {"collections":[{id,name,created_at,items:[{it,en,source,lesson,section,note,added_at,
 removed_at}]}]}, written atomically (tmp + replace). The default "Parole deboli" (id parole-deboli) always exists.
 """
-import json, os, re, sys, threading, time, unicodedata
+import hashlib, json, os, re, sys, threading, time, unicodedata
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -207,12 +207,19 @@ def audio_cards(cid: str, n: int, offset: int, dry: bool) -> dict:
             "uncovered": uncovered}
 
 
+def _content_hash(items: list[dict]) -> str:
+    """Short digest of the active items (sorted folded `it`): the same items give the same hash, any change a new one."""
+    return hashlib.sha256("\n".join(sorted(fold(i["it"]) for i in items)).encode()).hexdigest()[:8]
+
+
 def lesson_request(col: dict) -> dict:
     items = _active(col)
+    # The subject names the slug that generate() dedups on, so it carries the content hash: an unchanged
+    # collection is a duplicate, a changed one is a new lesson.
     brief = ("Costruisci una lezione su questa raccolta di parole e frasi che il discente trova difficili. "
              "Insegna ciascuna in contesto clinico, con esempi e un breve esercizio.\n\nVoci:\n" +
              "\n".join(f"- {i['it']}" + (f" — {i['en']}" if i.get("en") else "") for i in items))
-    return {"domain": "medical-italian", "depth": "ward", "subject": f"Raccolta: {col['name']}",
+    return {"domain": "medical-italian", "depth": "ward", "subject": f"Raccolta: {col['name']} ({_content_hash(items)})",
             "grounding": brief, "stage": "all", "source": "raccolte", "source_ref": col["id"], "extra": {}}
 
 

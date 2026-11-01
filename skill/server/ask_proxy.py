@@ -171,6 +171,14 @@ class StreamTap:
         self.raw = b""
 
 
+def error_line(url: str, cause: str) -> bytes:
+    """The final line of a cut-off reply in the upstream's own wire format, so the client sees a failure
+    rather than an answer that merely stops: Ollama NDJSON for api/chat and api/generate, else OpenAI SSE."""
+    if url.rstrip("/").endswith(("api/chat", "api/generate")):
+        return json.dumps({"error": cause, "done": True}).encode() + b"\n"
+    return b"data: " + json.dumps({"error": {"message": cause}}).encode() + b"\n\n"
+
+
 def _request_view(body: bytes | None) -> tuple[object, str | None, dict | None]:
     """(messages or prompt, model, params) from a model request body; params are the fields as sent."""
     try:
@@ -265,6 +273,8 @@ async def forward(request: Request, url: str, body: bytes | None, headers: dict,
                         await nxt
                     _log(f"{key or url}: upstream closed mid-stream — {why()}")
                     outcome[:] = ["cancelled", why()]
+                    if not gone.is_set():                  # superseded while the browser still listens
+                        yield error_line(url, why())
                     return
                 try:
                     data = nxt.result()
@@ -280,6 +290,8 @@ async def forward(request: Request, url: str, body: bytes | None, headers: dict,
         except httpx.HTTPError as e:                       # e.g. a >read-timeout gap between chunks
             _log(f"{key or url}: upstream stream failed: {type(e).__name__}: {e}")
             outcome[:] = ["error", f"{type(e).__name__}: {e}"[:500]]
+            if not gone.is_set():
+                yield error_line(url, outcome[1])
         except BaseException as e:                         # the browser went away while a chunk was in flight
             outcome[:] = ["cancelled", f"{type(e).__name__}: {e}"[:500]]
             raise
