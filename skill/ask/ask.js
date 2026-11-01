@@ -117,13 +117,31 @@ async function boot() {
   });
   // The semantic source needs passage bodies to return; fetch the shard lazily
   // so a BM25-only session never pays for it.
+  // Resolves to true when the passage bodies for the CURRENT scope are loaded. Scope 'all' needs none:
+  // its dense search runs server-side and returns the passages itself. A response that lands after the
+  // scope changed again is discarded, so a slow shard never overwrites the newer scope's cache.
+  let corpusFailure = '';
   const primeCorpus = async () => {
     const s2 = $('#scope').value;
-    if (s2 === 'all') return;
-    const r = await fetch(corpusUrl(s2)).catch(() => null);
-    if (r?.ok) corpusCache = new Map((await r.json()).map(p => [p.id, p]));
+    if (s2 === 'all') { corpusFailure = ''; return true; }
+    let reason = '';
+    try {
+      const r = await fetch(corpusUrl(s2));
+      if (!r.ok) reason = `corpus shard HTTP ${r.status}`;
+      else {
+        const map = new Map((await r.json()).map(p => [p.id, p]));
+        if ($('#scope').value !== s2) return false;
+        corpusCache = map; corpusFailure = '';
+        return true;
+      }
+    } catch (e) { reason = `corpus shard failed to load (${e && e.message || e})`; }
+    if ($('#scope').value === s2) {
+      corpusFailure = reason;
+      console.warn(`[chiron] retrieval: ${reason} for scope "${s2}" — keeping keyword search`);
+    }
+    return false;
   };
-  primeCorpus();
+  let corpusReady = primeCorpus();
 
   let handle;
   try {
@@ -186,13 +204,18 @@ async function boot() {
    * channel cannot serve (no sidecar, embedder down, scope 'all') — the page is
    * never left with no retrieval at all. */
   const pickChannel = async () => {
-    const dense = await semantic.ready($('#scope').value);
+    const sc = $('#scope').value;
+    let dense = await semantic.ready(sc);
+    // Dense hits are resolved through the corpus cache; without it every hit is dropped, so the
+    // keyword channel has to stay on.
+    if (dense && !(await corpusReady)) dense = false;
+    if ($('#scope').value !== sc) return DENSE;   // a newer pickChannel for the new scope owns the config
     DENSE = dense;
     handle.configure({ rag: { enabled: !dense } });
     const st = semantic.status();
     $('#grounded').title = dense
       ? `semantic · ${st.detail}`
-      : `keyword search — ${st.detail || 'no vectors for this scope'}`;
+      : `keyword search — ${corpusFailure || st.detail || 'no vectors for this scope'}`;
     return dense;
   };
   pickChannel().then(d => console.info('[chiron] retrieval:', d ? 'dense (bge-m3)' : 'bm25'));
@@ -204,7 +227,7 @@ async function boot() {
     // — before that, configure({rag}) cleared the index and re-fetched the OLD
     // sourceUrl, so a scope change silently reloaded the previous corpus.
     handle.configure({ rag: { sourceUrl: corpusUrl(s) } });
-    corpusCache = null; primeCorpus();
+    corpusCache = null; corpusReady = primeCorpus();
     pickChannel();
     setHint(s);
     setGrounded(stats, s);
