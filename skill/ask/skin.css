@@ -417,3 +417,7 @@
   .acolyte-model-picker option.cloud-model,
   .acolyte-model-picker.on-cloud { color: var(--chiron-success, #3fb950); }
 }
+
+/* phrase mode: the reply's machine-readable block and the mode-switch note */
+.acolyte-msg pre:has(code.language-phrase) { display: none; }
+#modenote { color: var(--chiron-muted); font-size: 11.5px; }

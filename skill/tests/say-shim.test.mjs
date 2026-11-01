@@ -59,3 +59,14 @@ test('a failed fetch of the current utterance still fires error and moves on', a
   assert.deepEqual(a.events, ['error']);
   assert.equal(synth.speaking, false);
 });
+
+test('an utterance with an Italian lang hint is voiced in Italian even without Italian stop-words', () => {
+  const { synth, U, fetches } = shim();
+  const withHint = utter(U, 'Ho mal testa.'); withHint.lang = 'it-IT';
+  const noHint = utter(U, 'Ho mal testa.');
+  synth.speak(withHint);
+  synth.cancel();
+  synth.speak(noHint);
+  assert.equal(fetches[0].body.lang, 'it', 'phrase mode sets it-IT on every utterance');
+  assert.equal(fetches[1].body.lang, 'en', 'without a hint the stop-word guess defaults to English');
+});

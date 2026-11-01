@@ -37,7 +37,7 @@ const IDS = (slug, dom) => `/library/library.corpus.vec.${slug}.${dom}.ids.json`
  * coverage is worse than no coverage. */
 const MIN_COVERAGE = 0.95;
 
-export function createSemanticSource({ scope, corpusById, embedUrl, topK = 8, focus = () => null }) {
+export function createSemanticSource({ scope, corpusById, embedUrl, topK = 8, focus = () => null, enabled = () => true }) {
   let loaded = null;      // { dom, dim, rows, ids, q }  — q is the Int8Array block
   let manifest = null;
   let disabled = false;   // set once we know this scope can never work
@@ -106,6 +106,8 @@ export function createSemanticSource({ scope, corpusById, embedUrl, topK = 8, fo
   }
 
   async function fetchSections({ query }) {
+    // The host turns retrieval off for modes that answer without the library (phrase builder).
+    if (!enabled()) return [];
     if (disabled || !query || query.length < 3) return [];
     const dom = scope();
     if (dom === 'all') {

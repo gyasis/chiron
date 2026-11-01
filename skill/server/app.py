@@ -2275,6 +2275,10 @@ app.include_router(mm_study.router)
 import raccolte  # noqa: E402
 app.include_router(raccolte.router)
 
+# Ask phrase coach: the Come si dice mode's chain behind an Ollama-compatible /ask/phrase/api/* (chat, tags, show).
+import phrase_coach  # noqa: E402
+app.include_router(phrase_coach.router)
+
 # Practice-exam grading (OMCeO Ordine simulator lesson): /api/exam/grade via the Claude CLI, tools off.
 import exam_grade  # noqa: E402
 app.include_router(exam_grade.router)
