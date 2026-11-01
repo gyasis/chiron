@@ -211,6 +211,26 @@ class Route(unittest.TestCase):
         self.assertEqual(last["done"], True)
         self.assertIn("no usable reply", last["error"])
 
+    def test_stream_false_returns_one_json_object(self):
+        async def ok(msgs, session_id=None):
+            return {"content": "line1\nline2\nline3\nline4\nline5\n", "kind": "new_request", "total_ms": 1, "steps": []}
+        phrase_coach._coach = ok
+        r = self.c.post("/ask/phrase/api/chat", json={"stream": False, "tools": [{"type": "function"}],
+                                                      "messages": [{"role": "user", "content": "hi"}]})
+        self.assertEqual(r.status_code, 200)
+        obj = r.json()                                                           # one object, as acolyte's .json() needs
+        self.assertEqual(obj["message"]["content"], "line1\nline2\nline3\nline4\nline5\n")
+        self.assertEqual((obj["done"], obj["done_reason"]), (True, "stop"))
+        self.assertEqual(phrase_coach.ask_proxy.inflight(), {})
+
+    def test_stream_false_failure_is_an_http_error(self):
+        async def boom(msgs, session_id=None):
+            raise RuntimeError("teach: no usable reply after 2 attempts")
+        phrase_coach._coach = boom
+        r = self.c.post("/ask/phrase/api/chat", json={"stream": False, "messages": [{"role": "user", "content": "hi"}]})
+        self.assertEqual(r.status_code, 502)
+        self.assertIn("no usable reply", r.json()["error"])
+
     def test_attempt_turn_passes_history_through(self):
         seen = {}
 

@@ -15,7 +15,7 @@ from pathlib import Path
 
 from fastapi import APIRouter, HTTPException
 from starlette.requests import Request
-from starlette.responses import StreamingResponse
+from starlette.responses import JSONResponse, Response, StreamingResponse
 
 SKILL = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(SKILL / "chains"))
@@ -124,4 +124,21 @@ async def chat(request: Request):
             if ask_proxy._inflight.get(key) is cancel:
                 del ask_proxy._inflight[key]
 
+    if body.get("stream") is False:
+        # acolyte asks for a single JSON reply whenever the request carries tools, and reads it with .json(),
+        # so the NDJSON lines are folded into one Ollama /api/chat object. A failure becomes an HTTP error,
+        # which acolyte's non-stream path reports instead of rendering an empty answer.
+        content, error = "", None
+        async for line in stream():
+            obj = json.loads(line)
+            if obj.get("error"):
+                error = obj["error"]
+                break
+            content += (obj.get("message") or {}).get("content", "")
+        if error is not None:
+            return JSONResponse({"error": error}, status_code=502)
+        if gone.is_set():
+            return Response(status_code=499)
+        return JSONResponse({"model": MODEL_ID, "message": {"role": "assistant", "content": content},
+                             "done": True, "done_reason": "stop"})
     return StreamingResponse(stream(), media_type="application/x-ndjson")
