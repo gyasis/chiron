@@ -2,7 +2,7 @@
 // Run: node --test skill/tests/phrase-mode.test.mjs
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { isPhraseRequest, parsePhraseBlock, PHRASE_SYSTEM_PROMPT, PHRASE_PATTERNS } from '../ask/phrase-mode.js';
+import { isPhraseRequest, parsePhraseBlock, PHRASE_PATTERNS, PHRASE_HOST, PHRASE_MODEL } from '../ask/phrase-mode.js';
 
 test('isPhraseRequest: phrase openings route', () => {
   for (const t of [
@@ -68,13 +68,17 @@ test('parsePhraseBlock: no block or empty input', () => {
   assert.equal(parsePhraseBlock(null).ok, false);
 });
 
-test('system prompt carries the SPEAK and phrase-block contract', () => {
-  assert.match(PHRASE_SYSTEM_PROMPT, /\[\[SPEAK\]\].*\[\[\/SPEAK\]\]/);
-  assert.match(PHRASE_SYSTEM_PROMPT, /exactly one spoken block/);
-  assert.match(PHRASE_SYSTEM_PROMPT, /```phrase/);
-  for (const k of ['"it"', '"en_intent"', '"register"', '"variants"', '"breakdown"', '"chunk"', '"gloss"']) {
-    assert.ok(PHRASE_SYSTEM_PROMPT.includes(k), k);
-  }
-  assert.match(PHRASE_SYSTEM_PROMPT, /Never translate word for word/);
-  assert.doesNotMatch(PHRASE_SYSTEM_PROMPT, /Lucrezia/);
+test('the page talks to the server-side coach, not a browser prompt', async () => {
+  assert.equal(PHRASE_HOST, '/ask/phrase');
+  assert.equal(PHRASE_MODEL, 'phrase-coach');
+  const mod = await import('../ask/phrase-mode.js');
+  assert.equal(mod.PHRASE_SYSTEM_PROMPT, undefined);
+});
+
+test('parsePhraseBlock: the coach block with pattern, slots and practice', () => {
+  const data = { ...GOOD, pattern: 'Sono qui per + [noun]', slots: ['noun'], practice: "I'm here for my interview." };
+  const r = parsePhraseBlock('**x**\n\n[[SPEAK]]x[[/SPEAK]]\n\n```phrase\n' + JSON.stringify(data) + '\n```');
+  assert.equal(r.ok, true);
+  assert.equal(r.data.practice, data.practice);
+  assert.deepEqual(r.data.slots, ['noun']);
 });

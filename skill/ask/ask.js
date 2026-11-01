@@ -13,7 +13,7 @@ import { createSemanticSource } from './semantic.js';
 import * as cards from './cards.js';
 import * as steps from './steps.js';
 import { installInAppBridge } from './inapp.js';
-import { isPhraseRequest, parsePhraseBlock, PHRASE_SYSTEM_PROMPT } from './phrase-mode.js';
+import { isPhraseRequest, parsePhraseBlock, PHRASE_HOST, PHRASE_MODEL } from './phrase-mode.js';
 
 const $ = s => document.querySelector(s);
 const LS_SCOPE = 'chiron.ask.scope';
@@ -150,23 +150,6 @@ async function boot() {
   };
   let corpusReady = primeCorpus();
 
-  // Phrase mode replaces the whole system message at send time, so the librarian persona, its retrieval
-  // context and its speak instructions never reach the model. beforeSend is the one hook that sees the
-  // final message list for every send path (composer, hero cards, handle.send).
-  const phrasePlugin = {
-    name: 'chiron-phrase-mode',
-    version: '1.0.0',
-    beforeSend(ctx) {
-      if (MODE !== 'phrase') return ctx;
-      const [first, ...rest] = ctx.messages;
-      if (!first || first.role !== 'system') {
-        console.warn('[chiron] phrase mode: first message is not the system prompt; leaving the request unchanged');
-        return ctx;
-      }
-      return { ...ctx, messages: [{ role: 'system', content: PHRASE_SYSTEM_PROMPT }, ...rest] };
-    },
-  };
-
   let handle;
   try {
     handle = mount({
@@ -182,7 +165,7 @@ async function boot() {
       // The semantic channel. Acolyte fuses it with its own BM25 via RRF; this
       // only supplies cosine-scored passages, and returns nothing at all when
       // the sidecar is missing, partial, or the embedder is down.
-      plugins: [semantic.plugin, phrasePlugin],
+      plugins: [semantic.plugin],
       // autoSpeak: the [[SPEAK]] block of every reply goes to Lucrezia (OmniVoice via say-shim.js in the app) and plays
       // by itself — Gyasi, 2026-10-18: "anything under the speak tag, it automatically does that".
       voice: { enabled: true, autoSpeak: true },
@@ -211,7 +194,7 @@ async function boot() {
   }
 
   $('#boot')?.remove();
-  modeCtl = { handle, pickChannel: null };
+  modeCtl = { handle, pickChannel: null, llm, model: llm.model };
   renderHero(handle);   // inline panels open themselves — no handle.open() here
   adoptControls(handle, stats);
 
@@ -296,11 +279,15 @@ async function boot() {
 
 let modeCtl = null;     // { handle, pickChannel, select, note } — set at boot (pickChannel once defined)
 
-/** Push the current mode into acolyte: retrieval and the response cache are off in phrase mode, so every
- *  phrase turn reaches the proxy. configure() replaces the storage object whole, hence the full literal. */
+/** Push the current mode into acolyte. Phrase mode talks to the server-side phrase coach (/ask/phrase, an
+ *  Ollama-shaped endpoint that owns the prompts); retrieval and the response cache are off so every phrase
+ *  turn reaches it. configure() replaces the llm and storage objects whole, hence the full literals. */
 function applyMode() {
   const phrase = MODE === 'phrase';
-  modeCtl.handle.configure({ storage: { dbName: 'chiron-ask', historyEnabled: true, cacheEnabled: !phrase } });
+  const llm = phrase
+    ? { provider: 'ollama', host: PHRASE_HOST, model: PHRASE_MODEL, headers: modeCtl.llm.headers }
+    : { ...modeCtl.llm, model: modeCtl.model };
+  modeCtl.handle.configure({ llm, storage: { dbName: 'chiron-ask', historyEnabled: true, cacheEnabled: !phrase } });
   if (phrase) modeCtl.handle.configure({ rag: { enabled: false } });
   else modeCtl.pickChannel();
 }
@@ -309,6 +296,10 @@ function applyMode() {
  *  history, and a mixed thread would carry two prompts' worth of context). */
 function switchMode(next, note, hero = true) {
   if (next === MODE) return;
+  if (MODE === 'librarian') {      // remember the model picked for the librarian, to restore it on the way back
+    const m = document.querySelector('.cmeta .acolyte-model-picker')?.value;
+    if (m) modeCtl.model = m;
+  }
   MODE = next;
   try { localStorage.setItem(LS_MODE, MODE); } catch (e) { console.warn('[chiron] ask mode not saved:', e && e.message || e); }
   if (modeCtl.select) modeCtl.select.value = MODE;
