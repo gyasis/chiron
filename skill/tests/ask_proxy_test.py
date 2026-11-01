@@ -189,6 +189,17 @@ class AskProxy(unittest.TestCase):
             A.httpx.AsyncClient = real
             A._ASK_THINKS.pop("thinker", None)
 
+    def test_keep_thinking_models_are_exempt_from_think_false(self):
+        real = A._ask_cfg
+        A._ask_cfg = lambda: {"provider": "ollama", "llm_url": "http://x", "model": "glm",
+                              "keep_thinking": ["glm-5.3:cloud"]}
+        try:
+            self.assertTrue(A._ask_keeps_thinking("glm-5.3:cloud"))
+            self.assertFalse(A._ask_keeps_thinking("gemma4:12b"))
+            self.assertFalse(A._ask_keeps_thinking(""))
+        finally:
+            A._ask_cfg = real
+
     def test_ledger_records_cancelled_mid_stream(self):
         before = len(self._ledger_rows())
         self.run_(call("stream", "tabC", disconnect_after=0.3))

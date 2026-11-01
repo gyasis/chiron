@@ -2542,6 +2542,13 @@ async def _ask_model_thinks(base: str, model: str) -> bool:
     return _ASK_THINKS[model]
 
 
+def _ask_keeps_thinking(model: str) -> bool:
+    """True for models listed in ~/.chiron/ask.json "keep_thinking". Those are models whose dossier says think:false
+    does not stop the reasoning but moves it into the answer text, so they must run with thinking on (their
+    reasoning stays in its own field, which the page never shows)."""
+    return bool(model) and model in (_ask_cfg().get("keep_thinking") or [])
+
+
 @app.api_route("/ask/llm/{path:path}", methods=["GET", "POST"])
 async def ask_llm_proxy(path: str, request: Request):
     """Passthrough to the configured ollama-compatible endpoint (governor by default).
@@ -2586,7 +2593,9 @@ async def ask_llm_proxy(path: str, request: Request):
     if body and path.rstrip("/").endswith("api/chat"):
         try:
             _b = json.loads(body)
-            if isinstance(_b, dict) and "think" not in _b and await _ask_model_thinks(base, _b.get("model") or ""):
+            _m = _b.get("model") or "" if isinstance(_b, dict) else ""
+            if isinstance(_b, dict) and "think" not in _b and not _ask_keeps_thinking(_m) \
+                    and await _ask_model_thinks(base, _m):
                 _b["think"] = False
                 body = json.dumps(_b).encode()
         except (ValueError, AttributeError):
