@@ -279,6 +279,7 @@ _WORD = re.compile(r"[^\W\d_]+", re.UNICODE)
 _SENT = re.compile(r"[^.!?;:\n]+")
 _LEI_CAPS = {"Lei", "La", "Le", "Sua", "Suo", "Suoi", "Sue", "Glielo", "Gliela"}
 _LEI_LOWER = re.compile(r"(?<![^\W\d_])(?:scusi|senta|dica|può|potrebbe|saprebbe|vuole|vorrebbe|permetta|sa|si accomodi)(?![^\W\d_])")
+_SI_GOVERNED = {"può", "potrebbe", "sa", "saprebbe", "vuole", "vorrebbe"}
 _TU_WORDS = {"tu", "ti", "te", "tuo", "tua", "tuoi", "tue", "scusa", "senti", "dimmi", "puoi", "potresti", "sai",
              "sapresti", "vuoi", "vorresti", "hai", "sei", "fai", "vai", "devi", "permettimi"}
 # "La ringrazio" / "Le chiedo": a capitalised La/Le opening a sentence is Lei only before one of these first-person
@@ -319,7 +320,11 @@ def register_of(it: str):
                 lei = True
             if low[i] in _TU_WORDS and not (low[i] == "sei" and i and low[i - 1] in _CLOCK_BEFORE):
                 tu = True
-        if _LEI_LOWER.search(sent.lower()):
+        lowered = sent.lower()
+        for m in _LEI_LOWER.finditer(lowered):
+            # impersonal/passive "si" governs the verb ("si può", "non si può"): not an address form
+            if m.group(0) in _SI_GOVERNED and re.search(r"(?<![^\W\d_])si\s+(?:non\s+)?$", lowered[:m.start()]):
+                continue
             lei = True
     if lei and tu:
         return None

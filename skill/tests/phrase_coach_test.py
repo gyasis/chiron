@@ -238,6 +238,11 @@ REGISTER_TABLE = [
     ("Scusi, sai dov'è?", None),                      # Lei and tu together: leave the model's label alone
     ("Lei è il dottore?", "lei"),
     ("Grazie. La ringrazio davvero.", "lei"),
+    ("Si può parcheggiare qui?", "neutral"),          # impersonal si governs the verb
+    ("Non si può fumare.", "neutral"),
+    ("Lei sa dove si può parcheggiare?", "lei"),
+    ("Sa se si può entrare?", "lei"),                  # the opening Sa is not governed by the later si
+    ("Si sa mai.", "neutral"),
     ("Sono le sei.", "neutral"),                      # "sei" after "le" is six o'clock
     ("Dove sei?", "tu"),
     ("Si accomodi pure.", "lei"),
