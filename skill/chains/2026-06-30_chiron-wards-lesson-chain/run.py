@@ -31,6 +31,7 @@ sys.stdout.reconfigure(line_buffering=True)
 from promptchain import PromptChain
 import sys as _sys; from pathlib import Path as _P; _sys.path.insert(0, str(_P(__file__).resolve().parent.parent))
 import chiron_models   # shared chains/chiron_models.py — heals retired cloud model names against the live catalog
+import ledger   # shared chains/ledger.py — one full prompt/response record per model call
 import obs   # shared chains/obs.py — per-lesson steps.jsonl observability (best-effort; never breaks generation)
 
 HOME = Path(os.path.expanduser("~"))
@@ -118,11 +119,11 @@ def extract_json(s):
 
 
 async def llm(model_dict, prompt, user_input="go"):
-    chain = PromptChain(models=[model_dict],
-                        instructions=[prompt + "\n\n{input}" if "{input}" not in prompt else prompt])
+    instr = prompt + "\n\n{input}" if "{input}" not in prompt else prompt
+    chain = PromptChain(models=[model_dict], instructions=[instr])
     try: chain.register_callback(obs.make_callback())
     except Exception: pass
-    return await chain.process_prompt_async(user_input)
+    return await ledger.chain_call("chain:2026-06-30_chiron-wards-lesson-chain", model_dict, instr, user_input, chain.process_prompt_async)
 
 
 async def json_with_repair(prompt, name, model_dict, validate_fn=None, max_repair=3):

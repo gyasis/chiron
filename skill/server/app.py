@@ -23,7 +23,7 @@ from pathlib import Path
 import httpx
 from fastapi import FastAPI, File, HTTPException, Request, Response, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse, HTMLResponse, RedirectResponse
+from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
@@ -37,6 +37,7 @@ PORT = int(os.environ.get("CHIRON_SERVER_PORT", "8911"))
 sys.path.insert(0, str(SKILL / "chains"))
 import dispatch  # noqa: E402  the single routing entry point
 import chiron_models  # noqa: E402  live-catalog model resolver (aliases like glm@latest; heals retired names)
+import ledger  # noqa: E402  prompt ledger: JSONL writer + Postgres loader
 
 JOBS: dict = {}
 import queue as _queuemod
@@ -2279,6 +2280,68 @@ import exam_grade  # noqa: E402
 app.include_router(exam_grade.router)
 raccolte.GENERATE = lambda d: generate(GenReq(**d))
 threading.Thread(target=lambda: mm_study._load(), daemon=True, name="mm-study-warm").start()   # first tap must not pay the ~4 s index load
+
+
+# ── prompt ledger — every model call's full prompt + response (chains/ledger.py) ───────────────
+LEDGER_LOAD_EVERY_S = 300
+
+
+def _ledger_loader() -> None:
+    while True:
+        time.sleep(LEDGER_LOAD_EVERY_S)
+        try:
+            ledger.load_to_pg()
+        except Exception as e:                      # Postgres down must not take the server with it
+            print(f"[ledger] periodic load failed: {type(e).__name__}: {e}", file=sys.stderr, flush=True)
+
+
+threading.Thread(target=_ledger_loader, daemon=True, name="ledger-loader").start()
+
+
+def _loopback_only(request: Request) -> None:
+    """The ledger holds full prompts, so only clients on this machine may read it."""
+    host = request.client.host if request.client else ""
+    if host not in ("127.0.0.1", "::1"):
+        raise HTTPException(403, f"/api/ledger is loopback-only (client {host or 'unknown'} refused)")
+
+
+@app.get("/api/ledger")
+def api_ledger(request: Request, source: str = "", since: str = "", until: str = "", session: str = "",
+               lesson: str = "", q: str = "", limit: int = 50):
+    """Prompt-ledger records, newest first. Loads any new JSONL lines into Postgres first (incremental)."""
+    _loopback_only(request)
+    limit = max(1, min(int(limit), 500))
+    where, args = [], []
+    for col, val in (("source", source), ("session_id", session), ("lesson_id", lesson)):
+        if val:
+            where.append(f"{col} = %s"); args.append(val)
+    if since:
+        where.append("ts >= %s"); args.append(since)
+    if until:
+        where.append("ts <= %s"); args.append(until)
+    if q:
+        where.append("(prompt ilike %s or response ilike %s)"); args += [f"%{q}%"] * 2
+    sql = f"select * from {ledger.TABLE}" + (" where " + " and ".join(where) if where else "") + " order by ts desc limit %s"
+    try:
+        from psycopg.rows import dict_row
+        conn = ledger.pg_connect()
+        try:
+            loaded = ledger.load_to_pg(conn)
+            items = conn.cursor(row_factory=dict_row).execute(sql, args + [limit]).fetchall()
+        finally:
+            conn.close()
+    except Exception as e:
+        print(f"[ledger] /api/ledger failed: {type(e).__name__}: {e}", file=sys.stderr, flush=True)
+        return JSONResponse({"error": f"{type(e).__name__}: {e}"[:500]}, status_code=503)
+    for it in items:
+        it["ts"] = it["ts"].isoformat()
+    return {"items": items, "loaded": loaded}
+
+
+@app.get("/api/ledger/status")
+def api_ledger_status(request: Request):
+    _loopback_only(request)
+    return ledger.status()
 
 
 @app.middleware("http")

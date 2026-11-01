@@ -171,7 +171,7 @@ class LlmJsonChain(unittest.TestCase):
               "deepseek": {"model": "d", "local": False}}
         calls = []
 
-        def fake(model, system, user, key, local=False):
+        def fake(model, system, user, key, local=False, source=None):
             calls.append((model, local))
             raise RuntimeError("down")
         env = {"TUTOR_FALLBACKS": "governor:b:2,governor:c:3", "OLLAMA_API_KEY": "k"}

@@ -29,6 +29,7 @@ sys.path.insert(0, str(SKILL / "scripts"))
 sys.path.insert(0, str(SKILL / "chains"))
 import pimsleur_drill  # noqa: E402  the same OmniVoice + whisper sidecars and voice refs as the drills
 import chiron_models  # noqa: E402
+import ledger  # noqa: E402
 sys.path.insert(0, str(SKILL / "server"))
 import local_models  # noqa: E402
 import fail_fast  # noqa: E402
@@ -135,7 +136,13 @@ def _examiner_prompt(b: dict) -> str:
             f"Trascrizione del candidato: «{b.get('answer','').strip()}»\n\n{fu}")
 
 
-def _ollama(model: str, system: str, user: str, key: str, local: bool = False) -> tuple[str, dict]:
+def _ledger_params(body: dict) -> dict:
+    """The request body minus the messages: exactly the knobs that were sent."""
+    return {k: v for k, v in body.items() if k != "messages"}
+
+
+def _ollama(model: str, system: str, user: str, key: str, local: bool = False,
+            source: str = "server:mock_oral") -> tuple[str, dict]:
     body = {"model": model if local else chiron_models.resolve(model), "stream": False, "format": "json",
             "options": {"temperature": 0.4},
             "messages": [{"role": "system", "content": system}, {"role": "user", "content": user}]}
@@ -150,10 +157,20 @@ def _ollama(model: str, system: str, user: str, key: str, local: bool = False) -
         headers = {"Authorization": "Bearer " + key}
     url = local_models.GOVERNOR + "/api/chat" if local else OLLAMA_CLOUD
     req = urllib.request.Request(url, json.dumps(body).encode(), {"Content-Type": "application/json", **headers})
-    d = json.loads(urllib.request.urlopen(req, timeout=timeout).read())
+    t0 = time.time()
+    try:
+        d = json.loads(urllib.request.urlopen(req, timeout=timeout).read())
+    except Exception as e:
+        ledger.record(source, body["model"], body["messages"], None, endpoint=url, params=_ledger_params(body),
+                      status="error", error=f"{type(e).__name__}: {e}"[:500], latency_ms=int((time.time() - t0) * 1000))
+        raise
     msg = d.get("message") or {}
     usage = {"model": d.get("model"), "prompt_tokens": d.get("prompt_eval_count"),
              "output_tokens": d.get("eval_count"), "thinking_chars": len(msg.get("thinking") or "")}
+    ledger.record(source, body["model"], body["messages"], msg.get("content") or "", endpoint=url,
+                  params=_ledger_params(body), tokens_in=usage["prompt_tokens"], tokens_out=usage["output_tokens"],
+                  reasoning_chars=usage["thinking_chars"], finish_reason=d.get("done_reason"),
+                  latency_ms=int((time.time() - t0) * 1000))
     if usage["thinking_chars"]:
         _err("turn", f"{model} emitted {usage['thinking_chars']} chars of thinking despite think:false")
     return msg.get("content") or "", usage

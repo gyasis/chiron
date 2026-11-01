@@ -55,7 +55,7 @@ def _gateway_json(system: str, user: str) -> tuple[dict, dict]:
     """Local LiteLLM gateway (OpenAI-compatible). gpt-4o-mini is a non-reasoning model:
     verified 2026-10-14 reasoning_tokens=0, ~1.4 s. Primary since Ollama Cloud hit its weekly cap."""
     if _gateway_is_governor():
-        text, usage = mock_oral._ollama(GATEWAY_MODEL, system, user, "", local=True)
+        text, usage = mock_oral._ollama(GATEWAY_MODEL, system, user, "", local=True, source="server:sessione")
         return mock_oral.parse_json(text), usage
     payload = {"model": GATEWAY_MODEL, "temperature": 0.4,
                "response_format": {"type": "json_object"},
@@ -68,9 +68,22 @@ def _gateway_json(system: str, user: str) -> tuple[dict, dict]:
         payload["reasoning_effort"] = effort
     body = json.dumps(payload).encode()
     req = urllib.request.Request(f"{GATEWAY_URL}/chat/completions", body, {"content-type": "application/json"})
-    with urllib.request.urlopen(req, timeout=fail_fast.attempt_timeout(90, fail_fast.modal_reserve())) as r:
-        d = json.loads(r.read())
+    url = f"{GATEWAY_URL}/chat/completions"
+    t0 = time.time()
+    try:
+        with urllib.request.urlopen(req, timeout=fail_fast.attempt_timeout(90, fail_fast.modal_reserve())) as r:
+            d = json.loads(r.read())
+    except Exception as e:
+        mock_oral.ledger.record("server:sessione", GATEWAY_MODEL, payload["messages"], None, endpoint=url,
+                                params={k: v for k, v in payload.items() if k != "messages"}, status="error",
+                                error=f"{type(e).__name__}: {e}"[:500], latency_ms=int((time.time() - t0) * 1000))
+        raise
     usage = d.get("usage") or {}
+    ch = (d.get("choices") or [{}])[0]
+    mock_oral.ledger.record("server:sessione", GATEWAY_MODEL, payload["messages"], (ch.get("message") or {}).get("content"),
+                            endpoint=url, params={k: v for k, v in payload.items() if k != "messages"},
+                            tokens_in=usage.get("prompt_tokens"), tokens_out=usage.get("completion_tokens"),
+                            finish_reason=ch.get("finish_reason"), latency_ms=int((time.time() - t0) * 1000))
     return json.loads(d["choices"][0]["message"]["content"]), usage
 
 
@@ -107,7 +120,7 @@ def _llm_json(system: str, user: str, stage: str) -> dict:
         try:
             if not key and not ex.get("local"):
                 raise RuntimeError("OLLAMA_API_KEY not set")
-            text, usage = mock_oral._ollama(ex["model"], system, user, key, ex.get("local", False))
+            text, usage = mock_oral._ollama(ex["model"], system, user, key, ex.get("local", False), source="server:sessione")
             out = mock_oral.parse_json(text)
             _log(stage, f"{ex['model']} ok {time.time() - t:.1f}s thinking_chars={usage['thinking_chars']}")
             return out

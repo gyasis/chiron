@@ -17,6 +17,7 @@ Without a scope, attempt_timeout(cap) returns cap: callers outside an exam path 
 """
 from __future__ import annotations
 import contextlib, contextvars, json, os, sys, threading, time, urllib.error, urllib.request
+from pathlib import Path
 
 import local_models
 
@@ -162,6 +163,25 @@ def check_governor(model: str) -> None:
 
 # ── non-governor fallback: the Modal lane ─────────────────────────────────────
 
+class _NoLedger:
+    @staticmethod
+    def record(*a, **k):
+        return None
+
+
+def _ledger():
+    """The shared prompt-ledger module (chains/ledger.py); a no-op stand-in if it cannot be imported."""
+    try:
+        chains = str(Path(__file__).resolve().parent.parent / "chains")
+        if chains not in sys.path:
+            sys.path.insert(0, chains)
+        import ledger
+        return ledger
+    except Exception as e:
+        sys.stderr.write(f"[ledger] import failed: {type(e).__name__}: {e}\n")
+        return _NoLedger
+
+
 def modal_chat(system: str, user: str, cap: float = 60.0) -> tuple[str, dict]:
     """One reply from the Modal lane (OpenAI-compatible, routed through the governor's REMOTE_BACKENDS:
     no lease, no queue, so a wedged Ollama lane cannot block it)."""
@@ -172,13 +192,26 @@ def modal_chat(system: str, user: str, cap: float = 60.0) -> tuple[str, dict]:
             "messages": [{"role": "system", "content": system}, {"role": "user", "content": user}]}
     req = urllib.request.Request(governor_root() + "/llm/lane/v1/chat/completions", json.dumps(body).encode(),
                                  {"Content-Type": "application/json", **governor_headers(t)})
+    lp = {k: v for k, v in body.items() if k != "messages"}
+    url = governor_root() + "/llm/lane/v1/chat/completions"
+    t0 = time.time()
     try:
         d = json.loads(urllib.request.urlopen(req, timeout=t).read())
     except urllib.error.HTTPError as e:
         detail = e.read()[:200].decode(errors="replace")
         hint = " (no lane session open: run `lane open %s <minutes>` on the Studio)" % MODAL_MODEL if e.code == 409 else ""
+        _ledger().record("server:modal", MODAL_MODEL, body["messages"], None, endpoint=url, params=lp, status="error",
+                         error=f"HTTP {e.code}: {detail}"[:500], latency_ms=int((time.time() - t0) * 1000))
         raise RuntimeError(f"Modal lane HTTP {e.code}{hint}: {detail}") from None
+    except Exception as e:
+        _ledger().record("server:modal", MODAL_MODEL, body["messages"], None, endpoint=url, params=lp, status="error",
+                         error=f"{type(e).__name__}: {e}"[:500], latency_ms=int((time.time() - t0) * 1000))
+        raise
     ch = (d.get("choices") or [{}])[0]
+    _ledger().record("server:modal", MODAL_MODEL, body["messages"], (ch.get("message") or {}).get("content"),
+                     endpoint=url, params=lp, tokens_in=(d.get("usage") or {}).get("prompt_tokens"),
+                     tokens_out=(d.get("usage") or {}).get("completion_tokens"), finish_reason=ch.get("finish_reason"),
+                     latency_ms=int((time.time() - t0) * 1000))
     msg = ch.get("message") or {}
     reasoning = msg.get("reasoning_content") or msg.get("reasoning") or ""
     if reasoning:
