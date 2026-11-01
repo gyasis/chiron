@@ -2,7 +2,7 @@
 and claude_p raises (with the cause) when `claude -p` fails.
 Each run.py is loaded with importlib; the persona file and grounding file are synthetic temp files.
 Run: ~/miniconda3/bin/python tests/chains_audit_test.py"""
-import importlib.util, io, os, subprocess, sys, tempfile, unittest
+import asyncio, importlib.util, io, os, subprocess, sys, tempfile, unittest
 from contextlib import redirect_stdout
 from pathlib import Path
 from unittest import mock
@@ -62,6 +62,29 @@ class Grounding(unittest.TestCase):
                     ctx = mod._user_ctx()
                 self.assertIn(body.strip(), ctx, chain)
                 self.assertIn(f"{len(body.strip())} chars", buf.getvalue(), chain)
+
+
+class SourcePack(unittest.TestCase):
+    def test_author_chapter_prompt_carries_full_user_grounding(self):
+        mod = load("2026-06-29_chiron-medicine-lesson-chain")
+        body = "".join(f"line{i:05d} " for i in range(1250))[:10000]
+        seen = {}
+
+        async def fake_repair(prompt, *a, **k):
+            seen["prompt"] = prompt
+
+        with tempfile.TemporaryDirectory() as d:
+            f = Path(d) / "grounding.md"
+            f.write_text(body)
+            with mock.patch.dict(os.environ, {"CH_GROUNDING": str(f)}), redirect_stdout(io.StringIO()):
+                ctx = mod._user_ctx()
+            avoid = {"covered_concepts": [], "existing_vignettes": []}
+            with mock.patch.object(mod, "OUT", Path(d) / "out"), \
+                    mock.patch.object(mod, "harrison", return_value="hits"), \
+                    mock.patch.object(mod, "json_with_repair", fake_repair), redirect_stdout(io.StringIO()):
+                (Path(d) / "out").mkdir()
+                asyncio.run(mod.author_chapter({"chapterNumber": 1, "title": "t"}, ctx + "# pack", avoid, 0))
+        self.assertIn(body.strip(), seen["prompt"])
 
 
 class ClaudeP(unittest.TestCase):

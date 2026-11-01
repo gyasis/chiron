@@ -335,7 +335,7 @@ def avoid_block(avoid: dict, for_vignettes: bool = False) -> str:
 async def phase1(source: str, avoid: dict):
     OUT.mkdir(parents=True, exist_ok=True)
     brief_p = fill(load_prompt("01-brief.md"), domain="medicine", sourceType="markdown",
-                   sourcePath=str(OUT / "source"), extractedText=source[:8000], metadata={"subject": SUBJECT})
+                   sourcePath=str(OUT / "source"), extractedText=source, metadata={"subject": SUBJECT})
     # Robustness: do NOT make the LLM echo the (large) source text back inside JSON — it fails to
     # escape quotes/backslashes in a 12K blob → invalid JSON. Leave it empty; we inject it after.
     brief_p += '\n\nIMPORTANT: in your output JSON, set "extractedText" to "" (empty string). Do NOT echo the source text.'
@@ -406,7 +406,7 @@ async def author_chapter(chapter, source: str, avoid: dict, idx: int):
         + "\n\n## CLINICAL VIGNETTE (mandatory)\n" + load_prompt("04c-quiz-clinical-vignette.md") \
         + "\n\n" + load_prompt("04u-medical-algorithm-widgets.md")  # shared DDx/algorithm widget pedagogy (parity w/ skill)
     p += (f"\n\n## GROUNDING (Harrison's — ground every clinical claim to this or the source; never invent):\n{grounding[:6000]}"
-          f"\n\n## SOURCE PACK:\n{source[:4000]}"
+          f"\n\n## SOURCE PACK:\n{source}"
           + avoid_block(avoid, for_vignettes=True)
           + f"\n\nReturn ONE JSON object: {{chapterIndex:{n}, title, exposition, widgets:[...]}} for chapter '{condition}'. "
             "widgets MUST include a full mcq-clinical-vignette (stem, keyInfo[], 5 options w/ per-distractor "
