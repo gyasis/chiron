@@ -122,11 +122,48 @@ class Chain(unittest.TestCase):
         self.assertEqual(len(chain._SPEAK.findall(r["content"])), 1)
         self.assertIn("[[SPEAK]]Sono qui per il colloquio.[[/SPEAK]]", r["content"])
 
-    def test_question_is_one_short_answer(self):
-        s = Script({"kind": "question"})
-        r = run_coach(s, prior_turns() + [{"role": "user", "content": "why no io?"}])
+    def test_question_is_one_short_answer_with_one_speak(self):
+        ans = 'Say *mia* only to contrast: "Sono qui per la mia specializzazione, non la tua."\n```meta\n{"speak": "Sono qui per la mia specializzazione."}\n```\n[[SPEAK]]stray[[/SPEAK]]'
+        s = Script({"kind": "question"}, answers={"answer": ans})
+        r = run_coach(s, prior_turns() + [{"role": "user", "content": "why not use mia?"}])
         self.assertEqual([c[0] for c in s.calls], ["understand", "answer"])
+        self.assertEqual(len(chain._SPEAK.findall(r["content"])), 1)
+        self.assertTrue(r["content"].endswith("[[SPEAK]]Sono qui per la mia specializzazione.[[/SPEAK]]"))
+        self.assertNotIn("```meta", r["content"])
+        self.assertNotIn("stray", r["content"])
+
+    def test_question_without_new_italian_speaks_the_last_phrase(self):
+        s = Script({"kind": "question"}, answers={"answer": 'Because the subject is in the verb.\n```meta\n{"speak": ""}\n```'})
+        r = run_coach(s, prior_turns() + [{"role": "user", "content": "why no io?"}])
+        self.assertTrue(r["content"].endswith("[[SPEAK]]Sono qui per la specializzazione.[[/SPEAK]]"))
+        s = Script({"kind": "question"})            # no meta block at all: same fallback
+        r = run_coach(s, prior_turns() + [{"role": "user", "content": "why no io?"}])
+        self.assertEqual(len(chain._SPEAK.findall(r["content"])), 1)
+
+    def test_question_with_nothing_to_speak_has_no_speak_block(self):
+        s = Script({"kind": "question"})
+        r = run_coach(s, [{"role": "user", "content": "why no io?"}])
         self.assertNotIn("[[SPEAK]]", r["content"])
+
+    def test_watch_out_that_repeats_one_string_is_dropped(self):
+        body = ("**Ho mal di testa.**\n\n**Watch out**\nEnglish says *ho un mal di testa*, but never *ho un mal di testa* here.\n\n"
+                "**Your turn**\nTry it.")
+        out = chain.drop_same_string_watch_out(body, "Ho mal di testa.", "Ho un mal di testa.")
+        self.assertNotIn("Watch out", out)
+        self.assertIn("**Your turn**", out)
+        good = body.replace("never *ho un mal di testa*", "never *ho una mal di testa*")
+        self.assertIn("Watch out", chain.drop_same_string_watch_out(good, "Ho mal di testa.", "Ho un mal di testa."))
+        same = "**Watch out**\nThe trap is `Sono qui` and not `Sono li`.\n"
+        self.assertNotIn("Watch out", chain.drop_same_string_watch_out(same, "Sono qui.", "sono qui"))
+
+    def test_teach_drops_watch_out_when_trap_equals_the_sentence(self):
+        b = dict(BUILD, literal_trap={"it": BUILD["it"], "why": "same"})
+        teach = TEACH.replace("**The pattern**", "**Watch out**\nNothing differs.\n\n**The pattern**")
+        orig = chain.json.dumps
+        s = Script(NEW, answers={"build": json.dumps(b), "teach": teach})
+        r = run_coach(s, [{"role": "user", "content": "how do I say hello"}])
+        self.assertNotIn("Watch out", r["content"])
+        self.assertIn("leave the Watch out section out", [c for c in s.calls if c[0] == "teach"][0][2])
 
     def test_bad_completion_fails_loudly(self):
         s = Script(NEW, fail_step="build")

@@ -240,7 +240,7 @@ Register: <Lei (formal) | tu (informal) | neutral>. <short reason>
 1-2 lines.
 
 **Watch out**
-The literal trap: what an English speaker would say word for word, and why it is off.
+The literal trap: show the WRONG form and the RIGHT form as two different strings (wrong: the word-for-word version an English speaker would say; right: the main sentence), and say why the wrong one is off. If the wrong form is not different from the right one, leave this whole section out.
 
 **Your turn**
 One new English sentence that needs the same pattern, for the learner to try in Italian.
@@ -265,7 +265,11 @@ Then end with a fenced block tagged meta holding ONLY this JSON (the system buil
 ```
 A sentence with no Lei/tu form is "neutral". 2 to 4 breakdown chunks. Keep it short."""
 
-ANSWER_SYS = """You are a warm, concise Italian coach. The learner asks a follow-up about the last phrase you taught. Answer in English with Italian examples, in at most 6 short lines. Do not repeat the whole lesson, and do not add any [[SPEAK]] or code block."""
+ANSWER_SYS = """You are a warm, concise Italian coach. The learner asks a follow-up about the last phrase you taught. Answer in English with Italian examples, in at most 6 short lines. Do not repeat the whole lesson, and do not write any [[SPEAK]] text.
+End with a fenced block tagged meta holding ONLY this JSON (the system builds the spoken block from it):
+```meta
+{"speak": "the main Italian example sentence of your answer, or an empty string if the answer has no new Italian sentence"}
+```"""
 
 
 # ── steps ────────────────────────────────────────────────────────────────────────
@@ -360,6 +364,28 @@ def _split_meta(text: str) -> tuple[str, dict]:
     return (text[:m.start()] + text[m.end():]).strip(), meta
 
 
+def _norm(t: str) -> str:
+    return re.sub(r"[^\w]+", " ", t.lower()).strip()
+
+
+_WATCH = re.compile(r"\*\*Watch out\*\*[\s\S]*?(?=\n\s*\*\*|\Z)")
+_FRAG = re.compile(r"\*\*([^*]+)\*\*|\*([^*]+)\*|`([^`]+)`|\"([^\"]+)\"|«([^»]+)»")
+
+
+def drop_same_string_watch_out(body: str, correct: str, trap: str) -> str:
+    """Remove the Watch out section when it contrasts a form with itself: the literal trap equals the correct
+    sentence, or the section quotes only one distinct Italian string. Logged when it fires."""
+    m = _WATCH.search(body)
+    if not m:
+        return body
+    frags = [_norm("".join(g)) for g in _FRAG.findall(m.group(0).split("**", 2)[2])]
+    frags = [f for f in frags if len(f.split()) >= 2]
+    if _norm(trap) == _norm(correct) or (len(frags) >= 2 and len(set(frags)) == 1):
+        log(f"teach: Watch out section contrasts a form with itself ({correct!r}) — dropped")
+        return (body[:m.start()] + body[m.end():]).replace("\n\n\n", "\n\n").strip()
+    return body
+
+
 def _tail(it: str, data: dict) -> str:
     """The spoken block and the machine-readable phrase block, built here so both are always well-formed."""
     spoken = it.replace("[[", "").replace("]]", "").strip()
@@ -389,7 +415,17 @@ async def step_teach(run: Run, _prev: str) -> str:
     if kind == "question":
         lp = json.dumps(run.last_phrase, ensure_ascii=False) if run.last_phrase else "(none)"
         user = f"LAST PHRASE (data): {lp}\n\nEARLIER TURNS:\n{run.transcript()}\n\nLEARNER ASKS:\n{run.user}"
-        run.content = (await model_call(run, "answer", MODEL_THINK, ANSWER_SYS, user)).strip()
+        text = await model_call(run, "answer", MODEL_THINK, ANSWER_SYS, user)
+        try:
+            body, meta = _split_meta(text)
+        except ValueError as e:
+            log(f"answer: {e}; speaking the last phrase instead")
+            body, meta = text, {}
+        body = _SPEAK.sub("", _FENCE.sub("", body)).strip()
+        speak = str(meta.get("speak") or "").strip() or str((run.last_phrase or {}).get("it") or "").strip()
+        if not speak:
+            log("answer: no Italian sentence to speak (no new example, no earlier phrase) — reply has no SPEAK block")
+        run.content = body + (f"\n\n[[SPEAK]]{speak.replace('[[', '').replace(']]', '')}[[/SPEAK]]" if speak else "")
         return run.content
     if kind == "attempt":
         lp = run.last_phrase or {}
@@ -407,7 +443,10 @@ async def step_teach(run: Run, _prev: str) -> str:
     user = (f"MAIN SENTENCE (use exactly): {b['it']}\nREGISTER (use exactly): {b['register']} — {b.get('register_note') or ''}\n"
             f"VARIANTS: {json.dumps(b['variants'], ensure_ascii=False)}\nLITERAL TRAP: {json.dumps(b['literal_trap'], ensure_ascii=False)}\n"
             f"The learner's intent: {run.understand.get('meaning')} (situation: {run.understand.get('situation')})")
+    if _norm(b["literal_trap"]["it"]) == _norm(b["it"]):
+        user += "\n\nThe literal trap is not different from the main sentence: leave the Watch out section out."
     body, meta = await _markdown_step(run, "teach", TEACH_SYS, user, ("pattern", "practice"))
+    body = drop_same_string_watch_out(body, b["it"], b["literal_trap"]["it"])
     data = {"it": b["it"], "en_intent": run.understand.get("meaning") or run.user, "register": b["register"],
             "variants": [{"it": v["it"], "register": v["register"]} for v in b["variants"]],
             "breakdown": meta.get("breakdown") or [], "pattern": meta["pattern"], "slots": meta.get("slots") or [],
