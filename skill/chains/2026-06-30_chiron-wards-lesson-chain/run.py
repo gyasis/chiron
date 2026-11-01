@@ -183,7 +183,10 @@ def _user_ctx() -> str:
         except Exception:
             t = ""
         if t:
-            return f"## USER-PROVIDED SOURCE (OCR'd pages / notes — prioritize, weave in):\n{t[:4000]}\n\n"
+            print(f"[grounding] CH_GROUNDING passed in full: {len(t)} chars", flush=True)
+            try: obs.phase("User grounding loaded", "start", chars=len(t)); obs.phase("User grounding loaded", "end", chars=len(t))
+            except Exception: pass
+            return f"## USER-PROVIDED SOURCE (OCR'd pages / notes — prioritize, weave in):\n{t}\n\n"
     return ""
 
 

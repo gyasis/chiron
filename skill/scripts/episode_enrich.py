@@ -64,13 +64,13 @@ def persona_display() -> str:
     return (PERSONA or "").replace("-", " ").title() or "the tutor"
 
 
-def load_persona_register(name: str | None = None, limit: int = 2500) -> str:
+def load_persona_register(name: str | None = None) -> str:
     """The persona DNA (voice/register) if the pack exists — used to flavor tone; empty if none."""
     name = name or PERSONA
     for p in (HOME / f".chiron/packs/{name}/persona.md", HOME / f".chiron/packs/{LANG_CODE}/persona.md"):
         try:
             if p.exists():
-                return p.read_text()[:limit]
+                return p.read_text()
         except Exception:
             pass
     return ""

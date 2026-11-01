@@ -149,7 +149,12 @@ async def llm(model_dict: dict, prompt: str, user_input: str = "go") -> str:
 def claude_p(prompt: str) -> str:
     r = subprocess.run(["claude", "-p", "--dangerously-skip-permissions"],
                        input=prompt, capture_output=True, text=True, timeout=600)
-    return r.stdout.strip()
+    out = (r.stdout or "").strip()
+    if r.returncode != 0 or not out:
+        detail = ((r.stderr or "").strip() or out)[:300]
+        print(f"[claude_p] FAILED rc={r.returncode}: {detail}", flush=True)
+        raise RuntimeError(f"claude -p failed (returncode={r.returncode}): {detail}")
+    return out
 
 
 async def call_engine(prompt: str, model_dict: dict) -> str:
@@ -222,7 +227,10 @@ def _user_ctx() -> str:
         except Exception:
             t = ""
         if t:
-            return f"## USER-PROVIDED CONTEXT (source material / OCR — prioritize this, weave it in):\n{t[:4000]}\n\n"
+            print(f"[grounding] CH_GROUNDING passed in full: {len(t)} chars", flush=True)
+            try: obs.phase("User grounding loaded", "start", chars=len(t)); obs.phase("User grounding loaded", "end", chars=len(t))
+            except Exception: pass
+            return f"## USER-PROVIDED CONTEXT (source material / OCR — prioritize this, weave it in):\n{t}\n\n"
     return ""
 
 

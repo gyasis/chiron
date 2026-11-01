@@ -150,7 +150,12 @@ def claude_p(prompt: str) -> str:
     """Headless Claude Code (strong Claude — Opus/Sonnet) as a function step (D4d). Prompt via stdin."""
     r = subprocess.run(["claude", "-p", "--dangerously-skip-permissions"],
                        input=prompt, capture_output=True, text=True, timeout=600)
-    return r.stdout.strip()
+    out = (r.stdout or "").strip()
+    if r.returncode != 0 or not out:
+        detail = ((r.stderr or "").strip() or out)[:300]
+        print(f"[claude_p] FAILED rc={r.returncode}: {detail}", flush=True)
+        raise RuntimeError(f"claude -p failed (returncode={r.returncode}): {detail}")
+    return out
 
 
 async def json_with_repair(prompt, name, md, validate_fn=None, max_repair=3, via_engine=False):
@@ -195,7 +200,7 @@ def load_persona_block() -> str:
     """Lucrezia's register (copied from the passage chain). activePersonaFor:language-it."""
     for p in (HOME / ".chiron/packs/lucrezia/persona.md", HOME / ".chiron/packs/language-it/persona.md"):
         if p.exists():
-            return p.read_text()[:4000]
+            return p.read_text()
     return ("Persona: Lucrezia — a warm, fond Italian tutor; greets the learner by name; bilingual "
             "(English instruction, perfect idiomatic Italian for target words); loves teaching; never "
             "voices the learner's own turns.")
@@ -246,7 +251,10 @@ def _user_ctx() -> str:
         except Exception:
             t = ""
         if t:
-            return f"## USER-PROVIDED SOURCE (OCR'd pages / notes — build the lesson around this):\n{t[:4000]}\n\n"
+            print(f"[grounding] CH_GROUNDING passed in full: {len(t)} chars", flush=True)
+            try: obs.phase("User grounding loaded", "start", chars=len(t)); obs.phase("User grounding loaded", "end", chars=len(t))
+            except Exception: pass
+            return f"## USER-PROVIDED SOURCE (OCR'd pages / notes — build the lesson around this):\n{t}\n\n"
     return ""
 
 
