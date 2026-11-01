@@ -2531,7 +2531,10 @@ async def _ask_model_thinks(base: str, model: str) -> bool:
         try:
             async with httpx.AsyncClient(timeout=httpx.Timeout(8.0, connect=3.0)) as cx:
                 r = await cx.post(f"{base}/api/show", json={"model": model})
-            caps = r.json().get("capabilities") or [] if r.status_code == 200 else []
+            if r.status_code != 200:                       # not cached: the next call asks again
+                print(f"[ask] capabilities for {model}: /api/show answered HTTP {r.status_code}", flush=True)
+                return False
+            caps = r.json().get("capabilities") or []
             _ASK_THINKS[model] = "thinking" in caps
         except (httpx.HTTPError, ValueError) as e:
             print(f"[ask] could not read capabilities for {model}: {e}", flush=True)

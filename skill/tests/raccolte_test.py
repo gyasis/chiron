@@ -67,6 +67,17 @@ class T(unittest.TestCase):
         self.assertEqual(c.post(u, json={"confirm": True}).json()["job_id"], "j1")
         self.assertEqual(seen[0]["source_ref"], "parole-deboli")
 
+    def test_lesson_subject_tracks_collection_content(self):
+        u = f"{D}/parole-deboli"
+        c.post(f"{u}/items", json={"items": [{"it": "febbre"}, {"it": "tosse"}]})
+        subj = lambda: c.post(f"{u}/lesson", json={"confirm": True, "dry": True}).json()["request"]["subject"]
+        a = subj()
+        c.post(f"{u}/items", json={"items": [{"it": "Tosse"}]})           # the same word again: no change
+        self.assertEqual(subj(), a)
+        c.post(f"{u}/items", json={"items": [{"it": "dispnea"}]})         # a new word: a new lesson
+        self.assertNotEqual(subj(), a)
+        self.assertTrue(a.startswith("Raccolta: Parole deboli ("))
+
     def test_audio_cards_dry(self):
         idx = TMP / "listening.index.json"
         idx.write_text(json.dumps({"lessons": {"L1": {"title": "Consenso", "tags": []}}, "cards": [
