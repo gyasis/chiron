@@ -66,6 +66,17 @@ def detect_depth(subject, domain):
     return "systematic"
 
 
+def clip_slug(base: str, limit: int) -> str:
+    """`base` cut to at most `limit` characters at a hyphen boundary, so no word is left half-written. A single word
+    longer than the limit is cut hard."""
+    if len(base) <= limit:
+        return base
+    cut = base[:limit]
+    if base[limit] != "-" and "-" in cut:
+        cut = cut.rsplit("-", 1)[0]
+    return cut.strip("-")
+
+
 def _slug(domain, depth, subject):
     base = re.sub(r"[^a-z0-9]+", "-", (subject or "lesson").lower()).strip("-")
     if domain == "medicine":
@@ -75,7 +86,7 @@ def _slug(domain, depth, subject):
     if domain == "medical-italian" and depth == "ward":
         return f"chiron-ward-{base}"
     if domain == "language-it" and depth == "pimsleur":
-        return f"chiron-pimsleur-{base[:40]}"       # the chain's own TOPIC_SLUG: its season file is <slug>.season.json
+        return f"chiron-pimsleur-{clip_slug(base, 40)}"       # the chain's own TOPIC_SLUG: its season file is <slug>.season.json
     return f"chiron-italian-{base[:48]}"
 
 

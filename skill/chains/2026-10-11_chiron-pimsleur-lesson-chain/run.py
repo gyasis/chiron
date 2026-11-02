@@ -65,7 +65,16 @@ FORMAT = os.environ.get("CH_FORMAT", "drill")   # drill | exam (commission quest
 # Library tags stamped on every lesson of the season (chiron.json "labels"); "Pimsleur" is added by the
 # library builder itself. CH_LABELS="Ordine exam,…" — an exam season is the Ordine test by construction.
 LABELS = [t.strip() for t in os.environ.get("CH_LABELS", "Ordine exam" if FORMAT == "exam" else "").split(",") if t.strip()]
-TOPIC_SLUG = re.sub(r"[^a-z0-9]+", "-", TOPIC.lower()).strip("-")[:40]
+def _clip_slug(base: str, limit: int = 40) -> str:      # same rule as dispatch.clip_slug: cut at a hyphen, not mid-word
+    if len(base) <= limit:
+        return base
+    cut = base[:limit]
+    if base[limit] != "-" and "-" in cut:
+        cut = cut.rsplit("-", 1)[0]
+    return cut.strip("-")
+
+
+TOPIC_SLUG = _clip_slug(re.sub(r"[^a-z0-9]+", "-", TOPIC.lower()).strip("-"))
 SEASON_FILE = GEN / f"chiron-pimsleur-{TOPIC_SLUG}.season.json"
 
 

@@ -100,7 +100,9 @@ class Chain(unittest.TestCase):
         self.assertEqual([c[0] for c in s.calls[:3]], ["understand", "build", "check"])
         self.assertEqual(sorted(c[0] for c in s.calls[3:]), ["diagram", "teach_item", "teach_shared"])   # all three run concurrently
         self.assertEqual([c[1] for c in s.calls[:3]], [chain.MODEL_FAST, chain.MODEL_THINK, chain.MODEL_FAST])
-        self.assertEqual({c[1] for c in s.calls[3:]}, {chain.MODEL_THINK})
+        by = {c[0]: c[1] for c in s.calls[3:]}
+        self.assertEqual(by, {"teach_item": chain.MODEL_STRUCT, "diagram": chain.MODEL_STRUCT, "teach_shared": chain.MODEL_THINK})
+        self.assertEqual(chain.MODEL_STRUCT, "mistral-large-3:675b-cloud")      # structure runs on the no-thinking model
         self.assertEqual(r["kind"], "new_request")
         c = r["content"]
         self.assertEqual(len(chain._SPEAK.findall(c)), 1)                      # a SPEAK block the model wrote is dropped; the system adds one
@@ -125,6 +127,51 @@ class Chain(unittest.TestCase):
         new = rows()[before:]
         self.assertEqual(len(new), 6)
         self.assertTrue(all(r["source"] == chain.SOURCE and r["session_id"] == "t" for r in new))
+        self.assertEqual(sorted(r["step"] for r in new), ["build", "check", "diagram", "how_built", "teach", "understand"])
+
+    def test_ledger_step_names(self):
+        self.assertEqual([chain.ledger_step(x) for x in ("understand", "build 2", "build_fix 3", "check", "how-built 2", "diagram 1.2", "teach", "coach", "answer")],
+                         ["understand", "build", "build_fix", "check", "how_built", "diagram", "teach", "coach", "answer"])
+
+    def test_last_how_built_step_is_pinned_to_the_build_sentence(self):
+        good = "1. **sono** (am)\n2. **Sono qui per la specializzazione.**: all of it."
+        self.assertEqual(chain.pin_last_step(good, BUILD["it"]), good)
+        bad = "1. **sono** (am)\n2. **Sono qui per la specializzazione**: no full stop."
+        out = chain.pin_last_step(bad, BUILD["it"])
+        self.assertEqual(out.splitlines()[0], "1. **sono** (am)")
+        self.assertTrue(out.splitlines()[1].startswith("2. **Sono qui per la specializzazione.**"))
+        wrong = "1. **x**\n2. **y**\n3. **Sono qui per la laurea.**: wrong sentence"
+        self.assertTrue(chain.pin_last_step(wrong, BUILD["it"]).endswith("3. **Sono qui per la specializzazione.**: the full sentence."))
+
+    def test_diagram_tokens_must_cover_the_sentence(self):
+        self.assertTrue(chain.covers(["Sono", "qui", "per", "la", "specializzazione"], BUILD["it"]))
+        self.assertTrue(chain.covers(["Dov'", "è", "l'", "ambulatorio"], "Dov'è l'ambulatorio?"))
+        self.assertFalse(chain.covers(["Sono", "qui", "per", "specializzazione"], BUILD["it"]))
+        d = json.loads(diagram_for([BUILD["it"]]))
+        d["sentences"][0]["tokens"] = d["sentences"][0]["tokens"][:-1]
+        self.assertIn("must spell exactly", chain.validate_sentences(d, [BUILD["it"]]))
+
+    def test_bad_layers_and_list_features_are_repaired_by_rule(self):
+        d = json.loads(diagram_for([BUILD["it"]]))
+        t = d["sentences"][0]["tokens"]
+        t[0]["layer"], t[0]["pos"] = "conjunctions", "CCONJ"
+        t[1]["features"] = {"gender": ["m", "f"]}
+        self.assertEqual(chain.normalize_sentences(d), 2)
+        self.assertEqual((t[0]["layer"], t[1]["features"]), ("preps", {"gender": "m, f"}))
+        self.assertIsNone(chain.validate_sentences(d, [BUILD["it"]]))
+        d2 = json.loads(diagram_for([BUILD["it"]]))
+        d2["sentences"][0]["tokens"][0].update(layer="zzz", pos="XYZ")
+        self.assertEqual(chain.normalize_sentences(d2), 0)               # unknown pos: left for the validator
+        self.assertIn("layer", chain.validate_sentences(d2, [BUILD["it"]]))
+
+    def test_a_diagram_that_misses_words_is_asked_again_once_then_dropped_with_the_reply_kept(self):
+        d = json.loads(diagram_for([BUILD["it"]]))
+        d["sentences"][0]["tokens"] = d["sentences"][0]["tokens"][:-1]
+        s = Script(NEW, answers={"diagram": json.dumps(d)})
+        r = run_coach(s, [{"role": "user", "content": "how do I say hello"}])
+        self.assertEqual([c[0] for c in s.calls].count("diagram"), 2)           # asked, re-asked once
+        self.assertNotIn("```diagram", r["content"])
+        self.assertTrue(r["diagram_error"])
 
     def test_check_fixes_reask_build_once(self):
         s = Script(NEW, check={"ok": False, "fixes": ["the variant is wrong"]})

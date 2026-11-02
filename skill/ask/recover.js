@@ -90,6 +90,7 @@ export function threadMsg(doc, role, text) {
  * Put the recovered answer where the interrupted one was: in the assistant bubble that follows the pending question. A bubble
  * is created only when there is none (a reload leaves the thread empty), and the question gets one only when it is missing,
  * so a recovery never adds a second copy of either. `bind(msg)` runs the normal phrase / diagram / related binding on it.
+ * `speak(text)` is wired to a Listen button on the recovered note and is never called on render.
  */
 export function renderRecoveredInto(doc, box, content, pending, { bind, speak, onFirstBubble } = {}) {
   if (!box) return null;
@@ -122,7 +123,15 @@ export function renderRecoveredInto(doc, box, content, pending, { bind, speak, o
   msg.dataset.phraseBound = '1';
   if (bind) bind(msg);
   if (msg.scrollIntoView) msg.scrollIntoView({ block: 'start' });
-  if (speak && speakText) speak(speakText);
+  if (speak && speakText) {            // a recovered answer is never spoken on its own: the learner taps to hear it
+    const listen = doc.createElement('button');
+    listen.type = 'button';
+    listen.className = 'ask-recovered-listen';
+    listen.textContent = 'Listen';
+    listen.addEventListener('click', () => speak(speakText));
+    note.appendChild(doc.createTextNode(' '));
+    note.appendChild(listen);
+  }
   return msg;
 }
 

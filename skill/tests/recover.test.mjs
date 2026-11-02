@@ -79,7 +79,11 @@ test('recovered answer replaces the interrupted bubble, adds no second user bubb
   assert.equal(msg.dataset.phraseBound, '1');
   assert.equal(msg.dataset.raw, REPLY, 'the raw reply is kept for the phrase / diagram / related binding');
   assert.deepEqual(bound, [msg]);
-  assert.deepEqual(spoken, ["Dov'è l'ambulatorio?"]);
+  assert.deepEqual(spoken, [], 'a recovered answer is never spoken on its own');
+  const listen = msg.all(n => n.className === 'ask-recovered-listen')[0];
+  assert.ok(listen, 'a Listen button stays available');
+  listen.click();
+  assert.deepEqual(spoken, ["Dov'è l'ambulatorio?"], 'tapping Listen speaks the [[SPEAK]] text');
 });
 
 test('a reload leaves an empty thread: the question and the answer are both created, once', () => {

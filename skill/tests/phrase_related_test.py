@@ -90,6 +90,15 @@ class Related(unittest.TestCase):
         out = R.find_related([topic("svolgersi", "verb", "verbo svolgersi si svolge")], shard)
         self.assertEqual([l["title"] for l in out["lessons"]], ["Svolgersi"])
 
+    def test_html_escaped_titles_are_decoded_once(self):
+        rows = [passage("pass", "Passato, imperfetto &amp; futuro", "Il passato &amp; l&#39;uso", "Il passato prossimo e l'imperfetto: ho fatto, facevo.")]
+        shard = TMP / "esc.json"
+        shard.write_text(json.dumps(rows))
+        r = R.find_related([topic("passato prossimo", "construction", "passato prossimo imperfetto")], shard)
+        self.assertEqual(r["lessons"][0]["title"], "Passato, imperfetto & futuro")
+        self.assertEqual(r["lessons"][0]["section"], "Il passato & l'uso")
+        self.assertNotIn("&amp;", r["lessons"][0]["title"] + r["lessons"][0]["section"])
+
     def test_accents_fold(self):
         self.assertEqual(R.tokens("Perché è già qui"), ["perche", "gia", "qui"])
 

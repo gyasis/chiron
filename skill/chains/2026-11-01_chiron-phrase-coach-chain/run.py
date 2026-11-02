@@ -45,6 +45,7 @@ GOVERNOR = os.environ.get("ATELIER_GOVERNOR", "http://localhost:8799/llm/ollama"
 # chiron_models because that resolver maps bare cloud ids, while these are the governor's own tags.
 MODEL_THINK = os.environ.get("CH_PHRASE_MODEL_THINK", "glm-5.3:cloud")                 # BUILD, TEACH, COACH
 MODEL_FAST = os.environ.get("CH_PHRASE_MODEL_FAST", "mistral-large-3:675b-cloud")      # UNDERSTAND, CHECK
+MODEL_STRUCT = os.environ.get("CH_PHRASE_MODEL_STRUCT", MODEL_FAST)                    # HOW-IT'S-BUILT, DIAGRAM (structure, no thinking)
 READ_S = float(os.environ.get("CH_PHRASE_READ_S", "170"))
 HISTORY_TURNS = 8
 REGISTERS = ("lei", "tu", "neutral")
@@ -175,6 +176,11 @@ class Run:
         return "\n\n".join(out) or "(no earlier turns)"
 
 
+def ledger_step(step: str) -> str:
+    """The ledger's step name: the step without its phrase number ("how-built 2" -> "how_built", "diagram 1.2" -> "diagram")."""
+    return re.sub(r"[\s\d.]+$", "", step).replace("-", "_").replace(" ", "_")
+
+
 async def model_call(run: Run, step: str, tag: str, system: str, user: str) -> str:
     """One recorded model call: chain_call writes the ledger record; the step's model, latency and done_reason
     are kept on the run."""
@@ -187,7 +193,7 @@ async def model_call(run: Run, step: str, tag: str, system: str, user: str) -> s
 
     obs.phase(step, "start")
     try:
-        text = await ledger.chain_call(SOURCE, {"name": tag}, system + "\n\n{input}", user, fn)
+        text = await ledger.chain_call(SOURCE, {"name": tag}, system + "\n\n{input}", user, fn, step=ledger_step(step))
     finally:
         obs.phase(step, "end")
     m = metas[-1]
@@ -263,7 +269,7 @@ You are given ONE phrase whose Italian sentence and register are already written
 
 """ + _BUILD_UP + """
 
-Use the given sentence exactly. Keep it tight."""
+Use the given sentence exactly. Keep it tight. Reply with ONLY the section, starting with the line **How it's built**, then the numbered steps. The bold fragment of the LAST step is the given sentence, character for character."""
 
 TEACH_SHARED_SYS = """You are a warm, concise Italian coach. You teach the learner to build sentences themselves.
 You are given N phrases (N is at least 1). Each phrase already has its Italian sentence, its register line and its "How it's built" steps, written elsewhere: do NOT write those. Write only the shared teaching below, in English with Italian phrases, in exactly this Markdown layout, nothing before or after it except the meta block:
@@ -308,10 +314,10 @@ End with a fenced block tagged meta holding ONLY this JSON (the system builds th
 ```"""
 
 DIAGRAM_SYS = """You are a grammar annotator for a BASIC student: assume zero prior grammar. For each given Italian sentence you produce an interlinear word-by-word breakdown. Parse EVERY word once, in order, including every function word (articles, prepositions, conjunctions, clitics such as "si", the pieces of a verb phrase). Never skip a word as obvious.
-Reply with ONLY a JSON object: {"sentences": [one object per given sentence, in the same order]}. Each sentence object:
+Reply with ONLY one JSON object, no prose and no Markdown fence: {"sentences": [one object per given sentence, in the same order]}. The "surface" values of the tokens, joined in order, must spell the sentence exactly (apostrophes kept, sentence punctuation dropped); never skip, merge, split or add a word. Each sentence object:
 {"translation": "natural English", "literal": "word-order gloss, word for word", "mood": "declarative|interrogative|imperative|...", "registerNote": "formal address (Lei) / informal (tu) / neutral, in a few words", "tokens": [...], "phrases": [...], "tips": ["0-2 short gotchas or mnemonics"]}
 token: {"surface": "the word exactly as written (keep apostrophes, drop sentence punctuation)", "lemma": "dictionary form: infinitive for verbs, masculine singular for nouns, adjectives and articles", "pos": "DET|NOUN|PROPN|ADJ|VERB|AUX|ADP|PRON|ADV|CCONJ|SCONJ|NUM", "layer": "articles|nouns|verbs|adverbs|preps|pronouns", "features": {"gender": "m", "number": "sg"}, "note": "plain-English beginner explanation, one or two short sentences"}
-layer choice: articles = definite/indefinite articles; nouns = nouns, proper nouns AND adjectives (say which noun the adjective agrees with); verbs = every verb form including auxiliaries and infinitives; adverbs = adverbs and the question words dove, quando, come, quanto; preps = prepositions, articulated prepositions (del = di + il) AND conjunctions (e, o, ma, che); pronouns = personal, clitic (si, mi, ti, lo, ci), relative and interrogative pronouns (chi, che, cosa).
+"layer" is REQUIRED and must be exactly one of the six words articles, nouns, verbs, adverbs, preps, pronouns, never anything else (not "conjunctions", "adjectives", "determiners"): DET -> articles; NOUN, PROPN, ADJ, NUM -> nouns; VERB, AUX -> verbs; ADV -> adverbs; ADP, CCONJ, SCONJ -> preps; PRON -> pronouns. "features" values are single strings. layer choice: articles = definite/indefinite articles; nouns = nouns, proper nouns AND adjectives (say which noun the adjective agrees with); verbs = every verb form including auxiliaries and infinitives; adverbs = adverbs and the question words dove, quando, come, quanto; preps = prepositions, articulated prepositions (del = di + il) AND conjunctions (e, o, ma, che); pronouns = personal, clitic (si, mi, ti, lo, ci), relative and interrogative pronouns (chi, che, cosa).
 notes: verbs give infinitive, tense, mood, person and number, regular or irregular, the auxiliary if compound, whether reflexive or impersonal "si"; for dovere/potere/volere say they take an infinitive; articles give gender, number and any elision (un'); prepositions say what they govern; pronouns say what they replace and where they sit.
 phrases: multi-word units taught as a unit (fixed expressions, collocations, verb phrases such as "fare la presa di servizio", articulated-preposition + noun): {"surface": "verbatim from the sentence", "type": "collocation|idiom|fixed-expression|verb-phrase", "literal": "word-order gloss", "meaning": "what it means as a unit", "note": "why it is idiomatic / when to reuse it"}. Use the same dictionary forms and the same analysis a teacher would give when explaining how the sentence is built. No HTML. Write every explanation in English."""
 
@@ -657,12 +663,13 @@ def _tail(speak: str, data: dict, diagram: dict | None = None, related: dict | N
     return out
 
 
-async def _markdown_step(run: Run, step: str, system: str, user: str, need: tuple, check=None, with_meta: bool = True) -> tuple[str, dict]:
+async def _markdown_step(run: Run, step: str, system: str, user: str, need: tuple, check=None, with_meta: bool = True,
+                         tag: str | None = None) -> tuple[str, dict]:
     """TEACH/COACH call; the reply must carry a meta block with the `need` keys (and pass `check`), else it is asked again (twice at most)."""
     cur, err = user, "no attempt made"
     for attempt in range(1, 3):
         try:
-            text = await model_call(run, step, MODEL_THINK, system, cur)
+            text = await model_call(run, step, tag or MODEL_THINK, system, cur)
             body, meta = _split_meta(text) if with_meta else (text.strip(), {})
             missing = [k for k in need if not meta.get(k)]
             if missing:
@@ -690,6 +697,37 @@ def _ap_norm(t: str) -> str:
     return str(t).replace("’", "'").replace("‘", "'").lower()
 
 
+_LETTERS = re.compile(r"[\W_]+")
+
+
+def covers(surfaces: list[str], sentence: str) -> bool:
+    """The tokens, joined, spell the sentence once whitespace, punctuation and case are ignored."""
+    return _LETTERS.sub("", _ap_norm("".join(surfaces))) == _LETTERS.sub("", _ap_norm(sentence))
+
+
+POS_LAYER = {"DET": "articles", "NOUN": "nouns", "PROPN": "nouns", "ADJ": "nouns", "NUM": "nouns", "VERB": "verbs", "AUX": "verbs",
+             "ADV": "adverbs", "ADP": "preps", "CCONJ": "preps", "SCONJ": "preps", "PRON": "pronouns"}
+
+
+def normalize_sentences(o) -> int:
+    """Mechanical repairs of the DIAGRAM reply, in place: a token whose layer is not one of the six is given the layer its
+    part of speech maps to, and a feature whose value is not a scalar is written as a string. Returns how many tokens changed
+    (logged by the caller). A token whose pos is unknown is left for the validator."""
+    n = 0
+    for s in (o.get("sentences") if isinstance(o, dict) else None) or []:
+        for t in (s.get("tokens") if isinstance(s, dict) else None) or []:
+            if not isinstance(t, dict):
+                continue
+            pos = str(t.get("pos") or "").upper()
+            if t.get("layer") not in AP_TOKEN_LAYERS and pos in POS_LAYER:
+                t["layer"] = POS_LAYER[pos]; n += 1
+            f = t.get("features")
+            if isinstance(f, dict) and not all(isinstance(v, (str, int, float, bool)) for v in f.values()):
+                t["features"] = {k: v if isinstance(v, (str, int, float, bool)) else ", ".join(map(str, v)) if isinstance(v, list) else str(v)
+                                 for k, v in f.items()}; n += 1
+    return n
+
+
 def _nonempty(v) -> bool:
     return isinstance(v, str) and bool(v.strip())
 
@@ -712,6 +750,8 @@ def validate_sentences(o, texts: list[str]):
         toks = s.get("tokens")
         if not isinstance(toks, list) or not toks:
             issues.append(f"{p}.tokens: need at least one token"); continue
+        if all(isinstance(t, dict) and _nonempty(t.get("surface")) for t in toks) and not covers([t["surface"] for t in toks], text):
+            issues.append(f'{p}.tokens: the surfaces, joined in order, must spell exactly "{text}": parse every word once, skip none, add none')
         for j, t in enumerate(toks, 1):
             q = f"{p}.tokens[{j}]"
             if not isinstance(t, dict):
@@ -807,6 +847,13 @@ def merge_sentences(parts: list[dict]) -> dict:
     return out
 
 
+def _fixed_validate(step: str, o, sent: str):
+    n = normalize_sentences(o)
+    if n:
+        log(f"{step}: {n} token field(s) repaired by rule (layer from pos / scalar features)")
+    return validate_sentences(o, [sent])
+
+
 async def diagram_item(run: Run, text: str, k: int, n: int) -> dict:
     """The annotation of ONE phrase: one call per Italian sentence in it, run concurrently, merged into one ApSentence.
     One call per sentence is the finest split there is (a sentence is the unit the model parses in one pass); a phrase
@@ -816,7 +863,7 @@ async def diagram_item(run: Run, text: str, k: int, n: int) -> dict:
     async def one(j: int, sent: str):
         user = f"SENTENCES (annotate each, in this order):\n1. {sent}"
         step = "diagram" if n == 1 and len(subs) == 1 else f"diagram {k + 1}.{j}"
-        o = await json_step(run, step, MODEL_THINK, DIAGRAM_SYS, user, lambda x: validate_sentences(x, [sent]), max_repair=2)
+        o = await json_step(run, step, MODEL_STRUCT, DIAGRAM_SYS, user, lambda x: _fixed_validate(step, x, sent), max_repair=2)
         return o["sentences"][0]
     return merge_sentences(list(await asyncio.gather(*[one(j, s) for j, s in enumerate(subs, 1)])))
 
@@ -828,9 +875,13 @@ def finish_diagram(run: Run, results: list, texts: list[str], t0: float) -> dict
             raise r
     errs = [r for r in results if isinstance(r, BaseException)]
     try:
-        if errs:
+        if errs and len(errs) == len(results):
             raise errs[0]
-        doc = assemble_passage(list(results), texts)
+        for r, t in zip(results, texts):
+            if isinstance(r, BaseException):
+                log(f"diagram dropped for {t!r}: {type(r).__name__}: {r}"[:400])
+        keep = [(r, t) for r, t in zip(results, texts) if not isinstance(r, BaseException)]
+        doc = assemble_passage([r for r, _ in keep], [t for _, t in keep])
         bad = validate_annotated_passage(doc)
         if bad:
             raise ValueError(f"assembled passage invalid: {bad}")
@@ -951,12 +1002,32 @@ def _item_user(run: Run, phrases: list, k: int, it: dict) -> str:
             f"REGISTER (use exactly): {it['register']} — {it.get('register_note') or ''}")
 
 
+_STEP = re.compile(r"(?m)^(\s*)(\d+)([.)])\s.*$")
+
+
+def pin_last_step(steps: str, sentence: str) -> str:
+    """The last numbered step must show the BUILD sentence exactly. When its bold fragment differs, the step is replaced
+    by one that does, and the swap is logged."""
+    last = None
+    for last in _STEP.finditer(steps):
+        pass
+    if last is None:
+        return steps
+    frags = re.findall(r"\*\*([^*]+)\*\*", last.group(0))
+    if frags and _norm(frags[0]) == _norm(sentence) and frags[0].strip() == sentence.strip():
+        return steps
+    log(f"how-built: last step {frags[0] if frags else last.group(0)!r} != BUILD sentence {sentence!r} — replaced")
+    new = f"{last.group(1)}{last.group(2)}{last.group(3)} **{sentence}**: the full sentence."
+    return steps[:last.start()] + new + steps[last.end():]
+
+
 async def teach_item(run: Run, phrases: list, k: int, it: dict) -> str:
     """The "How it's built" section of one phrase, headed so a numbered list of phrases stays readable."""
     n = len(phrases)
     body, _ = await _markdown_step(run, f"how-built {k + 1}" if n > 1 else "how-built", TEACH_ITEM_SYS,
-                                   _item_user(run, phrases, k, it), (), check=lambda b: check_built(b, 1), with_meta=False)
-    steps = _HOW.sub("", body, count=1).strip()
+                                   _item_user(run, phrases, k, it), (), check=lambda b: check_built(b, 1), with_meta=False,
+                                   tag=MODEL_STRUCT)
+    steps = pin_last_step(_HOW.sub("", body, count=1).strip(), it["it"])
     head = f"**How it's built · {k + 1}) {it['it']}**" if n > 1 else "**How it's built**"
     return f"{head}\n{steps}\n\n"
 

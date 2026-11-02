@@ -14,6 +14,7 @@ import * as cards from './cards.js';
 import * as steps from './steps.js';
 import { installInAppBridge } from './inapp.js';
 import { isPhraseRequest, parsePhraseBlock, PHRASE_HOST, PHRASE_MODEL } from './phrase-mode.js';
+import { stillWriting } from './still-writing.js';
 import { savePending, readPending, clearPending, renderRecoveredInto, createRecovery, threadMsg } from './recover.js';
 import { parseFenceBlock, buildDiagram, buildRelated, buildPimsleurAction, createBasket, buildAddRow } from './coach-extras.js';
 
@@ -827,6 +828,10 @@ function wireSteps(box) {
         const done = live;
         live = null;
         done.finish();
+        // The panel stops at the first text; a phrase reply goes on arriving, so a page-owned line keeps the count honest.
+        if (MODE === 'phrase' && own.dataset.streaming === '1' && !own.querySelector('.ask-still-writing')) {
+          stillWriting(document, own, done.born);
+        }
       }
     }
   }).observe(box, { childList: true, subtree: true, characterData: true });

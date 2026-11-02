@@ -9,7 +9,7 @@ phrase mode). The language-it shard holds no clinical-only lessons, so a clinica
     topics: [{"topic": "dovere + infinito", "kind": "construction|verb|vocabulary", "query": "dovere infinito ..."}]
 """
 from __future__ import annotations
-import json, math, os, re, sys, threading, unicodedata
+import html, json, math, os, re, sys, threading, unicodedata
 from pathlib import Path
 
 GEN = Path(os.environ.get("CHIRON_GEN", Path.home() / "Documents/generated"))
@@ -93,7 +93,8 @@ def lesson_of(p: dict) -> tuple[str, str, str]:
     title = meta.get("lesson") or (p.get("title") or "").split(" — ")[0]
     full = p.get("title") or ""
     section = full[len(title):].lstrip(" —") if full.startswith(title) else full.partition(" — ")[2]
-    return meta.get("lessonId") or p.get("id", "").split("#")[0], title, section.strip()
+    # the corpus keeps titles HTML-escaped; the page shows them with textContent, so they are decoded once here
+    return meta.get("lessonId") or p.get("id", "").split("#")[0], html.unescape(title), html.unescape(section.strip())
 
 
 def select(per_topic: list[tuple[dict, list[tuple[float, dict]]]], max_lessons: int = MAX_LESSONS, max_missing: int = MAX_MISSING) -> dict:

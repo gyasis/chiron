@@ -196,6 +196,27 @@ class Route(Base):
         self.assertEqual(res["slug"], "chiron-pimsleur-il-primo-giorno")
         self.assertEqual((res["env"]["CH_SOURCE"], res["env"]["CH_LESSONS"], res["env"]["CH_TARGETS"]), ("/x.json", "3", "given"))
 
+    def test_long_slug_is_cut_at_a_hyphen_not_mid_word(self):
+        import dispatch
+        slug = P.topic_slug("Procedure amministrative per la presa di servizio in specializzazione")
+        self.assertEqual(slug, "chiron-pimsleur-procedure-amministrative-per-la-presa-di")
+        self.assertLessEqual(len(slug) - len("chiron-pimsleur-"), 40)
+        self.assertEqual(dispatch.clip_slug("a" * 50, 40), "a" * 40)                  # one long word: hard cut
+        self.assertEqual(dispatch.clip_slug("abc-defg-hij", 8), "abc-defg")            # the cut lands on a hyphen
+        self.assertEqual(dispatch.clip_slug("abc-defg-hij", 9), "abc-defg")
+        slug2 = P.topic_slug("Procedure amministrative per l'ammissione")          # old rule cut this to "...amministrati"
+        self.assertFalse(slug2.endswith("amministrati"))
+        self.assertEqual(dispatch.clip_slug("short", 40), "short")
+
+    def test_the_chain_and_dispatch_agree_on_the_slug(self):
+        import re, importlib.util
+        src = (Path(__file__).resolve().parent.parent / "chains/2026-10-11_chiron-pimsleur-lesson-chain/run.py").read_text()
+        ns = {"re": re}
+        exec(src[src.index("def _clip_slug"):src.index("TOPIC_SLUG = ")], ns)
+        import dispatch
+        for base in ("procedure-amministrative-per-la-presa-di-servizio", "il-primo-giorno", "x" * 60):
+            self.assertEqual(ns["_clip_slug"](base), dispatch.clip_slug(base, 40))
+
 
 class Topic(Base):
     def setUp(self):

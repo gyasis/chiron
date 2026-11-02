@@ -110,8 +110,8 @@ def _usage_meta(usage: dict | None) -> dict:
             "reasoning_chars": u.get("thinking_chars", u.get("reasoning_chars"))}
 
 
-async def chain_call(source: str, model_dict: dict, instruction: str, user_input: str, fn):
-    """Await fn(user_input) (a chain's process_prompt_async), record the call, re-raise any error."""
+async def chain_call(source: str, model_dict: dict, instruction: str, user_input: str, fn, step: str | None = None):
+    """Await fn(user_input) (a chain's process_prompt_async), record the call under `step`, re-raise any error."""
     prompt = instruction.replace("{input}", str(user_input)) if "{input}" in instruction else instruction
     model = (model_dict or {}).get("name")
     t0 = time.time()
@@ -119,10 +119,10 @@ async def chain_call(source: str, model_dict: dict, instruction: str, user_input
         out = await fn(user_input)
     except BaseException as e:
         record(source, model, prompt, None, status="cancelled" if not isinstance(e, Exception) else "error",
-               error=f"{type(e).__name__}: {e}"[:500], latency_ms=int((time.time() - t0) * 1000))
+               error=f"{type(e).__name__}: {e}"[:500], latency_ms=int((time.time() - t0) * 1000), step=step)
         raise
     record(source, model, prompt, out if isinstance(out, str) else str(out),
-           latency_ms=int((time.time() - t0) * 1000))
+           latency_ms=int((time.time() - t0) * 1000), step=step)
     return out
 
 
