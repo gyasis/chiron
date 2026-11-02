@@ -250,6 +250,15 @@ body,.topbar,.pills,.facets,.row,.rhead{transition:background .2s,color .2s,bord
 .ssmpop .ssmhint a{color:#059669;text-decoration:none}
 .themebtn{border:1px solid var(--chiron-border);background:var(--chiron-surface);color:var(--chiron-fg);border-radius:99px;width:36px;height:36px;font-size:15px;cursor:pointer;flex:0 0 auto}
 .themebtn:hover{border-color:var(--chiron-accent)}
+/* Header hints: an instant explanation under each control on hover or keyboard focus. The native title
+   tooltip waits about a second and never shows on touch, so the text lives in data-tip and aria-label. */
+.topbar [data-tip]{position:relative}
+.topbar [data-tip]::after{content:attr(data-tip);position:absolute;top:calc(100% + 8px);left:50%;transform:translateX(-50%);
+  width:max-content;max-width:240px;white-space:normal;text-align:left;padding:7px 10px;border-radius:8px;
+  background:var(--chiron-fg);color:var(--chiron-surface);font-family:inherit;font-size:12px;font-weight:500;line-height:1.35;letter-spacing:0;
+  box-shadow:0 6px 18px rgba(0,0,0,.18);opacity:0;pointer-events:none;transition:opacity .12s;z-index:60}
+.topbar [data-tip]:hover::after,.topbar [data-tip]:focus-visible::after{opacity:1;transition-delay:.15s}
+.topbar .tip-end::after{left:auto;right:0;transform:none}
 /* staging row actions */
 .accept{font-size:11px;font-weight:700;color:#fff;background:var(--t-RISING);border:none;border-radius:99px;padding:4px 12px;cursor:pointer}
 .accept:hover{filter:brightness(1.1)}
@@ -300,16 +309,16 @@ body,.topbar,.pills,.facets,.row,.rhead{transition:background .2s,color .2s,bord
   <div class="topbar">
     <div class="brand"><span class="mk">C</span><span class="lbl">Chiron Library</span></div>
     <div class="search"><span class="mag">⌕</span><input id="q" placeholder="Search lessons, diseases, systems, subjects, topics…"></div>
-    <div class="sort"><span class="sl">Sort</span> <select id="sort"></select></div>
-    <a class="genbtn askbtn" href="/ask/" title="Ask across everything you've studied — grounded, with citations">◈ <span class="glbl">Ask</span></a>
-    <a class="genbtn askbtn" href="/mazzi" title="Anki decks — every deck with its card count; tap one to drill it in Sessione">🎴 <span class="glbl">Mazzi</span></a>
-    <button class="genbtn" onclick="LIB.wizard(true)">✦ <span class="glbl">Generate</span></button>
-    <button class="genbtn" onclick="LIB.jobs(true)" title="What's generating / recently generated" style="background:#0f766e">⚡ <span class="glbl">Jobs</span><span id="jobsdot" class="jobsdot" style="display:none"></span></button>
-    <button class="genbtn" onclick="LIB.captures(true)" title="Everything you've flagged — review + turn into cards/quizzes/lessons" style="background:#7c3aed">📥 <span class="glbl">Captures</span><span id="capdot" class="jobsdot" style="display:none"></span></button>
-    <button class="ssmbadge idle" id="ssmbadge" onclick="LIB.ssm.pop(event)" title="Specializzando (SSM app) — connection + practice-link address"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4.8 2.3A2 2 0 0 0 3 4v5a5 5 0 0 0 10 0V4a2 2 0 0 0-1.8-1.7"/><path d="M3.5 2.3h1.3M11.2 2.3h1.3"/><circle cx="19" cy="17" r="2.4"/><path d="M8 14v2a5 5 0 0 0 10 0v-.6"/></svg><span class="sdot"></span></button>
-    <button class="themebtn" id="themebtn" onclick="LIB.theme()" title="Toggle light / dark">🌙</button>
-    <button class="themebtn" title="Chains — what each lesson generator produces" onclick="window.open('chains-help.html','_blank')">❓</button>
-    <button class="themebtn" title="Import a .chiron lesson file (install offline)" onclick="document.getElementById('importfile').click()">⬆</button>
+    <div class="sort" data-tip="Order the lessons: by exam priority, newest, title and more"><span class="sl">Sort</span> <select id="sort" aria-label="Sort lessons"></select></div>
+    <a class="genbtn askbtn" href="/ask/" data-tip="Ask a question across all your lessons (answers cite them), or type &quot;How do I say…&quot; for the phrase coach" aria-label="Ask">◈ <span class="glbl">Ask</span></a>
+    <a class="genbtn askbtn" href="/mazzi" data-tip="Your Anki decks with card counts. Tap a deck to drill it in Sessione" aria-label="Mazzi: Anki decks">🎴 <span class="glbl">Mazzi</span></a>
+    <button class="genbtn" onclick="LIB.wizard(true)" data-tip="Create a new lesson: pick a domain and type, add a topic or upload a source" aria-label="Generate a lesson">✦ <span class="glbl">Generate</span></button>
+    <button class="genbtn" onclick="LIB.jobs(true)" data-tip="What is generating now and what finished recently, with any failures" aria-label="Jobs" style="background:#0f766e">⚡ <span class="glbl">Jobs</span><span id="jobsdot" class="jobsdot" style="display:none"></span></button>
+    <button class="genbtn" onclick="LIB.captures(true)" data-tip="Everything you flagged while studying. Review it and turn it into cards, quizzes or lessons" aria-label="Captures" style="background:#7c3aed">📥 <span class="glbl">Captures</span><span id="capdot" class="jobsdot" style="display:none"></span></button>
+    <button class="ssmbadge idle tip-end" id="ssmbadge" onclick="LIB.ssm.pop(event)" data-tip="Specializzando (SSM app): connection status and the practice-link address" aria-label="SSM app connection"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4.8 2.3A2 2 0 0 0 3 4v5a5 5 0 0 0 10 0V4a2 2 0 0 0-1.8-1.7"/><path d="M3.5 2.3h1.3M11.2 2.3h1.3"/><circle cx="19" cy="17" r="2.4"/><path d="M8 14v2a5 5 0 0 0 10 0v-.6"/></svg><span class="sdot"></span></button>
+    <button class="themebtn tip-end" id="themebtn" onclick="LIB.theme()" data-tip="Switch between light and dark" aria-label="Toggle light or dark theme">🌙</button>
+    <button class="themebtn tip-end" data-tip="Help: what each lesson generator (chain) produces" aria-label="Help: lesson generators" onclick="window.open('chains-help.html','_blank')">❓</button>
+    <button class="themebtn tip-end" data-tip="Import a .chiron lesson file to install it offline" aria-label="Import a lesson file" onclick="document.getElementById('importfile').click()">⬆</button>
     <input id="importfile" type="file" accept=".chiron,.zip" hidden>
   </div>
   <div class="ssmpop" id="ssmpop">

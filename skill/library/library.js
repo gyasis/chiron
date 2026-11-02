@@ -929,7 +929,7 @@ const LIB = {
     render(state){ const b=document.getElementById('ssmbadge'); if(!b) return;
       b.classList.remove('ok','down','idle'); b.classList.add(state);
       const t={ok:'SSM connected · '+this.eff(), down:'SSM offline · '+this.eff(), idle:'SSM address not set (using auto)'};
-      b.title=t[state]||''; },
+      b.dataset.tip=(t[state]||'')+' — tap for connection details'; b.setAttribute('aria-label',t[state]||'SSM app connection'); },
     async check(){ const url=this.eff(), c=new AbortController(), to=setTimeout(()=>c.abort(),3500);
       try{ await fetch(url+'/?ping='+Date.now(), {mode:'no-cors', signal:c.signal}); clearTimeout(to); this._live=true; this.render('ok'); }
       catch(e){ clearTimeout(to); this._live=false; this.render(this.isSet()?'down':'idle'); }
