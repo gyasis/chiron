@@ -2511,6 +2511,23 @@ def _ask_cfg() -> dict:
     return cfg
 
 
+_ASK_BUILD_EXT = (".html", ".js", ".css", ".json", ".webmanifest")
+
+
+@app.get("/ask/build.json")
+def ask_build():
+    """A fingerprint of the Ask page's served files (path, size, mtime). The phone app compares it with the one it
+    loaded and reloads Chiedi when it differs, so a server update reaches an already-open app."""
+    import hashlib
+    root = SKILL / "ask"
+    h = hashlib.sha1()
+    for f in sorted(root.rglob("*")):
+        if f.is_file() and f.suffix.lower() in _ASK_BUILD_EXT and ".bak" not in f.name:
+            st = f.stat()
+            h.update(f"{f.relative_to(root)}|{st.st_size}|{st.st_mtime_ns}\n".encode())
+    return {"build": h.hexdigest()[:16]}
+
+
 @app.get("/ask/config.json")
 def ask_config():
     """What the page needs to mount acolyte. `base` is OUR proxy, never the upstream —
