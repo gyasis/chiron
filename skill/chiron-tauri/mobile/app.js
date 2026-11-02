@@ -514,14 +514,27 @@ async function askUp() {
   }
   return false;
 }
+// The Ask page's build fingerprint from the server ('' when unreachable or when the server has no /ask/build.json).
+async function askBuild() {
+  const ac = new AbortController(), t = setTimeout(() => ac.abort(), 3000);
+  try { const r = await fetch(askBase() + '/ask/build.json', { cache: 'no-store', signal: ac.signal }); return r.ok ? ((await r.json()).build || '') : ''; }
+  catch (e) { console.warn('chiron ask: build check failed', e && e.name); return ''; }
+  finally { clearTimeout(t); }
+}
+// The open conversation is kept across close/reopen. The frame reloads when the address changed, or when the server
+// serves a different Ask build from the one loaded.
 async function openAsk() {
   const theme = document.documentElement.getAttribute('data-theme') || 'light';
   const key = askBase() + '/ask/?inapp=1';
   const fr = document.getElementById('ask-frame');
-  if (fr.dataset.src !== key) {   // keep the open conversation across close/reopen; reload only if the address changed
-    if (!await askUp()) { console.warn('chiron ask: unreachable', key); toast('Chiedi needs the library computer — ' + askBase() + ' not reachable'); return; }
-    ChironNav.loadFrame(document, 'ask-frame', key + '&theme=' + theme).dataset.src = key;
-  } else ASK.theme(theme);
+  const build = await askBuild();
+  const stale = fr.dataset.src === key && !!build && !!fr.dataset.build && build !== fr.dataset.build;
+  if (fr.dataset.src !== key || stale) {
+    if (!build && !await askUp()) { console.warn('chiron ask: unreachable', key); toast('Chiedi needs the library computer — ' + askBase() + ' not reachable'); return; }
+    if (stale) console.info('chiron ask: new build', fr.dataset.build, '->', build);
+    const f = ChironNav.loadFrame(document, 'ask-frame', key + '&theme=' + theme);
+    f.dataset.src = key; f.dataset.build = build;
+  } else { if (build && !fr.dataset.build) fr.dataset.build = build; ASK.theme(theme); }
   NAV.open('askov');
 }
 function closeAsk() { NAV.close('askov'); }

@@ -1,6 +1,6 @@
 'use strict';
 /* "Riprendi" — one learner, many screens. The hub slot now-studying/cur = {lesson, anchor, scroll, title, section, ts, from}
- * (relayed by chiron-server :8911 → hub progress API). Reads it into a Library banner ("Dal web: … — Riprendi") and writes
+ * (relayed by chiron-server :8911 → hub progress API). Reads it into a Library banner ("Dal computer: … — Riprendi"; with a Match Madness set: a pulsing "▶ Gioca") and writes
  * the phone's own reading position (reported by shell/handoff.js inside the lesson iframe) so the web can show the reverse.
  * Uses app.js globals: askBase, LESSONS, OPEN_SLUG, openLesson, slugOf, toast. */
 (function () {
@@ -22,17 +22,37 @@
   const ago = ts => { const m = Math.max(0, Math.round((Date.now() - ts) / 60000)); return m < 1 ? 'adesso' : m < 60 ? m + ' min fa' : m < 1440 ? Math.round(m / 60) + ' h fa' : Math.round(m / 1440) + ' g fa'; };
   const esc = s => String(s || '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
+  // the Match Madness app's scheme: ChironOpen (in-app handler) first, else the system opener — same order as app.js askBridge
+  async function openMM(url) {
+    try {
+      if (window.ChironOpen && window.ChironOpen.open(url)) return;
+      if (typeof TAURI !== 'undefined' && TAURI) await invoke('plugin:opener|open_url', { url }); else window.open(url, '_blank');
+    } catch (e) { console.warn('chiron handoff: could not open Match Madness', url, e); toast('Impossibile aprire Match Madness: ' + (e && e.message || e)); }
+  }
+  const mmUrl = mm => 'matchmadness://raccolta?id=' + encodeURIComponent(mm.id) + '&chiron=' + encodeURIComponent(askBase());
+
   function show(p) {
     if (!banner) {
       banner = document.createElement('div'); banner.id = 'hf-banner';
       banner.setAttribute('style', 'display:flex;align-items:center;gap:10px;margin:0 0 10px;padding:10px 12px;border-radius:12px;background:var(--medbg);color:var(--fg);font-size:12.5px;border:1px solid var(--elevated)');
       const anchor = document.getElementById('offbanner') || document.getElementById('rows'); anchor.parentNode.insertBefore(banner, anchor);
+      const st = document.createElement('style');   // a hand-off with a game ready pulses until it is answered
+      st.textContent = '@keyframes hf-pulse{0%,100%{transform:scale(1);box-shadow:0 0 0 0 rgba(0,0,0,0)}50%{transform:scale(1.015);box-shadow:0 4px 18px rgba(0,0,0,.18)}}' +
+        '#hf-banner.hf-mm{animation:hf-pulse 1.6s ease-in-out infinite}@media (prefers-reduced-motion:reduce){#hf-banner.hf-mm{animation:none}}';
+      document.head.appendChild(st);
     }
-    const where = p.from === 'web' ? 'Dal web' : 'Dal telefono';
-    banner.innerHTML = `<div style="flex:1;min-width:0"><div style="color:var(--muted);font-size:11px">${where} · ${ago(p.ts)}</div>
+    const where = p.from === 'web' ? 'Dal computer' : 'Dal telefono';
+    const mm = p.from === 'web' && p.mm && p.mm.id ? p.mm : null;
+    banner.classList.toggle('hf-mm', !!mm);
+    banner.innerHTML = mm
+      ? `<div style="flex:1;min-width:0"><div style="color:var(--muted);font-size:11px">${where} · ${ago(p.ts)} · tocca per continuare</div>
+         <div style="font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">🎮 Match Madness pronto — ${esc(mm.name)} · ${+mm.count || 0} coppie</div></div>
+         <button id="hf-mm" class="hbtn" style="font-weight:700;color:var(--med)">▶ Gioca</button><button id="hf-go" class="hbtn">Lezione</button><button id="hf-x" class="hbtn" aria-label="Chiudi">✕</button>`
+      : `<div style="flex:1;min-width:0"><div style="color:var(--muted);font-size:11px">${where} · ${ago(p.ts)}</div>
       <div style="font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(p.title)}${p.section ? ' § ' + esc(p.section) : ''}</div></div>
       <button id="hf-go" class="hbtn" style="font-weight:600;color:var(--med)">Riprendi</button><button id="hf-x" class="hbtn" aria-label="Chiudi">✕</button>`;
     banner.style.display = 'flex';
+    if (mm) banner.querySelector('#hf-mm').onclick = () => { banner.style.display = 'none'; ls.set('chiron.hf.dismissed', String(p.ts)); openMM(mmUrl(mm)); };
     banner.querySelector('#hf-go').onclick = () => { banner.style.display = 'none'; ls.set('chiron.hf.dismissed', String(p.ts));
       const a = String(p.anchor || '').replace(/[^\w.-]/g, '');
       openLesson(slugOf(p.lesson), a ? '#' + a : (p.scroll > 0 ? '#sf=' + p.scroll : ''), p.lesson); };

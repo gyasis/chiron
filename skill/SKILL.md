@@ -227,6 +227,33 @@ timestamped clip-glitch complaints is re-measured automatically (strict ASR + fa
 and becomes `PASS (re-checked …)` only when every flagged clip is clean — read those measurements too.
 Older built lessons need `scripts/upgrade_player_pimsleur.py <lesson.html>` before a drill shows in their player.
 
+## Source-audio lessons (a video's own voice, cut into clips)
+
+For a source that already speaks the language (a YouTube drill, a listening story): the lesson's audio IS that
+recording. Nothing the source says is re-synthesized; the narrator voice speaks only the overview and the drill's
+Italian framing lines.
+
+    python3 scripts/anki_link.py words.json anki.json          # read-only: which words already have an Anki note
+    python3 scripts/build_source_lesson.py spec.json           # clips, play-through, drill, read card, cards.json
+
+- **Spec** (schema in `build_source_lesson.py`): entries with Italian/English/example text and `clips` as source
+  seconds, plus optional `segments` (every spoken line, so the play-through highlight follows the whole entry).
+- **Play-through pane** (`shell/playthrough.js`, `#chiron-playthrough`): the source plays straight through; the
+  entry or line being spoken, its English and the example sit on top; "Senza inglese" hides the English; a click on
+  any row seeks. Data in `audio/playthrough.timeline.js`.
+- **Drill:** `pimsleur.json` with `"source_audio": true` and `item.audio = {it, en}` clip paths. Cue = the
+  source's English clip after a tone, answer = the source's Italian clip (see `pimsleur_drill.py`).
+- **Anki:** a word counts as already covered only when a note field IS the word (an article allowed); a sentence
+  containing it does not. Covered words are linked, never duplicated; only the rest become SR cards.
+
+## Continue on the phone (hand-off with Match Madness)
+
+"📱 Continua sul telefono" (`shell/handoff.js`) pins the reading position in the hub slot `now-studying`. On a
+lesson with Match Madness it also builds that lesson's collection (`POST /api/collections/from-lesson`) and puts
+`mm = {id, name, count}` in the pin. The phone app's Library banner (`chiron-tauri/mobile/handoff.js`) then pulses
+— "🎮 Match Madness pronto · N coppie" — and **▶ Gioca** opens `matchmadness://raccolta?id=…`; **Lezione**
+reopens the lesson. Tests: `tests/handoff-mm.test.mjs`.
+
 ## Library tags (several per lesson)
 
 A lesson can carry any number of tags: `chiron.json` → `"labels": ["Ordine exam", …]`. The Library shows

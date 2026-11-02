@@ -40,8 +40,13 @@
     const all = () => frames ? frames() : [frame()];
     win.addEventListener('message', ev => {
       const fr = all().find(f => f && f.contentWindow && ev.source === f.contentWindow);
-      if (!fr || ev.origin !== origin()) return;
+      if (!fr) return;
       const d = ev.data || {};
+      /* A SAVED lesson (served from the phone at lesson.localhost) asks to open another lesson it links to: its relative
+       * link cannot work, because saved copies live under timestamp folders. Lesson frame + saved-lesson origin only. */
+      if (d.type === 'chiron-open-lesson' && fr.id === 'l-frame' && (ev.origin === 'http://lesson.localhost' || ev.origin === 'lesson://localhost')
+          && typeof d.id === 'string' && d.id) { openLesson(d.id, typeof d.hash === 'string' ? d.hash : ''); return; }
+      if (ev.origin !== origin()) return;
       if (d.type === 'chiron-ask:ready') { api.theme(currentTheme(), fr); return; }   // a theme change made while Ask was loading
       if (d.type !== 'chiron-ask:open' || typeof d.url !== 'string') return;
       let u; try { u = new URL(d.url); } catch (e) { return; }
