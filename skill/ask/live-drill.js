@@ -2,7 +2,7 @@
  * Chiron · Ask — the live Pimsleur drill player.
  *
  *   openLiveDrill(sentences, { fetchImpl })   sentences: [{it, en}]. Starts POST /api/pimsleur/live, then plays the steps
- *                                              each line carries (narrator cue, Italian at 100/75/50%, the answer pause)
+ *                                              each line carries (narrator cue, Italian at the speeds the server sends, the answer pause)
  *                                              while the server keeps making the later lines.
  *
  * The server hands over ready-to-play steps ({kind, text, url, dur, pause, speed}); this module never computes a pause.
