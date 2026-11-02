@@ -16,6 +16,7 @@ import { installInAppBridge } from './inapp.js';
 import { isPhraseRequest, parsePhraseBlock, PHRASE_HOST, PHRASE_MODEL } from './phrase-mode.js';
 import { stillWriting } from './still-writing.js';
 import { savePending, readPending, clearPending, renderRecoveredInto, createRecovery, threadMsg } from './recover.js';
+import { openLiveDrill } from './live-drill.js';
 import { parseFenceBlock, buildDiagram, buildRelated, buildPimsleurAction, createBasket, buildAddRow } from './coach-extras.js';
 
 const $ = s => document.querySelector(s);
@@ -363,7 +364,7 @@ function buildExtras(msg, raw, data) {
   const rel = parseFenceBlock(raw, 'related');
   if (rel.ok) box.appendChild(buildRelated(document, rel.data, topic => post('/generate', {
     domain: 'language-it', subject: topic, source: 'Chiron · Ask phrase coach', extra: { from_question: data.en_intent || data.it } })));
-  if (phrases.length) box.appendChild(buildPimsleurAction(document, phrases, body => api('POST', '/api/pimsleur/from-phrases', body)));
+  if (phrases.length) box.appendChild(buildPimsleurAction(document, phrases, body => api('POST', '/api/pimsleur/from-phrases', body), openLiveDrill));
   if (box.children.length) msg.appendChild(box);
 }
 
@@ -501,7 +502,7 @@ function adoptControls(handle, stats) {
   modeCtl.select = persona;
   modeCtl.note = note;
 
-  BASKET = createBasket({ doc: document, api, pill: $('#basketbtn'), panel: $('#basketpanel') });
+  BASKET = createBasket({ doc: document, api, pill: $('#basketbtn'), panel: $('#basketpanel'), onDrill: openLiveDrill });
   $('#basketbtn').hidden = MODE !== 'phrase';
   RECOVERY = createRecovery({ storage: localStorage, fetchFn: (u, i) => fetch(u, i), now: () => Date.now(), session: askSession,
                               replyState, lastChangeAt: () => LAST_DOM_CHANGE, render: renderRecovered, status: showRecoverStatus });
