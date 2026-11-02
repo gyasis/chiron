@@ -213,13 +213,20 @@ class Chain(unittest.TestCase):
 
     def test_drill_makes_no_teach_call_and_emits_the_drill_block(self):
         s = Script({"kind": "drill"})
-        r = run_coach(s, prior_turns() + [{"role": "user", "content": "run these through out loud"}])
+        r = run_coach(s, prior_turns() + [{"role": "user", "content": "run these through out loud as pimsleur"}])
         self.assertEqual([c[0] for c in s.calls], ["understand"])
         self.assertEqual(r["kind"], "drill")
         self.assertIn('```drill\n{"action": "open"}\n```', r["content"])
         self.assertNotIn("[[SPEAK]]", r["content"])
         self.assertIn("drill", chain.UNDERSTAND_SYS)
         self.assertNotIn("```drill", chain.Run(prior_turns() + [{"role": "assistant", "content": r["content"]}, {"role": "user", "content": "x"}]).transcript())
+
+    def test_drill_without_the_pimsleur_name_is_a_conversation(self):
+        s = Script({"kind": "drill"})
+        r = run_coach(s, prior_turns() + [{"role": "user", "content": "quiz me on these"}])
+        self.assertEqual(r["kind"], "question")
+        self.assertNotIn("```drill", r["content"])
+        self.assertIn("Without the word Pimsleur it is never a drill", chain.UNDERSTAND_SYS)
 
     def test_question_with_nothing_to_speak_has_no_speak_block(self):
         s = Script({"kind": "question"})

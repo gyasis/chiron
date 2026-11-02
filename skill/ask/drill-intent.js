@@ -2,15 +2,16 @@
  * Chiron · Ask — the Pimsleur drill intent. Pure (no DOM), so it runs under node --test.
  *
  *   classifyDrillIntent(text)   'drill' | 'lesson' | 'none'
- *       drill   open the live drill player now             ("play these as pimsleur live", "drill me")
- *       lesson  show the full saved-lesson action          ("make a pimsleur lesson from these", "add to my library")
- *       none    an ordinary message: it goes to the model  ("how does pimsleur work?")
+ *       drill   open the live drill player now             ("play these as pimsleur live", "drill me with pimsleur")
+ *       lesson  show the full saved-lesson action          ("make a pimsleur lesson from these")
+ *       none    an ordinary message: it goes to the model  ("quiz me", "how does pimsleur work?")
  *   splitSpeak(speak)           the Italian lines of a [[SPEAK]] block
  *   composerLines(text)         one sentence per line typed in the composer
  *   pickSource({composer, replies, basket})   the {it, en} list to drill, by priority; replies are newest first
  *
- * Decision order: an explanation question is never an intent; "<pimsleur> live" is a drill; a lesson noun with a
- * create/save verb (or a library target) is a lesson; a drill verb aimed at the phrases, or at Pimsleur, is a drill.
+ * Only the name activates it: a message without "Pimsleur" (in any dictation spelling) is always 'none', so practice,
+ * quiz and test requests stay a conversation with Lucrezia. With the name: an explanation question is never an intent;
+ * "<pimsleur> live" is a drill; a lesson noun or a create/save verb is a lesson; a drill or play verb is a drill.
  * Voice dictation spells the name many ways (pimsler, pimsleer, pims layer), so the name is matched by shape.
  */
 
@@ -33,17 +34,12 @@ function norm(text) {
 
 export function classifyDrillIntent(text) {
   const t = norm(text);
-  if (!t || t.length > 240) return 'none';
+  if (!t || t.length > 240 || !PIMS_RE.test(t)) return 'none';
   if (EXPLAIN_RE.test(t)) return 'none';
-  const pims = PIMS_RE.test(t);
-  const lessonNoun = LESSON_NOUN_RE.test(t);
-  if (pims && PIMS_LIVE_RE.test(t)) return 'drill';
-  if (LIBRARY_RE.test(t) && CREATE_RE.test(t)) return 'lesson';
-  if (pims && lessonNoun) return 'lesson';
-  if (lessonNoun && CREATE_RE.test(t) && /\b(?:these|them|this|those|phrases?|basket)\b/.test(t)) return 'lesson';
-  if (DRILL_VERB_RE.test(t)) return 'drill';
-  if (pims && PIMS_VERB_RE.test(t)) return 'drill';
-  if (pims && t.split(' ').length <= 3) return 'drill';
+  if (PIMS_LIVE_RE.test(t)) return 'drill';
+  if (LESSON_NOUN_RE.test(t) || LIBRARY_RE.test(t)) return 'lesson';
+  if (DRILL_VERB_RE.test(t) || PIMS_VERB_RE.test(t) || t.split(' ').length <= 3) return 'drill';
+  if (CREATE_RE.test(t)) return 'lesson';
   return 'none';
 }
 

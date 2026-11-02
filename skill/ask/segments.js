@@ -12,7 +12,7 @@
 export const SEGMENTS = [['answer', 'Answer'], ['use', 'Use it'], ['context', 'Context']];
 
 /** The coach's bold section headings that belong under "Use it"; every other block stays on the Answer. */
-const USE = [/^how it'?s built/i, /^your turn/i];
+const USE = [/^how it'?s built/i];
 
 export function sectionOf(label) {
   const t = String(label || '').trim();
