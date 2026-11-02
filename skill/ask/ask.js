@@ -19,6 +19,7 @@ import { savePending, readPending, clearPending, renderRecoveredInto, createReco
 import { openLiveDrill } from './live-drill.js';
 import { classifyDrillIntent, pickSource, EMPTY_NOTE } from './drill-intent.js';
 import { parseFenceBlock, buildDiagram, buildRelated, buildPimsleurAction, createBasket, buildAddRow } from './coach-extras.js';
+import { segmentReply } from './segments.js';
 
 const $ = s => document.querySelector(s);
 const LS_SCOPE = 'chiron.ask.scope';
@@ -458,6 +459,66 @@ function wireLivePill(panel) {
   update();
 }
 
+/** The practice dock on a phone. The meta row sits just above the composer at phone width (under it on a wide screen),
+ *  shows the latest reply's "Your turn" sentence, and carries the basket count, which opens the basket. */
+function wireDock(panel) {
+  const dock = $('#cmeta'), row = panel.querySelector('.acolyte-input-row'), host = $('#host');
+  if (!dock || !host) return;
+  const phone = matchMedia('(max-width: 768px)');
+  const ta = composerEl(), wide = ta?.placeholder || '';
+  const place = () => {
+    if (phone.matches && row) row.before(dock); else host.after(dock);
+    if (!ta) return;
+    ta.placeholder = phone.matches ? 'Ask, or answer in Italian…' : wide;   // one line at phone width
+    ta.dispatchEvent(new Event('input'));                                   // autogrow() refits the field to it
+  };
+  phone.addEventListener('change', place);
+  place();
+
+  const turn = $('#dockturn'), q = $('#dockq');
+  const update = () => {
+    const last = [...(threadBox()?.querySelectorAll('.acolyte-msg.assistant') || [])].pop();
+    let practice = '';
+    try { practice = String(JSON.parse(last?.dataset.phrase || 'null')?.practice || '').trim(); }
+    catch (e) { console.warn('[chiron] dock: reply data unreadable:', e && e.message || e); }
+    q.textContent = practice;
+    turn.hidden = !practice;
+  };
+  q.addEventListener('click', () => composerEl()?.focus());
+  let timer;
+  new MutationObserver(() => { clearTimeout(timer); timer = setTimeout(update, 300); })
+    .observe(panel.querySelector('.acolyte-messages'), { childList: true, subtree: true, attributes: true, attributeFilter: ['data-phrase'] });
+  update();
+
+  const pill = $('#basketbtn'), bk = $('#dockbasket'), n = $('#dockn');
+  const count = () => {
+    const k = BASKET?.items.length || 0;
+    n.textContent = String(k);
+    bk.setAttribute('aria-label', `Pimsleur basket, ${k} phrase${k === 1 ? '' : 's'}`);
+    bk.setAttribute('aria-expanded', pill.getAttribute('aria-expanded') || 'false');
+  };
+  bk.addEventListener('click', () => pill.click());
+  new MutationObserver(count).observe(pill, { attributes: true, childList: true, characterData: true, subtree: true });
+  count();
+}
+
+/** Segment each finished reply for the phone (segments.js) and mark the latest reply, the only one that keeps its
+ *  action row at phone width. A reply is segmented again when its blocks change, keeping the segment shown. */
+function segmentAll(box) {
+  const msgs = [...box.querySelectorAll('.acolyte-msg.assistant')];
+  msgs.forEach((m, i) => {
+    m.classList.toggle('ask-latest', i === msgs.length - 1);
+    const body = m.querySelector('.acolyte-msg-body');
+    if (!body || m.dataset.streaming === '1') return;
+    const sig = [body.childElementCount, [...m.children].filter(c => !c.classList.contains('ask-seg')).length,
+                 m.querySelector('.ask-coach-extras')?.childElementCount || 0].join(':');
+    if (m.dataset.segSig === sig) return;
+    m.dataset.segSig = sig;
+    try { segmentReply(document, m); }
+    catch (e) { console.warn('[chiron] reply not segmented:', e && e.message || e); }
+  });
+}
+
 /** The phrases of a reply, for the basket and the Pimsleur action: data.items, else the single top-level phrase. */
 function phrasesOf(data) {
   const items = Array.isArray(data.items) && data.items.length ? data.items : [{ it: data.it, en: data.en_intent, register: data.register }];
@@ -590,10 +651,10 @@ function adoptControls(handle, stats) {
   const panel = document.querySelector('#host .acolyte-panel');
   if (!panel) return;
 
-  // model picker → the composer meta row
+  // model picker → the composer meta row (its settings group, a sheet on a phone)
   const picker = panel.querySelector('.acolyte-model-picker');
   if (picker) {
-    $('#cmeta').prepend(picker);
+    $('#cmmodel').append(picker);
     markCloudModels(picker);
     // acolyte repopulates the list when the config lands, so re-mark on change and on mutation
     picker.addEventListener('change', () => markCloudModels(picker));
@@ -609,7 +670,7 @@ function adoptControls(handle, stats) {
                       '<option value="phrase">Come si dice · phrase builder</option>';
   persona.value = MODE;
   persona.addEventListener('change', () => switchMode(persona.value));
-  picker?.after(persona);
+  $('#cmpersona').append(persona);
   const note = document.createElement('span');
   note.id = 'modenote';
   note.setAttribute('role', 'status');
@@ -692,6 +753,7 @@ function adoptControls(handle, stats) {
 
   autogrow(panel.querySelector('.acolyte-input'));
   wireLivePill(panel);
+  wireDock(panel);
   wireDispatch(handle, panel);
   wireThreads(handle);
 
@@ -991,6 +1053,7 @@ function wireDispatch(handle, panel) {
         dressSources(msg);
         msg.appendChild(buildActs(handle, panel, msg));
       });
+      segmentAll(box);
     }, DISPATCH_DEBOUNCE);
   }).observe(box, { childList: true, subtree: true, characterData: true, attributes: true, attributeFilter: ['data-streaming'] });
 }
