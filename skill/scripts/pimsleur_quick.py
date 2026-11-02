@@ -5,11 +5,11 @@ Rule: the sentence is synthesized once. Pieces are only ever cut out of that tak
 truly silent between two word groups; when there is no such place the whole phrase is repeated instead.
 
     take -> word times (whisper) -> clean breaks between chunks (>= MIN_QUIET_S below CLEAN_DB)
-      break found : whole 100%, end part 50% then 100%, whole 75% then 100%
-      no break    : whole 100% (listen), then repeats at 50%, 75%, 100%
+      break found : whole 100%, end part 80% then 100%, whole 80% then 100%
+      no break    : whole 100% (listen), then repeats at 80% and 100%
 
-Repeats ramp up in speed (speeds_for): two repeats play at 50% and 100%, three at 50%, 75% and 100%. Slow copies
-are time-stretched locally (ffmpeg rubberband, pitch kept), so they cost no extra synthesis.
+Repeats play slightly slow first, then at normal speed (SLOW = 0.8; stronger stretching sounds artificial). The
+slow copy is time-stretched locally (ffmpeg rubberband, pitch kept), so it costs no extra synthesis.
 
 A break is only considered between chunks (pimsleur_deconstruct.chunk_words, words_only), so a small word
 (gli, le, a, è...) never ends up alone. The narrator only speaks fixed lines, which are synthesized once and
@@ -47,13 +47,12 @@ CUES = {
 }
 
 
+SLOW = 0.8
+
+
 def speeds_for(n: int) -> list[float]:
-    """Speeds for n repeats, slowest first and ending at normal speed."""
-    if n <= 1:
-        return [1.0]
-    if n == 2:
-        return [0.5, 1.0]
-    return [round(0.5 + 0.5 * i / (n - 1), 2) for i in range(n)]
+    """Speeds for n repeats: slow first, normal speed last."""
+    return [1.0] if n <= 1 else [SLOW] * (n - 1) + [1.0]
 
 
 def stretched(path: str, speed: float) -> str:
@@ -119,10 +118,10 @@ def plan(text: str, breaks: list[dict]) -> list[dict]:
         return [{"cue": "listen"}, {"say": "whole", "speed": 1.0}, {"cue": "end"},
                 {"say": "end", "text": end_text, "from": br["t"], "speed": e1},
                 {"say": "end", "text": end_text, "from": br["t"], "speed": e2}, {"cue": "whole"},
-                {"say": "whole", "speed": 0.75}, {"say": "whole", "speed": 1.0}]
-    r = speeds_for(3)
+                {"say": "whole", "speed": SLOW}, {"say": "whole", "speed": 1.0}]
+    r = speeds_for(2)
     return [{"cue": "listen"}, {"say": "whole", "speed": 1.0}, {"cue": "repeat"}, {"say": "whole", "speed": r[0]},
-            {"cue": "again"}, {"say": "whole", "speed": r[1]}, {"cue": "full"}, {"say": "whole", "speed": r[2]}]
+            {"cue": "full"}, {"say": "whole", "speed": r[1]}]
 
 
 def transcribe_words(asr_url: str, path: str) -> list[dict]:
