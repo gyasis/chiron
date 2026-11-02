@@ -4,13 +4,19 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { classifyDrillIntent as c, splitSpeak, composerLines, pickSource } from '../ask/drill-intent.js';
 
-test('drill: play / practise / drill / convert / do it as Pimsleur', () => {
+test('drill: only with the Pimsleur name', () => {
   for (const t of [
-    'play these as pimsleur live', 'Pimsleur live', 'drill me', 'drill these', 'drill these phrases please',
-    'practise these', 'practice them aloud', 'do it as pimsleur', 'convert these to pimsleur', 'play these',
-    'can you drill these for me?', "let's do pimsleur with these", 'switch to pimsleur live', 'pimsleur', 'drill',
-    'run through these', 'quiz me on these', 'play them back',
+    'play these as pimsleur live', 'Pimsleur live', 'drill me with pimsleur', 'pimsleur these', 'do it as pimsleur',
+    'convert these to pimsleur', "let's do pimsleur with these", 'switch to pimsleur live', 'pimsleur', 'quiz me pimsleur style',
+    'play them back as pimsleur',
   ]) assert.equal(c(t), 'drill', t);
+});
+
+test('none: practice, quiz and test requests without the name stay with Lucrezia', () => {
+  for (const t of ['drill me', 'drill these', 'practise these', 'practice them aloud', 'play these', 'quiz me', 'test me',
+    'quiz me on these', 'run through these', 'play it again', "let's practice this", 'drill',
+    'add these to my library', 'save these as a lesson', 'put them in my library', 'make a lesson from these',
+  ]) assert.equal(c(t), 'none', t);
 });
 
 test('drill: dictation misspellings of the name', () => {
@@ -20,8 +26,8 @@ test('drill: dictation misspellings of the name', () => {
 
 test('lesson: a full saved lesson or season', () => {
   for (const t of ['make a pimsleur lesson from these', 'make a pimsler lesson', 'create a pimsleur season from my basket',
-    'add these to my library', 'save these as a lesson', 'generate a pimsleur lesson', 'turn these into a pimsleur course',
-    'put them in my library', 'convert these into a pimsleur lesson']) assert.equal(c(t), 'lesson', t);
+    'add these to my library as pimsleur', 'save these as a pimsleur lesson', 'generate a pimsleur lesson',
+    'turn these into a pimsleur course', 'convert these into a pimsleur lesson']) assert.equal(c(t), 'lesson', t);
 });
 
 test('none: ordinary messages, including questions that mention Pimsleur', () => {

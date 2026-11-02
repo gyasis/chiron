@@ -27,19 +27,19 @@ const coachReply = () => {
      [node('div', 'ask-acts')]);
 };
 
-test('sectionOf: How it\'s built and Your turn are practice; every other heading stays on the answer', () => {
+test('sectionOf: How it\'s built is practice; Your turn and every other heading stay on the answer', () => {
   assert.equal(sectionOf("How it's built · 2) Vorrei…"), 'use');
-  assert.equal(sectionOf('Your turn'), 'use');
+  assert.equal(sectionOf('Your turn'), 'answer');
   assert.equal(sectionOf('Watch out'), 'answer');
   assert.equal(sectionOf('The pattern'), 'answer');
   assert.equal(sectionOf('Corrections'), 'answer');
 });
 
-test('a coach reply: traps stay on Answer, steps + Your turn + extras on Use it, Study more on Context', () => {
+test('a coach reply: traps and Your turn stay on Answer, steps + extras on Use it, Study more on Context', () => {
   const { msg, body } = coachReply();
   assert.deepEqual(segmentReply(doc, msg), ['answer', 'use', 'context']);
   const seg = body.children.map(c => c.dataset.seg);
-  assert.deepEqual(seg, ['answer', 'use', 'use', 'answer', 'answer', 'use', undefined]);   // the hidden block is not tagged
+  assert.deepEqual(seg, ['answer', 'use', 'use', 'answer', 'answer', 'answer', undefined]);   // the hidden block is not tagged
   const ex = msg.byClass('ask-coach-extras')[0].children.map(c => c.dataset.seg);
   assert.deepEqual(ex, ['use', 'use', 'context', 'use']);
   assert.equal(msg.byClass('ask-acts')[0].dataset.seg, undefined, 'the action row is in every segment');

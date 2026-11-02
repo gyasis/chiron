@@ -239,7 +239,7 @@ Classify the LATEST learner turn:
 - "new_request": they want to say something in Italian (usually written in English, e.g. "how do I say ...").
 - "attempt": they wrote Italian in answer to the coach's last "Your turn" practice sentence (see LAST PRACTICE below).
 - "question": a follow-up about the last phrase (why, what about another form, can I also say ...).
-- "drill": they ask to practise, drill or play the phrases aloud as a spoken Pimsleur-style exercise ("play these", "drill me on them", "do it as pimsleur", "run these live"). Asking for a saved lesson or season is NOT a drill: that is a "new_request" or a "question".
+- "drill": they name Pimsleur and ask to play or drill the phrases with it ("do these as pimsleur", "pimsleur live", "drill me with pimsleur"). Without the word Pimsleur it is never a drill: "quiz me", "test me", "let's practise" are a "question" and the coach practises with them in the conversation. Asking for a saved lesson or season is NOT a drill: that is a "new_request" or a "question".
 For a new_request also extract what is needed to build the sentences. Reply with ONLY a JSON object:
 {"kind": "new_request|attempt|question|drill", "meaning": "what they really mean, in English", "phrases": [{"en": "one phrase to say, in English, complete and self-contained", "situation": "where/when for this phrase, or empty"}], "situation": "where/when", "listener": "who they are speaking to", "register_default": "lei|tu|neutral", "register_reason": "one short reason", "nuance": "politeness, urgency or tone that matters, or empty"}
 "phrases": ONE item for a single request. When the learner lists several (a numbered list, several separate questions, "these phrases"), one item per numbered entry or separate request, in their order, keeping each item's full wording. Never merge, drop, split or invent items.
@@ -567,8 +567,14 @@ def _build_user(run: Run, phrases: list, k: int, fixes: list | None = None, prev
     return text
 
 
+_PIMS_NAME = re.compile(r"\bp[iy]m+p?[sz]\s?l[eua]{1,3}y?e?r?s?\b", re.I)
+
+
 async def step_understand(run: Run) -> str:
     run.understand = await json_step(run, "understand", MODEL_FAST, UNDERSTAND_SYS, _understand_user(run), _valid_understand)
+    if run.understand["kind"] == "drill" and not _PIMS_NAME.search(run.user):
+        log("understand: drill without the Pimsleur name -> question (the coach practises in the conversation)")
+        run.understand["kind"] = "question"
     log(f"understand: kind={run.understand['kind']}"
         + (f" phrases={len(phrases_of(run.understand))}" if run.understand["kind"] == "new_request" else ""))
     return run.understand["kind"]
