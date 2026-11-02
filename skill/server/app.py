@@ -363,7 +363,9 @@ def _run_job(job: dict) -> None:
         _save()
         return
     out = GEN / res["slug"]
-    out.mkdir(parents=True, exist_ok=True)
+    is_season = res["depth"] == "pimsleur"       # a Pimsleur season writes many lesson dirs + <slug>.season.json, no <slug>/ dir
+    if not is_season:
+        out.mkdir(parents=True, exist_ok=True)
     job.update(status="running", slug=res["slug"], chain=res["chain_name"],
                depth=res["depth"], started=_now())
     _save()
@@ -399,6 +401,11 @@ def _run_job(job: dict) -> None:
             p = subprocess.Popen([sys.executable, res["runpy"]], env=env, stdout=lf, stderr=subprocess.STDOUT)
             job.update(pid=p.pid, status="running", phase="running"); _save()
             rc = p.wait()
+        if is_season and rc == 0 and (GEN / f"{res['slug']}.season.json").exists():
+            _rebuild_catalog()
+            job.update(status="ready", rc=rc, lesson_url="/library/", error=None, finished=_now())
+            _save()
+            return
         ok, why = (_lesson_complete(out, log) if (rc == 0 and lesson.exists()) else (False, ""))
         if rc == 0 and lesson.exists() and ok:
             # Preserve PUBLISHED — regenerating a lesson that was already accepted must not silently demote
@@ -2275,6 +2282,10 @@ app.include_router(mm_study.router)
 import raccolte  # noqa: E402
 app.include_router(raccolte.router)
 
+# Pimsleur from phrases: POST /api/pimsleur/from-phrases starts a season through generate() above (same JOBS, same log).
+import pimsleur_jobs  # noqa: E402
+app.include_router(pimsleur_jobs.router)
+
 # Ask phrase coach: the Come si dice mode's chain behind an Ollama-compatible /ask/phrase/api/* (chat, tags, show).
 import phrase_coach  # noqa: E402
 app.include_router(phrase_coach.router)
@@ -2283,6 +2294,9 @@ app.include_router(phrase_coach.router)
 import exam_grade  # noqa: E402
 app.include_router(exam_grade.router)
 raccolte.GENERATE = lambda d: generate(GenReq(**d))
+pimsleur_jobs.SUBMIT = lambda d: generate(GenReq(**d))
+pimsleur_jobs.JOBS = JOBS
+pimsleur_jobs.ORIGIN_OK = lambda request: _anki_origin_ok(request)
 threading.Thread(target=lambda: mm_study._load(), daemon=True, name="mm-study-warm").start()   # first tap must not pay the ~4 s index load
 
 

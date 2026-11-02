@@ -14,6 +14,7 @@ import * as cards from './cards.js';
 import * as steps from './steps.js';
 import { installInAppBridge } from './inapp.js';
 import { isPhraseRequest, parsePhraseBlock, PHRASE_HOST, PHRASE_MODEL } from './phrase-mode.js';
+import { parseFenceBlock, buildDiagram, buildRelated, buildPimsleurAction, createBasket, buildAddRow } from './coach-extras.js';
 
 const $ = s => document.querySelector(s);
 const LS_SCOPE = 'chiron.ask.scope';
@@ -294,6 +295,9 @@ function applyMode() {
   modeCtl.handle.configure({ llm, voice, storage: { dbName: 'chiron-ask', historyEnabled: true, cacheEnabled: !phrase } });
   if (phrase) modeCtl.handle.configure({ rag: { enabled: false } });
   else modeCtl.pickChannel();
+  setHint($('#scope').value);          // the topbar line follows the mode: "Phrase coach" vs the librarian's scope
+  const pill = $('#basketbtn');
+  if (pill) { pill.hidden = !phrase; if (!phrase) BASKET?.setOpen(false); else BASKET?.refresh().catch(e => console.warn('[chiron] basket not loaded:', e.message)); }
 }
 
 /** Change mode and start a fresh thread (setPersona-style changes only redraw the greeting on an empty
@@ -326,9 +330,48 @@ function bindPhrase(msg) {
   else console.warn('[chiron] phrase block not bound:', res.reason);
   for (const pre of msg.querySelectorAll('pre')) {
     const t = pre.textContent;
-    if (pre.querySelector('code.language-phrase') || (t.includes('"en_intent"') && t.trim().startsWith('{'))) pre.hidden = true;
+    if (pre.querySelector('code.language-phrase, code.language-diagram, code.language-related') ||
+        (t.includes('"en_intent"') && t.trim().startsWith('{')) ||
+        (t.trim().startsWith('{') && t.includes('"type":"annotated-passage"'))) pre.hidden = true;
   }
+  if (res.ok) buildExtras(msg, raw, res.data);
 }
+
+/** The phrases of a reply, for the basket and the Pimsleur action: data.items, else the single top-level phrase. */
+function phrasesOf(data) {
+  const items = Array.isArray(data.items) && data.items.length ? data.items : [{ it: data.it, en: data.en_intent, register: data.register }];
+  return items.filter(p => p && typeof p.it === 'string' && p.it.trim())
+    .map(p => ({ it: p.it.trim(), en: String(p.en || ''), register: ['lei', 'tu', 'neutral'].includes(p.register) ? p.register : '' }));
+}
+
+/** Everything under the reply that acolyte's sanitised markdown cannot carry: basket buttons, the sentence diagram,
+ *  "Study more" and the Pimsleur action. Built once per reply, from the hidden fenced blocks, with textContent only. */
+function buildExtras(msg, raw, data) {
+  if (msg.querySelector('.ask-coach-extras')) return;
+  const box = document.createElement('div');
+  box.className = 'ask-coach-extras';
+  const phrases = phrasesOf(data);
+  if (BASKET && phrases.length) box.appendChild(buildAddRow(document, BASKET, phrases));
+  const dg = parseFenceBlock(raw, 'diagram');
+  if (dg.ok) box.appendChild(buildDiagram(document, dg.data));
+  else if (!dg.reason.startsWith('no diagram')) console.warn('[chiron] diagram not shown:', dg.reason);
+  const rel = parseFenceBlock(raw, 'related');
+  if (rel.ok) box.appendChild(buildRelated(document, rel.data, topic => post('/generate', {
+    domain: 'language-it', subject: topic, source: 'Chiron · Ask phrase coach', extra: { from_question: data.en_intent || data.it } })));
+  if (phrases.length) box.appendChild(buildPimsleurAction(document, phrases, body => api('POST', '/api/pimsleur/from-phrases', body)));
+  if (box.children.length) msg.appendChild(box);
+}
+
+/** JSON request helper for the collections / Pimsleur routes. */
+async function api(method, path, body) {
+  const r = await fetch(path, { method, headers: body ? { 'content-type': 'application/json' } : {}, body: body ? JSON.stringify(body) : undefined });
+  const txt = await r.text();
+  let data; try { data = JSON.parse(txt); } catch { data = { detail: txt.slice(0, 200) }; }
+  if (!r.ok) throw new Error(data.detail || data.error || `${r.status} ${r.statusText}`);
+  return data;
+}
+
+let BASKET = null;      // the Pimsleur basket (phrase mode); items live server-side in Raccolte, so phone and browser share it
 
 /* ─── adopt acolyte's controls into the pilot's chrome ───
  * The pilot puts the model picker under the composer, settings in the rail, and
@@ -383,6 +426,13 @@ function adoptControls(handle, stats) {
   persona.after(note);
   modeCtl.select = persona;
   modeCtl.note = note;
+
+  BASKET = createBasket({ doc: document, api, pill: $('#basketbtn'), panel: $('#basketpanel') });
+  $('#basketbtn').hidden = MODE !== 'phrase';
+  const refreshBasket = () => { if (MODE === 'phrase' && !document.hidden) BASKET.refresh().catch(e => console.warn('[chiron] basket not refreshed:', e.message)); };
+  document.addEventListener('visibilitychange', refreshBasket);
+  window.addEventListener('focus', refreshBasket);
+  refreshBasket();
 
   // A message that opens like a phrase request moves to the phrase builder before it is sent. The
   // composer's own Enter / Send handlers live in a closure inside acolyte, so the interception sits on
@@ -604,6 +654,7 @@ function setHint(scope) {
   // so a restored "Medical Italian" session still claimed to search everything.
   // Two places saying different things about what is being searched is worse
   // than either one alone.
+  if (MODE === 'phrase') { $('#tsub').textContent = 'Phrase coach · say it in English, get the Italian'; return; }
   $('#tsub').textContent = FOCUS
     ? `Scope: ${FOCUS.lessons.length} lesson${FOCUS.lessons.length === 1 ? '' : 's'} · grounded in your library`
     : `Scope: ${scope === 'all' ? 'everything' : (DOMAIN_LABEL[scope] || scope)}`
@@ -1027,7 +1078,7 @@ async function post(path, body) {
   });
   const txt = await r.text();
   let data; try { data = JSON.parse(txt); } catch { data = { detail: txt.slice(0, 200) }; }
-  if (!r.ok) throw new Error(data.detail || `${r.status} ${r.statusText}`);
+  if (!r.ok) throw new Error(data.detail || data.error || `${r.status} ${r.statusText}`);
   return data;
 }
 

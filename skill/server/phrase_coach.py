@@ -21,6 +21,7 @@ SKILL = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(SKILL / "chains"))
 import ask_proxy  # noqa: E402
 import local_models  # noqa: E402
+import phrase_related  # noqa: E402
 
 CHAIN_FILE = SKILL / "chains" / "2026-11-01_chiron-phrase-coach-chain" / "run.py"
 MODEL_ID = "phrase-coach"
@@ -44,6 +45,7 @@ def get_coach():
         _chain = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(_chain)
         _chain.GOVERNOR = local_models.GOVERNOR     # the chain's own default is the neutral localhost
+        _chain.RELATED = phrase_related.find_related    # "Study more": lessons in the library for the phrase's topics
         _coach = _chain.coach
     return _coach
 

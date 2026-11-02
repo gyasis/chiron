@@ -1,7 +1,7 @@
 """phrase_coach_test — the phrase-coach chain (kind routing, check/fix loop, attempt coaching, bad completions) and the
 NDJSON route /ask/phrase/api/*. Model calls are mocked at the chain's transport (_chat) and at httpx; no network.
 Run: ~/miniconda3/bin/python tests/phrase_coach_test.py"""
-import asyncio, json, os, sys, tempfile, unittest
+import asyncio, json, os, re, sys, tempfile, unittest
 from pathlib import Path
 
 import httpx
@@ -18,6 +18,7 @@ from fastapi.testclient import TestClient  # noqa: E402
 
 phrase_coach.get_coach()
 chain = phrase_coach._chain
+chain.RELATED = None        # the library lookup is off unless a test sets it
 REAL_CHAT = chain._chat
 
 
@@ -28,31 +29,42 @@ def meta(tag, reason="stop"):
 BUILD = {"it": "Sono qui per la specializzazione.", "register": "neutral", "register_note": "no address form",
          "variants": [{"it": "Sono qui per fare la specializzazione.", "register": "neutral", "why": "common"}],
          "literal_trap": {"it": "Io sono qui per la mia specializzazione.", "why": "io and mia are redundant"}}
-TEACH = ("**Sono qui per la specializzazione.**\nRegister: neutral. No Lei or tu form.\n\n**The pattern**\n`Sono qui per + [noun]`\n\n"
+TEACH = ("**Sono qui per la specializzazione.**\nRegister: neutral. No Lei or tu form.\n**How it's built**\n1. **sono qui** (\"I am here\")\n2. **sono qui per** (purpose)\n3. **Sono qui per la specializzazione.**\n\n**The pattern**\n`Sono qui per + [noun]`\n\n"
          "**Your turn**\nI'm here for my interview.\n\n```meta\n"
          '{"pattern": "Sono qui per + [noun]", "slots": ["noun"], "practice": "I\'m here for my interview.", '
          '"breakdown": [{"chunk": "Sono qui", "gloss": "I am here"}]}\n```\n[[SPEAK]]stray model speak[[/SPEAK]]')
-COACH = ("**Good: you used the frame.**\n**Corrections**\n- per il colloquio, not per colloquio.\n\n**Your turn**\nI'm here for my exam.\n\n```meta\n"
+COACH = ("**Good: you used the frame.**\n**Corrections**\n- per il colloquio, not per colloquio.\n**Corrected sentence** **Sono qui per il colloquio.**\n**How it's built**\n1. **sono qui**\n2. **sono qui per**\n3. **Sono qui per il colloquio.**\n\n**Your turn**\nI'm here for my exam.\n\n```meta\n"
          '{"corrected": "Sono qui per il colloquio.", "register": "neutral", "pattern": "Sono qui per + [noun]", "slots": ["noun"], '
          '"practice": "I\'m here for my exam.", "breakdown": [{"chunk": "per il colloquio", "gloss": "for the interview"}]}\n```')
+
+
+def diagram_for(texts, tag_note="note"):
+    """A valid DIAGRAM reply: one token per word of each sentence."""
+    sents = []
+    for t in texts:
+        toks = [{"surface": w, "lemma": w.lower(), "pos": "NOUN", "layer": "nouns", "note": f"{tag_note} {w}"}
+                for w in t.replace(".", "").replace("?", "").replace(",", "").split()]
+        sents.append({"translation": "English", "literal": "lit", "tokens": toks, "phrases": [], "tips": []})
+    return json.dumps({"sentences": sents})
 
 
 class Script:
     """Replaces chain._chat: answers by step (read from the system prompt) and records the calls."""
     def __init__(self, understand, check=None, fail_step=None, answers=None):
         self.calls, self.understand, self.check = [], understand, check or {"ok": True, "fixes": []}
+        self.diagram_texts = [BUILD["it"]]
         self.fail_step, self.answers = fail_step, answers or {}
 
     async def __call__(self, tag, system, user):
         step = ("understand" if system.startswith("You route") else "build" if system.startswith("You write Italian")
                 else "check" if system.startswith("You are a strict") else "teach" if "teach the learner to build" in system
-                else "coach" if "marking a learner" in system else "answer")
+                else "coach" if "marking a learner" in system else "diagram" if system.startswith("You are a grammar annotator") else "answer")
         self.calls.append((step, tag, user))
         if step == self.fail_step:
             raise chain.ModelReplyError(f"{tag}: done_reason='length', 0 chars of content")
         if step in self.answers:
             return self.answers[step], meta(tag)
-        out = {"understand": json.dumps(self.understand), "build": json.dumps(BUILD), "check": json.dumps(self.check),
+        out = {"understand": json.dumps(self.understand), "build": json.dumps(BUILD), "diagram": diagram_for(self.diagram_texts), "check": json.dumps(self.check),
                "teach": TEACH, "coach": COACH, "answer": "Because Italian drops the subject pronoun."}[step]
         return out, meta(tag)
 
@@ -78,8 +90,9 @@ class Chain(unittest.TestCase):
     def test_new_request_runs_all_four_steps(self):
         s = Script(NEW)
         r = run_coach(s, [{"role": "system", "content": "ignored librarian text"}, {"role": "user", "content": "How do I say I'm here for my specialization?"}])
-        self.assertEqual([c[0] for c in s.calls], ["understand", "build", "check", "teach"])
-        self.assertEqual([c[1] for c in s.calls], [chain.MODEL_FAST, chain.MODEL_THINK, chain.MODEL_FAST, chain.MODEL_THINK])
+        self.assertEqual([c[0] for c in s.calls[:3]], ["understand", "build", "check"])
+        self.assertEqual(sorted(c[0] for c in s.calls[3:]), ["diagram", "teach"])      # TEACH and DIAGRAM both run, concurrently
+        self.assertEqual([c[1] for c in s.calls], [chain.MODEL_FAST, chain.MODEL_THINK, chain.MODEL_FAST, chain.MODEL_THINK, chain.MODEL_THINK])
         self.assertEqual(r["kind"], "new_request")
         c = r["content"]
         self.assertEqual(len(chain._SPEAK.findall(c)), 1)                      # a SPEAK block the model wrote is dropped; the system adds one
@@ -92,7 +105,7 @@ class Chain(unittest.TestCase):
         self.assertEqual(blk["practice"], "I'm here for my interview.")
         self.assertEqual(blk["variants"][0]["it"], "Sono qui per fare la specializzazione.")
         self.assertNotIn("```meta", c)
-        self.assertEqual([x["step"] for x in r["steps"]], ["understand", "build", "check", "register", "teach"])
+        self.assertEqual([x["step"] for x in r["steps"]], ["understand", "build", "check", "register", "teach", "diagram"])
         self.assertTrue(all(x["done_reason"] == "stop" and "latency_ms" in x for x in r["steps"] if x["step"] != "register"))
 
     def test_ledger_has_one_record_per_call(self):
@@ -101,19 +114,21 @@ class Chain(unittest.TestCase):
         before = len(rows())
         run_coach(Script(NEW), [{"role": "user", "content": "how do I say hello"}])
         new = rows()[before:]
-        self.assertEqual(len(new), 4)
+        self.assertEqual(len(new), 5)
         self.assertTrue(all(r["source"] == chain.SOURCE and r["session_id"] == "t" for r in new))
 
     def test_check_fixes_reask_build_once(self):
         s = Script(NEW, check={"ok": False, "fixes": ["the variant is wrong"]})
         run_coach(s, [{"role": "user", "content": "how do I say hello"}])
-        self.assertEqual([c[0] for c in s.calls], ["understand", "build", "check", "build", "teach"])
+        self.assertEqual([c[0] for c in s.calls[:4]], ["understand", "build", "check", "build"])
+        self.assertEqual(sorted(c[0] for c in s.calls[4:]), ["diagram", "teach"])
         self.assertIn("the variant is wrong", s.calls[3][2])
 
     def test_attempt_skips_build_and_check(self):
         s = Script({"kind": "attempt"})
+        s.diagram_texts = ["Sono qui per il colloquio."]
         r = run_coach(s, prior_turns() + [{"role": "user", "content": "Sono qui per colloquio"}])
-        self.assertEqual([c[0] for c in s.calls], ["understand", "coach"])
+        self.assertEqual([c[0] for c in s.calls], ["understand", "coach", "diagram"])   # the corrected sentence is diagrammed after COACH
         self.assertIn("I'm here for my interview.", s.calls[0][2])             # the open practice sentence reaches UNDERSTAND
         self.assertIn("Sono qui per colloquio", s.calls[1][2])
         blk = chain.phrase_block(r["content"])
@@ -294,6 +309,269 @@ class Register(unittest.TestCase):
                       prior_turns() + [{"role": "user", "content": "Sono qui per colloquio"}])
         self.assertEqual(chain.phrase_block(r["content"])["register"], "neutral")
         self.assertEqual(r["register_overrides"][0]["what"], "corrected")
+
+
+M_EN = ["Where is the clinic?", "Who is my tutor?", "What time is the safety course?"]
+M_ITEMS = [{"it": "Dov'è l'ambulatorio?", "register": "neutral", "register_note": "no address form", "variants": [],
+            "literal_trap": {"it": "Dove è l'ambulatorio?", "why": "elision"}},
+           {"it": "Chi è il mio tutor?", "register": "neutral", "register_note": "no address form", "variants": [],
+            "literal_trap": {"it": "Chi è il mio tutor?", "why": "same"}},
+           {"it": "A che ora è il corso di sicurezza?", "register": "neutral", "register_note": "no address form", "variants": [],
+            "literal_trap": {"it": "Che tempo è il corso?", "why": "time is ora"}}]
+M_NEW = {**NEW, "meaning": "three questions", "phrases": [{"en": e, "situation": ""} for e in M_EN]}
+
+TEACH_MULTI = ("**1) Dov'è l'ambulatorio?**\nRegister: neutral. No address form.\n**How it's built**\n1. **è** (is)\n2. **dove è**\n3. **Dov'è l'ambulatorio?**\n\n"
+               "**2) Chi è il mio tutor?**\nRegister: neutral. No address form.\n**How it's built**\n1. **chi**\n2. **chi è**\n3. **Chi è il mio tutor?**\n\n"
+               "**3) A che ora è il corso di sicurezza?**\nRegister: neutral. No address form.\n**How it's built**\n1. **ora**\n2. **che ora è**\n3. **A che ora è il corso di sicurezza?**\n\n"
+               "**The pattern**\n`[question word] è [noun]?`\n\n**Your turn**\nWhere is the room?\n\n```meta\n"
+               '{"pattern": "[question word] è [noun]?", "slots": ["q", "noun"], "practice": "Where is the room?", "breakdown": [{"chunk": "Dov\'è", "gloss": "where is"}]}\n```')
+
+
+def multi_script(**kw):
+    answers = {"build": json.dumps({"items": M_ITEMS}), "teach": TEACH_MULTI, **kw.pop("answers", {})}
+    s = Script(M_NEW, answers=answers, **kw)
+    s.diagram_texts = [i["it"] for i in M_ITEMS]
+    return s
+
+
+class MultiPhrase(unittest.TestCase):
+    MSG = [{"role": "user", "content": "how do i say these phrases: 1. Where is the clinic? 2. Who is my tutor? 3. What time is the safety course?"}]
+
+    def test_one_build_one_check_for_all_items(self):
+        s = multi_script()
+        r = run_coach(s, self.MSG)
+        steps = [c[0] for c in s.calls]
+        self.assertEqual(steps.count("build"), 1)
+        self.assertEqual(steps.count("check"), 1)
+        build_user = [c for c in s.calls if c[0] == "build"][0][2]
+        self.assertIn("N = 3", build_user)
+        for e in M_EN:
+            self.assertIn(e, build_user)
+        self.assertEqual(len(chain.phrase_block(r["content"])["items"]), 3)
+
+    def test_phrase_block_has_items_and_keeps_top_level_it(self):
+        r = run_coach(multi_script(), self.MSG)
+        blk = chain.phrase_block(r["content"])
+        self.assertEqual([i["it"] for i in blk["items"]], [i["it"] for i in M_ITEMS])
+        self.assertEqual([i["en"] for i in blk["items"]], M_EN)
+        self.assertEqual(blk["it"], M_ITEMS[0]["it"])                         # backward compatible
+        self.assertEqual(blk["pattern"], "[question word] è [noun]?")
+
+    def test_speak_holds_all_n_sentences_in_order(self):
+        r = run_coach(multi_script(), self.MSG)
+        speaks = chain._SPEAK.findall(r["content"])
+        self.assertEqual(len(speaks), 1)
+        txt = speaks[0]
+        pos = [txt.index(i["it"]) for i in M_ITEMS]
+        self.assertEqual(pos, sorted(pos))
+
+    def test_every_item_has_a_how_its_built_section(self):
+        r = run_coach(multi_script(), self.MSG)
+        self.assertEqual(len(chain._HOW.findall(r["content"])), 3)
+
+    def test_teach_missing_a_how_its_built_section_is_asked_again_then_fails(self):
+        bad = TEACH_MULTI.replace("**How it's built**\n1. **ora**\n2. **che ora è**\n3. **A che ora è il corso di sicurezza?**\n\n", "")
+        s = multi_script(answers={"teach": bad})
+        with self.assertRaises(RuntimeError) as cm:
+            run_coach(s, self.MSG)
+        self.assertIn("How it", str(cm.exception))
+        self.assertEqual([c[0] for c in s.calls].count("teach"), 2)
+        self.assertIn("exactly 3", [c for c in s.calls if c[0] == "teach"][1][2])
+
+    def test_single_phrase_teach_also_requires_how_its_built(self):
+        s = Script(NEW, answers={"teach": TEACH.replace("**How it's built**", "**Build**")})
+        with self.assertRaises(RuntimeError):
+            run_coach(s, [{"role": "user", "content": "how do I say hello"}])
+
+    def test_check_reasks_build_only_for_flagged_items(self):
+        fixed = {**M_ITEMS[1], "it": "Chi è il mio tutor di percorso?"}
+        s = multi_script(check={"ok": False, "fixes": [{"item": 2, "fix": "use tutor di percorso"}]})
+        orig = s.__call__
+        count = {"n": 0}
+
+        async def route(tag, system, user):
+            if system.startswith("You write Italian"):
+                count["n"] += 1
+                if count["n"] == 2:
+                    s.calls.append(("build_fix", tag, user))
+                    return json.dumps({"items": [fixed]}), meta(tag)
+            return await orig(tag, system, user)
+        s.diagram_texts = [M_ITEMS[0]["it"], fixed["it"], M_ITEMS[2]["it"]]
+        chain._chat = route
+        r = asyncio.run(chain.coach(self.MSG))
+        fix_user = [c for c in s.calls if c[0] == "build_fix"][0][2]
+        listed = fix_user.split("PHRASES TO BUILD:")[1].split("## REVIEWER FIXES")[0]
+        self.assertIn("N = 1", fix_user)
+        self.assertIn(M_EN[1], listed)
+        self.assertNotIn(M_EN[0], listed)
+        self.assertNotIn(M_EN[2], listed)
+        self.assertEqual([i["it"] for i in chain.phrase_block(r["content"])["items"]],
+                         [M_ITEMS[0]["it"], fixed["it"], M_ITEMS[2]["it"]])
+
+    def test_register_rule_runs_per_item(self):
+        items = [dict(i) for i in M_ITEMS]
+        items[1] = {**items[1], "it": "Scusi, chi è il mio tutor?", "register": "neutral"}      # has a Lei opener
+        s = multi_script(answers={"build": json.dumps({"items": items})})
+        s.diagram_texts = [i["it"] for i in items]
+        r = run_coach(s, self.MSG)
+        regs = [i["register"] for i in chain.phrase_block(r["content"])["items"]]
+        self.assertEqual(regs, ["neutral", "lei", "neutral"])
+
+    def test_build_with_wrong_item_count_is_repaired(self):
+        s = multi_script(answers={"build": json.dumps({"items": M_ITEMS[:2]})})
+        with self.assertRaises(RuntimeError):
+            run_coach(s, self.MSG)
+        self.assertEqual([c[0] for c in s.calls].count("build"), 3)
+        self.assertIn("exactly 3", [c for c in s.calls if c[0] == "build"][1][2])
+
+    def test_understand_without_phrases_still_builds_one(self):
+        r = run_coach(Script(NEW), [{"role": "user", "content": "how do I say hello"}])
+        self.assertEqual(len(chain.phrase_block(r["content"])["items"]), 1)
+
+
+class Diagram(unittest.TestCase):
+    MSG = [{"role": "user", "content": "how do I say I'm here for my specialization?"}]
+
+    def test_diagram_fence_is_a_valid_annotated_passage(self):
+        r = run_coach(Script(NEW), self.MSG)
+        doc = json.loads(chain._DFENCE.search(r["content"]).group(1))
+        self.assertEqual(chain.validate_annotated_passage(doc), [])
+        self.assertEqual(doc["type"], "annotated-passage")
+        self.assertEqual(len(doc["sentences"]), 1)
+        self.assertEqual(doc["sentences"][0]["text"], BUILD["it"])
+        self.assertTrue(r["content"].index("```phrase") < r["content"].index("```diagram"))
+
+    def test_n_items_give_n_sentences(self):
+        r = run_coach(multi_script(), MultiPhrase.MSG)
+        doc = json.loads(chain._DFENCE.search(r["content"]).group(1))
+        self.assertEqual([s["idx"] for s in doc["sentences"]], [1, 2, 3])
+
+    def test_invalid_diagram_is_repaired(self):
+        s = Script(NEW)
+        n = {"d": 0}
+        orig = s.__call__
+
+        async def flaky(tag, system, user):
+            if system.startswith("You are a grammar annotator"):
+                n["d"] += 1
+                if n["d"] == 1:
+                    return json.dumps({"sentences": [{"translation": "x", "tokens": [{"surface": "Sono", "pos": "VERB", "layer": "bogus", "note": "n"}]}]}), meta(tag)
+            return await orig(tag, system, user)
+        chain._chat = flaky
+        r = asyncio.run(chain.coach(self.MSG))
+        self.assertEqual(n["d"], 2)
+        self.assertIn("```diagram", r["content"])
+
+    def test_diagram_failure_keeps_the_reply(self):
+        s = Script(NEW, fail_step="diagram")
+        r = run_coach(s, self.MSG)
+        self.assertNotIn("```diagram", r["content"])
+        self.assertIn("**How it's built**", r["content"])
+        self.assertIn("[[SPEAK]]", r["content"])
+        self.assertTrue(r["diagram_error"])
+        self.assertEqual([x for x in r["steps"] if x["step"] == "diagram"][0]["done_reason"], "failed")
+
+    def test_surface_not_in_sentence_is_rejected(self):
+        bad = {"sentences": [{"translation": "x", "tokens": [{"surface": "Zebra", "pos": "NOUN", "layer": "nouns", "note": "n"}]}]}
+        self.assertIn("does not occur", chain.validate_sentences(bad, ["Sono qui."]))
+
+    def test_validator_mirrors_the_zod_required_fields(self):
+        doc = chain.assemble_passage(json.loads(diagram_for(["Sono qui."]))["sentences"], ["Sono qui."])
+        self.assertEqual(chain.validate_annotated_passage(doc), [])
+        for mutate in (lambda d: d.update(language="fr"), lambda d: d.update(genre="poem"), lambda d: d.update(layers=[]),
+                       lambda d: d.update(sentences=[]), lambda d: d["sentences"][0].update(tokens=[]),
+                       lambda d: d["sentences"][0]["tokens"][0].update(layer="x"), lambda d: d.update(type="widget")):
+            bad = json.loads(json.dumps(doc))
+            mutate(bad)
+            self.assertTrue(chain.validate_annotated_passage(bad))
+
+    def test_teach_and_diagram_run_concurrently(self):
+        s = Script(NEW)
+        orig = s.__call__
+        ev = {}
+
+        async def barrier(tag, system, user):
+            name = "teach" if "teach the learner to build" in system else "diagram" if system.startswith("You are a grammar annotator") else None
+            if name:
+                ev.setdefault("teach", asyncio.Event())
+                ev.setdefault("diagram", asyncio.Event())
+                ev[name].set()
+                other = "diagram" if name == "teach" else "teach"
+                await asyncio.wait_for(ev[other].wait(), 3)      # sequential calls would time out here
+            return await orig(tag, system, user)
+        chain._chat = barrier
+        r = asyncio.run(chain.coach(self.MSG))
+        self.assertIn("```diagram", r["content"])
+
+    def test_coach_path_diagrams_the_corrected_sentence(self):
+        s = Script({"kind": "attempt"})
+        s.diagram_texts = ["Sono qui per il colloquio."]
+        r = run_coach(s, prior_turns() + [{"role": "user", "content": "Sono qui per colloquio"}])
+        doc = json.loads(chain._DFENCE.search(r["content"]).group(1))
+        self.assertEqual(doc["sentences"][0]["text"], "Sono qui per il colloquio.")
+        self.assertEqual(len(chain._HOW.findall(r["content"])), 1)
+
+    def test_backticks_in_notes_cannot_close_the_fence(self):
+        d = json.loads(diagram_for([BUILD["it"]]))
+        d["sentences"][0]["tokens"][0]["note"] = "use ``` carefully"
+        s = Script(NEW, answers={"diagram": json.dumps(d)})
+        r = run_coach(s, self.MSG)
+        doc = json.loads(chain._DFENCE.search(r["content"]).group(1))
+        self.assertIn("```", doc["sentences"][0]["tokens"][0]["note"])
+
+
+def verb_diagram():
+    d = json.loads(diagram_for([BUILD["it"]]))
+    d["sentences"][0]["tokens"][0].update(lemma="stare", pos="VERB", layer="verbs")
+    return json.dumps(d)
+
+
+SAMPLE_DOC = {"sentences": [{"idx": 1, "text": "Scusi, dove e quando devo fare la presa di servizio?", "translation": "t",
+    "registerNote": "Lei (formal)", "tokens": [
+        {"surface": "Scusi", "lemma": "scusare", "pos": "VERB", "layer": "verbs", "note": "imperative"},
+        {"surface": "dove", "lemma": "dove", "pos": "ADV", "layer": "adverbs", "note": "where"},
+        {"surface": "quando", "lemma": "quando", "pos": "ADV", "layer": "adverbs", "note": "when"},
+        {"surface": "devo", "lemma": "dovere", "pos": "VERB", "layer": "verbs", "note": "must"},
+        {"surface": "fare", "lemma": "fare", "pos": "VERB", "layer": "verbs", "features": {"form": "infinitive"}, "note": "to do"},
+        {"surface": "di", "lemma": "di", "pos": "ADP", "layer": "preps", "note": "of"},
+        {"surface": "si", "lemma": "si", "pos": "PRON", "layer": "pronouns", "note": "impersonal si"}],
+    "phrases": [{"surface": "presa di servizio", "type": "fixed-expression", "meaning": "taking up post"}], "tips": []}]}
+
+
+class Related(unittest.TestCase):
+    def test_topics_from_a_diagram(self):
+        topics = {t["topic"]: t["kind"] for t in chain.study_topics(SAMPLE_DOC)}
+        self.assertEqual(topics["dovere + infinito"], "construction")
+        self.assertEqual(topics["interrogativi (dove, quando)"], "construction")
+        self.assertEqual(topics["forma di cortesia (Lei)"], "construction")
+        self.assertEqual(topics["si impersonale"], "construction")
+        self.assertEqual(topics["dovere"], "verb")
+        self.assertEqual(topics["fare"], "verb")
+        self.assertEqual(topics["presa di servizio"], "vocabulary")
+        kinds = [t["kind"] for t in chain.study_topics(SAMPLE_DOC)]
+        self.assertEqual(kinds, sorted(kinds, key={"construction": 0, "verb": 1, "vocabulary": 2}.get))   # constructions first
+
+    def test_related_block_follows_the_diagram(self):
+        chain.RELATED = lambda topics: {"lessons": [{"title": "Dovere", "url": "/lessons/x/lesson.html", "topic": topics[0]["topic"]}], "missing": ["si impersonale"]}
+        try:
+            r = run_coach(Script(NEW, answers={"diagram": verb_diagram()}), [{"role": "user", "content": "how do I say hello"}])
+        finally:
+            chain.RELATED = None
+        rel = json.loads(re.search(r"```related\n([\s\S]*?)```", r["content"]).group(1))
+        self.assertEqual(rel["missing"], ["si impersonale"])
+        self.assertTrue(r["content"].index("```diagram") < r["content"].index("```related"))
+
+    def test_related_failure_is_logged_and_omitted(self):
+        def boom(topics):
+            raise OSError("shard unreadable")
+        chain.RELATED = boom
+        try:
+            r = run_coach(Script(NEW, answers={"diagram": verb_diagram()}), [{"role": "user", "content": "how do I say hello"}])
+        finally:
+            chain.RELATED = None
+        self.assertNotIn("```related", r["content"])
+        self.assertIn("```diagram", r["content"])
+        self.assertEqual([x for x in r["steps"] if x["step"] == "related"][0]["done_reason"], "failed")
 
 
 class Route(unittest.TestCase):

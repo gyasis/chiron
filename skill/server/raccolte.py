@@ -20,7 +20,7 @@ so Pixel, Galaxy and the web are one learner. (Named raccolte, not collections: 
                                                    existing /generate job path (it shows in Jobs/Activity). No model call here.
 
 Storage: state/collections.json  {"collections":[{id,name,created_at,items:[{it,en,source,lesson,section,note,added_at,
-removed_at}]}]}, written atomically (tmp + replace). The default "Parole deboli" (id parole-deboli) always exists.
+removed_at}]}]}, written atomically (tmp + replace). The default "Parole deboli" (id parole-deboli) and the phrase coach's "Pimsleur basket" (id pimsleur-basket) always exist.
 """
 import hashlib, json, os, re, sys, threading, time, unicodedata
 from datetime import datetime, timezone
@@ -33,7 +33,8 @@ SKILL = Path(__file__).resolve().parent.parent
 GEN = Path(os.environ.get("CHIRON_GEN", Path.home() / "Documents/generated"))
 STATE_F = Path(os.environ.get("CHIRON_COLLECTIONS_FILE", SKILL / "server" / "state" / "collections.json"))
 DEFAULT_ID, DEFAULT_NAME = "parole-deboli", "Parole deboli"
-SOURCES = {"mm", "lesson", "ascolto", "capture", "manual"}
+SOURCES = {"mm", "lesson", "ascolto", "capture", "manual", "ask-phrase"}
+BASKET_ID, BASKET_NAME = "pimsleur-basket", "Pimsleur basket"   # the phrase coach's basket: always exists; the register rides in `note` ("register:lei")
 MAX_ITEMS_PER_POST, PER_WORD_CARDS = 200, 2
 
 router = APIRouter()
@@ -69,6 +70,8 @@ def _load() -> dict:
     cols = d.setdefault("collections", [])
     if not any(c["id"] == DEFAULT_ID for c in cols):
         cols.insert(0, {"id": DEFAULT_ID, "name": DEFAULT_NAME, "created_at": _now(), "items": []})
+    if not any(c["id"] == BASKET_ID for c in cols):
+        cols.insert(1, {"id": BASKET_ID, "name": BASKET_NAME, "created_at": _now(), "items": []})
     return d
 
 
@@ -92,7 +95,7 @@ def _active(c: dict) -> list[dict]:
 
 def _summary(c: dict) -> dict:
     return {"id": c["id"], "name": c["name"], "count": len(_active(c)), "created_at": c.get("created_at"),
-            "default": c["id"] == DEFAULT_ID}
+            "default": c["id"] in (DEFAULT_ID, BASKET_ID)}
 
 
 # ── missing English: cheap local lookups first ────────────────────────────────

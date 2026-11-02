@@ -28,6 +28,7 @@ CHAIN = {
     ("medical-italian", "passage"): "2026-06-30_chiron-medical-italian-passage-chain",
     ("medical-italian", "ward"):    "2026-06-30_chiron-wards-lesson-chain",
     ("language-it", "lesson"):      "2026-06-30_chiron-pure-italian-lesson-chain",
+    ("language-it", "pimsleur"):    "2026-10-11_chiron-pimsleur-lesson-chain",   # a SEASON of drill lessons, not one lesson dir
 }
 DEFAULT_DEPTH = {"medicine": "primer", "medical-italian": "ward", "language-it": "lesson"}
 
@@ -73,6 +74,8 @@ def _slug(domain, depth, subject):
         return f"chiron-ssm-{base}"
     if domain == "medical-italian" and depth == "ward":
         return f"chiron-ward-{base}"
+    if domain == "language-it" and depth == "pimsleur":
+        return f"chiron-pimsleur-{base[:40]}"       # the chain's own TOPIC_SLUG: its season file is <slug>.season.json
     return f"chiron-italian-{base[:48]}"
 
 
@@ -108,6 +111,13 @@ def resolve(domain, depth=None, subject="", subject_type=None, extra=None):
             env["CH_SETTING"] = extra["setting"]
     elif domain == "language-it":
         env["CH_TOPIC"] = subject
+        if depth == "pimsleur":
+            env["CH_DOMAIN"] = "language-it"
+            if extra.get("source_file"):
+                env["CH_SOURCE"] = str(extra["source_file"])
+                env["CH_TARGETS"] = "given"       # the planner uses the phrases in the source as the lesson targets
+            if extra.get("lessons"):
+                env["CH_LESSONS"] = str(int(extra["lessons"]))
     return {"runpy": str(chain / "run.py"), "chain_name": chain.name, "env": env,
             "depth": depth, "domain": domain, "slug": _slug(domain, depth, subject)}
 
