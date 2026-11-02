@@ -5,8 +5,11 @@ Rule: the sentence is synthesized once. Pieces are only ever cut out of that tak
 truly silent between two word groups; when there is no such place the whole phrase is repeated instead.
 
     take -> word times (whisper) -> clean breaks between chunks (>= MIN_QUIET_S below CLEAN_DB)
-      break found : whole x1, end part x2, whole x2
-      no break    : whole x3
+      break found : whole 100%, end part 50% then 100%, whole 75% then 100%
+      no break    : whole 100% (listen), then repeats at 50%, 75%, 100%
+
+Repeats ramp up in speed (speeds_for): two repeats play at 50% and 100%, three at 50%, 75% and 100%. Slow copies
+are time-stretched locally (ffmpeg rubberband, pitch kept), so they cost no extra synthesis.
 
 A break is only considered between chunks (pimsleur_deconstruct.chunk_words, words_only), so a small word
 (gli, le, a, è...) never ends up alone. The narrator only speaks fixed lines, which are synthesized once and
@@ -40,7 +43,28 @@ CUES = {
     "end": "Now just the end of the sentence.",
     "whole": "Now the whole sentence again.",
     "again": "Say it once more.",
+    "full": "Now at full speed.",
 }
+
+
+def speeds_for(n: int) -> list[float]:
+    """Speeds for n repeats, slowest first and ending at normal speed."""
+    if n <= 1:
+        return [1.0]
+    if n == 2:
+        return [0.5, 1.0]
+    return [round(0.5 + 0.5 * i / (n - 1), 2) for i in range(n)]
+
+
+def stretched(path: str, speed: float) -> str:
+    """A pitch-preserving slowed copy of a clip (cached next to it)."""
+    if speed == 1.0:
+        return path
+    out = path.replace(".wav", f".x{int(speed * 100)}.wav")
+    if not os.path.exists(out):
+        subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-i", path, "-af",
+                        f"rubberband=tempo={speed}:pitchq=quality:transients=smooth", out], check=True)
+    return out
 
 
 def _fold(w: str) -> str:
@@ -91,11 +115,14 @@ def plan(text: str, breaks: list[dict]) -> list[dict]:
         mid = len(toks) / 2
         br = min(breaks, key=lambda b: abs(b["after_word"] - mid))
         end_text = " ".join(toks[br["after_word"]:])
-        return [{"cue": "listen"}, {"say": "whole", "reps": 1}, {"cue": "end"},
-                {"say": "end", "text": end_text, "from": br["t"], "reps": 2}, {"cue": "whole"},
-                {"say": "whole", "reps": 2}]
-    return [{"cue": "listen"}, {"say": "whole", "reps": 1}, {"cue": "repeat"}, {"say": "whole", "reps": 1},
-            {"cue": "again"}, {"say": "whole", "reps": 1}]
+        e1, e2 = speeds_for(2)
+        return [{"cue": "listen"}, {"say": "whole", "speed": 1.0}, {"cue": "end"},
+                {"say": "end", "text": end_text, "from": br["t"], "speed": e1},
+                {"say": "end", "text": end_text, "from": br["t"], "speed": e2}, {"cue": "whole"},
+                {"say": "whole", "speed": 0.75}, {"say": "whole", "speed": 1.0}]
+    r = speeds_for(3)
+    return [{"cue": "listen"}, {"say": "whole", "speed": 1.0}, {"cue": "repeat"}, {"say": "whole", "speed": r[0]},
+            {"cue": "again"}, {"say": "whole", "speed": r[1]}, {"cue": "full"}, {"say": "whole", "speed": r[2]}]
 
 
 def transcribe_words(asr_url: str, path: str) -> list[dict]:
@@ -151,14 +178,13 @@ def render(drills: list[dict], out_mp3: str, baker) -> list[dict]:
                 parts += [c, baker.silence(0.9)]
                 t += D._dur(c) + 0.9
                 continue
-            clip = d["clips"][s["say"]]
+            clip = stretched(d["clips"][s["say"]], s.get("speed", 1.0))
             dur = D._dur(clip)
-            for r in range(s["reps"]):
-                pz = pause_after(dur, LEVEL)
-                tl.append({"t": round(t, 2), "kind": s["say"], "text": s.get("text", d["text"]), "line": n,
-                           "dur": round(dur, 2), "rep": r + 1, "of": s["reps"]})
-                parts += [clip, baker.silence(pz)]
-                t += dur + pz
+            pz = pause_after(dur, LEVEL)
+            tl.append({"t": round(t, 2), "kind": s["say"], "text": s.get("text", d["text"]), "line": n,
+                       "dur": round(dur, 2), "speed": s.get("speed", 1.0)})
+            parts += [clip, baker.silence(pz)]
+            t += dur + pz
     lst = out_mp3 + ".txt"
     open(lst, "w").write("".join(f"file '{p}'\n" for p in parts))
     subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-f", "concat", "-safe", "0", "-i", lst, "-ar", str(D.RATE),
