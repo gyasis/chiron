@@ -6,7 +6,7 @@ Usage: name_scenes_dialogue.py <transcript.json> [--force]  (--force renames eve
 import sys, json, asyncio, os
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-import episode_enrich as EN   # reuse the glm-5.1 -> deepseek ladder + json_with_repair
+import episode_enrich as EN   # reuse the glm@latest -> deepseek ladder + json_with_repair
 
 FORCE = "--force" in sys.argv
 tpath = Path([a for a in sys.argv[1:] if not a.startswith("-")][0])
