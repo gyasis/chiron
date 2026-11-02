@@ -2297,6 +2297,11 @@ raccolte.GENERATE = lambda d: generate(GenReq(**d))
 pimsleur_jobs.SUBMIT = lambda d: generate(GenReq(**d))
 pimsleur_jobs.JOBS = JOBS
 pimsleur_jobs.ORIGIN_OK = lambda request: _anki_origin_ok(request)
+
+# Live drill: POST /api/pimsleur/live makes the lines in the background while the Ask page plays the earlier ones.
+import pimsleur_live  # noqa: E402
+app.include_router(pimsleur_live.router)
+pimsleur_live.ORIGIN_OK = lambda request: _anki_origin_ok(request)
 threading.Thread(target=lambda: mm_study._load(), daemon=True, name="mm-study-warm").start()   # first tap must not pay the ~4 s index load
 
 

@@ -5,6 +5,7 @@
  *   buildDiagram(doc, data)     the word-by-word sentence diagram with its layer toggles
  *   buildRelated(...)           "Study more": lessons found + topics with no lesson yet (+ a "Make a lesson" button)
  *   buildPimsleurAction(...)    "Make a Pimsleur lesson from these N phrases", with an inline confirm
+ *   (both take an optional onDrill(phrases) that adds a "Drill now" button: the live drill, see live-drill.js)
  *   createBasket(...)           the Pimsleur basket: phrases collected over time, stored server-side in Raccolte
  *
  * Every piece of model or server text goes in through textContent, never innerHTML. `doc` is the Document (injected so
@@ -226,12 +227,18 @@ function phraseList(doc, phrases) {
 }
 
 /** The shortcut button on a reply. `send(body)` POSTs the route. */
-export function buildPimsleurAction(doc, phrases, send) {
+export function buildPimsleurAction(doc, phrases, send, onDrill) {
   const row = el(doc, 'div', 'px-action');
   const label = phrases.length === 1 ? 'this phrase' : `these ${phrases.length} phrases`;
   const btn = el(doc, 'button', 'px-open', `🎧 Make a Pimsleur lesson from ${label}`);
   btn.type = 'button';
   row.appendChild(btn);
+  if (onDrill) {
+    const live = el(doc, 'button', 'px-open px-live', '▶ Drill now');
+    live.type = 'button';
+    live.addEventListener('click', () => onDrill(phrases));
+    row.appendChild(live);
+  }
   btn.addEventListener('click', () => {
     if (row.querySelector('.px-confirm')) return;
     const box = el(doc, 'div', 'px-confirm');
@@ -276,7 +283,7 @@ const fold = s => String(s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '
  * The basket controller + its panel. `api(method, path, body)` returns parsed JSON or throws.
  * The pill (`pill`) shows "🎧 Basket n/8"; `panel` is the sheet it opens. Items live in the server's Raccolte collection.
  */
-export function createBasket({ doc, api, pill, panel, target = BASKET_TARGET, onChange = () => {} }) {
+export function createBasket({ doc, api, pill, panel, target = BASKET_TARGET, onChange = () => {}, onDrill = null }) {
   const st = { items: [], open: false, topic: '', dirty: false, mode: 'list', msg: null, loaded: false, topicSig: '' };
   const listeners = new Set();
   const base = `/api/collections/${BASKET_ID}`;
@@ -407,6 +414,13 @@ export function createBasket({ doc, api, pill, panel, target = BASKET_TARGET, on
     clr.disabled = !n;
     clr.addEventListener('click', () => { st.mode = 'clear'; render(); });
     acts.appendChild(gen);
+    if (onDrill) {
+      const live = el(doc, 'button', 'bk-live', '▶ Drill these now');
+      live.type = 'button';
+      live.disabled = !n;
+      live.addEventListener('click', () => onDrill(st.items));
+      acts.appendChild(live);
+    }
     acts.appendChild(clr);
     panel.appendChild(acts);
   }
