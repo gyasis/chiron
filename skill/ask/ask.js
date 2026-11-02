@@ -14,6 +14,7 @@ import * as cards from './cards.js';
 import * as steps from './steps.js';
 import { installInAppBridge } from './inapp.js';
 import { isPhraseRequest, parsePhraseBlock, PHRASE_HOST, PHRASE_MODEL } from './phrase-mode.js';
+import { savePending, clearPending, renderRecoveredInto, createRecovery } from './recover.js';
 import { parseFenceBlock, buildDiagram, buildRelated, buildPimsleurAction, createBasket, buildAddRow } from './coach-extras.js';
 
 const $ = s => document.querySelector(s);
@@ -374,6 +375,69 @@ async function api(method, path, body) {
   return data;
 }
 
+/* ─── a coach answer that survives a dropped connection ───
+ * The server keeps a phrase run going when the browser disconnects (a phone's screen sleeping suspends the WebView). The
+ * request is remembered in localStorage; when the page is visible again the answer is fetched from /ask/phrase/run/latest
+ * and shown in place of the interrupted bubble. acolyte has no call to update a stored message, so the recovered answer is
+ * not written into acolyte's own thread history; the server's run store and the prompt ledger hold it. */
+{
+  const nativeFetch = window.fetch.bind(window);
+  window.fetch = (input, init) => {
+    try {
+      const url = typeof input === 'string' ? input : (input && input.url) || '';
+      if (url.includes('/ask/phrase/api/chat') && init && typeof init.body === 'string') {
+        const last = [...(JSON.parse(init.body).messages || [])].reverse().find(m => m.role === 'user');
+        if (last) savePending(localStorage, { text: String(last.content || '').trim(), session: askSession(), started_at: Date.now() });
+      }
+    } catch (e) { console.warn('[chiron] could not note the pending phrase request:', e && e.message || e); }
+    return nativeFetch(input, init);
+  };
+}
+let LAST_DOM_CHANGE = Date.now();     // the thread changes while an answer streams; a stalled stream stops changing it
+
+function threadBox() { return document.querySelector('.acolyte-messages'); }
+
+/** What the page shows for the pending request: 'missing' | 'streaming' | 'interrupted' | 'complete'. */
+function replyState(p) {
+  const msgs = [...(threadBox()?.querySelectorAll('.acolyte-msg') || [])];
+  let ui = -1;
+  msgs.forEach((m, i) => { if (m.classList.contains('user') && (m.dataset.raw || '').trim() === p.text) ui = i; });
+  const asst = ui >= 0 && msgs[ui + 1]?.classList.contains('assistant') ? msgs[ui + 1] : null;
+  if (!asst) return 'missing';
+  if (asst.dataset.streaming === '1') return 'streaming';
+  const cut = /interrupted/i.test(asst.innerText);
+  if (asst.dataset.phraseBound === '1' && !cut) return 'complete';
+  return cut ? 'interrupted' : 'streaming';
+}
+
+function speakItalian(text) {
+  try {
+    if (!window.speechSynthesis || $('#voicebtn')?.classList.contains('on') === false) return;
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = 'it-IT';
+    window.speechSynthesis.speak(u);
+  } catch (e) { console.warn('[chiron] recovered answer not spoken:', e && e.message || e); }
+}
+
+function renderRecovered(content, pending) {
+  renderRecoveredInto(document, threadBox(), content, pending, {
+    bind: bindPhrase, speak: speakItalian, onFirstBubble: () => document.querySelector('.ask-hero')?.remove() });
+}
+
+function showRecoverStatus(text) {
+  let el = document.querySelector('.ask-recover-status');
+  if (text == null) { el?.remove(); return; }
+  if (!el) {
+    el = document.createElement('div');
+    el.className = 'ask-recover-status';
+    el.setAttribute('role', 'status');
+    threadBox()?.appendChild(el);
+  }
+  el.textContent = text;
+}
+
+let RECOVERY = null;
+
 let BASKET = null;      // the Pimsleur basket (phrase mode); items live server-side in Raccolte, so phone and browser share it
 
 /* ─── adopt acolyte's controls into the pilot's chrome ───
@@ -432,6 +496,13 @@ function adoptControls(handle, stats) {
 
   BASKET = createBasket({ doc: document, api, pill: $('#basketbtn'), panel: $('#basketpanel') });
   $('#basketbtn').hidden = MODE !== 'phrase';
+  RECOVERY = createRecovery({ storage: localStorage, fetchFn: (u, i) => fetch(u, i), now: () => Date.now(), session: askSession,
+                              replyState, lastChangeAt: () => LAST_DOM_CHANGE, render: renderRecovered, status: showRecoverStatus });
+  const recover = () => { if (MODE === 'phrase' && !document.hidden) RECOVERY.check().catch(e => console.warn('[chiron] recovery failed:', e && e.message || e)); };
+  document.addEventListener('visibilitychange', recover);
+  window.addEventListener('pageshow', recover);
+  window.addEventListener('online', recover);
+  setTimeout(recover, 1500);                                                // a reload while a run is pending
   const refreshBasket = () => { if (MODE === 'phrase' && !document.hidden) BASKET.refresh().catch(e => console.warn('[chiron] basket not refreshed:', e.message)); };
   document.addEventListener('visibilitychange', refreshBasket);
   window.addEventListener('focus', refreshBasket);
@@ -761,6 +832,7 @@ function wireDispatch(handle, panel) {
   wireSteps(box);
   let timer;
   new MutationObserver(() => {
+    LAST_DOM_CHANGE = Date.now();
     clearTimeout(timer);
     // An answer streams in token by token; wait for it to settle rather than
     // rebuilding the row on every chunk.
@@ -771,6 +843,7 @@ function wireDispatch(handle, panel) {
           if (msg.dataset.streaming === '1' || !msg.dataset.raw) return;
           msg.dataset.phraseBound = '1';
           bindPhrase(msg);
+          if (!/interrupted/i.test(msg.innerText)) clearPending(localStorage);        // the answer arrived: nothing to recover
         });
       }
       box.querySelectorAll('.acolyte-msg.assistant:not([data-acts])').forEach(msg => {

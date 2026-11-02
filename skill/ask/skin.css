@@ -528,3 +528,11 @@
 .bk-gen { background: var(--chiron-accent); color: var(--chiron-surface); border-color: transparent; font-weight: 600; }
 .bk-panel button { font: inherit; cursor: pointer; }
 @media (max-width: 768px) { .bk-panel { top: 60px; left: 12px; right: 12px; width: auto; max-height: calc(100dvh - 240px); } }
+
+/* a recovered coach answer: the reply text in our own container, plus a quiet note */
+.ask-md p { margin: 0 0 .7em; }
+.ask-md ol, .ask-md ul { margin: 0 0 .7em; padding-left: 1.4em; }
+.ask-md code { background: var(--chiron-elevated); border-radius: 4px; padding: 0 4px; font-size: .92em; }
+.ask-recovered-note { margin-top: .6em; font-size: 11.5px; color: var(--chiron-muted); }
+.ask-recover-status { margin: 10px auto; max-width: 880px; padding: 8px 14px; font-size: 13px; color: var(--chiron-fg-secondary);
+  background: var(--chiron-elevated); border-radius: 99px; width: fit-content; }
