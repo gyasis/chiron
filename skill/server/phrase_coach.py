@@ -5,9 +5,14 @@
     POST /ask/phrase/api/show   its capabilities
 
 The reply comes from chains/2026-11-01_chiron-phrase-coach-chain `coach(messages)`; the prompts live in the chain,
-never in the page. Same single-flight as /ask/llm (ask_proxy): one coach run per X-Ask-Session, a newer request
-or a browser disconnect cancels the run in flight. A run that fails ends the stream with the error line
-ask_proxy.error_line uses, so acolyte shows "Answer interrupted" instead of a reply that merely stops.
+never in the page. A run is a server-side task (phrase_runs) that outlives the connection: a browser disconnect cancels
+nothing, the same request sent again attaches to the run (replaying what it has emitted, then continuing live; a finished run
+is returned at once with no model calls), and only a newer, different request from the same X-Ask-Session supersedes it.
+A run that fails ends the stream with the error line ask_proxy.error_line uses, so acolyte shows "Answer interrupted".
+
+    GET  /ask/phrase/run/<run_id>   {status, content_so_far, done, error, user, elapsed_s} for a page that lost its stream
+    GET  /ask/phrase/run/latest     the same for this session's newest run (the page does not need to know the id)
+    The chat response carries X-Phrase-Run: <run_id> (X-Phrase-Run-Attached: 1 when it joined an existing run).
 """
 from __future__ import annotations
 import asyncio, contextlib, importlib.util, json, sys
@@ -22,11 +27,13 @@ sys.path.insert(0, str(SKILL / "chains"))
 import ask_proxy  # noqa: E402
 import local_models  # noqa: E402
 import phrase_related  # noqa: E402
+import phrase_runs  # noqa: E402
 
 CHAIN_FILE = SKILL / "chains" / "2026-11-01_chiron-phrase-coach-chain" / "run.py"
 MODEL_ID = "phrase-coach"
 
 router = APIRouter()
+STORE = phrase_runs.RunStore()
 _coach = None            # the chain's coach(); tests replace it
 _chain = None
 
@@ -82,6 +89,32 @@ def show():
     return {"capabilities": ["completion"], "model_info": {}}
 
 
+async def drive(emit, msgs: list, key: str) -> dict:
+    result: dict = {}
+    async for kind, val in events(msgs, key):
+        if kind == "text":
+            emit(val)
+        else:
+            result = val
+    return result
+
+
+@router.get("/ask/phrase/run/latest")
+async def run_latest(request: Request):
+    run = STORE.latest_for(ask_proxy.session_key(request))
+    if run is None:
+        raise HTTPException(404, "no run for this session")
+    return run.view(STORE.clock())
+
+
+@router.get("/ask/phrase/run/{rid}")
+async def run_status(rid: str):
+    run = STORE.get(rid)
+    if run is None:
+        raise HTTPException(404, f"no run {rid!r} (finished runs are kept {int(STORE.ttl_s)} s)")
+    return run.view(STORE.clock())
+
+
 @router.post("/ask/phrase/api/chat")
 async def chat(request: Request):
     try:
@@ -94,83 +127,35 @@ async def chat(request: Request):
 
     url = "/ask/phrase/api/chat"
     key = ask_proxy.session_key(request)
-    cancel, gone = asyncio.Event(), asyncio.Event()
-    old = ask_proxy._inflight.get(key)
-    if old is not None and not old.is_set():
-        _log(f"{key}: new coach run supersedes the one in flight — cancelling it")
-        old.set()
-    ask_proxy._inflight[key] = cancel
-    watcher = asyncio.ensure_future(ask_proxy._watch_disconnect(request, gone, cancel))
-
-    def why() -> str:
-        return "browser disconnected" if gone.is_set() else "superseded by a newer request from this session"
+    run, attached = STORE.start(key, msgs, drive)
+    _log(f"{key}: run {run.id} {'attached to the existing run (' + run.status + ')' if attached else 'started'}")
+    headers = {"X-Phrase-Run": run.id, "X-Phrase-Run-Attached": "1" if attached else "0"}
 
     async def stream():
-        out: asyncio.Queue = asyncio.Queue()
-        result: dict = {}
-
-        async def pump():
-            try:
-                async for kind, val in events(msgs, key):
-                    if kind == "text":
-                        out.put_nowait(val)
-                    else:
-                        result.update(val)
-            finally:
-                out.put_nowait(None)
-
-        task = asyncio.ensure_future(pump())
-        stop = asyncio.ensure_future(cancel.wait())
-        get = None
-        try:
-            while True:
-                get = asyncio.ensure_future(out.get())
-                await asyncio.wait({get, stop}, return_when=asyncio.FIRST_COMPLETED)
-                if not get.done():
-                    task.cancel()
-                    with contextlib.suppress(BaseException):
-                        await task
-                    _log(f"{key}: coach run cancelled — {why()}")
-                    if not gone.is_set():
-                        yield ask_proxy.error_line(url, why())
-                    return
-                chunk = get.result()
-                if chunk is None:
-                    break
-                yield ndjson_line(chunk)          # one whole section per line: a fenced block never arrives half-sent
-            try:
-                await task
-            except BaseException as e:
-                cause = f"{type(e).__name__}: {e}"[:500]
-                _log(f"{key}: coach run failed — {cause}")
-                yield ask_proxy.error_line(url, cause)
-                return
-            _log(f"{key}: kind={result.get('kind')} first_text_ms={result.get('first_text_ms')} total_ms={result.get('total_ms')} steps="
-                 + ",".join(f"{s['step']}:{s['model']}:{s['latency_ms']}ms:{s['done_reason']}" for s in result.get("steps", [])))
-            yield ndjson_done()
-        finally:
-            for t in (task, stop, get):
-                if t is not None and not t.done():
-                    t.cancel()
-            watcher.cancel()
-            if ask_proxy._inflight.get(key) is cancel:
-                del ask_proxy._inflight[key]
+        i = 0
+        while True:
+            await run.wait_change(i)
+            while i < len(run.chunks):
+                yield ndjson_line(run.chunks[i])          # one whole section per line: a fenced block never arrives half-sent
+                i += 1
+            if run.status != "running":
+                break
+        if run.status != "done":
+            yield ask_proxy.error_line(url, run.error or run.status)
+            return
+        r = run.result
+        _log(f"{key}: run {run.id} kind={r.get('kind')} first_text_ms={r.get('first_text_ms')} total_ms={r.get('total_ms')} steps="
+             + ",".join(f"{s['step']}:{s['model']}:{s['latency_ms']}ms:{s['done_reason']}" for s in r.get("steps", [])))
+        yield ndjson_done()
 
     if body.get("stream") is False:
         # acolyte asks for a single JSON reply whenever the request carries tools, and reads it with .json(),
-        # so the NDJSON lines are folded into one Ollama /api/chat object. A failure becomes an HTTP error,
+        # so the sections are folded into one Ollama /api/chat object. A failure becomes an HTTP error,
         # which acolyte's non-stream path reports instead of rendering an empty answer.
-        content, error = "", None
-        async for line in stream():
-            obj = json.loads(line)
-            if obj.get("error"):
-                error = obj["error"]
-                break
-            content += (obj.get("message") or {}).get("content", "")
-        if error is not None:
-            return JSONResponse({"error": error}, status_code=502)
-        if gone.is_set():
-            return Response(status_code=499)
-        return JSONResponse({"model": MODEL_ID, "message": {"role": "assistant", "content": content},
-                             "done": True, "done_reason": "stop"})
-    return StreamingResponse(stream(), media_type="application/x-ndjson")
+        while run.status == "running":
+            await run.wait_change(len(run.chunks))
+        if run.status != "done":
+            return JSONResponse({"error": run.error or run.status}, status_code=502, headers=headers)
+        return JSONResponse({"model": MODEL_ID, "message": {"role": "assistant", "content": "".join(run.chunks)},
+                             "done": True, "done_reason": "stop"}, headers=headers)
+    return StreamingResponse(stream(), media_type="application/x-ndjson", headers=headers)

@@ -671,6 +671,8 @@ class Streaming(unittest.TestCase):
 
 class StreamRoute(unittest.TestCase):
     def setUp(self):
+        phrase_coach.STORE.runs.clear()
+        phrase_coach.STORE.latest.clear()
         app = FastAPI()
         app.include_router(phrase_coach.router)
         self.c = TestClient(app)
@@ -701,8 +703,231 @@ class StreamRoute(unittest.TestCase):
         self.assertIn("no usable reply", lines[-1]["error"])
 
 
+import phrase_runs  # noqa: E402
+
+MSG1 = [{"role": "user", "content": "how do I say hello"}]
+MSG2 = [{"role": "user", "content": "how do I say goodbye"}]
+
+
+class Clock:
+    def __init__(self): self.t = 1000.0
+    def __call__(self): return self.t
+
+
+def listen(run):
+    """What the route's stream does: read the chunks as they come."""
+    async def go():
+        got, i = [], 0
+        while True:
+            await run.wait_change(i)
+            while i < len(run.chunks):
+                got.append(run.chunks[i]); i += 1
+            if run.status != "running":
+                return got
+    return go()
+
+
+class RunStoreTests(unittest.TestCase):
+    def drive_with_gate(self, gate, calls):
+        async def drive(emit, msgs, key):
+            calls.append(key)
+            emit("a")
+            await gate.wait()
+            emit("b")
+            return {"kind": "new_request"}
+        return drive
+
+    def test_a_disconnect_mid_run_does_not_cancel_it(self):
+        async def go():
+            store, gate, calls = phrase_runs.RunStore(), asyncio.Event(), []
+            run, attached = store.start("k", MSG1, self.drive_with_gate(gate, calls))
+            self.assertFalse(attached)
+            await run.wait_change(0)
+            listener = asyncio.ensure_future(listen(run))
+            await asyncio.sleep(0)
+            listener.cancel()                                       # the browser went away
+            await asyncio.sleep(0)
+            self.assertEqual(run.status, "running")
+            gate.set()
+            await run.task
+            self.assertEqual((run.status, run.chunks, run.content), ("done", ["a", "b"], "ab"))
+        asyncio.run(go())
+
+    def test_the_same_run_id_attaches_and_replays_then_continues_live(self):
+        async def go():
+            store, gate, calls = phrase_runs.RunStore(), asyncio.Event(), []
+            drive = self.drive_with_gate(gate, calls)
+            run, _ = store.start("k", MSG1, drive)
+            await run.wait_change(0)
+            again, attached = store.start("k", MSG1, drive)
+            self.assertTrue(attached)
+            self.assertIs(again, run)
+            late = asyncio.ensure_future(listen(again))             # joins after "a" was emitted: replays it
+            await asyncio.sleep(0)
+            gate.set()
+            self.assertEqual(await late, ["a", "b"])
+            self.assertEqual(len(calls), 1)                         # one coach run, not two
+        asyncio.run(go())
+
+    def test_a_finished_run_is_returned_at_once_with_no_new_model_calls(self):
+        async def go():
+            store, gate, calls = phrase_runs.RunStore(), asyncio.Event(), []
+            gate.set()
+            drive = self.drive_with_gate(gate, calls)
+            run, _ = store.start("k", MSG1, drive)
+            await run.task
+            again, attached = store.start("k", MSG1, drive)
+            self.assertTrue(attached)
+            self.assertEqual(again.status, "done")
+            self.assertEqual(await listen(again), ["a", "b"])
+            self.assertEqual(len(calls), 1)
+        asyncio.run(go())
+
+    def test_a_new_different_request_from_the_same_session_supersedes(self):
+        async def go():
+            store, calls = phrase_runs.RunStore(), []
+            g1, g2, g3 = asyncio.Event(), asyncio.Event(), asyncio.Event()
+            r1, _ = store.start("k", MSG1, self.drive_with_gate(g1, calls))
+            other, _ = store.start("k2", MSG1 + [{"role": "user", "content": "x"}], self.drive_with_gate(g3, calls))
+            await asyncio.sleep(0)
+            r2, _ = store.start("k", MSG2, self.drive_with_gate(g2, calls))
+            await asyncio.sleep(0)
+            self.assertEqual(r1.status, "cancelled")
+            self.assertTrue(r1.task.cancelled() or r1.task.done())
+            self.assertEqual(await listen(r1), ["a"])               # a listener of the old run ends, with its status "cancelled"
+            self.assertEqual(r2.status, "running")
+            self.assertEqual(other.status, "running", "another session is untouched")
+            g2.set(); g3.set()
+            await r2.task
+            self.assertEqual(r2.status, "done")
+        asyncio.run(go())
+
+    def test_a_failed_run_is_retried_by_a_re_send(self):
+        async def go():
+            store, n = phrase_runs.RunStore(), []
+
+            async def drive(emit, msgs, key):
+                n.append(1)
+                if len(n) == 1:
+                    raise RuntimeError("build: no usable reply")
+                emit("ok")
+                return {}
+            r1, _ = store.start("k", MSG1, drive)
+            await r1.task
+            self.assertEqual((r1.status, "no usable reply" in r1.error), ("error", True))
+            r2, attached = store.start("k", MSG1, drive)
+            self.assertFalse(attached)
+            await r2.task
+            self.assertEqual((r2.status, r2.chunks), ("done", ["ok"]))
+        asyncio.run(go())
+
+    def test_finished_runs_are_evicted_by_ttl_and_running_ones_are_not(self):
+        async def go():
+            clock = Clock()
+            store = phrase_runs.RunStore(ttl_s=100, clock=clock)
+            gate, calls = asyncio.Event(), []
+            done_run, _ = store.start("a", MSG1, self.drive_with_gate(asyncio.Event(), calls))
+            done_run.task.cancel()
+            running, _ = store.start("b", MSG2, self.drive_with_gate(gate, calls))
+            await asyncio.sleep(0)
+            store.cancel(done_run.id, "test")                        # any finished state counts
+            done_run.finished = clock.t
+            clock.t += 99
+            self.assertIsNotNone(store.get(done_run.id))
+            clock.t += 2
+            self.assertIsNone(store.get(done_run.id))
+            self.assertIsNone(store.latest_for("a"))
+            clock.t += 10_000
+            self.assertIs(store.get(running.id), running, "a run in flight is kept however long it takes")
+            gate.set()
+            await running.task
+        asyncio.run(go())
+
+    def test_the_store_is_capped_and_the_oldest_finished_run_goes_first(self):
+        async def go():
+            store = phrase_runs.RunStore(max_runs=3)
+            runs = []
+
+            async def drive(emit, msgs, key):
+                emit(msgs[0]["content"])
+                return {}
+            for i in range(5):
+                r, _ = store.start(f"s{i}", [{"role": "user", "content": f"m{i}"}], drive)
+                await r.task
+                runs.append(r)
+            self.assertEqual(len(store.runs), 3)
+            self.assertEqual(list(store.runs), [r.id for r in runs[2:]])
+            gate = asyncio.Event()
+            hold, _ = store.start("held", MSG1, self.drive_with_gate(gate, []))
+            self.assertIn(hold.id, store.runs)
+            self.assertLessEqual(len(store.runs), 3)
+            gate.set()
+            await hold.task
+        asyncio.run(go())
+
+    def test_run_id_depends_on_session_and_the_full_messages(self):
+        a = phrase_runs.run_id_of("k", MSG1)
+        self.assertEqual(a, phrase_runs.run_id_of("k", [dict(m) for m in MSG1]))
+        self.assertNotEqual(a, phrase_runs.run_id_of("k2", MSG1))
+        self.assertNotEqual(a, phrase_runs.run_id_of("k", MSG1 + [{"role": "assistant", "content": "x"}]))
+
+
+class RunRoute(unittest.TestCase):
+    def setUp(self):
+        phrase_coach.STORE.runs.clear()
+        phrase_coach.STORE.latest.clear()
+        app = FastAPI()
+        app.include_router(phrase_coach.router)
+        self.app = app
+
+    def test_status_endpoints_and_the_run_header(self):
+        n = {"calls": 0}
+
+        async def ok(msgs, session_id=None):
+            n["calls"] += 1
+            return {"content": "line1\nline2\n", "kind": "new_request", "total_ms": 1, "steps": []}
+        phrase_coach._coach = ok
+        with TestClient(self.app) as c:
+            r = c.post("/ask/phrase/api/chat", json={"messages": [{"role": "user", "content": "hi"}]}, headers={"X-Ask-Session": "tabS"})
+            rid = r.headers["x-phrase-run"]
+            self.assertEqual(r.headers["x-phrase-run-attached"], "0")
+            st = c.get(f"/ask/phrase/run/{rid}").json()
+            self.assertEqual((st["status"], st["done"], st["content_so_far"], st["error"], st["user"]), ("done", True, "line1\nline2\n", None, "hi"))
+            self.assertEqual(c.get("/ask/phrase/run/latest", headers={"X-Ask-Session": "tabS"}).json()["id"], rid)
+            self.assertEqual(c.get("/ask/phrase/run/latest", headers={"X-Ask-Session": "other"}).status_code, 404)
+            self.assertEqual(c.get("/ask/phrase/run/nope").status_code, 404)
+            again = c.post("/ask/phrase/api/chat", json={"messages": [{"role": "user", "content": "hi"}]}, headers={"X-Ask-Session": "tabS"})
+            self.assertEqual(again.headers["x-phrase-run-attached"], "1")
+            self.assertEqual(again.text, r.text)                      # the finished answer again, instantly
+            self.assertEqual(n["calls"], 1)                           # no new model calls
+
+    def test_a_second_post_while_running_attaches_and_gets_the_whole_answer(self):
+        import threading, time
+        n = {"calls": 0}
+
+        async def slow(msgs, session_id=None):
+            n["calls"] += 1
+            await asyncio.sleep(0.6)
+            return {"content": "slow answer", "kind": "new_request", "total_ms": 1, "steps": []}
+        phrase_coach._coach = slow
+        out = {}
+        with TestClient(self.app) as c:
+            def first():
+                out["a"] = c.post("/ask/phrase/api/chat", json={"messages": MSG1}, headers={"X-Ask-Session": "tabR"})
+            t = threading.Thread(target=first)
+            t.start()
+            time.sleep(0.2)
+            out["b"] = c.post("/ask/phrase/api/chat", json={"messages": MSG1}, headers={"X-Ask-Session": "tabR"})
+            t.join()
+        self.assertEqual(out["b"].headers["x-phrase-run-attached"], "1")
+        self.assertEqual(out["a"].text, out["b"].text)
+        self.assertEqual(n["calls"], 1)
+
+
 class Route(unittest.TestCase):
     def setUp(self):
+        phrase_coach.STORE.runs.clear()
+        phrase_coach.STORE.latest.clear()
         app = FastAPI()
         app.include_router(phrase_coach.router)
         self.c = TestClient(app)
