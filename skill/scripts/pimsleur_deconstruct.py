@@ -307,15 +307,26 @@ def word_pieces(word: str, cfg: Settings, article: str = "", prefix_follows: boo
     return out
 
 
-def chunk_words(text: str, teach: set[str] | None = None) -> list[str]:
-    """Split a phrase into chunks: each content word carries the function words in front of it.
-    A function word listed in `teach` is the item being taught and gets a chunk of its own."""
-    teach = teach or set()
+def is_small(token: str) -> bool:
+    """A word too small to say on its own: a function word, or any word of one or two letters (è, ho, io, te)."""
+    t = token.replace("'", "")
+    return token in FUNCTION_WORDS or len(t) <= 2
+
+
+def chunk_words(text: str, teach: set[str] | None = None, words_only: bool = False) -> list[str]:
+    """Split a phrase into chunks: each content word carries the small words in front of it.
+
+    Course style: function words ride forward; a function word listed in `teach` gets a chunk of its own.
+    `words_only` (Ask drills): every small word (is_small) rides with its neighbour and `teach` is ignored,
+    so no chunk is ever a lone small word; trailing small words join the chunk before them.
+    """
+    teach = set() if words_only else (teach or set())
     toks = [t for t in re.split(r"[\s,;:.!?¿¡\"“”()]+", _norm(text)) if t]
     chunks: list[str] = []
     pending: list[str] = []
     for t in toks:
-        if t in FUNCTION_WORDS and t not in teach:
+        small = is_small(t) if words_only else t in FUNCTION_WORDS
+        if small and t not in teach:
             pending.append(t)
             continue
         chunks.append(" ".join(pending + [t]))
@@ -371,7 +382,7 @@ def deconstruct(target: str, level: int = 3, known: set[str] | None = None, teac
                    teach={_norm(k) for k in (teach or set())}, words_only=words_only,
                    stress_overrides={_norm(k): v for k, v in (stress_overrides or {}).items()})
     full = " ".join(re.sub(r"[,;:.!?¿¡\"“”()]", " ", _norm(target)).split())
-    chunks = chunk_words(full, cfg.teach)
+    chunks = chunk_words(full, cfg.teach, cfg.words_only)
     if not chunks:
         return []
 
@@ -408,9 +419,12 @@ def deconstruct(target: str, level: int = 3, known: set[str] | None = None, teac
 
 
 def _finish(pieces: list[Piece], full: str, cfg: Settings) -> list[Piece]:
-    """Merge immediate repeats and end the block on the full target with the closing repeat count."""
+    """Merge immediate repeats and end the block on the full target with the closing repeat count.
+    In words_only mode a lone small word is never kept as a step."""
     out: list[Piece] = []
     for p in pieces:
+        if cfg.words_only and p.text != full and all(is_small(t) for t in p.text.split()):
+            continue
         if out and out[-1].text == p.text:
             out[-1].reps = max(out[-1].reps, p.reps)
             continue

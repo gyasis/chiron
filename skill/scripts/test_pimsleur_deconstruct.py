@@ -130,3 +130,19 @@ def test_words_only_never_splits_a_word():
 
 def seq_w(target, level=3):
     return [p.text for p in deconstruct(target, level=level, words_only=True)]
+
+
+@pytest.mark.parametrize("target", [
+    "Mi dica dove le fa male", "Gli uomini e le donne", "È qui per la visita", "Ho un appuntamento con il medico",
+    "Non lo so", "Io e te", "Ti posso aiutare", "C'è un problema", "Le faccio una domanda",
+])
+def test_words_only_never_says_a_small_word_alone(target):
+    from pimsleur_deconstruct import is_small
+    for p in deconstruct(target, level=3, words_only=True, teach={"ti", "mi"}):
+        assert not all(is_small(t) for t in p.text.split()) or p.kind == "whole", (target, p.text)
+
+
+def test_words_only_keeps_articles_on_their_noun():
+    s = seq_w("Gli uomini e le donne")
+    assert "gli" not in s and "e" not in s and "le" not in s
+    assert "e le donne" in s and "gli uomini e le donne" in s
