@@ -156,6 +156,7 @@ button{font:inherit;cursor:pointer}
       <div class="tsub" id="tsub">Scope: everything · grounded in your library</div>
     </div>
     <div class="tools">
+      <button class="chip" id="basketbtn" hidden aria-expanded="false" aria-controls="basketpanel" title="Phrases collected for a Pimsleur lesson">🎧 Basket 0/8</button>
       <button class="chip on" id="voicebtn" title="Read answers aloud">🔊 Voice out</button>
       <button class="chip" id="openlesson" disabled title="Opens the top cited lesson">⤴ Open in lesson</button>
     </div>
@@ -167,6 +168,8 @@ button{font:inherit;cursor:pointer}
     <span class="grounded" id="grounded"></span>
   </div>
 </main>
+
+<div id="basketpanel" class="bk-panel" role="dialog" aria-label="Pimsleur basket" hidden></div>
 
 <script>
 /* phone drawer: ☰ opens the rail, scrim / a thread / New question closes it */

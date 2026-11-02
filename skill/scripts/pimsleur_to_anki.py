@@ -15,7 +15,7 @@ from __future__ import annotations
 
 import argparse, base64, hashlib, importlib.util, json, os, subprocess, sys, tempfile
 
-DEFAULT_VOICES = {"cue": "pauls_tutor", "target": "lucrezia_italian"}
+DEFAULT_VOICES = {"cue": "pimsleur_narrator", "target": "lucrezia_italian"}
 TARGET_LUFS = "-20"
 ENV_FILE = os.path.expanduser("~/.chiron/anki.env")
 ANKI_PY = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "server", "anki.py")

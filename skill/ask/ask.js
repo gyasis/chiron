@@ -14,6 +14,9 @@ import * as cards from './cards.js';
 import * as steps from './steps.js';
 import { installInAppBridge } from './inapp.js';
 import { isPhraseRequest, parsePhraseBlock, PHRASE_HOST, PHRASE_MODEL } from './phrase-mode.js';
+import { stillWriting } from './still-writing.js';
+import { savePending, readPending, clearPending, renderRecoveredInto, createRecovery, threadMsg } from './recover.js';
+import { parseFenceBlock, buildDiagram, buildRelated, buildPimsleurAction, createBasket, buildAddRow } from './coach-extras.js';
 
 const $ = s => document.querySelector(s);
 const LS_SCOPE = 'chiron.ask.scope';
@@ -291,9 +294,15 @@ function applyMode() {
   // utterance, which say-shim reads as its language hint. configure() replaces the voice object whole.
   const voice = { enabled: $('#voicebtn')?.classList.contains('on') !== false, autoSpeak: true,
                   voiceName: phrase ? 'Lucrezia' : undefined, accent: phrase ? 'it-IT' : undefined };
-  modeCtl.handle.configure({ llm, voice, storage: { dbName: 'chiron-ask', historyEnabled: true, cacheEnabled: !phrase } });
+  // acolyte sends stream:false whenever its request carries tools (its one default tool is the context7 docs lookup).
+  // The phrase coach has no use for it, and without tools acolyte reads the NDJSON stream: sections appear as they finish.
+  modeCtl.handle.configure({ llm, voice, storage: { dbName: 'chiron-ask', historyEnabled: true, cacheEnabled: !phrase },
+                             tools: { context7: { enabled: !phrase } } });
   if (phrase) modeCtl.handle.configure({ rag: { enabled: false } });
   else modeCtl.pickChannel();
+  setHint($('#scope').value);          // the topbar line follows the mode: "Phrase coach" vs the librarian's scope
+  const pill = $('#basketbtn');
+  if (pill) { pill.hidden = !phrase; if (!phrase) BASKET?.setOpen(false); else BASKET?.refresh().catch(e => console.warn('[chiron] basket not loaded:', e.message)); }
 }
 
 /** Change mode and start a fresh thread (setPersona-style changes only redraw the greeting on an empty
@@ -326,9 +335,117 @@ function bindPhrase(msg) {
   else console.warn('[chiron] phrase block not bound:', res.reason);
   for (const pre of msg.querySelectorAll('pre')) {
     const t = pre.textContent;
-    if (pre.querySelector('code.language-phrase') || (t.includes('"en_intent"') && t.trim().startsWith('{'))) pre.hidden = true;
+    if (pre.querySelector('code.language-phrase, code.language-diagram, code.language-related') ||
+        (t.includes('"en_intent"') && t.trim().startsWith('{')) ||
+        (t.trim().startsWith('{') && t.includes('"type":"annotated-passage"'))) pre.hidden = true;
   }
+  if (res.ok) buildExtras(msg, raw, res.data);
 }
+
+/** The phrases of a reply, for the basket and the Pimsleur action: data.items, else the single top-level phrase. */
+function phrasesOf(data) {
+  const items = Array.isArray(data.items) && data.items.length ? data.items : [{ it: data.it, en: data.en_intent, register: data.register }];
+  return items.filter(p => p && typeof p.it === 'string' && p.it.trim())
+    .map(p => ({ it: p.it.trim(), en: String(p.en || ''), register: ['lei', 'tu', 'neutral'].includes(p.register) ? p.register : '' }));
+}
+
+/** Everything under the reply that acolyte's sanitised markdown cannot carry: basket buttons, the sentence diagram,
+ *  "Study more" and the Pimsleur action. Built once per reply, from the hidden fenced blocks, with textContent only. */
+function buildExtras(msg, raw, data) {
+  if (msg.querySelector('.ask-coach-extras')) return;
+  const box = document.createElement('div');
+  box.className = 'ask-coach-extras';
+  const phrases = phrasesOf(data);
+  if (BASKET && phrases.length) box.appendChild(buildAddRow(document, BASKET, phrases));
+  const dg = parseFenceBlock(raw, 'diagram');
+  if (dg.ok) box.appendChild(buildDiagram(document, dg.data));
+  else if (!dg.reason.startsWith('no diagram')) console.warn('[chiron] diagram not shown:', dg.reason);
+  const rel = parseFenceBlock(raw, 'related');
+  if (rel.ok) box.appendChild(buildRelated(document, rel.data, topic => post('/generate', {
+    domain: 'language-it', subject: topic, source: 'Chiron · Ask phrase coach', extra: { from_question: data.en_intent || data.it } })));
+  if (phrases.length) box.appendChild(buildPimsleurAction(document, phrases, body => api('POST', '/api/pimsleur/from-phrases', body)));
+  if (box.children.length) msg.appendChild(box);
+}
+
+/** JSON request helper for the collections / Pimsleur routes. */
+async function api(method, path, body) {
+  const r = await fetch(path, { method, headers: body ? { 'content-type': 'application/json' } : {}, body: body ? JSON.stringify(body) : undefined });
+  const txt = await r.text();
+  let data; try { data = JSON.parse(txt); } catch { data = { detail: txt.slice(0, 200) }; }
+  if (!r.ok) throw new Error(data.detail || data.error || `${r.status} ${r.statusText}`);
+  return data;
+}
+
+/* ─── a coach answer that survives a dropped connection ───
+ * The server keeps a phrase run going when the browser disconnects (a phone's screen sleeping suspends the WebView). The
+ * request is remembered in localStorage; when the page is visible again the answer is fetched from /ask/phrase/run/latest
+ * and shown in place of the interrupted bubble. acolyte has no call to update a stored message, so the recovered answer is
+ * not written into acolyte's own thread history; the server's run store and the prompt ledger hold it. */
+{
+  const nativeFetch = window.fetch.bind(window);
+  window.fetch = (input, init) => {
+    try {
+      const url = typeof input === 'string' ? input : (input && input.url) || '';
+      if (url.includes('/ask/phrase/api/chat') && init && typeof init.body === 'string') {
+        const last = [...(JSON.parse(init.body).messages || [])].reverse().find(m => m.role === 'user');
+        if (last) savePending(localStorage, { text: String(last.content || '').trim(), session: askSession(), started_at: Date.now() });
+      }
+    } catch (e) { console.warn('[chiron] could not note the pending phrase request:', e && e.message || e); }
+    return nativeFetch(input, init);
+  };
+}
+let LAST_DOM_CHANGE = Date.now();     // the thread changes while an answer streams; a stalled stream stops changing it
+
+function threadBox() { return document.querySelector('.acolyte-messages'); }
+
+/** What the page shows for the pending request: 'missing' | 'streaming' | 'interrupted' | 'complete'. */
+function replyState(p) {
+  const msgs = [...(threadBox()?.querySelectorAll('.acolyte-msg') || [])];
+  let ui = -1;
+  msgs.forEach((m, i) => { if (m.classList.contains('user') && (m.dataset.raw || '').trim() === p.text) ui = i; });
+  const asst = ui >= 0 && msgs[ui + 1]?.classList.contains('assistant') ? msgs[ui + 1] : null;
+  if (!asst) return 'missing';
+  if (asst.dataset.streaming === '1') return 'streaming';
+  const cut = /interrupted/i.test(asst.innerText);
+  if (asst.dataset.phraseBound === '1' && !cut) return 'complete';
+  return cut ? 'interrupted' : 'streaming';
+}
+
+function speakItalian(text) {
+  try {
+    if (!window.speechSynthesis || $('#voicebtn')?.classList.contains('on') === false) return;
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = 'it-IT';
+    window.speechSynthesis.speak(u);
+  } catch (e) { console.warn('[chiron] recovered answer not spoken:', e && e.message || e); }
+}
+
+function renderRecovered(content, pending) {
+  renderRecoveredInto(document, threadBox(), content, pending, {
+    bind: bindPhrase, speak: speakItalian, onFirstBubble: () => document.querySelector('.ask-hero')?.remove() });
+}
+
+function showRecoverStatus(text) {
+  let el = document.querySelector('.ask-recover-status');
+  if (text == null) { el?.remove(); return; }
+  const box = threadBox(), p = readPending(localStorage);
+  if (box && p && ![...box.children].some(m => m.classList.contains('user') && (m.dataset.raw || '').trim() === p.text)) {
+    document.querySelector('.ask-hero')?.remove();                         // an emptied thread: show the question being answered
+    box.appendChild(threadMsg(document, 'user', p.text));
+  }
+  if (!el) {
+    el = document.createElement('div');
+    el.className = 'ask-recover-status';
+    el.setAttribute('role', 'status');
+    threadBox()?.appendChild(el);
+  }
+  el.textContent = text;
+  el.scrollIntoView({ block: 'nearest' });
+}
+
+let RECOVERY = null;
+
+let BASKET = null;      // the Pimsleur basket (phrase mode); items live server-side in Raccolte, so phone and browser share it
 
 /* ─── adopt acolyte's controls into the pilot's chrome ───
  * The pilot puts the model picker under the composer, settings in the rail, and
@@ -383,6 +500,20 @@ function adoptControls(handle, stats) {
   persona.after(note);
   modeCtl.select = persona;
   modeCtl.note = note;
+
+  BASKET = createBasket({ doc: document, api, pill: $('#basketbtn'), panel: $('#basketpanel') });
+  $('#basketbtn').hidden = MODE !== 'phrase';
+  RECOVERY = createRecovery({ storage: localStorage, fetchFn: (u, i) => fetch(u, i), now: () => Date.now(), session: askSession,
+                              replyState, lastChangeAt: () => LAST_DOM_CHANGE, render: renderRecovered, status: showRecoverStatus });
+  const recover = () => { if (MODE === 'phrase' && !document.hidden) RECOVERY.check().catch(e => console.warn('[chiron] recovery failed:', e && e.message || e)); };
+  document.addEventListener('visibilitychange', recover);
+  window.addEventListener('pageshow', recover);
+  window.addEventListener('online', recover);
+  setTimeout(recover, 1500);                                                // a reload while a run is pending
+  const refreshBasket = () => { if (MODE === 'phrase' && !document.hidden) BASKET.refresh().catch(e => console.warn('[chiron] basket not refreshed:', e.message)); };
+  document.addEventListener('visibilitychange', refreshBasket);
+  window.addEventListener('focus', refreshBasket);
+  refreshBasket();
 
   // A message that opens like a phrase request moves to the phrase builder before it is sent. The
   // composer's own Enter / Send handlers live in a closure inside acolyte, so the interception sits on
@@ -604,6 +735,7 @@ function setHint(scope) {
   // so a restored "Medical Italian" session still claimed to search everything.
   // Two places saying different things about what is being searched is worse
   // than either one alone.
+  if (MODE === 'phrase') { $('#tsub').textContent = 'Phrase coach · say it in English, get the Italian'; return; }
   $('#tsub').textContent = FOCUS
     ? `Scope: ${FOCUS.lessons.length} lesson${FOCUS.lessons.length === 1 ? '' : 's'} · grounded in your library`
     : `Scope: ${scope === 'all' ? 'everything' : (DOMAIN_LABEL[scope] || scope)}`
@@ -696,6 +828,10 @@ function wireSteps(box) {
         const done = live;
         live = null;
         done.finish();
+        // The panel stops at the first text; a phrase reply goes on arriving, so a page-owned line keeps the count honest.
+        if (MODE === 'phrase' && own.dataset.streaming === '1' && !own.querySelector('.ask-still-writing')) {
+          stillWriting(document, own, done.born);
+        }
       }
     }
   }).observe(box, { childList: true, subtree: true, characterData: true });
@@ -707,6 +843,7 @@ function wireDispatch(handle, panel) {
   wireSteps(box);
   let timer;
   new MutationObserver(() => {
+    LAST_DOM_CHANGE = Date.now();
     clearTimeout(timer);
     // An answer streams in token by token; wait for it to settle rather than
     // rebuilding the row on every chunk.
@@ -717,6 +854,8 @@ function wireDispatch(handle, panel) {
           if (msg.dataset.streaming === '1' || !msg.dataset.raw) return;
           msg.dataset.phraseBound = '1';
           bindPhrase(msg);
+          const pend = readPending(localStorage);                                     // only the answer to the PENDING question clears it
+          if (pend && msg.previousElementSibling?.dataset.raw?.trim() === pend.text && !/interrupted/i.test(msg.innerText)) clearPending(localStorage);
         });
       }
       box.querySelectorAll('.acolyte-msg.assistant:not([data-acts])').forEach(msg => {
@@ -1027,7 +1166,7 @@ async function post(path, body) {
   });
   const txt = await r.text();
   let data; try { data = JSON.parse(txt); } catch { data = { detail: txt.slice(0, 200) }; }
-  if (!r.ok) throw new Error(data.detail || `${r.status} ${r.statusText}`);
+  if (!r.ok) throw new Error(data.detail || data.error || `${r.status} ${r.statusText}`);
   return data;
 }
 

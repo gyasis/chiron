@@ -8,12 +8,20 @@ turn is the learner's Italian attempt it coaches that attempt instead.
 Importable: `await coach(messages)` -> {"content": markdown, "kind", "steps": [...], "total_ms"}.
 The server (server/phrase_coach.py) calls it for POST /ask/phrase/api/chat.
 
-A PromptChain of four function steps, sharing one per-call state:
+Streaming: coach_stream() is an async generator that yields the reply section by section as each is ready (every phrase
+runs its own BUILD -> CHECK pipeline concurrently; its Italian line is emitted first, then the "How it's built" sections
+in order, then the shared teaching, then SPEAK and the hidden blocks last); coach() folds it for stream:false and the tests.
+
+Steps, sharing one per-call state:
   1 UNDERSTAND  (mistral, JSON)      classify the latest turn: new_request | attempt | question; for a new
-                                     request extract meaning, situation, listener, default register, nuance
-  2 BUILD       (glm, JSON)          the native sentence, register, variants, the literal trap
-  3 CHECK       (mistral, JSON)      critic: natural? register label true? A failed check re-asks BUILD once
-  4 TEACH/COACH (glm, markdown)      new_request -> pattern lesson; attempt -> coaching; question -> short answer
+                                     request extract the list of phrases (one per numbered entry), situation,
+                                     listener, default register, nuance
+  2 BUILD       (glm, JSON)          ONE call builds all N phrases: items[{it, register, variants, literal_trap}]
+  3 CHECK       (mistral, JSON)      ONE call reviews all N. Flagged items only are re-asked of BUILD (once)
+  4 TEACH/COACH (glm, markdown)      new_request -> per-phrase "How it's built" + pattern lesson; attempt ->
+                                     coaching; question -> short answer. For new_request and attempt a DIAGRAM
+                                     call (glm, JSON) annotates the Italian token by token; for new_request it
+                                     runs concurrently with TEACH. A DIAGRAM failure drops the diagram, never the reply.
 Steps 2 and 3 pass through for an attempt or a question.
 
 Models go through the Atelier governor's Ollama route (/api/chat), the same hop mock_oral uses. glm runs with
@@ -27,7 +35,6 @@ import asyncio, json, os, re, sys, time
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-from promptchain import PromptChain
 import ledger   # shared chains/ledger.py — one full prompt/response record per model call
 import obs      # shared chains/obs.py — phase markers (no-ops unless a run directory is set)
 import httpx
@@ -38,6 +45,7 @@ GOVERNOR = os.environ.get("ATELIER_GOVERNOR", "http://localhost:8799/llm/ollama"
 # chiron_models because that resolver maps bare cloud ids, while these are the governor's own tags.
 MODEL_THINK = os.environ.get("CH_PHRASE_MODEL_THINK", "glm-5.3:cloud")                 # BUILD, TEACH, COACH
 MODEL_FAST = os.environ.get("CH_PHRASE_MODEL_FAST", "mistral-large-3:675b-cloud")      # UNDERSTAND, CHECK
+MODEL_STRUCT = os.environ.get("CH_PHRASE_MODEL_STRUCT", MODEL_FAST)                    # HOW-IT'S-BUILT, DIAGRAM (structure, no thinking)
 READ_S = float(os.environ.get("CH_PHRASE_READ_S", "170"))
 HISTORY_TURNS = 8
 REGISTERS = ("lei", "tu", "neutral")
@@ -80,6 +88,7 @@ def extract_json(s):
 
 
 _FENCE = re.compile(r"```phrase[^\S\n]*\n([\s\S]*?)```", re.I)
+_DFENCE = re.compile(r"```diagram[^\S\n]*\n([\s\S]*?)```", re.I)
 _META = re.compile(r"```meta[^\S\n]*\n([\s\S]*?)```", re.I)
 _SPEAK = re.compile(r"\[\[\s*SPEAK\s*\]\][\s\S]*?\[\[\s*/?\s*SPEAK\s*\]\]", re.I)
 
@@ -140,17 +149,36 @@ class Run:
         self.last_phrase = next((p for p in (phrase_block(t["content"]) for t in reversed(self.history)
                                              if t["role"] == "assistant") if p), None)
         self.steps: list[dict] = []
-        self.understand = self.build = self.check = None
+        self.q: asyncio.Queue = asyncio.Queue()      # sections of the reply, in order; None ends the stream
+        self.parts: list[str] = []
+        self.first_text_ms = None
+        self.understand = self.check = None
+        self.items: list[dict] = []          # the built phrases (one dict per phrase, in the learner's order)
+        self.diagram_error = None
         self.overrides: list[dict] = []
         self.content = ""
         self.t0 = time.time()
 
+    def emit(self, text: str) -> None:
+        """Append one section to the reply and hand it to the stream. The reply only ever grows at its end."""
+        if not text:
+            return
+        if self.first_text_ms is None:
+            self.first_text_ms = int((time.time() - self.t0) * 1000)
+        self.parts.append(text)
+        self.q.put_nowait(text)
+
     def transcript(self) -> str:
         out = []
         for t in self.history:
-            text = _FENCE.sub("", _SPEAK.sub("", str(t["content"]))).strip()
+            text = _DFENCE.sub("", _FENCE.sub("", _SPEAK.sub("", str(t["content"])))).strip()
             out.append(f"{'LEARNER' if t['role'] == 'user' else 'COACH'}: {text[:1200]}")
         return "\n\n".join(out) or "(no earlier turns)"
+
+
+def ledger_step(step: str) -> str:
+    """The ledger's step name: the step without its phrase number ("how-built 2" -> "how_built", "diagram 1.2" -> "diagram")."""
+    return re.sub(r"[\s\d.]+$", "", step).replace("-", "_").replace(" ", "_")
 
 
 async def model_call(run: Run, step: str, tag: str, system: str, user: str) -> str:
@@ -165,7 +193,7 @@ async def model_call(run: Run, step: str, tag: str, system: str, user: str) -> s
 
     obs.phase(step, "start")
     try:
-        text = await ledger.chain_call(SOURCE, {"name": tag}, system + "\n\n{input}", user, fn)
+        text = await ledger.chain_call(SOURCE, {"name": tag}, system + "\n\n{input}", user, fn, step=ledger_step(step))
     finally:
         obs.phase(step, "end")
     m = metas[-1]
@@ -209,48 +237,60 @@ Classify the LATEST learner turn:
 - "new_request": they want to say something in Italian (usually written in English, e.g. "how do I say ...").
 - "attempt": they wrote Italian in answer to the coach's last "Your turn" practice sentence (see LAST PRACTICE below).
 - "question": a follow-up about the last phrase (why, what about another form, can I also say ...).
-For a new_request also extract what is needed to build the sentence. Reply with ONLY a JSON object:
-{"kind": "new_request|attempt|question", "meaning": "what they really mean, in English", "situation": "where/when", "listener": "who they are speaking to", "register_default": "lei|tu|neutral", "register_reason": "one short reason", "nuance": "politeness, urgency or tone that matters, or empty"}
-For the other kinds the other fields may be empty strings."""
+For a new_request also extract what is needed to build the sentences. Reply with ONLY a JSON object:
+{"kind": "new_request|attempt|question", "meaning": "what they really mean, in English", "phrases": [{"en": "one phrase to say, in English, complete and self-contained", "situation": "where/when for this phrase, or empty"}], "situation": "where/when", "listener": "who they are speaking to", "register_default": "lei|tu|neutral", "register_reason": "one short reason", "nuance": "politeness, urgency or tone that matters, or empty"}
+"phrases": ONE item for a single request. When the learner lists several (a numbered list, several separate questions, "these phrases"), one item per numbered entry or separate request, in their order, keeping each item's full wording. Never merge, drop, split or invent items.
+For the other kinds the other fields may be empty strings and "phrases" an empty list."""
 
 BUILD_SYS = """You write Italian the way a native speaker actually says it in a given situation. Never translate word for word: if the literal wording is not what Italians say, give what they say.
-Reply with ONLY a JSON object:
-{"it": "the main sentence", "register": "lei|tu|neutral", "register_note": "one short line on why", "variants": [{"it": "...", "register": "lei|tu|neutral", "why": "..."}], "literal_trap": {"it": "the word-for-word version an English speaker would produce", "why": "why it sounds off or wrong"}}
+You are given N numbered phrases. Build ALL N in one answer. Reply with ONLY a JSON object:
+{"items": [{"it": "the main sentence", "register": "lei|tu|neutral", "register_note": "one short line on why", "variants": [{"it": "...", "register": "lei|tu|neutral", "why": "..."}], "literal_trap": {"it": "the word-for-word version an English speaker would produce", "why": "why it sounds off or wrong"}}]}
+"items" has exactly N entries, in the same order as the numbered phrases.
 Rules:
 - register is "lei" or "tu" only if the sentence contains an address form (Lei/tu verb endings, pronouns, imperatives, polite openers like "Scusi"/"Scusa"). A sentence with no address form is "neutral".
 - variants: the other register's version only when it differs from the main sentence, plus at most one common alternative phrasing. An empty list is fine.
 - Say what the learner asked for. Do not add openers, greetings or content they did not ask for.
 - literal_trap.it must be what a literal translation would give, even if it is wrong."""
 
-CHECK_SYS = """You are a strict native-speaker reviewer of an Italian phrase built for an English-speaking learner.
-Judge: (1) is "it" what a native would really say in this situation, not a literal translation? (2) is the register label true (a sentence with no Lei/tu form is "neutral", and "lei" requires a Lei form)? (3) are the variants correct, and is each variant's register label true? (4) is literal_trap really the word-for-word version, and is its "why" right?
-The register labels are a fixed vocabulary (lei, tu, neutral): never ask to rename or reword a label. Flag ONLY real errors: unnatural or wrong Italian, a false register label, a wrong variant, a wrong literal_trap. Do not request additions, extra variants, extra notes, openers the learner did not ask for, or stylistic preferences. If the phrase is acceptable, ok is true.
-Reply with ONLY a JSON object: {"ok": true|false, "fixes": ["one concrete instruction per real error"]}. "fixes" is empty when ok is true."""
+CHECK_SYS = """You are a strict native-speaker reviewer of Italian phrases built for an English-speaking learner. You review N numbered items in one go.
+For each item judge: (1) is "it" what a native would really say in this situation, not a literal translation? (2) is the register label true (a sentence with no Lei/tu form is "neutral", and "lei" requires a Lei form)? (3) are the variants correct, and is each variant's register label true? (4) is literal_trap really the word-for-word version, and is its "why" right?
+The register labels are a fixed vocabulary (lei, tu, neutral): never ask to rename or reword a label. Flag ONLY real errors: unnatural or wrong Italian, a false register label, a wrong variant, a wrong literal_trap. Do not request additions, extra variants, extra notes, openers the learner did not ask for, or stylistic preferences. If every item is acceptable, ok is true.
+Reply with ONLY a JSON object: {"ok": true|false, "fixes": [{"item": <1-based item number>, "fix": "one concrete instruction for that item"}]}. "fixes" is empty when ok is true; list only items that have a real error."""
 
-TEACH_SYS = """You are a warm, concise Italian coach. You do not just translate: you teach the learner to build the sentence themselves.
-Write a reply in English with Italian phrases, in exactly this Markdown layout, nothing before or after it except the meta block:
+_BUILD_UP = """**How it's built**
+3 to 5 numbered steps that build THIS sentence up from the English intent to the final Italian, each step showing the growing Italian fragment in bold followed by a plain-English reason. Step 1 picks the core (the verb or structure and why: a thing you do takes "fare"; an obligation takes dovere + infinitive; asking about a procedure takes impersonal "si" + verb). Then add each piece in Italian order and say why it goes there: question word first, then the verb, then the object with its article, then time or place, then a politeness opener such as "Scusi" and where it goes. The last step is the full sentence. Name each word by its dictionary form (lemma) exactly as a word-by-word grammar breakdown would, so the steps and that breakdown agree. Example shape:
+1. **devo fare** ("I have to do"): an obligation is dovere + infinitive.
+2. **devo fare la presa di servizio**: add the object with its article.
+3. **dove e quando devo fare la presa di servizio?**: question words open the sentence.
+4. **Scusi, dove e quando devo fare la presa di servizio?**: the polite opener goes first."""
 
-**<the main Italian sentence>**
-Register: <Lei (formal) | tu (informal) | neutral>. <short reason>
-<Formal (Lei): ... or Informal (tu): ... , only if a different-register variant is given; skip otherwise>
+TEACH_ITEM_SYS = """You are a warm, concise Italian coach. You do not just translate: you teach the learner to build the sentence themselves.
+You are given ONE phrase whose Italian sentence and register are already written elsewhere. Write only this section, in English with Italian, nothing before or after it:
+
+""" + _BUILD_UP + """
+
+Use the given sentence exactly. Keep it tight. Reply with ONLY the section, starting with the line **How it's built**, then the numbered steps. The bold fragment of the LAST step is the given sentence, character for character."""
+
+TEACH_SHARED_SYS = """You are a warm, concise Italian coach. You teach the learner to build sentences themselves.
+You are given N phrases (N is at least 1). Each phrase already has its Italian sentence, its register line and its "How it's built" steps, written elsewhere: do NOT write those. Write only the shared teaching below, in English with Italian phrases, in exactly this Markdown layout, nothing before or after it except the meta block:
 
 **The pattern**
-`<reusable frame with [slots]>` then 2-3 swaps showing the same frame in other situations (Italian, with a 2-4 word English gloss each).
+`<reusable frame with [slots]>` then 2-3 swaps showing the same frame in other situations (Italian, with a 2-4 word English gloss each). One shared pattern if the phrases really share one; otherwise one pattern per group of phrases that do, each named by the phrase numbers it covers.
 
 **Why Italians say it this way**
-1-2 lines.
+1-2 lines (per pattern group when there are several).
 
 **Watch out**
-The literal trap: show the WRONG form and the RIGHT form as two different strings (wrong: the word-for-word version an English speaker would say; right: the main sentence), and say why the wrong one is off. If the wrong form is not different from the right one, leave this whole section out.
+Only for a phrase that has a LITERAL TRAP: show the WRONG form and the RIGHT form as two different strings (wrong: the word-for-word version an English speaker would say; right: the main sentence), and say why the wrong one is off. Name the phrase number when N is more than 1. If no phrase has a trap, leave this whole section out.
 
 **Your turn**
 One new English sentence that needs the same pattern, for the learner to try in Italian.
 
 Then end with a fenced block tagged meta holding ONLY this JSON (the system builds the spoken and data blocks from it, so do not write any [[SPEAK]] text yourself):
 ```meta
-{"pattern": "the frame, same as above", "slots": ["slot names"], "practice": "the Your-turn English sentence", "breakdown": [{"chunk": "Italian chunk", "gloss": "English gloss"}]}
+{"pattern": "the main frame, same as above", "slots": ["slot names"], "practice": "the Your-turn English sentence", "breakdown": [{"chunk": "Italian chunk", "gloss": "English gloss"}]}
 ```
-Use the given sentence and register exactly as provided. 2 to 4 breakdown chunks. Keep the whole reply short."""
+Use the given sentences and registers exactly as provided. 2 to 4 breakdown chunks (from the first phrase). Keep the reply tight."""
 
 COACH_SYS = """You are a warm, concise Italian coach marking a learner's attempt. The learner was asked to say a practice sentence in Italian, using a pattern from the last phrase.
 Write in English with Italian phrases, in exactly this Markdown layout, nothing before or after it except the meta block:
@@ -258,6 +298,7 @@ Write in English with Italian phrases, in exactly this Markdown layout, nothing 
 **<what is right>** One or two lines on what they got right (be specific and encouraging).
 **Corrections** Each error as a bullet: what they wrote -> what it should be, and why. If there are no errors, say so plainly. Correctness wins over encouragement: never call a wrong form right.
 **Corrected sentence** the full correct Italian sentence in bold, with a Register line.
+""" + _BUILD_UP.replace("this sentence", "the CORRECTED sentence, so the learner sees how it should have been constructed") + """
 **Your turn** One new English sentence on the same pattern, slightly harder.
 
 Then end with a fenced block tagged meta holding ONLY this JSON (the system builds the spoken and data blocks from it, so do not write any [[SPEAK]] text yourself):
@@ -272,6 +313,13 @@ End with a fenced block tagged meta holding ONLY this JSON (the system builds th
 {"speak": "the main Italian example sentence of your answer, or an empty string if the answer has no new Italian sentence"}
 ```"""
 
+DIAGRAM_SYS = """You are a grammar annotator for a BASIC student: assume zero prior grammar. For each given Italian sentence you produce an interlinear word-by-word breakdown. Parse EVERY word once, in order, including every function word (articles, prepositions, conjunctions, clitics such as "si", the pieces of a verb phrase). Never skip a word as obvious.
+Reply with ONLY one JSON object, no prose and no Markdown fence: {"sentences": [one object per given sentence, in the same order]}. The "surface" values of the tokens, joined in order, must spell the sentence exactly (apostrophes kept, sentence punctuation dropped); never skip, merge, split or add a word. Each sentence object:
+{"translation": "natural English", "literal": "word-order gloss, word for word", "mood": "declarative|interrogative|imperative|...", "registerNote": "formal address (Lei) / informal (tu) / neutral, in a few words", "tokens": [...], "phrases": [...], "tips": ["0-2 short gotchas or mnemonics"]}
+token: {"surface": "the word exactly as written (keep apostrophes, drop sentence punctuation)", "lemma": "dictionary form: infinitive for verbs, masculine singular for nouns, adjectives and articles", "pos": "DET|NOUN|PROPN|ADJ|VERB|AUX|ADP|PRON|ADV|CCONJ|SCONJ|NUM", "layer": "articles|nouns|verbs|adverbs|preps|pronouns", "features": {"gender": "m", "number": "sg"}, "note": "plain-English beginner explanation, one or two short sentences"}
+"layer" is REQUIRED and must be exactly one of the six words articles, nouns, verbs, adverbs, preps, pronouns, never anything else (not "conjunctions", "adjectives", "determiners"): DET -> articles; NOUN, PROPN, ADJ, NUM -> nouns; VERB, AUX -> verbs; ADV -> adverbs; ADP, CCONJ, SCONJ -> preps; PRON -> pronouns. "features" values are single strings. layer choice: articles = definite/indefinite articles; nouns = nouns, proper nouns AND adjectives (say which noun the adjective agrees with); verbs = every verb form including auxiliaries and infinitives; adverbs = adverbs and the question words dove, quando, come, quanto; preps = prepositions, articulated prepositions (del = di + il) AND conjunctions (e, o, ma, che); pronouns = personal, clitic (si, mi, ti, lo, ci), relative and interrogative pronouns (chi, che, cosa).
+notes: verbs give infinitive, tense, mood, person and number, regular or irregular, the auxiliary if compound, whether reflexive or impersonal "si"; for dovere/potere/volere say they take an infinitive; articles give gender, number and any elision (un'); prepositions say what they govern; pronouns say what they replace and where they sit.
+phrases: multi-word units taught as a unit (fixed expressions, collocations, verb phrases such as "fare la presa di servizio", articulated-preposition + noun): {"surface": "verbatim from the sentence", "type": "collocation|idiom|fixed-expression|verb-phrase", "literal": "word-order gloss", "meaning": "what it means as a unit", "note": "why it is idiomatic / when to reuse it"}. Use the same dictionary forms and the same analysis a teacher would give when explaining how the sentence is built. No HTML. Write every explanation in English."""
 
 # ── deterministic register rule ──────────────────────────────────────────────────
 
@@ -408,6 +456,15 @@ def fix_register_lines(body: str, label: str, note: str | None, variants: list, 
 
 # ── steps ────────────────────────────────────────────────────────────────────────
 
+def _norm_items(o):
+    """The list of built items in a BUILD reply: {"items": [...]}, or a single bare item."""
+    if isinstance(o, dict) and isinstance(o.get("items"), list):
+        return o["items"]
+    if isinstance(o, dict) and str(o.get("it") or "").strip():
+        return [o]
+    return None
+
+
 def _valid_understand(o):
     if not isinstance(o, dict) or o.get("kind") not in KINDS:
         return f'"kind" must be one of {list(KINDS)}'
@@ -416,10 +473,19 @@ def _valid_understand(o):
             return '"meaning" is required for a new_request'
         if o.get("register_default") not in REGISTERS:
             return '"register_default" must be lei|tu|neutral'
+        ph = o.get("phrases")
+        if ph is not None and (not isinstance(ph, list) or not all(isinstance(p, dict) and str(p.get("en") or "").strip() for p in ph)):
+            return '"phrases" must be a list of {"en": ..., "situation": ...}'
     return None
 
 
-def _valid_build(o):
+def phrases_of(u: dict) -> list[dict]:
+    """The phrases to build: the UNDERSTAND list, else the single meaning."""
+    ph = [{"en": str(p["en"]).strip(), "situation": str(p.get("situation") or "").strip()} for p in (u.get("phrases") or [])]
+    return ph or [{"en": str(u.get("meaning") or "").strip(), "situation": str(u.get("situation") or "").strip()}]
+
+
+def _valid_one(o):
     if not isinstance(o, dict) or not str(o.get("it") or "").strip():
         return '"it" is required'
     if o.get("register") not in REGISTERS:
@@ -434,10 +500,43 @@ def _valid_build(o):
     return None
 
 
+def _valid_items(n: int):
+    def validate(o):
+        items = _norm_items(o)
+        if items is None:
+            return 'return {"items": [ ... ]}'
+        if len(items) != n:
+            return f'"items" needs exactly {n} entries, in the order of the numbered phrases; got {len(items)}'
+        for i, it in enumerate(items, 1):
+            issue = _valid_one(it)
+            if issue:
+                return f"items[{i}]: {issue}"
+        return None
+    return validate
+
+
 def _valid_check(o):
     if not isinstance(o, dict) or not isinstance(o.get("ok"), bool) or not isinstance(o.get("fixes", []), list):
-        return 'need {"ok": bool, "fixes": [..]}'
+        return 'need {"ok": bool, "fixes": [{"item": n, "fix": "..."}]}'
     return None
+
+
+def _flagged(check: dict, n: int) -> dict[int, list[str]]:
+    """item index -> reviewer fixes. A fix without a usable item number applies to every item."""
+    if check.get("ok"):
+        return {}
+    out: dict[int, list[str]] = {}
+    for f in check.get("fixes") or []:
+        text = str(f.get("fix") if isinstance(f, dict) else f).strip()
+        if not text:
+            continue
+        k = f.get("item") if isinstance(f, dict) else None
+        if isinstance(k, int) and not isinstance(k, bool) and 1 <= k <= n:
+            out.setdefault(k - 1, []).append(text)
+        else:
+            for i in range(n):
+                out.setdefault(i, []).append(text)
+    return out
 
 
 def _understand_user(run: Run) -> str:
@@ -447,47 +546,60 @@ def _understand_user(run: Run) -> str:
             f"{practice}\n\nLATEST LEARNER TURN:\n{run.user}")
 
 
-def _build_user(run: Run, fixes: list | None = None) -> str:
+def _build_user(run: Run, phrases: list, k: int, fixes: list | None = None, prev: dict | None = None) -> str:
+    """The BUILD prompt for ONE phrase (index k); the other phrases ride along as context only."""
     u = run.understand
-    text = (f"Meaning: {u.get('meaning')}\nSituation: {u.get('situation') or 'unspecified'}\n"
+    p = phrases[k]
+    text = (f"Overall meaning: {u.get('meaning')}\nSituation: {u.get('situation') or 'unspecified'}\n"
             f"Listener: {u.get('listener') or 'unspecified'}\nDefault register: {u.get('register_default')} "
             f"({u.get('register_reason') or 'no reason given'})\nNuance: {u.get('nuance') or 'none'}\n"
             f"Learner's own words: {run.user}")
+    others = "\n".join(f"- {q['en']}" for i, q in enumerate(phrases) if i != k)
+    if others:
+        text += f"\n\nOTHER PHRASES IN THE SAME MESSAGE (context only, do not build them; keep register and wording consistent with them):\n{others}"
+    text += f"\n\nN = 1. PHRASES TO BUILD:\n1. {p['en']}" + (f" (situation: {p['situation']})" if p["situation"] else "")
     if fixes:
-        text += "\n\n## REVIEWER FIXES (apply every one)\n" + "\n".join(f"- {f}" for f in fixes) + \
-                f"\n\nPrevious attempt:\n{json.dumps(run.build, ensure_ascii=False)}"
+        text += "\n\n## REVIEWER FIXES (apply every one)\n" + "\n".join(f"- phrase 1: {f}" for f in fixes) + \
+                f"\n\nPrevious attempt:\n{json.dumps({'items': [prev]}, ensure_ascii=False)}"
     return text
 
 
 async def step_understand(run: Run) -> str:
     run.understand = await json_step(run, "understand", MODEL_FAST, UNDERSTAND_SYS, _understand_user(run), _valid_understand)
-    log(f"understand: kind={run.understand['kind']}")
+    log(f"understand: kind={run.understand['kind']}"
+        + (f" phrases={len(phrases_of(run.understand))}" if run.understand["kind"] == "new_request" else ""))
     return run.understand["kind"]
 
 
-async def step_build(run: Run, _prev: str) -> str:
-    if run.understand["kind"] != "new_request":
-        return _prev
-    run.build = await json_step(run, "build", MODEL_THINK, BUILD_SYS, _build_user(run), _valid_build)
-    return json.dumps(run.build, ensure_ascii=False)
-
-
-async def step_check(run: Run, _prev: str) -> str:
-    if run.understand["kind"] != "new_request":
-        return _prev
+async def build_check_one(run: Run, phrases: list, k: int) -> dict:
+    """BUILD then CHECK for one phrase, in its own pipeline so the phrases do not wait for each other. A flagged item is
+    rebuilt once, alone. The register rule has the last word on the labels."""
+    n, tag = len(phrases), (f" {k + 1}" if len(phrases) > 1 else "")
+    o = await json_step(run, f"build{tag}", MODEL_THINK, BUILD_SYS, _build_user(run, phrases, k), _valid_items(1))
+    item = _norm_items(o)[0]
     user = (f"Situation: {run.understand.get('situation')}; listener: {run.understand.get('listener')}; "
-            f"meaning: {run.understand.get('meaning')}\n\nPHRASE UNDER REVIEW:\n{json.dumps(run.build, ensure_ascii=False)}")
-    run.check = await json_step(run, "check", MODEL_FAST, CHECK_SYS, user, _valid_check)
-    fixes = [str(f) for f in run.check.get("fixes") or [] if str(f).strip()]
-    if not run.check["ok"] and fixes:
-        log(f"check: {len(fixes)} fix(es) — re-asking build once: {fixes}")
-        run.build = await json_step(run, "build_fix", MODEL_THINK, BUILD_SYS, _build_user(run, fixes), _valid_build)
-    else:
-        log("check: ok")
-    correct_build_registers(run.build, run.overrides)
-    run.steps.append({"step": "register", "model": "rule", "done_reason": "n/a", "latency_ms": 0,
-                      "thinking_chars": 0, "overrides": list(run.overrides)})
-    return json.dumps(run.build, ensure_ascii=False)
+            f"meaning: {phrases[k]['en']}\n\nN = 1 ITEMS UNDER REVIEW:\n"
+            f"{json.dumps({'items': [{'item': 1, **item}]}, ensure_ascii=False)}")
+    chk = await json_step(run, f"check{tag}", MODEL_FAST, CHECK_SYS, user, _valid_check)
+    fixes = _flagged(chk, 1).get(0)
+    if fixes:
+        log(f"check{tag}: {fixes} — re-asking build for this phrase only, once")
+        o = await json_step(run, f"build_fix{tag}", MODEL_THINK, BUILD_SYS, _build_user(run, phrases, k, fixes, item), _valid_items(1))
+        item = _norm_items(o)[0]
+    correct_build_registers(item, run.overrides)
+    return item
+
+
+_REG_NAME = {"lei": "Lei (formal)", "tu": "tu (informal)", "neutral": "neutral"}
+
+
+def header_block(k: int, n: int, it: dict) -> str:
+    """The Italian sentence, its register line and its variants, written by code from the built item (no model call)."""
+    lines = [f"**{k + 1}) {it['it']}**" if n > 1 else f"**{it['it']}**",
+             f"Register: {_REG_NAME[it['register']]}." + (f" {it['register_note']}" if it.get("register_note") else "")]
+    for v in it["variants"]:
+        lines.append(f"{_REG_PREFIX[v['register']]} {v['it']}" + (f" — {v['why']}" if v.get("why") else ""))
+    return "\n".join(lines) + "\n\n"
 
 
 def _split_meta(text: str) -> tuple[str, dict]:
@@ -507,6 +619,7 @@ def _norm(t: str) -> str:
 
 _WATCH = re.compile(r"\*\*Watch out\*\*[\s\S]*?(?=\n\s*\*\*|\Z)")
 _FRAG = re.compile(r"\*\*([^*]+)\*\*|\*([^*]+)\*|`([^`]+)`|\"([^\"]+)\"|«([^»]+)»")
+_HOW = re.compile(r"\*\*How it[’']s built[^*\n]*\*\*")
 
 
 def drop_same_string_watch_out(body: str, correct: str, trap: str) -> str:
@@ -523,23 +636,48 @@ def drop_same_string_watch_out(body: str, correct: str, trap: str) -> str:
     return body
 
 
-def _tail(it: str, data: dict) -> str:
-    """The spoken block and the machine-readable phrase block, built here so both are always well-formed."""
-    spoken = it.replace("[[", "").replace("]]", "").strip()
-    return f"\n\n[[SPEAK]]{spoken}[[/SPEAK]]\n\n```phrase\n{json.dumps(data, ensure_ascii=False)}\n```"
+def check_built(body: str, n: int) -> None:
+    """Every phrase must carry its own "How it's built" section of 3+ numbered steps; else the reply is asked again."""
+    parts = _HOW.split(body)
+    if len(parts) - 1 != n:
+        raise ValueError(f'the reply has {len(parts) - 1} "How it\'s built" sections, it needs exactly {n} (one per phrase)')
+    for k, sec in enumerate(parts[1:], 1):
+        sec = sec.split("\n**", 1)[0]
+        if len(re.findall(r"(?m)^\s*\d+[.)]\s", sec)) < 3:
+            raise ValueError(f'the "How it\'s built" section of phrase {k} needs 3 to 5 numbered steps')
 
 
-async def _markdown_step(run: Run, step: str, system: str, user: str, need: tuple) -> tuple[str, dict]:
-    """TEACH/COACH call; the reply must carry a meta block with the `need` keys, else it is asked again (twice at most)."""
+def _json_fence(obj) -> str:
+    """JSON for a fenced block: a backtick inside a string is written as \\u0060 so model text cannot close the fence."""
+    return json.dumps(obj, ensure_ascii=False).replace("`", "\\u0060")
+
+
+def _tail(speak: str, data: dict, diagram: dict | None = None, related: dict | None = None) -> str:
+    """The spoken block and the machine-readable blocks (phrase, diagram, related), built here so they are always well-formed."""
+    spoken = speak.replace("[[", "").replace("]]", "").strip()
+    out = f"\n\n[[SPEAK]]{spoken}[[/SPEAK]]\n\n```phrase\n{_json_fence(data)}\n```"
+    if diagram:
+        out += f"\n\n```diagram\n{_json_fence(diagram)}\n```"
+    if related:
+        out += f"\n\n```related\n{_json_fence(related)}\n```"
+    return out
+
+
+async def _markdown_step(run: Run, step: str, system: str, user: str, need: tuple, check=None, with_meta: bool = True,
+                         tag: str | None = None) -> tuple[str, dict]:
+    """TEACH/COACH call; the reply must carry a meta block with the `need` keys (and pass `check`), else it is asked again (twice at most)."""
     cur, err = user, "no attempt made"
     for attempt in range(1, 3):
         try:
-            text = await model_call(run, step, MODEL_THINK, system, cur)
-            body, meta = _split_meta(text)
+            text = await model_call(run, step, tag or MODEL_THINK, system, cur)
+            body, meta = _split_meta(text) if with_meta else (text.strip(), {})
             missing = [k for k in need if not meta.get(k)]
             if missing:
                 raise ValueError(f"meta block lacks {missing}")
-            return _SPEAK.sub("", _FENCE.sub("", body)).strip(), meta
+            body = _SPEAK.sub("", _DFENCE.sub("", _FENCE.sub("", body))).strip()
+            if check:
+                check(body)
+            return body, meta
         except (ModelReplyError, ValueError) as e:
             err = str(e)
             log(f"{step} attempt {attempt}: {err} — retrying")
@@ -547,74 +685,485 @@ async def _markdown_step(run: Run, step: str, system: str, user: str, need: tupl
     raise RuntimeError(f"{step}: no usable reply — {err}")
 
 
-async def step_teach(run: Run, _prev: str) -> str:
-    kind = run.understand["kind"]
-    if kind == "question":
-        lp = json.dumps(run.last_phrase, ensure_ascii=False) if run.last_phrase else "(none)"
-        user = f"LAST PHRASE (data): {lp}\n\nEARLIER TURNS:\n{run.transcript()}\n\nLEARNER ASKS:\n{run.user}"
-        text = await model_call(run, "answer", MODEL_THINK, ANSWER_SYS, user)
-        try:
-            body, meta = _split_meta(text)
-        except ValueError as e:
-            log(f"answer: {e}; speaking the last phrase instead")
-            body, meta = text, {}
-        body = _SPEAK.sub("", _FENCE.sub("", body)).strip()
-        speak = str(meta.get("speak") or "").strip() or str((run.last_phrase or {}).get("it") or "").strip()
-        if not speak:
-            log("answer: no Italian sentence to speak (no new example, no earlier phrase) — reply has no SPEAK block")
-        run.content = body + (f"\n\n[[SPEAK]]{speak.replace('[[', '').replace(']]', '')}[[/SPEAK]]" if speak else "")
-        return run.content
-    if kind == "attempt":
-        lp = run.last_phrase or {}
-        user = (f"PRACTICE SENTENCE (English): {lp.get('practice') or '(unknown; infer it from the earlier turns)'}\n"
-                f"PATTERN TAUGHT: {lp.get('pattern') or '(unknown)'} with slots {lp.get('slots') or []}\n"
-                f"EARLIER TURNS:\n{run.transcript()}\n\nLEARNER'S ITALIAN ATTEMPT:\n{run.user}")
-        body, meta = await _markdown_step(run, "coach", COACH_SYS, user, ("corrected", "practice"))
-        reg = meta.get("register") if meta.get("register") in REGISTERS else "neutral"
-        reg = apply_register_rule(meta["corrected"], reg, "corrected", run.overrides)
-        body = fix_register_lines(body, reg, _REG_NOTE[reg], [], meta["corrected"])
-        data = {"it": meta["corrected"], "en_intent": lp.get("practice") or "", "register": reg, "variants": [],
-                "breakdown": meta.get("breakdown") or [], "pattern": meta.get("pattern") or lp.get("pattern") or "",
-                "slots": meta.get("slots") or [], "practice": meta["practice"]}
-        run.content = body + _tail(meta["corrected"], data)
-        return run.content
-    b = run.build
-    user = (f"MAIN SENTENCE (use exactly): {b['it']}\nREGISTER (use exactly): {b['register']} — {b.get('register_note') or ''}\n"
-            f"VARIANTS: {json.dumps(b['variants'], ensure_ascii=False)}\nLITERAL TRAP: {json.dumps(b['literal_trap'], ensure_ascii=False)}\n"
-            f"The learner's intent: {run.understand.get('meaning')} (situation: {run.understand.get('situation')})")
-    if _norm(b["literal_trap"]["it"]) == _norm(b["it"]):
-        user += "\n\nThe literal trap is not different from the main sentence: leave the Watch out section out."
-    body, meta = await _markdown_step(run, "teach", TEACH_SYS, user, ("pattern", "practice"))
-    body = drop_same_string_watch_out(body, b["it"], b["literal_trap"]["it"])
-    body = fix_register_lines(body, b["register"], b.get("register_note"), b["variants"], b["it"])
-    data = {"it": b["it"], "en_intent": run.understand.get("meaning") or run.user, "register": b["register"],
-            "variants": [{"it": v["it"], "register": v["register"]} for v in b["variants"]],
-            "breakdown": meta.get("breakdown") or [], "pattern": meta["pattern"], "slots": meta.get("slots") or [],
-            "practice": meta["practice"]}
-    run.content = body + _tail(b["it"], data)
-    return run.content
+# ── DIAGRAM: the AnnotatedPassage (lib/schemas/widget-spec.ts) built from the sentences ─────────
+
+AP_LAYERS = [("articles", "Articles", True), ("nouns", "Nouns", True), ("verbs", "Verbs", True), ("adverbs", "Adverbs", True),
+             ("preps", "Prepositions", True), ("pronouns", "Pronouns", True), ("phrases", "Phrases", True),
+             ("translation", "Translation", True), ("literal", "Word for word", False)]
+AP_TOKEN_LAYERS = {"articles", "nouns", "verbs", "adverbs", "preps", "pronouns"}
 
 
-# ── entry point ──────────────────────────────────────────────────────────────────
+def _ap_norm(t: str) -> str:
+    return str(t).replace("’", "'").replace("‘", "'").lower()
+
+
+_LETTERS = re.compile(r"[\W_]+")
+
+
+def covers(surfaces: list[str], sentence: str) -> bool:
+    """The tokens, joined, spell the sentence once whitespace, punctuation and case are ignored."""
+    return _LETTERS.sub("", _ap_norm("".join(surfaces))) == _LETTERS.sub("", _ap_norm(sentence))
+
+
+POS_LAYER = {"DET": "articles", "NOUN": "nouns", "PROPN": "nouns", "ADJ": "nouns", "NUM": "nouns", "VERB": "verbs", "AUX": "verbs",
+             "ADV": "adverbs", "ADP": "preps", "CCONJ": "preps", "SCONJ": "preps", "PRON": "pronouns"}
+
+
+def normalize_sentences(o) -> int:
+    """Mechanical repairs of the DIAGRAM reply, in place: a token whose layer is not one of the six is given the layer its
+    part of speech maps to, and a feature whose value is not a scalar is written as a string. Returns how many tokens changed
+    (logged by the caller). A token whose pos is unknown is left for the validator."""
+    n = 0
+    for s in (o.get("sentences") if isinstance(o, dict) else None) or []:
+        for t in (s.get("tokens") if isinstance(s, dict) else None) or []:
+            if not isinstance(t, dict):
+                continue
+            pos = str(t.get("pos") or "").upper()
+            if t.get("layer") not in AP_TOKEN_LAYERS and pos in POS_LAYER:
+                t["layer"] = POS_LAYER[pos]; n += 1
+            f = t.get("features")
+            if isinstance(f, dict) and not all(isinstance(v, (str, int, float, bool)) for v in f.values()):
+                t["features"] = {k: v if isinstance(v, (str, int, float, bool)) else ", ".join(map(str, v)) if isinstance(v, list) else str(v)
+                                 for k, v in f.items()}; n += 1
+    return n
+
+
+def _nonempty(v) -> bool:
+    return isinstance(v, str) and bool(v.strip())
+
+
+def validate_sentences(o, texts: list[str]):
+    """Shape check of the model's DIAGRAM reply against the zod ApSentence/ApToken/ApPhrase required fields.
+    Returns an issues string (fed back to the model for repair) or None."""
+    if not isinstance(o, dict) or not isinstance(o.get("sentences"), list):
+        return 'return {"sentences": [ ... ]}'
+    ss = o["sentences"]
+    if len(ss) != len(texts):
+        return f'"sentences" needs exactly {len(texts)} entries, one per given sentence in order; got {len(ss)}'
+    issues = []
+    for i, (s, text) in enumerate(zip(ss, texts), 1):
+        p = f"sentences[{i}]"
+        if not isinstance(s, dict):
+            issues.append(f"{p}: must be an object"); continue
+        if not _nonempty(s.get("translation")):
+            issues.append(f"{p}.translation: required")
+        toks = s.get("tokens")
+        if not isinstance(toks, list) or not toks:
+            issues.append(f"{p}.tokens: need at least one token"); continue
+        if all(isinstance(t, dict) and _nonempty(t.get("surface")) for t in toks) and not covers([t["surface"] for t in toks], text):
+            issues.append(f'{p}.tokens: the surfaces, joined in order, must spell exactly "{text}": parse every word once, skip none, add none')
+        for j, t in enumerate(toks, 1):
+            q = f"{p}.tokens[{j}]"
+            if not isinstance(t, dict):
+                issues.append(f"{q}: must be an object"); continue
+            if not _nonempty(t.get("surface")):
+                issues.append(f"{q}.surface: required")
+            elif _ap_norm(t["surface"]).strip(" .,;:!?«»\"'") not in _ap_norm(text):
+                issues.append(f'{q}.surface "{t["surface"]}" does not occur in the sentence')
+            if not _nonempty(t.get("pos")):
+                issues.append(f"{q}.pos: required")
+            if t.get("layer") not in AP_TOKEN_LAYERS:
+                issues.append(f"{q}.layer: must be one of {sorted(AP_TOKEN_LAYERS)}")
+            if not _nonempty(t.get("note")):
+                issues.append(f"{q}.note: required")
+            if "lemma" in t and t["lemma"] is not None and not isinstance(t["lemma"], str):
+                issues.append(f"{q}.lemma: must be a string")
+            f = t.get("features")
+            if f is not None and not (isinstance(f, dict) and all(isinstance(v, (str, int, float, bool)) for v in f.values())):
+                issues.append(f"{q}.features: must be an object of strings, numbers or booleans")
+        for j, ph in enumerate(s.get("phrases") or [], 1):
+            q = f"{p}.phrases[{j}]"
+            if not isinstance(ph, dict) or not all(_nonempty(ph.get(k)) for k in ("surface", "type", "meaning")):
+                issues.append(f"{q}: needs surface, type and meaning")
+        if not isinstance(s.get("tips", []), list) or not all(isinstance(x, str) for x in s.get("tips", [])):
+            issues.append(f"{p}.tips: must be a list of strings")
+    return "; ".join(issues[:6]) or None
+
+
+def assemble_passage(sents: list, texts: list[str]) -> dict:
+    """The AnnotatedPassage document: layers and ids come from code, the sentences from the model."""
+    out = []
+    for i, (s, text) in enumerate(zip(sents, texts), 1):
+        sent = {"idx": i, "text": text, "translation": s["translation"].strip(), "tokens": s["tokens"],
+                "phrases": s.get("phrases") or [], "tips": [t for t in s.get("tips") or [] if str(t).strip()]}
+        for k in ("literal", "mood", "registerNote"):
+            if _nonempty(s.get(k)):
+                sent[k] = s[k].strip()
+        out.append(sent)
+    return {"type": "annotated-passage", "id": "ap-coach", "language": "it", "domain": None, "genre": "dialogue-script",
+            "layers": [{"key": k, "label": lab, "defaultOn": on} for k, lab, on in AP_LAYERS],
+            "sentences": out, "anomalies": []}
+
+
+def validate_annotated_passage(doc) -> list[str]:
+    """Mirror of AnnotatedPassageSchema's required fields (lib/schemas/widget-spec.ts). Python mirror, not zod via node:
+    the schema is TypeScript, and running it needs a build step this chain does not otherwise have."""
+    if not isinstance(doc, dict):
+        return ["document must be an object"]
+    iss = []
+    if doc.get("type") != "annotated-passage": iss.append("type must be 'annotated-passage'")
+    if not _nonempty(doc.get("id")): iss.append("id required")
+    if doc.get("language") not in ("it", "de"): iss.append("language must be it|de")
+    if doc.get("domain") is not None and not isinstance(doc["domain"], str): iss.append("domain must be a string or null")
+    if doc.get("genre") not in ("narrative", "expository", "exam-question", "dialogue-script"): iss.append("genre invalid")
+    ly = doc.get("layers")
+    if not isinstance(ly, list) or not ly or not all(isinstance(l, dict) and _nonempty(l.get("key")) and _nonempty(l.get("label"))
+                                                      and isinstance(l.get("defaultOn"), bool) for l in ly):
+        iss.append("layers: non-empty list of {key,label,defaultOn:bool}")
+    ss = doc.get("sentences")
+    if not isinstance(ss, list) or not ss:
+        iss.append("sentences: non-empty list")
+    else:
+        for s in ss:
+            if not (isinstance(s, dict) and isinstance(s.get("idx"), int) and not isinstance(s["idx"], bool) and s["idx"] >= 1
+                    and _nonempty(s.get("text")) and isinstance(s.get("translation"), str)
+                    and isinstance(s.get("tokens"), list) and s["tokens"]
+                    and isinstance(s.get("phrases", []), list) and isinstance(s.get("tips", []), list)):
+                iss.append(f"sentence {s.get('idx') if isinstance(s, dict) else '?'} is malformed")
+                continue
+            for t in s["tokens"]:
+                if not (isinstance(t, dict) and isinstance(t.get("surface"), str) and isinstance(t.get("pos"), str)
+                        and t.get("layer") in AP_TOKEN_LAYERS and isinstance(t.get("note"), str)):
+                    iss.append(f"sentence {s['idx']}: a token is malformed"); break
+    if not isinstance(doc.get("anomalies", []), list): iss.append("anomalies must be a list")
+    return iss
+
+
+_SENT_SPLIT = re.compile(r"(?<=[.?!])\s+")
+
+
+def merge_sentences(parts: list[dict]) -> dict:
+    """One ApSentence from the annotations of an item's sub-sentences, in order."""
+    if len(parts) == 1:
+        return parts[0]
+    out = {"translation": " ".join(p["translation"].strip() for p in parts),
+           "tokens": [t for p in parts for t in p["tokens"]],
+           "phrases": [x for p in parts for x in (p.get("phrases") or [])],
+           "tips": [x for p in parts for x in (p.get("tips") or [])][:3]}
+    for k, sep in (("literal", " "), ("mood", " / "), ("registerNote", " ")):
+        vals = [p[k].strip() for p in parts if _nonempty(p.get(k))]
+        if vals:
+            out[k] = sep.join(dict.fromkeys(vals)) if k != "literal" else sep.join(vals)
+    return out
+
+
+def _fixed_validate(step: str, o, sent: str):
+    n = normalize_sentences(o)
+    if n:
+        log(f"{step}: {n} token field(s) repaired by rule (layer from pos / scalar features)")
+    return validate_sentences(o, [sent])
+
+
+async def diagram_item(run: Run, text: str, k: int, n: int) -> dict:
+    """The annotation of ONE phrase: one call per Italian sentence in it, run concurrently, merged into one ApSentence.
+    One call per sentence is the finest split there is (a sentence is the unit the model parses in one pass); a phrase
+    that holds three sentences costs three calls. Raises when a sentence cannot be annotated."""
+    subs = [x for x in _SENT_SPLIT.split(text.strip()) if x] or [text]
+
+    async def one(j: int, sent: str):
+        user = f"SENTENCES (annotate each, in this order):\n1. {sent}"
+        step = "diagram" if n == 1 and len(subs) == 1 else f"diagram {k + 1}.{j}"
+        o = await json_step(run, step, MODEL_STRUCT, DIAGRAM_SYS, user, lambda x: _fixed_validate(step, x, sent), max_repair=2)
+        return o["sentences"][0]
+    return merge_sentences(list(await asyncio.gather(*[one(j, s) for j, s in enumerate(subs, 1)])))
+
+
+def finish_diagram(run: Run, results: list, texts: list[str], t0: float) -> dict | None:
+    """The AnnotatedPassage from every phrase's annotation, or None (logged, recorded) when any of them failed."""
+    for r in results:
+        if isinstance(r, asyncio.CancelledError):
+            raise r
+    errs = [r for r in results if isinstance(r, BaseException)]
+    try:
+        if errs and len(errs) == len(results):
+            raise errs[0]
+        for r, t in zip(results, texts):
+            if isinstance(r, BaseException):
+                log(f"diagram dropped for {t!r}: {type(r).__name__}: {r}"[:400])
+        keep = [(r, t) for r, t in zip(results, texts) if not isinstance(r, BaseException)]
+        doc = assemble_passage([r for r, _ in keep], [t for _, t in keep])
+        bad = validate_annotated_passage(doc)
+        if bad:
+            raise ValueError(f"assembled passage invalid: {bad}")
+        return doc
+    except Exception as e:
+        run.diagram_error = f"{type(e).__name__}: {e}"[:400]
+        log(f"diagram FAILED, reply goes out without it: {run.diagram_error}")
+        run.steps.append({"step": "diagram", "model": MODEL_THINK, "done_reason": "failed", "thinking_chars": 0,
+                          "latency_ms": int((time.time() - t0) * 1000), "error": run.diagram_error})
+        return None
+
+
+# ── RELATED: study topics from the diagram, lessons from the library ─────────────────────────
+
+MODALS = {"dovere", "potere", "volere", "sapere"}
+INTERROG = {"dove", "quando", "come", "perché", "chi", "quanto", "quale", "cosa"}
+ARTICULATED = {"del", "dello", "della", "dell'", "dei", "degli", "delle", "al", "allo", "alla", "all'", "ai", "agli", "alle",
+               "dal", "dallo", "dalla", "dall'", "dai", "dagli", "dalle", "nel", "nello", "nella", "nell'", "nei", "negli", "nelle",
+               "sul", "sullo", "sulla", "sull'", "sui", "sugli", "sulle", "col", "coi"}
+RELATED = None     # set by the server: fn(topics) -> {"lessons": [...], "missing": [...]}; None = no lookup wired
+
+
+def study_topics(doc: dict) -> list[dict]:
+    """Study topics from the DIAGRAM tokens (lemma, pos, features, notes) and phrases: constructions first, then verb
+    lemmas, then vocabulary. Each topic is {topic, kind, query}; `query` is the text the library search runs."""
+    cons: dict[str, str] = {}
+    verbs: dict[str, str] = {}
+    vocab: dict[str, str] = {}
+    interrog: list[str] = []
+    for s in doc.get("sentences") or []:
+        toks = s.get("tokens") or []
+        note_rn = _ap_norm(s.get("registerNote") or "")
+        if re.search(r"\blei\b|formal|polite|cortesia", note_rn) and "informal" not in note_rn.replace("not informal", ""):
+            cons.setdefault("forma di cortesia (Lei)", "Lei forma di cortesia formale")
+        for i, t in enumerate(toks):
+            surf = _ap_norm(t.get("surface") or "")
+            lemma = _ap_norm(t.get("lemma") or surf)
+            feats = " ".join(str(v).lower() for v in (t.get("features") or {}).values())
+            note = _ap_norm(t.get("note") or "")
+            layer, pos = t.get("layer"), str(t.get("pos") or "").upper()
+            if layer == "verbs" and pos == "VERB" and re.search(r"(are|ere|ire|rre|arsi|ersi|irsi)$", lemma) and lemma not in ("essere", "avere"):
+                verbs.setdefault(lemma, f"verbo {lemma} {surf}")
+            if layer == "verbs" and lemma in MODALS:
+                nxt = next((u for u in toks[i + 1:i + 3] if u.get("layer") == "verbs"), None)
+                if nxt and (re.search(r"(are|ere|ire|rre|arsi|ersi|irsi)$", _ap_norm(nxt.get("surface") or ""))
+                            or "infinit" in " ".join(str(v).lower() for v in (nxt.get("features") or {}).values())):
+                    cons.setdefault(f"{lemma} + infinito", f"{lemma} infinito verbi modali {surf}")
+            if lemma == "si" and ("impersonal" in note or "imperson" in feats):
+                cons.setdefault("si impersonale", "si impersonale")
+            if layer == "preps" and ("articulated" in note or "articulated" in feats or surf in ARTICULATED):
+                cons.setdefault("preposizioni articolate", "preposizioni articolate")
+            if lemma in INTERROG and layer in ("adverbs", "pronouns"):
+                interrog.append(lemma)
+            if "passato prossimo" in feats or "passato prossimo" in note or "present perfect" in feats:
+                cons.setdefault("passato prossimo", "passato prossimo")
+            if "condizionale" in feats or "conditional" in feats:
+                cons.setdefault("condizionale", "condizionale")
+            if re.search(r"\bfuturo\b|\bfuture\b", feats):
+                cons.setdefault("futuro semplice", "futuro semplice")
+        for ph in s.get("phrases") or []:
+            if str(ph.get("type")) in ("collocation", "idiom", "fixed-expression") and len(vocab) < 4:
+                vocab.setdefault(_ap_norm(ph["surface"]).strip(), _ap_norm(ph["surface"]).strip())
+    if interrog:
+        uniq = list(dict.fromkeys(interrog))[:3]
+        cons.setdefault(f"interrogativi ({', '.join(uniq)})", "interrogativi " + " ".join(uniq) + " domande")
+    return ([{"topic": k, "kind": "construction", "query": q} for k, q in cons.items()]
+            + [{"topic": k, "kind": "verb", "query": q} for k, q in list(verbs.items())[:6]]
+            + [{"topic": k, "kind": "vocabulary", "query": q} for k, q in vocab.items()])
+
+
+async def step_related(run: Run, doc: dict | None) -> dict | None:
+    """Study-more lookup. Needs the diagram's lemmas; any failure is logged and the section is simply left out."""
+    if doc is None or RELATED is None:
+        return None
+    t0 = time.time()
+    try:
+        topics = study_topics(doc)
+        res = await asyncio.to_thread(RELATED, topics) if topics else None
+        run.steps.append({"step": "related", "model": "bm25", "done_reason": "stop", "thinking_chars": 0,
+                          "latency_ms": int((time.time() - t0) * 1000), "topics": [t["topic"] for t in topics]})
+        if res and (res.get("lessons") or res.get("missing")):
+            return {"lessons": res.get("lessons") or [], "missing": res.get("missing") or []}
+        return None
+    except Exception as e:
+        log(f"related FAILED, reply goes out without it: {type(e).__name__}: {e}")
+        run.steps.append({"step": "related", "model": "bm25", "done_reason": "failed", "thinking_chars": 0,
+                          "latency_ms": int((time.time() - t0) * 1000), "error": str(e)[:300]})
+        return None
+
+
+async def _diagram_related(run: Run, texts: list[str]) -> tuple[dict | None, dict | None]:
+    """DIAGRAM then RELATED for sentences that are already final (the COACH path's corrected sentence)."""
+    t0 = time.time()
+    res = await asyncio.gather(*[diagram_item(run, t, k, len(texts)) for k, t in enumerate(texts)], return_exceptions=True)
+    doc = finish_diagram(run, list(res), texts, t0)
+    return doc, await step_related(run, doc)
+
+
+# ── TEACH / COACH / ANSWER ───────────────────────────────────────────────────────
+
+def _teach_user(run: Run) -> str:
+    phrases = phrases_of(run.understand)
+    parts = []
+    for k, (b, ph) in enumerate(zip(run.items, phrases), 1):
+        same = _norm(b["literal_trap"]["it"]) == _norm(b["it"])
+        trap = ("LITERAL TRAP: none — the literal version is not different from the main sentence: "
+                + ("leave the Watch out section out." if len(run.items) == 1 else "leave this phrase out of the Watch out section.")
+                if same else f"LITERAL TRAP: {json.dumps(b['literal_trap'], ensure_ascii=False)}")
+        parts.append((f"PHRASE {k} (English: {ph['en']})\n" if len(run.items) > 1 else "")
+                     + f"MAIN SENTENCE (use exactly): {b['it']}\nREGISTER (use exactly): {b['register']} — {b.get('register_note') or ''}\n"
+                       f"VARIANTS: {json.dumps(b['variants'], ensure_ascii=False)}\n{trap}")
+    return (f"N = {len(run.items)}\n\n" + "\n\n".join(parts)
+            + f"\n\nThe learner's intent: {run.understand.get('meaning')} (situation: {run.understand.get('situation')})")
+
+
+def _item_user(run: Run, phrases: list, k: int, it: dict) -> str:
+    return (f"PHRASE (English): {phrases[k]['en']}\nMAIN SENTENCE (use exactly): {it['it']}\n"
+            f"REGISTER (use exactly): {it['register']} — {it.get('register_note') or ''}")
+
+
+_STEP = re.compile(r"(?m)^(\s*)(\d+)([.)])\s.*$")
+
+
+def pin_last_step(steps: str, sentence: str) -> str:
+    """The last numbered step must show the BUILD sentence exactly. When its bold fragment differs, the step is replaced
+    by one that does, and the swap is logged."""
+    last = None
+    for last in _STEP.finditer(steps):
+        pass
+    if last is None:
+        return steps
+    frags = re.findall(r"\*\*([^*]+)\*\*", last.group(0))
+    if frags and _norm(frags[0]) == _norm(sentence) and frags[0].strip() == sentence.strip():
+        return steps
+    log(f"how-built: last step {frags[0] if frags else last.group(0)!r} != BUILD sentence {sentence!r} — replaced")
+    new = f"{last.group(1)}{last.group(2)}{last.group(3)} **{sentence}**: the full sentence."
+    return steps[:last.start()] + new + steps[last.end():]
+
+
+async def teach_item(run: Run, phrases: list, k: int, it: dict) -> str:
+    """The "How it's built" section of one phrase, headed so a numbered list of phrases stays readable."""
+    n = len(phrases)
+    body, _ = await _markdown_step(run, f"how-built {k + 1}" if n > 1 else "how-built", TEACH_ITEM_SYS,
+                                   _item_user(run, phrases, k, it), (), check=lambda b: check_built(b, 1), with_meta=False,
+                                   tag=MODEL_STRUCT)
+    steps = pin_last_step(_HOW.sub("", body, count=1).strip(), it["it"])
+    head = f"**How it's built · {k + 1}) {it['it']}**" if n > 1 else "**How it's built**"
+    return f"{head}\n{steps}\n\n"
+
+
+async def teach_shared(run: Run) -> tuple[str, dict]:
+    """Pattern, why, watch out and your turn for all phrases, plus the meta block."""
+    body, meta = await _markdown_step(run, "teach", TEACH_SHARED_SYS, _teach_user(run), ("pattern", "practice"))
+    if len(run.items) == 1:
+        body = drop_same_string_watch_out(body, run.items[0]["it"], run.items[0]["literal_trap"]["it"])
+    return body + "\n", meta
+
+
+async def _new_request(run: Run) -> None:
+    """Every phrase runs its own BUILD -> CHECK pipeline concurrently; its Italian and register line are emitted as soon as it
+    (and every earlier phrase) is done, then the How-it's-built sections in order, then the shared teaching, then the
+    hidden blocks. The reply text only ever grows at its end, so it can be streamed."""
+    phrases = phrases_of(run.understand)
+    n = len(phrases)
+    run.items = [None] * n
+    hdr = [asyncio.Event() for _ in range(n)]
+    how: list = [None] * n
+    diag: list = [None] * n
+    t_diag = time.time()
+
+    async def item(k: int) -> None:
+        it = await build_check_one(run, phrases, k)
+        run.items[k] = it
+        how[k] = asyncio.ensure_future(teach_item(run, phrases, k, it))                 # started now, emitted in order
+        diag[k] = asyncio.ensure_future(diagram_item(run, it["it"], k, n))
+        if k:
+            await hdr[k - 1].wait()
+        run.emit(header_block(k, n, it))
+        hdr[k].set()
+
+    tasks = [asyncio.ensure_future(item(k)) for k in range(n)]
+    shared = None
+    try:
+        await asyncio.gather(*tasks)
+        run.steps.append({"step": "register", "model": "rule", "done_reason": "n/a", "latency_ms": 0,
+                          "thinking_chars": 0, "overrides": list(run.overrides)})
+        shared = asyncio.ensure_future(teach_shared(run))
+        for f in how:
+            run.emit(await f)
+        body, meta = await shared
+        run.emit(body)
+        texts = [b["it"] for b in run.items]
+        doc = finish_diagram(run, list(await asyncio.gather(*diag, return_exceptions=True)), texts, t_diag)
+        rel = await step_related(run, doc)
+    finally:
+        for t in [*tasks, *how, *diag, shared]:
+            if t is not None and not t.done():
+                t.cancel()
+    first = run.items[0]
+    var = lambda b: [{"it": v["it"], "register": v["register"]} for v in b["variants"]]
+    data = {"it": first["it"], "en_intent": (run.understand.get("meaning") or run.user) if n == 1 else "; ".join(p["en"] for p in phrases),
+            "register": first["register"], "variants": var(first), "breakdown": meta.get("breakdown") or [],
+            "pattern": meta["pattern"], "slots": meta.get("slots") or [], "practice": meta["practice"],
+            "items": [{"it": b["it"], "en": p["en"], "register": b["register"], "variants": var(b)} for b, p in zip(run.items, phrases)]}
+    run.emit(_tail(" ".join(texts), data, doc, rel))
+
+
+async def _attempt(run: Run) -> None:
+    lp = run.last_phrase or {}
+    user = (f"PRACTICE SENTENCE (English): {lp.get('practice') or '(unknown; infer it from the earlier turns)'}\n"
+            f"PATTERN TAUGHT: {lp.get('pattern') or '(unknown)'} with slots {lp.get('slots') or []}\n"
+            f"EARLIER TURNS:\n{run.transcript()}\n\nLEARNER'S ITALIAN ATTEMPT:\n{run.user}")
+    body, meta = await _markdown_step(run, "coach", COACH_SYS, user, ("corrected", "practice"), check=lambda b: check_built(b, 1))
+    reg = meta.get("register") if meta.get("register") in REGISTERS else "neutral"
+    reg = apply_register_rule(meta["corrected"], reg, "corrected", run.overrides)
+    run.emit(fix_register_lines(body, reg, _REG_NOTE[reg], [], meta["corrected"]) + "\n")
+    # the corrected sentence only exists once COACH has answered, so its diagram follows it
+    doc, rel = await _diagram_related(run, [meta["corrected"]])
+    data = {"it": meta["corrected"], "en_intent": lp.get("practice") or "", "register": reg, "variants": [],
+            "breakdown": meta.get("breakdown") or [], "pattern": meta.get("pattern") or lp.get("pattern") or "",
+            "slots": meta.get("slots") or [], "practice": meta["practice"],
+            "items": [{"it": meta["corrected"], "en": lp.get("practice") or "", "register": reg, "variants": []}]}
+    run.emit(_tail(meta["corrected"], data, doc, rel))
+
+
+async def _question(run: Run) -> None:
+    lp = json.dumps(run.last_phrase, ensure_ascii=False) if run.last_phrase else "(none)"
+    user = f"LAST PHRASE (data): {lp}\n\nEARLIER TURNS:\n{run.transcript()}\n\nLEARNER ASKS:\n{run.user}"
+    text = await model_call(run, "answer", MODEL_THINK, ANSWER_SYS, user)
+    try:
+        body, meta = _split_meta(text)
+    except ValueError as e:
+        log(f"answer: {e}; speaking the last phrase instead")
+        body, meta = text, {}
+    body = _SPEAK.sub("", _DFENCE.sub("", _FENCE.sub("", body))).strip()
+    speak = str(meta.get("speak") or "").strip() or str((run.last_phrase or {}).get("it") or "").strip()
+    if not speak:
+        log("answer: no Italian sentence to speak (no new example, no earlier phrase) — reply has no SPEAK block")
+    run.emit(body + (f"\n\n[[SPEAK]]{speak.replace('[[', '').replace(']]', '')}[[/SPEAK]]" if speak else ""))
+
+
+# ── entry points ─────────────────────────────────────────────────────────────────
+
+async def _pipeline(run: Run, session_id: str | None) -> None:
+    try:
+        with ledger.context(session_id=session_id, run_id=ledger.new_run_id()):
+            kind = await step_understand(run)
+            await {"new_request": _new_request, "attempt": _attempt, "question": _question}[kind](run)
+    finally:
+        run.q.put_nowait(None)
+
+
+async def coach_stream(messages: list[dict], session_id: str | None = None):
+    """Async generator over the reply: yields ("text", chunk) as each section of the answer is ready, then ("done", result).
+    The text only ever grows at its end. A failed run raises from the generator after the chunks already yielded;
+    cancelling the consumer cancels the run."""
+    run = Run(messages)
+    task = asyncio.ensure_future(_pipeline(run, session_id))
+    try:
+        while True:
+            chunk = await run.q.get()
+            if chunk is None:
+                break
+            yield ("text", chunk)
+        await task                                       # re-raises the run's failure
+        yield ("done", {"content": "".join(run.parts), "kind": run.understand["kind"], "steps": run.steps,
+                        "register_overrides": run.overrides, "diagram_error": run.diagram_error,
+                        "first_text_ms": run.first_text_ms, "total_ms": int((time.time() - run.t0) * 1000)})
+    finally:
+        if not task.done():
+            task.cancel()
+
 
 async def coach(messages: list[dict], session_id: str | None = None) -> dict:
-    """Run the chain over an Ollama-style message list (system turns are ignored; the prompts live here)."""
-    run = Run(messages)
-
-    async def s1(_x): return await step_understand(run)
-    async def s2(x): return await step_build(run, x)
-    async def s3(x): return await step_check(run, x)
-    async def s4(x): return await step_teach(run, x)
-
-    chain = PromptChain(models=[], instructions=[s1, s2, s3, s4], verbose=False)
-    with ledger.context(session_id=session_id, run_id=ledger.new_run_id()):
-        await chain.process_prompt_async(run.user)
-    return {"content": run.content, "kind": run.understand["kind"], "steps": run.steps, "register_overrides": run.overrides,
-            "total_ms": int((time.time() - run.t0) * 1000)}
+    """The whole reply at once (stream:false and the tests): coach_stream folded."""
+    async for kind, val in coach_stream(messages, session_id):
+        if kind == "done":
+            return val
 
 
 if __name__ == "__main__":
     q = " ".join(sys.argv[1:]) or "How do I say I'm here for my specialization?"
     out = asyncio.run(coach([{"role": "user", "content": q}]))
     print(out["content"])
-    print(json.dumps({"kind": out["kind"], "steps": out["steps"], "total_ms": out["total_ms"]}, indent=1))
+    print(json.dumps({"kind": out["kind"], "steps": out["steps"], "first_text_ms": out["first_text_ms"], "total_ms": out["total_ms"]}, indent=1))

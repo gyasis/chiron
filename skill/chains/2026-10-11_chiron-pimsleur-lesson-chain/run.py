@@ -37,6 +37,7 @@ USAGE
 -----
   CH_TOPIC="common irregular verbs in the passato prossimo and futuro" CH_STAGE=all python3 run.py
   Env: CHIRON_PIMSLEUR_ENGINE=modal bakes on the chiron-bake Modal lane instead of the Mac.
+  Env: CH_TARGETS=given -> the planner must use the phrases listed in CH_SOURCE as the lesson targets (server/pimsleur_jobs.py sets it)
   Env: CH_TOPIC (required) · CH_LESSONS (default: planner decides, 3-6) · CH_DOMAIN (language-it|medical-italian)
        CH_SOURCE (file or dir of .md/.txt/.json to ground in; e.g. a study pack) · CH_STAGE (plan|author|card|bake|
        listen|export|report|all; comma list ok) · CH_FORCE=1 (re-author) · plus the pure-italian chain's model env vars.
@@ -64,7 +65,16 @@ FORMAT = os.environ.get("CH_FORMAT", "drill")   # drill | exam (commission quest
 # Library tags stamped on every lesson of the season (chiron.json "labels"); "Pimsleur" is added by the
 # library builder itself. CH_LABELS="Ordine exam,…" — an exam season is the Ordine test by construction.
 LABELS = [t.strip() for t in os.environ.get("CH_LABELS", "Ordine exam" if FORMAT == "exam" else "").split(",") if t.strip()]
-TOPIC_SLUG = re.sub(r"[^a-z0-9]+", "-", TOPIC.lower()).strip("-")[:40]
+def _clip_slug(base: str, limit: int = 40) -> str:      # same rule as dispatch.clip_slug: cut at a hyphen, not mid-word
+    if len(base) <= limit:
+        return base
+    cut = base[:limit]
+    if base[limit] != "-" and "-" in cut:
+        cut = cut.rsplit("-", 1)[0]
+    return cut.strip("-")
+
+
+TOPIC_SLUG = _clip_slug(re.sub(r"[^a-z0-9]+", "-", TOPIC.lower()).strip("-"))
 SEASON_FILE = GEN / f"chiron-pimsleur-{TOPIC_SLUG}.season.json"
 
 
@@ -154,6 +164,12 @@ def plan_valid(o) -> list:
     return iss
 
 
+GIVEN_TARGETS = ("\nThe SOURCE lists TARGET PHRASES the learner chose. Use EXACTLY those phrases as the lessons' targets: spread them "
+                 "across the lessons from easiest to hardest, keep their wording and their Lei/tu form, and add supporting "
+                 "sentences only where a lesson would otherwise have fewer than 5 targets. Never replace or rewrite a given phrase.\n"
+                 if os.environ.get("CH_TARGETS") == "given" else "")
+
+
 async def p0_plan() -> dict:
     if SEASON_FILE.exists() and not FORCE:
         print(f"[P0] resume {SEASON_FILE.name}")
@@ -165,7 +181,7 @@ Pimsleur: short audio lessons; each introduces a few speakable items, recalls th
 recycles earlier lessons. Grammar is absorbed from whole sentences, never lectured.
 
 TOPIC: {TOPIC}
-{SRC}
+{SRC}{GIVEN_TARGETS}
 Plan {count} lessons, ordered easiest -> hardest, each building on the previous. For each lesson give 5-7 TARGETS:
 the concrete Italian phrases/sentences (or exact forms) it must make the learner able to SAY. Prefer high-frequency,
 useful sentences over isolated forms. `pattern` = the one grammatical pattern the lesson's table will show

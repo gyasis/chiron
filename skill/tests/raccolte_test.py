@@ -24,7 +24,7 @@ class T(unittest.TestCase):
 
     def test_default_always_exists(self):
         cols = c.get(D).json()["collections"]
-        self.assertEqual([x["id"] for x in cols], ["parole-deboli"])
+        self.assertEqual([x["id"] for x in cols], ["parole-deboli", "pimsleur-basket"])
         self.assertEqual(cols[0]["name"], "Parole deboli")
 
     def test_create_and_existing(self):

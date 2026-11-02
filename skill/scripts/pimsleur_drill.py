@@ -21,7 +21,7 @@ the loudness. Those are exactly where the 2026-10-10 prototype had its bugs.
 
 ITEM BANK — <lesson-dir>/pimsleur.json
   { "title": str, "album": str?, "track": int?, "intro": [str]?, "outro": str?,
-    "voices": {"cue": "pauls_tutor", "target": "lucrezia_italian"}?,
+    "voices": {"cue": "pimsleur_narrator", "target": "lucrezia_italian"}?,
     "items":  [ITEM], "review": [ITEM]? }
   ITEM = { "id": str, "it": str, "en": str, "kind": "phrase"|"question"|"talk",
            "build": [str]?,   # back-chain pieces, shortest first, each a word-suffix of "it"
@@ -42,7 +42,7 @@ ASR_URL = os.environ.get("CHIRON_WHISPER_URL", "http://192.168.0.159:8766")
 QC_FAILED = 3
 MODAL_SYNTH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "modal", "modal_synth.py")
 VOICES_FILE = os.path.expanduser("~/.chiron/voices.json")
-DEFAULT_VOICES = {"cue": "pauls_tutor", "target": "lucrezia_italian"}
+DEFAULT_VOICES = {"cue": "pimsleur_narrator", "target": "lucrezia_italian"}
 LUFS = {"cue": "-18", "target": "-20"}   # the cue voice reads ~2 dB quieter at equal LUFS
 RATE = 24000
 GAP_AFTER_SPEECH = 0.5
