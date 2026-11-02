@@ -571,3 +571,13 @@
 .ld-ctl { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
 .ld-btn { font: inherit; cursor: pointer; border: 1px solid var(--chiron-border); background: var(--chiron-surface); color: var(--chiron-fg); border-radius: 99px; padding: 8px 12px; min-height: 40px; }
 .ld-btn:hover { background: var(--chiron-elevated); }
+
+/* ── Pimsleur live: the pill by the composer, and the notes the drill intent leaves in the thread ── */
+.live-pill { font-weight: 600; min-height: 36px; }
+.live-pill:hover:not(:disabled) { background: var(--chiron-elevated); }
+#livenote { color: var(--chiron-muted); font-size: 12px; flex: 1 1 100%; }
+#livenote:empty { display: none; }
+.ask-local-note { margin: 8px auto; max-width: 880px; width: 100%; padding: 10px 14px; border: 1px solid var(--chiron-border);
+                  border-radius: 12px; background: var(--chiron-elevated); color: var(--chiron-fg-secondary); font-size: 13.5px; }
+.ask-local-note p { margin: 0 0 6px; }
+.ask-local-note p:last-child { margin: 0; }

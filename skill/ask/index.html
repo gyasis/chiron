@@ -118,6 +118,14 @@ button{font:inherit;cursor:pointer}
   .topbar .tools{flex:0 0 auto;display:flex;gap:6px}
   #openlesson{display:none}
   #voicebtn{padding:7px 10px}
+  /* the basket collapses to an icon + count badge so the title and the voice toggle keep their room */
+  #basketbtn{font-size:0;gap:0;min-width:44px;min-height:40px;justify-content:center;padding:0 10px}
+  #basketbtn::before{content:'🎧 ' attr(data-n);font-size:13.5px;font-weight:700}
+  #voicebtn{font-size:0;min-width:44px;min-height:40px;justify-content:center;padding:0 10px}
+  #voicebtn::before{content:'🔊';font-size:15px}
+  #voicebtn:not(.on)::before{opacity:.45}
+  .cmeta{padding:0 12px;margin:-4px auto 10px;gap:8px}
+  .cmeta .live-pill{min-height:44px;padding:0 16px;font-size:14px;font-weight:600}
 }
 /* in-app: the app's ‹ closes Ask, so the web-library links would only strand you in a nested library; the mic can't work in a WebView */
 [data-inapp] .railfoot-link,[data-inapp] .acolyte-mic{display:none!important}
@@ -165,6 +173,8 @@ button{font:inherit;cursor:pointer}
   <div id="host"><div class="boot" id="boot">Starting Chiron · Ask…</div></div>
 
   <div class="cmeta" id="cmeta">
+    <button class="chip live-pill" id="livebtn" type="button" title="Drill the phrases aloud, Pimsleur style">🎧 Pimsleur live<span id="liven"></span></button>
+    <span id="livenote" role="status"></span>
     <span class="grounded" id="grounded"></span>
   </div>
 </main>

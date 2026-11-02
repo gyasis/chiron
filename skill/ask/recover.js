@@ -31,7 +31,7 @@ export function clearPending(storage) {
   try { storage.removeItem(PENDING_KEY); } catch { /* storage blocked: nothing to clear */ }
 }
 
-const HIDDEN = /```(?:phrase|diagram|related|meta)[^\S\n]*\n[\s\S]*?```/gi;
+const HIDDEN = /```(?:phrase|diagram|related|drill|meta)[^\S\n]*\n[\s\S]*?```/gi;
 const SPEAK = /\[\[\s*SPEAK\s*\]\]([\s\S]*?)\[\[\s*\/?\s*SPEAK\s*\]\]/i;
 
 /** The visible text of a raw reply, and the text of its [[SPEAK]] block. */

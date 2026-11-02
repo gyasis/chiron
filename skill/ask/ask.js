@@ -15,8 +15,9 @@ import * as steps from './steps.js';
 import { installInAppBridge } from './inapp.js';
 import { isPhraseRequest, parsePhraseBlock, PHRASE_HOST, PHRASE_MODEL } from './phrase-mode.js';
 import { stillWriting } from './still-writing.js';
-import { savePending, readPending, clearPending, renderRecoveredInto, createRecovery, threadMsg } from './recover.js';
+import { savePending, readPending, clearPending, renderRecoveredInto, createRecovery, threadMsg, splitReply } from './recover.js';
 import { openLiveDrill } from './live-drill.js';
+import { classifyDrillIntent, pickSource, EMPTY_NOTE } from './drill-intent.js';
 import { parseFenceBlock, buildDiagram, buildRelated, buildPimsleurAction, createBasket, buildAddRow } from './coach-extras.js';
 
 const $ = s => document.querySelector(s);
@@ -302,8 +303,7 @@ function applyMode() {
   if (phrase) modeCtl.handle.configure({ rag: { enabled: false } });
   else modeCtl.pickChannel();
   setHint($('#scope').value);          // the topbar line follows the mode: "Phrase coach" vs the librarian's scope
-  const pill = $('#basketbtn');
-  if (pill) { pill.hidden = !phrase; if (!phrase) BASKET?.setOpen(false); else BASKET?.refresh().catch(e => console.warn('[chiron] basket not loaded:', e.message)); }
+  BASKET?.refresh().catch(e => console.warn('[chiron] basket not loaded:', e.message));
 }
 
 /** Change mode and start a fresh thread (setPersona-style changes only redraw the greeting on an empty
@@ -331,6 +331,7 @@ function switchMode(next, note, hero = true) {
  *  dataset for the send buttons, and hide it from the rendered reply. Runs once per finished reply. */
 function bindPhrase(msg) {
   const raw = msg.dataset.raw || '';
+  if (parseFenceBlock(raw, 'drill').ok) return bindDrill(msg);
   const res = parsePhraseBlock(raw);
   if (res.ok) msg.dataset.phrase = JSON.stringify(res.data);
   else console.warn('[chiron] phrase block not bound:', res.reason);
@@ -341,6 +342,120 @@ function bindPhrase(msg) {
         (t.trim().startsWith('{') && t.includes('"type":"annotated-passage"'))) pre.hidden = true;
   }
   if (res.ok) buildExtras(msg, raw, res.data);
+}
+
+/* ─── Pimsleur live: the pill, the drill intent, and the coach's `drill` reply ─── */
+
+let LAST_SEND_TS = 0;      // when the learner last sent something in this page; a fresh `drill` reply opens the player, a restored one does not
+const FRESH_REPLY_MS = 120000;
+const composerEl = () => document.querySelector('#host .acolyte-input');
+
+/** Newest first: each assistant reply's phrases (phrase mode) and Italian [[SPEAK]] text (both modes). */
+function replySources() {
+  return [...(threadBox()?.querySelectorAll('.acolyte-msg.assistant') || [])].reverse().map(m => {
+    let phrases = [];
+    try { const d = JSON.parse(m.dataset.phrase || 'null'); if (d) phrases = phrasesOf(d); }
+    catch (e) { console.warn('[chiron] reply phrases unreadable for the drill:', e && e.message || e); }
+    return { phrases, speak: splitReply(m.dataset.raw || '').speak };
+  });
+}
+
+/** What a drill would play: the composer's lines, else the newest reply's phrases, else the basket. `useComposer` is
+ *  false when the composer holds a command ("play these live") rather than phrases. */
+function drillSource({ useComposer = false } = {}) {
+  return pickSource({ composer: useComposer ? composerEl()?.value : '', replies: replySources(), basket: BASKET?.items || [] });
+}
+
+/** A local note in the thread (never sent to a model). Returns the note so a caller can add controls. */
+function threadNote(text) {
+  const box = threadBox();
+  if (!box) { console.warn('[chiron] thread note not shown, no thread:', text); return null; }
+  document.querySelector('.ask-hero')?.remove();
+  const n = document.createElement('div');
+  n.className = 'ask-local-note';
+  n.setAttribute('role', 'status');
+  const t = document.createElement('p');
+  t.textContent = text;
+  n.appendChild(t);
+  box.appendChild(n);
+  n.scrollIntoView({ block: 'nearest' });
+  return n;
+}
+
+function startDrill(lines) {
+  try {
+    if (!openLiveDrill(lines)) throw new Error('the player did not open');
+    return true;
+  } catch (e) {
+    console.warn('[chiron] live drill did not open:', e && e.message || e);
+    threadNote(`Could not open the live drill: ${e && e.message || e}`);
+    return false;
+  }
+}
+
+/** The learner asked, in their own words, to drill ('drill') or to make the saved lesson ('lesson'). */
+function runDrillIntent(kind) {
+  const lines = drillSource();
+  if (!lines.length) { threadNote(EMPTY_NOTE); return; }
+  const n = lines.length === 1 ? '1 phrase' : `${lines.length} phrases`;
+  if (kind === 'drill') {
+    if (startDrill(lines)) threadNote(`Opened a live drill with ${n}.`);
+    return;
+  }
+  const note = threadNote(`A full Pimsleur lesson from ${n}, saved to your library:`);
+  if (!note) return;
+  const row = buildPimsleurAction(document, lines, body => api('POST', '/api/pimsleur/from-phrases', body), openLiveDrill);
+  note.appendChild(row);
+  row.querySelector('.px-open')?.click();            // straight to the confirm
+}
+
+/** A coach reply of kind "drill": hide its machine block, add a re-open button, and open the player when the reply is fresh. */
+function bindDrill(msg) {
+  for (const pre of msg.querySelectorAll('pre')) if (pre.querySelector('code.language-drill') || /^\s*\{\s*"action"\s*:\s*"open"/.test(pre.textContent)) pre.hidden = true;
+  if (msg.querySelector('.ask-coach-extras')) return;
+  const box = document.createElement('div');
+  box.className = 'ask-coach-extras';
+  const btn = document.createElement('button');
+  btn.type = 'button';
+  btn.className = 'px-open px-live';
+  btn.textContent = '▶ Open the live drill';
+  btn.addEventListener('click', () => {
+    const lines = drillSource();
+    if (!lines.length) { btn.textContent = EMPTY_NOTE; return; }
+    startDrill(lines);
+  });
+  box.appendChild(btn);
+  msg.appendChild(box);
+  if (Date.now() - LAST_SEND_TS < FRESH_REPLY_MS) btn.click();
+}
+
+/** The "🎧 Pimsleur live" pill by the composer: a tap drills drillSource(); the count shows what it would play. */
+function wireLivePill(panel) {
+  const pill = $('#livebtn'), count = $('#liven'), note = $('#livenote');
+  if (!pill) return;
+  let noteTimer;
+  const update = () => {
+    const n = drillSource({ useComposer: true }).length;
+    count.textContent = n ? ` · ${n}` : '';
+    pill.setAttribute('aria-label', n ? `Pimsleur live, ${n} phrases` : 'Pimsleur live');
+  };
+  pill.addEventListener('click', () => {
+    const lines = drillSource({ useComposer: true });
+    clearTimeout(noteTimer);
+    if (!lines.length) {
+      note.textContent = EMPTY_NOTE;
+      noteTimer = setTimeout(() => { note.textContent = ''; }, 7000);
+      return;
+    }
+    note.textContent = '';
+    startDrill(lines);
+  });
+  let timer;
+  const later = () => { clearTimeout(timer); timer = setTimeout(update, 300); };
+  new MutationObserver(later).observe(panel.querySelector('.acolyte-messages'), { childList: true, subtree: true, characterData: true });
+  panel.addEventListener('input', later);
+  BASKET?.subscribe(later);
+  update();
 }
 
 /** The phrases of a reply, for the basket and the Pimsleur action: data.items, else the single top-level phrase. */
@@ -503,7 +618,7 @@ function adoptControls(handle, stats) {
   modeCtl.note = note;
 
   BASKET = createBasket({ doc: document, api, pill: $('#basketbtn'), panel: $('#basketpanel'), onDrill: openLiveDrill });
-  $('#basketbtn').hidden = MODE !== 'phrase';
+  $('#basketbtn').hidden = false;
   RECOVERY = createRecovery({ storage: localStorage, fetchFn: (u, i) => fetch(u, i), now: () => Date.now(), session: askSession,
                               replyState, lastChangeAt: () => LAST_DOM_CHANGE, render: renderRecovered, status: showRecoverStatus });
   const recover = () => { if (MODE === 'phrase' && !document.hidden) RECOVERY.check().catch(e => console.warn('[chiron] recovery failed:', e && e.message || e)); };
@@ -511,7 +626,7 @@ function adoptControls(handle, stats) {
   window.addEventListener('pageshow', recover);
   window.addEventListener('online', recover);
   setTimeout(recover, 1500);                                                // a reload while a run is pending
-  const refreshBasket = () => { if (MODE === 'phrase' && !document.hidden) BASKET.refresh().catch(e => console.warn('[chiron] basket not refreshed:', e.message)); };
+  const refreshBasket = () => { if (!document.hidden) BASKET.refresh().catch(e => console.warn('[chiron] basket not refreshed:', e.message)); };
   document.addEventListener('visibilitychange', refreshBasket);
   window.addEventListener('focus', refreshBasket);
   refreshBasket();
@@ -520,6 +635,16 @@ function adoptControls(handle, stats) {
   // composer's own Enter / Send handlers live in a closure inside acolyte, so the interception sits on
   // the panel in the capture phase, ahead of them.
   const route = (e, text) => {
+    const intent = classifyDrillIntent(text);
+    if (intent !== 'none') {                      // drill / full-lesson intent: handled here, no model is called
+      e.preventDefault();
+      e.stopPropagation();
+      const ta = composerEl();
+      if (ta) { ta.value = ''; ta.dispatchEvent(new Event('input', { bubbles: true })); }
+      runDrillIntent(intent);
+      return;
+    }
+    if (text && text.trim()) LAST_SEND_TS = Date.now();
     if (MODE !== 'librarian' || !isPhraseRequest(text)) return;
     if (panel.querySelector('.acolyte-msg.thinking, .acolyte-msg[data-streaming="1"]')) return;   // a send is in flight
     e.preventDefault();
@@ -566,6 +691,7 @@ function adoptControls(handle, stats) {
   }).observe(panel.querySelector('.acolyte-messages'), { childList: true, subtree: true });
 
   autogrow(panel.querySelector('.acolyte-input'));
+  wireLivePill(panel);
   wireDispatch(handle, panel);
   wireThreads(handle);
 

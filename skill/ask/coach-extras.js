@@ -348,6 +348,7 @@ export function createBasket({ doc, api, pill, panel, target = BASKET_TARGET, on
     const n = st.items.length;
     const label = `🎧 Basket ${n}/${target}`;
     if (pill.textContent !== label) pill.textContent = label;
+    pill.dataset.n = `${n}`;
     pill.setAttribute('aria-expanded', String(st.open));
     panel.hidden = !st.open;
     panel.textContent = '';
