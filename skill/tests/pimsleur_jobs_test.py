@@ -13,6 +13,7 @@ import pimsleur_jobs as P  # noqa: E402
 from fastapi import FastAPI  # noqa: E402
 from fastapi.testclient import TestClient  # noqa: E402
 
+REAL_SUGGEST = P.suggest_topic
 app = FastAPI()
 app.include_router(R.router)
 app.include_router(P.router)
@@ -43,6 +44,7 @@ class Base(unittest.TestCase):
         for f in (TMP / "gen").glob("*"):
             f.unlink()
         P.JOBS.clear()
+        P._topic_cache.clear()
         for f in P.STATE.glob("*.json"):
             f.unlink()
         self.launch = Launcher()
@@ -193,6 +195,80 @@ class Route(Base):
         self.assertTrue(res["runpy"].endswith("2026-10-11_chiron-pimsleur-lesson-chain/run.py"))
         self.assertEqual(res["slug"], "chiron-pimsleur-il-primo-giorno")
         self.assertEqual((res["env"]["CH_SOURCE"], res["env"]["CH_LESSONS"], res["env"]["CH_TARGETS"]), ("/x.json", "3", "given"))
+
+
+class Topic(Base):
+    def setUp(self):
+        super().setUp()
+        self.asked = []
+
+        def fake(phrases):
+            self.asked.append([p["it"] for p in phrases])
+            return "Primo giorno di specializzazione"
+        P.suggest_topic = fake
+
+    def post(self, **body):
+        return c.post("/api/pimsleur/topic", json=body)
+
+    def test_title_comes_from_the_model_and_is_cached_per_basket_content(self):
+        self.fill_basket()
+        a = self.post(collection="pimsleur-basket").json()
+        b = self.post(collection="pimsleur-basket").json()
+        self.assertEqual((a["topic"], a["source"]), ("Primo giorno di specializzazione", "model"))
+        self.assertEqual(b["source"], "cache")
+        self.assertEqual(len(self.asked), 1)                                       # one model call for the same content
+        c.post(BASKET + "/items", json={"items": [{"it": "Una frase nuova.", "source": "ask-phrase"}]})
+        self.assertEqual(self.post(collection="pimsleur-basket").json()["source"], "model")   # changed content: asked again
+        self.assertEqual(len(self.asked), 2)
+
+    def test_model_failure_gives_the_flagged_fallback_and_is_not_cached(self):
+        def boom(phrases):
+            raise ValueError("no usable title")
+        P.suggest_topic = boom
+        r = self.post(phrases=PH).json()
+        self.assertEqual(r["source"], "fallback")
+        self.assertTrue(r["topic"].startswith("Coach phrases:"))
+        self.assertEqual(P._topic_cache, {})
+
+    def test_guards(self):
+        P.ORIGIN_OK = lambda request: False
+        self.assertEqual(self.post(phrases=PH).status_code, 403)
+        P.ORIGIN_OK = None
+        self.assertEqual(c.post("/api/pimsleur/topic", content=b"x").status_code, 400)
+        self.assertEqual(self.post(phrases=[]).status_code, 400)
+        self.assertEqual(self.post(collection="nope").status_code, 404)
+
+    def test_a_cached_title_names_the_season_when_no_topic_is_sent(self):
+        self.fill_basket()
+        self.post(collection="pimsleur-basket")
+        r = c.post(URL, json={"collection": "pimsleur-basket", "confirm": True}).json()
+        self.assertEqual(r["topic"], "Primo giorno di specializzazione")
+
+    def test_the_fallback_title_is_short(self):
+        t = P.derive_topic(PH)
+        self.assertLessEqual(len(t), 60)
+        self.assertEqual(t, "Coach phrases: Where is the clinic / Who is my tutor")
+
+    def test_suggest_topic_reads_one_stop_reply_and_rejects_the_rest(self):
+        import httpx
+        real = httpx.post
+
+        class R:
+            def __init__(self, content, reason="stop"): self.c, self.r = content, reason
+            def raise_for_status(self): pass
+            def json(self): return {"message": {"content": self.c}, "done_reason": self.r}
+        fn = REAL_SUGGEST
+        try:
+            httpx.post = lambda *a, **k: R('"Primo giorno di specializzazione."\nextra line')
+            self.assertEqual(fn(PH), "Primo giorno di specializzazione")
+            httpx.post = lambda *a, **k: R("Titolo", "length")
+            with self.assertRaises(ValueError):
+                fn(PH)
+            httpx.post = lambda *a, **k: R("")
+            with self.assertRaises(ValueError):
+                fn(PH)
+        finally:
+            httpx.post = real
 
 
 if __name__ == "__main__":

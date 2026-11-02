@@ -16,7 +16,7 @@ Audio bakes on the Mac path: CHIRON_PIMSLEUR_ENGINE is forced to "mac" (Modal co
     empties; a duplicate leaves the basket alone.
 """
 from __future__ import annotations
-import hashlib, json, os, re, subprocess, sys
+import asyncio, hashlib, json, os, re, subprocess, sys
 from pathlib import Path
 
 from fastapi import APIRouter
@@ -26,6 +26,7 @@ from starlette.responses import JSONResponse
 SKILL = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(SKILL / "chains"))
 import dispatch  # noqa: E402
+import local_models  # noqa: E402
 import raccolte  # noqa: E402
 
 STATE = Path(os.environ.get("CHIRON_PIMSLEUR_STATE", SKILL / "server" / "state")) / "pimsleur-from-phrases"
@@ -55,11 +56,37 @@ def phrase_hash(phrases: list[dict]) -> str:
 
 
 def derive_topic(phrases: list[dict]) -> str:
-    """A short theme from the first phrases: their English intents when present, else the Italian."""
+    """The fallback theme when no model title is available: the first clause of the first phrases' English intents."""
     def short(p):
-        t = (p.get("en") or p["it"]).strip().rstrip("?.!")
-        return " ".join(t.split()[:5])
-    return "Coach phrases: " + "; ".join(short(p) for p in phrases[:3])
+        t = re.split(r"[,?;:]| and ", (p.get("en") or p["it"]).strip().rstrip("?.!"))[0]
+        return " ".join(t.split()[:4])
+    return "Coach phrases: " + " / ".join(short(p) for p in phrases[:2])
+
+
+TOPIC_MODEL = os.environ.get("CH_PHRASE_MODEL_FAST", "mistral-large-3:675b-cloud")     # same fast model as the coach's UNDERSTAND
+TOPIC_SYS = ("You name audio language-course seasons. You are given the phrases an English-speaking learner wants to drill in Italian. "
+             "Reply with ONLY a short Italian title of 3 to 7 words naming the situation they share, for example: Primo giorno di "
+             "specializzazione. No quotes, no trailing punctuation, no explanation.")
+_topic_cache: dict[str, str] = {}         # phrase hash -> model title; a changed basket is a new hash, so the entry never goes stale
+TOPIC_CACHE_MAX = 64
+
+
+def suggest_topic(phrases: list[dict]) -> str:
+    """One fast-model call (through the Atelier governor, as the coach's UNDERSTAND step) for a short Italian theme title.
+    Raises when the model does not answer with a usable one-line title."""
+    import httpx
+    user = "\n".join(f"- {p.get('en') or p['it']}  ({p['it']})" for p in phrases[:12])
+    body = {"model": TOPIC_MODEL, "stream": False, "options": {"temperature": 0.3},
+            "messages": [{"role": "system", "content": TOPIC_SYS}, {"role": "user", "content": user}]}
+    r = httpx.post(f"{local_models.GOVERNOR}/api/chat", json=body, timeout=httpx.Timeout(connect=5.0, read=30.0, write=10.0, pool=5.0),
+                   headers={"X-Governor-Max-Seconds": "30"})
+    r.raise_for_status()
+    d = r.json()
+    text = ((d.get("message") or {}).get("content") or "").strip().splitlines()[0:1]
+    title = re.sub(r"^[\"'«\s]+|[\"'».\s]+$", "", text[0]) if text else ""
+    if d.get("done_reason") != "stop" or not (3 <= len(title) <= 80) or not re.search(r"[^\W\d_]", title):
+        raise ValueError(f"unusable title from {TOPIC_MODEL}: done_reason={d.get('done_reason')!r} title={title!r}")
+    return title
 
 
 def topic_slug(topic: str) -> str:
@@ -188,7 +215,7 @@ async def from_phrases(request: Request):
 
     topic = re.sub(r"\s+", " ", topic_in or "").strip()[:120]
     if not topic:
-        topic = _free_topic(derive_topic(phrases))
+        topic = _free_topic(_topic_cache.get(h) or derive_topic(phrases))
     elif (GEN / f"{topic_slug(topic)}.season.json").exists():
         return _reply(409, f"a Pimsleur season on {topic!r} already exists with different phrases: change the topic")
     path = STATE / f"{h}.json"
@@ -220,3 +247,41 @@ async def from_phrases(request: Request):
             out["basket_error"] = f"the run started but the basket was not emptied: {getattr(e, 'detail', e)}"
     _log(f"{res.get('job_id')}: {len(phrases)} phrases, topic {topic!r}, hash {h}")
     return out
+
+
+@router.post("/api/pimsleur/topic")
+async def topic(request: Request):
+    """A short theme title for a phrase set (the basket panel asks when it opens). Cached per content hash; when the model
+    cannot answer, the first-phrases fallback is returned and flagged, and nothing is cached."""
+    ok = ORIGIN_OK(request) if ORIGIN_OK else None
+    if ok is False:
+        return _reply(403, "origin not allowed")
+    try:
+        b = await request.json()
+    except ValueError:
+        b = None
+    if not isinstance(b, dict):
+        return _reply(400, "body must be a JSON object")
+    if isinstance(b.get("collection"), str):
+        try:
+            phrases = read_collection(b["collection"])
+        except Exception as e:
+            return _reply(404, f"collection {b['collection']!r}: {getattr(e, 'detail', e)}")
+    else:
+        phrases = clean_phrases(b.get("phrases"))
+        if isinstance(phrases, str):
+            return _reply(400, phrases)
+    if not phrases:
+        return _reply(400, "no phrases")
+    h = phrase_hash(phrases)
+    if h in _topic_cache:
+        return {"ok": True, "topic": _topic_cache[h], "source": "cache", "phrase_hash": h}
+    try:
+        title = await asyncio.to_thread(suggest_topic, phrases)
+    except Exception as e:
+        _log(f"topic suggestion failed, using the fallback: {type(e).__name__}: {e}")
+        return {"ok": True, "topic": derive_topic(phrases), "source": "fallback", "phrase_hash": h, "reason": f"{type(e).__name__}: {e}"[:200]}
+    if len(_topic_cache) >= TOPIC_CACHE_MAX:
+        _topic_cache.pop(next(iter(_topic_cache)))
+    _topic_cache[h] = title
+    return {"ok": True, "topic": title, "source": "model", "phrase_hash": h}

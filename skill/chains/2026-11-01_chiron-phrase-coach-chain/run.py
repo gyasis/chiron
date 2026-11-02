@@ -8,7 +8,11 @@ turn is the learner's Italian attempt it coaches that attempt instead.
 Importable: `await coach(messages)` -> {"content": markdown, "kind", "steps": [...], "total_ms"}.
 The server (server/phrase_coach.py) calls it for POST /ask/phrase/api/chat.
 
-A PromptChain of four function steps, sharing one per-call state:
+Streaming: coach_stream() is an async generator that yields the reply section by section as each is ready (every phrase
+runs its own BUILD -> CHECK pipeline concurrently; its Italian line is emitted first, then the "How it's built" sections
+in order, then the shared teaching, then SPEAK and the hidden blocks last); coach() folds it for stream:false and the tests.
+
+Steps, sharing one per-call state:
   1 UNDERSTAND  (mistral, JSON)      classify the latest turn: new_request | attempt | question; for a new
                                      request extract the list of phrases (one per numbered entry), situation,
                                      listener, default register, nuance
@@ -31,7 +35,6 @@ import asyncio, json, os, re, sys, time
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-from promptchain import PromptChain
 import ledger   # shared chains/ledger.py — one full prompt/response record per model call
 import obs      # shared chains/obs.py — phase markers (no-ops unless a run directory is set)
 import httpx
@@ -145,12 +148,24 @@ class Run:
         self.last_phrase = next((p for p in (phrase_block(t["content"]) for t in reversed(self.history)
                                              if t["role"] == "assistant") if p), None)
         self.steps: list[dict] = []
+        self.q: asyncio.Queue = asyncio.Queue()      # sections of the reply, in order; None ends the stream
+        self.parts: list[str] = []
+        self.first_text_ms = None
         self.understand = self.check = None
         self.items: list[dict] = []          # the built phrases (one dict per phrase, in the learner's order)
         self.diagram_error = None
         self.overrides: list[dict] = []
         self.content = ""
         self.t0 = time.time()
+
+    def emit(self, text: str) -> None:
+        """Append one section to the reply and hand it to the stream. The reply only ever grows at its end."""
+        if not text:
+            return
+        if self.first_text_ms is None:
+            self.first_text_ms = int((time.time() - self.t0) * 1000)
+        self.parts.append(text)
+        self.q.put_nowait(text)
 
     def transcript(self) -> str:
         out = []
@@ -243,16 +258,16 @@ _BUILD_UP = """**How it's built**
 3. **dove e quando devo fare la presa di servizio?**: question words open the sentence.
 4. **Scusi, dove e quando devo fare la presa di servizio?**: the polite opener goes first."""
 
-TEACH_SYS = """You are a warm, concise Italian coach. You do not just translate: you teach the learner to build the sentences themselves.
-You are given N phrases (N is at least 1). Write a reply in English with Italian phrases, in exactly this Markdown layout, nothing before or after it except the meta block:
+TEACH_ITEM_SYS = """You are a warm, concise Italian coach. You do not just translate: you teach the learner to build the sentence themselves.
+You are given ONE phrase whose Italian sentence and register are already written elsewhere. Write only this section, in English with Italian, nothing before or after it:
 
-FOR EACH PHRASE, in order (number the headings "1)", "2)" and so on only when N is more than 1):
-**<the main Italian sentence>**
-Register: <Lei (formal) | tu (informal) | neutral>. <short reason>
-<Formal (Lei): ... or Informal (tu): ... , only if a different-register variant is given; skip otherwise>
 """ + _BUILD_UP + """
 
-THEN, once for all phrases:
+Use the given sentence exactly. Keep it tight."""
+
+TEACH_SHARED_SYS = """You are a warm, concise Italian coach. You teach the learner to build sentences themselves.
+You are given N phrases (N is at least 1). Each phrase already has its Italian sentence, its register line and its "How it's built" steps, written elsewhere: do NOT write those. Write only the shared teaching below, in English with Italian phrases, in exactly this Markdown layout, nothing before or after it except the meta block:
+
 **The pattern**
 `<reusable frame with [slots]>` then 2-3 swaps showing the same frame in other situations (Italian, with a 2-4 word English gloss each). One shared pattern if the phrases really share one; otherwise one pattern per group of phrases that do, each named by the phrase numbers it covers.
 
@@ -261,36 +276,6 @@ THEN, once for all phrases:
 
 **Watch out**
 Only for a phrase that has a LITERAL TRAP: show the WRONG form and the RIGHT form as two different strings (wrong: the word-for-word version an English speaker would say; right: the main sentence), and say why the wrong one is off. Name the phrase number when N is more than 1. If no phrase has a trap, leave this whole section out.
-
-**Your turn**
-One new English sentence that needs the same pattern, for the learner to try in Italian.
-
-Then end with a fenced block tagged meta holding ONLY this JSON (the system builds the spoken and data blocks from it, so do not write any [[SPEAK]] text yourself):
-```meta
-{"pattern": "the main frame, same as above", "slots": ["slot names"], "practice": "the Your-turn English sentence", "breakdown": [{"chunk": "Italian chunk", "gloss": "English gloss"}]}
-```
-Use the given sentences and registers exactly as provided. Every phrase MUST have its own "How it's built" section. 2 to 4 breakdown chunks (from the first phrase). Keep the reply tight: short steps, no repetition."""
-
-TEACH_ITEM_SYS = """You are a warm, concise Italian coach. You do not just translate: you teach the learner to build the sentence themselves.
-You are given ONE phrase. Write only the part below, in English with Italian, in exactly this Markdown layout, nothing before or after it (the system writes the heading with the Italian sentence):
-
-Register: <Lei (formal) | tu (informal) | neutral>. <short reason>
-<Formal (Lei): ... or Informal (tu): ... , only if a different-register variant is given; skip otherwise>
-""" + _BUILD_UP + """
-
-Use the given sentence and register exactly as provided. Keep it tight."""
-
-TEACH_SHARED_SYS = """You are a warm, concise Italian coach. You teach the learner to build sentences themselves.
-You are given N phrases (N is at least 2). Each phrase already has its own heading, register line and "How it's built" steps, written elsewhere: do NOT write those. Write only the shared teaching below, in English with Italian phrases, in exactly this Markdown layout, nothing before or after it except the meta block:
-
-**The pattern**
-`<reusable frame with [slots]>` then 2-3 swaps showing the same frame in other situations (Italian, with a 2-4 word English gloss each). One shared pattern if the phrases really share one; otherwise one pattern per group of phrases that do, each named by the phrase numbers it covers.
-
-**Why Italians say it this way**
-1-2 lines (per pattern group when there are several).
-
-**Watch out**
-Only for a phrase that has a LITERAL TRAP: show the WRONG form and the RIGHT form as two different strings (wrong: the word-for-word version an English speaker would say; right: the main sentence), and say why the wrong one is off. Name the phrase number. If no phrase has a trap, leave this whole section out.
 
 **Your turn**
 One new English sentence that needs the same pattern, for the learner to try in Italian.
@@ -555,19 +540,21 @@ def _understand_user(run: Run) -> str:
             f"{practice}\n\nLATEST LEARNER TURN:\n{run.user}")
 
 
-def _build_user(run: Run, phrases: list, fixes: dict | None = None, only: list | None = None) -> str:
+def _build_user(run: Run, phrases: list, k: int, fixes: list | None = None, prev: dict | None = None) -> str:
+    """The BUILD prompt for ONE phrase (index k); the other phrases ride along as context only."""
     u = run.understand
-    idx = only if only is not None else list(range(len(phrases)))
-    lines = "\n".join(f"{j}. {phrases[i]['en']}" + (f" (situation: {phrases[i]['situation']})" if phrases[i]["situation"] else "")
-                      for j, i in enumerate(idx, 1))
+    p = phrases[k]
     text = (f"Overall meaning: {u.get('meaning')}\nSituation: {u.get('situation') or 'unspecified'}\n"
             f"Listener: {u.get('listener') or 'unspecified'}\nDefault register: {u.get('register_default')} "
             f"({u.get('register_reason') or 'no reason given'})\nNuance: {u.get('nuance') or 'none'}\n"
-            f"Learner's own words: {run.user}\n\nN = {len(idx)}. PHRASES TO BUILD:\n{lines}")
+            f"Learner's own words: {run.user}")
+    others = "\n".join(f"- {q['en']}" for i, q in enumerate(phrases) if i != k)
+    if others:
+        text += f"\n\nOTHER PHRASES IN THE SAME MESSAGE (context only, do not build them; keep register and wording consistent with them):\n{others}"
+    text += f"\n\nN = 1. PHRASES TO BUILD:\n1. {p['en']}" + (f" (situation: {p['situation']})" if p["situation"] else "")
     if fixes:
-        text += "\n\n## REVIEWER FIXES (apply every one)\n" + "\n".join(
-            f"- phrase {j}: {f}" for j, i in enumerate(idx, 1) for f in fixes.get(i, [])) + \
-            f"\n\nPrevious attempt:\n{json.dumps({'items': [run.items[i] for i in idx]}, ensure_ascii=False)}"
+        text += "\n\n## REVIEWER FIXES (apply every one)\n" + "\n".join(f"- phrase 1: {f}" for f in fixes) + \
+                f"\n\nPrevious attempt:\n{json.dumps({'items': [prev]}, ensure_ascii=False)}"
     return text
 
 
@@ -578,38 +565,35 @@ async def step_understand(run: Run) -> str:
     return run.understand["kind"]
 
 
-async def step_build(run: Run, _prev: str) -> str:
-    if run.understand["kind"] != "new_request":
-        return _prev
-    phrases = phrases_of(run.understand)
-    o = await json_step(run, "build", MODEL_THINK, BUILD_SYS, _build_user(run, phrases), _valid_items(len(phrases)))
-    run.items = _norm_items(o)
-    return json.dumps(run.items, ensure_ascii=False)
-
-
-async def step_check(run: Run, _prev: str) -> str:
-    if run.understand["kind"] != "new_request":
-        return _prev
-    phrases = phrases_of(run.understand)
-    numbered = json.dumps({"items": [{"item": i, **it} for i, it in enumerate(run.items, 1)]}, ensure_ascii=False)
+async def build_check_one(run: Run, phrases: list, k: int) -> dict:
+    """BUILD then CHECK for one phrase, in its own pipeline so the phrases do not wait for each other. A flagged item is
+    rebuilt once, alone. The register rule has the last word on the labels."""
+    n, tag = len(phrases), (f" {k + 1}" if len(phrases) > 1 else "")
+    o = await json_step(run, f"build{tag}", MODEL_THINK, BUILD_SYS, _build_user(run, phrases, k), _valid_items(1))
+    item = _norm_items(o)[0]
     user = (f"Situation: {run.understand.get('situation')}; listener: {run.understand.get('listener')}; "
-            f"meaning: {run.understand.get('meaning')}\n\nN = {len(run.items)} ITEMS UNDER REVIEW:\n{numbered}")
-    run.check = await json_step(run, "check", MODEL_FAST, CHECK_SYS, user, _valid_check)
-    flagged = _flagged(run.check, len(run.items))
-    if flagged:
-        only = sorted(flagged)
-        log(f"check: fixes for item(s) {[i + 1 for i in only]} — re-asking build for those only, once: {flagged}")
-        new = await json_step(run, "build_fix", MODEL_THINK, BUILD_SYS, _build_user(run, phrases, flagged, only),
-                              _valid_items(len(only)))
-        for i, it in zip(only, _norm_items(new)):
-            run.items[i] = it
-    else:
-        log("check: ok")
-    for it in run.items:
-        correct_build_registers(it, run.overrides)
-    run.steps.append({"step": "register", "model": "rule", "done_reason": "n/a", "latency_ms": 0,
-                      "thinking_chars": 0, "overrides": list(run.overrides)})
-    return json.dumps(run.items, ensure_ascii=False)
+            f"meaning: {phrases[k]['en']}\n\nN = 1 ITEMS UNDER REVIEW:\n"
+            f"{json.dumps({'items': [{'item': 1, **item}]}, ensure_ascii=False)}")
+    chk = await json_step(run, f"check{tag}", MODEL_FAST, CHECK_SYS, user, _valid_check)
+    fixes = _flagged(chk, 1).get(0)
+    if fixes:
+        log(f"check{tag}: {fixes} — re-asking build for this phrase only, once")
+        o = await json_step(run, f"build_fix{tag}", MODEL_THINK, BUILD_SYS, _build_user(run, phrases, k, fixes, item), _valid_items(1))
+        item = _norm_items(o)[0]
+    correct_build_registers(item, run.overrides)
+    return item
+
+
+_REG_NAME = {"lei": "Lei (formal)", "tu": "tu (informal)", "neutral": "neutral"}
+
+
+def header_block(k: int, n: int, it: dict) -> str:
+    """The Italian sentence, its register line and its variants, written by code from the built item (no model call)."""
+    lines = [f"**{k + 1}) {it['it']}**" if n > 1 else f"**{it['it']}**",
+             f"Register: {_REG_NAME[it['register']]}." + (f" {it['register_note']}" if it.get("register_note") else "")]
+    for v in it["variants"]:
+        lines.append(f"{_REG_PREFIX[v['register']]} {v['it']}" + (f" — {v['why']}" if v.get("why") else ""))
+    return "\n".join(lines) + "\n\n"
 
 
 def _split_meta(text: str) -> tuple[str, dict]:
@@ -629,7 +613,7 @@ def _norm(t: str) -> str:
 
 _WATCH = re.compile(r"\*\*Watch out\*\*[\s\S]*?(?=\n\s*\*\*|\Z)")
 _FRAG = re.compile(r"\*\*([^*]+)\*\*|\*([^*]+)\*|`([^`]+)`|\"([^\"]+)\"|«([^»]+)»")
-_HOW = re.compile(r"\*\*How it[’']s built\*\*")
+_HOW = re.compile(r"\*\*How it[’']s built[^*\n]*\*\*")
 
 
 def drop_same_string_watch_out(body: str, correct: str, trap: str) -> str:
@@ -692,20 +676,6 @@ async def _markdown_step(run: Run, step: str, system: str, user: str, need: tupl
             log(f"{step} attempt {attempt}: {err} — retrying")
             cur = user + f"\n\n## PREVIOUS REPLY WAS UNUSABLE\n{err}\nFollow the layout exactly and end with the meta block."
     raise RuntimeError(f"{step}: no usable reply — {err}")
-
-
-def fix_registers_per_item(body: str, items: list) -> str:
-    """fix_register_lines for one phrase, or for each numbered phrase block ("**1)** ...") before the pattern section."""
-    if len(items) == 1:
-        it = items[0]
-        return fix_register_lines(body, it["register"], it.get("register_note"), it["variants"], it["it"])
-    head, sep, rest = body.partition("**The pattern**")
-    segs = re.split(r"(?m)^(?=\*\*\d+\))", head)
-    if len(segs) - 1 != len(items):
-        log(f"[register] reply has {len(segs) - 1} numbered phrase blocks for {len(items)} items; register lines left as written")
-        return body
-    fixed = [fix_register_lines(s, it["register"], it.get("register_note"), it["variants"], it["it"]) for s, it in zip(segs[1:], items)]
-    return segs[0] + "".join(fixed) + sep + rest
 
 
 # ── DIAGRAM: the AnnotatedPassage (lib/schemas/widget-spec.ts) built from the sentences ─────────
@@ -837,25 +807,30 @@ def merge_sentences(parts: list[dict]) -> dict:
     return out
 
 
-async def step_diagram(run: Run, texts: list[str]) -> dict | None:
-    """DIAGRAM: one call per Italian sentence, all run concurrently, merged back into one ApSentence per phrase (an
-    item can hold several sentences, and one call for five long items outran the read timeout). Any failure is logged
-    and returns None: the reply goes out without a diagram."""
-    t0 = time.time()
-    subs = [[x for x in _SENT_SPLIT.split(t.strip()) if x] or [t] for t in texts]
-    flat = [(i, x) for i, parts in enumerate(subs) for x in parts]
+async def diagram_item(run: Run, text: str, k: int, n: int) -> dict:
+    """The annotation of ONE phrase: one call per Italian sentence in it, run concurrently, merged into one ApSentence.
+    One call per sentence is the finest split there is (a sentence is the unit the model parses in one pass); a phrase
+    that holds three sentences costs three calls. Raises when a sentence cannot be annotated."""
+    subs = [x for x in _SENT_SPLIT.split(text.strip()) if x] or [text]
 
-    async def one(n: int, text: str):
-        user = f"SENTENCES (annotate each, in this order):\n1. {text}"
-        step = "diagram" if len(flat) == 1 else f"diagram {n}"
-        o = await json_step(run, step, MODEL_THINK, DIAGRAM_SYS, user, lambda x: validate_sentences(x, [text]), max_repair=2)
+    async def one(j: int, sent: str):
+        user = f"SENTENCES (annotate each, in this order):\n1. {sent}"
+        step = "diagram" if n == 1 and len(subs) == 1 else f"diagram {k + 1}.{j}"
+        o = await json_step(run, step, MODEL_THINK, DIAGRAM_SYS, user, lambda x: validate_sentences(x, [sent]), max_repair=2)
         return o["sentences"][0]
+    return merge_sentences(list(await asyncio.gather(*[one(j, s) for j, s in enumerate(subs, 1)])))
+
+
+def finish_diagram(run: Run, results: list, texts: list[str], t0: float) -> dict | None:
+    """The AnnotatedPassage from every phrase's annotation, or None (logged, recorded) when any of them failed."""
+    for r in results:
+        if isinstance(r, asyncio.CancelledError):
+            raise r
+    errs = [r for r in results if isinstance(r, BaseException)]
     try:
-        done = await asyncio.gather(*[one(n, x) for n, (_, x) in enumerate(flat, 1)])
-        by_item: list[list[dict]] = [[] for _ in texts]
-        for (i, _), ann in zip(flat, done):
-            by_item[i].append(ann)
-        doc = assemble_passage([merge_sentences(parts) for parts in by_item], texts)
+        if errs:
+            raise errs[0]
+        doc = assemble_passage(list(results), texts)
         bad = validate_annotated_passage(doc)
         if bad:
             raise ValueError(f"assembled passage invalid: {bad}")
@@ -947,7 +922,10 @@ async def step_related(run: Run, doc: dict | None) -> dict | None:
 
 
 async def _diagram_related(run: Run, texts: list[str]) -> tuple[dict | None, dict | None]:
-    doc = await step_diagram(run, texts)
+    """DIAGRAM then RELATED for sentences that are already final (the COACH path's corrected sentence)."""
+    t0 = time.time()
+    res = await asyncio.gather(*[diagram_item(run, t, k, len(texts)) for k, t in enumerate(texts)], return_exceptions=True)
+    doc = finish_diagram(run, list(res), texts, t0)
     return doc, await step_related(run, doc)
 
 
@@ -958,7 +936,8 @@ def _teach_user(run: Run) -> str:
     parts = []
     for k, (b, ph) in enumerate(zip(run.items, phrases), 1):
         same = _norm(b["literal_trap"]["it"]) == _norm(b["it"])
-        trap = ("LITERAL TRAP: none — the literal version is not different from the main sentence: " + ("leave the Watch out section out." if len(run.items) == 1 else "leave this phrase out of the Watch out section.")
+        trap = ("LITERAL TRAP: none — the literal version is not different from the main sentence: "
+                + ("leave the Watch out section out." if len(run.items) == 1 else "leave this phrase out of the Watch out section.")
                 if same else f"LITERAL TRAP: {json.dumps(b['literal_trap'], ensure_ascii=False)}")
         parts.append((f"PHRASE {k} (English: {ph['en']})\n" if len(run.items) > 1 else "")
                      + f"MAIN SENTENCE (use exactly): {b['it']}\nREGISTER (use exactly): {b['register']} — {b.get('register_note') or ''}\n"
@@ -967,109 +946,153 @@ def _teach_user(run: Run) -> str:
             + f"\n\nThe learner's intent: {run.understand.get('meaning')} (situation: {run.understand.get('situation')})")
 
 
-def _item_user(run: Run, k: int) -> str:
-    """The user prompt for ONE phrase (1-based k) of a multi-phrase TEACH."""
-    b, ph = run.items[k - 1], phrases_of(run.understand)[k - 1]
-    return (f"PHRASE (English): {ph['en']}\nMAIN SENTENCE (use exactly): {b['it']}\nREGISTER (use exactly): {b['register']} — {b.get('register_note') or ''}\n"
-            f"VARIANTS: {json.dumps(b['variants'], ensure_ascii=False)}")
+def _item_user(run: Run, phrases: list, k: int, it: dict) -> str:
+    return (f"PHRASE (English): {phrases[k]['en']}\nMAIN SENTENCE (use exactly): {it['it']}\n"
+            f"REGISTER (use exactly): {it['register']} — {it.get('register_note') or ''}")
 
 
-async def _teach_new(run: Run) -> tuple[str, dict]:
-    n = len(run.items)
-    if n == 1:
-        body, meta = await _markdown_step(run, "teach", TEACH_SYS, _teach_user(run), ("pattern", "practice"),
-                                          check=lambda b: check_built(b, 1))
+async def teach_item(run: Run, phrases: list, k: int, it: dict) -> str:
+    """The "How it's built" section of one phrase, headed so a numbered list of phrases stays readable."""
+    n = len(phrases)
+    body, _ = await _markdown_step(run, f"how-built {k + 1}" if n > 1 else "how-built", TEACH_ITEM_SYS,
+                                   _item_user(run, phrases, k, it), (), check=lambda b: check_built(b, 1), with_meta=False)
+    steps = _HOW.sub("", body, count=1).strip()
+    head = f"**How it's built · {k + 1}) {it['it']}**" if n > 1 else "**How it's built**"
+    return f"{head}\n{steps}\n\n"
+
+
+async def teach_shared(run: Run) -> tuple[str, dict]:
+    """Pattern, why, watch out and your turn for all phrases, plus the meta block."""
+    body, meta = await _markdown_step(run, "teach", TEACH_SHARED_SYS, _teach_user(run), ("pattern", "practice"))
+    if len(run.items) == 1:
         body = drop_same_string_watch_out(body, run.items[0]["it"], run.items[0]["literal_trap"]["it"])
-        return fix_registers_per_item(body, run.items), meta
-    # N phrases: the per-phrase build-ups and the shared teaching are independent, so they are written concurrently
-    # (one long reply for five phrases was the slowest step of the chain).
-    async def one(k):
-        body, _ = await _markdown_step(run, f"teach {k}", TEACH_ITEM_SYS, _item_user(run, k), (),
-                                       check=lambda b: check_built(b, 1), with_meta=False)
-        return f"**{k}) {run.items[k - 1]['it']}**\n{body}"
-    shared = _markdown_step(run, "teach shared", TEACH_SHARED_SYS, _teach_user(run), ("pattern", "practice"))
-    results = await asyncio.gather(*[one(k) for k in range(1, n + 1)], shared)
-    blocks, (rest, meta) = results[:-1], results[-1]
-    return fix_registers_per_item("\n\n".join(blocks) + "\n\n" + rest, run.items), meta
+    return body + "\n", meta
 
 
-async def step_teach(run: Run, _prev: str) -> str:
-    kind = run.understand["kind"]
-    if kind == "question":
-        lp = json.dumps(run.last_phrase, ensure_ascii=False) if run.last_phrase else "(none)"
-        user = f"LAST PHRASE (data): {lp}\n\nEARLIER TURNS:\n{run.transcript()}\n\nLEARNER ASKS:\n{run.user}"
-        text = await model_call(run, "answer", MODEL_THINK, ANSWER_SYS, user)
-        try:
-            body, meta = _split_meta(text)
-        except ValueError as e:
-            log(f"answer: {e}; speaking the last phrase instead")
-            body, meta = text, {}
-        body = _SPEAK.sub("", _DFENCE.sub("", _FENCE.sub("", body))).strip()
-        speak = str(meta.get("speak") or "").strip() or str((run.last_phrase or {}).get("it") or "").strip()
-        if not speak:
-            log("answer: no Italian sentence to speak (no new example, no earlier phrase) — reply has no SPEAK block")
-        run.content = body + (f"\n\n[[SPEAK]]{speak.replace('[[', '').replace(']]', '')}[[/SPEAK]]" if speak else "")
-        return run.content
-    if kind == "attempt":
-        lp = run.last_phrase or {}
-        user = (f"PRACTICE SENTENCE (English): {lp.get('practice') or '(unknown; infer it from the earlier turns)'}\n"
-                f"PATTERN TAUGHT: {lp.get('pattern') or '(unknown)'} with slots {lp.get('slots') or []}\n"
-                f"EARLIER TURNS:\n{run.transcript()}\n\nLEARNER'S ITALIAN ATTEMPT:\n{run.user}")
-        body, meta = await _markdown_step(run, "coach", COACH_SYS, user, ("corrected", "practice"), check=lambda b: check_built(b, 1))
-        reg = meta.get("register") if meta.get("register") in REGISTERS else "neutral"
-        reg = apply_register_rule(meta["corrected"], reg, "corrected", run.overrides)
-        body = fix_register_lines(body, reg, _REG_NOTE[reg], [], meta["corrected"])
-        # the corrected sentence only exists once COACH has answered, so its diagram follows it
-        doc, rel = await _diagram_related(run, [meta["corrected"]])
-        data = {"it": meta["corrected"], "en_intent": lp.get("practice") or "", "register": reg, "variants": [],
-                "breakdown": meta.get("breakdown") or [], "pattern": meta.get("pattern") or lp.get("pattern") or "",
-                "slots": meta.get("slots") or [], "practice": meta["practice"],
-                "items": [{"it": meta["corrected"], "en": lp.get("practice") or "", "register": reg, "variants": []}]}
-        run.content = body + _tail(meta["corrected"], data, doc, rel)
-        return run.content
-    texts = [b["it"] for b in run.items]
-    teach = asyncio.ensure_future(_teach_new(run))
-    side = asyncio.ensure_future(_diagram_related(run, texts))
-    try:
-        (body, meta), (doc, rel) = await asyncio.gather(teach, side)
-    except BaseException:
-        for t in (teach, side):
-            t.cancel()
-        raise
+async def _new_request(run: Run) -> None:
+    """Every phrase runs its own BUILD -> CHECK pipeline concurrently; its Italian and register line are emitted as soon as it
+    (and every earlier phrase) is done, then the How-it's-built sections in order, then the shared teaching, then the
+    hidden blocks. The reply text only ever grows at its end, so it can be streamed."""
     phrases = phrases_of(run.understand)
+    n = len(phrases)
+    run.items = [None] * n
+    hdr = [asyncio.Event() for _ in range(n)]
+    how: list = [None] * n
+    diag: list = [None] * n
+    t_diag = time.time()
+
+    async def item(k: int) -> None:
+        it = await build_check_one(run, phrases, k)
+        run.items[k] = it
+        how[k] = asyncio.ensure_future(teach_item(run, phrases, k, it))                 # started now, emitted in order
+        diag[k] = asyncio.ensure_future(diagram_item(run, it["it"], k, n))
+        if k:
+            await hdr[k - 1].wait()
+        run.emit(header_block(k, n, it))
+        hdr[k].set()
+
+    tasks = [asyncio.ensure_future(item(k)) for k in range(n)]
+    shared = None
+    try:
+        await asyncio.gather(*tasks)
+        run.steps.append({"step": "register", "model": "rule", "done_reason": "n/a", "latency_ms": 0,
+                          "thinking_chars": 0, "overrides": list(run.overrides)})
+        shared = asyncio.ensure_future(teach_shared(run))
+        for f in how:
+            run.emit(await f)
+        body, meta = await shared
+        run.emit(body)
+        texts = [b["it"] for b in run.items]
+        doc = finish_diagram(run, list(await asyncio.gather(*diag, return_exceptions=True)), texts, t_diag)
+        rel = await step_related(run, doc)
+    finally:
+        for t in [*tasks, *how, *diag, shared]:
+            if t is not None and not t.done():
+                t.cancel()
     first = run.items[0]
-    data = {"it": first["it"], "en_intent": run.understand.get("meaning") or run.user if len(texts) == 1
-            else "; ".join(p["en"] for p in phrases),
-            "register": first["register"], "variants": [{"it": v["it"], "register": v["register"]} for v in first["variants"]],
-            "breakdown": meta.get("breakdown") or [], "pattern": meta["pattern"], "slots": meta.get("slots") or [],
-            "practice": meta["practice"],
-            "items": [{"it": b["it"], "en": p["en"], "register": b["register"],
-                       "variants": [{"it": v["it"], "register": v["register"]} for v in b["variants"]]}
-                      for b, p in zip(run.items, phrases)]}
-    run.content = body + _tail(" ".join(texts), data, doc, rel)
-    return run.content
+    var = lambda b: [{"it": v["it"], "register": v["register"]} for v in b["variants"]]
+    data = {"it": first["it"], "en_intent": (run.understand.get("meaning") or run.user) if n == 1 else "; ".join(p["en"] for p in phrases),
+            "register": first["register"], "variants": var(first), "breakdown": meta.get("breakdown") or [],
+            "pattern": meta["pattern"], "slots": meta.get("slots") or [], "practice": meta["practice"],
+            "items": [{"it": b["it"], "en": p["en"], "register": b["register"], "variants": var(b)} for b, p in zip(run.items, phrases)]}
+    run.emit(_tail(" ".join(texts), data, doc, rel))
 
 
-# ── entry point ──────────────────────────────────────────────────────────────────
+async def _attempt(run: Run) -> None:
+    lp = run.last_phrase or {}
+    user = (f"PRACTICE SENTENCE (English): {lp.get('practice') or '(unknown; infer it from the earlier turns)'}\n"
+            f"PATTERN TAUGHT: {lp.get('pattern') or '(unknown)'} with slots {lp.get('slots') or []}\n"
+            f"EARLIER TURNS:\n{run.transcript()}\n\nLEARNER'S ITALIAN ATTEMPT:\n{run.user}")
+    body, meta = await _markdown_step(run, "coach", COACH_SYS, user, ("corrected", "practice"), check=lambda b: check_built(b, 1))
+    reg = meta.get("register") if meta.get("register") in REGISTERS else "neutral"
+    reg = apply_register_rule(meta["corrected"], reg, "corrected", run.overrides)
+    run.emit(fix_register_lines(body, reg, _REG_NOTE[reg], [], meta["corrected"]) + "\n")
+    # the corrected sentence only exists once COACH has answered, so its diagram follows it
+    doc, rel = await _diagram_related(run, [meta["corrected"]])
+    data = {"it": meta["corrected"], "en_intent": lp.get("practice") or "", "register": reg, "variants": [],
+            "breakdown": meta.get("breakdown") or [], "pattern": meta.get("pattern") or lp.get("pattern") or "",
+            "slots": meta.get("slots") or [], "practice": meta["practice"],
+            "items": [{"it": meta["corrected"], "en": lp.get("practice") or "", "register": reg, "variants": []}]}
+    run.emit(_tail(meta["corrected"], data, doc, rel))
+
+
+async def _question(run: Run) -> None:
+    lp = json.dumps(run.last_phrase, ensure_ascii=False) if run.last_phrase else "(none)"
+    user = f"LAST PHRASE (data): {lp}\n\nEARLIER TURNS:\n{run.transcript()}\n\nLEARNER ASKS:\n{run.user}"
+    text = await model_call(run, "answer", MODEL_THINK, ANSWER_SYS, user)
+    try:
+        body, meta = _split_meta(text)
+    except ValueError as e:
+        log(f"answer: {e}; speaking the last phrase instead")
+        body, meta = text, {}
+    body = _SPEAK.sub("", _DFENCE.sub("", _FENCE.sub("", body))).strip()
+    speak = str(meta.get("speak") or "").strip() or str((run.last_phrase or {}).get("it") or "").strip()
+    if not speak:
+        log("answer: no Italian sentence to speak (no new example, no earlier phrase) — reply has no SPEAK block")
+    run.emit(body + (f"\n\n[[SPEAK]]{speak.replace('[[', '').replace(']]', '')}[[/SPEAK]]" if speak else ""))
+
+
+# ── entry points ─────────────────────────────────────────────────────────────────
+
+async def _pipeline(run: Run, session_id: str | None) -> None:
+    try:
+        with ledger.context(session_id=session_id, run_id=ledger.new_run_id()):
+            kind = await step_understand(run)
+            await {"new_request": _new_request, "attempt": _attempt, "question": _question}[kind](run)
+    finally:
+        run.q.put_nowait(None)
+
+
+async def coach_stream(messages: list[dict], session_id: str | None = None):
+    """Async generator over the reply: yields ("text", chunk) as each section of the answer is ready, then ("done", result).
+    The text only ever grows at its end. A failed run raises from the generator after the chunks already yielded;
+    cancelling the consumer cancels the run."""
+    run = Run(messages)
+    task = asyncio.ensure_future(_pipeline(run, session_id))
+    try:
+        while True:
+            chunk = await run.q.get()
+            if chunk is None:
+                break
+            yield ("text", chunk)
+        await task                                       # re-raises the run's failure
+        yield ("done", {"content": "".join(run.parts), "kind": run.understand["kind"], "steps": run.steps,
+                        "register_overrides": run.overrides, "diagram_error": run.diagram_error,
+                        "first_text_ms": run.first_text_ms, "total_ms": int((time.time() - run.t0) * 1000)})
+    finally:
+        if not task.done():
+            task.cancel()
+
 
 async def coach(messages: list[dict], session_id: str | None = None) -> dict:
-    """Run the chain over an Ollama-style message list (system turns are ignored; the prompts live here)."""
-    run = Run(messages)
-
-    async def s1(_x): return await step_understand(run)
-    async def s2(x): return await step_build(run, x)
-    async def s3(x): return await step_check(run, x)
-    async def s4(x): return await step_teach(run, x)
-
-    chain = PromptChain(models=[], instructions=[s1, s2, s3, s4], verbose=False)
-    with ledger.context(session_id=session_id, run_id=ledger.new_run_id()):
-        await chain.process_prompt_async(run.user)
-    return {"content": run.content, "kind": run.understand["kind"], "steps": run.steps, "register_overrides": run.overrides,
-            "diagram_error": run.diagram_error, "total_ms": int((time.time() - run.t0) * 1000)}
+    """The whole reply at once (stream:false and the tests): coach_stream folded."""
+    async for kind, val in coach_stream(messages, session_id):
+        if kind == "done":
+            return val
 
 
 if __name__ == "__main__":
     q = " ".join(sys.argv[1:]) or "How do I say I'm here for my specialization?"
     out = asyncio.run(coach([{"role": "user", "content": q}]))
     print(out["content"])
-    print(json.dumps({"kind": out["kind"], "steps": out["steps"], "total_ms": out["total_ms"]}, indent=1))
+    print(json.dumps({"kind": out["kind"], "steps": out["steps"], "first_text_ms": out["first_text_ms"], "total_ms": out["total_ms"]}, indent=1))

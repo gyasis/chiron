@@ -292,7 +292,10 @@ function applyMode() {
   // utterance, which say-shim reads as its language hint. configure() replaces the voice object whole.
   const voice = { enabled: $('#voicebtn')?.classList.contains('on') !== false, autoSpeak: true,
                   voiceName: phrase ? 'Lucrezia' : undefined, accent: phrase ? 'it-IT' : undefined };
-  modeCtl.handle.configure({ llm, voice, storage: { dbName: 'chiron-ask', historyEnabled: true, cacheEnabled: !phrase } });
+  // acolyte sends stream:false whenever its request carries tools (its one default tool is the context7 docs lookup).
+  // The phrase coach has no use for it, and without tools acolyte reads the NDJSON stream: sections appear as they finish.
+  modeCtl.handle.configure({ llm, voice, storage: { dbName: 'chiron-ask', historyEnabled: true, cacheEnabled: !phrase },
+                             tools: { context7: { enabled: !phrase } } });
   if (phrase) modeCtl.handle.configure({ rag: { enabled: false } });
   else modeCtl.pickChannel();
   setHint($('#scope').value);          // the topbar line follows the mode: "Phrase coach" vs the librarian's scope

@@ -12,7 +12,7 @@ import {
 class Node {
   constructor(tag) { this.tagName = tag.toUpperCase(); this.children = []; this.className = ''; this._text = ''; this.dataset = {}; this.attrs = {}; this.l = {}; this.style = {}; this.parent = null; this.value = ''; this.hidden = false; this.disabled = false; }
   get textContent() { return this._text + this.children.map(c => c.textContent).join(''); }
-  set textContent(v) { this.children = []; this._text = String(v); }
+  set textContent(v) { this.writes = (this.writes || 0) + 1; this.children = []; this._text = String(v); }
   set innerHTML(v) { throw new Error('innerHTML must never be used for model text: ' + v); }
   get classList() {
     const n = this;
@@ -176,6 +176,7 @@ function fakeServer(items = []) {
     if (method === 'GET') return { items: state.items.map(i => ({ it: i.it, en: i.en, note: i.register ? 'register:' + i.register : '' })) };
     if (method === 'POST' && path.endsWith('/items')) { for (const i of body.items) state.items.push({ it: i.it, en: i.en, register: (/register:(\w+)/.exec(i.note) || [])[1] || '' }); return {}; }
     if (method === 'DELETE') { const it = decodeURIComponent(path.split('it=')[1]); state.items = state.items.filter(i => i.it !== it); return {}; }
+    if (path === '/api/pimsleur/topic') { state.topicCalls = (state.topicCalls || 0) + 1; return { topic: state.topic || 'Primo giorno di specializzazione' }; }
     if (path === '/api/pimsleur/from-phrases') { const r = state.post; if (r && !r.duplicate) state.items = []; return r; }
     throw new Error('unexpected ' + method + ' ' + path);
   };
@@ -267,4 +268,41 @@ test('basket: a refresh picks up phrases added elsewhere (phone), and a failed s
   await row.byClass('bk-plus')[0].click();
   await tick();
   assert.equal(row.dataset.error, 'offline');
+});
+
+test('basket: a refresh that changes nothing does not rebuild the pill or the panel (it would swallow a click in flight)', async () => {
+  const srv = fakeServer(PH);
+  const { pill, panel, basket } = mkBasket(srv);
+  await basket.refresh();
+  basket.setOpen(true);
+  await tick();                                            // the topic suggestion lands and renders once
+  const writes = pill.writes, first = panel.children[0];
+  await basket.refresh();
+  await basket.refresh();
+  assert.equal(pill.writes, writes, 'the pill text node is left alone');
+  assert.equal(panel.children[0], first, 'the panel DOM is left alone');
+  srv.state.items.push({ it: 'Nuova frase.', en: 'New', register: '' });      // a real change does re-render
+  await basket.refresh();
+  assert.notEqual(panel.children[0], first);
+  assert.match(pill.textContent, /4\/8/);
+});
+
+test('basket: the topic is suggested when the panel opens, unless the learner has typed one', async () => {
+  const srv = fakeServer(PH);
+  const { panel, basket } = mkBasket(srv);
+  await basket.refresh();
+  assert.equal(srv.state.topicCalls || 0, 0, 'closed panel: no suggestion call');
+  basket.setOpen(true);
+  await tick();
+  assert.equal(panel.byClass('bk-topic')[0].value, 'Primo giorno di specializzazione');
+  basket.setOpen(false); basket.setOpen(true);
+  await tick();
+  assert.equal(srv.state.topicCalls, 1, 'same basket content: asked once');
+  const input = panel.byClass('bk-topic')[0];
+  input.value = 'Il mio titolo';
+  await input.fire('input');
+  srv.state.items.push({ it: 'Nuova frase.', en: 'New', register: '' });
+  await basket.refresh();
+  await tick();
+  assert.equal(panel.byClass('bk-topic')[0].value, 'Il mio titolo', 'a typed topic is never overwritten');
 });

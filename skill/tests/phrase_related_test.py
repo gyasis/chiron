@@ -74,6 +74,22 @@ class Related(unittest.TestCase):
         self.assertEqual(len(out["missing"]), R.MAX_MISSING)
         self.assertEqual(len(set(out["missing"])), len(out["missing"]))
 
+    def test_a_bare_high_frequency_verb_is_neither_a_match_nor_missing(self):
+        out = R.find_related([topic("fare", "verb", "verbo fare fare"), topic("dovere", "verb", "verbo dovere devo")], SHARD)
+        self.assertEqual(out, {"lessons": [], "missing": []})          # "Il verbo fare" exists, but a bare "fare" must not pull it in
+        # the same lemma through a construction or a vocabulary phrase still counts
+        out = R.find_related([topic("dovere + infinito", "construction", "dovere infinito verbi modali devo")], SHARD)
+        self.assertEqual(out["lessons"][0]["title"], "Verbi modali")
+        out = R.find_related([topic("fare la spesa", "vocabulary", "fare la spesa")], SHARD)
+        self.assertEqual(out["lessons"][0]["title"], "Il verbo fare")
+
+    def test_a_content_verb_still_matches(self):
+        rows = ROWS + [passage("svolg", "Svolgersi", "c", "Il verbo svolgersi: si svolge, si svolgono. Dove si svolge la lezione?")]
+        shard = TMP / "svolg.json"
+        shard.write_text(json.dumps(rows))
+        out = R.find_related([topic("svolgersi", "verb", "verbo svolgersi si svolge")], shard)
+        self.assertEqual([l["title"] for l in out["lessons"]], ["Svolgersi"])
+
     def test_accents_fold(self):
         self.assertEqual(R.tokens("Perché è già qui"), ["perche", "gia", "qui"])
 

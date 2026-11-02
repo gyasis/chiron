@@ -202,7 +202,8 @@ const words = (t, n) => String(t || '').trim().replace(/[?.!]+$/, '').split(/\s+
 
 /** A short theme from the first phrases (the server derives the same way when the topic is left empty). */
 export function deriveTopic(phrases) {
-  return 'Coach phrases: ' + phrases.slice(0, 3).map(p => words(p.en || p.it, 5)).join('; ');
+  const clause = p => words(String(p.en || p.it).trim().replace(/[?.!]+$/, '').split(/[,?;:]| and /)[0], 4);
+  return 'Coach phrases: ' + phrases.slice(0, 2).map(clause).join(' / ');
 }
 
 /** What the /api/pimsleur/from-phrases reply means, in words. A duplicate is never "Queued". */
@@ -276,7 +277,7 @@ const fold = s => String(s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '
  * The pill (`pill`) shows "🎧 Basket n/8"; `panel` is the sheet it opens. Items live in the server's Raccolte collection.
  */
 export function createBasket({ doc, api, pill, panel, target = BASKET_TARGET, onChange = () => {} }) {
-  const st = { items: [], open: false, topic: '', dirty: false, mode: 'list', msg: null };
+  const st = { items: [], open: false, topic: '', dirty: false, mode: 'list', msg: null, loaded: false, topicSig: '' };
   const listeners = new Set();
   const base = `/api/collections/${BASKET_ID}`;
 
@@ -287,9 +288,15 @@ export function createBasket({ doc, api, pill, panel, target = BASKET_TARGET, on
     subscribe: fn => { listeners.add(fn); return () => listeners.delete(fn); },
     async refresh() {
       const d = await api('GET', base);
-      st.items = (d.items || []).map(i => ({ it: i.it, en: i.en || '', register: regOf(i.note) }));
+      const next = (d.items || []).map(i => ({ it: i.it, en: i.en || '', register: regOf(i.note) }));
+      const same = st.loaded && JSON.stringify(next) === JSON.stringify(st.items);
+      st.items = next;
+      st.loaded = true;
+      if (same) return;          // nothing changed: do not rebuild the pill or the panel (a focus refresh landing between a
+                                 // click's mousedown and mouseup would replace the node under the pointer and swallow the click)
       if (!st.dirty) st.topic = st.items.length ? deriveTopic(st.items) : '';
       changed();
+      suggest();
     },
     async add(phrases) {
       const fresh = phrases.filter(p => !ctl.has(p.it));
@@ -304,8 +311,23 @@ export function createBasket({ doc, api, pill, panel, target = BASKET_TARGET, on
       await ctl.refresh();
     },
     async toggle(p) { return ctl.has(p.it) ? ctl.remove(p.it) : ctl.add([p]); },
-    setOpen(v) { st.open = v; render(); },
+    setOpen(v) { st.open = v; render(); if (v) suggest(); },
   };
+
+  /** A short theme title from the model (the server caches it per basket content). Fills the topic field unless the
+   *  learner has typed their own; until it answers the field shows the first-phrases fallback. */
+  async function suggest() {
+    const sig = JSON.stringify(st.items.map(i => i.it));
+    if (!st.open || !st.items.length || st.dirty || st.topicSig === sig) return;
+    st.topicSig = sig;
+    try {
+      const r = await api('POST', '/api/pimsleur/topic', { collection: BASKET_ID });
+      if (!st.dirty && st.topicSig === sig && r && typeof r.topic === 'string' && r.topic.trim()) { st.topic = r.topic.trim(); render(); }
+    } catch (e) {
+      st.topicSig = '';          // try again the next time the panel opens
+      console.warn('[chiron] topic suggestion unavailable:', e && e.message || e);
+    }
+  }
 
   function changed() { render(); for (const f of listeners) f(); onChange(ctl); }
 
@@ -317,7 +339,8 @@ export function createBasket({ doc, api, pill, panel, target = BASKET_TARGET, on
 
   function render() {
     const n = st.items.length;
-    pill.textContent = `🎧 Basket ${n}/${target}`;
+    const label = `🎧 Basket ${n}/${target}`;
+    if (pill.textContent !== label) pill.textContent = label;
     pill.setAttribute('aria-expanded', String(st.open));
     panel.hidden = !st.open;
     panel.textContent = '';

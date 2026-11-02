@@ -25,7 +25,6 @@ import phrase_related  # noqa: E402
 
 CHAIN_FILE = SKILL / "chains" / "2026-11-01_chiron-phrase-coach-chain" / "run.py"
 MODEL_ID = "phrase-coach"
-CHUNK_LINES = 4          # lines per streamed delta: the reply is complete before it is sent, this only paces the render
 
 router = APIRouter()
 _coach = None            # the chain's coach(); tests replace it
@@ -50,14 +49,27 @@ def get_coach():
     return _coach
 
 
-def ndjson_chunks(text: str) -> list[bytes]:
-    lines = text.splitlines(keepends=True)
-    parts = ["".join(lines[i:i + CHUNK_LINES]) for i in range(0, len(lines), CHUNK_LINES)] or [text]
-    out = [json.dumps({"model": MODEL_ID, "message": {"role": "assistant", "content": p}, "done": False},
-                      ensure_ascii=False).encode() + b"\n" for p in parts]
-    out.append(json.dumps({"model": MODEL_ID, "message": {"role": "assistant", "content": ""}, "done": True,
-                           "done_reason": "stop"}).encode() + b"\n")
-    return out
+def ndjson_line(text: str) -> bytes:
+    return json.dumps({"model": MODEL_ID, "message": {"role": "assistant", "content": text}, "done": False},
+                      ensure_ascii=False).encode() + b"\n"
+
+
+def ndjson_done() -> bytes:
+    return json.dumps({"model": MODEL_ID, "message": {"role": "assistant", "content": ""}, "done": True,
+                       "done_reason": "stop"}).encode() + b"\n"
+
+
+async def events(msgs: list, session_id: str):
+    """("text", chunk) per section as the chain finishes it, then ("done", result). A coach() replaced by a test (or any
+    callable that returns the whole reply) is sent as one chunk."""
+    coach = get_coach()
+    if coach is _chain.coach:
+        async for ev in _chain.coach_stream(msgs, session_id=session_id):
+            yield ev
+    else:
+        res = await coach(msgs, session_id=session_id)
+        yield ("text", res["content"])
+        yield ("done", res)
 
 
 @router.get("/ask/phrase/api/tags")
@@ -94,32 +106,50 @@ async def chat(request: Request):
         return "browser disconnected" if gone.is_set() else "superseded by a newer request from this session"
 
     async def stream():
-        task = stop = None
-        try:
-            task = asyncio.ensure_future(get_coach()(msgs, session_id=key))
-            stop = asyncio.ensure_future(cancel.wait())
-            await asyncio.wait({task, stop}, return_when=asyncio.FIRST_COMPLETED)
-            if not task.done():
-                task.cancel()
-                with contextlib.suppress(BaseException):
-                    await task
-                _log(f"{key}: coach run cancelled — {why()}")
-                if not gone.is_set():
-                    yield ask_proxy.error_line(url, why())
-                return
+        out: asyncio.Queue = asyncio.Queue()
+        result: dict = {}
+
+        async def pump():
             try:
-                res = task.result()
+                async for kind, val in events(msgs, key):
+                    if kind == "text":
+                        out.put_nowait(val)
+                    else:
+                        result.update(val)
+            finally:
+                out.put_nowait(None)
+
+        task = asyncio.ensure_future(pump())
+        stop = asyncio.ensure_future(cancel.wait())
+        get = None
+        try:
+            while True:
+                get = asyncio.ensure_future(out.get())
+                await asyncio.wait({get, stop}, return_when=asyncio.FIRST_COMPLETED)
+                if not get.done():
+                    task.cancel()
+                    with contextlib.suppress(BaseException):
+                        await task
+                    _log(f"{key}: coach run cancelled — {why()}")
+                    if not gone.is_set():
+                        yield ask_proxy.error_line(url, why())
+                    return
+                chunk = get.result()
+                if chunk is None:
+                    break
+                yield ndjson_line(chunk)          # one whole section per line: a fenced block never arrives half-sent
+            try:
+                await task
             except BaseException as e:
                 cause = f"{type(e).__name__}: {e}"[:500]
                 _log(f"{key}: coach run failed — {cause}")
                 yield ask_proxy.error_line(url, cause)
                 return
-            _log(f"{key}: kind={res.get('kind')} total_ms={res.get('total_ms')} steps="
-                 + ",".join(f"{s['step']}:{s['model']}:{s['latency_ms']}ms:{s['done_reason']}" for s in res.get("steps", [])))
-            for line in ndjson_chunks(res["content"]):
-                yield line
+            _log(f"{key}: kind={result.get('kind')} first_text_ms={result.get('first_text_ms')} total_ms={result.get('total_ms')} steps="
+                 + ",".join(f"{s['step']}:{s['model']}:{s['latency_ms']}ms:{s['done_reason']}" for s in result.get("steps", [])))
+            yield ndjson_done()
         finally:
-            for t in (task, stop):
+            for t in (task, stop, get):
                 if t is not None and not t.done():
                     t.cancel()
             watcher.cancel()

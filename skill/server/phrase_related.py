@@ -18,6 +18,9 @@ SHARD = "library.corpus.language-it.json"
 MAX_LESSONS, MAX_MISSING = 5, 6
 K1, B = 1.4, 0.75
 GENERIC = {"verbo", "verbi", "forma", "domande", "domanda", "modali"}
+# A bare match on one of these says nothing: they are in almost every lesson. Such a verb is a topic only through a
+# construction (dovere + infinito, passato prossimo) or a vocabulary phrase (fare la presa di servizio) that contains it.
+COMMON_LEMMAS = {"essere", "avere", "fare", "andare", "stare", "dare", "dire", "venire", "potere", "volere", "dovere", "sapere", "vedere"}
 _TOKEN = re.compile(r"[a-z0-9']+")
 _lock = threading.Lock()
 _cache: dict = {}
@@ -119,9 +122,14 @@ def select(per_topic: list[tuple[dict, list[tuple[float, dict]]]], max_lessons: 
     return {"lessons": lessons, "missing": missing[:max_missing]}
 
 
+def is_bare_common(topic: dict) -> bool:
+    """A verb topic that is only a high-frequency lemma: not searched, not reported missing."""
+    return topic.get("kind") == "verb" and str(topic.get("topic", "")).strip().lower() in COMMON_LEMMAS
+
+
 def find_related(topics: list[dict], shard: Path | None = None) -> dict:
     path = shard or (LIBRARY / SHARD)
     if not path.exists():
         raise FileNotFoundError(f"library shard not found: {path}")
     idx = _index(path)
-    return select([(t, search(idx, t)) for t in topics])
+    return select([(t, search(idx, t)) for t in topics if not is_bare_common(t)])

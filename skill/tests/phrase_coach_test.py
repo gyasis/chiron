@@ -29,8 +29,7 @@ def meta(tag, reason="stop"):
 BUILD = {"it": "Sono qui per la specializzazione.", "register": "neutral", "register_note": "no address form",
          "variants": [{"it": "Sono qui per fare la specializzazione.", "register": "neutral", "why": "common"}],
          "literal_trap": {"it": "Io sono qui per la mia specializzazione.", "why": "io and mia are redundant"}}
-TEACH = ("**Sono qui per la specializzazione.**\nRegister: neutral. No Lei or tu form.\n**How it's built**\n1. **sono qui** (\"I am here\")\n2. **sono qui per** (purpose)\n3. **Sono qui per la specializzazione.**\n\n**The pattern**\n`Sono qui per + [noun]`\n\n"
-         "**Your turn**\nI'm here for my interview.\n\n```meta\n"
+TEACH = ("**The pattern**\n`Sono qui per + [noun]`\n\n**Your turn**\nI'm here for my interview.\n\n```meta\n"
          '{"pattern": "Sono qui per + [noun]", "slots": ["noun"], "practice": "I\'m here for my interview.", '
          '"breakdown": [{"chunk": "Sono qui", "gloss": "I am here"}]}\n```\n[[SPEAK]]stray model speak[[/SPEAK]]')
 COACH = ("**Good: you used the frame.**\n**Corrections**\n- per il colloquio, not per colloquio.\n**Corrected sentence** **Sono qui per il colloquio.**\n**How it's built**\n1. **sono qui**\n2. **sono qui per**\n3. **Sono qui per il colloquio.**\n\n**Your turn**\nI'm here for my exam.\n\n```meta\n"
@@ -48,7 +47,7 @@ def diagram_for(texts, tag_note="note"):
     return json.dumps({"sentences": sents})
 
 
-ITEM_BLOCK = "Register: neutral. No address form.\n**How it's built**\n1. **a**\n2. **a b**\n3. **c**"
+ITEM_BLOCK = "**How it's built**\n1. **a**\n2. **a b**\n3. **c**"
 SHARED_MULTI = ("**The pattern**\n`[question word] è [noun]?`\n\n**Your turn**\nWhere is the room?\n\n```meta\n"
                 '{"pattern": "[question word] è [noun]?", "slots": ["q", "noun"], "practice": "Where is the room?", "breakdown": [{"chunk": "Dov\'è", "gloss": "where is"}]}\n```')
 
@@ -63,16 +62,17 @@ class Script:
     async def __call__(self, tag, system, user):
         step = ("understand" if system.startswith("You route") else "build" if system.startswith("You write Italian")
                 else "check" if system.startswith("You are a strict") else "teach_item" if "You are given ONE phrase" in system
-                else "teach_shared" if "Write only the shared teaching" in system else "teach" if "teach the learner to build" in system
+                else "teach_shared" if "Write only the shared teaching" in system
                 else "coach" if "marking a learner" in system else "diagram" if system.startswith("You are a grammar annotator") else "answer")
         self.calls.append((step, tag, user))
         if step == self.fail_step:
             raise chain.ModelReplyError(f"{tag}: done_reason='length', 0 chars of content")
         if step in self.answers:
-            return self.answers[step], meta(tag)
+            v = self.answers[step]
+            return (v(user) if callable(v) else v), meta(tag)
         out = {"understand": json.dumps(self.understand), "build": json.dumps(BUILD), "diagram": diagram_for(re.findall(r"(?m)^\d+\. (.+)$", user)),
-               "teach_item": ITEM_BLOCK, "teach_shared": SHARED_MULTI, "check": json.dumps(self.check),
-               "teach": TEACH, "coach": COACH, "answer": "Because Italian drops the subject pronoun."}[step]
+               "teach_item": ITEM_BLOCK, "teach_shared": TEACH if user.startswith("N = 1\n") else SHARED_MULTI,
+               "check": json.dumps(self.check(user) if callable(self.check) else self.check), "coach": COACH, "answer": "Because Italian drops the subject pronoun."}[step]
         return out, meta(tag)
 
 
@@ -98,8 +98,9 @@ class Chain(unittest.TestCase):
         s = Script(NEW)
         r = run_coach(s, [{"role": "system", "content": "ignored librarian text"}, {"role": "user", "content": "How do I say I'm here for my specialization?"}])
         self.assertEqual([c[0] for c in s.calls[:3]], ["understand", "build", "check"])
-        self.assertEqual(sorted(c[0] for c in s.calls[3:]), ["diagram", "teach"])      # TEACH and DIAGRAM both run, concurrently
-        self.assertEqual([c[1] for c in s.calls], [chain.MODEL_FAST, chain.MODEL_THINK, chain.MODEL_FAST, chain.MODEL_THINK, chain.MODEL_THINK])
+        self.assertEqual(sorted(c[0] for c in s.calls[3:]), ["diagram", "teach_item", "teach_shared"])   # all three run concurrently
+        self.assertEqual([c[1] for c in s.calls[:3]], [chain.MODEL_FAST, chain.MODEL_THINK, chain.MODEL_FAST])
+        self.assertEqual({c[1] for c in s.calls[3:]}, {chain.MODEL_THINK})
         self.assertEqual(r["kind"], "new_request")
         c = r["content"]
         self.assertEqual(len(chain._SPEAK.findall(c)), 1)                      # a SPEAK block the model wrote is dropped; the system adds one
@@ -112,7 +113,8 @@ class Chain(unittest.TestCase):
         self.assertEqual(blk["practice"], "I'm here for my interview.")
         self.assertEqual(blk["variants"][0]["it"], "Sono qui per fare la specializzazione.")
         self.assertNotIn("```meta", c)
-        self.assertEqual([x["step"] for x in r["steps"]], ["understand", "build", "check", "register", "teach", "diagram"])
+        self.assertEqual([x["step"] for x in r["steps"]][:3], ["understand", "build", "check"])
+        self.assertEqual(sorted(x["step"] for x in r["steps"][3:]), ["diagram", "how-built", "register", "teach"])
         self.assertTrue(all(x["done_reason"] == "stop" and "latency_ms" in x for x in r["steps"] if x["step"] != "register"))
 
     def test_ledger_has_one_record_per_call(self):
@@ -121,14 +123,14 @@ class Chain(unittest.TestCase):
         before = len(rows())
         run_coach(Script(NEW), [{"role": "user", "content": "how do I say hello"}])
         new = rows()[before:]
-        self.assertEqual(len(new), 5)
+        self.assertEqual(len(new), 6)
         self.assertTrue(all(r["source"] == chain.SOURCE and r["session_id"] == "t" for r in new))
 
     def test_check_fixes_reask_build_once(self):
         s = Script(NEW, check={"ok": False, "fixes": ["the variant is wrong"]})
         run_coach(s, [{"role": "user", "content": "how do I say hello"}])
         self.assertEqual([c[0] for c in s.calls[:4]], ["understand", "build", "check", "build"])
-        self.assertEqual(sorted(c[0] for c in s.calls[4:]), ["diagram", "teach"])
+        self.assertEqual(sorted(c[0] for c in s.calls[4:]), ["diagram", "teach_item", "teach_shared"])
         self.assertIn("the variant is wrong", s.calls[3][2])
 
     def test_attempt_skips_build_and_check(self):
@@ -182,10 +184,10 @@ class Chain(unittest.TestCase):
         b = dict(BUILD, literal_trap={"it": BUILD["it"], "why": "same"})
         teach = TEACH.replace("**The pattern**", "**Watch out**\nNothing differs.\n\n**The pattern**")
         orig = chain.json.dumps
-        s = Script(NEW, answers={"build": json.dumps(b), "teach": teach})
+        s = Script(NEW, answers={"build": json.dumps(b), "teach_shared": teach})
         r = run_coach(s, [{"role": "user", "content": "how do I say hello"}])
         self.assertNotIn("Watch out", r["content"])
-        self.assertIn("leave the Watch out section out", [c for c in s.calls if c[0] == "teach"][0][2])
+        self.assertIn("leave the Watch out section out", [c for c in s.calls if c[0] == "teach_shared"][0][2])
 
     def test_bad_completion_fails_loudly(self):
         s = Script(NEW, fail_step="build")
@@ -284,10 +286,7 @@ class Register(unittest.TestCase):
         b = dict(BUILD, register="lei", register_note="Lei", variants=[
             {"it": "Sono qui per iscrivermi alla specializzazione.", "register": "lei", "why": "enroll"},
             {"it": "Sono qui per la specializzazione.", "register": "neutral", "why": "dup of the main sentence"}])
-        teach = TEACH.replace("Register: neutral. No Lei or tu form.",
-                              "Register: Lei (formal). Mi scusi sets the frame.\nFormal (Lei): Sono qui per iscrivermi alla specializzazione.\n"
-                              "Formal (Lei): Sono qui per la specializzazione.")
-        s = Script(NEW, answers={"build": json.dumps(b), "teach": teach})
+        s = Script(NEW, answers={"build": json.dumps(b)})
         r = run_coach(s, [{"role": "user", "content": "how do I say I'm here for my specialization"}])
         blk = chain.phrase_block(r["content"])
         self.assertEqual(blk["register"], "neutral")
@@ -301,7 +300,7 @@ class Register(unittest.TestCase):
         self.assertEqual(r["register_overrides"][0]["model"], "lei")
         reg_step = [x for x in r["steps"] if x["step"] == "register"][0]
         self.assertEqual(len(reg_step["overrides"]), 2)
-        teach_user = [c for c in s.calls if c[0] == "teach"][0][2]
+        teach_user = [c for c in s.calls if c[0] == "teach_shared"][0][2]
         self.assertIn("REGISTER (use exactly): neutral", teach_user)
 
     def test_unsure_rule_keeps_the_model_label(self):
@@ -327,26 +326,30 @@ M_ITEMS = [{"it": "Dov'è l'ambulatorio?", "register": "neutral", "register_note
             "literal_trap": {"it": "Che tempo è il corso?", "why": "time is ora"}}]
 M_NEW = {**NEW, "meaning": "three questions", "phrases": [{"en": e, "situation": ""} for e in M_EN]}
 
+def _item_for(user):
+    listed = user.split("PHRASES TO BUILD:")[1]
+    return next(i for i, e in zip(M_ITEMS, M_EN) if e in listed)
+
+
 def multi_script(**kw):
-    answers = {"build": json.dumps({"items": M_ITEMS}), **kw.pop("answers", {})}
+    answers = {"build": lambda user: json.dumps({"items": [_item_for(user)]}), **kw.pop("answers", {})}
     s = Script(M_NEW, answers=answers, **kw)
-    s.diagram_texts = [i["it"] for i in M_ITEMS]
     return s
 
 
 class MultiPhrase(unittest.TestCase):
     MSG = [{"role": "user", "content": "how do i say these phrases: 1. Where is the clinic? 2. Who is my tutor? 3. What time is the safety course?"}]
 
-    def test_one_build_one_check_for_all_items(self):
+    def test_one_build_and_one_check_per_item_each_with_its_own_phrase(self):
         s = multi_script()
         r = run_coach(s, self.MSG)
         steps = [c[0] for c in s.calls]
-        self.assertEqual(steps.count("build"), 1)
-        self.assertEqual(steps.count("check"), 1)
-        build_user = [c for c in s.calls if c[0] == "build"][0][2]
-        self.assertIn("N = 3", build_user)
-        for e in M_EN:
-            self.assertIn(e, build_user)
+        self.assertEqual((steps.count("build"), steps.count("check")), (3, 3))
+        for c in [c for c in s.calls if c[0] == "build"]:
+            self.assertIn("N = 1", c[2])
+            listed = c[2].split("PHRASES TO BUILD:")[1]
+            self.assertEqual(sum(e in listed for e in M_EN), 1)                  # only its own phrase is built
+            self.assertIn("OTHER PHRASES IN THE SAME MESSAGE", c[2])             # the rest ride along as context
         self.assertEqual(len(chain.phrase_block(r["content"])["items"]), 3)
 
     def test_phrase_block_has_items_and_keeps_top_level_it(self):
@@ -370,7 +373,7 @@ class MultiPhrase(unittest.TestCase):
         self.assertEqual(len(chain._HOW.findall(r["content"])), 3)
 
     def test_teach_item_missing_a_how_its_built_section_is_asked_again_then_fails(self):
-        s = multi_script(answers={"teach_item": "Register: neutral.\nNo steps here."})
+        s = multi_script(answers={"teach_item": "No steps here."})
         with self.assertRaises(RuntimeError) as cm:
             run_coach(s, self.MSG)
         self.assertIn("How it", str(cm.exception))
@@ -381,56 +384,50 @@ class MultiPhrase(unittest.TestCase):
         r = run_coach(s, self.MSG)
         steps = [c[0] for c in s.calls]
         self.assertEqual((steps.count("teach_item"), steps.count("teach_shared")), (3, 1))
-        self.assertEqual(r["content"].count("**How it's built**"), 3)
+        self.assertEqual(len(chain._HOW.findall(r["content"])), 3)
         heads = [l for l in r["content"].splitlines() if l.startswith("**") and l[2:3].isdigit()]
         self.assertEqual(heads, [f"**{k}) {i['it']}**" for k, i in enumerate(M_ITEMS, 1)])
-        self.assertLess(r["content"].index("**3) "), r["content"].index("**The pattern**"))
+        self.assertLess(r["content"].index("**3) "), r["content"].index("**How it's built"))      # every Italian line first
+        self.assertLess(r["content"].rindex("**How it's built"), r["content"].index("**The pattern**"))
 
     def test_single_phrase_teach_also_requires_how_its_built(self):
-        s = Script(NEW, answers={"teach": TEACH.replace("**How it's built**", "**Build**")})
+        s = Script(NEW, answers={"teach_item": "1. a\n2. b\n3. c"})
         with self.assertRaises(RuntimeError):
             run_coach(s, [{"role": "user", "content": "how do I say hello"}])
 
-    def test_check_reasks_build_only_for_flagged_items(self):
+    def test_a_flagged_item_is_rebuilt_alone(self):
         fixed = {**M_ITEMS[1], "it": "Chi è il mio tutor di percorso?"}
-        s = multi_script(check={"ok": False, "fixes": [{"item": 2, "fix": "use tutor di percorso"}]})
-        orig = s.__call__
-        count = {"n": 0}
+        calls = {"build": 0}
 
-        async def route(tag, system, user):
-            if system.startswith("You write Italian"):
-                count["n"] += 1
-                if count["n"] == 2:
-                    s.calls.append(("build_fix", tag, user))
-                    return json.dumps({"items": [fixed]}), meta(tag)
-            return await orig(tag, system, user)
-        s.diagram_texts = [M_ITEMS[0]["it"], fixed["it"], M_ITEMS[2]["it"]]
-        chain._chat = route
-        r = asyncio.run(chain.coach(self.MSG))
-        fix_user = [c for c in s.calls if c[0] == "build_fix"][0][2]
+        def build(user):
+            calls["build"] += 1
+            return json.dumps({"items": [fixed if "REVIEWER FIXES" in user else _item_for(user)]})
+        s = multi_script(check=lambda user: {"ok": False, "fixes": [{"item": 1, "fix": "use tutor di percorso"}]} if "Chi è il mio tutor?" in user else {"ok": True, "fixes": []},
+                         answers={"build": build})
+        r = run_coach(s, self.MSG)
+        self.assertEqual(calls["build"], 4)                                       # 3 builds + one re-ask, not 3 more
+        fix_user = [c for c in s.calls if c[0] == "build" and "REVIEWER FIXES" in c[2]][0][2]
         listed = fix_user.split("PHRASES TO BUILD:")[1].split("## REVIEWER FIXES")[0]
-        self.assertIn("N = 1", fix_user)
         self.assertIn(M_EN[1], listed)
         self.assertNotIn(M_EN[0], listed)
-        self.assertNotIn(M_EN[2], listed)
         self.assertEqual([i["it"] for i in chain.phrase_block(r["content"])["items"]],
                          [M_ITEMS[0]["it"], fixed["it"], M_ITEMS[2]["it"]])
 
     def test_register_rule_runs_per_item(self):
         items = [dict(i) for i in M_ITEMS]
         items[1] = {**items[1], "it": "Scusi, chi è il mio tutor?", "register": "neutral"}      # has a Lei opener
-        s = multi_script(answers={"build": json.dumps({"items": items})})
-        s.diagram_texts = [i["it"] for i in items]
+        s = multi_script(answers={"build": lambda user: json.dumps({"items": [next(i for i, e in zip(items, M_EN) if e in user.split("PHRASES TO BUILD:")[1])]})})
         r = run_coach(s, self.MSG)
         regs = [i["register"] for i in chain.phrase_block(r["content"])["items"]]
         self.assertEqual(regs, ["neutral", "lei", "neutral"])
 
-    def test_build_with_wrong_item_count_is_repaired(self):
+    def test_build_with_wrong_item_count_is_repaired_then_fails(self):
         s = multi_script(answers={"build": json.dumps({"items": M_ITEMS[:2]})})
         with self.assertRaises(RuntimeError):
             run_coach(s, self.MSG)
-        self.assertEqual([c[0] for c in s.calls].count("build"), 3)
-        self.assertIn("exactly 3", [c for c in s.calls if c[0] == "build"][1][2])
+        repair = [c for c in s.calls if c[0] == "build" and "PROBLEMS" in c[2]]
+        self.assertTrue(repair)
+        self.assertIn("exactly 1", repair[0][2])
 
     def test_understand_without_phrases_still_builds_one(self):
         r = run_coach(Script(NEW), [{"role": "user", "content": "how do I say hello"}])
@@ -499,7 +496,7 @@ class Diagram(unittest.TestCase):
         ev = {}
 
         async def barrier(tag, system, user):
-            name = "teach" if "teach the learner to build" in system else "diagram" if system.startswith("You are a grammar annotator") else None
+            name = "teach" if "Write only the shared teaching" in system else "diagram" if system.startswith("You are a grammar annotator") else None
             if name:
                 ev.setdefault("teach", asyncio.Event())
                 ev.setdefault("diagram", asyncio.Event())
@@ -592,6 +589,116 @@ class Related(unittest.TestCase):
         self.assertNotIn("```related", r["content"])
         self.assertIn("```diagram", r["content"])
         self.assertEqual([x for x in r["steps"] if x["step"] == "related"][0]["done_reason"], "failed")
+
+
+class Streaming(unittest.TestCase):
+    MSG = MultiPhrase.MSG
+
+    def collect(self, script, msgs=None):
+        chain._chat = script
+
+        async def go():
+            chunks, done = [], None
+            async for kind, val in chain.coach_stream(msgs or self.MSG, session_id="t"):
+                if kind == "text":
+                    chunks.append(val)
+                else:
+                    done = val
+            return chunks, done
+        return asyncio.run(go())
+
+    def test_sections_arrive_in_order_and_the_hidden_blocks_come_last(self):
+        chunks, done = self.collect(multi_script())
+        self.assertEqual(len(chunks), 3 + 3 + 1 + 1)                              # 3 Italian lines, 3 build-ups, shared, tail
+        self.assertTrue(chunks[0].startswith("**1) "))
+        self.assertTrue(chunks[2].startswith("**3) "))
+        self.assertTrue(chunks[3].startswith("**How it's built · 1)"))
+        self.assertTrue(chunks[6].startswith("**The pattern**"))
+        self.assertTrue(chunks[-1].lstrip().startswith("[[SPEAK]]"))              # SPEAK right before the fences, at the very end
+        self.assertIn("```phrase", chunks[-1])
+        self.assertTrue(all("```" not in c for c in chunks[:-1]))                 # no fence before the last section
+        self.assertEqual("".join(chunks), done["content"])
+        self.assertLessEqual(done["first_text_ms"], done["total_ms"])
+
+    def test_a_fenced_block_is_never_split_across_chunks(self):
+        chunks, _ = self.collect(multi_script())
+        self.assertTrue(all(c.count("```") % 2 == 0 for c in chunks))
+
+    def test_item_order_is_stable_when_a_later_item_finishes_first(self):
+        s = multi_script()
+        orig = s.__call__
+
+        async def slow_first(tag, system, user):
+            if system.startswith("You write Italian") and M_EN[0] in user.split("PHRASES TO BUILD:")[1]:
+                await asyncio.sleep(0.3)                                          # item 1 is the slowest to build
+            return await orig(tag, system, user)
+        chunks, _ = self.collect(slow_first)
+        self.assertEqual([c.split(")")[0] for c in chunks[:3]], ["**1", "**2", "**3"])
+
+    def test_the_first_text_does_not_wait_for_the_slow_parts(self):
+        s = multi_script()
+        orig = s.__call__
+        t = {}
+
+        async def slow_rest(tag, system, user):
+            if system.startswith("You are a grammar annotator") or "Write only the shared teaching" in system:
+                await asyncio.sleep(0.4)
+            return await orig(tag, system, user)
+        chain._chat = slow_rest
+
+        async def go():
+            t0 = asyncio.get_event_loop().time()
+            async for kind, val in chain.coach_stream(self.MSG, session_id="t"):
+                if kind == "text" and "first" not in t:
+                    t["first"] = asyncio.get_event_loop().time() - t0
+            t["total"] = asyncio.get_event_loop().time() - t0
+        asyncio.run(go())
+        self.assertLess(t["first"], 0.25)
+        self.assertGreater(t["total"], 0.4)
+
+    def test_a_failed_item_fails_the_stream_after_the_chunks_already_sent(self):
+        s = multi_script(fail_step="check")
+        chain._chat = s
+        seen = []
+
+        async def go():
+            async for kind, val in chain.coach_stream(self.MSG, session_id="t"):
+                seen.append(kind)
+        with self.assertRaises(RuntimeError):
+            asyncio.run(go())
+        self.assertNotIn("done", seen)
+
+
+class StreamRoute(unittest.TestCase):
+    def setUp(self):
+        app = FastAPI()
+        app.include_router(phrase_coach.router)
+        self.c = TestClient(app)
+        phrase_coach._coach = chain.coach                                         # the real chain (other tests install mocks)
+        chain._chat = multi_script()
+
+    def post(self, **extra):
+        return self.c.post("/ask/phrase/api/chat", json={"messages": MultiPhrase.MSG, **extra}, headers={"X-Ask-Session": "sr1"})
+
+    def test_ndjson_has_one_line_per_section_and_the_fences_travel_whole(self):
+        objs = [json.loads(l) for l in self.post().text.splitlines()]
+        text = [o["message"]["content"] for o in objs if not o["done"]]
+        self.assertEqual(len(text), 8)
+        self.assertTrue(objs[-1]["done"])
+        self.assertEqual([i for i, c in enumerate(text) if "```" in c], [7])         # all three fences in the last line, whole
+        self.assertEqual(text[-1].count("```") % 2, 0)
+
+    def test_stream_false_folds_every_section(self):
+        streamed = "".join(json.loads(l)["message"]["content"] for l in self.post().text.splitlines())
+        chain._chat = multi_script()
+        r = self.post(stream=False, tools=[{"type": "function"}])
+        self.assertEqual(r.json()["message"]["content"], streamed)
+
+    def test_a_failure_after_some_text_ends_with_the_error_line(self):
+        chain._chat = multi_script(fail_step="teach_shared")
+        lines = [json.loads(l) for l in self.post().text.splitlines()]
+        self.assertTrue(any(not o["done"] and o["message"]["content"].startswith("**1)") for o in lines))
+        self.assertIn("no usable reply", lines[-1]["error"])
 
 
 class Route(unittest.TestCase):
