@@ -502,10 +502,12 @@
 .px-topic, .bk-topic { flex: 1 1 100%; font: inherit; font-size: 13px; padding: 7px 9px; border: 1px solid var(--chiron-border); border-radius: 8px; background: var(--chiron-bg); color: var(--chiron-fg); }
 
 /* the basket sheet: opens under the topbar pill; on a phone it spans the width and stays clear of the composer */
-.bk-panel { position: fixed; z-index: 40; top: 58px; right: 12px; width: min(380px, calc(100vw - 24px)); max-height: calc(100dvh - 210px); overflow: auto;
+.bk-panel { position: fixed; z-index: 40; top: 58px; right: 12px; width: min(380px, calc(100vw - 24px)); max-height: calc(100dvh - 210px); overflow: hidden;
   background: var(--chiron-surface); color: var(--chiron-fg); border: 1px solid var(--chiron-border); border-radius: 12px; box-shadow: 0 8px 28px rgba(0,0,0,.18);
   padding: 12px; display: flex; flex-direction: column; gap: 8px; font-size: 13.5px; }
 .bk-panel[hidden] { display: none; }
+.bk-panel > * { flex: 0 0 auto; }
+.bk-panel > .bk-list { flex: 1 1 auto; }
 .bk-head { display: flex; align-items: center; gap: 8px; }
 .bk-count { margin-left: auto; color: var(--chiron-muted); font-size: 12.5px; }
 .bk-x { border: 0; background: none; color: var(--chiron-muted); width: 34px; height: 34px; border-radius: 50%; }
@@ -516,7 +518,7 @@
 .bk-msg { font-size: 12.5px; background: var(--chiron-elevated); border-radius: 8px; padding: 6px 9px; }
 .bk-msg.err { color: var(--chiron-error, #b42318); }
 .bk-msg a, .bk-link { color: var(--chiron-accent); }
-.bk-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
+.bk-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; overflow: auto; flex: 1 1 auto; min-height: 72px; }
 .bk-list li { display: flex; align-items: center; gap: 6px; padding: 4px 0; }
 .bk-list li + li { border-top: 1px solid var(--chiron-divider); }
 .bk-t { flex: 1; }

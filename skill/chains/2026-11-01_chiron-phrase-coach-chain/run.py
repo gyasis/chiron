@@ -271,6 +271,36 @@ Then end with a fenced block tagged meta holding ONLY this JSON (the system buil
 ```
 Use the given sentences and registers exactly as provided. Every phrase MUST have its own "How it's built" section. 2 to 4 breakdown chunks (from the first phrase). Keep the reply tight: short steps, no repetition."""
 
+TEACH_ITEM_SYS = """You are a warm, concise Italian coach. You do not just translate: you teach the learner to build the sentence themselves.
+You are given ONE phrase. Write only the part below, in English with Italian, in exactly this Markdown layout, nothing before or after it (the system writes the heading with the Italian sentence):
+
+Register: <Lei (formal) | tu (informal) | neutral>. <short reason>
+<Formal (Lei): ... or Informal (tu): ... , only if a different-register variant is given; skip otherwise>
+""" + _BUILD_UP + """
+
+Use the given sentence and register exactly as provided. Keep it tight."""
+
+TEACH_SHARED_SYS = """You are a warm, concise Italian coach. You teach the learner to build sentences themselves.
+You are given N phrases (N is at least 2). Each phrase already has its own heading, register line and "How it's built" steps, written elsewhere: do NOT write those. Write only the shared teaching below, in English with Italian phrases, in exactly this Markdown layout, nothing before or after it except the meta block:
+
+**The pattern**
+`<reusable frame with [slots]>` then 2-3 swaps showing the same frame in other situations (Italian, with a 2-4 word English gloss each). One shared pattern if the phrases really share one; otherwise one pattern per group of phrases that do, each named by the phrase numbers it covers.
+
+**Why Italians say it this way**
+1-2 lines (per pattern group when there are several).
+
+**Watch out**
+Only for a phrase that has a LITERAL TRAP: show the WRONG form and the RIGHT form as two different strings (wrong: the word-for-word version an English speaker would say; right: the main sentence), and say why the wrong one is off. Name the phrase number. If no phrase has a trap, leave this whole section out.
+
+**Your turn**
+One new English sentence that needs the same pattern, for the learner to try in Italian.
+
+Then end with a fenced block tagged meta holding ONLY this JSON (the system builds the spoken and data blocks from it, so do not write any [[SPEAK]] text yourself):
+```meta
+{"pattern": "the main frame, same as above", "slots": ["slot names"], "practice": "the Your-turn English sentence", "breakdown": [{"chunk": "Italian chunk", "gloss": "English gloss"}]}
+```
+Use the given sentences and registers exactly as provided. 2 to 4 breakdown chunks (from the first phrase). Keep the reply tight."""
+
 COACH_SYS = """You are a warm, concise Italian coach marking a learner's attempt. The learner was asked to say a practice sentence in Italian, using a pattern from the last phrase.
 Write in English with Italian phrases, in exactly this Markdown layout, nothing before or after it except the meta block:
 
@@ -643,13 +673,13 @@ def _tail(speak: str, data: dict, diagram: dict | None = None, related: dict | N
     return out
 
 
-async def _markdown_step(run: Run, step: str, system: str, user: str, need: tuple, check=None) -> tuple[str, dict]:
+async def _markdown_step(run: Run, step: str, system: str, user: str, need: tuple, check=None, with_meta: bool = True) -> tuple[str, dict]:
     """TEACH/COACH call; the reply must carry a meta block with the `need` keys (and pass `check`), else it is asked again (twice at most)."""
     cur, err = user, "no attempt made"
     for attempt in range(1, 3):
         try:
             text = await model_call(run, step, MODEL_THINK, system, cur)
-            body, meta = _split_meta(text)
+            body, meta = _split_meta(text) if with_meta else (text.strip(), {})
             missing = [k for k in need if not meta.get(k)]
             if missing:
                 raise ValueError(f"meta block lacks {missing}")
@@ -718,7 +748,7 @@ def validate_sentences(o, texts: list[str]):
                 issues.append(f"{q}: must be an object"); continue
             if not _nonempty(t.get("surface")):
                 issues.append(f"{q}.surface: required")
-            elif _ap_norm(t["surface"]).strip() not in _ap_norm(text):
+            elif _ap_norm(t["surface"]).strip(" .,;:!?«»\"'") not in _ap_norm(text):
                 issues.append(f'{q}.surface "{t["surface"]}" does not occur in the sentence')
             if not _nonempty(t.get("pos")):
                 issues.append(f"{q}.pos: required")
@@ -789,13 +819,43 @@ def validate_annotated_passage(doc) -> list[str]:
     return iss
 
 
+_SENT_SPLIT = re.compile(r"(?<=[.?!])\s+")
+
+
+def merge_sentences(parts: list[dict]) -> dict:
+    """One ApSentence from the annotations of an item's sub-sentences, in order."""
+    if len(parts) == 1:
+        return parts[0]
+    out = {"translation": " ".join(p["translation"].strip() for p in parts),
+           "tokens": [t for p in parts for t in p["tokens"]],
+           "phrases": [x for p in parts for x in (p.get("phrases") or [])],
+           "tips": [x for p in parts for x in (p.get("tips") or [])][:3]}
+    for k, sep in (("literal", " "), ("mood", " / "), ("registerNote", " ")):
+        vals = [p[k].strip() for p in parts if _nonempty(p.get(k))]
+        if vals:
+            out[k] = sep.join(dict.fromkeys(vals)) if k != "literal" else sep.join(vals)
+    return out
+
+
 async def step_diagram(run: Run, texts: list[str]) -> dict | None:
-    """DIAGRAM call. Any failure is logged and returns None: the reply goes out without a diagram."""
+    """DIAGRAM: one call per Italian sentence, all run concurrently, merged back into one ApSentence per phrase (an
+    item can hold several sentences, and one call for five long items outran the read timeout). Any failure is logged
+    and returns None: the reply goes out without a diagram."""
     t0 = time.time()
-    user = "SENTENCES (annotate each, in this order):\n" + "\n".join(f"{i}. {t}" for i, t in enumerate(texts, 1))
+    subs = [[x for x in _SENT_SPLIT.split(t.strip()) if x] or [t] for t in texts]
+    flat = [(i, x) for i, parts in enumerate(subs) for x in parts]
+
+    async def one(n: int, text: str):
+        user = f"SENTENCES (annotate each, in this order):\n1. {text}"
+        step = "diagram" if len(flat) == 1 else f"diagram {n}"
+        o = await json_step(run, step, MODEL_THINK, DIAGRAM_SYS, user, lambda x: validate_sentences(x, [text]), max_repair=2)
+        return o["sentences"][0]
     try:
-        o = await json_step(run, "diagram", MODEL_THINK, DIAGRAM_SYS, user, lambda x: validate_sentences(x, texts), max_repair=2)
-        doc = assemble_passage(o["sentences"], texts)
+        done = await asyncio.gather(*[one(n, x) for n, (_, x) in enumerate(flat, 1)])
+        by_item: list[list[dict]] = [[] for _ in texts]
+        for (i, _), ann in zip(flat, done):
+            by_item[i].append(ann)
+        doc = assemble_passage([merge_sentences(parts) for parts in by_item], texts)
         bad = validate_annotated_passage(doc)
         if bad:
             raise ValueError(f"assembled passage invalid: {bad}")
@@ -907,13 +967,30 @@ def _teach_user(run: Run) -> str:
             + f"\n\nThe learner's intent: {run.understand.get('meaning')} (situation: {run.understand.get('situation')})")
 
 
+def _item_user(run: Run, k: int) -> str:
+    """The user prompt for ONE phrase (1-based k) of a multi-phrase TEACH."""
+    b, ph = run.items[k - 1], phrases_of(run.understand)[k - 1]
+    return (f"PHRASE (English): {ph['en']}\nMAIN SENTENCE (use exactly): {b['it']}\nREGISTER (use exactly): {b['register']} — {b.get('register_note') or ''}\n"
+            f"VARIANTS: {json.dumps(b['variants'], ensure_ascii=False)}")
+
+
 async def _teach_new(run: Run) -> tuple[str, dict]:
     n = len(run.items)
-    body, meta = await _markdown_step(run, "teach", TEACH_SYS, _teach_user(run), ("pattern", "practice"),
-                                      check=lambda b: check_built(b, n))
     if n == 1:
+        body, meta = await _markdown_step(run, "teach", TEACH_SYS, _teach_user(run), ("pattern", "practice"),
+                                          check=lambda b: check_built(b, 1))
         body = drop_same_string_watch_out(body, run.items[0]["it"], run.items[0]["literal_trap"]["it"])
-    return fix_registers_per_item(body, run.items), meta
+        return fix_registers_per_item(body, run.items), meta
+    # N phrases: the per-phrase build-ups and the shared teaching are independent, so they are written concurrently
+    # (one long reply for five phrases was the slowest step of the chain).
+    async def one(k):
+        body, _ = await _markdown_step(run, f"teach {k}", TEACH_ITEM_SYS, _item_user(run, k), (),
+                                       check=lambda b: check_built(b, 1), with_meta=False)
+        return f"**{k}) {run.items[k - 1]['it']}**\n{body}"
+    shared = _markdown_step(run, "teach shared", TEACH_SHARED_SYS, _teach_user(run), ("pattern", "practice"))
+    results = await asyncio.gather(*[one(k) for k in range(1, n + 1)], shared)
+    blocks, (rest, meta) = results[:-1], results[-1]
+    return fix_registers_per_item("\n\n".join(blocks) + "\n\n" + rest, run.items), meta
 
 
 async def step_teach(run: Run, _prev: str) -> str:

@@ -48,6 +48,11 @@ def diagram_for(texts, tag_note="note"):
     return json.dumps({"sentences": sents})
 
 
+ITEM_BLOCK = "Register: neutral. No address form.\n**How it's built**\n1. **a**\n2. **a b**\n3. **c**"
+SHARED_MULTI = ("**The pattern**\n`[question word] è [noun]?`\n\n**Your turn**\nWhere is the room?\n\n```meta\n"
+                '{"pattern": "[question word] è [noun]?", "slots": ["q", "noun"], "practice": "Where is the room?", "breakdown": [{"chunk": "Dov\'è", "gloss": "where is"}]}\n```')
+
+
 class Script:
     """Replaces chain._chat: answers by step (read from the system prompt) and records the calls."""
     def __init__(self, understand, check=None, fail_step=None, answers=None):
@@ -57,14 +62,16 @@ class Script:
 
     async def __call__(self, tag, system, user):
         step = ("understand" if system.startswith("You route") else "build" if system.startswith("You write Italian")
-                else "check" if system.startswith("You are a strict") else "teach" if "teach the learner to build" in system
+                else "check" if system.startswith("You are a strict") else "teach_item" if "You are given ONE phrase" in system
+                else "teach_shared" if "Write only the shared teaching" in system else "teach" if "teach the learner to build" in system
                 else "coach" if "marking a learner" in system else "diagram" if system.startswith("You are a grammar annotator") else "answer")
         self.calls.append((step, tag, user))
         if step == self.fail_step:
             raise chain.ModelReplyError(f"{tag}: done_reason='length', 0 chars of content")
         if step in self.answers:
             return self.answers[step], meta(tag)
-        out = {"understand": json.dumps(self.understand), "build": json.dumps(BUILD), "diagram": diagram_for(self.diagram_texts), "check": json.dumps(self.check),
+        out = {"understand": json.dumps(self.understand), "build": json.dumps(BUILD), "diagram": diagram_for(re.findall(r"(?m)^\d+\. (.+)$", user)),
+               "teach_item": ITEM_BLOCK, "teach_shared": SHARED_MULTI, "check": json.dumps(self.check),
                "teach": TEACH, "coach": COACH, "answer": "Because Italian drops the subject pronoun."}[step]
         return out, meta(tag)
 
@@ -320,15 +327,8 @@ M_ITEMS = [{"it": "Dov'è l'ambulatorio?", "register": "neutral", "register_note
             "literal_trap": {"it": "Che tempo è il corso?", "why": "time is ora"}}]
 M_NEW = {**NEW, "meaning": "three questions", "phrases": [{"en": e, "situation": ""} for e in M_EN]}
 
-TEACH_MULTI = ("**1) Dov'è l'ambulatorio?**\nRegister: neutral. No address form.\n**How it's built**\n1. **è** (is)\n2. **dove è**\n3. **Dov'è l'ambulatorio?**\n\n"
-               "**2) Chi è il mio tutor?**\nRegister: neutral. No address form.\n**How it's built**\n1. **chi**\n2. **chi è**\n3. **Chi è il mio tutor?**\n\n"
-               "**3) A che ora è il corso di sicurezza?**\nRegister: neutral. No address form.\n**How it's built**\n1. **ora**\n2. **che ora è**\n3. **A che ora è il corso di sicurezza?**\n\n"
-               "**The pattern**\n`[question word] è [noun]?`\n\n**Your turn**\nWhere is the room?\n\n```meta\n"
-               '{"pattern": "[question word] è [noun]?", "slots": ["q", "noun"], "practice": "Where is the room?", "breakdown": [{"chunk": "Dov\'è", "gloss": "where is"}]}\n```')
-
-
 def multi_script(**kw):
-    answers = {"build": json.dumps({"items": M_ITEMS}), "teach": TEACH_MULTI, **kw.pop("answers", {})}
+    answers = {"build": json.dumps({"items": M_ITEMS}), **kw.pop("answers", {})}
     s = Script(M_NEW, answers=answers, **kw)
     s.diagram_texts = [i["it"] for i in M_ITEMS]
     return s
@@ -369,14 +369,22 @@ class MultiPhrase(unittest.TestCase):
         r = run_coach(multi_script(), self.MSG)
         self.assertEqual(len(chain._HOW.findall(r["content"])), 3)
 
-    def test_teach_missing_a_how_its_built_section_is_asked_again_then_fails(self):
-        bad = TEACH_MULTI.replace("**How it's built**\n1. **ora**\n2. **che ora è**\n3. **A che ora è il corso di sicurezza?**\n\n", "")
-        s = multi_script(answers={"teach": bad})
+    def test_teach_item_missing_a_how_its_built_section_is_asked_again_then_fails(self):
+        s = multi_script(answers={"teach_item": "Register: neutral.\nNo steps here."})
         with self.assertRaises(RuntimeError) as cm:
             run_coach(s, self.MSG)
         self.assertIn("How it", str(cm.exception))
-        self.assertEqual([c[0] for c in s.calls].count("teach"), 2)
-        self.assertIn("exactly 3", [c for c in s.calls if c[0] == "teach"][1][2])
+        self.assertIn("exactly 1", [c for c in s.calls if c[0] == "teach_item"][-1][2])
+
+    def test_multi_teach_is_one_call_per_phrase_plus_a_shared_call(self):
+        s = multi_script()
+        r = run_coach(s, self.MSG)
+        steps = [c[0] for c in s.calls]
+        self.assertEqual((steps.count("teach_item"), steps.count("teach_shared")), (3, 1))
+        self.assertEqual(r["content"].count("**How it's built**"), 3)
+        heads = [l for l in r["content"].splitlines() if l.startswith("**") and l[2:3].isdigit()]
+        self.assertEqual(heads, [f"**{k}) {i['it']}**" for k, i in enumerate(M_ITEMS, 1)])
+        self.assertLess(r["content"].index("**3) "), r["content"].index("**The pattern**"))
 
     def test_single_phrase_teach_also_requires_how_its_built(self):
         s = Script(NEW, answers={"teach": TEACH.replace("**How it's built**", "**Build**")})
@@ -510,6 +518,18 @@ class Diagram(unittest.TestCase):
         doc = json.loads(chain._DFENCE.search(r["content"]).group(1))
         self.assertEqual(doc["sentences"][0]["text"], "Sono qui per il colloquio.")
         self.assertEqual(len(chain._HOW.findall(r["content"])), 1)
+
+    def test_multi_sentence_item_is_annotated_per_sentence_and_merged(self):
+        item = {**BUILD, "it": "Scusi, dove è? E chi è il tutor?", "register": "lei"}
+        s = Script(NEW, answers={"build": json.dumps({"items": [item]})})
+        r = run_coach(s, self.MSG)
+        self.assertEqual([c[0] for c in s.calls].count("diagram"), 2)          # one call per Italian sentence
+        doc = json.loads(chain._DFENCE.search(r["content"]).group(1))
+        self.assertEqual(len(doc["sentences"]), 1)                              # still one ApSentence per phrase
+        surfaces = [t["surface"] for t in doc["sentences"][0]["tokens"]]
+        self.assertIn("dove", surfaces)
+        self.assertIn("chi", surfaces)
+        self.assertEqual(doc["sentences"][0]["text"], item["it"])
 
     def test_backticks_in_notes_cannot_close_the_fence(self):
         d = json.loads(diagram_for([BUILD["it"]]))
