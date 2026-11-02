@@ -174,5 +174,24 @@ class Pause(unittest.TestCase):
         self.assertAlmostEqual(pd.answer_pause(3.0), 7.0)
 
 
+class DefaultVoices(unittest.TestCase):
+    def test_default_cue_voice_is_the_pimsleur_narrator(self):
+        self.assertEqual(pd.DEFAULT_VOICES, {"cue": "pimsleur_narrator", "target": "lucrezia_italian"})
+
+    def test_anki_export_uses_the_same_defaults(self):
+        spec = importlib.util.spec_from_file_location("p2a_v", os.path.join(os.path.dirname(__file__), "..", "scripts", "pimsleur_to_anki.py"))
+        m = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(m)
+        self.assertEqual(m.DEFAULT_VOICES, pd.DEFAULT_VOICES)
+
+    def test_the_default_voices_are_registered(self):
+        import json
+        if not os.path.exists(pd.VOICES_FILE):
+            self.skipTest("no ~/.chiron/voices.json on this machine")
+        refs = json.load(open(pd.VOICES_FILE))
+        for role, vid in pd.DEFAULT_VOICES.items():
+            self.assertIn(vid, refs, f"{role} voice {vid!r} is not registered")
+
+
 if __name__ == "__main__":
     unittest.main()
