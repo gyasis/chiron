@@ -119,3 +119,14 @@ def test_monosyllable_is_modelled_whole():
 def test_pause_law():
     assert pause_after(0.4) == pytest.approx(2.66)
     assert pause_after(1.0, level=9) == pytest.approx(3.2)
+
+
+def test_words_only_never_splits_a_word():
+    s = seq_w("Vorrei imparare a parlare con i pazienti")
+    assert s == ["vorrei imparare a parlare con i pazienti", "pazienti", "con i pazienti", "parlare", "a parlare",
+                 "a parlare con i pazienti", "imparare", "imparare a parlare con i pazienti", "vorrei",
+                 "vorrei imparare a parlare con i pazienti"]
+
+
+def seq_w(target, level=3):
+    return [p.text for p in deconstruct(target, level=level, words_only=True)]

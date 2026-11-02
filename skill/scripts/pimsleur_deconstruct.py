@@ -221,6 +221,7 @@ class Settings:
     level: int = 3                 # 1-8 behave like Unit I lessons 1-8; 9+ behave like Unit II
     known: set[str] = field(default_factory=set)
     teach: set[str] = field(default_factory=set)   # function words that ARE the new item (ti, da) stand alone
+    words_only: bool = False                       # build from whole words and phrases, never syllable pieces
     stress_overrides: dict[str, int] = field(default_factory=dict)
 
     @property
@@ -238,7 +239,7 @@ class Settings:
 
 def wants_sub_build(word: str, cfg: Settings) -> bool:
     """Should this new word be built from syllables? (newness + length, fading with level)"""
-    if cfg.unit2:
+    if cfg.unit2 or cfg.words_only:
         return False
     n = len(syllabify(word))
     if n >= 4:
@@ -360,13 +361,14 @@ def _chunk_pieces(chunk: str, cfg: Settings, prefix_follows: bool = False) -> li
 
 
 def deconstruct(target: str, level: int = 3, known: set[str] | None = None, teach: set[str] | None = None,
-                stress_overrides: dict[str, int] | None = None) -> list[Piece]:
+                stress_overrides: dict[str, int] | None = None, words_only: bool = False) -> list[Piece]:
     """Ordered build-up for a word, phrase or sentence.
 
-    `known` = words/chunks the learner already has; `teach` = function words that are the new item.
+    `known` = words/chunks the learner already has; `teach` = function words that are the new item;
+    `words_only` = whole words and phrases only (the Ask phrase drill), no syllable pieces.
     """
     cfg = Settings(level=level, known={_norm(k) for k in (known or set())},
-                   teach={_norm(k) for k in (teach or set())},
+                   teach={_norm(k) for k in (teach or set())}, words_only=words_only,
                    stress_overrides={_norm(k): v for k, v in (stress_overrides or {}).items()})
     full = " ".join(re.sub(r"[,;:.!?¿¡\"“”()]", " ", _norm(target)).split())
     chunks = chunk_words(full, cfg.teach)
@@ -442,11 +444,12 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--level", type=int, default=3, help="1-8 = Unit I lesson style, 9+ = Unit II style")
     ap.add_argument("--known", default="", help="comma-separated words/chunks already learned")
     ap.add_argument("--teach", default="", help="comma-separated function words that are the new item (ti, da)")
+    ap.add_argument("--words", action="store_true", help="whole words and phrases only, no syllable pieces")
     ap.add_argument("--json", action="store_true")
     a = ap.parse_args(argv)
     known = {k.strip() for k in a.known.split(",") if k.strip()}
     teach = {k.strip() for k in a.teach.split(",") if k.strip()}
-    pieces = deconstruct(a.target, level=a.level, known=known, teach=teach)
+    pieces = deconstruct(a.target, level=a.level, known=known, teach=teach, words_only=a.words)
     if a.json:
         print(json.dumps([asdict(p) | {"pause_s": pause_after(estimate_seconds(p.text), a.level)}
                           for p in pieces], ensure_ascii=False, indent=2))
