@@ -75,7 +75,7 @@ export function renderMarkdownLite(doc, text) {
   return root;
 }
 
-function threadMsg(doc, role, text) {
+export function threadMsg(doc, role, text) {
   const m = doc.createElement('div');
   m.className = `acolyte-msg ${role}`;
   m.dataset.raw = text;

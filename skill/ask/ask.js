@@ -14,7 +14,7 @@ import * as cards from './cards.js';
 import * as steps from './steps.js';
 import { installInAppBridge } from './inapp.js';
 import { isPhraseRequest, parsePhraseBlock, PHRASE_HOST, PHRASE_MODEL } from './phrase-mode.js';
-import { savePending, clearPending, renderRecoveredInto, createRecovery } from './recover.js';
+import { savePending, readPending, clearPending, renderRecoveredInto, createRecovery, threadMsg } from './recover.js';
 import { parseFenceBlock, buildDiagram, buildRelated, buildPimsleurAction, createBasket, buildAddRow } from './coach-extras.js';
 
 const $ = s => document.querySelector(s);
@@ -427,6 +427,11 @@ function renderRecovered(content, pending) {
 function showRecoverStatus(text) {
   let el = document.querySelector('.ask-recover-status');
   if (text == null) { el?.remove(); return; }
+  const box = threadBox(), p = readPending(localStorage);
+  if (box && p && ![...box.children].some(m => m.classList.contains('user') && (m.dataset.raw || '').trim() === p.text)) {
+    document.querySelector('.ask-hero')?.remove();                         // an emptied thread: show the question being answered
+    box.appendChild(threadMsg(document, 'user', p.text));
+  }
   if (!el) {
     el = document.createElement('div');
     el.className = 'ask-recover-status';
@@ -434,6 +439,7 @@ function showRecoverStatus(text) {
     threadBox()?.appendChild(el);
   }
   el.textContent = text;
+  el.scrollIntoView({ block: 'nearest' });
 }
 
 let RECOVERY = null;
@@ -843,7 +849,8 @@ function wireDispatch(handle, panel) {
           if (msg.dataset.streaming === '1' || !msg.dataset.raw) return;
           msg.dataset.phraseBound = '1';
           bindPhrase(msg);
-          if (!/interrupted/i.test(msg.innerText)) clearPending(localStorage);        // the answer arrived: nothing to recover
+          const pend = readPending(localStorage);                                     // only the answer to the PENDING question clears it
+          if (pend && msg.previousElementSibling?.dataset.raw?.trim() === pend.text && !/interrupted/i.test(msg.innerText)) clearPending(localStorage);
         });
       }
       box.querySelectorAll('.acolyte-msg.assistant:not([data-acts])').forEach(msg => {

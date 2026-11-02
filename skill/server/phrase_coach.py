@@ -96,6 +96,8 @@ async def drive(emit, msgs: list, key: str) -> dict:
             emit(val)
         else:
             result = val
+    _log(f"{key}: kind={result.get('kind')} first_text_ms={result.get('first_text_ms')} total_ms={result.get('total_ms')} steps="
+         + ",".join(f"{s['step']}:{s['model']}:{s['latency_ms']}ms:{s['done_reason']}" for s in result.get("steps", [])))
     return result
 
 
@@ -143,9 +145,6 @@ async def chat(request: Request):
         if run.status != "done":
             yield ask_proxy.error_line(url, run.error or run.status)
             return
-        r = run.result
-        _log(f"{key}: run {run.id} kind={r.get('kind')} first_text_ms={r.get('first_text_ms')} total_ms={r.get('total_ms')} steps="
-             + ",".join(f"{s['step']}:{s['model']}:{s['latency_ms']}ms:{s['done_reason']}" for s in r.get("steps", [])))
         yield ndjson_done()
 
     if body.get("stream") is False:
