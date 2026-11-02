@@ -571,3 +571,78 @@
 .ld-ctl { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
 .ld-btn { font: inherit; cursor: pointer; border: 1px solid var(--chiron-border); background: var(--chiron-surface); color: var(--chiron-fg); border-radius: 99px; padding: 8px 12px; min-height: 40px; }
 .ld-btn:hover { background: var(--chiron-elevated); }
+
+/* ── Pimsleur live: the pill by the composer, and the notes the drill intent leaves in the thread ── */
+.live-pill { font-weight: 600; min-height: 36px; }
+.live-pill:hover:not(:disabled) { background: var(--chiron-elevated); }
+#livenote { color: var(--chiron-muted); font-size: 12px; flex: 1 1 100%; }
+#livenote:empty { display: none; }
+.ask-local-note { margin: 8px auto; max-width: 880px; width: 100%; padding: 10px 14px; border: 1px solid var(--chiron-border);
+                  border-radius: 12px; background: var(--chiron-elevated); color: var(--chiron-fg-secondary); font-size: 13.5px; }
+.ask-local-note p { margin: 0 0 6px; }
+.ask-local-note p:last-child { margin: 0; }
+
+/* ── phone: the segmented reply, no avatar gutter, one level of boxes ──
+   The segmented control (segments.js) is shown only at phone width; on a wide screen every block of a reply shows. */
+.ask-seg { display: none; }
+@media (max-width: 768px) {
+  #host .acolyte-messages { padding: 14px 16px 10px; }
+  #host .acolyte-msg { margin: 0 0 22px; }
+  /* a column, so the action row can sit last, under the extras the page adds after it */
+  #host .acolyte-msg.assistant { display: flex; flex-direction: column; align-items: stretch; }
+  #host .acolyte-msg.assistant::before {
+    content: '◈'; display: grid; width: 22px; height: 22px; margin: 0 0 8px; align-self: flex-start;
+    border-radius: 7px; font-size: 11px;
+  }
+  #host .acolyte-msg.assistant > .ask-acts { order: 5; }
+  #host .acolyte-msg.assistant.ask-latest > .acolyte-msg-speak { display: none; }
+  #host .acolyte-msg-body { font-size: 15.5px; line-height: 1.55; }
+  #host .acolyte-msg.user > .acolyte-msg-body { max-width: 84%; border-radius: 18px 18px 4px 18px; padding: 9px 14px; }
+
+  #host .ask-seg {
+    display: flex; gap: 2px; padding: 3px; margin: 0 0 12px;
+    background: var(--chiron-elevated); border-radius: 11px;
+  }
+  #host .ask-seg button {
+    flex: 1; min-width: 0; min-height: 34px; border: 0; background: none; border-radius: 9px; padding: 6px 4px;
+    font: 600 13px var(--font-b); color: var(--chiron-fg-secondary);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  #host .ask-seg button.on { background: var(--chiron-surface); color: var(--chiron-fg); box-shadow: 0 1px 3px rgba(0, 0, 0, .1); }
+  #host .acolyte-msg[data-seg-on="answer"] [data-seg]:not([data-seg="answer"]),
+  #host .acolyte-msg[data-seg-on="use"] [data-seg]:not([data-seg="use"]),
+  #host .acolyte-msg[data-seg-on="context"] [data-seg]:not([data-seg="context"]) { display: none; }
+  #host .ask-coach-extras { margin-top: 4px; gap: 16px; }
+
+  /* the dispatch row belongs to the latest reply only */
+  #host .acolyte-msg.assistant:not(.ask-latest) > .ask-acts { display: none; }
+  #host .ask-acts { gap: 6px; margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--chiron-divider); }
+  #host .ask-acts .act { border: 0; background: var(--chiron-elevated); color: var(--chiron-fg); border-radius: 99px; padding: 7px 12px; min-height: 36px; font-size: 13px; }
+  #host .ask-acts .act:hover:not(:disabled) { background: var(--chiron-elevated); color: var(--chiron-fg); }
+  #host .ask-acts .act.ghost { color: var(--chiron-fg-secondary); }
+
+  /* boxes inside the reply lose their frame: section heads carry the structure */
+  .ask-dg, .ask-rel { background: none; border: 0; border-radius: 0; padding: 0; }
+  .dg-toggles { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; margin: 0 -16px 10px; padding: 0 16px 2px; }
+  .dg-layer { flex: 0 0 auto; }
+  #host .asrc-bar { display: none; }
+  #host .ask-cards { border-color: var(--chiron-border); }
+  #host .ask-steps { border: 0; background: var(--chiron-elevated); }
+  #host .acolyte-recent-strip { display: none; }
+
+  /* composer: one rounded field with the mic and send inside it */
+  #host .acolyte-input-row {
+    width: calc(100% - 24px); margin: 0 auto calc(10px + env(safe-area-inset-bottom));
+    padding: 5px 5px 5px 14px; border-radius: 24px; box-shadow: none; align-items: flex-end; gap: 4px;
+  }
+  #host .acolyte-input-row:focus-within { border-color: var(--chiron-border); box-shadow: none; }
+  #host .acolyte-input { padding: 8px 0; font-size: 16px; }
+  #host .acolyte-mic, #host .acolyte-send { width: 38px; height: 38px; border-radius: 50%; }
+  #host .acolyte-mic { background: none; }
+
+  /* the basket opens as a bottom sheet over the page */
+  .bk-panel { top: auto; bottom: 0; left: 0; right: 0; width: auto; max-height: 82dvh; border: 0; border-radius: 20px 20px 0 0;
+    padding: 14px 16px calc(16px + env(safe-area-inset-bottom)); gap: 10px; box-shadow: 0 0 0 100vmax rgba(0, 0, 0, .38); }
+  .bk-head strong { font: 700 16px var(--font-h); }
+  .bk-gen, .bk-live, .bk-clear { min-height: 40px; }
+}

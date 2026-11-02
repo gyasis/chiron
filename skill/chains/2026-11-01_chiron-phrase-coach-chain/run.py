@@ -13,7 +13,7 @@ runs its own BUILD -> CHECK pipeline concurrently; its Italian line is emitted f
 in order, then the shared teaching, then SPEAK and the hidden blocks last); coach() folds it for stream:false and the tests.
 
 Steps, sharing one per-call state:
-  1 UNDERSTAND  (mistral, JSON)      classify the latest turn: new_request | attempt | question; for a new
+  1 UNDERSTAND  (mistral, JSON)      classify the latest turn: new_request | attempt | question | drill; for a new
                                      request extract the list of phrases (one per numbered entry), situation,
                                      listener, default register, nuance
   2 BUILD       (glm, JSON)          ONE call builds all N phrases: items[{it, register, variants, literal_trap}]
@@ -22,7 +22,8 @@ Steps, sharing one per-call state:
                                      coaching; question -> short answer. For new_request and attempt a DIAGRAM
                                      call (glm, JSON) annotates the Italian token by token; for new_request it
                                      runs concurrently with TEACH. A DIAGRAM failure drops the diagram, never the reply.
-Steps 2 and 3 pass through for an attempt or a question.
+Steps 2 and 3 pass through for an attempt or a question. A drill makes no TEACH call: the reply is one line plus a
+fenced `drill` block the page recognises, and the page opens its live drill.
 
 Models go through the Atelier governor's Ollama route (/api/chat), the same hop mock_oral uses. glm runs with
 thinking on (its dossier: think:false leaks reasoning into content), so no think flag is sent and only
@@ -49,7 +50,7 @@ MODEL_STRUCT = os.environ.get("CH_PHRASE_MODEL_STRUCT", MODEL_FAST)             
 READ_S = float(os.environ.get("CH_PHRASE_READ_S", "170"))
 HISTORY_TURNS = 8
 REGISTERS = ("lei", "tu", "neutral")
-KINDS = ("new_request", "attempt", "question")
+KINDS = ("new_request", "attempt", "question", "drill")
 
 _shown: dict[str, list] = {}     # tag -> capabilities, from /api/show
 
@@ -89,6 +90,7 @@ def extract_json(s):
 
 _FENCE = re.compile(r"```phrase[^\S\n]*\n([\s\S]*?)```", re.I)
 _DFENCE = re.compile(r"```diagram[^\S\n]*\n([\s\S]*?)```", re.I)
+_DRILLFENCE = re.compile(r"```drill[^\S\n]*\n([\s\S]*?)```", re.I)
 _META = re.compile(r"```meta[^\S\n]*\n([\s\S]*?)```", re.I)
 _SPEAK = re.compile(r"\[\[\s*SPEAK\s*\]\][\s\S]*?\[\[\s*/?\s*SPEAK\s*\]\]", re.I)
 
@@ -171,7 +173,7 @@ class Run:
     def transcript(self) -> str:
         out = []
         for t in self.history:
-            text = _DFENCE.sub("", _FENCE.sub("", _SPEAK.sub("", str(t["content"])))).strip()
+            text = _DRILLFENCE.sub("", _DFENCE.sub("", _FENCE.sub("", _SPEAK.sub("", str(t["content"]))))).strip()
             out.append(f"{'LEARNER' if t['role'] == 'user' else 'COACH'}: {text[:1200]}")
         return "\n\n".join(out) or "(no earlier turns)"
 
@@ -237,8 +239,9 @@ Classify the LATEST learner turn:
 - "new_request": they want to say something in Italian (usually written in English, e.g. "how do I say ...").
 - "attempt": they wrote Italian in answer to the coach's last "Your turn" practice sentence (see LAST PRACTICE below).
 - "question": a follow-up about the last phrase (why, what about another form, can I also say ...).
+- "drill": they ask to practise, drill or play the phrases aloud as a spoken Pimsleur-style exercise ("play these", "drill me on them", "do it as pimsleur", "run these live"). Asking for a saved lesson or season is NOT a drill: that is a "new_request" or a "question".
 For a new_request also extract what is needed to build the sentences. Reply with ONLY a JSON object:
-{"kind": "new_request|attempt|question", "meaning": "what they really mean, in English", "phrases": [{"en": "one phrase to say, in English, complete and self-contained", "situation": "where/when for this phrase, or empty"}], "situation": "where/when", "listener": "who they are speaking to", "register_default": "lei|tu|neutral", "register_reason": "one short reason", "nuance": "politeness, urgency or tone that matters, or empty"}
+{"kind": "new_request|attempt|question|drill", "meaning": "what they really mean, in English", "phrases": [{"en": "one phrase to say, in English, complete and self-contained", "situation": "where/when for this phrase, or empty"}], "situation": "where/when", "listener": "who they are speaking to", "register_default": "lei|tu|neutral", "register_reason": "one short reason", "nuance": "politeness, urgency or tone that matters, or empty"}
 "phrases": ONE item for a single request. When the learner lists several (a numbered list, several separate questions, "these phrases"), one item per numbered entry or separate request, in their order, keeping each item's full wording. Never merge, drop, split or invent items.
 For the other kinds the other fields may be empty strings and "phrases" an empty list."""
 
@@ -1123,13 +1126,18 @@ async def _question(run: Run) -> None:
     run.emit(body + (f"\n\n[[SPEAK]]{speak.replace('[[', '').replace(']]', '')}[[/SPEAK]]" if speak else ""))
 
 
+async def _drill(run: Run) -> None:
+    """The learner asked to practise the phrases aloud. The page owns the phrases and the player; this only signals it."""
+    run.emit("Opening a live drill with your phrases.\n\n```drill\n" + _json_fence({"action": "open"}) + "\n```")
+
+
 # ── entry points ─────────────────────────────────────────────────────────────────
 
 async def _pipeline(run: Run, session_id: str | None) -> None:
     try:
         with ledger.context(session_id=session_id, run_id=ledger.new_run_id()):
             kind = await step_understand(run)
-            await {"new_request": _new_request, "attempt": _attempt, "question": _question}[kind](run)
+            await {"new_request": _new_request, "attempt": _attempt, "question": _question, "drill": _drill}[kind](run)
     finally:
         run.q.put_nowait(None)
 

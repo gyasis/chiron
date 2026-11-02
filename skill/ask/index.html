@@ -94,7 +94,10 @@ button{font:inherit;cursor:pointer}
        font-size:11.5px;color:var(--chiron-muted)}
 .cmeta select{font:inherit;font-size:11.5px;border:1px solid var(--chiron-border);border-radius:99px;
               padding:3px 9px;background:var(--chiron-surface);color:var(--chiron-fg-secondary);max-width:200px}
-.cmeta .grounded{margin-left:auto;white-space:nowrap}
+.cmeta .grounded{margin-left:auto;white-space:nowrap;order:1}
+/* the settings group and the dock pieces: flat in the meta row on a wide screen, a sheet and a dock on a phone */
+.cm-set,.cm-row{display:contents}
+.cm-set-h,.cm-lbl,.dock-turn,.dock-basket,.setbtn{display:none}
 .railfoot-link{color:var(--chiron-muted);text-decoration:none;padding:4px 6px;border-radius:6px;font-size:12px}
 .railfoot-link:hover{background:var(--chiron-elevated);color:var(--chiron-fg)}
 .boot{flex:1;display:grid;place-items:center;color:var(--chiron-muted);font-size:14px}
@@ -110,14 +113,52 @@ button{font:inherit;cursor:pointer}
   .railfoot{flex-wrap:wrap}
   .scrim{display:block;position:fixed;inset:0;z-index:25;background:rgba(0,0,0,.4);opacity:0;pointer-events:none;transition:opacity .2s}
   body.rail-open .scrim{opacity:1;pointer-events:auto}
-  .menubtn{display:grid;place-items:center;flex:0 0 auto;width:40px;height:40px;border-radius:50%;border:1px solid var(--chiron-border);background:var(--chiron-surface);color:var(--chiron-fg);font-size:18px}
+  .menubtn{display:grid;place-items:center;flex:0 0 auto;width:40px;height:40px;border-radius:50%;border:0;background:none;color:var(--chiron-fg);font-size:19px}
   .main{width:100%}
-  .topbar{padding:0 10px;gap:8px;height:56px}
+  /* app bar: menu, a two-line title, then round icon buttons; the title is also the way into the settings sheet */
+  .topbar{padding:0 6px 0 4px;gap:4px;padding-top:env(safe-area-inset-top);height:calc(54px + env(safe-area-inset-top))}
   .ttl,.tsub{max-width:none}
-  .topbar .tt{flex:1}
-  .topbar .tools{flex:0 0 auto;display:flex;gap:6px}
+  .ttl{font-size:15.5px}
+  .topbar .tt{flex:1;min-width:0;padding:0 2px;cursor:pointer}
+  .topbar .tools{flex:0 0 auto;display:flex;gap:2px}
   #openlesson{display:none}
-  #voicebtn{padding:7px 10px}
+  /* the basket count lives in the practice dock on a phone */
+  #basketbtn{display:none}
+  #voicebtn,.setbtn{font-size:0;width:40px;height:40px;padding:0;justify-content:center;border:0;border-radius:50%;background:none;color:var(--chiron-fg)}
+  #voicebtn.on{background:none;color:var(--chiron-fg)}
+  #voicebtn::before{content:'🔊';font-size:16px}
+  #voicebtn:not(.on)::before{opacity:.4}
+  .setbtn{display:inline-flex}
+  .setbtn::before{content:'⚙';font-size:18px;color:var(--chiron-fg-secondary)}
+  #voicebtn:hover:not(:disabled),.setbtn:hover:not(:disabled){background:var(--chiron-elevated);color:var(--chiron-fg)}
+
+  /* practice dock: Your turn for the latest reply, Pimsleur live and the basket, just above the composer */
+  .cmeta{width:auto;max-width:none;margin:0 12px 8px;padding:8px 10px;gap:8px;font-size:13px;
+         background:var(--chiron-surface);border:1px solid var(--chiron-border);border-radius:18px}
+  .dock-turn:not([hidden]){display:flex;align-items:center;gap:8px;flex:1 1 100%;min-width:0}
+  .dock-lbl{flex:0 0 auto;font:700 10.5px var(--font-h);letter-spacing:.08em;text-transform:uppercase;color:var(--lang)}
+  .dock-q{flex:1;min-width:0;border:0;background:none;padding:3px 0;text-align:left;font-size:13.5px;font-weight:600;
+          color:var(--chiron-fg);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .cmeta .live-pill{min-height:36px;padding:0 14px;font-size:13.5px;border-color:transparent;background:var(--chiron-accent);color:var(--chiron-surface)}
+  .cmeta .live-pill:hover:not(:disabled){background:var(--chiron-accent);color:var(--chiron-surface)}
+  .dock-basket{display:inline-flex;min-height:36px;padding:0 13px;font-size:13.5px;font-weight:600;border-color:transparent;background:var(--chiron-elevated);color:var(--chiron-fg)}
+  .dock-basket:hover:not(:disabled){border-color:transparent;color:var(--chiron-fg)}
+  .dock-basket b{font-family:var(--font-h)}
+
+  /* settings sheet: model, who answers and the grounding line, off the always-visible bottom area */
+  .cm-set{display:flex;flex-direction:column;gap:14px;position:fixed;left:0;right:0;bottom:0;z-index:35;
+          background:var(--chiron-surface);color:var(--chiron-fg);border-radius:20px 20px 0 0;font-size:14px;
+          padding:12px 16px calc(20px + env(safe-area-inset-bottom));box-shadow:0 -10px 30px rgba(0,0,0,.18);
+          transform:translateY(105%);visibility:hidden;transition:transform .28s cubic-bezier(.2,.8,.2,1),visibility .28s}
+  body.set-open .cm-set{transform:none;visibility:visible}
+  body.set-open .scrim{opacity:1;pointer-events:auto}
+  .cm-set-h{display:flex;align-items:center;gap:8px}
+  .cm-set-h strong{font:700 16px var(--font-h)}
+  .cm-x{margin-left:auto;width:40px;height:40px;border:0;border-radius:50%;background:none;color:var(--chiron-muted);font-size:15px}
+  .cm-row{display:flex;flex-direction:column;gap:6px}
+  .cm-lbl{display:block;font:700 10.5px var(--font-h);letter-spacing:.08em;text-transform:uppercase;color:var(--chiron-muted)}
+  .cmeta .cm-set select{width:100%;max-width:none;min-height:44px;font-size:15px;padding:8px 12px;border-radius:12px;background:var(--chiron-bg)}
+  .cmeta .cm-set .grounded{margin:0;white-space:normal;font-size:13px;color:var(--chiron-muted)}
 }
 /* in-app: the app's ‹ closes Ask, so the web-library links would only strand you in a nested library; the mic can't work in a WebView */
 [data-inapp] .railfoot-link,[data-inapp] .acolyte-mic{display:none!important}
@@ -158,6 +199,7 @@ button{font:inherit;cursor:pointer}
     <div class="tools">
       <button class="chip" id="basketbtn" hidden aria-expanded="false" aria-controls="basketpanel" title="Phrases collected for a Pimsleur lesson">🎧 Basket 0/8</button>
       <button class="chip on" id="voicebtn" title="Read answers aloud">🔊 Voice out</button>
+      <button class="chip setbtn" id="setbtn" type="button" aria-label="Ask settings" aria-controls="cmset" aria-expanded="false">⚙</button>
       <button class="chip" id="openlesson" disabled title="Opens the top cited lesson">⤴ Open in lesson</button>
     </div>
   </div>
@@ -165,7 +207,16 @@ button{font:inherit;cursor:pointer}
   <div id="host"><div class="boot" id="boot">Starting Chiron · Ask…</div></div>
 
   <div class="cmeta" id="cmeta">
-    <span class="grounded" id="grounded"></span>
+    <div class="dock-turn" id="dockturn" hidden><span class="dock-lbl">Your turn</span><button class="dock-q" id="dockq" type="button" title="Answer it in the box below"></button></div>
+    <div class="cm-set" id="cmset" role="dialog" aria-label="Ask settings">
+      <div class="cm-set-h"><strong>Ask settings</strong><button class="cm-x" id="cmsetx" type="button" aria-label="Close settings">✕</button></div>
+      <div class="cm-row" id="cmmodel"><span class="cm-lbl">Model</span></div>
+      <div class="cm-row" id="cmpersona"><span class="cm-lbl">Who answers</span></div>
+      <span class="grounded" id="grounded"></span>
+    </div>
+    <button class="chip live-pill" id="livebtn" type="button" title="Drill the phrases aloud, Pimsleur style">🎧 Pimsleur live<span id="liven"></span></button>
+    <button class="chip dock-basket" id="dockbasket" type="button" aria-controls="basketpanel" title="Phrases collected for a Pimsleur lesson">Basket <b id="dockn">0</b></button>
+    <span id="livenote" role="status"></span>
   </div>
 </main>
 
@@ -176,7 +227,13 @@ button{font:inherit;cursor:pointer}
 (function () {
   var b = document.body, close = function () { b.classList.remove('rail-open'); };
   document.getElementById('menubtn').onclick = function () { b.classList.toggle('rail-open'); };
-  document.getElementById('scrim').onclick = close;
+  document.getElementById('scrim').onclick = function () { close(); setSheet(false); };
+  /* phone settings sheet: ⚙ or a tap on the title opens it, ✕ / the scrim closes it */
+  var setBtn = document.getElementById('setbtn');
+  var setSheet = function (on) { b.classList.toggle('set-open', on); setBtn.setAttribute('aria-expanded', String(on)); };
+  setBtn.onclick = function () { setSheet(!b.classList.contains('set-open')); };
+  document.getElementById('cmsetx').onclick = function () { setSheet(false); };
+  document.querySelector('.topbar .tt').addEventListener('click', function () { if (matchMedia('(max-width:768px)').matches) setSheet(true); });
   document.querySelector('.rail').addEventListener('click', function (e) { if (e.target.closest('.th, .newchat')) close(); });
 })();
 </script>
