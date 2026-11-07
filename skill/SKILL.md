@@ -270,21 +270,30 @@ that narrows the whole Library to that tag (like the SSM switch; remembered acro
 The Pimsleur chain stamps `CH_LABELS="tag1,tag2"` on every lesson of a season. `CH_FORMAT=exam`
 defaults to `Ordine exam`.
 
-## Dettato (listen, type, say it back)
+## Verbal Check (listen, write, say it back)
 
-`http://localhost:8911/dettato` — a REAL recording (a classmate's WhatsApp voice note, any clip) cut into 2-7 s lines.
-Per line: replay the real clip (▶) or a slowed copy (🐢) as often as needed, type what you hear — or write the
-numbered lines on paper and send a 📷 photo (gemma4 vision copies it verbatim, mistakes kept). "Fatto: giudicami"
-runs a deterministic word check (accent slips count half) and one Lucrezia call (`think:false`, mock-oral examiner
-chain) that explains each miss by its SOUND; the grammar and words she names collect in a shared Riferimento.
-"Ripeti a voce" records each line and checks it with whisper (mic needs `localhost`).
+`http://localhost:8911/verbal-check` (alias `/dettato`). Two sources, one page:
+- **A real recording** (a classmate's WhatsApp voice note, any clip) cut into 2-7 s lines: `?l=<slug>`.
+- **An Anki deck's listening cards** (any card with audio + Italian text, due first): `?deck=<deck>&n=15`.
+
+Per line: replay the clip (▶) or a slowed copy (🐢) as often as needed, then write what you hear in ONE input box:
+type it, or write it in a notebook and tap the 📷 inside the box (gemma4 vision copies it verbatim, mistakes kept; an
+unnumbered photo fills the current line, a page of numbered lines fills them all). "Fatto: giudicami" runs a
+deterministic word check (accent slips count half) and one Lucrezia call (`think:false`, mock-oral examiner chain)
+that explains each miss by its SOUND; her grammar and words collect in a shared Riferimento.
+
+**Replays are evidence.** Normal and slowed plays are counted per line; a slowed replay weighs 1.5. Difficulty =
+score + listens (right after 1-2 listens = facile, right only after ten = difficile). Lucrezia sees the counts, the
+Riferimento tab ranks "le righe più difficili" across attempts, and for **Anki cards the review is written back to
+Anki** with ease from score AND listens (Easy / Good / Hard / Again), verified by reps like every Chiron review.
+"Ripeti a voce" records each line and checks it with whisper (mic needs `localhost` or HTTPS).
 
     python3 scripts/build_dettato.py <audio> --title "Marti: …" --slug <kebab> --from "<who>" --context "<one line>"
 
-Output `~/Documents/generated/chiron-dettato/<slug>/` (dettato.json, audio/NN.mp3 + NN-slow.mp3, attempts/).
-Lines marked `uncertain` are where whisper large and turbo disagreed; the judge is told so. Class voice notes come
-from `wa-voice-sync` (see the class-whatsapp skill). Code: `server/dettato.py`, `shell/dettato.html`,
-tests `tests/dettato_test.py`.
+Output `~/Documents/generated/chiron-dettato/<slug>/` (dettato.json, audio/NN.mp3 + NN-slow.mp3, attempts/); Anki
+sessions keep attempts in `chiron-dettato/anki/<deck>/attempts/`. Lines marked `uncertain` are where whisper large and
+turbo disagreed; the judge is told so. Class voice notes come from `wa-voice-sync` (class-whatsapp skill).
+Code: `server/dettato.py`, `shell/dettato.html`, tests `tests/dettato_test.py`.
 
 ## Mock oral (OMCeO Italian test)
 

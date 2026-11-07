@@ -1,10 +1,18 @@
-"""Dettato — listen to a real Italian recording line by line, type what you hear, say it back; Lucrezia judges.
+"""Verbal Check (dettato) — listen to real Italian line by line, write what you hear, say it back; Lucrezia judges.
 
-    GET  /dettato?l=<slug>             the page (shell/dettato.html); no slug -> the list of lessons
+Two sources, one page: a built lesson (a real recording, scripts/build_dettato.py) or an ANKI deck's listening
+cards (each card's audio is a line). For Anki cards the result is written back to Anki's scheduler, because a
+card reviewed here must advance Anki or it returns tomorrow as if unseen (anki.py).
+
+    GET  /verbal-check (= /dettato)    the page. ?l=<slug> a lesson, ?deck=<anki deck>&n=15 an Anki session
     GET  /api/dettato/list             every built lesson (scripts/build_dettato.py writes them)
     GET  /api/dettato/lesson/<slug>    dettato.json (clips are served from /lessons/chiron-dettato/<slug>/audio/)
-    POST /api/dettato/judge            {slug, answers:[{n, typed, plays}]} -> per-line word check + Lucrezia's notes
-    POST /api/dettato/speak?slug=&n=   <audio> -> what whisper heard + word check against the line
+    GET  /api/dettato/anki?deck=&limit=   an Anki session: cards with audio + Italian text, due first
+    GET  /api/dettato/anki-decks       decks that have cards with audio, with counts
+    GET  /api/dettato/anki-media?f=&slow=1   a card's audio (cached; slow = atempo 0.75)
+    POST /api/dettato/judge            {slug, answers:[{n, typed, plays, slow}]} or {deck, answers:[{cardId, ...}]}
+    GET  /api/dettato/hard?slug=       the lines that cost the most listens across every attempt
+    POST /api/dettato/speak?slug=&n=   <audio> -> what whisper heard + word check (?cardId= for an Anki card)
     POST /api/dettato/photo?slug=      <image> of a handwritten page (numbered lines) -> {lines:[{n, text}]}, copied
                                        exactly as written (mistakes kept); the page then sends them to /judge
     GET  /api/dettato/riferimento      the shared grammar + vocabulary reference every judged lesson adds to
@@ -12,9 +20,12 @@
 The word check is deterministic (accent-insensitive alignment; a word right but for its accent counts as an
 accent slip). The model only writes the explanations. Lines the builder marked `uncertain` (two whisper passes
 disagreed) are flagged to the model so it does not blame the learner for a transcription error.
-Attempts are saved to <lesson>/attempts/<stamp>.json.
+Replays are evidence: how many times a line was played (and how many of those slowed) before it was written is
+the line's DIFFICULTY for this learner, kept beside the score. A line right after 1-2 listens is easy; right after
+ten is still hard. Difficulty sets the Anki ease, goes to Lucrezia, and ranks /hard.
+Attempts are saved to <lesson>/attempts/<stamp>.json (Anki sessions: chiron-dettato/anki/<deck>/attempts/).
 """
-import base64, difflib, json, os, re, time, unicodedata, urllib.request
+import base64, difflib, json, os, re, subprocess, time, unicodedata, urllib.parse, urllib.request
 from datetime import datetime
 from pathlib import Path
 
@@ -76,11 +87,39 @@ def check(target: str, typed: str) -> dict:
     return {"words": words, "extra": extra, "score": round(100 * ok / max(1, len(t)))}
 
 
+def listens(plays: int, slow: int) -> float:
+    """Effort to hear a line: a slowed replay counts 1.5 (it means the normal speed was not enough)."""
+    return max(0, int(plays or 0)) + 1.5 * max(0, int(slow or 0))
+
+
+def difficulty(score: int, plays: int, slow: int) -> str:
+    n = listens(plays, slow)
+    if score >= 90:
+        return "facile" if n <= 2 else "media" if n <= 5 else "difficile"
+    if score >= 70:
+        return "media" if n <= 3 else "difficile"
+    return "difficile" if n <= 3 else "molto difficile"
+
+
+def anki_ease(score: int, plays: int, slow: int) -> int:
+    """Anki ease from the result AND the effort: right but only after many listens is Hard, not Good."""
+    n = listens(plays, slow)
+    if score >= 95 and n <= 2:
+        return 4
+    if score >= 85 and n <= 5:
+        return 3
+    if score >= 70:
+        return 2
+    return 1
+
+
 SYSTEM = """You are Lucrezia, a warm, precise Italian teacher (Learn Italian with Lucrezia). Your student is Gyasi, an \
 American doctor starting his anaesthesia residency in Salerno. His weakness is LISTENING: he is doing a dictation of a \
 REAL voice message from a classmate, typing each line he hears.
 
-You receive, per line: the correct Italian (a machine transcript), what he typed, and the word check. Explain his \
+You receive, per line: the correct Italian (a machine transcript or an Anki card), what he typed, the word check, \
+and how many times he had to replay it (normal and slowed). Many replays on a line he finally got right still mean \
+that line is hard for his ear: say what makes it hard (speed, run-together words, an unfamiliar word). Explain his \
 mistakes so he can HEAR the difference next time: why the sound fooled him (elision, linking, a dropped vowel, the \
 southern accent, fast speech), and what the word means. Teach the grammar a line uses only when it explains a mistake \
 or is genuinely useful. A line marked "uncertain" may contain a transcription error: if his version is plausible \
@@ -104,6 +143,7 @@ def _judge_prompt(lesson: dict, rows: list[dict]) -> str:
     for r in rows:
         miss = [f"{w['w']}→{w['got'] or '∅'}" for w in r["check"]["words"] if w["s"] != "ok"]
         parts.append(f"Line {r['n']}{' (uncertain transcript)' if r['uncertain'] else ''}: «{r['it']}»\n"
+                     f"  replays: {r['plays']} normal, {r['slow']} slowed ({r['difficulty']})\n"
                      f"  typed: «{r['typed']}»  score {r['check']['score']}%  "
                      f"not ok: {', '.join(miss) or 'none'}  extra: {', '.join(r['check']['extra']) or 'none'}")
     return "\n".join(parts)
@@ -154,6 +194,7 @@ def _add_reference(slug: str, out: dict) -> int:
 
 
 @router.get("/dettato", response_class=HTMLResponse)
+@router.get("/verbal-check", response_class=HTMLResponse)
 def page():
     return HTMLResponse((SKILL / "shell" / "dettato.html").read_text(),
                         headers={"Cache-Control": "no-cache, must-revalidate"})
@@ -183,20 +224,145 @@ def reference():
     return json.loads(REF.read_text()) if REF.exists() else {"grammar": {}, "vocab": {}}
 
 
+ANKI_DIR = ROOT / "anki"
+MEDIA = ROOT / "anki-media"
+
+
+def _deck_slug(deck: str) -> str:
+    return "anki-" + (re.sub(r"[^a-z0-9]+", "-", _fold(deck.lower())).strip("-")[:60] or "deck")
+
+
+def _anki_line(c: dict) -> dict | None:
+    """An Anki card as a Verbal Check line: its audio and the Italian it speaks. None when it has neither."""
+    import anki
+    f = c.get("fields") or {}
+    if c.get("modelName") == anki.LISTEN_MODEL:
+        it = anki._clean(f.get("Italiano", {}).get("value", ""))[0]
+        en = anki._clean(f.get("English", {}).get("value", ""))[0]
+        m = anki.SOUND.search(f.get("Audio", {}).get("value", "") or "")
+        audio = m.group(1) if m else None
+    else:
+        fr, a1 = anki._clean(anki._field(f, anki.FRONT_KEYS))
+        bk, a2 = anki._clean(anki._field(f, anki.BACK_KEYS))
+        m = anki.SOUND.search(f.get("Audio", {}).get("value", "") or "")
+        audio, it, en = (m.group(1) if m else None) or a1 or a2, fr, bk
+    if not audio or not it or c.get("ord") == 1:        # ord 1 = the reversed (English-first) card of a note
+        return None
+    return {"cardId": c["cardId"], "noteId": c.get("note"), "it": it, "en": en, "audio": audio}
+
+
+def _anki_cards(card_ids: list[int]) -> dict[int, dict]:
+    import anki
+    return {ln["cardId"]: ln for ln in (_anki_line(c) for c in anki.invoke("cardsInfo", cards=card_ids) or []) if ln}
+
+
+def anki_session(deck: str, limit: int = 15) -> dict:
+    import anki
+    if not anki.reachable():
+        raise HTTPException(503, "Anki is not reachable (AnkiConnect on the Mac Studio / MacBook is closed)")
+    ids = anki.invoke("findCards", query=f'"deck:{deck}"') or []
+    due = set(anki.invoke("findCards", query=f'"deck:{deck}" (is:due or is:learn)') or [])
+    ids = [i for i in ids if i in due] + [i for i in ids if i not in due]
+    lines, seen = [], set()
+    for i in range(0, len(ids), 200):                   # cardsInfo in pages until enough lines with audio
+        for c in anki.invoke("cardsInfo", cards=ids[i:i + 200]) or []:
+            ln = _anki_line(c)
+            if ln and ln["noteId"] not in seen:
+                seen.add(ln["noteId"])
+                lines.append(ln)
+        if len(lines) >= limit:
+            break
+    lines = lines[:limit]
+    if not lines:
+        raise HTTPException(404, f"deck {deck!r} has no cards with audio and Italian text")
+    for n, ln in enumerate(lines, 1):
+        q = urllib.parse.quote(ln.pop("audio"))
+        ln.update(n=n, clip=f"/api/dettato/anki-media?f={q}", slow=f"/api/dettato/anki-media?f={q}&slow=1",
+                  due=ln["cardId"] in due)
+    return {"slug": _deck_slug(deck), "source": "anki", "deck": deck, "title": deck.split("::")[-1],
+            "from": "Anki", "context": deck, "base": "", "lines": lines, "seconds": None}
+
+
+@router.get("/api/dettato/anki")
+def anki_lesson(deck: str, limit: int = 15):
+    return anki_session(deck, max(1, min(limit, 60)))
+
+
+# Decks that are not Italian listening material (German, USMLE) stay out of the list; override with the env var.
+SKIP_DECKS = re.compile(os.environ.get("CHIRON_VERBAL_SKIP_DECKS", r"german|deutsch|goethe|wortliste|anking|step \d"), re.I)
+DECK_CACHE_S = 600
+_decks_cache: dict = {}
+
+
+@router.get("/api/dettato/anki-decks")
+def anki_decks(fresh: int = 0):
+    """Decks holding cards with audio (one findCards per deck, ~8 s for 70 decks), cached DECK_CACHE_S."""
+    import anki
+    if not fresh and _decks_cache.get("t", 0) > time.time() - DECK_CACHE_S:
+        return _decks_cache["v"]
+    if not anki.reachable():
+        raise HTTPException(503, "Anki is not reachable")
+    out = []
+    for d in sorted(anki.invoke("deckNames") or []):
+        if SKIP_DECKS.search(d):
+            continue
+        # bare "sound" matches the [sound:…] tag; "[" cannot be escaped in Anki search
+        n = len(anki.invoke("findCards", query=f'"deck:{d}" -"deck:{d}::*" sound') or [])
+        if n:
+            out.append({"deck": d, "cards": n})
+    _decks_cache.update(t=time.time(), v={"decks": out})
+    return _decks_cache["v"]
+
+
+@router.get("/api/dettato/anki-media")
+def anki_media(f: str, slow: int = 0):
+    from fastapi.responses import FileResponse
+    import anki
+    if not re.fullmatch(r"[\w.\-]+\.(mp3|ogg|wav|m4a|opus)", f or ""):
+        raise HTTPException(400, "bad media name")
+    MEDIA.mkdir(parents=True, exist_ok=True)
+    src = MEDIA / f
+    if not src.exists():
+        data = anki.media(f)
+        if not data:
+            raise HTTPException(404, f"Anki has no media file {f}")
+        src.write_bytes(data)
+    if not slow:
+        return FileResponse(src)
+    dst = MEDIA / (src.stem + ".slow.mp3")
+    if not dst.exists():
+        subprocess.run(["ffmpeg", "-v", "error", "-y", "-i", str(src), "-af", "atempo=0.75", str(dst)], check=True)
+    return FileResponse(dst)
+
+
+def _session_for(b: dict) -> tuple[dict, dict, Path]:
+    """(lesson meta, {key: line}, attempts dir). Reference text always comes from the server, never the client."""
+    if b.get("deck"):
+        ids = [int(a["cardId"]) for a in b.get("answers") or [] if str(a.get("cardId", "")).isdigit()]
+        cards = _anki_cards(ids) if ids else {}
+        meta = {"slug": _deck_slug(b["deck"]), "title": b["deck"], "context": "Anki listening cards", "source": "anki"}
+        return meta, cards, ANKI_DIR / meta["slug"] / "attempts"
+    les = _lesson(b.get("slug", ""))
+    return les, {ln["n"]: ln for ln in les["lines"]}, ROOT / les["slug"] / "attempts"
+
+
 @router.post("/api/dettato/judge")
 async def judge(req: Request):
     from starlette.concurrency import run_in_threadpool
     b = await req.json()
-    les = _lesson(b.get("slug", ""))
-    by_n = {ln["n"]: ln for ln in les["lines"]}
+    les, by_key, att_dir = await run_in_threadpool(_session_for, b)
+    anki_src = les.get("source") == "anki"
     rows = []
     for a in b.get("answers") or []:
-        ln = by_n.get(a.get("n"))
+        ln = by_key.get(int(a.get("cardId") or 0) if anki_src else a.get("n"))
         if not ln:
             continue
-        typed = str(a.get("typed") or "")
-        rows.append({"n": ln["n"], "it": ln["it"], "typed": typed, "plays": a.get("plays", 0),
-                     "uncertain": ln.get("uncertain", False), "check": check(ln["it"], typed)})
+        typed, plays, slow = str(a.get("typed") or ""), int(a.get("plays") or 0), int(a.get("slow") or 0)
+        c = check(ln["it"], typed)
+        rows.append({"n": a.get("n", ln.get("n")), "cardId": ln.get("cardId"), "it": ln["it"], "en": ln.get("en", ""),
+                     "typed": typed, "plays": plays, "slow": slow, "listens": listens(plays, slow),
+                     "difficulty": difficulty(c["score"], plays, slow), "uncertain": ln.get("uncertain", False),
+                     "input": a.get("input", "typed"), "check": c})
     if not rows:
         raise HTTPException(400, "no answers")
     score = round(sum(r["check"]["score"] for r in rows) / len(rows))
@@ -207,24 +373,59 @@ async def judge(req: Request):
     except HTTPException as e:
         notes, err = {}, e.detail
     added = _add_reference(les["slug"], notes) if notes else 0
-    result = {"slug": les["slug"], "score": score, "rows": rows, "lucrezia": notes, "lucrezia_error": err,
-              "reference_added": added, "secs": round(time.time() - t, 1),
-              "at": datetime.now().isoformat(timespec="seconds")}
-    d = ROOT / les["slug"] / "attempts"
-    d.mkdir(exist_ok=True)
-    (d / (datetime.now().strftime("%Y%m%d-%H%M%S") + ".json")).write_text(json.dumps(result, ensure_ascii=False, indent=1))
+    anki_res = None
+    if anki_src:
+        import anki
+        reviews = [{"cardId": r["cardId"], "ease": anki_ease(r["check"]["score"], r["plays"], r["slow"])} for r in rows]
+        try:
+            anki_res = await run_in_threadpool(anki.answer, reviews)
+            anki_res["eases"] = {str(r["cardId"]): r["ease"] for r in reviews}
+        except Exception as e:
+            anki_res = {"ok": False, "written": 0, "of": len(reviews), "detail": f"{type(e).__name__}: {e}"[:300]}
+    result = {"slug": les["slug"], "source": les.get("source", "lesson"), "score": score, "rows": rows,
+              "lucrezia": notes, "lucrezia_error": err, "reference_added": added, "anki": anki_res,
+              "secs": round(time.time() - t, 1), "at": datetime.now().isoformat(timespec="seconds")}
+    att_dir.mkdir(parents=True, exist_ok=True)
+    (att_dir / (datetime.now().strftime("%Y%m%d-%H%M%S") + ".json")).write_text(json.dumps(result, ensure_ascii=False, indent=1))
     return result
+
+
+def hardest(att_dir: Path, top: int = 10) -> list[dict]:
+    """Lines ranked by mean listens across attempts (then lowest mean score): what this ear keeps missing."""
+    agg: dict = {}
+    for f in sorted(att_dir.glob("*.json")):
+        for r in json.loads(f.read_text()).get("rows", []):
+            k = str(r.get("cardId") or r.get("n"))
+            a = agg.setdefault(k, {"n": r.get("n"), "cardId": r.get("cardId"), "it": r["it"], "tries": 0,
+                                   "listens": 0.0, "score": 0})
+            a["tries"] += 1
+            a["listens"] += r.get("listens", listens(r.get("plays", 0), r.get("slow", 0)))
+            a["score"] += r["check"]["score"]
+    out = [{**a, "listens": round(a["listens"] / a["tries"], 1), "score": round(a["score"] / a["tries"])} for a in agg.values()]
+    return sorted(out, key=lambda a: (-a["listens"], a["score"]))[:top]
+
+
+@router.get("/api/dettato/hard")
+def hard(slug: str = "", deck: str = ""):
+    d = (ANKI_DIR / _deck_slug(deck) if deck else ROOT / _lesson(slug)["slug"]) / "attempts"
+    return {"lines": hardest(d) if d.exists() else []}
 
 
 @router.post("/api/dettato/speak")
 async def speak(req: Request):
     from starlette.concurrency import run_in_threadpool
-    les = _lesson(req.query_params.get("slug", ""))
-    try:
-        n = int(req.query_params.get("n", ""))
-        ln = next(x for x in les["lines"] if x["n"] == n)
-    except (ValueError, StopIteration):
-        raise HTTPException(400, "bad line number")
+    cid = req.query_params.get("cardId", "")
+    if cid.isdigit():
+        ln = (await run_in_threadpool(_anki_cards, [int(cid)])).get(int(cid))
+        if not ln:
+            raise HTTPException(404, "no such Anki card with audio")
+    else:
+        les = _lesson(req.query_params.get("slug", ""))
+        try:
+            n = int(req.query_params.get("n", ""))
+            ln = next(x for x in les["lines"] if x["n"] == n)
+        except (ValueError, StopIteration):
+            raise HTTPException(400, "bad line number")
     audio = await req.body()
     if len(audio) < 1000:
         return {"heard": "", "note": "recording too short", "check": check(ln["it"], "")}
@@ -239,11 +440,14 @@ async def speak(req: Request):
 
 
 OCR_MODEL = os.environ.get("CHIRON_DETTATO_OCR_MODEL", "gemma4:31b")
-OCR_PROMPT = """This is a photo of a handwritten Italian dictation. Each line starts with its number (e.g. "4." or "4)").
+OCR_PROMPT = """This is a photo of handwritten Italian: a learner's dictation, written in a notebook.
 Copy EXACTLY what is written, letter by letter. This is a test of the writer's listening: do NOT correct spelling,
 do NOT add missing accents or apostrophes, do NOT fix grammar, do NOT complete words. If a word is crossed out, skip it.
-If a word is illegible write [?]. Reply ONLY with JSON: {"lines": [{"n": <line number>, "text": "<exactly as written>"}]}
-Only the numbers you can see; never invent a line."""
+If a word is illegible write [?].
+If the lines start with numbers ("4." or "4)"), return one entry per number. If there are no numbers, return ONE
+entry with "n": null holding all the writing in reading order.
+Reply ONLY with JSON: {"lines": [{"n": <line number or null>, "text": "<exactly as written>"}]}
+Never invent a line or a number."""
 
 
 def read_photo(image: bytes) -> dict:
@@ -276,21 +480,31 @@ def read_photo(image: bytes) -> dict:
         out = mock_oral.parse_json(msg.get("content") or "")
     except ValueError as e:
         raise HTTPException(502, f"vision model gave no JSON: {e}")
-    lines = [{"n": int(x["n"]), "text": str(x.get("text", "")).strip()} for x in out.get("lines") or []
-             if str(x.get("n", "")).strip().isdigit()]
+    lines = [{"n": int(x["n"]) if str(x.get("n", "")).strip().isdigit() else None,
+              "text": str(x.get("text", "")).strip()} for x in out.get("lines") or [] if str(x.get("text", "")).strip()]
     return {"lines": lines, "model": model, "secs": round(time.time() - t0, 1),
             "thinking_chars": len(msg.get("thinking") or "")}
 
 
 @router.post("/api/dettato/photo")
 async def photo(req: Request):
+    """?slug= (a lesson) or ?count= (an Anki session's line count), and ?n= the line on screen: an unnumbered
+    photo is that line's answer; a numbered page fills every line it shows."""
     from starlette.concurrency import run_in_threadpool
-    les = _lesson(req.query_params.get("slug", ""))
+    q = req.query_params
+    if q.get("count", "").isdigit():
+        valid = set(range(1, int(q["count"]) + 1))
+    else:
+        valid = {ln["n"] for ln in _lesson(q.get("slug", ""))["lines"]}
     image = await req.body()
     if len(image) < 2000:
         raise HTTPException(400, "image too small")
     out = await run_in_threadpool(read_photo, image)
-    valid = {ln["n"] for ln in les["lines"]}
+    cur = int(q["n"]) if q.get("n", "").isdigit() else None
+    unnumbered = [x for x in out["lines"] if x["n"] is None]
+    if unnumbered and cur in valid:
+        out["lines"] = [x for x in out["lines"] if x["n"] is not None] + \
+                       [{"n": cur, "text": " ".join(x["text"] for x in unnumbered)}]
     out["ignored"] = [x["n"] for x in out["lines"] if x["n"] not in valid]
     out["lines"] = [x for x in out["lines"] if x["n"] in valid]
     return out
