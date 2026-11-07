@@ -153,17 +153,35 @@ function renderFacetPanel() {
   el.querySelectorAll('[data-fk]').forEach(b => b.onclick = () => { const set = F.facets[b.dataset.fk], v = b.dataset.fv; set.has(v) ? set.delete(v) : set.add(v); refresh(); });
   el.querySelector('[data-fclr]').onclick = () => { FACETS.forEach(([k]) => F.facets[k].clear()); refresh(); };
 }
+/* Search: accent- and case-free, every typed word must appear somewhere (any order); a word of 4+ letters also
+ * matches a word one letter off ("centra" finds "centro"). A typed search looks across every lesson. */
+const norm = s => String(s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+function oneOff(a, b) {   // edit distance <= 1
+  if (a === b) return true;
+  const la = a.length, lb = b.length; if (Math.abs(la - lb) > 1) return false;
+  let i = 0, j = 0, d = 0;
+  while (i < la && j < lb) { if (a[i] === b[j]) { i++; j++; continue; } if (++d > 1) return false;
+    if (la > lb) i++; else if (lb > la) j++; else { i++; j++; } }
+  return d + (la - i) + (lb - j) <= 1;
+}
+function searchHit(l, q) {
+  const hay = norm([l.title, l.system, l.subject, l.topic, (l.labels || []).join(' '), l.id, l.domain].join(' '));
+  const words = hay.split(/[^a-z0-9]+/).filter(Boolean);
+  return norm(q).split(/[^a-z0-9]+/).filter(Boolean).every(t =>
+    hay.includes(t) || (t.length >= 4 && words.some(w => oneOff(t, w.slice(0, t.length + 1)) || oneOff(t, w))));
+}
+const dispTitle = t => String(t || '').replace(/^Chiron\s*·\s*/, '');
 function match(l) {
   if (SERVER_DOWN && !OFFLINE[slugOf(l.id)]) return false;  // computer unreachable: only what is ON the phone opens
   if (isSSM(l) && !F.showSSM) return false;                  // SSM exam questions are OUT by default, like the web library
-  if (F.only.size && !(l.labels || []).some(t => F.only.has(t))) return false;
+  const q = (F.q || '').trim();
+  if (!q && F.only.size && !(l.labels || []).some(t => F.only.has(t))) return false;   // focus chips narrow browsing only
   if (F.hideDom.has(l.domain)) return false;                 // hide-filters win, incl. over search
   if (l.system && F.hideSys.has(l.system)) return false;
-  if (F.dom && l.domain !== F.dom) return false;
+  if (!q && F.dom && l.domain !== F.dom) return false;      // a typed search looks in every domain
   for (const [k, , fld] of FACETS) { const set = F.facets[k]; if (!set.size) continue;   // across facets AND, within one OR
     const v = l[fld]; if (Array.isArray(v) ? !v.some(x => set.has(x)) : !(v && set.has(v))) return false; }
-  if (F.q) { const s = (l.title + ' ' + (l.system || '') + ' ' + (l.subject || '') + ' ' + (l.topic || '') + ' ' + (l.labels || []).join(' ')).toLowerCase();
-    if (!s.includes(F.q.toLowerCase())) return false; } return true;
+  return !q || searchHit(l, q);
 }
 function lessonAction(l) {   // shared by the list (Index) rows and the Tiles cards
   const slug = slugOf(l.id), off = !!OFFLINE[slug];
@@ -182,7 +200,7 @@ function rowHtml(l) {   // Index view — dense one-line rows
   const lvl = l.level ? `<span class="tag">${l.level}</span>` : '';
   const hl = hlOf(l);
   return `<div class="row ${domCls(l.domain)}${hl ? ' hl' : ''}"${hl ? ` style="--hlc:${hl[1].color}"` : ''}><div class="edge"></div>
-    <div class="body"><div class="t">${esc(l.title)}</div>
+    <div class="body"><div class="t">${esc(dispTitle(l.title))}</div>
       <div class="meta">${l.status === 'staged' ? '<span class="tag rev">🟡 REVIEW</span>' : ''}<span class="tag ${domCls(l.domain)}">${l.domain}</span>${cat}${lvl}${l.clips ? `<span class="clip">▸${l.clips}${off ? ' · ✓' : ''}</span>` : ''}</div>${tagChips(l)}</div>
     <div class="act">${lessonAction(l)}</div></div>`;
 }
@@ -191,7 +209,7 @@ function tileHtml(l) {   // Tiles view — 2-up cards
   const sub = l.subject || l.system || l.topic || (l.level ? 'Livello ' + l.level : '') || '';
   const hl = hlOf(l);
   return `<div class="tcard ${domCls(l.domain)}${l.ready ? '' : ' q'}${hl ? ' hl' : ''}"${hl ? ` style="--hlc:${hl[1].color}"` : ''}><div class="tstrip"></div>
-    <div class="tbd"><div class="tt">${esc(l.title)}</div><div class="tsub">${esc(sub)}</div>${tagChips(l)}${l.status === 'staged' ? '<span class="tag rev">🟡 REVIEW</span>' : ''}</div>
+    <div class="tbd"><div class="tt">${esc(dispTitle(l.title))}</div><div class="tsub">${esc(sub)}</div>${tagChips(l)}${l.status === 'staged' ? '<span class="tag rev">🟡 REVIEW</span>' : ''}</div>
     <div class="tft"><span class="tag ${domCls(l.domain)}">${esc(l.domain)}</span>${l.clips ? `<span class="clip">▸${l.clips}${off ? ' ✓' : ''}</span>` : ''}${lessonAction(l)}</div></div>`;
 }
 function group(arr) { return F.view === 'tiles' ? `<div class="tgrid">${arr.map(tileHtml).join('')}</div>` : arr.map(rowHtml).join(''); }
@@ -220,6 +238,7 @@ function renderRows() {
   const staged = sortLessons(list.filter(l => l.ready && l.status === 'staged'));
   const ready = sortLessons(list.filter(l => l.ready && l.status !== 'staged'));
   const queued = list.filter(l => !l.ready);
+  const q = (F.q || '').trim();
   const hdr = (i, t, n, note) => `<div class="sec">${i} ${t} <span class="ct">${n}</span><span class="note">${note}</span></div>`;
   let h = '';
   if (ACTIVE.length) h += `<div class="sec">⏳ Generating <span class="ct">${ACTIVE.length}</span><span class="note">tap to watch</span></div>` +
@@ -232,6 +251,7 @@ function renderRows() {
     h += todo.length ? `<div class="saveall" style="--hlc:${st.color || 'var(--accent)'}" id="saveall">⬇ Save all ${todo.length} to this phone (${Math.round(todo.reduce((a, l) => a + (l.sizeMB || 0), 0))} MB)</div>`
                      : `<div class="offbanner">✓ Every ${[...F.only].join(' + ')} lesson that can be saved is on this phone.</div>`;
   }
+  if (q && (F.dom || F.only.size)) h += `<div class="offbanner">🔎 ${list.length} match${list.length === 1 ? '' : 'es'} for “${esc(q)}” across all lessons — chips are paused while you search.</div>`;
   if (staged.length) { h += `<div class="reviewband">🟡 Needs Review — ${staged.length} generated, not yet published.</div>` + group(staged); }
   if (ready.length) { const dl = ready.filter(l => l.bundle).length; h += hdr('📚', 'Available', ready.length, dl ? dl + ' downloadable' : 'open to study') + group(ready); }
   if (queued.length) h += hdr('○', 'To generate', queued.length, 'tap Generate') + group(queued.slice(0, 400));
@@ -307,8 +327,15 @@ async function renderActivity() {
 }
 function curPane() { return Math.round(pane.scrollLeft / pane.clientWidth); }
 async function loadLibrary() {
+  let why = '';
   try {
-    const d = await (await fetch(idxUrl() + '?' + Date.now())).json();
+    let d = null;
+    for (const wait of [0, 1500, 4000]) {      // a dropped first request (network still waking) must not strand the phone offline
+      if (wait) await new Promise(r => setTimeout(r, wait));
+      try { const r = await fetch(idxUrl() + '?' + Date.now()); if (!r.ok) throw new Error('HTTP ' + r.status); d = await r.json(); break; }
+      catch (e) { why = String(e && e.message || e); }
+    }
+    if (!d) throw new Error(why);
     LESSONS = d.lessons || []; SERVER_DOWN = false;
     try { localStorage.setItem('chiron.idx', JSON.stringify(LESSONS.filter(l => l.ready))); } catch (e) {}
     try { const c = await (await fetch(LIB + '/library/library.config.json?' + Date.now())).json();
@@ -317,13 +344,14 @@ async function loadLibrary() {
     document.getElementById('offbanner').style.display = 'none';
     renderChips(); renderFocus(); renderSort(); renderFacetPanel(); renderRows(); refreshSync();
   } catch (e) {
+    why = why || String(e && e.message || e);    // a render error lands here too: show it rather than blame the network
     // Computer off / power cut: fall back to the last library this phone saw, showing only lessons saved on it.
     let cached = []; try { cached = JSON.parse(localStorage.getItem('chiron.idx') || '[]'); } catch (e2) {}
     if (TAURI && cached.length) {
       LESSONS = cached; SERVER_DOWN = true;
       await refreshOffline();
       const b = document.getElementById('offbanner'); b.style.display = '';
-      b.innerHTML = `⚡ Your computer isn't reachable — showing the <b>${Object.keys(OFFLINE).length}</b> lessons saved on this phone. They work fully offline.`;
+      b.innerHTML = `⚡ Your computer isn't reachable — showing the <b>${Object.keys(OFFLINE).length}</b> lessons saved on this phone. They work fully offline. Pull down to retry.<br><small>${esc(LIB)} · ${esc(why || 'no answer')}</small>`;
       renderChips(); renderFocus(); renderSort(); renderFacetPanel(); renderRows();
       document.getElementById('syncedtag').textContent = 'offline';
       return;
@@ -410,7 +438,7 @@ async function refreshOffline() {
       ls.forEach(o => { const m = o.slug ? null : LESSONS.find(l => (l.title || '').includes(o.title) || o.title.includes(l.title));
         OFFLINE[o.slug || (m ? slugOf(m.id) : o.title)] = { id: o.id, entry: o.entry }; });
       if (LESSONS.length) renderRows();   // the Library's ✓ / ⟳ Update state depends on what is on the phone
-      box.innerHTML = ls.length ? ls.map(o => `<div class="row m"><div class="edge"></div><div class="body"><div class="t">${esc(o.title)}</div><div class="meta"><span class="clip">✓ offline</span></div></div><div class="act"><span class="btn" data-oid="${o.id}" data-oentry="${o.entry}">Open →</span></div></div>`).join('') : `<div class="empty">Nothing saved yet. Download lessons from the Library.</div>`;
+      box.innerHTML = ls.length ? ls.map(o => `<div class="row m"><div class="edge"></div><div class="body"><div class="t">${esc(dispTitle(o.title))}</div><div class="meta"><span class="clip">✓ offline</span></div></div><div class="act"><span class="btn" data-oid="${o.id}" data-oentry="${o.entry}">Open →</span></div></div>`).join('') : `<div class="empty">Nothing saved yet. Download lessons from the Library.</div>`;
       box.querySelectorAll('[data-oid]').forEach(e => e.onclick = () => { const base = isAndroid ? 'http://lesson.localhost/' : 'lesson://localhost/'; const pu = base + e.dataset.oid + '/' + e.dataset.oentry; ChironNav.loadFrame(document, 'l-frame', pu); document.getElementById('l-title').textContent = 'Lesson'; setMode('read');
         if (window.ChironPlay) ChironPlay.load({ slug: 'offline-' + e.dataset.oid, title: (e.closest('.row').querySelector('.t') || {}).textContent || 'Lezione', sub: '', pageUrl: pu }); go(2); });
     } catch (e) { box.innerHTML = `<div class="empty">—</div>`; }
@@ -418,7 +446,8 @@ async function refreshOffline() {
 }
 async function syncNow() {
   const tag = document.getElementById('syncedtag'); tag.textContent = 'syncing…';
-  if (!TAURI) { await loadLibrary(); return; }
+  await loadLibrary();                           // re-reads the library index too, so a refresh clears a stale offline state
+  if (!TAURI) return;
   try {
     const cat = await invoke('server_lessons', { url: catUrl() });
     const files = (cat.lessons || []).map(e => e.file);
