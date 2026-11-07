@@ -16,6 +16,9 @@ card reviewed here must advance Anki or it returns tomorrow as if unseen (anki.p
     POST /api/dettato/photo?slug=      <image> of a handwritten page (numbered lines) -> {lines:[{n, text}]}, copied
                                        exactly as written (mistakes kept); the page then sends them to /judge
     GET  /api/dettato/riferimento      the shared grammar + vocabulary reference every judged lesson adds to
+    GET  /api/dettato/pending          WhatsApp voice notes with no lesson yet, plus the build jobs
+    POST /api/dettato/build            {phone_file} or {all: true} -> queue lesson builds (one at a time)
+    GET  /api/dettato/build            the build jobs: queued | running | done | failed (+ error)
 
 The word check is deterministic (accent-insensitive alignment; a word right but for its accent counts as an
 accent slip). The model only writes the explanations. Lines the builder marked `uncertain` (two whisper passes
@@ -25,7 +28,7 @@ the line's DIFFICULTY for this learner, kept beside the score. A line right afte
 ten is still hard. Difficulty sets the Anki ease, goes to Lucrezia, and ranks /hard.
 Attempts are saved to <lesson>/attempts/<stamp>.json (Anki sessions: chiron-dettato/anki/<deck>/attempts/).
 """
-import base64, difflib, json, os, re, subprocess, time, unicodedata, urllib.parse, urllib.request
+import base64, difflib, json, os, queue, re, subprocess, sys, threading, time, unicodedata, urllib.parse, urllib.request
 from datetime import datetime
 from pathlib import Path
 
@@ -42,6 +45,14 @@ REF = ROOT / "riferimento.json"
 JUDGE_DEADLINE_S = float(os.environ.get("CHIRON_DETTATO_DEADLINE_S") or 120)
 
 router = APIRouter()
+
+sys.path.insert(0, str(SKILL / "scripts"))
+import verbal_check  # noqa: E402  (scripts/verbal_check.py: the same build path as the `verbal-check` CLI)
+
+BUILD_JOBS: dict[str, dict] = {}      # slug -> job; bounded by the number of voice notes
+_BUILD_Q: "queue.Queue[str]" = queue.Queue()
+_BUILD_LOCK = threading.Lock()
+_BUILD_WORKER: threading.Thread | None = None
 
 
 def _lesson(slug: str) -> dict:
@@ -210,6 +221,65 @@ def lessons():
         out.append({"slug": d["slug"], "title": d["title"], "from": d.get("from", ""), "lines": len(d["lines"]),
                     "seconds": d.get("seconds"), "attempts": len(att), "best": best})
     return {"lessons": out}
+
+
+def _build_worker():
+    while True:
+        slug = _BUILD_Q.get()
+        job = BUILD_JOBS[slug]
+        job.update(status="running", started=datetime.now().isoformat(timespec="seconds"))
+        try:
+            lesson = verbal_check.build_voice(job["note"])
+            job.update(status="done", lines=len(lesson["lines"]),
+                       uncertain=sum(1 for l in lesson["lines"] if l["uncertain"]))
+        except Exception as e:  # a failed build must not kill the worker; the job carries the reason
+            job.update(status="failed", error=f"{type(e).__name__}: {e}")
+            print(f"[dettato] build {slug} failed: {e}", file=sys.stderr, flush=True)
+        job["finished"] = datetime.now().isoformat(timespec="seconds")
+        _BUILD_Q.task_done()
+
+
+def _queue_build(note: dict) -> dict:
+    global _BUILD_WORKER
+    with _BUILD_LOCK:
+        job = BUILD_JOBS.get(note["slug"])
+        if job and job["status"] in ("queued", "running"):
+            return job
+        job = BUILD_JOBS[note["slug"]] = {"slug": note["slug"], "status": "queued", "note": note,
+                                          "queued": datetime.now().isoformat(timespec="seconds")}
+        if _BUILD_WORKER is None or not _BUILD_WORKER.is_alive():
+            _BUILD_WORKER = threading.Thread(target=_build_worker, name="dettato-build", daemon=True)
+            _BUILD_WORKER.start()
+        _BUILD_Q.put(note["slug"])
+        return job
+
+
+def _jobs() -> list[dict]:
+    return [{k: v for k, v in j.items() if k != "note"} | {"from": j["note"].get("from"), "seconds": j["note"].get("seconds")}
+            for j in BUILD_JOBS.values()]
+
+
+@router.get("/api/dettato/pending")
+def pending_notes():
+    busy = {s for s, j in BUILD_JOBS.items() if j["status"] in ("queued", "running")}
+    return {"pending": [n | {"building": n["slug"] in busy} for n in verbal_check.pending()], "jobs": _jobs()}
+
+
+@router.post("/api/dettato/build")
+async def build_lessons(request: Request):
+    b = await request.json()
+    notes = verbal_check.pending()
+    if not b.get("all"):
+        notes = [n for n in notes if n["phone_file"] == b.get("phone_file")]
+        if not notes:
+            raise HTTPException(404, f"no pending voice note {b.get('phone_file')!r} (already built, or not synced: "
+                                     "run `verbal-check sync`)")
+    return {"queued": [{k: v for k, v in _queue_build(n).items() if k != "note"} for n in notes]}
+
+
+@router.get("/api/dettato/build")
+def build_jobs():
+    return {"jobs": _jobs()}
 
 
 @router.get("/api/dettato/lesson/{slug}")

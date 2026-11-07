@@ -44,6 +44,8 @@ button,textarea,input{font:inherit}
 .ex{font-style:italic;color:var(--mute);font-size:15px}
 .hidden{display:none}
 .state{color:var(--mute);font-size:15px;margin-top:8px} .state.err{color:var(--bad)}
+.pend{display:flex;gap:10px;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid var(--line)}
+.pend .sub{font-size:14px}
 .list a{display:block;padding:12px 0;border-bottom:1px solid var(--line);text-decoration:none;color:var(--fg)}
 @media (pointer:coarse){.kb{display:none}}
 kbd{font-size:12px;border:1px solid var(--line);border-radius:4px;padding:0 4px}
@@ -56,6 +58,11 @@ kbd{font-size:12px;border:1px solid var(--line);border-radius:4px;padding:0 4px}
     <p class="sub">Ascolta, scrivi quello che senti (tastiera o quaderno + foto), ripeti a voce. Lucrezia giudica. Quante volte riascolti conta: dice quanto è difficile la frase per te.</p>
     <h2>Registrazioni vere</h2>
     <div id="lessons" class="list"></div>
+    <div id="pending-box" class="hidden">
+      <div class="row" style="justify-content:space-between;margin-top:18px"><h2 style="margin:0">Note vocali da preparare</h2><button class="btn" id="build-all">Crea tutte</button></div>
+      <p class="count">Note vocali del gruppo senza lezione. Una lezione si crea in circa un minuto (whisper sul Mac). Dal terminale: <code>verbal-check sync</code>.</p>
+      <div id="pending"></div>
+    </div>
     <h2>Anki: carte d'ascolto</h2>
     <div id="decks" class="list"><p class="sub">Carico i mazzi…</p></div>
     <p class="sub"><a href="#" id="ref-home">Riferimento: grammatica e parole</a></p>
@@ -343,15 +350,54 @@ kbd{font-size:12px;border:1px solid var(--line);border-radius:4px;padding:0 4px}
     }).catch(function (e) { el.innerHTML = '<p class="state err">' + esc(e.message) + '</p>'; });
   }
 
+  var pendTimer = null, seenDone = {};
+  function loadPending() {
+    api('/api/dettato/pending').then(function (r) {
+      var busy = false;
+      var jobs = {}; r.jobs.forEach(function (j) { jobs[j.slug] = j; });
+      var failed = r.jobs.filter(function (j) { return j.status === 'failed'; });
+      var done = r.jobs.filter(function (j) { return j.status === 'done' && !seenDone[j.slug]; });
+      $('pending-box').classList.toggle('hidden', !r.pending.length && !failed.length);
+      $('pending').innerHTML = r.pending.map(function (n) {
+        var j = jobs[n.slug], st = j && j.status;
+        if (st === 'queued' || st === 'running') busy = true;
+        var btn = st === 'running' ? '<span class="count">Creo…</span>' : st === 'queued' ? '<span class="count">In coda</span>'
+          : '<button class="btn" data-pf="' + esc(n.phone_file) + '">' + (st === 'failed' ? 'Riprova' : 'Crea lezione') + '</button>';
+        return '<div class="pend"><div><b>' + esc((n.from || 'Nota').trim()) + '</b> <span class="count">' + esc(n.day || '') + ' ' + esc(n.time || '') + ' · ' + Math.round(n.seconds) + ' s</span>' +
+          '<div class="sub">' + esc(n.preview) + '…</div>' + (st === 'failed' ? '<div class="state err">' + esc(j.error) + '</div>' : '') + '</div>' + btn + '</div>';
+      }).join('');
+      $('pending').querySelectorAll('button[data-pf]').forEach(function (b) {
+        b.onclick = function () { b.disabled = true; build({ phone_file: b.dataset.pf }); };
+      });
+      $('build-all').classList.toggle('hidden', !r.pending.some(function (n) { var j = jobs[n.slug]; return !j || j.status === 'failed'; }));
+      if (done.length) { done.forEach(function (j) { seenDone[j.slug] = 1; }); refreshLessons(); }
+      clearTimeout(pendTimer);
+      if (busy) pendTimer = setTimeout(loadPending, 4000);
+    }).catch(function (e) { $('pending-box').classList.remove('hidden'); $('pending').innerHTML = '<p class="state err">' + esc(e.message) + '</p>'; });
+  }
+  function build(body) {
+    api('/api/dettato/build', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
+      .then(loadPending).catch(function (e) { $('pending').insertAdjacentHTML('afterbegin', '<p class="state err">' + esc(e.message) + '</p>'); });
+  }
+  function refreshLessons() {
+    api('/api/dettato/list').then(function (r) {
+      $('lessons').innerHTML = r.lessons.map(function (l) {
+        return '<a href="/verbal-check?l=' + encodeURIComponent(l.slug) + '"><b>' + esc(l.title) + '</b><div class="sub">' + esc(l.from) + ' · ' + l.lines + ' righe · ' +
+          Math.round(l.seconds) + ' s' + (l.best != null ? ' · migliore ' + l.best + '%' : '') + '</div></a>'; }).join('');
+    });
+  }
+
   if (!slug && !deck) {
     $('home').classList.remove('hidden');
+    $('build-all').onclick = function () { $('build-all').disabled = true; build({ all: true }); };
     $('ref-home').onclick = function (e) { e.preventDefault(); showRef($('ref-home-box')); };
     api('/api/dettato/list').then(function (r) {
       $('lessons').innerHTML = r.lessons.length ? r.lessons.map(function (l) {
         return '<a href="/verbal-check?l=' + encodeURIComponent(l.slug) + '"><b>' + esc(l.title) + '</b><div class="sub">' + esc(l.from) + ' · ' + l.lines + ' righe · ' +
           Math.round(l.seconds) + ' s' + (l.best != null ? ' · migliore ' + l.best + '%' : '') + '</div></a>'; }).join('')
-        : '<p class="sub">Nessuna registrazione. Creane una con scripts/build_dettato.py.</p>';
+        : '<p class="sub">Nessuna registrazione. Creane una qui sotto o con <code>verbal-check sync</code>.</p>';
     });
+    loadPending();
     api('/api/dettato/anki-decks').then(function (r) {
       $('decks').innerHTML = r.decks.length ? r.decks.map(function (d) {
         return '<a href="/verbal-check?deck=' + encodeURIComponent(d.deck) + '&n=15"><b>' + esc(d.deck.split('::').slice(-2).join(' › ')) + '</b><div class="sub">' + d.cards + ' carte con audio · 15 per sessione, prima quelle in scadenza</div></a>'; }).join('')
