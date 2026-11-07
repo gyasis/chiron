@@ -19,6 +19,45 @@ struct Lesson {
     id: String,
     title: String,
     entry: String,
+    #[serde(default)]
+    slug: String, // the library slug; "" for a copy saved before slugs were recorded
+}
+
+/// Key that says "same lesson": the slug when known, else the title (only for copies with no slug).
+fn same_lesson(a: &Lesson, b: &Lesson) -> bool {
+    if !a.slug.is_empty() && !b.slug.is_empty() {
+        return a.slug == b.slug;
+    }
+    if a.slug.is_empty() && b.slug.is_empty() {
+        return a.title == b.title;
+    }
+    // one side has no slug: an older copy, matched by title as before
+    a.title == b.title
+}
+
+/// Put `new` first and drop every entry for the same lesson. Returns the ids of the dropped entries.
+fn merge_into(idx: Vec<Lesson>, new: Lesson) -> (Vec<Lesson>, Vec<String>) {
+    let (gone, mut kept): (Vec<Lesson>, Vec<Lesson>) = idx.into_iter().partition(|l| same_lesson(l, &new));
+    kept.insert(0, new);
+    (kept, gone.into_iter().map(|l| l.id).collect())
+}
+
+/// Keep the first entry per lesson. Two different lessons that share a title both stay when their slugs differ.
+fn dedupe(v: Vec<Lesson>) -> Vec<Lesson> {
+    let mut out: Vec<Lesson> = Vec::with_capacity(v.len());
+    for l in v {
+        if !out.iter().any(|o| same_lesson(o, &l)) {
+            out.push(l);
+        }
+    }
+    out
+}
+
+/// The `slug` field of a chiron.json manifest, if present.
+fn manifest_slug(json: &[u8]) -> Option<String> {
+    let v: serde_json::Value = serde_json::from_slice(json).ok()?;
+    let s = v.get("slug")?.as_str()?.trim().to_string();
+    if s.is_empty() { None } else { Some(s) }
 }
 
 fn lessons_dir<R: Runtime>(app: &tauri::AppHandle<R>) -> PathBuf {
@@ -49,9 +88,18 @@ fn read_index<R: Runtime>(app: &tauri::AppHandle<R>) -> Vec<Lesson> {
         .ok()
         .and_then(|s| serde_json::from_str(&s).ok())
         .unwrap_or_default();
-    // de-dupe by title (heal indexes that accumulated repeat imports)
-    let mut seen = std::collections::HashSet::new();
-    v.retain(|l| seen.insert(l.title.clone()));
+    // a copy saved before slugs were recorded: read the slug from its own chiron.json when the bundle had one
+    let mut filled = false;
+    for l in v.iter_mut().filter(|l| l.slug.is_empty()) {
+        if let Some(s) = fs::read(lessons_dir(app).join(&l.id).join("chiron.json")).ok().and_then(|b| manifest_slug(&b)) {
+            l.slug = s;
+            filled = true;
+        }
+    }
+    let v = dedupe(v);
+    if filled {
+        let _ = write_index(app, &v);
+    }
     v
 }
 
@@ -76,7 +124,7 @@ fn delete_lesson(app: tauri::AppHandle, id: String) -> Result<(), String> {
 
 // Shared: unzip a .chiron's BYTES into app_local_data/lessons/<id>/, register
 // it, return the new Lesson. Used by file-import AND server-download.
-fn import_zip_bytes(app: &tauri::AppHandle, data: Vec<u8>) -> Result<Lesson, String> {
+fn import_zip_bytes(app: &tauri::AppHandle, data: Vec<u8>, slug_hint: Option<String>) -> Result<Lesson, String> {
     let mut zip = zip::ZipArchive::new(Cursor::new(data)).map_err(|e| e.to_string())?;
 
     let id = format!(
@@ -89,6 +137,7 @@ fn import_zip_bytes(app: &tauri::AppHandle, data: Vec<u8>) -> Result<Lesson, Str
     let dest = lessons_dir(app).join(&id);
     let mut entry = String::new();
     let mut title = String::new();
+    let mut slug = slug_hint.filter(|s| !s.is_empty()).unwrap_or_default();
 
     for i in 0..zip.len() {
         let mut f = zip.by_index(i).map_err(|e| e.to_string())?;
@@ -101,6 +150,9 @@ fn import_zip_bytes(app: &tauri::AppHandle, data: Vec<u8>) -> Result<Lesson, Str
         }
         let mut buf = Vec::new();
         f.read_to_end(&mut buf).map_err(|e| e.to_string())?;
+        if slug.is_empty() && name == "chiron.json" {
+            slug = manifest_slug(&buf).unwrap_or_default();
+        }
 
         // pick the lesson entry html (prefer lesson.html, else first root html)
         let is_html = name.ends_with(".html");
@@ -137,11 +189,12 @@ fn import_zip_bytes(app: &tauri::AppHandle, data: Vec<u8>) -> Result<Lesson, Str
         title = id.clone();
     }
 
-    let lesson = Lesson { id, title, entry };
-    let mut idx = read_index(app);
-    idx.retain(|l| l.title != lesson.title); // replace existing same-title (no dup)
-    idx.insert(0, lesson.clone());
+    let lesson = Lesson { id, title, entry, slug };
+    let (idx, replaced) = merge_into(read_index(app), lesson.clone());
     write_index(app, &idx)?;
+    for old in replaced {
+        let _ = fs::remove_dir_all(lessons_dir(app).join(&old)); // the copy this import replaces
+    }
     Ok(lesson)
 }
 
@@ -149,7 +202,7 @@ fn import_zip_bytes(app: &tauri::AppHandle, data: Vec<u8>) -> Result<Lesson, Str
 // understands Android content:// URIs).
 #[tauri::command]
 fn import_lesson(app: tauri::AppHandle, data: Vec<u8>) -> Result<Lesson, String> {
-    import_zip_bytes(&app, data)
+    import_zip_bytes(&app, data, None)
 }
 
 // List a server catalog: GET <url>/lessons.json (works for http LAN + https Pages).
@@ -186,7 +239,8 @@ fn import_from_server(app: tauri::AppHandle, url: String, file: String) -> Resul
     resp.into_reader()
         .read_to_end(&mut bytes)
         .map_err(|e| e.to_string())?;
-    import_zip_bytes(&app, bytes)
+    let hint = file.rsplit('/').next().unwrap_or(&file).trim_end_matches(".chiron").to_string();
+    import_zip_bytes(&app, bytes, Some(hint))
 }
 
 // ---- on-device tutor grounding: bounded plain text of a SAVED (offline) lesson --------------------------------
@@ -366,4 +420,48 @@ pub fn run() {
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn l(id: &str, title: &str, slug: &str) -> Lesson {
+        Lesson { id: id.into(), title: title.into(), entry: "lesson.html".into(), slug: slug.into() }
+    }
+
+    #[test]
+    fn two_lessons_with_one_title_both_stay() {
+        let (idx, gone) = merge_into(vec![l("a", "Chiron · Italian", "chiron-italian-a")], l("b", "Chiron · Italian", "chiron-italian-b"));
+        assert_eq!(idx.len(), 2);
+        assert!(gone.is_empty());
+    }
+
+    #[test]
+    fn same_slug_replaces_and_reports_the_old_copy() {
+        let (idx, gone) = merge_into(vec![l("a", "Old title", "chiron-x")], l("b", "New title", "chiron-x"));
+        assert_eq!(idx.iter().map(|x| x.id.as_str()).collect::<Vec<_>>(), vec!["b"]);
+        assert_eq!(gone, vec!["a".to_string()]);
+    }
+
+    #[test]
+    fn older_copy_without_slug_is_replaced_by_title() {
+        let (idx, gone) = merge_into(vec![l("a", "T", ""), l("c", "Other", "")], l("b", "T", "chiron-t"));
+        assert_eq!(idx.len(), 2);
+        assert_eq!(gone, vec!["a".to_string()]);
+    }
+
+    #[test]
+    fn dedupe_keeps_first_per_lesson() {
+        let v = dedupe(vec![l("1", "T", "s1"), l("2", "T", "s2"), l("3", "T2", "s1"), l("4", "U", ""), l("5", "U", "")]);
+        assert_eq!(v.iter().map(|x| x.id.as_str()).collect::<Vec<_>>(), vec!["1", "2", "4"]);
+    }
+
+    #[test]
+    fn manifest_slug_reads_only_a_real_value() {
+        assert_eq!(manifest_slug(br#"{"slug":"chiron-x"}"#), Some("chiron-x".into()));
+        assert_eq!(manifest_slug(br#"{"slug":""}"#), None);
+        assert_eq!(manifest_slug(br#"{"title":"t"}"#), None);
+        assert_eq!(manifest_slug(b"not json"), None);
+    }
 }

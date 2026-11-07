@@ -104,6 +104,16 @@ function pickEntry(paths) {
   return any.find((p) => /lesson\.html$/i.test(p)) || any[0] || null;
 }
 
+// Same lesson = same slug when both copies know it; a copy saved before slugs were recorded matches by title.
+function sameLesson(a, b) {
+  if (a.slug && b.slug) return a.slug === b.slug;
+  return a.title === b.title;
+}
+
+function slugFromManifest(bytes) {
+  try { return String(JSON.parse(new TextDecoder().decode(bytes)).slug || '').trim(); } catch { return ''; }
+}
+
 function titleFromHtml(bytes, fallback) {
   try {
     const head = new TextDecoder().decode(bytes.slice(0, 8192));
@@ -167,9 +177,11 @@ async function importBundleBytes(u8, name) {
     files[names[relPaths.indexOf(entry)]] || new Uint8Array(),
     name.replace(/\.(chiron\.)?zip$/i, '').replace(/\.chiron$/i, ''),
   );
-  // replace any existing entry with the same title (no duplicates)
-  const list = loadIndex().filter((l) => l.title !== title);
-  list.unshift({ id, title, entry, size: total, importedAt: Date.now() });
+  const mf = names[relPaths.indexOf('chiron.json')];
+  const slug = (mf && slugFromManifest(files[mf])) || '';
+  // replace the saved copy of the same lesson (no duplicates); two lessons sharing a title both stay
+  const list = loadIndex().filter((l) => !sameLesson(l, { slug, title }));
+  list.unshift({ id, title, slug, entry, size: total, importedAt: Date.now() });
   saveIndex(list);
   render();
   return title;
@@ -237,7 +249,7 @@ async function downloadCatalogLesson(item) {
   try {
     if (TAURI) {
       const lesson = await window.__TAURI__.core.invoke('import_from_server', { url: serverUrl(), file: item.file });
-      tauriLessons = tauriLessons.filter((l) => l.title !== lesson.title);
+      tauriLessons = tauriLessons.filter((l) => !sameLesson(l, lesson));
       tauriLessons.unshift(lesson);
       render();
       toast('Added "' + lesson.title + '"');
@@ -373,7 +385,7 @@ async function tauriImport() {
     // which std::fs in Rust cannot. Then hand the raw bytes to Rust to unzip.
     const data = await window.__TAURI__.fs.readFile(path);
     const lesson = await window.__TAURI__.core.invoke('import_lesson', { data });
-    tauriLessons = tauriLessons.filter((l) => l.title !== lesson.title);
+    tauriLessons = tauriLessons.filter((l) => !sameLesson(l, lesson));
     tauriLessons.unshift(lesson);
     render();
     toast('Added "' + lesson.title + '"');

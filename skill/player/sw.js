@@ -10,7 +10,7 @@
  *     the file:// fetch limits apply.
  */
 
-const SHELL_CACHE = 'chiron-shell-v2';
+const SHELL_CACHE = 'chiron-shell-v3';
 const LESSON_CACHE = 'chiron-lessons-v1';   // written by app.js on import
 
 const SHELL_ASSETS = [
