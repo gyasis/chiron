@@ -36,6 +36,9 @@ STRIP_RE = re.compile(
     r"[ \t]*<!--nav-->.*?<!--/nav-->\n?"
     r"|[ \t]*<!-- ascolto-nav -->.*?<!-- /ascolto-nav -->\n?", re.S)
 
+# Tells the Chiron server to add nothing to the page (no tutor, language switch or web player).
+PLAIN_META = '<meta name="chiron-chrome" content="none">'
+
 TITLES = {
     1: "Il primo giorno",
     2: "Medici, treni, abitudini",
@@ -103,6 +106,8 @@ def inject(path: str, day: int, days: list[int] | None = None) -> bool:
 
     doc = open(path, encoding="utf-8").read()
     doc = STRIP_RE.sub("", doc)                       # idempotent: never stack bars
+    if PLAIN_META not in doc:                         # served as written: the page brings its own player
+        doc = doc.replace("<head>", "<head>\n" + PLAIN_META, 1)
 
     # The top bar goes inside .wrap, above the masthead, so it shares the page's measure.
     m = re.search(r'(<div class="wrap">\n)', doc)

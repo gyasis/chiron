@@ -22,33 +22,45 @@
     --step-2: 1.4375rem;
     --step-3: 1.875rem;
     --step-4: 2.5rem;
+
+    /* The Listen player reads Chiron's colour names; point them at this page's palette so it
+       follows light and dark with the page instead of falling back to white. */
+    --chiron-fg: var(--ink);
+    --chiron-fg-secondary: var(--muted);
+    --chiron-muted: var(--muted);
+    --chiron-accent: var(--accent);
+    --chiron-accent-light: var(--accent-soft);
+    --chiron-surface: var(--ground);
+    --chiron-elevated: var(--raised);
+    --chiron-border: var(--rule);
+    --chiron-divider: var(--rule);
   }
 
   @media (prefers-color-scheme: dark) {
     :root {
       --ground: #14171A;
-      --raised: #1C2024;
+      --raised: #1F2428;
       --ink: #E7E6E1;
       --muted: #9BA1A8;
-      --faint: #7C838A;
+      --faint: #8F969D;
       --accent: #7FB8D6;
-      --accent-soft: #1E2E38;
+      --accent-soft: #1F3340;
       --alert: #E0897B;
       --alert-soft: #33211E;
-      --rule: #2C3237;
+      --rule: #3A4248;
     }
   }
   :root[data-theme="dark"] {
     --ground: #14171A;
-    --raised: #1C2024;
+    --raised: #1F2428;
     --ink: #E7E6E1;
     --muted: #9BA1A8;
-    --faint: #7C838A;
+    --faint: #8F969D;
     --accent: #7FB8D6;
-    --accent-soft: #1E2E38;
+    --accent-soft: #1F3340;
     --alert: #E0897B;
     --alert-soft: #33211E;
-    --rule: #2C3237;
+    --rule: #3A4248;
   }
   :root[data-theme="light"] {
     --ground: #F1F0EC;
@@ -261,6 +273,8 @@
 
   .trap {
     background: var(--alert-soft);
+    border: 1px solid var(--rule);
+    border-radius: 5px;
     padding: 0.95rem 1.1rem;
     display: flex;
     flex-direction: column;
@@ -408,3 +422,16 @@
   /* pushes the Ascolto link to the far edge of the top bar (from the retired add_nav.py) */
   .daynav .sp { flex: 1; }
   .daynav .go { color: var(--accent); }
+
+/* ── il compito — the handwritten paragraph beside its correction (Day 8) ────────── */
+.compito{border-top:1px solid var(--rule);margin:1.4rem 0}
+.compito .cmp-row{display:grid;grid-template-columns:1fr;gap:.35rem;padding:.7rem .4rem;
+  border-bottom:1px solid var(--rule)}
+.compito .was{font-family:var(--mono);font-size:.9rem;color:var(--brick);
+  text-decoration:line-through;text-decoration-thickness:1px;
+  text-decoration-color:color-mix(in srgb,var(--brick) 45%,transparent)}
+.compito .now{font-family:var(--display);font-weight:600;font-size:1.0625rem;
+  letter-spacing:-.008em}
+@media(min-width:46rem){
+  .compito .cmp-row{grid-template-columns:1fr 1fr;column-gap:1.6rem;align-items:baseline}
+}
