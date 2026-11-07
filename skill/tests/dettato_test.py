@@ -1,6 +1,6 @@
 """dettato_test — the dictation page's pure parts (no network: no whisper or model calls).
 Run: python3 skill/tests/dettato_test.py"""
-import json, os, sys, tempfile, unittest
+import json, os, sys, tempfile, unittest, unittest.mock
 from pathlib import Path
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "server"))
@@ -151,6 +151,91 @@ class AnkiJudge(unittest.TestCase):
         self.assertEqual(r["rows"][0]["check"]["score"], 100)
         self.assertEqual(r["rows"][0]["difficulty"], "difficile")       # right, but after nine listens
         self.assertEqual(sent["reviews"], [{"cardId": 77, "ease": 2}])  # so Anki gets Hard, not Good
+
+
+class VoicePending(unittest.TestCase):
+    """verbal-check's pending list: which voice notes still need a lesson."""
+    def setUp(self):
+        import verbal_check as vc
+        self.vc = vc
+        self.tmp = tempfile.TemporaryDirectory()
+        d = Path(self.tmp.name)
+        self.wa, self.out = d / "wa", d / "out"
+        (self.wa / "audio").mkdir(parents=True)
+        rows = [
+            {"phone_file": "PTT-1-WA0001.opus", "seconds": 20.0, "paired": True, "day": "2026-11-06",
+             "time": "1:07 PM", "from": " Marti", "file": "audio/2026-11-06_1307_Marti_WA0001.opus", "text": "Allora"},
+            {"phone_file": "PTT-1-WA0002.opus", "seconds": 30.0, "paired": False, "file": "audio/unpaired/PTT-1-WA0002.opus"},
+            {"phone_file": "PTT-1-WA0003.opus", "seconds": 1.5, "paired": True, "day": "2026-11-06", "time": "1:08 PM",
+             "from": "Laura", "file": "audio/2026-11-06_1308_Laura_WA0003.opus"},
+            {"phone_file": "PTT-1-WA0004.opus", "seconds": 40.0, "paired": True, "day": "2026-11-06", "time": "1:09 PM",
+             "from": "Anna", "file": "audio/2026-11-06_1309_Anna_WA0004.opus"},
+            {"phone_file": "PTT-1-WA0005.opus", "seconds": 40.0, "paired": True, "day": "2026-11-06", "time": "1:10 PM",
+             "from": "Anna", "file": "audio/missing.opus"},
+        ]
+        (self.wa / "audio" / "unpaired").mkdir()
+        for r in rows[:4]:
+            (self.wa / r["file"]).write_bytes(b"x")
+        (self.wa / "voice.jsonl").write_text("\n".join(json.dumps(r) for r in rows) + "\n")
+        built = self.out / "anything"          # WA0004 already has a lesson, under another slug
+        built.mkdir(parents=True)
+        (built / "dettato.json").write_text(json.dumps({"origin": {"phone_file": "PTT-1-WA0004.opus"}}))
+        self.patch = unittest.mock.patch.object(vc.bd, "OUT", self.out)
+        self.patch.start()
+
+    def tearDown(self):
+        self.patch.stop()
+        self.tmp.cleanup()
+
+    def test_only_paired_long_unbuilt_on_disk(self):
+        p = self.vc.pending(wa_dir=self.wa)
+        self.assertEqual([n["phone_file"] for n in p], ["PTT-1-WA0001.opus"])
+        self.assertEqual(p[0]["slug"], "wa-2026-11-06-1307-marti-wa0001")
+
+    def test_unpaired_on_request(self):
+        p = self.vc.pending(include_unpaired=True, wa_dir=self.wa)
+        self.assertEqual([n["phone_file"] for n in p], ["PTT-1-WA0001.opus", "PTT-1-WA0002.opus"])
+
+    def test_build_voice_passes_origin_and_clean_name(self):
+        got = {}
+        def fake_build(audio, title, speaker, context, slug, origin=None):
+            got.update(title=title, speaker=speaker, slug=slug, origin=origin)
+            return {"slug": slug}
+        with unittest.mock.patch.object(self.vc.bd, "build", fake_build):
+            self.vc.build_voice(self.vc.pending(wa_dir=self.wa)[0])
+        self.assertEqual(got["speaker"], "Marti")
+        self.assertEqual(got["title"], "Marti, 2026-11-06 1:07 PM")
+        self.assertEqual(got["origin"]["phone_file"], "PTT-1-WA0001.opus")
+
+
+class BuildRoute(unittest.TestCase):
+    """POST /api/dettato/build queues one build per note, runs it on the worker, reports done or the error."""
+    def test_queue_runs_and_reports(self):
+        import asyncio
+        note = {"phone_file": "P1.opus", "slug": "wa-p1", "from": "Marti", "seconds": 9}
+        bad = {"phone_file": "P2.opus", "slug": "wa-p2", "from": "Anna", "seconds": 9}
+
+        def fake_build_voice(n):
+            if n["slug"] == "wa-p2":
+                raise dt.verbal_check.bd.BuildError("whisper down")
+            return {"lines": [{"uncertain": False}, {"uncertain": True}]}
+
+        class Req:
+            def __init__(self, b): self.b = b
+            async def json(self): return self.b
+        dt.BUILD_JOBS.clear()
+        with unittest.mock.patch.object(dt.verbal_check, "pending", lambda: [note, bad]), \
+                unittest.mock.patch.object(dt.verbal_check, "build_voice", fake_build_voice):
+            r = asyncio.run(dt.build_lessons(Req({"all": True})))
+            self.assertEqual([j["slug"] for j in r["queued"]], ["wa-p1", "wa-p2"])
+            dt._BUILD_Q.join()
+            jobs = {j["slug"]: j for j in dt.build_jobs()["jobs"]}
+        self.assertEqual((jobs["wa-p1"]["status"], jobs["wa-p1"]["lines"], jobs["wa-p1"]["uncertain"]), ("done", 2, 1))
+        self.assertEqual(jobs["wa-p2"]["status"], "failed")
+        self.assertIn("whisper down", jobs["wa-p2"]["error"])
+        with unittest.mock.patch.object(dt.verbal_check, "pending", lambda: []):
+            with self.assertRaises(dt.HTTPException):
+                asyncio.run(dt.build_lessons(Req({"phone_file": "nope.opus"})))
 
 
 if __name__ == "__main__":

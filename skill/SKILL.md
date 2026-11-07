@@ -288,7 +288,17 @@ Riferimento tab ranks "le righe più difficili" across attempts, and for **Anki 
 Anki** with ease from score AND listens (Easy / Good / Hard / Again), verified by reps like every Chiron review.
 "Ripeti a voce" records each line and checks it with whisper (mic needs `localhost` or HTTPS).
 
-    python3 scripts/build_dettato.py <audio> --title "Marti: …" --slug <kebab> --from "<who>" --context "<one line>"
+**Making lessons** — one CLI on PATH (`~/.local/bin/verbal-check` → `scripts/verbal_check.py`), and the app's home page
+runs the same code ("Note vocali da preparare" → **Crea lezione** / **Crea tutte**; `GET /api/dettato/pending`,
+`POST /api/dettato/build {phone_file}|{all:true}`, `GET /api/dettato/build` for job status, one build at a time):
+
+    verbal-check sync [--no-chat]      # chat pull + voice-note pull/pair/transcribe + a lesson per new note
+    verbal-check pending | list        # what still needs a lesson | what is built (tries, best score)
+    verbal-check build <audio> --title "Marti: …" [--from "<who>"] [--context "<one line>"] [--slug <kebab>]
+
+Every command takes `--json`. Voice-note lessons get the slug `wa-<day>-<HHMM>-<sender>-<waNNNN>` and record their
+`origin` (the phone file), so a note is never built twice. The `verbal-check` skill (linked into pi, omp, codex,
+opencode, dsh) points any harness at this CLI.
 
 Output `~/Documents/generated/chiron-dettato/<slug>/` (dettato.json, audio/NN.mp3 + NN-slow.mp3, attempts/); Anki
 sessions keep attempts in `chiron-dettato/anki/<deck>/attempts/`. Lines marked `uncertain` are where whisper large and
