@@ -324,7 +324,7 @@ def qc_clip(path: str, text: str, lang: str) -> tuple[float, str]:
             print(f"  asr: no answer (sidecar restarting?) — retry in {wait}s", flush=True)
             time.sleep(wait)
     heard = " ".join(seg.get("text", "").strip() for seg in segs)
-    return difflib.SequenceMatcher(None, _norm(text), _norm(_spell_numbers(heard, lang))).ratio(), heard
+    return difflib.SequenceMatcher(None, _norm(_spell_numbers(text, lang)), _norm(_spell_numbers(heard, lang))).ratio(), heard
 
 
 def synth_modal(baker: Baker, lines: list, slug: str):
@@ -492,7 +492,7 @@ TAIL_MAX_DB = -28.0      # last voiced 50 ms must have decayed below this — a 
 def flagged(text: str) -> tuple[list[tuple[float, float]], list[str]]:
     """(time ranges of clip-glitch complaints, complaint lines measurement can't settle)."""
     ranges, other = [], []
-    for line in text.splitlines():
+    for line in text.split("\n## Auto re-check")[0].splitlines():   # the listener's notes only
         ts = [int(m) * 60 + int(s) for m, s in re.findall(r"\b(\d{1,2}):(\d{2})\b", line)]
         if not ts or "VERDICT" in line:
             continue
@@ -554,7 +554,7 @@ def recheck(lesson_dir: str, text: str) -> tuple[bool, list[str]]:
             seen.add(key)
             lang = "en" if e["who"] == "cue" else "it"
             ratio, heard = qc_clip(baker.raw(*key), e["text"], lang)
-            same = _words(_norm(_spell_numbers(heard, lang))) == _words(_norm(e["text"]))
+            same = _words(_norm(_spell_numbers(heard, lang))) == _words(_norm(_spell_numbers(e["text"], lang)))
             db = tail_db(baker.clip(*key))
             good = same and db <= TAIL_MAX_DB
             ok = ok and good

@@ -477,7 +477,7 @@ def bake_audio():
            "--domain", "medicine", "--persona", "pauls-tutor"]
     if os.environ.get("CH_AUDIO_QC") != "1":
         cmd.append("--no-qc")
-    r = subprocess.run(cmd, capture_output=True, text=True, timeout=2400)
+    r = subprocess.run(cmd, capture_output=True, text=True, timeout=14400)  # 4 h: a full bake runs over an hour on the serial Mac voice lane
     print(((r.stdout or "")[-1200:] + "\n" + (r.stderr or "")[-1200:]), flush=True)
     clips = sorted((OUT / "audio").glob("**/*.mp3")) if (OUT / "audio").exists() else []
     print(f"[phase 6] baked {len(clips)} audio clip(s) → audio/", flush=True)

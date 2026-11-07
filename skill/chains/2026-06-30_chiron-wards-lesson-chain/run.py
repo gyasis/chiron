@@ -305,7 +305,7 @@ async def phase4_audio_scripts():
 def bake():
     print("[phase 5] BAKE → Atelier OmniVoice (Mac), Lucrezia, language-it …", flush=True)
     r = subprocess.run(["node", str(SKILL / "scripts" / "bake-lesson-audio.mjs"), str(OUT),
-                        "--domain", "language-it", "--persona", "lucrezia"], capture_output=True, text=True, timeout=2400)
+                        "--domain", "language-it", "--persona", "lucrezia"], capture_output=True, text=True, timeout=14400)  # 4 h: a full bake runs over an hour on the serial Mac voice lane
     print("  " + ((r.stdout or "") + (r.stderr or "")).strip()[-300:], flush=True)
 
 

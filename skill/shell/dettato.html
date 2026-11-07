@@ -1,0 +1,317 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dettato</title>
+<style>
+:root{--bg:#f7f3ec;--card:#fffdf8;--fg:#2a2420;--mute:#7a6f66;--line:#e6ddd0;--accent:#8a3b2a;--ok:#2f6b45;--warn:#a5641a;--bad:#a33a2a;--chip:#f3ece2}
+@media (prefers-color-scheme:dark){:root{--bg:#171513;--card:#1f1c1a;--fg:#f2ece6;--mute:#a99d92;--line:#3a342f;--accent:#e08a6f;--ok:#7cc79a;--warn:#e0a35a;--bad:#ef8a7a;--chip:#2c2724}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:17px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}
+main{max-width:760px;margin:0 auto;padding:24px 16px 80px}
+h1{font-size:24px;margin:0 0 4px} h2{font-size:18px;margin:24px 0 8px}
+a{color:var(--accent)}
+button,textarea{font:inherit}
+.sub{color:var(--mute);font-size:15px}
+.tabs{display:flex;gap:6px;margin:18px 0 14px;flex-wrap:wrap}
+.tabs button{border:1px solid var(--line);background:var(--card);color:var(--fg);border-radius:999px;padding:6px 14px;cursor:pointer}
+.tabs button.on{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px;margin:10px 0}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.btn{border:1px solid var(--line);background:var(--chip);color:var(--fg);border-radius:10px;padding:9px 14px;cursor:pointer}
+.btn.main{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+.btn:disabled{opacity:.45;cursor:default}
+.btn.rec{background:var(--bad);color:#fff;border-color:var(--bad)}
+textarea{width:100%;min-height:84px;margin-top:12px;padding:10px;border:1px solid var(--line);border-radius:10px;background:var(--bg);color:var(--fg);resize:vertical}
+.count{font-size:13px;color:var(--mute)}
+.dots{display:flex;gap:4px;flex-wrap:wrap;margin:8px 0}
+.dots span{width:22px;height:22px;border-radius:50%;background:var(--chip);font-size:11px;display:grid;place-items:center;cursor:pointer;color:var(--mute)}
+.dots span.done{background:var(--mute);color:var(--bg)} .dots span.cur{background:var(--fg);color:var(--bg)}
+.w-ok{color:var(--ok)} .w-accent{color:var(--warn);text-decoration:underline dotted}
+.w-wrong{color:var(--bad);font-weight:600} .w-missing{color:var(--mute);text-decoration:line-through}
+.got{font-size:12px;color:var(--bad);vertical-align:super}
+.score{font-size:32px;font-weight:700}
+.note{margin:6px 0 0;font-size:15px} .note b{font-weight:600}
+.typed{font-size:14px;color:var(--mute);margin-top:4px}
+.unc{font-size:12px;color:var(--warn)}
+.ref-item{padding:8px 0;border-bottom:1px solid var(--line)} .ref-item:last-child{border-bottom:0}
+.ex{font-style:italic;color:var(--mute);font-size:15px}
+.hidden{display:none}
+.state{color:var(--mute);font-size:15px;margin-top:8px} .state.err{color:var(--bad)}
+.list a{display:block;padding:12px 0;border-bottom:1px solid var(--line);text-decoration:none;color:var(--fg)}
+kbd{font-size:12px;border:1px solid var(--line);border-radius:4px;padding:0 4px}
+</style>
+</head>
+<body>
+<main>
+  <div id="home" class="hidden">
+    <h1>Dettato</h1>
+    <p class="sub">Vere registrazioni in italiano. Ascolta, scrivi quello che senti, ripeti a voce. Lucrezia ti corregge alla fine.</p>
+    <div id="lessons" class="list"></div>
+    <p class="sub"><a href="#" id="ref-home">Riferimento: grammatica e parole</a></p>
+  </div>
+
+  <div id="app" class="hidden">
+    <p class="sub"><a href="/dettato">← Tutti i dettati</a></p>
+    <h1 id="title"></h1>
+    <div class="sub" id="ctx"></div>
+    <div class="row" style="margin-top:10px"><button class="btn" id="whole">▶ Ascolta tutto il vocale</button><span class="count" id="whole-len"></span></div>
+    <div class="tabs">
+      <button data-tab="scrivi" class="on">1 · Ascolta e scrivi</button>
+      <button data-tab="giudizio">2 · Il giudizio di Lucrezia</button>
+      <button data-tab="ripeti">3 · Ripeti a voce</button>
+      <button data-tab="rif">Riferimento</button>
+    </div>
+
+    <section id="t-scrivi">
+      <div class="dots" id="dots"></div>
+      <div class="card">
+        <div class="row" style="justify-content:space-between"><b id="ln-label"></b><span class="unc" id="ln-unc"></span></div>
+        <div class="row" style="margin-top:10px">
+          <button class="btn main" id="play">▶ Ascolta</button>
+          <button class="btn" id="slow">🐢 Lento</button>
+          <span class="count" id="plays"></span>
+        </div>
+        <textarea id="typed" placeholder="Scrivi quello che senti… (accenti non obbligatori)" autocomplete="off" spellcheck="false"></textarea>
+        <div class="row" style="margin-top:10px;justify-content:space-between">
+          <div class="row"><button class="btn" id="prev">← Indietro</button><button class="btn" id="next">Avanti →</button></div>
+          <span class="row"><label class="btn" for="photo">📷 Foto del foglio</label><input type="file" id="photo" accept="image/*" capture="environment" class="hidden">
+          <button class="btn main" id="judge">Fatto: giudicami</button></span>
+        </div>
+        <div class="count" style="margin-top:8px">A mano: scrivi su carta, ogni riga col suo numero (“4. quindi se…”), poi 📷. Lucrezia legge esattamente quello che hai scritto.</div>
+        <div class="count" style="margin-top:4px"><kbd>Ctrl</kbd>+<kbd>Spazio</kbd> riascolta · <kbd>Ctrl</kbd>+<kbd>↓</kbd> lento · <kbd>Invio</kbd> avanti · <kbd>Maiusc</kbd>+<kbd>Invio</kbd> a capo</div>
+      </div>
+      <div class="state" id="s-state"></div>
+    </section>
+
+    <section id="t-giudizio" class="hidden">
+      <div id="verdict"><p class="sub">Scrivi le righe nella scheda 1, poi premi “Fatto: giudicami”.</p></div>
+    </section>
+
+    <section id="t-ripeti" class="hidden">
+      <p class="sub">Ascolta una riga, poi dilla tu. Whisper scrive quello che ha capito e lo confronta con l'originale. Il microfono funziona da <b>localhost</b>.</p>
+      <div id="say-list"></div>
+    </section>
+
+    <section id="t-rif" class="hidden"><div id="ref"></div></section>
+  </div>
+</main>
+<audio id="player" preload="auto"></audio>
+<script>
+(function () {
+  var $ = function (id) { return document.getElementById(id); };
+  var esc = function (s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); };
+  var slug = new URLSearchParams(location.search).get('l');
+  var L = null, cur = 0, answers = {}, player = $('player');
+  var KEY = function () { return 'chiron.dettato.' + slug; };
+
+  function api(path, opts) {
+    return fetch(path, opts).then(function (r) {
+      if (!r.ok) return r.text().then(function (t) { throw new Error(r.status + ' ' + t.slice(0, 300)); });
+      return r.json();
+    });
+  }
+  function save() { try { localStorage.setItem(KEY(), JSON.stringify({ cur: cur, answers: answers })); } catch (e) {} }
+  function load() { try { var s = JSON.parse(localStorage.getItem(KEY()) || '{}'); answers = s.answers || {}; cur = s.cur || 0; } catch (e) {} }
+
+  function tab(name) {
+    document.querySelectorAll('.tabs button').forEach(function (b) { b.classList.toggle('on', b.dataset.tab === name); });
+    ['scrivi', 'giudizio', 'ripeti', 'rif'].forEach(function (t) { $('t-' + t).classList.toggle('hidden', t !== name); });
+    if (name === 'rif') showRef($('ref'));
+    if (name === 'ripeti') sayList();
+  }
+  document.querySelectorAll('.tabs button').forEach(function (b) { b.onclick = function () { tab(b.dataset.tab); }; });
+
+  function play(src) { player.pause(); player.src = L.base + src; player.currentTime = 0; return player.play().catch(function () {}); }
+  function line() { return L.lines[cur]; }
+  function ans(n) { return answers[n] || (answers[n] = { typed: '', plays: 0 }); }
+
+  function show() {
+    var ln = line(), a = ans(ln.n);
+    $('ln-label').textContent = 'Riga ' + ln.n + ' di ' + L.lines.length + ' · ' + (ln.end - ln.start).toFixed(1) + ' s';
+    $('ln-unc').textContent = ln.uncertain ? 'trascrizione automatica incerta' : '';
+    $('typed').value = a.typed;
+    $('plays').textContent = a.plays ? 'ascoltata ' + a.plays + '×' : '';
+    $('prev').disabled = cur === 0;
+    $('next').disabled = cur === L.lines.length - 1;
+    $('dots').innerHTML = L.lines.map(function (l, i) {
+      return '<span data-i="' + i + '" class="' + (i === cur ? 'cur' : (answers[l.n] && answers[l.n].typed.trim() ? 'done' : '')) + '">' + l.n + '</span>';
+    }).join('');
+    $('dots').querySelectorAll('span').forEach(function (s) { s.onclick = function () { go(+s.dataset.i); }; });
+    $('typed').focus();
+  }
+  function go(i) { if (i < 0 || i >= L.lines.length) return; cur = i; save(); show(); listen(false); }
+  function listen(slow) { var ln = line(), a = ans(ln.n); a.plays++; save(); $('plays').textContent = 'ascoltata ' + a.plays + '×'; play(slow ? ln.slow : ln.clip); }
+
+  function start() {
+    $('app').classList.remove('hidden');
+    $('title').textContent = L.title;
+    $('ctx').textContent = [L.from, L.context].filter(Boolean).join(' · ');
+    $('whole-len').textContent = Math.round(L.seconds) + ' s · ' + L.lines.length + ' righe';
+    $('whole').onclick = function () { play(L.source); };
+    load(); if (cur >= L.lines.length) cur = 0;
+    $('play').onclick = function () { listen(false); };
+    $('slow').onclick = function () { listen(true); };
+    $('prev').onclick = function () { go(cur - 1); };
+    $('next').onclick = function () { go(cur + 1); };
+    $('typed').oninput = function () { ans(line().n).typed = $('typed').value; save(); };
+    $('typed').onkeydown = function (e) {
+      if (e.ctrlKey && e.code === 'Space') { e.preventDefault(); listen(false); }
+      else if (e.ctrlKey && e.key === 'ArrowDown') { e.preventDefault(); listen(true); }
+      else if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); if (cur < L.lines.length - 1) go(cur + 1); else $('judge').focus(); }
+    };
+    $('judge').onclick = judge;
+    $('photo').onchange = function () { var f = $('photo').files[0]; $('photo').value = ''; if (f) readPhoto(f); };
+    show();
+  }
+
+  function shrink(file) {   // phone photos are 3-12 MB; 1600 px JPEG is plenty for handwriting
+    return new Promise(function (ok, bad) {
+      var img = new Image(), url = URL.createObjectURL(file);
+      img.onload = function () {
+        var k = Math.min(1, 1600 / Math.max(img.width, img.height)), c = document.createElement('canvas');
+        c.width = Math.round(img.width * k); c.height = Math.round(img.height * k);
+        c.getContext('2d').drawImage(img, 0, 0, c.width, c.height); URL.revokeObjectURL(url);
+        c.toBlob(function (b) { b ? ok(b) : bad(new Error('immagine non leggibile')); }, 'image/jpeg', 0.85);
+      };
+      img.onerror = function () { bad(new Error('immagine non leggibile')); };
+      img.src = url;
+    });
+  }
+  function readPhoto(file) {
+    $('s-state').className = 'state'; $('s-state').textContent = 'Leggo il foglio…';
+    shrink(file).then(function (b) {
+      return fetch('/api/dettato/photo?slug=' + encodeURIComponent(slug), { method: 'POST', headers: { 'content-type': 'image/jpeg' }, body: b });
+    }).then(function (r) { if (!r.ok) return r.text().then(function (t) { throw new Error(r.status + ' ' + t.slice(0, 300)); }); return r.json(); })
+      .then(function (d) {
+        if (!d.lines.length) throw new Error('non trovo righe numerate nella foto');
+        d.lines.forEach(function (x) { var a = ans(x.n); a.typed = x.text; a.source = 'foto'; });
+        save(); show();
+        $('s-state').textContent = 'Letto dal foglio: righe ' + d.lines.map(function (x) { return x.n; }).join(', ') +
+          (d.ignored && d.ignored.length ? ' (ignorate: ' + d.ignored.join(', ') + ')' : '') + '. Controlla, poi “Fatto: giudicami”.';
+      })
+      .catch(function (e) { $('s-state').className = 'state err'; $('s-state').textContent = 'Foto: ' + e.message; });
+  }
+
+  function judge() {
+    var list = L.lines.map(function (l) { var a = answers[l.n] || {}; return { n: l.n, typed: a.typed || '', plays: a.plays || 0 }; })
+      .filter(function (a) { return a.typed.trim(); });
+    if (!list.length) { $('s-state').textContent = 'Scrivi almeno una riga prima.'; return; }
+    $('judge').disabled = true;
+    $('s-state').className = 'state'; $('s-state').textContent = 'Lucrezia sta correggendo ' + list.length + ' righe…';
+    api('/api/dettato/judge', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ slug: slug, answers: list }) })
+      .then(function (r) { $('s-state').textContent = ''; verdict(r); tab('giudizio'); })
+      .catch(function (e) { $('s-state').className = 'state err'; $('s-state').textContent = 'Errore: ' + e.message; })
+      .then(function () { $('judge').disabled = false; });
+  }
+
+  function words(check) {
+    return check.words.map(function (w) {
+      var got = (w.s === 'wrong' || w.s === 'accent') && w.got ? '<span class="got">' + esc(w.got) + '</span>' : '';
+      return '<span class="w-' + w.s + '">' + esc(w.w) + '</span>' + got;
+    }).join(' ') + (check.extra.length ? ' <span class="got">+ ' + esc(check.extra.join(' ')) + '</span>' : '');
+  }
+
+  function verdict(r) {
+    var z = r.lucrezia || {}, notes = {};
+    (z.lines || []).forEach(function (l) { notes[l.n] = l.notes || []; });
+    var h = '<div class="card"><div class="score">' + r.score + '%</div>' +
+      (z.summary ? '<p>' + esc(z.summary) + '</p>' : '') +
+      (r.lucrezia_error ? '<p class="state err">Lucrezia non ha potuto commentare: ' + esc(r.lucrezia_error) + ' (il controllo parola per parola qui sotto è valido).</p>' : '') +
+      '<div class="count"><span class="w-ok">giusto</span> · <span class="w-accent">accento</span> · <span class="w-wrong">sbagliato</span> · <span class="w-missing">mancante</span></div></div>';
+    r.rows.forEach(function (row) {
+      var ln = L.lines.filter(function (l) { return l.n === row.n; })[0];
+      h += '<div class="card"><div class="row" style="justify-content:space-between"><b>Riga ' + row.n + ' · ' + row.check.score + '%</b>' +
+        '<span class="row"><button class="btn" data-src="' + esc(ln.clip) + '">▶</button><button class="btn" data-src="' + esc(ln.slow) + '">🐢</button></span></div>' +
+        '<div style="margin-top:8px">' + words(row.check) + '</div>' +
+        '<div class="typed">Hai scritto: ' + esc(row.typed) + '</div>' +
+        (notes[row.n] || []).map(function (n) { return '<p class="note"><b>' + esc(n.heard || '∅') + ' → ' + esc(n.correct) + '</b> · ' + esc(n.why) + '</p>'; }).join('') +
+        '</div>';
+    });
+    if ((z.grammar || []).length) h += '<h2>Grammatica</h2><div class="card">' + z.grammar.map(function (g) {
+      return '<div class="ref-item"><b>' + esc(g.term) + '</b><div>' + esc(g.explain) + '</div><div class="ex">' + esc(g.example) + '</div></div>'; }).join('') + '</div>';
+    if ((z.vocab || []).length) h += '<h2>Parole</h2><div class="card">' + z.vocab.map(function (v) {
+      return '<div class="ref-item"><b>' + esc(v.it) + '</b> · ' + esc(v.en) + (v.note ? ' <span class="ex">(' + esc(v.note) + ')</span>' : '') + '</div>'; }).join('') + '</div>';
+    if (r.reference_added) h += '<p class="sub">' + r.reference_added + ' voci aggiunte al Riferimento.</p>';
+    h += '<div class="row"><button class="btn main" id="again">Riprova le righe sbagliate</button><button class="btn" id="to-say">Ora ripeti a voce →</button></div>';
+    $('verdict').innerHTML = h;
+    $('verdict').querySelectorAll('[data-src]').forEach(function (b) { b.onclick = function () { play(b.dataset.src); }; });
+    $('again').onclick = function () {
+      r.rows.forEach(function (row) { if (row.check.score < 100) answers[row.n] = { typed: '', plays: 0 }; });
+      var first = L.lines.findIndex(function (l) { return !(answers[l.n] && answers[l.n].typed); });
+      save(); tab('scrivi'); go(first < 0 ? 0 : first);
+    };
+    $('to-say').onclick = function () { tab('ripeti'); };
+  }
+
+  var recorder = null, stream = null;
+  function sayList() {
+    if ($('say-list').dataset.built) return;
+    $('say-list').dataset.built = '1';
+    $('say-list').innerHTML = L.lines.map(function (l) {
+      return '<div class="card" data-n="' + l.n + '"><div class="row" style="justify-content:space-between"><b>Riga ' + l.n + '</b>' +
+        '<span class="row"><button class="btn" data-src="' + esc(l.clip) + '">▶</button><button class="btn" data-src="' + esc(l.slow) + '">🐢</button>' +
+        '<button class="btn main" data-rec="' + l.n + '">🎙 Dilla tu</button></span></div>' +
+        '<div class="ex" style="margin-top:6px">' + esc(l.it) + '</div><div class="out"></div></div>';
+    }).join('');
+    $('say-list').querySelectorAll('[data-src]').forEach(function (b) { b.onclick = function () { play(b.dataset.src); }; });
+    $('say-list').querySelectorAll('[data-rec]').forEach(function (b) { b.onclick = function () { rec(b); }; });
+  }
+  function rec(b) {
+    var n = b.dataset.rec, out = b.closest('.card').querySelector('.out');
+    if (recorder) { recorder.stop(); return; }
+    player.pause();
+    var go = function (s) {
+      stream = s; var chunks = [];
+      var r = recorder = new MediaRecorder(s);
+      r.ondataavailable = function (e) { if (e.data.size) chunks.push(e.data); };
+      r.onstop = function () {
+        recorder = null; b.classList.remove('rec'); b.textContent = '🎙 Dilla tu';
+        out.innerHTML = '<div class="state">Whisper ascolta…</div>';
+        var blob = new Blob(chunks, { type: r.mimeType || 'audio/webm' });
+        fetch('/api/dettato/speak?slug=' + encodeURIComponent(slug) + '&n=' + n, { method: 'POST', headers: { 'content-type': blob.type }, body: blob })
+          .then(function (x) { if (!x.ok) return x.text().then(function (t) { throw new Error(t); }); return x.json(); })
+          .then(function (d) {
+            out.innerHTML = '<div style="margin-top:8px"><b>' + d.check.score + '%</b> · ' + words(d.check) + '</div>' +
+              '<div class="typed">Whisper ha sentito: ' + esc(d.heard || d.note || '') + '</div>';
+          })
+          .catch(function (e) { out.innerHTML = '<div class="state err">Errore: ' + esc(e.message) + '</div>'; });
+      };
+      r.start(); b.classList.add('rec'); b.textContent = '■ Stop';
+    };
+    if (stream) return go(stream);
+    navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true } }).then(go, function (e) {
+      out.innerHTML = '<div class="state err">Microfono non disponibile: ' + esc(e.message) +
+        (location.hostname !== 'localhost' && location.hostname !== '127.0.0.1' ? ' — apri la pagina da http://localhost:8911' + esc(location.pathname + location.search) : '') + '</div>';
+    });
+  }
+
+  function showRef(el) {
+    api('/api/dettato/riferimento').then(function (r) {
+      var g = Object.values(r.grammar || {}), v = Object.values(r.vocab || {});
+      if (!g.length && !v.length) { el.innerHTML = '<p class="sub">Vuoto: si riempie ogni volta che Lucrezia giudica un dettato.</p>'; return; }
+      el.innerHTML = '<h2>Grammatica (' + g.length + ')</h2><div class="card">' + g.map(function (x) {
+        return '<div class="ref-item"><b>' + esc(x.term) + '</b><div>' + esc(x.explain) + '</div><div class="ex">' + esc(x.example) + '</div><div class="count">' + esc((x.lessons || []).join(', ')) + '</div></div>'; }).join('') +
+        '</div><h2>Parole (' + v.length + ')</h2><div class="card">' + v.map(function (x) {
+        return '<div class="ref-item"><b>' + esc(x.it) + '</b> · ' + esc(x.en) + (x.note ? ' <span class="ex">(' + esc(x.note) + ')</span>' : '') + '</div>'; }).join('') + '</div>';
+    }).catch(function (e) { el.innerHTML = '<p class="state err">' + esc(e.message) + '</p>'; });
+  }
+
+  if (!slug) {
+    $('home').classList.remove('hidden');
+    $('ref-home').onclick = function (e) { e.preventDefault(); showRef($('lessons')); };
+    api('/api/dettato/list').then(function (r) {
+      $('lessons').innerHTML = r.lessons.length ? r.lessons.map(function (l) {
+        return '<a href="/dettato?l=' + encodeURIComponent(l.slug) + '"><b>' + esc(l.title) + '</b><div class="sub">' + esc(l.from) + ' · ' + l.lines + ' righe · ' +
+          Math.round(l.seconds) + ' s' + (l.best != null ? ' · migliore ' + l.best + '%' : '') + '</div></a>'; }).join('')
+        : '<p class="sub">Nessun dettato. Creane uno con scripts/build_dettato.py.</p>';
+    });
+  } else {
+    api('/api/dettato/lesson/' + encodeURIComponent(slug)).then(function (d) { L = d; start(); })
+      .catch(function (e) { document.querySelector('main').innerHTML = '<p class="state err">' + esc(e.message) + '</p>'; });
+  }
+})();
+</script>
+</body>
+</html>

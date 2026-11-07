@@ -195,3 +195,10 @@ class DefaultVoices(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+def test_flagged_ignores_earlier_auto_recheck():
+    text = ("- **03:26**: the clip for *persone* is abruptly cut off with a click artifact.\nVERDICT: FIX\n"
+            "\n## Auto re-check (measured)\n- 03:25 'persone': ASR heard 'x' (WORDS DIFFER) -> CONFIRMED\n")
+    ranges, other = pd.flagged(text)
+    assert ranges == [(206, 206)] and other == []
