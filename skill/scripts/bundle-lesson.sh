@@ -69,6 +69,15 @@ command -v zip >/dev/null 2>&1 || { echo "bundle-lesson: 'zip' not found (apt in
 NAME="$(basename "${LESSON_DIR}")"
 OUT="${OUT_ARG:-${LESSON_DIR}/${NAME}.chiron}"
 OUT="$(cd "$(dirname "${OUT}")" && pwd)/$(basename "${OUT}")"
+SLUG="$(basename "${OUT}" .chiron)"   # the library slug: the catalog names each bundle <slug>.chiron
+
+# --- the lesson's own id ------------------------------------------------------
+# The page keys its saved progress by <meta name="chiron-lesson-id">. Language lessons copied that tag from
+# the chiron-italian-appunto donor page, so they all shared its id; give each one its own slug.
+DONOR_ID="italian-appunto-lucrezia-2026-06-29"
+if [[ "${SLUG}" != "chiron-italian-appunto" ]] && grep -q "name=\"chiron-lesson-id\" content=\"${DONOR_ID}\"" "${LESSON_DIR}/${ENTRY}"; then
+  sed -i "s|name=\"chiron-lesson-id\" content=\"${DONOR_ID}\"|name=\"chiron-lesson-id\" content=\"${SLUG}\"|" "${LESSON_DIR}/${ENTRY}"
+fi
 
 # --- auto-apply the mobile / responsive layer (idempotent) ---------------------
 # Make sure every .chiron opens clean on a phone. All steps mutate the entry HTML
@@ -131,7 +140,7 @@ CREATED="$(date +%F)"
 # arg (a theme-ish default, correct only on a FIRST bundle). tags/labels (Library tags)/status/subject/level/source are carried
 # forward. (Root cause of the "video-it keeps resetting to medicine on every rebundle" bug.)
 CHIRON_TITLE="${TITLE}" CHIRON_ENTRY="${ENTRY}" CHIRON_DOMAIN_ARG="${DOMAIN}" \
-CHIRON_CLIPS="${CLIPS:-0}" CHIRON_CREATED="${CREATED}" python3 - "${LESSON_DIR}" <<'PY'
+CHIRON_CLIPS="${CLIPS:-0}" CHIRON_CREATED="${CREATED}" CHIRON_SLUG="${SLUG}" python3 - "${LESSON_DIR}" <<'PY'
 import json, os, sys
 d = sys.argv[1]; cjp = os.path.join(d, "chiron.json")
 def _load(p):
@@ -141,7 +150,7 @@ old = _load(cjp); content = _load(os.path.join(d, "content.json"))
 domain = old.get("domain") or content.get("domain") or os.environ.get("CHIRON_DOMAIN_ARG") or ""
 m = {"format": "chiron/1", "title": os.environ["CHIRON_TITLE"], "entry": os.environ["CHIRON_ENTRY"],
      "domain": domain, "created": os.environ["CHIRON_CREATED"],
-     "audioClips": int(os.environ.get("CHIRON_CLIPS") or 0), "generator": "chiron"}
+     "audioClips": int(os.environ.get("CHIRON_CLIPS") or 0), "generator": "chiron", "slug": os.environ["CHIRON_SLUG"]}
 for k in ("tags", "labels", "lessonFormat", "status", "subject", "level", "source", "source_ref", "accepted", "series"):
     if old.get(k) is not None: m[k] = old[k]
 json.dump(m, open(cjp, "w"), ensure_ascii=False, indent=2)

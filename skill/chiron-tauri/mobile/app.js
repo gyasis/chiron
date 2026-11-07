@@ -406,8 +406,9 @@ async function refreshOffline() {
   const box = document.getElementById('offrows');
   if (TAURI) {
     try { const ls = await invoke('list_lessons'); OFFLINE = {};
-      // map installed back onto library slugs by title where possible
-      ls.forEach(o => { const m = LESSONS.find(l => (l.title || '').includes(o.title) || o.title.includes(l.title)); OFFLINE[m ? slugOf(m.id) : o.title] = { id: o.id, entry: o.entry }; });
+      // map each saved copy onto its library slug; a copy saved before slugs were recorded falls back to its title
+      ls.forEach(o => { const m = o.slug ? null : LESSONS.find(l => (l.title || '').includes(o.title) || o.title.includes(l.title));
+        OFFLINE[o.slug || (m ? slugOf(m.id) : o.title)] = { id: o.id, entry: o.entry }; });
       if (LESSONS.length) renderRows();   // the Library's ✓ / ⟳ Update state depends on what is on the phone
       box.innerHTML = ls.length ? ls.map(o => `<div class="row m"><div class="edge"></div><div class="body"><div class="t">${esc(o.title)}</div><div class="meta"><span class="clip">✓ offline</span></div></div><div class="act"><span class="btn" data-oid="${o.id}" data-oentry="${o.entry}">Open →</span></div></div>`).join('') : `<div class="empty">Nothing saved yet. Download lessons from the Library.</div>`;
       box.querySelectorAll('[data-oid]').forEach(e => e.onclick = () => { const base = isAndroid ? 'http://lesson.localhost/' : 'lesson://localhost/'; const pu = base + e.dataset.oid + '/' + e.dataset.oentry; ChironNav.loadFrame(document, 'l-frame', pu); document.getElementById('l-title').textContent = 'Lesson'; setMode('read');
@@ -448,7 +449,7 @@ document.getElementById('impfile').onclick = document.getElementById('importbtn'
     for (let i = 0; i < paths.length; i++) {
       toast(`Importing ${i + 1} of ${paths.length}…`);
       try { const l = await invoke('import_lesson', { data: Array.from(await readFile(paths[i])) });
-        OFFLINE[l.title] = { id: l.id, entry: l.entry }; ok++; } catch (e) {}
+        OFFLINE[l.slug || l.title] = { id: l.id, entry: l.entry }; ok++; } catch (e) {}
     }
     await refreshOffline(); renderRows(); toast(ok === paths.length ? `Imported ${ok} ✓` : `Imported ${ok} of ${paths.length}`);
   } catch (e) { toast('Import failed'); }

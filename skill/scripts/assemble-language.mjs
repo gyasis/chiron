@@ -20,7 +20,7 @@
 //   matchMadness?:{ pairs:[{a,b}] },  srCards?:[{front,back,tags?}] }
 
 import { readFileSync, writeFileSync, copyFileSync, mkdirSync, existsSync, readdirSync } from 'node:fs';
-import { resolve, dirname } from 'node:path';
+import { resolve, dirname, basename } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { renderWidget } from '../dist/lib/widget-renderer.js';
 
@@ -157,6 +157,11 @@ ${contentSections}
 // shell donor: appunto head (CSS) + trailing scripts (audio player, scroll-spy, reveal-en, theme switcher)
 const ref = readFileSync(REF, 'utf8');
 let head = ref.slice(0, ref.indexOf('</head>') + 7).replace(/<title>[\s\S]*?<\/title>/, `<title>Chiron · ${esc(c.title)}</title>`);
+// the page keys its saved progress by this id, so each lesson carries its own folder name, never the donor's
+const lessonId = basename(OUT);
+head = /<meta name="chiron-lesson-id"[^>]*>/.test(head)
+  ? head.replace(/<meta name="chiron-lesson-id"[^>]*>/, `<meta name="chiron-lesson-id" content="${esc(lessonId)}" />`)
+  : head.replace('</title>', `</title>\n  <meta name="chiron-lesson-id" content="${esc(lessonId)}" />`);
 // the group-chat-animation + match-madness widgets need clinical-widgets.css (copied into the lesson dir);
 // the appunto donor head doesn't link it, so inject the link when those widgets are present (else the chat renders unstyled)
 if (mmHtml && !head.includes('clinical-widgets.css')) {
