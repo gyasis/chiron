@@ -2286,6 +2286,10 @@ app.include_router(raccolte.router)
 import pimsleur_jobs  # noqa: E402
 app.include_router(pimsleur_jobs.router)
 
+# Dettato: a real recording line by line — listen, type, say it back; Lucrezia judges (/dettato + /api/dettato/*).
+import dettato  # noqa: E402
+app.include_router(dettato.router)
+
 # Ask phrase coach: the Come si dice mode's chain behind an Ollama-compatible /ask/phrase/api/* (chat, tags, show).
 import phrase_coach  # noqa: E402
 app.include_router(phrase_coach.router)
