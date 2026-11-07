@@ -270,6 +270,22 @@ that narrows the whole Library to that tag (like the SSM switch; remembered acro
 The Pimsleur chain stamps `CH_LABELS="tag1,tag2"` on every lesson of a season. `CH_FORMAT=exam`
 defaults to `Ordine exam`.
 
+## Dettato (listen, type, say it back)
+
+`http://localhost:8911/dettato` — a REAL recording (a classmate's WhatsApp voice note, any clip) cut into 2-7 s lines.
+Per line: replay the real clip (▶) or a slowed copy (🐢) as often as needed, type what you hear — or write the
+numbered lines on paper and send a 📷 photo (gemma4 vision copies it verbatim, mistakes kept). "Fatto: giudicami"
+runs a deterministic word check (accent slips count half) and one Lucrezia call (`think:false`, mock-oral examiner
+chain) that explains each miss by its SOUND; the grammar and words she names collect in a shared Riferimento.
+"Ripeti a voce" records each line and checks it with whisper (mic needs `localhost`).
+
+    python3 scripts/build_dettato.py <audio> --title "Marti: …" --slug <kebab> --from "<who>" --context "<one line>"
+
+Output `~/Documents/generated/chiron-dettato/<slug>/` (dettato.json, audio/NN.mp3 + NN-slow.mp3, attempts/).
+Lines marked `uncertain` are where whisper large and turbo disagreed; the judge is told so. Class voice notes come
+from `wa-voice-sync` (see the class-whatsapp skill). Code: `server/dettato.py`, `shell/dettato.html`,
+tests `tests/dettato_test.py`.
+
 ## Mock oral (OMCeO Italian test)
 
 `http://localhost:8911/oral` on the computer (the mic needs `localhost`, a secure context). Lucrezia is the
