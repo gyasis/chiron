@@ -1344,6 +1344,10 @@ def generate(req: GenReq):
         res = dispatch.resolve(req.domain, req.depth, req.subject, req.subject_type, req.extra)
     except SystemExit as e:
         raise HTTPException(400, str(e))
+    if res["depth"] != "passage" and dispatch.generic_subject(req.subject):    # a passage subject is an SSM question id
+        raise HTTPException(400, f"subject '{req.subject.strip()}' is too general to name a lesson — every lesson with "
+                                 f"this subject shares one folder, so you would get the old lesson back. Type the "
+                                 f"topic instead, e.g. 'reading the class chat' or 'passato prossimo'")
     slug = res["slug"]
     # ATLAS PRE-VALIDATION: if depth resolved to 'atlas' but the subject isn't an actual atlas
     # system/alias, the atlas chain would HARD-ABORT (the disease-class-tagged-as-atlas bug). Rather than

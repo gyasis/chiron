@@ -74,7 +74,7 @@ def _clip_slug(base: str, limit: int = 40) -> str:      # same rule as dispatch.
     return cut.strip("-")
 
 
-TOPIC_SLUG = _clip_slug(re.sub(r"[^a-z0-9]+", "-", TOPIC.lower()).strip("-"))
+TOPIC_SLUG = os.environ.get("CH_SLUG", "").removeprefix("chiron-pimsleur-") or _clip_slug(re.sub(r"[^a-z0-9]+", "-", TOPIC.lower()).strip("-"))
 SEASON_FILE = GEN / f"chiron-pimsleur-{TOPIC_SLUG}.season.json"
 
 

@@ -90,7 +90,7 @@ def suggest_topic(phrases: list[dict]) -> str:
 
 
 def topic_slug(topic: str) -> str:
-    return dispatch._slug("language-it", "pimsleur", topic)
+    return dispatch.lesson_slug("language-it", "pimsleur", topic)
 
 
 def _free_topic(topic: str) -> str:
