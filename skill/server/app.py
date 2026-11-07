@@ -381,6 +381,8 @@ def _run_job(job: dict) -> None:
     # CH_SLUG: tell the chain the EXACT output slug the server will look for, so its self-computed slug
     # can never diverge (the 5α-reductase '-drug' vs '-systematic' mismatch). Chains honor it if they read it.
     env = {**os.environ, **res["env"], "CH_STAGE": job.get("stage", "all"), "CH_SLUG": res["slug"]}
+    if job.pop("rewrite", False):
+        env["CH_FORCE"] = "1"        # rewrite chapters already written; one-shot, so a later retry resumes
     _pm = _next_primary()                                    # round-robin the primary across providers
     env["CH_MODEL_REASON"] = _pm; env["CH_MODEL_STRUCT"] = _pm   # FORCE it — override any inherited value so the rotation actually takes
     job["primary"] = _pm                                     # surface which provider this lesson started on
@@ -1239,6 +1241,23 @@ def _job_for_slug(slug: str) -> dict:
     return job
 
 
+_ACTIVE = ("queued", "running", "baking")
+
+
+def _active_job_for_slug(slug: str, exclude: str | None = None) -> dict | None:
+    """A job for this slug that is still doing paid work, in any lane (text, inline bake, bake queue).
+    Every entry point that can start paid work on an existing lesson checks this first."""
+    if not slug:
+        return None
+    return next((j for j in list(JOBS.values()) if j.get("slug") == slug and j.get("id") != exclude
+                 and j.get("status") in _ACTIVE), None)
+
+
+def _busy(j: dict) -> HTTPException:
+    return HTTPException(409, f"already in progress — job {j['id']} is {j.get('status')} for "
+                              f"'{j.get('slug')}'; wait for it to finish")
+
+
 # Must run AFTER _job_for_slug is defined: the bake worker thread is already live and pops the slug at
 # once — called earlier (it used to sit right under _resume_orphaned_bakes), the worker hit a NameError
 # that its except swallowed, so a bake interrupted by a restart sat 'queued' forever with no worker on it.
@@ -1279,6 +1298,7 @@ class GenReq(BaseModel):
 
 class RegenReq(BaseModel):
     note: str = ""
+    rewrite: bool = False    # True = rewrite chapters already written (a full paid run); False keeps them
 
 
 class RegisterReq(BaseModel):
@@ -1417,8 +1437,7 @@ def bake(ref: str, engine: str = "mac"):
     # refuse if a bake for this slug is already ACTIVE OR QUEUED — two fast clicks must not double-enqueue
     # (which spent Mac time / Modal $ twice). A stale queued job from a lost in-memory queue is re-enqueued
     # by _resume_orphaned_bakes on restart, so we no longer need to let a live 'queued' fall through here.
-    infl = next((j for j in JOBS.values() if j.get("slug") == slug
-                 and j.get("status") in ("baking", "queued") and j.get("lane") == "bake"), None)
+    infl = _active_job_for_slug(slug)          # any lane: a stage=all text job bakes inline while 'running'
     if infl:
         return {"job_id": infl["id"], "slug": slug, "status": infl.get("status"), "duplicate": True}
     job = _job_for_slug(slug)
@@ -1444,8 +1463,8 @@ def bake_all(engine: str = "mac"):
         if not slug or slug in seen or j.get("status") == "published":
             continue
         seen.add(slug)
-        if j.get("status") in ("queued", "baking") or slug in _CANCELLED:
-            continue                                   # already in flight
+        if _active_job_for_slug(slug) or slug in _CANCELLED:
+            continue                                   # already in flight (any lane)
         if not (GEN / slug / "lesson.html").exists():
             continue                                   # no viewable text yet
         rec = _recovery(slug)                          # non-blocking (ro, short timeout)
@@ -1469,8 +1488,8 @@ def bake_batch(req: BakeBatchReq):
     for slug in req.slugs:
         if not (GEN / slug / "lesson.html").exists():
             continue                                   # no viewable text yet
-        if any(j.get("slug") == slug and j.get("status") in ("queued", "baking") for j in JOBS.values()):
-            continue                                   # already in flight
+        if _active_job_for_slug(slug):
+            continue                                   # already in flight (any lane)
         job = _job_for_slug(slug)
         _enqueue_bake(job, req.engine)
         queued.append(slug)
@@ -1709,16 +1728,20 @@ def retry(jid: str):
                                j.get("subject_type"), j.get("extra") or {})
     except SystemExit as e:
         raise HTTPException(400, str(e))
-    nid = uuid.uuid4().hex[:12]
-    job = {"id": nid, "created": _now(), "status": "queued", "phase": "queued",
-           "domain": j.get("domain", "medicine"), "subject": j["subject"], "depth": res["depth"],
-           "subject_type": j.get("subject_type"), "grounding": j.get("grounding"),
-           "images": j.get("images"), "stage": j.get("stage", "all"),
-           "source": j.get("source"), "source_ref": j.get("source_ref"), "extra": j.get("extra") or {},
-           "slug": res["slug"], "chain": res["chain_name"], "retry_of": jid}
-    JOBS[nid] = job
-    _save()
-    threading.Thread(target=_run_job, args=(job,), daemon=True).start()
+    with _SUBMIT_LOCK:                 # check + insert together, so a double tap cannot start two runs
+        busy = _active_job_for_slug(res["slug"]) or _active_job_for_slug(j.get("slug"))
+        if busy:
+            raise _busy(busy)
+        nid = uuid.uuid4().hex[:12]
+        job = {"id": nid, "created": _now(), "status": "queued", "phase": "queued",
+               "domain": j.get("domain", "medicine"), "subject": j["subject"], "depth": res["depth"],
+               "subject_type": j.get("subject_type"), "grounding": j.get("grounding"),
+               "images": j.get("images"), "stage": j.get("stage", "all"),
+               "source": j.get("source"), "source_ref": j.get("source_ref"), "extra": j.get("extra") or {},
+               "slug": res["slug"], "chain": res["chain_name"], "retry_of": jid}
+        JOBS[nid] = job
+        _save()
+    _GEN_Q.put(job)                    # the bounded worker pool runs it (GEN_CONC), like /generate
     return {"job_id": nid, "slug": res["slug"], "status": "queued"}
 
 
@@ -1800,7 +1823,12 @@ def accept(ref: str):
         except Exception:
             cj = {}
     cj.update(status="published", accepted=_now())
-    cj.setdefault("subject", slug)
+    if not cj.get("subject"):            # the bundler drops subject; restore the REAL one, never the slug
+        subj = prior.get("subject") or next((j.get("subject") for j in JOBS.values()
+                                             if j.get("slug") == slug and j.get("subject")
+                                             and j.get("subject") != slug), None)
+        if subj and subj != slug:
+            cj["subject"] = subj
     for k in ("source", "source_ref"):   # provenance the bundler DROPS (empty on cj) → fill from prior
         if prior.get(k) and not cj.get(k):
             cj[k] = prior[k]
@@ -2157,15 +2185,50 @@ def corpus_status():
 
 @app.post("/regenerate/{ref}")
 def regenerate(ref: str, body: RegenReq):
-    """ref = a job id OR a lesson slug. Re-run the same routing, appending the reviewer note to grounding."""
-    job = JOBS.get(ref) or _job_for_slug(ref)
-    if body.note:
-        job["grounding"] = (job.get("grounding") or "") + f"\n\nReviewer note: {body.note}"
-        job["note"] = body.note
-    job.update(status="queued", phase="queued")
-    _save()
-    threading.Thread(target=_run_job, args=(job,), daemon=True).start()
-    return {"ok": True, "job_id": job["id"], "slug": job["slug"], "status": "queued"}
+    """ref = a job id OR a lesson slug. Re-run the same routing, appending the reviewer note to grounding.
+    Chapters already written are kept (the chains resume) unless `rewrite` is true. Refuses when the
+    lesson is busy, has no recorded subject, or the routing would build a different slug than the
+    lesson's own — a regenerate never starts a paid run into a new folder."""
+    with _SUBMIT_LOCK:
+        job = JOBS.get(ref)
+        slug = job.get("slug") if job else ref
+        busy = _active_job_for_slug(slug, exclude=job.get("id") if job else None)
+        if busy or (job and job.get("status") in _ACTIVE):
+            raise _busy(busy or job)
+        if job is None:
+            job = next((j for j in JOBS.values() if j.get("slug") == slug and j.get("lane") != "bake"
+                        and j.get("subject")), None)
+        if job is None:
+            cj = {}
+            p = GEN / slug / "chiron.json"
+            if p.exists():
+                try:
+                    cj = json.loads(p.read_text())
+                except Exception:
+                    cj = {}
+            if not cj.get("subject") or not cj.get("domain") or cj.get("subject") == slug:
+                raise HTTPException(409, f"'{slug}' has no recorded subject/domain, so a regenerate cannot "
+                                         f"rebuild it in place — generate it fresh from the generate form")
+            job = _job_for_slug(slug)
+        try:
+            res = dispatch.resolve(job.get("domain", "medicine"), job.get("depth"), job.get("subject") or "",
+                                   job.get("subject_type"), job.get("extra") or {})
+        except SystemExit as e:
+            raise HTTPException(400, str(e))
+        if res["slug"] != slug:
+            raise HTTPException(409, f"regenerate would build '{res['slug']}', not '{slug}' — refused so no "
+                                     f"paid run lands in a new folder")
+        if body.note:
+            job["grounding"] = (job.get("grounding") or "") + f"\n\nReviewer note: {body.note}"
+            job["note"] = body.note
+        job["rewrite"] = bool(body.rewrite)
+        job.update(status="queued", phase="queued")
+        _save()
+    _GEN_Q.put(job)
+    kept = "" if body.rewrite else (" Chapters already written are KEPT; the note only shapes parts not yet "
+                                    "written, assembly and audio. Send rewrite=true to rewrite them (full paid run).")
+    return {"ok": True, "job_id": job["id"], "slug": job["slug"], "status": "queued",
+            "rewrite": bool(body.rewrite), "note": ("Regenerating." + kept).strip()}
 
 
 @app.post("/upload")
