@@ -483,8 +483,8 @@
       else if (a === 'web') { s.close(); if (window.ChironHandoff) ChironHandoff.toWeb(); }
       else if (a === 'regen') {
         const note = s.body.querySelector('#rg-note').value.trim();
-        if (!(await ask('Regenerate this lesson?', 'It runs the whole generation again (uses model tokens) and replaces the current text.', 'Regenerate', true))) return;
-        try { const r = await api('/regenerate/' + encodeURIComponent(slug), { method: 'POST', json: { note } }); s.close(); toast('Regenerating — ' + (r.status || 'queued')); if (typeof pollActive === 'function') pollActive(); }
+        if (!(await ask('Regenerate this lesson?', 'Chapters already written are kept; your note shapes the parts not yet written, the assembly and the audio. It uses model tokens.', 'Regenerate', true))) return;
+        try { const r = await api('/regenerate/' + encodeURIComponent(slug), { method: 'POST', json: { note } }); s.close(); toast(r.note || ('Regenerating — ' + (r.status || 'queued'))); if (typeof pollActive === 'function') pollActive(); }
         catch (e) { toast('Regenerate failed: ' + e.message); } } });
   }
   (function wireMore() { const b = document.getElementById('l-more'); if (b) b.onclick = lessonMenu; })();

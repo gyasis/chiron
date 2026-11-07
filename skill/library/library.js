@@ -506,16 +506,16 @@ const LIB = {
     const pg=document.getElementById('wizprog'); pg.style.display='';
     document.getElementById('p-title').textContent=`Generating: ${r.slug||''}${r.depth?' ('+r.depth+')':''}`;
     document.getElementById('p-open').style.display='none'; document.getElementById('p-log').textContent='';
-    LIB._renderSteps('queued'); },
-  _renderSteps(phase){
+    LIB._renderSteps('queued', r.domain); },
+  _renderSteps(phase, domain){
     const order=['grounding','planning','writing','assembling','baking','ready'];
-    const labels={grounding:'Grounding (Harrison / atlas)',planning:'Planning chapters',writing:'Writing chapters',assembling:'Assembling lesson',baking:'Baking audio (Mac)',ready:'Ready'};
+    const labels={grounding:/^medic/.test(domain||'medicine')?'Grounding (Harrison / atlas)':'Grounding (your sources)',planning:'Planning chapters',writing:'Writing chapters',assembling:'Assembling lesson',baking:'Baking audio (Mac)',ready:'Ready'};
     let ci=order.indexOf(phase); if(phase==='queued'||ci<0) ci=(phase==='ready')?order.length-1:0;
     document.getElementById('p-steps').innerHTML=order.map(s=>{ const i=order.indexOf(s), cls=i<ci?'done':i===ci?'active':'';
       return `<div class="step ${cls}"><span class="dot">${i<ci?'✓':''}</span>${labels[s]}</div>`; }).join(''); },
   async _poll(jid){
     try{ const d=await (await fetch(API+'/jobs/'+jid)).json();
-      LIB._renderSteps(d.phase||d.status);
+      LIB._renderSteps(d.phase||d.status, d.domain);
       if(d.log_tail) document.getElementById('p-log').textContent=d.log_tail;
       if(d.status==='ready'||d.status==='published'){
         document.getElementById('p-title').textContent='✓ Lesson ready — staged for review';
@@ -532,7 +532,8 @@ const LIB = {
     if(r.ok) LIB.reload(); else alert('Accept failed'); }catch(e){ alert('Accept failed: '+e.message); } },
   async sendback(slug){ const note=prompt('What needs fixing? (sent to regenerate)'); if(note===null) return;
     try{ const r=await (await fetch(API+'/regenerate/'+slug,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({note})})).json();
-      if(r.job_id){ LIB.wizard(true); GENJOB=r.job_id; LIB._showProg({slug:r.slug}); LIB._poll(r.job_id); }
+      if(r.job_id){ if(r.note) alert(r.note); LIB.wizard(true); GENJOB=r.job_id; LIB._showProg({slug:r.slug}); LIB._poll(r.job_id); }
+      else alert('Regenerate refused: '+(r.detail||'unknown reason'));
     }catch(e){ alert('Regenerate failed: '+e.message); } },
 
   /* ---- Jobs / generation activity (reads /activity) — so you always know what's baking ---- */
@@ -751,7 +752,7 @@ const LIB = {
     catch(e){ alert('Provider update failed: '+e.message); }
     LIB._loadJobs();
   },
-  async retry(id){ try{ await fetch(API+'/retry/'+id,{method:'POST'}); LIB._loadJobs(); }catch(e){ alert('Retry failed: '+e.message); } },
+  async retry(id){ try{ const r=await (await fetch(API+'/retry/'+id,{method:'POST'})).json(); if(!r.job_id) alert('Retry refused: '+(r.detail||'unknown reason')); LIB._loadJobs(); }catch(e){ alert('Retry failed: '+e.message); } },
   // stop a queued/baking/generating job — kills the subprocess (or de-queues it); lesson TEXT is kept → still viewable + rebakeable
   async cancel(id){ if(!confirm('Cancel this job? The lesson text is kept — you can rebake the audio later.')) return;
     try{ const r=await (await fetch(API+'/cancel/'+encodeURIComponent(id),{method:'POST'})).json();
