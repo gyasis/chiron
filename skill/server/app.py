@@ -368,6 +368,7 @@ def _run_job(job: dict) -> None:
         out.mkdir(parents=True, exist_ok=True)
     job.update(status="running", slug=res["slug"], chain=res["chain_name"],
                depth=res["depth"], started=_now())
+    _CANCELLED.discard(res["slug"])      # an earlier cancel of this slug must not make this run's inline bake skip
     _save()
 
     grounding = job.get("grounding") or ""
@@ -395,14 +396,20 @@ def _run_job(job: dict) -> None:
     MAX_TRIES, last_err, rc = 3, "", -1
     lesson = out / "lesson.html"
     for attempt in range(1, MAX_TRIES + 1):
+        if job.get("cancelled"):            # /cancel already set the final status; never start another try
+            return
         with open(log, "w" if attempt == 1 else "a") as lf:   # keep the log history across retries
             if attempt > 1:
                 lf.write(f"\n=== AUTO-RETRY {attempt}/{MAX_TRIES} — resuming (prev: {last_err[:150]}) ===\n"); lf.flush()
                 _append_step(out, {"kind": "event", "event_type": "STEP_ERROR",
                                    "step_instruction": f"↻ auto-retry {attempt}/{MAX_TRIES} (resuming): {last_err[:120]}"})
-            p = subprocess.Popen([sys.executable, res["runpy"]], env=env, stdout=lf, stderr=subprocess.STDOUT)
+            p = subprocess.Popen([sys.executable, res["runpy"]], env=env, stdout=lf, stderr=subprocess.STDOUT,
+                                 start_new_session=True)   # own process group: /cancel's killpg stops the chain, not the server
             job.update(pid=p.pid, status="running", phase="running"); _save()
             rc = p.wait()
+        if job.get("cancelled"):            # killed by /cancel: keep the cancelled status, no auto-retry
+            _save()
+            return
         if is_season and rc == 0 and (GEN / f"{res['slug']}.season.json").exists():
             _rebuild_catalog()
             job.update(status="ready", rc=rc, lesson_url="/library/", error=None, finished=_now())
@@ -1767,6 +1774,7 @@ def cancel(ref: str):
                 pass
     # F1: also flag the slug cancelled so a Modal-pool worker that hasn't started yet skips it (see _run_bake)
     _CANCELLED.add(job.get("slug") or slug)
+    job["cancelled"] = True                                 # the generation retry loop stops on this flag
     if st == "queued":                                      # sitting in the bake queue → worker skips it on pop
         _CANCELLED.add(job.get("slug") or slug)
     lesson = GEN / (job.get("slug") or slug) / "lesson.html"
@@ -2222,6 +2230,7 @@ def regenerate(ref: str, body: RegenReq):
             job["grounding"] = (job.get("grounding") or "") + f"\n\nReviewer note: {body.note}"
             job["note"] = body.note
         job["rewrite"] = bool(body.rewrite)
+        job.pop("cancelled", None)          # a new request on this job; an earlier cancel no longer applies
         job.update(status="queued", phase="queued")
         _save()
     _GEN_Q.put(job)
