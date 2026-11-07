@@ -70,7 +70,7 @@ if __name__ == "__main__" and not SUBJECT:
 SYSTEM = os.environ.get("CH_SYSTEM", "").strip()   # NO hardcoded default — inferred from the subject in main() if absent
 N_CHAPTERS = int(os.environ.get("CH_CHAPTERS", "4"))
 STAGE = os.environ.get("CH_STAGE", "plan")  # plan | chapters | assemble | all
-SLUG = "chiron-" + re.sub(r"[^a-z0-9]+", "-", SUBJECT.lower()).strip("-") + "-amboss"
+SLUG = os.environ.get("CH_SLUG") or "chiron-" + re.sub(r"[^a-z0-9]+", "-", SUBJECT.lower()).strip("-") + "-amboss"
 OUT = GEN / SLUG
 
 # Model probe (2026-06-29): glm-5.2 is the newest/strong GLM (glm-4.6 RETIRED 2026-06-16) — fast (~2s)

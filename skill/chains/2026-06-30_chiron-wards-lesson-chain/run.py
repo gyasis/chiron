@@ -64,7 +64,7 @@ TOPIC = os.environ.get("CH_TOPIC", "")
 SETTING = os.environ.get("CH_SETTING", "")
 STAGE = os.environ.get("CH_STAGE", "author")
 MODEL = os.environ.get("CH_MODEL_REASON", "glm@latest")
-SLUG = "chiron-ward-" + re.sub(r"[^a-z0-9]+", "-", (TOPIC or "lesson").lower()).strip("-")
+SLUG = os.environ.get("CH_SLUG") or "chiron-ward-" + re.sub(r"[^a-z0-9]+", "-", (TOPIC or "lesson").lower()).strip("-")
 OUT = GEN / SLUG
 
 

@@ -76,7 +76,7 @@ MODEL_QC = os.environ.get("CH_MODEL_QC", "deepseek-flash@latest")  # Phase 2.5 j
 QC_ROUNDS = int(os.environ.get("CH_QC_ROUNDS", "0"))   # 0 = lean (Phase-2 validator + assemble gate suffice, like the medicine chain); set 1 to add the LLM QC re-author pass
 N_SECTIONS = int(os.environ.get("CH_SECTIONS", "8"))
 
-SLUG = "chiron-italian-" + re.sub(r"[^a-z0-9]+", "-", (TOPIC or "lesson").lower()).strip("-")[:48]
+SLUG = os.environ.get("CH_SLUG") or "chiron-italian-" + re.sub(r"[^a-z0-9]+", "-", (TOPIC or "lesson").lower()).strip("-")[:48]
 OUT = GEN / SLUG
 
 

@@ -69,7 +69,7 @@ if __name__ == "__main__" and not SUBJECT:
     raise SystemExit("[chiron] CH_SUBJECT is empty — refusing to generate a placeholder lesson (wrong-subject guard).")
 N_CHAPTERS = int(os.environ.get("CH_CHAPTERS", "6"))
 STAGE = os.environ.get("CH_STAGE", "plan")  # plan | chapters | assemble | audio | all
-SLUG = "chiron-" + re.sub(r"[^a-z0-9]+", "-", SUBJECT.lower()).strip("-") + "-primer"
+SLUG = os.environ.get("CH_SLUG") or "chiron-" + re.sub(r"[^a-z0-9]+", "-", SUBJECT.lower()).strip("-") + "-primer"
 OUT = GEN / SLUG
 
 MODEL_REASON = os.environ.get("CH_MODEL_REASON", "glm@latest")

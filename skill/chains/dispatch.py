@@ -11,11 +11,12 @@ CLI:  python3 dispatch.py --domain medicine --subject "Aortic aneurysm" [--depth
                           [--subject-type disease] [--stage all|chapters|assemble|audio|plan] [--dry-run]
 API:  from dispatch import resolve, run   # resolve(...) -> {runpy, env, depth, domain, slug}; run(res, stage)
 """
-import argparse, json, os, re, subprocess, sys
+import argparse, json, os, re, subprocess, sys, unicodedata
 from pathlib import Path
 
 SKILL = Path(os.environ.get("CHIRON_SKILL", Path.home() / "Documents/code/chiron/skill"))
 CHAINS = SKILL / "chains"
+GEN = Path(os.environ.get("CHIRON_GEN", Path.home() / "Documents/generated"))
 ATLAS = SKILL / "blueprints" / "disease-atlas.json"
 
 # (domain, depth) -> chain dir
@@ -77,7 +78,39 @@ def clip_slug(base: str, limit: int) -> str:
     return cut.strip("-")
 
 
+def slug_base(subject: str) -> str:
+    """Lower-case hyphen form of a subject. Accented letters keep their base letter (perché → perche)."""
+    s = unicodedata.normalize("NFKD", subject or "")
+    s = "".join(c for c in s if not unicodedata.combining(c))
+    return re.sub(r"[^a-z0-9]+", "-", s.lower()).strip("-")
+
+
+GENERIC_SUBJECTS = {"italian", "italiano", "lesson", "lezione", "language", "lingua", "medicine", "medicina",
+                    "german", "deutsch", "english", "test", "topic"}
+
+
+def generic_subject(subject: str) -> bool:
+    """True when the subject is only a domain or placeholder word, so it cannot name one lesson."""
+    return slug_base(subject) in GENERIC_SUBJECTS or len(slug_base(subject)) < 3
+
+
 def _slug(domain, depth, subject):
+    base = slug_base(subject) or "lesson"
+    if domain == "medicine":
+        return f"chiron-{base}-{depth}" if depth != "amboss" else f"chiron-{base}-amboss"
+    if domain == "medical-italian" and depth == "passage":
+        return f"chiron-ssm-{base}"
+    if domain == "medical-italian" and depth == "ward":
+        return f"chiron-ward-{base}"
+    if domain == "language-it" and depth == "pimsleur":
+        return f"chiron-pimsleur-{clip_slug(base, 40)}"       # the chain's own TOPIC_SLUG: its season file is <slug>.season.json
+    base = re.sub(r"^(italian|italiano)-(?=.)", "", base)     # the prefix already says italian
+    return f"chiron-italian-{clip_slug(base, 48)}"
+
+
+def _legacy_slug(domain, depth, subject):
+    """The slug rule before slug_base: accents dropped, Italian names cut at 48 characters. Existing lessons
+    were named with it."""
     base = re.sub(r"[^a-z0-9]+", "-", (subject or "lesson").lower()).strip("-")
     if domain == "medicine":
         return f"chiron-{base}-{depth}" if depth != "amboss" else f"chiron-{base}-amboss"
@@ -88,6 +121,18 @@ def _slug(domain, depth, subject):
     if domain == "language-it" and depth == "pimsleur":
         return f"chiron-pimsleur-{clip_slug(base, 40)}"       # the chain's own TOPIC_SLUG: its season file is <slug>.season.json
     return f"chiron-italian-{base[:48]}"
+
+
+def _existing(slug: str) -> bool:
+    return (GEN / slug).is_dir() or (GEN / f"{slug}.season.json").exists()
+
+
+def lesson_slug(domain, depth, subject):
+    """The slug for a subject. A lesson that already exists under the older rule keeps its folder, so a retry,
+    regenerate or duplicate check finds it instead of starting a new paid run."""
+    slug = _slug(domain, depth, subject)
+    old = _legacy_slug(domain, depth, subject)
+    return old if old != slug and _existing(old) and not _existing(slug) else slug
 
 
 def resolve(domain, depth=None, subject="", subject_type=None, extra=None):
@@ -130,7 +175,7 @@ def resolve(domain, depth=None, subject="", subject_type=None, extra=None):
             if extra.get("lessons"):
                 env["CH_LESSONS"] = str(int(extra["lessons"]))
     return {"runpy": str(chain / "run.py"), "chain_name": chain.name, "env": env,
-            "depth": depth, "domain": domain, "slug": _slug(domain, depth, subject)}
+            "depth": depth, "domain": domain, "slug": lesson_slug(domain, depth, subject)}
 
 
 def run(res, stage="all"):
