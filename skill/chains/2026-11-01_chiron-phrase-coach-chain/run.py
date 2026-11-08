@@ -50,7 +50,8 @@ MODEL_STRUCT = os.environ.get("CH_PHRASE_MODEL_STRUCT", MODEL_FAST)             
 READ_S = float(os.environ.get("CH_PHRASE_READ_S", "170"))
 HISTORY_TURNS = 8
 REGISTERS = ("lei", "tu", "neutral")
-KINDS = ("new_request", "attempt", "question", "drill")
+KINDS = ("new_request", "vocab", "attempt", "question", "drill", "lesson", "clarify")
+CLARIFY_OPTIONS = ("vocab", "new_request", "lesson", "question")
 
 _shown: dict[str, list] = {}     # tag -> capabilities, from /api/show
 
@@ -91,6 +92,7 @@ def extract_json(s):
 _FENCE = re.compile(r"```phrase[^\S\n]*\n([\s\S]*?)```", re.I)
 _DFENCE = re.compile(r"```diagram[^\S\n]*\n([\s\S]*?)```", re.I)
 _DRILLFENCE = re.compile(r"```drill[^\S\n]*\n([\s\S]*?)```", re.I)
+_CHOICEFENCE = re.compile(r"```choices[^\S\n]*\n([\s\S]*?)```", re.I)
 _META = re.compile(r"```meta[^\S\n]*\n([\s\S]*?)```", re.I)
 _SPEAK = re.compile(r"\[\[\s*SPEAK\s*\]\][\s\S]*?\[\[\s*/?\s*SPEAK\s*\]\]", re.I)
 
@@ -173,7 +175,7 @@ class Run:
     def transcript(self) -> str:
         out = []
         for t in self.history:
-            text = _DRILLFENCE.sub("", _DFENCE.sub("", _FENCE.sub("", _SPEAK.sub("", str(t["content"]))))).strip()
+            text = _CHOICEFENCE.sub("", _DRILLFENCE.sub("", _DFENCE.sub("", _FENCE.sub("", _SPEAK.sub("", str(t["content"])))))).strip()
             out.append(f"{'LEARNER' if t['role'] == 'user' else 'COACH'}: {text[:1200]}")
         return "\n\n".join(out) or "(no earlier turns)"
 
@@ -239,10 +241,14 @@ Classify the LATEST learner turn:
 - "new_request": they want to say something in Italian (usually written in English, e.g. "how do I say ...").
 - "attempt": they wrote Italian in answer to the coach's last "Your turn" practice sentence (see LAST PRACTICE below).
 - "question": a follow-up about the last phrase (why, what about another form, can I also say ...).
+- "vocab": they want WORDS, not sentences: "what's the verb for give", "list the Italian verbs for give, bring, take", "the word for stethoscope", "how do you say 'to put'", a bare list of English words. The answer is a short word list, so do not turn the words into phrases.
+- "lesson": they want a full saved lesson or course on a topic ("make me a lesson on the passato prossimo", "teach me everything about hospital shifts").
+- "clarify": you cannot tell which of these they want (for example a topic name alone, "hospital words and phrases", or a request that fits both "vocab" and "new_request"). Do not guess: the coach asks them.
 - "drill": they name Pimsleur and ask to play or drill the phrases with it ("do these as pimsleur", "pimsleur live", "drill me with pimsleur"). Without the word Pimsleur it is never a drill: "quiz me", "test me", "let's practise" are a "question" and the coach practises with them in the conversation. Asking for a saved lesson or season is NOT a drill: that is a "new_request" or a "question".
 For a new_request also extract what is needed to build the sentences. Reply with ONLY a JSON object:
-{"kind": "new_request|attempt|question|drill", "meaning": "what they really mean, in English", "phrases": [{"en": "one phrase to say, in English, complete and self-contained", "situation": "where/when for this phrase, or empty"}], "situation": "where/when", "listener": "who they are speaking to", "register_default": "lei|tu|neutral", "register_reason": "one short reason", "nuance": "politeness, urgency or tone that matters, or empty"}
+{"kind": "new_request|vocab|attempt|question|drill|lesson|clarify", "meaning": "what they really mean, in English", "phrases": [{"en": "one phrase to say, in English, complete and self-contained", "situation": "where/when for this phrase, or empty"}], "situation": "where/when", "listener": "who they are speaking to", "register_default": "lei|tu|neutral", "register_reason": "one short reason", "nuance": "politeness, urgency or tone that matters, or empty"}
 "phrases": ONE item for a single request. When the learner lists several (a numbered list, several separate questions, "these phrases"), one item per numbered entry or separate request, in their order, keeping each item's full wording. Never merge, drop, split or invent items.
+For a "clarify" also add "clarify_question" (one short question to the learner, in English) and "options": 2 or 3 of "vocab", "new_request", "lesson", "question", the readings you are choosing between.
 For the other kinds the other fields may be empty strings and "phrases" an empty list."""
 
 BUILD_SYS = """You write Italian the way a native speaker actually says it in a given situation. Never translate word for word: if the literal wording is not what Italians say, give what they say.
@@ -479,6 +485,12 @@ def _valid_understand(o):
         ph = o.get("phrases")
         if ph is not None and (not isinstance(ph, list) or not all(isinstance(p, dict) and str(p.get("en") or "").strip() for p in ph)):
             return '"phrases" must be a list of {"en": ..., "situation": ...}'
+    if o["kind"] == "clarify":
+        if not str(o.get("clarify_question") or "").strip():
+            return '"clarify_question" is required for a clarify'
+        opts = o.get("options")
+        if not isinstance(opts, list) or len(set(opts)) < 2 or not set(opts) <= set(CLARIFY_OPTIONS):
+            return f'"options" must list 2 or 3 of {list(CLARIFY_OPTIONS)}'
     return None
 
 
@@ -570,8 +582,39 @@ def _build_user(run: Run, phrases: list, k: int, fixes: list | None = None, prev
 _PIMS_NAME = re.compile(r"\bp[iy]m+p?[sz]\s?l[eua]{1,3}y?e?r?s?\b", re.I)
 
 
+# A leading keyword names the reply the learner wants and overrides the classifier ("words: give, bring").
+_KEYWORD = re.compile(r"^\s*(words?|vocab(?:ulary)?|phrases?|say|lesson)\s*[:\-–—]\s*", re.I)
+_KEYWORD_KIND = {"word": "vocab", "words": "vocab", "vocab": "vocab", "vocabulary": "vocab",
+                 "phrase": "new_request", "phrases": "new_request", "say": "new_request", "lesson": "lesson"}
+# A request for words, recognised without the model: "the verbs for", "what's the word for", "list the words".
+_WORD_ASK = re.compile(r"\b(?:verbs?|words?|nouns?|adjectives?|vocab\w*)\s+(?:for|meaning|that mean)\b"
+                       r"|\bwhat(?:'s|\s+is|\s+are)\s+the\s+(?:italian\s+)?(?:words?|verbs?|nouns?)\b", re.I)
+
+
+def keyword_kind(text: str) -> tuple[str | None, str]:
+    """(the kind a leading keyword names, the text without it); (None, text) when there is no keyword."""
+    m = _KEYWORD.match(text or "")
+    if not m:
+        return None, text
+    return _KEYWORD_KIND[m.group(1).lower()], text[m.end():].strip()
+
+
 async def step_understand(run: Run) -> str:
+    forced, rest = keyword_kind(run.user)
+    if forced:
+        log(f"understand: keyword -> {forced}")
+        run.user = rest or run.user
+    if forced in ("vocab", "lesson"):
+        run.understand = {"kind": forced, "meaning": run.user}
+        return forced
     run.understand = await json_step(run, "understand", MODEL_FAST, UNDERSTAND_SYS, _understand_user(run), _valid_understand)
+    if forced == "new_request" and run.understand["kind"] != "new_request":
+        log(f"understand: classified {run.understand['kind']}, keyword says new_request")
+        run.understand.update(kind="new_request", meaning=run.understand.get("meaning") or run.user,
+                              register_default=run.understand.get("register_default") if run.understand.get("register_default") in REGISTERS else "neutral")
+    if not forced and run.understand["kind"] == "new_request" and _WORD_ASK.search(run.user):
+        log("understand: new_request that asks for words -> vocab")
+        run.understand["kind"] = "vocab"
     if run.understand["kind"] == "drill" and not _PIMS_NAME.search(run.user):
         log("understand: drill without the Pimsleur name -> question (the coach practises in the conversation)")
         run.understand["kind"] = "question"
@@ -645,15 +688,16 @@ def drop_same_string_watch_out(body: str, correct: str, trap: str) -> str:
     return body
 
 
-def check_built(body: str, n: int) -> None:
-    """Every phrase must carry its own "How it's built" section of 3+ numbered steps; else the reply is asked again."""
+def check_built(body: str, n: int, min_steps: int = 3) -> None:
+    """Every phrase must carry its own "How it's built" section of `min_steps`+ numbered steps; else the reply is asked
+    again. A one- or two-word answer has nothing to build up, so its caller asks for one step."""
     parts = _HOW.split(body)
     if len(parts) - 1 != n:
         raise ValueError(f'the reply has {len(parts) - 1} "How it\'s built" sections, it needs exactly {n} (one per phrase)')
     for k, sec in enumerate(parts[1:], 1):
         sec = sec.split("\n**", 1)[0]
-        if len(re.findall(r"(?m)^\s*\d+[.)]\s", sec)) < 3:
-            raise ValueError(f'the "How it\'s built" section of phrase {k} needs 3 to 5 numbered steps')
+        if len(re.findall(r"(?m)^\s*\d+[.)]\s", sec)) < min_steps:
+            raise ValueError(f'the "How it\'s built" section of phrase {k} needs {min_steps} to 5 numbered steps')
 
 
 def _json_fence(obj) -> str:
@@ -1033,11 +1077,16 @@ def pin_last_step(steps: str, sentence: str) -> str:
 async def teach_item(run: Run, phrases: list, k: int, it: dict) -> str:
     """The "How it's built" section of one phrase, headed so a numbered list of phrases stays readable."""
     n = len(phrases)
-    body, _ = await _markdown_step(run, f"how-built {k + 1}" if n > 1 else "how-built", TEACH_ITEM_SYS,
-                                   _item_user(run, phrases, k, it), (), check=lambda b: check_built(b, 1), with_meta=False,
-                                   tag=MODEL_STRUCT)
-    steps = pin_last_step(_HOW.sub("", body, count=1).strip(), it["it"])
     head = f"**How it's built · {k + 1}) {it['it']}**" if n > 1 else "**How it's built**"
+    least = 1 if len(it["it"].split()) <= 2 else 3
+    try:
+        body, _ = await _markdown_step(run, f"how-built {k + 1}" if n > 1 else "how-built", TEACH_ITEM_SYS,
+                                       _item_user(run, phrases, k, it), (), check=lambda b: check_built(b, 1, least),
+                                       with_meta=False, tag=MODEL_STRUCT)
+    except RuntimeError as e:          # one missing section must not cost the learner the rest of the reply
+        log(f"how-built {k + 1}: left out — {e}")
+        return f"{head}\n_This section could not be written; the rest of the reply is complete._\n\n"
+    steps = pin_last_step(_HOW.sub("", body, count=1).strip(), it["it"])
     return f"{head}\n{steps}\n\n"
 
 
@@ -1137,13 +1186,74 @@ async def _drill(run: Run) -> None:
     run.emit("Opening a live drill with your phrases.\n\n```drill\n" + _json_fence({"action": "open"}) + "\n```")
 
 
+VOCAB_SYS = """You are a concise Italian vocabulary coach for an English speaker. The learner asked for Italian WORDS, not sentences.
+Give one entry per word they asked for, in their order; when they ask for "the verbs for X", give the verb an Italian speaker would really use for X (and at most one common alternative in "note").
+Reply with ONLY a JSON object:
+{"words": [{"en": "the English word as they asked", "it": "the Italian dictionary form (infinitive for a verb, singular with its article for a noun: il letto, la flebo)", "pos": "verb|noun|adjective|adverb|expression", "note": "one short line that matters for use: irregular forms, gender, a common alternative and when it fits; or empty", "example_it": "one short natural Italian sentence using it", "example_en": "its English meaning"}]}"""
+
+
+def _valid_vocab(o):
+    w = o.get("words") if isinstance(o, dict) else None
+    if not isinstance(w, list) or not w:
+        return '"words" must be a non-empty list'
+    for i, e in enumerate(w, 1):
+        if not isinstance(e, dict) or not all(str(e.get(k) or "").strip() for k in ("en", "it", "example_it")):
+            return f'words[{i}] needs "en", "it" and "example_it"'
+    return None
+
+
+async def _vocab(run: Run) -> None:
+    """A word list: each Italian word with a use note and one example sentence. The example sentences are the reply's
+    phrases, so the basket, cards and drill get whole sentences rather than single words."""
+    o = await json_step(run, "vocab", MODEL_STRUCT, VOCAB_SYS, f"EARLIER TURNS:\n{run.transcript()}\n\nLEARNER ASKS:\n{run.user}", _valid_vocab)
+    words = o["words"]
+    out = []
+    for k, w in enumerate(words, 1):
+        pos = f" · {w['pos']}" if str(w.get("pos") or "").strip() else ""
+        lines = [f"**{k}) {w['it']}** — {w['en']}{pos}"]
+        if str(w.get("note") or "").strip():
+            lines.append(str(w["note"]).strip())
+        lines.append(f"*{w['example_it']}*" + (f" — {w['example_en']}" if str(w.get("example_en") or "").strip() else ""))
+        out.append("\n".join(lines))
+    run.emit("\n\n".join(out) + "\n\n_Want any of these built into a full phrase? Ask for it, or start with **phrase:**._")
+    items = [{"it": w["example_it"], "en": str(w.get("example_en") or w["en"]), "register": "neutral", "variants": []} for w in words]
+    data = {"it": ", ".join(w["it"] for w in words), "en_intent": run.user, "register": "neutral", "variants": [],
+            "words": [{"it": w["it"], "en": w["en"], "pos": w.get("pos") or "", "note": w.get("note") or ""} for w in words],
+            "items": items}
+    run.emit(_tail("\n".join(f"{w['it']}. {w['example_it']}" for w in words), data))
+
+
+async def _lesson(run: Run) -> None:
+    """A full lesson is generated by the lesson generator, which costs a model run: the coach points at it, never starts it."""
+    topic = str(run.understand.get("meaning") or run.user).strip()
+    run.emit(f"That sounds like a full lesson on **{topic}**, not a phrase. Tap **📘 Make a lesson from this** below "
+             "to generate it, or ask me for the words or a phrase first.")
+
+
+_CLARIFY_LABEL = {"vocab": "Just the words", "new_request": "Build full phrases", "lesson": "Make a full lesson",
+                  "question": "Explain it"}
+_CLARIFY_PREFIX = {"vocab": "words: ", "new_request": "phrase: ", "lesson": "lesson: ", "question": ""}
+
+
+async def _clarify(run: Run) -> None:
+    """The classifier could not tell what the learner wants: ask, with one button per reading. A button sends the
+    question again with its keyword, so the answer is not classified a second time."""
+    opts = list(dict.fromkeys(run.understand["options"]))[:3]
+    choices = [{"label": _CLARIFY_LABEL[o], "send": _CLARIFY_PREFIX[o] + run.user} for o in opts]
+    run.emit(str(run.understand["clarify_question"]).strip() + "\n\n"
+             + "\n".join(f"- **{c['label']}**" for c in choices)
+             + "\n\n_Tip: start a message with **words:**, **phrase:** or **lesson:** to choose directly._"
+             + "\n\n```choices\n" + _json_fence({"choices": choices}) + "\n```")
+
+
 # ── entry points ─────────────────────────────────────────────────────────────────
 
 async def _pipeline(run: Run, session_id: str | None) -> None:
     try:
         with ledger.context(session_id=session_id, run_id=ledger.new_run_id()):
             kind = await step_understand(run)
-            await {"new_request": _new_request, "attempt": _attempt, "question": _question, "drill": _drill}[kind](run)
+            await {"new_request": _new_request, "vocab": _vocab, "attempt": _attempt, "question": _question, "drill": _drill,
+                   "lesson": _lesson, "clarify": _clarify}[kind](run)
     finally:
         run.q.put_nowait(None)
 

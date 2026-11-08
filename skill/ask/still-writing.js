@@ -8,9 +8,19 @@
  *   stillWriting(doc, msg, bornMs, { now, setTimer, clearTimer })   -> { stop() }
  *     msg      the assistant message element; streaming is over when msg.dataset.streaming !== '1' or it is detached
  *     bornMs   now()-clock time the question was sent
+ *
+ *   cutShort(msg)   true when a later assistant message follows msg: acolyte shows a failed reply as a NEW message and
+ *                   leaves the half-written one flagged as streaming, so the later message is the only sign it ended.
  */
 
 export const TICK_MS = 1000;
+
+export function cutShort(msg) {
+  const parent = msg.parentElement || msg.parent;
+  const kids = parent ? [...(parent.children || [])] : [];
+  const i = kids.indexOf(msg);
+  return i >= 0 && kids.slice(i + 1).some(n => /\bacolyte-msg\b/.test(n.className || '') && /\bassistant\b/.test(n.className || ''));
+}
 
 export function stillWriting(doc, msg, bornMs, env = {}) {
   const now = env.now || (() => performance.now());
@@ -27,6 +37,14 @@ export function stillWriting(doc, msg, bornMs, env = {}) {
   const tick = () => {
     if (closed) return;
     if (msg.isConnected === false) { closed = true; stop(); return; }     // the thread was re-rendered under it
+    if (msg.dataset.streaming === '1' && cutShort(msg)) {     // the reply failed part-way: say so and stop counting
+      closed = true; stop();
+      msg.dataset.streaming = '';
+      msg.dataset.cut = '1';
+      el.className = 'ask-still-writing done';
+      el.textContent = `Reply cut short · ${secs()} s`;
+      return;
+    }
     if (msg.dataset.streaming !== '1') {         // streaming ended: the final total replaces the running count
       closed = true; stop();
       el.className = 'ask-still-writing done';
