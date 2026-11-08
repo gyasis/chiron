@@ -685,6 +685,11 @@ def p5_listen(out: Path):
         return
     r = subprocess.run([sys.executable, str(SKILL / "scripts" / "pimsleur_drill.py"), "listen", str(out)],
                        capture_output=True, text=True)
+    if not lm.exists() or lm.stat().st_mtime < mp3.stat().st_mtime:
+        err = " | ".join((r.stderr or r.stdout or "no output").strip().splitlines()[-3:])[:400]
+        print(f"[P5] {out.name}: listen check FAILED to run (exit {r.returncode}): {err} — the audio itself is not judged; "
+              f"re-run: CH_STAGE=listen", flush=True)
+        return
     rechecked = "re-checked" in (out / "audio" / "pimsleur.listen.md").read_text() if r.returncode == 0 else False
     verdict = ("PASS (Gemini flagged a glitch; every flagged clip measured clean — see listen.md)" if rechecked
                else "PASS" if r.returncode == 0 else "FIX — read audio/pimsleur.listen.md (auto re-check confirmed it or couldn't measure it)")
