@@ -18,7 +18,9 @@ PIPELINE
 --------
   P0a CHECK    (LLM, CHECKERS)       a learner phrase list in CH_SOURCE is checked (Italian, translation, one English
                                      word per Italian word) and the season is built from the corrected list
-  P0  PLAN     (LLM, MODEL_REASON)   topic (+ optional source) -> season.json: N lessons, targets, pattern
+  P0  PLAN     (LLM, PLANNERS)       topic (+ optional source) -> season.json: N lessons, targets, pattern; every
+                                     given learner phrase must be a target, each target in one lesson (checked in code)
+  P0b CHECK    (LLM, CHECKERS)       the planner's own supporting sentences are checked and corrected
   P1  AUTHOR   (LLM, WRITERS)        per lesson -> pimsleur.json items; validated by pimsleur_drill.validate + rules;
                                      thinking off, output capped (MAX_OUT), a reply that reasons before its JSON is refused
   P1b REVIEW   (LLM, CHECKERS)       every checker reviews the Italian; their issues are combined -> one re-author round
@@ -122,9 +124,9 @@ def source_block() -> str:
 SRC = source_block()
 
 # Lesson writing and both checks run on models whose thinking is switched OFF (verified per lane by
-# chiron_models.thinking_off). glm-5.3 cannot switch thinking off: it moves its reasoning into the answer, so it
-# only plans (one call) and never writes lessons.
+# chiron_models.thinking_off). glm-5.3 is not used: it cannot switch thinking off and moves its reasoning into the answer.
 WRITERS = [m.strip() for m in os.environ.get("CH_PIMSLEUR_WRITERS", "gemma4:31b,deepseek-flash@latest").split(",") if m.strip()]
+PLANNERS = [m.strip() for m in os.environ.get("CH_PIMSLEUR_PLANNERS", ",".join(WRITERS)).split(",") if m.strip()]
 CHECKERS = [m.strip() for m in os.environ.get("CH_PIMSLEUR_CHECKERS", "deepseek-flash@latest,gemma4:31b").split(",") if m.strip()]
 # The largest lesson answer across 38 real Pimsleur lessons was 7,764 characters, about 2,400 tokens (measured
 # 2026-11-08 over ~/Documents/generated/chiron-pimsleur-*/pimsleur.json). 6,000 leaves 2.5x room; a reply that
@@ -194,6 +196,9 @@ async def check_all(prompt: str, name: str) -> list | None:
     return [dict(i, by=c) for c, o in zip(CHECKERS, outs) if o for i in o["issues"] if isinstance(i, dict)]
 
 
+GIVEN: list[str] = []      # the learner's (checked) phrases when CH_SOURCE is a phrase list
+
+
 # ── P0a SOURCE CHECK: the learner's own phrases are checked before anything is built from them ──────────
 def source_targets() -> tuple[Path, dict] | None:
     """The CH_SOURCE file when it is a phrase list ({"targets": [{it, en}]}), else None."""
@@ -231,7 +236,7 @@ def apply_source_fixes(targets: list[dict], issues: list[dict]) -> tuple[list[di
 async def p0a_source_check() -> None:
     """Checks the learner's phrases (Italian, translation, one English word per Italian word) and builds the season
     from the corrected list. The changes are written next to the plan and logged."""
-    global SRC
+    global SRC, GIVEN
     src = source_targets()
     if not src:
         return
@@ -249,6 +254,8 @@ Check EACH pair: (1) is `it` correct standard Italian (grammar, agreement, irreg
 (2) does `en` translate `it` exactly, and does each Italian word get the SAME correct English in every pair (one
 Italian word is never two different English words, two different things are never one Italian word)? (3) is it what
 people in Italy would really say in that setting? Report ONLY real errors, never style preferences.
+Reference (Italian hospital usage): il camice / i camici = the (white) coat, lab coat; la divisa or la casacca = scrubs,
+uniform; il pigiama chirurgico = surgical scrubs; il lenzuolo, le lenzuola = the sheet, the sheets (bed linen).
 `fix_en` is the plain English a narrator reads aloud: one meaning, no parentheses, no slashes, no alternatives.
 When a pair's English names the wrong thing for its Italian word, correct the English; keep the learner's Italian
 unless the Italian itself is wrong.
@@ -266,6 +273,7 @@ Return ONLY JSON: {{"issues": [{{"n": <pair number>, "problem": "...", "fix_it":
         print(f"[P0a] {len(notes)} change(s) to the learner's phrases" + ("" if notes else " — all correct"), flush=True)
         for line in notes:
             print(f"[P0a]   {line}", flush=True)
+    GIVEN = [str(t.get("it") or "").strip() for t in d["targets"] if str(t.get("it") or "").strip()]
     body = json.dumps({k: v for k, v in d.items() if k != "_checked"}, ensure_ascii=False, indent=1)
     SRC = f"\n## SOURCE — ground every Italian line in this; do not invent facts it does not support\n### {path.name} (checked)\n{body}\n"
 
@@ -282,6 +290,13 @@ ITEM RULES (a drill item is something the learner must SAY aloud, from an Englis
 - No item may repeat one taught in an earlier lesson (listed below): every item is a new sentence.
 - Translate each Italian word exactly as the SOURCE does, the same way in every item. One Italian word never gets two
   different English words.
+- A "question" is a real question a person asks. Its `en` starts with a question word or an auxiliary verb ("Where
+  are...?", "Can you...?", "Is the...?", "Do we...?"); its `it` is a full sentence with a conjugated verb ("Dove sono
+  gli asciugamani puliti?", "Può portare i camici in lavanderia?", "La lavatrice è libera?"). An instruction with a
+  "?" added is NOT a question ("Lavare la biancheria a 90 gradi?" / "Wash the laundry at 90 degrees?").
+  "Deve...?" is "Do you have to...?" in English, never "Must you...?".
+- Every sentence is true and useful in the lesson's real setting. Never add the negative of another item to fill a slot.
+- The talk item's `en` task asks about the same situation and things its model answer `it` talks about.
 """
 
 EXAM_RULES = """
@@ -296,10 +311,17 @@ EXAM ITEMS (CH_FORMAT=exam — the learner is rehearsing the Ordine dei Medici o
 
 # ── P0 PLAN ────────────────────────────────────────────────────────────────────────────────────────────
 def plan_valid(o) -> list:
+    """Problems in a season plan. A target repeated in a later lesson is removed in place (it stays in the first)."""
     iss = []
     ls = o.get("lessons") if isinstance(o, dict) else None
     if not isinstance(ls, list) or not ls:
         return ["lessons: missing or empty"]
+    seen = set()
+    for l in ls:
+        if isinstance(l, dict) and isinstance(l.get("targets"), list):
+            keep = [t for t in l["targets"] if _fold(str(t)) not in seen]
+            seen |= {_fold(str(t)) for t in keep}
+            l["targets"] = keep
     if N_LESSONS and len(ls) != N_LESSONS:
         iss.append(f"need exactly {N_LESSONS} lessons, got {len(ls)}")
     if not N_LESSONS and not 2 <= len(ls) <= 8:
@@ -309,11 +331,16 @@ def plan_valid(o) -> list:
             if not str(l.get(k, "")).strip():
                 iss.append(f"lessons[{i}].{k} missing")
         t = l.get("targets")
-        if not isinstance(t, list) or not 5 <= len(t) <= 8:
-            iss.append(f"lessons[{i}].targets: need 5-8, got {len(t) if isinstance(t, list) else 0}")
+        if not isinstance(t, list) or not 3 <= len(t) <= 8:
+            iss.append(f"lessons[{i}].targets: need 3-8 different targets, got {len(t) if isinstance(t, list) else 0}")
     for k in ("title", "album"):
         if not str(o.get(k, "")).strip():
             iss.append(f"{k} missing")
+    if os.environ.get("CH_TARGETS") == "given" and GIVEN:
+        planned = seen
+        missing = [g for g in GIVEN if _fold(g) not in planned]
+        if missing:
+            iss.append(f"these SOURCE phrases are not a target of any lesson; use each one exactly: {missing}")
     return iss
 
 
@@ -336,7 +363,8 @@ recycles earlier lessons. Grammar is absorbed from whole sentences, never lectur
 TOPIC: {TOPIC}
 {SRC}{GIVEN_TARGETS}
 Plan {count} lessons, ordered easiest -> hardest, each building on the previous. For each lesson give 5-7 TARGETS:
-the concrete Italian phrases/sentences (or exact forms) it must make the learner able to SAY. Prefer high-frequency,
+the concrete Italian phrases/sentences (or exact forms) it must make the learner able to SAY. Each target appears
+in ONE lesson only. Prefer high-frequency,
 useful sentences over isolated forms. `pattern` = the one grammatical pattern the lesson's table will show
 (e.g. "fare -> ho fatto, dire -> ho detto: irregular participles with avere").
 
@@ -344,12 +372,43 @@ Return ONLY JSON:
 {{"title": "<English season title>", "titleIt": "<Italian>", "album": "Chiron Pimsleur · <short Italian name>",
   "lessons": [{{"title": "...", "titleIt": "...", "focus": "<one sentence>", "pattern": "...",
                "targets": ["<Italian>", "..."]}}]}}"""
-    o = await pi.json_with_repair(prompt, "pimsleur-plan", pi.model_for(pi.MODEL_REASON), plan_valid)
+    o = await ask_json(prompt, "pimsleur-plan", PLANNERS, plan_valid)
     if not o:
-        sys.exit("[P0] planner failed on every model — see .scratch/pimsleur-plan.raw.txt")
+        sys.exit(f"[P0] planner failed on every model ({', '.join(PLANNERS)}) — see the [ask] lines above")
+    await p0b_check_added(o)
     SEASON_FILE.write_text(json.dumps(o, ensure_ascii=False, indent=1))
     print(f"[P0] {len(o['lessons'])} lessons -> {SEASON_FILE.name}")
     return o
+
+
+async def p0b_check_added(season: dict) -> None:
+    """Targets the planner wrote itself (not the learner's checked phrases) are checked for errors and corrected in
+    place. Fail-open: with no checker answer the plan is kept."""
+    given = {_fold(g) for g in GIVEN}
+    added = [(l, k) for l in season["lessons"] for k, t in enumerate(l["targets"]) if _fold(str(t)) not in given]
+    if not added:
+        return
+    lines = [{"n": i + 1, "it": l["targets"][k]} for i, (l, k) in enumerate(added)]
+    prompt = f"""You are a native Italian editor. A course will teach these Italian sentences aloud; every error will be memorised.
+Report ONLY sentences with a real error (grammar, agreement, articles, irregular plurals, prepositions, a word that
+does not exist, something no Italian would say). Not style preferences.
+SENTENCES:
+{json.dumps(lines, ensure_ascii=False, indent=1)}
+Return ONLY JSON: {{"issues": [{{"n": <number>, "problem": "...", "fix_it": "<corrected Italian>"}}]}}"""
+    issues = await check_all(prompt, "plan-added")
+    if issues is None:
+        print("[P0b] no checker answered — the planner's sentences are kept", flush=True)
+        return
+    done = set()
+    for i in issues:
+        n, fix = i.get("n"), str(i.get("fix_it") or "").strip()
+        if not isinstance(n, int) or not 1 <= n <= len(added) or not fix or n in done:
+            continue
+        l, k = added[n - 1]
+        print(f"[P0b] {l['targets'][k]!r} -> {fix!r} ({i.get('by')}: {i.get('problem')})", flush=True)
+        l["targets"][k] = fix
+        done.add(n)
+    print(f"[P0b] {len(added)} planner sentence(s) checked, {len(done)} corrected", flush=True)
 
 
 def lesson_dir(n: int, l: dict) -> Path:
@@ -362,6 +421,41 @@ def _fold(t: str) -> str:
     return " ".join(re.sub(r"[^\w\s]", " ", t.lower()).split())
 
 
+EN_QUESTION = re.compile(r"^((at|in|on|for|to|from|with|by|of|about)\s+)?(is|are|was|were|do|does|did|can|could|will|would|shall|should|may|might|must|have|has|"
+                         r"had|where|what|when|why|how|who|whom|whose|which)\b", re.I)
+IT_INFINITIVE = re.compile(r"^\w{2,}(are|ere|ire)$", re.I)
+
+
+def item_shape_issues(items: list) -> list:
+    """Checks a model cannot be trusted with: a "question" that is an instruction with "?" added, and an item that is
+    only the negative of another item."""
+    iss, plain = [], {}
+    for it in items:
+        if it.get("kind") in ("phrase", "question"):
+            plain[it.get("id")] = _fold(it.get("it") or "")
+    for it in items:
+        k, iid = it.get("kind"), it.get("id")
+        if k == "question":
+            en = (it.get("en") or "").strip().strip('"\'')
+            first = (pd._words(it.get("it") or "") or [""])[0]
+            if not en.endswith("?") or not EN_QUESTION.match(en):
+                iss.append(f"{iid}: `en` {en!r} is not a real English question (start with Where/What/Can/Is/Do...)")
+            if re.match(r"^must (i|you|we|he|she|they)\b", en, re.I):
+                iss.append(f"{iid}: `en` {en!r}: say \"Do you have to...?\", not \"Must you...?\"")
+            if IT_INFINITIVE.match(first):
+                iss.append(f"{iid}: `it` starts with the infinitive {first!r}; a question needs a conjugated verb")
+        if k not in ("phrase", "question"):
+            continue
+        mine = plain[iid]
+        bare = " ".join(w for w in mine.split() if w != "non")
+        for oid, other in plain.items():
+            if oid == iid:
+                continue
+            if bare != mine and bare == other:
+                iss.append(f"{iid}: is only the negative of {oid}; write a different, useful sentence")
+    return iss
+
+
 def bank_valid_for(prev_items: list):
     """bank_valid plus: the intro is a list of sentences, and no item repeats one from an earlier lesson."""
     taught = {_fold(i.get("it") or "") for i in prev_items if i.get("kind") != "talk"}
@@ -372,6 +466,7 @@ def bank_valid_for(prev_items: list):
         iss = bank_valid(o)
         if not isinstance(o, dict):
             return iss
+        iss += item_shape_issues(o.get("items") or [])
         intro = o.get("intro")
         if not isinstance(intro, list) or not all(isinstance(x, str) and x.strip() for x in intro):
             iss.append("`intro` must be a list of English sentences")
@@ -429,13 +524,16 @@ async def review_italian(items: list) -> list | None:
     prompt = f"""You are a native Italian editor checking lines a language course will teach to a learner.
 For EACH item check: is `it` correct, natural spoken Italian (grammar, agreement, articles, clitics, participle
 agreement with essere, formal Lei where addressed to someone)? Does `en` mean the same thing? (Not for kind "talk":
-there `en` is the speaking TASK given to the learner and `it` a model answer — check only that `it` answers it.) Are the `build`
-pieces the same WORDS as the end of `it` (ignore punctuation and capitals — the code compares words)? Only report
-REAL errors — not style preferences, not punctuation in build pieces.
+there `en` is the speaking TASK given to the learner and `it` a model answer — check only that `it` answers it.)
+Ignore `build`: the code checks it. Only report REAL errors — not style preferences.
 For kind "exam": `q` is the examiner's Italian question (check it), `en` is English guidance (not a translation),
 `it` the model answer (check it answers `q`).
 ALSO report any line that is FACTUALLY or CLINICALLY wrong — a dose or frequency a doctor would not prescribe,
 a law, article or procedure stated wrongly or not supported by the SOURCE below. A learner will repeat it aloud.
+Lines that are not in the SOURCE are expected: a lesson adds its own supporting sentences. Never report a line only
+because the SOURCE does not contain it. DO report a "question" that is not a real question (an instruction with "?"
+added), a sentence that is false or pointless in the setting, and a talk item whose model answer does not answer
+its task.
 {SRC}
 ITEMS:
 {json.dumps(items, ensure_ascii=False, indent=1)}
@@ -448,17 +546,27 @@ Return ONLY JSON: {{"issues": [{{"id": "...", "problem": "...", "fix": "<correct
     return issues
 
 
+def lesson_targets(n: int, l: dict, prev_items: list, season: dict) -> tuple[list, list]:
+    """This lesson's targets minus any already taught, and the targets of later lessons (which it must not use yet)."""
+    taught = {_fold(i.get("it") or "") for i in prev_items if i.get("kind") != "talk"}
+    mine = [t for t in l["targets"] if _fold(str(t)) not in taught]
+    later = [t for x in season["lessons"][n:] for t in x.get("targets") or [] if _fold(str(t)) not in taught]
+    return mine, later
+
+
 async def p1_author(n: int, l: dict, out: Path, prev_items: list, season: dict) -> dict:
     bank_path = out / "pimsleur.json"
     if bank_path.exists() and not FORCE:
         print(f"[P1] resume {out.name}")
         return json.loads(bank_path.read_text())
     point_at(out)
+    targets, later = lesson_targets(n, l, prev_items, season)
     prompt = f"""Write the item bank for ONE Pimsleur-method audio lesson (Italian for an English speaker, a doctor).
 SEASON: {season['title']} — lesson {n} of {len(season['lessons'])}: {l['title']} ({l['titleIt']})
 FOCUS: {l['focus']}
 PATTERN: {l['pattern']}
-TARGETS (the learner must be able to SAY these by the end): {json.dumps(l['targets'], ensure_ascii=False)}
+TARGETS (the learner must be able to SAY these by the end): {json.dumps(targets, ensure_ascii=False)}
+LATER LESSONS teach these — do not use them in this lesson: {json.dumps(later, ensure_ascii=False)}
 ALREADY TAUGHT in earlier lessons:
 {taught_block(prev_items)}
 {SRC}

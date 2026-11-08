@@ -81,11 +81,68 @@ class AskJson(unittest.TestCase):
         self.assertTrue(all("max_tokens" in m.quiet_model("gemma4:31b")["params"] for _ in [0]))
 
 
+class Shape(unittest.TestCase):
+    Q = lambda self, i, it, en: {"id": f"q{i}", "it": it, "en": en, "kind": "question", "build": ["x"]}
+
+    def test_an_instruction_with_a_question_mark_is_refused(self):
+        iss = m.item_shape_issues([self.Q(1, "Lavare la biancheria a 90 gradi?", "Wash the laundry at 90 degrees?")])
+        self.assertTrue(any("not a real English question" in i for i in iss), iss)
+        self.assertTrue(any("infinitive" in i for i in iss), iss)
+
+    def test_real_questions_pass(self):
+        items = [self.Q(1, "Dove sono gli asciugamani puliti?", "Where are the clean towels?"),
+                 self.Q(2, "La lavatrice è libera?", "Is the washing machine free?"),
+                 self.Q(3, "Può portare i camici in lavanderia?", "Can you take the lab coats to the laundry?")]
+        self.assertEqual(m.item_shape_issues(items), [])
+
+    def test_a_negated_copy_is_refused(self):
+        items = [ITEM(1, "I camici devono essere sterilizzati."), ITEM(2, "I camici non devono essere sterilizzati.")]
+        self.assertTrue(any("only the negative of i1" in i for i in m.item_shape_issues(items)))
+
+    def test_a_statement_drilled_as_a_yes_no_question_is_allowed(self):
+        items = [ITEM(1, "La lavatrice è libera."), self.Q(2, "La lavatrice è libera?", "Is the washing machine free?")]
+        self.assertEqual(m.item_shape_issues(items), [])
+
+
+class Plan(unittest.TestCase):
+    def test_every_given_phrase_must_be_a_target(self):
+        lesson = lambda t: {"title": "t", "titleIt": "t", "focus": "f", "pattern": "p", "targets": t}
+        o = {"title": "s", "album": "a", "lessons": [lesson(["Uno.", "Due", "Tre", "Quattro", "Cinque"]),
+                                                     lesson(["Sei", "Sette", "Otto", "Nove", "Dieci"])]}
+        os.environ["CH_TARGETS"], m.GIVEN = "given", ["uno", "Undici."]
+        try:
+            iss = m.plan_valid(o)
+        finally:
+            os.environ.pop("CH_TARGETS"); m.GIVEN = []
+        self.assertEqual(len(iss), 1, iss)
+        self.assertIn("Undici.", iss[0])
+
+
+class Targets(unittest.TestCase):
+    def test_taught_targets_are_dropped_and_later_ones_listed(self):
+        season = {"lessons": [{"targets": ["Uno."]}, {"targets": ["Uno", "Due."]}, {"targets": ["Tre.", "Due"]}]}
+        mine, later = m.lesson_targets(2, season["lessons"][1], [{"it": "uno", "kind": "phrase"}], season)
+        self.assertEqual(mine, ["Due."])
+        self.assertEqual(later, ["Tre.", "Due"])
+
+    def test_must_you_is_refused(self):
+        q = {"id": "q", "it": "Deve lavare la biancheria?", "en": "Must you wash the laundry?", "kind": "question", "build": ["x"]}
+        self.assertTrue(any("Do you have to" in i for i in m.item_shape_issues([q])))
+
+    def test_a_target_repeated_in_a_later_lesson_is_removed(self):
+        lesson = lambda t: {"title": "t", "titleIt": "t", "focus": "f", "pattern": "p", "targets": t}
+        o = {"title": "s", "album": "a", "lessons": [lesson(["Uno", "Due", "Tre"]), lesson(["Sei", "Sette", "Otto", "uno."])]}
+        self.assertEqual(m.plan_valid(o), [])
+        self.assertEqual(o["lessons"][1]["targets"], ["Sei", "Sette", "Otto"])
+
+    def test_at_what_time_is_a_real_question(self):
+        q = {"id": "q", "it": "A che ora apre la lavanderia?", "en": "At what time does the laundry open?", "kind": "question", "build": ["x"]}
+        self.assertEqual(m.item_shape_issues([q]), [])
+
+
 class Wiring(unittest.TestCase):
-    def test_only_the_plan_uses_the_shared_thinking_ladder(self):
-        src = CHAIN.read_text()
-        self.assertEqual(src.count("pi.json_with_repair("), 1)
-        self.assertIn('pi.json_with_repair(prompt, "pimsleur-plan"', src)
+    def test_no_step_uses_the_shared_thinking_ladder(self):
+        self.assertNotIn("pi.json_with_repair(", CHAIN.read_text())
 
 
 if __name__ == "__main__":
