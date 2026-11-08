@@ -60,6 +60,7 @@
 .tp-src{display:inline-block;margin:6px 8px 0 0;font-family:var(--fh);font-weight:700;font-size:11.5px;color:var(--muted);background:var(--surface);border-radius:99px;padding:3px 10px}
 .tp-hint{color:var(--muted);font-size:13.5px;text-align:center;padding:26px 14px;line-height:1.55}
 .tp-bar{flex:0 0 auto;display:flex;align-items:flex-end;gap:8px;padding:6px 14px 6px}
+.tp-bar .nib-wrap{flex:1;min-width:0}.tp-bar .nib-wrap textarea{width:100%;box-sizing:border-box}
 .tp-bar textarea{flex:1;min-width:0;resize:none;max-height:110px;border:1px solid var(--border);background:var(--bg);color:var(--fg);border-radius:14px;padding:11px 13px;font:inherit;font-size:15px;line-height:1.35}
 .tp-send{flex:0 0 auto;width:46px;height:46px;border-radius:50%;border:none;background:var(--accent);color:#fff;font-size:20px}
 .tp-send:disabled{opacity:.45}
@@ -456,6 +457,21 @@
   // One engine, one generation at a time: answers and translations queue behind each other.
   let llmQ = Promise.resolve();
   const llmRun = args => { const r = llmQ.then(() => PLUG('llm_generate', args)); llmQ = r.catch(() => {}); return r; };
+
+  // ---- nib on the question box: misspellings underlined from the bundled dictionaries (offline), and grammar
+  // suggestions from Gemma when it is on the phone. It shares llmQ, so a check never runs beside an answer.
+  let nibH = null, nibLang = 'en';
+  const nibSync = () => { if (nibH) nibH.set({}); };   // the box was changed from code, not typed
+  document.addEventListener('DOMContentLoaded', async () => {
+    if (!window.nib) return warn('nib not loaded');
+    const onPhone = PLUG ? await PLUG('llm_status').then(st => !!(st && st.downloaded), () => false) : false;
+    nibH = nib.attach(textEl, { lang: nibLang, model: onPhone ? 'device' : 'off', dicts: 'nib/dicts',
+      deviceQueue: fn => { const r = llmQ.then(fn); llmQ = r.catch(() => {}); return r; } });
+  });
+  textEl.addEventListener('input', () => {
+    const l = guessLang(textEl.value);
+    if (nibH && l !== nibLang) { nibLang = l; nibH.set({ lang: l }); }
+  });
   // Double tap on a Veloce bubble shows its translation (IT -> EN, EN -> IT). Translated in the background after the
   // answer, so the tap is instant; a tap before that waits for it. Same 320-token runaway guard as FAST_MAX_TOKENS.
   // Revealing it also has Lucrezia read it aloud (her English voice for English, see /api/oral/say); 🔊 replays it.
@@ -587,7 +603,7 @@
     if (!(await ensureFastReady())) return;
     busy = true; sendBtn.disabled = true; unlockAudio(); stopSpeaking(true);
     if (hlOpen) { hlOpen = false; paintHl(); }
-    textEl.value = ''; textEl.style.height = 'auto';
+    textEl.value = ''; textEl.style.height = 'auto'; nibSync();
     history.push({ role: 'user', content: text }); const uEl = o.reask ? null : addMsg('u', esc(text));
     const stEl = addMsg('st', '<span class="spinc"></span><span class="stt">⚡ Preparo…</span><button class="tp-chip" id="tp-fx" style="margin-left:8px">⏹ Interrompi</button>');
     const setSt = t => { const x = stEl.querySelector('.stt'); if (x) x.textContent = t; };
@@ -664,7 +680,7 @@
     if (mode === 'fast' && !o.deep) return askFast(text, o);
     busy = true; sendBtn.disabled = true; unlockAudio(); stopSpeaking(true);
     if (hlOpen) { hlOpen = false; paintHl(); }   // give the answer the room (chips stay one tap away)
-    textEl.value = ''; textEl.style.height = 'auto';
+    textEl.value = ''; textEl.style.height = 'auto'; nibSync();
     history.push({ role: 'user', content: text }); if (!o.reask) addMsg('u', esc(text));
     const rid = 'ph' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
     const stEl = addMsg('st', '<span class="spinc"></span><span class="stt">Lucrezia sta pensando…</span>');
@@ -804,7 +820,7 @@
   }
   // Show what was heard, right above the mic, and send after a short countdown.
   function offerHeard(txt, via) {
-    textEl.value = txt;
+    textEl.value = txt; nibSync();
     let n = 3;
     const show = () => heard('Ho sentito' + (via ? ' (' + via + ')' : '') + ': <span class="h-q">«' + esc(txt) + '»</span><span class="h-act"><button id="tp-h-send">Invia ora (' + n + ')</button><button id="tp-h-edit">✎ Modifica</button></span>');
     show();
