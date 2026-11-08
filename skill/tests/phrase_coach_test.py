@@ -436,12 +436,13 @@ class MultiPhrase(unittest.TestCase):
         r = run_coach(multi_script(), self.MSG)
         self.assertEqual(len(chain._HOW.findall(r["content"])), 3)
 
-    def test_teach_item_missing_a_how_its_built_section_is_asked_again_then_fails(self):
+    def test_teach_item_missing_a_how_its_built_section_is_asked_again_then_left_out(self):
         s = multi_script(answers={"teach_item": "No steps here."})
-        with self.assertRaises(RuntimeError) as cm:
-            run_coach(s, self.MSG)
-        self.assertIn("How it", str(cm.exception))
+        r = run_coach(s, self.MSG)
         self.assertIn("exactly 1", [c for c in s.calls if c[0] == "teach_item"][-1][2])
+        self.assertEqual([c[0] for c in s.calls].count("teach_item"), 6)            # each section asked twice
+        self.assertEqual(r["content"].count("This section could not be written"), 3)
+        self.assertIsNotNone(chain.phrase_block(r["content"]))                      # the reply still finishes
 
     def test_multi_teach_is_one_call_per_phrase_plus_a_shared_call(self):
         s = multi_script()
@@ -456,8 +457,9 @@ class MultiPhrase(unittest.TestCase):
 
     def test_single_phrase_teach_also_requires_how_its_built(self):
         s = Script(NEW, answers={"teach_item": "1. a\n2. b\n3. c"})
-        with self.assertRaises(RuntimeError):
-            run_coach(s, [{"role": "user", "content": "how do I say hello"}])
+        r = run_coach(s, [{"role": "user", "content": "how do I say hello"}])
+        self.assertEqual([c[0] for c in s.calls].count("teach_item"), 2)
+        self.assertIn("This section could not be written", r["content"])
 
     def test_a_flagged_item_is_rebuilt_alone(self):
         fixed = {**M_ITEMS[1], "it": "Chi è il mio tutor di percorso?"}
@@ -1056,6 +1058,100 @@ class Route(unittest.TestCase):
         self.assertEqual(self.c.post("/ask/phrase/api/chat", json={"x": 1}).status_code, 400)
         self.assertEqual(self.c.get("/ask/phrase/api/tags").json()["models"][0]["name"], "phrase-coach")
         self.assertIn("completion", self.c.post("/ask/phrase/api/show", json={"model": "phrase-coach"}).json()["capabilities"])
+
+
+class Routing(unittest.TestCase):
+    """What the learner wants decides the reply: words, phrases, a full lesson, or a question back when it is unclear."""
+    VERBS = "Can you list the Italian verbs for 'give', 'bring', and 'take', and 'put'"
+    WORDS = {"words": [{"en": e, "it": i, "pos": "verb", "note": n, "example_it": x, "example_en": y} for e, i, n, x, y in [
+        ("give", "dare", "irregular: do, dai, dà", "Mi dai il libro?", "Will you give me the book?"),
+        ("bring", "portare", "", "Porto il caffè.", "I'll bring the coffee."),
+        ("take", "prendere", "", "Prendo il treno.", "I take the train."),
+        ("put", "mettere", "", "Metti la flebo qui.", "Put the drip here.")]]}
+    FOUR = {**NEW, "meaning": "the Italian verbs", "phrases": [{"en": f"the Italian verb for '{w}'", "situation": ""} for w in ("give", "bring", "take", "put")]}
+
+    def vocab_script(self, understand):
+        return Script(understand, answers={"answer": json.dumps(self.WORDS)})
+
+    def test_model_says_vocab_gives_a_word_list_without_building_phrases(self):
+        s = self.vocab_script({"kind": "vocab", "meaning": "verbs"})
+        r = run_coach(s, [{"role": "user", "content": self.VERBS}])
+        self.assertEqual([c[0] for c in s.calls], ["understand", "answer"])
+        self.assertEqual(r["kind"], "vocab")
+        for w in ("**1) dare** — give", "**2) portare**", "**3) prendere**", "**4) mettere**", "*Mi dai il libro?*"):
+            self.assertIn(w, r["content"])
+        self.assertNotIn("How it's built", r["content"])
+        blk = chain.phrase_block(r["content"])
+        self.assertEqual(blk["it"], "dare, portare, prendere, mettere")
+        self.assertEqual([i["it"] for i in blk["items"]][:2], ["Mi dai il libro?", "Porto il caffè."])   # whole sentences to drill
+
+    def test_a_new_request_that_asks_for_words_becomes_vocab(self):
+        s = self.vocab_script(self.FOUR)                       # the misreading that crashed on 2026-11-08
+        r = run_coach(s, [{"role": "user", "content": self.VERBS}])
+        self.assertEqual(r["kind"], "vocab")
+        self.assertNotIn("build", [c[0] for c in s.calls])
+
+    def test_words_keyword_skips_the_classifier(self):
+        s = self.vocab_script({"kind": "new_request"})
+        r = run_coach(s, [{"role": "user", "content": "words: give, bring, take, put"}])
+        self.assertEqual([c[0] for c in s.calls], ["answer"])
+        self.assertIn("LEARNER ASKS:\ngive, bring, take, put", s.calls[0][2])
+        self.assertEqual(r["kind"], "vocab")
+
+    def test_phrase_keyword_builds_phrases_even_when_the_model_says_words(self):
+        s = Script({"kind": "vocab", "meaning": "", "phrases": []})
+        r = run_coach(s, [{"role": "user", "content": "phrase: what's the word for the badge office"}])
+        self.assertEqual(r["kind"], "new_request")
+        self.assertIn("build", [c[0] for c in s.calls])
+
+    def test_lesson_keyword_points_at_the_lesson_button_and_calls_no_model(self):
+        s = Script(NEW)
+        r = run_coach(s, [{"role": "user", "content": "lesson: the passato prossimo"}])
+        self.assertEqual(s.calls, [])
+        self.assertEqual(r["kind"], "lesson")
+        self.assertIn("Make a lesson from this", r["content"])
+        self.assertIn("the passato prossimo", r["content"])
+
+    def test_unsure_asks_with_one_button_per_reading(self):
+        s = Script({"kind": "clarify", "clarify_question": "Do you want the words, or full sentences?", "options": ["vocab", "new_request"]})
+        r = run_coach(s, [{"role": "user", "content": "hospital laundry"}])
+        self.assertEqual([c[0] for c in s.calls], ["understand"])
+        self.assertTrue(r["content"].startswith("Do you want the words, or full sentences?"))
+        m = re.search(r"```choices\n(.+?)\n```", r["content"], re.S)
+        self.assertEqual(json.loads(m.group(1))["choices"], [{"label": "Just the words", "send": "words: hospital laundry"},
+                                                             {"label": "Build full phrases", "send": "phrase: hospital laundry"}])
+
+    def test_clarify_needs_two_known_options(self):
+        self.assertIsNotNone(chain._valid_understand({"kind": "clarify", "clarify_question": "?", "options": ["vocab"]}))
+        self.assertIsNotNone(chain._valid_understand({"kind": "clarify", "clarify_question": "?", "options": ["vocab", "poem"]}))
+        self.assertIsNone(chain._valid_understand({"kind": "clarify", "clarify_question": "?", "options": ["vocab", "lesson"]}))
+
+    def test_keyword_parsing(self):
+        self.assertEqual(chain.keyword_kind("Words: dare"), ("vocab", "dare"))
+        self.assertEqual(chain.keyword_kind("say - where is the ward?"), ("new_request", "where is the ward?"))
+        self.assertEqual(chain.keyword_kind("How do I say where is the ward?"), (None, "How do I say where is the ward?"))
+
+
+class Resilience(unittest.TestCase):
+    ONE_WORD = {**BUILD, "it": "dare", "variants": [], "literal_trap": {"it": "dare", "why": "same"}}
+
+    def test_a_one_word_phrase_needs_only_one_step(self):
+        s = Script(NEW, answers={"build": json.dumps(self.ONE_WORD), "teach_item": "**How it's built**\n1. **dare** (to give): the infinitive."})
+        r = run_coach(s, [{"role": "user", "content": "How do I say give?"}])
+        self.assertIn("1. **dare**", r["content"])
+        self.assertEqual([c[0] for c in s.calls].count("teach_item"), 1)
+
+    def test_a_section_that_cannot_be_written_is_left_out_not_fatal(self):
+        s = Script(NEW, answers={"teach_item": "**How it's built**\n1. **sono**"})      # a full sentence with one step, twice
+        r = run_coach(s, [{"role": "user", "content": "How do I say I'm here for my specialization?"}])
+        self.assertIn("This section could not be written", r["content"])
+        self.assertIn("**The pattern**", r["content"])
+        self.assertIsNotNone(chain.phrase_block(r["content"]))
+
+    def test_check_built_minimum(self):
+        chain.check_built("**How it's built**\n1. **dare**", 1, 1)
+        with self.assertRaises(ValueError):
+            chain.check_built("**How it's built**\n1. **dare**", 1)
 
 
 if __name__ == "__main__":

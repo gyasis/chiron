@@ -333,6 +333,8 @@ function switchMode(next, note, hero = true) {
 function bindPhrase(msg) {
   const raw = msg.dataset.raw || '';
   if (parseFenceBlock(raw, 'drill').ok) return bindDrill(msg);
+  const ch = parseFenceBlock(raw, 'choices');
+  if (ch.ok) return bindChoices(msg, ch.data);
   const res = parsePhraseBlock(raw);
   if (res.ok) msg.dataset.phrase = JSON.stringify(res.data);
   else console.warn('[chiron] phrase block not bound:', res.reason);
@@ -347,6 +349,7 @@ function bindPhrase(msg) {
 
 /* ─── Pimsleur live: the pill, the drill intent, and the coach's `drill` reply ─── */
 
+let SEND = null;          // sends a message as the learner; set once the chat is wired
 let LAST_SEND_TS = 0;      // when the learner last sent something in this page; a fresh `drill` reply opens the player, a restored one does not
 const FRESH_REPLY_MS = 120000;
 const composerEl = () => document.querySelector('#host .acolyte-input');
@@ -408,6 +411,30 @@ function runDrillIntent(kind) {
   const row = buildPimsleurAction(document, lines, body => api('POST', '/api/pimsleur/from-phrases', body), openLiveDrill);
   note.appendChild(row);
   row.querySelector('.px-open')?.click();            // straight to the confirm
+}
+
+/** A coach reply that asks what the learner wants: one button per reading. A button sends the question again with its
+ *  keyword ("words: …"), so the coach does not have to guess a second time. */
+function bindChoices(msg, data) {
+  for (const pre of msg.querySelectorAll('pre')) if (pre.querySelector('code.language-choices') || /^\s*\{\s*"choices"/.test(pre.textContent)) pre.hidden = true;
+  if (msg.querySelector('.ask-coach-extras') || !Array.isArray(data?.choices)) return;
+  const box = document.createElement('div');
+  box.className = 'ask-coach-extras ask-choices';
+  for (const c of data.choices) {
+    if (!c || typeof c.send !== 'string' || !c.send.trim()) continue;
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'px-open';
+    b.textContent = String(c.label || c.send);
+    b.addEventListener('click', () => {
+      if (!SEND) { console.warn('[chiron] choice not sent: the chat is not ready'); return; }
+      box.querySelectorAll('button').forEach(x => { x.disabled = true; });
+      LAST_SEND_TS = Date.now();
+      SEND(c.send.trim());
+    });
+    box.appendChild(b);
+  }
+  msg.appendChild(box);
 }
 
 /** A coach reply of kind "drill": hide its machine block, add a re-open button, and open the player when the reply is fresh. */
@@ -1029,6 +1056,7 @@ function wireSteps(box) {
 function wireDispatch(handle, panel) {
   const box = panel.querySelector('.acolyte-messages');
   if (!box) return;
+  SEND = text => handle.send(text);
   wireSteps(box);
   let timer;
   new MutationObserver(() => {
@@ -1048,8 +1076,10 @@ function wireDispatch(handle, panel) {
         });
       }
       box.querySelectorAll('.acolyte-msg.assistant:not([data-acts])').forEach(msg => {
-        if (!msg.querySelector('.acolyte-msg-body')?.textContent.trim()) return;
+        const said = msg.querySelector('.acolyte-msg-body')?.textContent.trim();
+        if (!said) return;
         msg.dataset.acts = '1';
+        if (/^⚠\s*Answer interrupted/.test(said)) return;            // an error has nothing to listen to, card or drill
         dressSources(msg);
         msg.appendChild(buildActs(handle, panel, msg));
       });
