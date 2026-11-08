@@ -1188,6 +1188,7 @@ async def _drill(run: Run) -> None:
 
 VOCAB_SYS = """You are a concise Italian vocabulary coach for an English speaker. The learner asked for Italian WORDS, not sentences.
 Give one entry per word they asked for, in their order; when they ask for "the verbs for X", give the verb an Italian speaker would really use for X (and at most one common alternative in "note").
+Give the word Italians actually use in that setting (in a hospital: what staff say on the ward), not a near-synonym. Two different things never share one Italian word: if two English words would get the same Italian word, one of them is wrong, so find the right one (scrubs are la divisa or il pigiama chirurgico; il camice is the white coat).
 Reply with ONLY a JSON object:
 {"words": [{"en": "the English word as they asked", "it": "the Italian dictionary form (infinitive for a verb, singular with its article for a noun: il letto, la flebo)", "pos": "verb|noun|adjective|adverb|expression", "note": "one short line that matters for use: irregular forms, gender, a common alternative and when it fits; or empty", "example_it": "one short natural Italian sentence using it", "example_en": "its English meaning"}]}"""
 
@@ -1205,7 +1206,7 @@ def _valid_vocab(o):
 async def _vocab(run: Run) -> None:
     """A word list: each Italian word with a use note and one example sentence. The example sentences are the reply's
     phrases, so the basket, cards and drill get whole sentences rather than single words."""
-    o = await json_step(run, "vocab", MODEL_STRUCT, VOCAB_SYS, f"EARLIER TURNS:\n{run.transcript()}\n\nLEARNER ASKS:\n{run.user}", _valid_vocab)
+    o = await json_step(run, "vocab", MODEL_THINK, VOCAB_SYS, f"EARLIER TURNS:\n{run.transcript()}\n\nLEARNER ASKS:\n{run.user}", _valid_vocab)
     words = o["words"]
     out = []
     for k, w in enumerate(words, 1):
@@ -1240,8 +1241,7 @@ async def _clarify(run: Run) -> None:
     question again with its keyword, so the answer is not classified a second time."""
     opts = list(dict.fromkeys(run.understand["options"]))[:3]
     choices = [{"label": _CLARIFY_LABEL[o], "send": _CLARIFY_PREFIX[o] + run.user} for o in opts]
-    run.emit(str(run.understand["clarify_question"]).strip() + "\n\n"
-             + "\n".join(f"- **{c['label']}**" for c in choices)
+    run.emit(str(run.understand["clarify_question"]).strip()
              + "\n\n_Tip: start a message with **words:**, **phrase:** or **lesson:** to choose directly._"
              + "\n\n```choices\n" + _json_fence({"choices": choices}) + "\n```")
 

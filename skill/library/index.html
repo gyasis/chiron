@@ -21,6 +21,14 @@
 html,body{height:100%}
 body{margin:0;font-family:var(--font-b);background:var(--chiron-bg);color:var(--chiron-fg);display:flex;flex-direction:column}
 .topbar{flex:0 0 auto;height:58px;background:var(--chiron-surface);border-bottom:1px solid var(--chiron-border);display:flex;align-items:center;gap:14px;padding:0 18px}
+/* the "N running" pill (/ask/running.js): every job the server is working on, with its elapsed time */
+.chiron-running{position:relative}
+.chiron-running-pill{font:inherit;font-size:13px;padding:6px 12px;border-radius:999px;border:1px solid var(--chiron-border);background:var(--chiron-elevated);color:var(--chiron-fg);cursor:pointer;white-space:nowrap}
+.chiron-running-list{position:absolute;right:0;top:calc(100% + 6px);z-index:60;width:min(360px,90vw);max-height:60vh;overflow:auto;padding:6px;border-radius:12px;border:1px solid var(--chiron-border);background:var(--chiron-surface);box-shadow:0 8px 24px rgba(0,0,0,.12)}
+.chiron-running-row{display:block;padding:8px 10px;border-radius:8px;color:var(--chiron-fg);text-decoration:none}
+.chiron-running-row:hover{background:var(--chiron-elevated)}
+.chiron-running-row .crr-t{font-size:13.5px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.chiron-running-row .crr-d{font-size:12px;color:var(--chiron-muted)}
 .brand{display:flex;align-items:center;gap:9px;font-family:var(--font-h);font-weight:800;color:var(--chiron-accent);font-size:16px}
 .brand .mk{width:28px;height:28px;border-radius:8px;background:var(--chiron-accent);color:#fff;display:grid;place-items:center;font-size:14px}
 .search{flex:1;max-width:560px;position:relative}
@@ -541,5 +549,10 @@ body,.topbar,.pills,.facets,.row,.rhead{transition:background .2s,color .2s,bord
 </div>
 <script src="vendor/fflate.min.js"></script>
 <script src="library.js?v=20260718c"></script>
+<script type="module">
+import { mountRunning } from '/ask/running.js';
+const bar = document.querySelector('.topbar'), jobs = bar && bar.querySelector('[onclick^="LIB.jobs"]');
+if (bar) { const r = mountRunning(document, bar); if (jobs) jobs.before(r.el); }
+</script>
 <script>if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));}</script>
 </body></html>
