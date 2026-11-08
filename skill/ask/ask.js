@@ -784,6 +784,7 @@ function adoptControls(handle, stats) {
   }).observe(panel.querySelector('.acolyte-messages'), { childList: true, subtree: true });
 
   autogrow(panel.querySelector('.acolyte-input'));
+  wireNib(panel.querySelector('.acolyte-input'));
   wireLivePill(panel);
   wireDock(panel);
   wireDispatch(handle, panel);
@@ -820,6 +821,21 @@ function autogrow(ta) {
   ta.form?.addEventListener('submit', () => setTimeout(fit, 0));
   ta.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey) setTimeout(fit, 0); });
   fit();
+}
+
+/** nib: dictionary underlines on the composer; grammar from `nib serve` on a desktop.
+ *  The phone cannot reach the desktop's nib serve (it binds 127.0.0.1), so there it stays dictionary only. */
+function wireNib(ta) {
+  if (!ta || !window.nib) return;
+  const guess = t => ((t.match(/\b(il|lo|la|le|gli|di|che|è|per|con|una|un|del|della|non|sono|nel|alla|come|anche|dei|delle)\b/gi) || []).length
+    > (t.match(/\b(the|and|of|is|are|to|with|for|that|this|in|on|as|it|you|can|what)\b/gi) || []).length ? 'it' : 'en');
+  let lang = 'en';
+  const h = nib.attach(ta, { lang, model: /Android|iPhone|iPad/i.test(navigator.userAgent) ? 'off' : 'auto', dicts: './nib/dicts' });
+  ta.addEventListener('input', () => { const l = guess(ta.value); if (l !== lang) h.set({ lang: lang = l }); });
+  // acolyte clears the field on send without an input event; redraw so no old underline stays
+  const resync = () => setTimeout(() => h.set({}), 0);
+  ta.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey) resync(); });
+  ta.closest('.acolyte-input-row')?.querySelector('.acolyte-send')?.addEventListener('click', resync);
 }
 
 function setTitle(t) {

@@ -201,6 +201,9 @@
    on the right of the field, which `order` does without touching the DOM. */
 #host .acolyte-mic { order: 2; }
 #host .acolyte-input { order: 1; }
+/* nib wraps the textarea; the wrap takes its place in the row */
+#host .acolyte-input-row > .nib-wrap { order: 1; flex: 1; min-width: 0; }
+#host .nib-wrap .acolyte-input { width: 100%; box-sizing: border-box; }
 #host .acolyte-send { order: 3; }
 #host .acolyte-mic {
   background: var(--chiron-elevated); border: 0; color: var(--chiron-fg-secondary);
