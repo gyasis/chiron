@@ -85,6 +85,19 @@ class ChainWiring(unittest.TestCase):
         self.assertNotIn("verdict is None or verdict.get(\"pass\")", src)
 
 
+class Markup(unittest.TestCase):
+    def test_em_attributes_are_stripped_before_the_check(self):
+        os.environ.setdefault("CH_TOPIC", "test topic")
+        os.environ.setdefault("CHIRON_LEDGER_DIR", str(TMP / "ledger"))
+        sp = importlib.util.spec_from_file_location("pi_chain", CHAINS / "2026-06-30_chiron-pure-italian-lesson-chain" / "run.py")
+        pi = importlib.util.module_from_spec(sp)
+        sp.loader.exec_module(pi)
+        got = pi.plain_markup({"introHtml": 'Say <em style="color: #d32f2f;">ciao</em> and <STRONG class="k">grazie</STRONG>',
+                               "vocab": [{"note": "<em>già</em>"}], "n": 3})
+        self.assertEqual(got, {"introHtml": "Say <em>ciao</em> and <strong>grazie</STRONG>",
+                               "vocab": [{"note": "<em>già</em>"}], "n": 3})
+
+
 class Completeness(unittest.TestCase):
     def _lesson(self, name, log_text):
         out = TMP / "gen" / name

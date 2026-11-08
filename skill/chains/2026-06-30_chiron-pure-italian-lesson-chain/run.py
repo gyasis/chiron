@@ -139,6 +139,20 @@ def extract_json(s):
     return json.loads(s[st:], strict=False)
 
 
+_TAG_ATTRS = re.compile(r"<(em|strong)\s[^>]*>", re.I)
+
+
+def plain_markup(o):
+    """<em style="…"> -> <em> (and <strong>) in every string: the lesson theme styles them, and the checks count bare tags."""
+    if isinstance(o, str):
+        return _TAG_ATTRS.sub(lambda m: f"<{m.group(1).lower()}>", o)
+    if isinstance(o, list):
+        return [plain_markup(x) for x in o]
+    if isinstance(o, dict):
+        return {k: plain_markup(v) for k, v in o.items()}
+    return o
+
+
 async def llm(md, prompt, user_input="go"):
     md = chiron_models.thinking_off(md)
     instr = prompt + "\n\n{input}" if "{input}" not in prompt else prompt
@@ -180,7 +194,7 @@ async def json_with_repair(prompt, name, md, validate_fn=None, max_repair=3, via
                     print(f"[repair] {name} [{tag}]: rate-limited (429) — skipping retries, falling to next model", flush=True)
                     break   # advance the ladder to the next model immediately; don't hammer a capped provider
                 print(f"[repair] {name} [{tag}] {attempt}: LLM errored ({e})", flush=True); await asyncio.sleep(3); continue
-            try: obj = extract_json(last)
+            try: obj = plain_markup(extract_json(last))
             except Exception as e:
                 cur = prompt + f"\n\n## PREVIOUS INVALID JSON\n{e}\nReturn ONLY corrected valid JSON. Escape every \" and newline inside string values."; continue
             iss = validate_fn(obj) if validate_fn else None
