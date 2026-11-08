@@ -324,9 +324,12 @@ def _lesson_complete(out: Path, log: Path):
         text = log.read_text(errors="ignore")
     except Exception:
         text = ""
-    m = re.search(r"authored\s+(\d+)\s*/\s*(\d+)\s+chapters", text)
-    if m and int(m.group(1)) < int(m.group(2)):
-        return False, f"only {m.group(1)}/{m.group(2)} chapters authored"
+    # the log is appended across retries: the last count is the one that describes this lesson
+    counts = re.findall(r"authored\s+(\d+)\s*/\s*(\d+)\s+(chapters|sections)", text)
+    if counts and int(counts[-1][0]) < int(counts[-1][1]):
+        return False, f"only {counts[-1][0]}/{counts[-1][1]} {counts[-1][2]} authored"
+    if (out / "extras.NEEDS_REVIEW").exists():
+        return False, "the lesson extras (match game, flashcards, closing) were not written"
     m2 = re.search(r"Total rendered:\s*(\d+)\s*/\s*(\d+)\s+widgets\s*\((\d+)\s+failed\)", text)
     if m2 and int(m2.group(3)) > 0:
         return False, f"{m2.group(3)} widget(s) failed to render"
@@ -1015,11 +1018,20 @@ def _reconcile() -> None:
     same job ran on two workers concurrently). Bakes use status 'baking', never 'running', so a 'running'
     job is always text-gen — no lane check needed here."""
     for j in JOBS.values():
-        if j.get("status") == "running":
-            sl = j.get("slug") or ""
-            if sl and (GEN / sl / "lesson.html").exists():
-                j.update(status="ready", finished=j.get("finished") or _now())
+        if j.get("status") == "running" and _wrote_lesson(j):
+            j.update(status="ready", finished=j.get("finished") or _now())
     _save()
+
+
+def _wrote_lesson(j: dict) -> bool:
+    """True when this job's lesson.html exists and was written after the job started. A lesson.html older than
+    the job is the previous version of a regenerated lesson, not this job's output."""
+    sl = j.get("slug") or ""
+    lh = GEN / sl / "lesson.html"
+    if not sl or not lh.exists():
+        return False
+    started = _ts(j.get("started") or "")
+    return started is None or lh.stat().st_mtime >= started
 
 
 app = FastAPI(title="Chiron generate-server")
@@ -1209,8 +1221,7 @@ def _resume_queued_generations() -> None:
     """A restart wipes the in-memory _GEN_Q, so jobs left 'queued' (or 'running' but with no text on
     disk — died mid-generation) would hang forever. Re-enqueue them so the queue survives a restart."""
     for j in list(JOBS.values()):
-        sl = j.get("slug") or ""
-        if (GEN / sl / "lesson.html").exists():
+        if _wrote_lesson(j):
             continue                                    # already produced text → nothing to resume
         if j.get("status") == "queued":
             _GEN_Q.put(j)

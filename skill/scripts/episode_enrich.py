@@ -9,12 +9,12 @@ null teaching slots the Player renders:
 
 "Teach the Italian OF the dialogue" (PRD §2 step 4). One LLM call per SCENE (the FSI unit) so the
 model sees the whole situation. Uses the SAME house pattern as the chains: PromptChain single-step
-calls, model FALLBACK ladder (glm@latest → deepseek-flash@latest, both Ollama Cloud — NO Gemini), self-repair on bad JSON/validation,
+calls, model FALLBACK ladder (gemma4:31b → deepseek-flash@latest, both Ollama Cloud, thinking off — NO Gemini), self-repair on bad JSON/validation,
 `over_worklist` bounded loop. Per-scene RESUME (skip already-enriched scenes unless CH_FORCE=1),
 one-time `.bak` before writing. NOT hand-rolled orchestration (R-PC1).
 
 Run:  ~/miniconda3/bin/python3 episode_enrich.py <episode_dir_or_transcript.json>
-        [--force] [--concurrent] [--ladder glm@latest,deepseek-flash@latest]
+        [--force] [--concurrent] [--ladder gemma4:31b,deepseek-flash@latest]
 Env:  OLLAMA_API_KEY / GEMINI_API_KEY|GOOGLE_API_KEY / OPENAI_API_KEY (else read from ~/dev/.env);
       CH_ENRICH_LADDER · CH_FORCE · CH_LEARNER (default Gyasi)
 """
@@ -75,14 +75,14 @@ def load_persona_register(name: str | None = None) -> str:
             pass
     return ""
 
-# Model ladder: glm@latest primary (Ollama Cloud), gemini-flash a DIFFERENT family fallback (mirrors the chains).
-_DEFAULT_LADDER = os.environ.get("CH_ENRICH_LADDER", "glm@latest,deepseek-flash@latest")
+# Model ladder: gemma4:31b primary, deepseek-flash fallback, both Ollama Cloud with thinking off (glm cannot switch it off).
+_DEFAULT_LADDER = os.environ.get("CH_ENRICH_LADDER", "gemma4:31b,deepseek-flash@latest")
 
 
 # ── model helpers (compact copies of the chain's — PromptChain-based, per-call explicit model) ──
 def ollama(name: str, temperature: float = 0.4) -> dict:
-    return {"name": f"ollama_chat/{chiron_models.resolve(name)}",
-            "params": {"api_base": "https://ollama.com", "api_key": OLLAMA_KEY, "temperature": temperature}}
+    return {"name": f"openai/{chiron_models.resolve(name)}",
+            "params": {"api_base": "https://ollama.com/v1", "api_key": OLLAMA_KEY, "temperature": temperature}}
 
 
 def model_for(name: str, temperature: float = 0.4) -> dict:
@@ -105,10 +105,11 @@ def _ladder() -> list[str]:
         if m.startswith("gpt-") and not OPENAI_KEY:
             continue
         out.append(m)
-    return out or ["glm@latest"]
+    return out or ["gemma4:31b"]
 
 
 def extract_json(s: str):
+    chiron_models.refuse_leaked(s)
     s = re.sub(r"^```(?:json)?\s*|\s*```$", "", s.strip(), flags=re.M).strip()
     st = next((i for i, ch in enumerate(s) if ch in "{["), -1)
     if st < 0:
@@ -131,6 +132,7 @@ def extract_json(s: str):
 
 
 async def _llm(md: dict, prompt: str) -> str:
+    md = chiron_models.thinking_off(md)
     chain = PromptChain(models=[md], instructions=[prompt + "\n\n{input}"])
     return await chain.process_prompt_async("go")
 
@@ -313,7 +315,7 @@ def main():
     ap.add_argument("target", help="episode dir OR path to transcript.json")
     ap.add_argument("--force", action="store_true", help="re-enrich every scene (ignore resume)")
     ap.add_argument("--concurrent", action="store_true", help="run scenes in parallel (sem=4)")
-    ap.add_argument("--ladder", default="", help="override model ladder, e.g. glm@latest,deepseek-flash@latest")
+    ap.add_argument("--ladder", default="", help="override model ladder, e.g. gemma4:31b,deepseek-flash@latest")
     ap.add_argument("--lang", default="", help="target language code (it/de/es/fr…); default it")
     ap.add_argument("--persona", default="", help="tutor persona pack name; default lucrezia")
     args = ap.parse_args()

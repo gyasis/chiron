@@ -28,6 +28,7 @@ def fill(t, **s):
 
 
 def extract_json(s):
+    chiron_models.refuse_leaked(s)
     s = re.sub(r"^```(?:json)?\s*|\s*```$", "", s.strip(), flags=re.M).strip()
     st = next((i for i, c in enumerate(s) if c in "{["), -1)
     if st < 0:
@@ -50,8 +51,9 @@ def extract_json(s):
 
 
 async def llm(prompt):
-    ch = PromptChain(models=[{"name": f"openai/{chiron_models.resolve('glm@latest')}",
-                              "params": {"api_base": "https://ollama.com/v1", "api_key": OLLAMA_KEY, "temperature": 0.4}}],
+    md = chiron_models.thinking_off({"name": f"openai/{chiron_models.resolve(os.environ.get('CH_MODEL_STRUCT', 'gemma4:31b'))}",
+                                     "params": {"api_base": "https://ollama.com/v1", "api_key": OLLAMA_KEY, "temperature": 0.4}})
+    ch = PromptChain(models=[md],
                      instructions=[prompt + "\n\n{input}"])
     return await ch.process_prompt_async("go")
 

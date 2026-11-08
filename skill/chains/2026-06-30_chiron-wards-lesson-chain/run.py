@@ -63,7 +63,7 @@ LEARNER = os.environ.get("CH_LEARNER", "Gyasi")
 TOPIC = os.environ.get("CH_TOPIC", "")
 SETTING = os.environ.get("CH_SETTING", "")
 STAGE = os.environ.get("CH_STAGE", "author")
-MODEL = os.environ.get("CH_MODEL_REASON", "glm@latest")
+MODEL = os.environ.get("CH_MODEL_REASON", "gemma4:31b")
 SLUG = os.environ.get("CH_SLUG") or "chiron-ward-" + re.sub(r"[^a-z0-9]+", "-", (TOPIC or "lesson").lower()).strip("-")
 OUT = GEN / SLUG
 
@@ -98,6 +98,7 @@ def load_prompt(name): return (PROMPTS / name).read_text()
 
 
 def extract_json(s):
+    chiron_models.refuse_leaked(s)
     s = re.sub(r"^```(?:json)?\s*|\s*```$", "", s.strip(), flags=re.M).strip()
     start = next((i for i, ch in enumerate(s) if ch in "{["), -1)
     if start < 0: return json.loads(s, strict=False)
@@ -119,6 +120,7 @@ def extract_json(s):
 
 
 async def llm(model_dict, prompt, user_input="go"):
+    model_dict = chiron_models.thinking_off(model_dict)
     instr = prompt + "\n\n{input}" if "{input}" not in prompt else prompt
     chain = PromptChain(models=[model_dict], instructions=[instr])
     try: chain.register_callback(obs.make_callback())

@@ -73,13 +73,11 @@ STAGE = os.environ.get("CH_STAGE", "plan")  # plan | chapters | assemble | all
 SLUG = os.environ.get("CH_SLUG") or "chiron-" + re.sub(r"[^a-z0-9]+", "-", SUBJECT.lower()).strip("-") + "-amboss"
 OUT = GEN / SLUG
 
-# Model probe (2026-06-29): glm-5.2 is the newest/strong GLM (glm-4.6 RETIRED 2026-06-16) — fast (~2s)
-# and returns clean JSON content. deepseek-v3.2 is a hidden-reasoner → returns EMPTY content here.
-# qwen3-coder:480b also works. STRONG default = glm-5.2. The chapter-author/verify SEAM can also use
-# the strongest model — headless Claude Code (Opus/Sonnet) via `claude -p` — set CH_CHAPTER_ENGINE=claude.
-MODEL_REASON = os.environ.get("CH_MODEL_REASON", "glm@latest")
-MODEL_STRUCT = os.environ.get("CH_MODEL_STRUCT", "glm@latest")
-CHAPTER_ENGINE = os.environ.get("CH_CHAPTER_ENGINE", "glm")  # "glm" (glm-5.2) | "claude" (claude -p headless)
+# Models run with thinking switched off (llm() -> chiron_models.thinking_off). glm is not the default: it cannot
+# switch thinking off. The chapter-author/verify SEAM can use headless Claude Code via `claude -p` — set CH_CHAPTER_ENGINE=claude.
+MODEL_REASON = os.environ.get("CH_MODEL_REASON", "gemma4:31b")
+MODEL_STRUCT = os.environ.get("CH_MODEL_STRUCT", "gemma4:31b")
+CHAPTER_ENGINE = os.environ.get("CH_CHAPTER_ENGINE", "model")  # "claude" = claude -p headless; anything else = MODEL_STRUCT
 
 
 def ollama(model: str, temperature: float = 0.4) -> dict:
@@ -124,6 +122,7 @@ def extract_json(s: str):
     strict=False tolerates literal newlines/tabs inside strings (LLMs emit these in long
     fields like extractedText/exposition); brace-balancing (string-aware) avoids the greedy
     regex grabbing a stray brace in trailing prose."""
+    chiron_models.refuse_leaked(s)
     s = re.sub(r"^```(?:json)?\s*|\s*```$", "", s.strip(), flags=re.M).strip()
     start = next((i for i, c in enumerate(s) if c in "{["), -1)
     if start < 0:
@@ -147,6 +146,7 @@ def extract_json(s: str):
 
 
 async def llm(model_dict: dict, prompt: str, user_input: str = "go") -> str:
+    model_dict = chiron_models.thinking_off(model_dict)
     instr = prompt + "\n\n{input}" if "{input}" not in prompt else prompt
     chain = PromptChain(models=[model_dict], instructions=[instr])
     try: chain.register_callback(obs.make_callback())
@@ -181,7 +181,7 @@ def claude_p(prompt: str) -> str:
 
 
 async def call_engine(prompt: str, model_dict: dict) -> str:
-    """One model call via the configured strong engine: glm-5.2 (Ollama) or headless Claude (claude -p)."""
+    """One model call via the configured engine: MODEL_STRUCT (Ollama Cloud) or headless Claude (claude -p)."""
     if CHAPTER_ENGINE == "claude":
         return await asyncio.to_thread(claude_p, prompt + "\n\nReturn ONLY the JSON object, no prose.")
     return await llm(model_dict, prompt)

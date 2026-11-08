@@ -5,6 +5,7 @@ from pathlib import Path
 
 os.environ.setdefault("CH_TOPIC", "test topic")
 os.environ.setdefault("CHIRON_LEDGER_DIR", tempfile.mkdtemp(prefix="chiron-pims-rules-"))
+os.environ["CHIRON_SKILL"] = str(Path(__file__).resolve().parent.parent)   # the chain loads its helpers from $CHIRON_SKILL: test THIS tree
 CHAIN = Path(__file__).resolve().parent.parent / "chains" / "2026-10-11_chiron-pimsleur-lesson-chain" / "run.py"
 spec = importlib.util.spec_from_file_location("pims_chain", CHAIN)
 m = importlib.util.module_from_spec(spec)
