@@ -1561,6 +1561,8 @@ def job_steps(ref: str):
     status = (job or {}).get("status") or ("ready" if (out / "lesson.html").exists() else "running")
     finished = status in ("ready", "published", "error", "audio-failed", "done")
     sp = out / "steps.jsonl"
+    if not sp.exists() and (GEN / f"{slug}-plan" / "steps.jsonl").exists():     # a Pimsleur season plans in <slug>-plan/
+        sp = GEN / f"{slug}-plan" / "steps.jsonl"
 
     def _parse(ts):
         try: return _dt.datetime.fromisoformat(ts)
@@ -2381,6 +2383,23 @@ pimsleur_jobs.ORIGIN_OK = lambda request: _anki_origin_ok(request)
 # Live drill: POST /api/pimsleur/live makes the lines in the background while the Ask page plays the earlier ones.
 import pimsleur_live  # noqa: E402
 app.include_router(pimsleur_live.router)
+import running  # noqa: E402
+
+
+@app.get("/running")
+def running_now():
+    """Everything the server is working on right now (lessons, Pimsleur seasons, phrase answers, live-drill audio,
+    dictation builds) plus the jobs that finished in the last few minutes. Every page and the phone poll this."""
+    jobs = list(JOBS.values())
+    for j in jobs:
+        if j.get("status") in running.LIVE:
+            _enrich_job(j, stamp=False)
+    mono = phrase_coach.STORE.clock()
+    runs = [{"id": r.id, "user": r.user, "status": r.status, "age_s": mono - r.started}
+            for r in list(phrase_coach.STORE.runs.values())]
+    with pimsleur_live._LOCK:
+        live = [dict(s) for s in pimsleur_live._SESSIONS.values()]
+    return running.collect(jobs, runs, live, list(dettato.BUILD_JOBS.values()), time.time())
 pimsleur_live.ORIGIN_OK = lambda request: _anki_origin_ok(request)
 threading.Thread(target=lambda: mm_study._load(), daemon=True, name="mm-study-warm").start()   # first tap must not pay the ~4 s index load
 

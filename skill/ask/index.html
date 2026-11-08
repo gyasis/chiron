@@ -68,6 +68,14 @@ button{font:inherit;cursor:pointer}
 .topbar{flex:0 0 auto;height:52px;display:flex;align-items:center;gap:10px;padding:0 18px;
         border-bottom:1px solid var(--chiron-border);background:var(--chiron-bg)}
 .topbar .tt{min-width:0}
+/* the "N running" pill (running.js): every job the server is working on, with its elapsed time */
+.chiron-running{position:relative}
+.chiron-running-pill{font:inherit;font-size:13px;padding:5px 11px;border-radius:999px;border:1px solid var(--chiron-border);background:var(--chiron-elevated);color:var(--chiron-fg);cursor:pointer;white-space:nowrap}
+.chiron-running-list{position:absolute;right:0;top:calc(100% + 6px);z-index:50;width:min(360px,90vw);max-height:60vh;overflow:auto;padding:6px;border-radius:12px;border:1px solid var(--chiron-border);background:var(--chiron-bg);box-shadow:0 8px 24px rgba(0,0,0,.12)}
+.chiron-running-row{display:block;padding:8px 10px;border-radius:8px;color:var(--chiron-fg);text-decoration:none}
+.chiron-running-row:hover{background:var(--chiron-elevated)}
+.chiron-running-row .crr-t{font-size:13.5px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.chiron-running-row .crr-d{font-size:12px;color:var(--chiron-muted)}
 .ttl{font-family:var(--font-h);font-weight:700;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:52vw}
 /* nowrap+ellipsis like .ttl above: the topbar is a FIXED 52px, so any element
    added to the row (the focus chip) squeezes .tt and a wrapping subtitle spills

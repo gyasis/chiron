@@ -15,6 +15,7 @@ import * as steps from './steps.js';
 import { installInAppBridge } from './inapp.js';
 import { isPhraseRequest, parsePhraseBlock, PHRASE_HOST, PHRASE_MODEL } from './phrase-mode.js';
 import { stillWriting } from './still-writing.js';
+import { mountRunning } from './running.js';
 import { savePending, readPending, clearPending, renderRecoveredInto, createRecovery, threadMsg, splitReply } from './recover.js';
 import { openLiveDrill } from './live-drill.js';
 import { classifyDrillIntent, pickSource, EMPTY_NOTE } from './drill-intent.js';
@@ -92,7 +93,11 @@ function tokens() {
 
 /* ─── boot ─── */
 
+let RUNNING = null;        // the "N running" pill (running.js)
+
 async function boot() {
+  const tools = document.querySelector('.topbar .tools');
+  if (tools) { RUNNING = mountRunning(document, tools); tools.prepend(RUNNING.el); }
   let cfg, index, stats = null;
   try {
     [cfg, index, stats] = await Promise.all([
@@ -408,7 +413,7 @@ function runDrillIntent(kind) {
   }
   const note = threadNote(`A full Pimsleur lesson from ${n}, saved to your library:`);
   if (!note) return;
-  const row = buildPimsleurAction(document, lines, body => api('POST', '/api/pimsleur/from-phrases', body), openLiveDrill);
+  const row = buildPimsleurAction(document, lines, body => api('POST', '/api/pimsleur/from-phrases', body).finally(() => RUNNING?.refresh()), openLiveDrill);
   note.appendChild(row);
   row.querySelector('.px-open')?.click();            // straight to the confirm
 }
@@ -567,7 +572,7 @@ function buildExtras(msg, raw, data) {
   const rel = parseFenceBlock(raw, 'related');
   if (rel.ok) box.appendChild(buildRelated(document, rel.data, topic => post('/generate', {
     domain: 'language-it', subject: topic, source: 'Chiron · Ask phrase coach', extra: { from_question: data.en_intent || data.it } })));
-  if (phrases.length) box.appendChild(buildPimsleurAction(document, phrases, body => api('POST', '/api/pimsleur/from-phrases', body), openLiveDrill));
+  if (phrases.length) box.appendChild(buildPimsleurAction(document, phrases, body => api('POST', '/api/pimsleur/from-phrases', body).finally(() => RUNNING?.refresh()), openLiveDrill));
   if (box.children.length) msg.appendChild(box);
 }
 
