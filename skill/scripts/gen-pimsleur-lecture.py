@@ -88,7 +88,11 @@ async def main():
             print(f"[retry {attempt}] {e}"); cur = prompt + f"\n\n## PREVIOUS OUTPUT INVALID/TRUNCATED: {e}\nReturn ONLY complete valid JSON."; continue
         iss = validate(o)
         if not iss: obj = o; break
-        print(f"[retry {attempt}] {iss}"); cur = prompt + f"\n\n## PROBLEMS\n{iss}\nReturn ONLY corrected valid JSON fixing them."
+        print(f"[retry {attempt}] {iss}")
+        # The previous draft goes back with the problems, so a short script is expanded rather than rewritten from scratch.
+        cur = (prompt + f"\n\n## PROBLEMS\n{iss}\nA script that is too short: keep every segment of your draft below and ADD "
+               "segments (more scene detail, one more example per phrase, a grammar note) until it is inside the range. "
+               "Return ONLY the corrected complete JSON.\n\n## YOUR DRAFT\n" + json.dumps(o, ensure_ascii=False))
     if not obj: print(f"[FAIL] {OUT.name}: no valid script after retries"); sys.exit(2)
     asp = OUT / "audio-scripts.json"
     for f in (asp, OUT / "audio/manifest.js", OUT / "audio/manifest.json"):
