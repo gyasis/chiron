@@ -167,7 +167,34 @@ async def json_with_repair(prompt, name, model_dict, validate_fn=None, max_repai
 
 
 # ── grounding (SCOPED to medical accuracy of THIS lesson) ──
+BOOKS = os.environ.get("CH_BOOKS", "").strip()   # booklake profiles that replace Harrison as the per-query source
+BOOK_TAG = os.environ.get("CH_BOOK_TAG", "").strip()   # or: every booklake book with this subject tag (e.g. anesthesia)
+BOOK_SRC = BOOK_TAG and f"tag:{BOOK_TAG}" or BOOKS
+BOOK_QUERIES = [q.strip() for q in os.environ.get("CH_BOOK_QUERIES", "").split("|") if q.strip()]   # extra book queries, e.g. English dose queries for an Italian topic
+
+
+def books(query: str, n: int) -> str:
+    """Grounding from the CH_BOOKS booklake books for `query` plus CH_BOOK_QUERIES, reranked together by booklake-ground."""
+    import tempfile
+    with tempfile.NamedTemporaryFile(suffix=".md") as tf:
+        sel = ["--tag", BOOK_TAG] if BOOK_TAG else ["--books", BOOKS]
+        r = subprocess.run([str(HOME / ".local/bin/booklake-ground"), *sel, "--k", str(n),
+                            "--max-chars", "6000", "-o", tf.name, query, *BOOK_QUERIES], capture_output=True, text=True, timeout=600)
+        text = Path(tf.name).read_text().strip()
+    if not text:
+        print(f"[books] no passages for '{query[:60]}': {r.stderr.strip()[-200:]}", flush=True)
+        return f"[books ({BOOK_SRC}): no passages found for this query]"
+    return f"## BOOKS ({BOOK_SRC}) — the ONLY reference source for this lesson\n{text}"
+
+
+GROUNDING_ONLY = os.environ.get("CH_GROUNDING_ONLY") == "1"   # CH_GROUNDING is the sole source: Harrison is never queried
+
+
 def harrison(q, n=4):
+    if BOOKS or BOOK_TAG:
+        return books(q, n)
+    if GROUNDING_ONLY:
+        return "(no Harrison excerpt: the USER-PROVIDED source above is the ONLY grounding for this lesson)"
     try:
         r = subprocess.run([str(HOME / ".local/bin/harrison-search"), "-q", q, "-n", str(n), "--prose"],
                            capture_output=True, text=True, timeout=150)
@@ -204,7 +231,9 @@ async def phase2_author():
         f"You are Lucrezia, a warm Italian medical tutor. Author a MEDICAL-ITALIAN ward lesson on **{TOPIC}**, "
         f"set in **{setting}**, for {LEARNER} — a native-English-speaker DOCTOR learning medical Italian for the SSM exam.\n"
         "LANGUAGE-FIRST: the goal is to UNDERSTAND and SPEAK the Italian; the medicine is the bonus (but must be ACCURATE).\n\n"
-        f"{USER_CTX}## GROUNDING (Harrison's — keep every clinical claim accurate to this; do not invent):\n{grounding}\n\n"
+        "DOSES: when the topic is a drug or a fluid, the 'terapia' section STATES the concrete adult doses found in the grounding "
+        "(numbers with units, e.g. mg/kg, mcg/kg/min, % or MAC) in Italian, and the dialogue or vignette uses one of them. Never invent a dose.\n\n"
+        f"{USER_CTX}## GROUNDING ({'USER-PROVIDED SOURCE above ONLY' if GROUNDING_ONLY else ('the BOOKS excerpt below, plus any USER-PROVIDED SOURCE above' if (BOOKS or BOOK_TAG) else "Harrison's, plus any USER-PROVIDED SOURCE above")} — keep every clinical claim accurate to it; do not invent):\n{grounding}\n\n"
         "## OUTPUT — return ONLY a content.json with EXACTLY this schema:\n"
         "{\n"
         '  "title": "<Italian title>", "subtitle": "<one EN sentence>", "langName": "Italiano medico", "cefr": "B1-B2",\n'
@@ -240,7 +269,7 @@ async def phase2_author():
         if not any(s.get("vocab") for s in secs): return ["no vocab tables"]
         return None
     print(f"[phase 2] AUTHOR ward content.json for '{TOPIC}' (grounded {len(grounding)}c)…", flush=True)
-    content = await json_with_repair(p, "content", ollama(), validate_fn=valid)
+    content = await json_with_repair(p, "content", model_for(MODEL), validate_fn=valid)
     if content is None:
         print("[phase 2] content failed — see .scratch/content.raw.txt"); return None
     (OUT / "content.json").write_text(json.dumps(content, ensure_ascii=False, indent=2))
@@ -290,7 +319,7 @@ async def phase4_audio_scripts():
           "every Italian term is its OWN lang:'it' segment and the NEXT lang:'en' glosses it. Persona Lucrezia: greet "
           "'Gyasi' by name in the summary, sign off warmly. Return ONLY {\"artifacts\":[...]}.")
     print(f"[phase 4] AUDIO transcripts — 04s bilingual ({len(secs)} sections)…", flush=True)
-    res = await json_with_repair(p, "lecture-scripts", ollama(),
+    res = await json_with_repair(p, "lecture-scripts", model_for(MODEL),
                                  validate_fn=lambda o: None if (isinstance(o, dict) and o.get("artifacts")) else ["no artifacts"])
     arts = (res or {}).get("artifacts", [])
     out = {"summary": [], "sections": {}}

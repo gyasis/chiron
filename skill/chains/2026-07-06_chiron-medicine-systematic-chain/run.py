@@ -148,6 +148,7 @@ SECTION_WIDGET_HINTS = {
     "complications": "pattern-cards (complication families) + pathway-diagram (sequela paths)",
     "prognosis": "chart-xy (survival/recovery curve) + step-cards (risk factors)",
     "capstone": "a hardest cumulative mcq-clinical-vignette + match-madness over ALL prior concepts + a boss",
+    "dosing-monitoring": "step-cards (dose by indication) + slider-estimation; STATE THE CONCRETE ADULT DOSES found in the grounding (numbers with units: mg/kg, mcg/kg, mcg/kg/min, % MAC, mL/kg; ranges per indication and per depth/setting) — never replace a sourced number with a vague phrase like 'a larger dose'",
 }
 
 
@@ -312,7 +313,34 @@ def _user_ctx() -> str:
 USER_CTX = _user_ctx()
 
 
+BOOKS = os.environ.get("CH_BOOKS", "").strip()   # booklake profiles that replace Harrison as the per-query source
+BOOK_TAG = os.environ.get("CH_BOOK_TAG", "").strip()   # or: every booklake book with this subject tag (e.g. anesthesia)
+BOOK_SRC = BOOK_TAG and f"tag:{BOOK_TAG}" or BOOKS
+
+
+def books(query: str, n: int, extra: tuple = ()) -> str:
+    """Grounding from the CH_BOOKS booklake books (reranked across books by booklake-ground).
+    `extra` adds further queries whose candidates join the same reranked pool."""
+    import tempfile
+    with tempfile.NamedTemporaryFile(suffix=".md") as tf:
+        sel = ["--tag", BOOK_TAG] if BOOK_TAG else ["--books", BOOKS]
+        r = subprocess.run([str(HOME / ".local/bin/booklake-ground"), *sel, "--k", str(n),
+                            "--max-chars", "6000", "-o", tf.name, query, *extra], capture_output=True, text=True, timeout=600)
+        text = Path(tf.name).read_text().strip()
+    if not text:
+        print(f"[books] no passages for '{query[:60]}': {r.stderr.strip()[-200:]}", flush=True)
+        return f"[books ({BOOK_SRC}): no passages found for this query]"
+    return f"## BOOKS ({BOOK_SRC}) — the ONLY reference source for this lesson\n{text}"
+
+
+GROUNDING_ONLY = os.environ.get("CH_GROUNDING_ONLY") == "1"   # CH_GROUNDING is the sole source: Harrison is never queried
+
+
 def harrison(query: str, n: int = 5) -> str:
+    if BOOKS or BOOK_TAG:
+        return books(query, n)
+    if GROUNDING_ONLY:
+        return "(no Harrison excerpt: the USER-PROVIDED source above is the ONLY grounding for this lesson)"
     try:
         r = subprocess.run([str(HOME / ".local/bin/harrison-search"), "-q", query, "-n", str(n), "--prose", "--full"],
                            capture_output=True, text=True, timeout=180)
@@ -403,13 +431,17 @@ async def author_chapter(chapter, idx: int):
     if (OUT / f"chapter{n}.json").exists() and os.environ.get("CH_FORCE") != "1":
         print(f"[phase 3] chapter {n} — RESUME (exists, skip)", flush=True)
         return n
-    grounding = harrison(SUBJECT + " " + focus + " " + " ".join(concepts[:4]), n=6)
+    query = SUBJECT + " " + focus + " " + " ".join(concepts[:4])
+    if section_key == "dosing-monitoring" and (BOOKS or BOOK_TAG):
+        grounding = books(query, 6, extra=(f"{SUBJECT} dose mg/kg", f"{SUBJECT} adult dose infusion rate"))
+    else:
+        grounding = harrison(query, n=6)
     hint = SECTION_WIDGET_HINTS.get(section_key, "the widgets recommended by 04a for this section")
     p = fill(load_prompt("04a-chapter-write.md"), chapterSyllabus=chapter, curriculum=AMBOSS_CURR) \
         + "\n\n## CLINICAL VIGNETTE (mandatory)\n" + load_prompt("04c-quiz-clinical-vignette.md") \
         + "\n\n" + load_prompt("04u-medical-algorithm-widgets.md")
     p += (
-        f"\n\n{USER_CTX}## GROUNDING (Harrison's — ground every clinical claim to this; never invent):\n{grounding[:6000]}"
+        f"\n\n{USER_CTX}## GROUNDING ({'USER-PROVIDED CONTEXT above ONLY' if GROUNDING_ONLY else ('the BOOKS excerpt below, plus any USER-PROVIDED CONTEXT above' if (BOOKS or BOOK_TAG) else "Harrison's, plus any USER-PROVIDED CONTEXT above")} — ground every clinical claim to it; never invent):\n{grounding[:6000]}"
         f"\n\n## SYSTEMATIC DEEP-DIVE (BLOCKING): this lesson is a single-{ENTITY}, {CHAPTER_COUNT_EXACT}-section "
         f"systematic deep-dive on '{SUBJECT}'. Produce a FULL canonical AMBOSS chapter for the section "
         f"'{theme}' (sectionKey={section_key}), focused on: {focus}. Use the FULL widget palette per 04a — "
