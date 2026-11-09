@@ -72,9 +72,9 @@ STAGE = os.environ.get("CH_STAGE", "plan")  # plan | chapters | assemble | audio
 SLUG = os.environ.get("CH_SLUG") or "chiron-" + re.sub(r"[^a-z0-9]+", "-", SUBJECT.lower()).strip("-") + "-primer"
 OUT = GEN / SLUG
 
-MODEL_REASON = os.environ.get("CH_MODEL_REASON", "glm@latest")
-MODEL_STRUCT = os.environ.get("CH_MODEL_STRUCT", "glm@latest")
-CHAPTER_ENGINE = os.environ.get("CH_CHAPTER_ENGINE", "glm")  # "glm" | "claude"
+MODEL_REASON = os.environ.get("CH_MODEL_REASON", "gemma4:31b")
+MODEL_STRUCT = os.environ.get("CH_MODEL_STRUCT", "gemma4:31b")
+CHAPTER_ENGINE = os.environ.get("CH_CHAPTER_ENGINE", "model")  # "claude" = claude -p headless; anything else = MODEL_STRUCT
 AMBOSS_CURR = json.loads((SKILL / "curricula" / "medicine-amboss.json").read_text())  # full widget palette + targets
 
 
@@ -116,6 +116,7 @@ def fill(t: str, **slots) -> str:
 
 def extract_json(s: str):
     """Pull the first balanced JSON object/array out of an LLM reply (string-aware, strict=False)."""
+    chiron_models.refuse_leaked(s)
     s = re.sub(r"^```(?:json)?\s*|\s*```$", "", s.strip(), flags=re.M).strip()
     start = next((i for i, c in enumerate(s) if c in "{["), -1)
     if start < 0:
@@ -139,6 +140,7 @@ def extract_json(s: str):
 
 
 async def llm(model_dict: dict, prompt: str, user_input: str = "go") -> str:
+    model_dict = chiron_models.thinking_off(model_dict)
     instr = prompt + "\n\n{input}" if "{input}" not in prompt else prompt
     chain = PromptChain(models=[model_dict], instructions=[instr])
     try: chain.register_callback(obs.make_callback())

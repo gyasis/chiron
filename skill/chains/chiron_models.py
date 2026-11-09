@@ -61,12 +61,27 @@ def _not_cloud(name: str) -> bool:
     return name.startswith(("local/", "gpt-", "gemini", "claude", "openai/", "o1", "o3", "o4"))
 
 
+def api_id(catalog_name: str) -> str:
+    """The id Ollama Cloud's API takes for a catalog name: 'glm-5.3:cloud' -> 'glm-5.3', 'gemma4:31b-cloud' -> 'gemma4:31b'."""
+    if catalog_name.endswith(":cloud"):
+        return catalog_name[:-len(":cloud")]
+    if catalog_name.endswith("-cloud") and ":" in catalog_name:
+        return catalog_name[:-len("-cloud")]
+    return catalog_name
+
+
 def live_ids() -> list[str] | None:
+    """API ids of the live cloud models in the catalog. Each entry names its model in `name` (older files: `id`)."""
     try:
-        return [m["id"] for m in json.loads(CATALOG.read_text())["models"]]
+        models = json.loads(CATALOG.read_text())["models"]
+        ids = list(dict.fromkeys(api_id(m.get("id") or m["name"]) for m in models))
     except Exception as e:
-        _log(f"catalog unreadable ({CATALOG}: {e}) — run `ollama-cloud-models --write`; using LAST_KNOWN")
+        _log(f"catalog unreadable ({CATALOG}: {type(e).__name__}: {e}) — run `ollama-cloud-models --write`; using LAST_KNOWN")
         return None
+    if not ids:
+        _log(f"catalog {CATALOG} lists no models — using LAST_KNOWN")
+        return None
+    return ids
 
 
 def family_of(name: str) -> str | None:
@@ -84,7 +99,8 @@ def _ver(s: str) -> tuple:
 def candidates(family: str, ids: list[str]) -> list[str]:
     rx = FAMILIES[family]
     hits = [(m, re.fullmatch(rx, m.split(":")[0])) for m in ids]
-    return [m for m, h in sorted(((m, h) for m, h in hits if h), key=lambda t: _ver(t[1].group(1)), reverse=True)]
+    # newest version first; within one version the untagged id ('deepseek-v4.1-flash') before a dated snapshot
+    return [m for m, h in sorted(((m, h) for m, h in hits if h), key=lambda t: (_ver(t[1].group(1)), ":" not in t[0]), reverse=True)]
 
 
 # ── probe ─────────────────────────────────────────────────────────────────────
@@ -294,6 +310,23 @@ def thinking_off(md: dict, force: bool = False) -> dict:
     if not method:
         return md
     return {**md, "params": {**(md.get("params") or {}), **method}}
+
+
+LEAK_CHARS = 300          # prose this long before the JSON is reasoning written into the answer
+
+
+def leaked_reasoning(text: str) -> bool:
+    """True when a reply that should be JSON opens with prose instead: the model reasoned in the answer."""
+    t = re.sub(r"^```(?:json)?\s*", "", (text or "").strip())
+    i = min([k for k in (t.find("{"), t.find("[")) if k >= 0], default=len(t))
+    return i > LEAK_CHARS
+
+
+def refuse_leaked(text: str) -> None:
+    """Raise ValueError when the reply carries reasoning before its JSON, so a repair loop re-asks for JSON only."""
+    if leaked_reasoning(text):
+        raise ValueError("reasoning was written into the answer before the JSON; reply with ONLY the JSON, "
+                         "no analysis or notes before or after it")
 
 
 def status(force: bool = False) -> dict:

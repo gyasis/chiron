@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 """Generate a curated end-of-lesson glossary.json from a lesson's chapters (grounded, no invention).
-Usage: gen-glossary.py <lesson-dir>   (writes <dir>/glossary.json; the assembler renders it). Free-ish: 1 glm call."""
+Usage: gen-glossary.py <lesson-dir>   (writes <dir>/glossary.json; the assembler renders it). Free-ish: 1 model call, thinking off."""
 import glob, json, os, re, subprocess, sys
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "chains")); import chiron_models  # heals retired cloud model names
 
 OUT = Path(sys.argv[1]).expanduser()
 KEY = os.environ.get("OLLAMA_API_KEY", "")
-MODEL = chiron_models.resolve(os.environ.get("CH_MODEL_STRUCT", "glm@latest"))   # newest live+probed GLM (chains/chiron_models.py)
+MODEL = chiron_models.resolve(os.environ.get("CH_MODEL_STRUCT", "gemma4:31b"))
 
 def strip(html): return re.sub(r"\s+", " ", re.sub(r"<[^>]+>", " ", html or "")).strip()
 
@@ -29,7 +29,7 @@ prompt = (f"From this medical lesson on '{subject}', extract a GLOSSARY of the 1
 def ollama(prompt):
     import urllib.request, time
     body = json.dumps({"model": MODEL, "messages": [{"role": "user", "content": prompt}],
-                       "temperature": 0.2}).encode()
+                       "temperature": 0.2, "reasoning_effort": "none"}).encode()   # thinking off on Ollama Cloud /v1
     last = None
     for attempt in range(3):   # Ollama Cloud models flap (transient 404/5xx) — retry before giving up
         try:

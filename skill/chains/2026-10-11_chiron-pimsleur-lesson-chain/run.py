@@ -132,7 +132,6 @@ CHECKERS = [m.strip() for m in os.environ.get("CH_PIMSLEUR_CHECKERS", "deepseek-
 # 2026-11-08 over ~/Documents/generated/chiron-pimsleur-*/pimsleur.json). 6,000 leaves 2.5x room; a reply that
 # reaches it is cut off and fails validation, so a runaway answer costs about a minute, not ten.
 MAX_OUT = int(os.environ.get("CH_PIMSLEUR_MAX_TOKENS", "6000"))
-LEAK_CHARS = 300          # prose this long before the JSON is reasoning written into the answer
 
 
 def quiet_model(name: str, temperature: float = 0.4) -> dict:
@@ -142,11 +141,7 @@ def quiet_model(name: str, temperature: float = 0.4) -> dict:
     return md
 
 
-def leaked_reasoning(text: str) -> bool:
-    """True when the reply opens with prose instead of the JSON: the model reasoned in the answer."""
-    t = re.sub(r"^```(?:json)?\s*", "", (text or "").strip())
-    i = min([k for k in (t.find("{"), t.find("[")) if k >= 0], default=len(t))
-    return i > LEAK_CHARS
+leaked_reasoning = pi.chiron_models.leaked_reasoning
 
 
 async def ask_json(prompt: str, name: str, names: list[str], validate=None, temperature: float = 0.4):

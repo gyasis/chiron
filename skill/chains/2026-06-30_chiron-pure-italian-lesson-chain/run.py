@@ -13,7 +13,7 @@ loop with a rich validator + a whole-lesson QC judge.
   Phase 0    STYLE PACK (fn, NO LLM) — exemplar-cafe.md + Lucrezia persona + FORMATTING_RULES.
   Phase 0.5  LIBRARY-DEDUP (fn, NO LLM) — scan chiron-italian-*/content.json → AVOID set.
   Phase 1    PLAN (LLM, MODEL_REASON) — 8 section plans (syllabus.json). plan_valid deterministic.
-  Phase 2    PER-SECTION AUTHOR (author-ladder + over_worklist) — chapterN.json, sec_valid rich,
+  Phase 2    PER-SECTION AUTHOR (author-ladder, SECTION_CONC at once) — chapterN.json, sec_valid rich,
              NEEDS_REVIEW never fatal, per-section RESUME. Phase 2b authors coldOpen + extras.
   Phase 2.5  WHOLE-LESSON QC (LLM judge, MODEL_QC — different family) — deterministic globals +
              rubric → route issues back to named sections (bounded CH_QC_ROUNDS). Fail-OPEN.
@@ -24,7 +24,7 @@ loop with a rich validator + a whole-lesson QC judge.
 Run:  cd ~/Documents/PromptChain && CH_TOPIC="how to use the word appunto" CH_STAGE=assemble \
         bash scripts/observe.sh runs/2026-06-30_chiron-pure-italian-lesson-chain
 Env:  OLLAMA_API_KEY ; CH_TOPIC (required) ; CH_STAGE (author|assemble|audio|all) ;
-      CH_AUTHOR_LADDER (glm@latest,claude,deepseek-flash@latest) ; CH_MODEL_REASON/STRUCT/QC ; CH_QC_ROUNDS ; CH_FORCE.
+      CH_AUTHOR_LADDER (gemma4:31b,claude,deepseek-flash@latest) ; CH_MODEL_REASON/STRUCT/QC ; CH_QC_ROUNDS ; CH_FORCE.
 """
 from promptchain.observability import init_mlflow
 init_mlflow()
@@ -37,7 +37,6 @@ import sys as _sys; from pathlib import Path as _P; _sys.path.insert(0, str(_P(_
 import chiron_models   # shared chains/chiron_models.py — heals retired cloud model names against the live catalog
 import ledger   # shared chains/ledger.py — one full prompt/response record per model call
 import obs   # shared chains/obs.py — per-lesson steps.jsonl observability (best-effort; never breaks generation)
-from promptchain.utils.external_loop import over_worklist
 
 # ── config ──────────────────────────────────────────────────────────────────────
 HOME = Path(os.path.expanduser("~"))
@@ -67,14 +66,15 @@ LEARNER = os.environ.get("CH_LEARNER", "Gyasi")
 TOPIC = os.environ.get("CH_TOPIC", "")
 STAGE = os.environ.get("CH_STAGE", "author")
 
-# Models (per role). glm@latest primary (glm-5.2 was flaky on Ollama Cloud); QC is a DIFFERENT family
-# (gemini-flash) so the judge doesn't share the author's blind spots. max_tokens AUTOMATIC.
-MODEL_REASON = os.environ.get("CH_MODEL_REASON", "glm@latest")     # Phase 1 plan
-MODEL_STRUCT = os.environ.get("CH_MODEL_STRUCT", "glm@latest")     # Phase 2 per-section author
+# Models (per role), thinking switched off in llm(); glm is not used because it cannot switch thinking off. QC is a
+# DIFFERENT family so the judge doesn't share the author's blind spots. max_tokens AUTOMATIC.
+MODEL_REASON = os.environ.get("CH_MODEL_REASON", "gemma4:31b")     # Phase 1 plan
+MODEL_STRUCT = os.environ.get("CH_MODEL_STRUCT", "gemma4:31b")     # Phase 2 per-section author
 MODEL_QC = os.environ.get("CH_MODEL_QC", "deepseek-flash@latest")  # Phase 2.5 judge (different family, Ollama Cloud)
 # Section authoring is governed by AUTHOR_LADDER (below), not a single engine — CH_AUTHOR_LADDER overrides it.
 QC_ROUNDS = int(os.environ.get("CH_QC_ROUNDS", "0"))   # 0 = lean (Phase-2 validator + assemble gate suffice, like the medicine chain); set 1 to add the LLM QC re-author pass
 N_SECTIONS = int(os.environ.get("CH_SECTIONS", "8"))
+SECTION_CONC = int(os.environ.get("CH_SECTION_CONC", "3"))   # sections authored at once
 
 SLUG = os.environ.get("CH_SLUG") or "chiron-italian-" + re.sub(r"[^a-z0-9]+", "-", (TOPIC or "lesson").lower()).strip("-")[:48]
 OUT = GEN / SLUG
@@ -88,10 +88,10 @@ def ollama(model=MODEL_STRUCT, t=0.45):
 _FB = [m.strip() for m in os.environ.get("CH_MODEL_FALLBACKS", "local/gemma4:12b,deepseek-flash@latest,gpt-5-mini").split(",") if m.strip()]
 FALLBACKS = [m for m in _FB if not (m.startswith("gpt-") and not OPENAI_KEY) and not (m.startswith("gemini") and not GEMINI_KEY) and not (m.startswith("local/") and not os.environ.get("CH_LOCAL_BASE"))]
 
-# AUTHOR engine ladder (Phase-2 section authoring ONLY): glm (primary) -> claude (headless CLI) -> gemini-flash.
-# glm authors first (fast, its 3 repairs); only if it CAN'T produce valid output do we fall to claude, then gemini.
+# AUTHOR engine ladder (Phase-2 section authoring ONLY): gemma4:31b (primary) -> claude (headless CLI) -> deepseek-flash.
+# The primary gets 3 repairs; only if it CAN'T produce valid output do we fall to claude, then deepseek-flash.
 # "claude" = the claude -p CLI (always available, not a litellm key); everything else routes through model_for/llm.
-_AL = [m.strip() for m in os.environ.get("CH_AUTHOR_LADDER", "glm@latest,claude,deepseek-flash@latest").split(",") if m.strip()]
+_AL = [m.strip() for m in os.environ.get("CH_AUTHOR_LADDER", "gemma4:31b,claude,deepseek-flash@latest").split(",") if m.strip()]
 AUTHOR_LADDER = [m for m in _AL if m == "claude" or (not (m.startswith("gpt-") and not OPENAI_KEY) and not (m.startswith("gemini") and not GEMINI_KEY))]
 
 
@@ -119,6 +119,7 @@ def _author_item(name: str, temperature: float = 0.45) -> dict:
 
 
 def extract_json(s):
+    chiron_models.refuse_leaked(s)
     s = re.sub(r"^```(?:json)?\s*|\s*```$", "", s.strip(), flags=re.M).strip()
     st = next((i for i, ch in enumerate(s) if ch in "{["), -1)
     if st < 0: return json.loads(s, strict=False)
@@ -138,7 +139,22 @@ def extract_json(s):
     return json.loads(s[st:], strict=False)
 
 
+_TAG_ATTRS = re.compile(r"<(em|strong)\s[^>]*>", re.I)
+
+
+def plain_markup(o):
+    """<em style="…"> -> <em> (and <strong>) in every string: the lesson theme styles them, and the checks count bare tags."""
+    if isinstance(o, str):
+        return _TAG_ATTRS.sub(lambda m: f"<{m.group(1).lower()}>", o)
+    if isinstance(o, list):
+        return [plain_markup(x) for x in o]
+    if isinstance(o, dict):
+        return {k: plain_markup(v) for k, v in o.items()}
+    return o
+
+
 async def llm(md, prompt, user_input="go"):
+    md = chiron_models.thinking_off(md)
     instr = prompt + "\n\n{input}" if "{input}" not in prompt else prompt
     chain = PromptChain(models=[md], instructions=[instr])
     try: chain.register_callback(obs.make_callback())
@@ -162,8 +178,8 @@ async def json_with_repair(prompt, name, md, validate_fn=None, max_repair=3, via
     """Self-repair loop + MODEL FALLBACK (medicine/passage pattern). Re-prompt the current model on bad
     JSON / failed validate up to max_repair (feeding validate_fn's issues into a ## PROBLEMS re-prompt);
     if it STILL can't, fall back to the next model in the ladder. Returns None on total exhaustion (caller
-    flags needs_review + KEEPS GOING). via_engine=True uses the AUTHOR_LADDER (glm->claude->deepseek)."""
-    # Section authoring uses the AUTHOR_LADDER (glm -> claude -> deepseek); plan/extras/QC use the litellm FALLBACKS ladder.
+    flags needs_review + KEEPS GOING). via_engine=True uses the AUTHOR_LADDER (gemma->claude->deepseek)."""
+    # Section authoring uses the AUTHOR_LADDER (gemma -> claude -> deepseek); plan/extras/QC use the litellm FALLBACKS ladder.
     ladder = [_author_item(m) for m in AUTHOR_LADDER] if via_engine else ([md] + [model_for(m) for m in FALLBACKS])
     last = ""
     for mi, cmd in enumerate(ladder):
@@ -171,14 +187,14 @@ async def json_with_repair(prompt, name, md, validate_fn=None, max_repair=3, via
         cur = prompt
         attempts = max_repair if mi == 0 else 1   # primary: <=3 reviews then fail; fallbacks: ONE quick try each — HARD bound, never an infinite/runaway loop
         for attempt in range(1, attempts + 1):
-            try: last = await (asyncio.to_thread(claude_p, cur + "\n\nReturn ONLY the JSON object, no prose.") if cmd.get("_claude") else llm(cmd, cur))   # author ladder rung: claude marker -> claude -p CLI; else litellm (glm/gemini)
+            try: last = await (asyncio.to_thread(claude_p, cur + "\n\nReturn ONLY the JSON object, no prose.") if cmd.get("_claude") else llm(cmd, cur))   # author ladder rung: claude marker -> claude -p CLI; else litellm
             except Exception as e:
                 _msg = str(e).lower()
                 if 'ratelimit' in _msg or '429' in _msg or 'usage limit' in _msg or 'rate limit' in _msg or 'resource_exhausted' in _msg or 'quota' in _msg:
                     print(f"[repair] {name} [{tag}]: rate-limited (429) — skipping retries, falling to next model", flush=True)
                     break   # advance the ladder to the next model immediately; don't hammer a capped provider
                 print(f"[repair] {name} [{tag}] {attempt}: LLM errored ({e})", flush=True); await asyncio.sleep(3); continue
-            try: obj = extract_json(last)
+            try: obj = plain_markup(extract_json(last))
             except Exception as e:
                 cur = prompt + f"\n\n## PREVIOUS INVALID JSON\n{e}\nReturn ONLY corrected valid JSON. Escape every \" and newline inside string values."; continue
             iss = validate_fn(obj) if validate_fn else None
@@ -356,7 +372,7 @@ async def phase1_plan(avoid: dict):
     return secs
 
 
-# ── Phase 2 — PER-SECTION AUTHOR (author-ladder + over_worklist) ────────────────────
+# ── Phase 2 — PER-SECTION AUTHOR (author-ladder, SECTION_CONC at once) ────────────────────
 def _strip_tags(h): return re.sub(r"<[^>]+>", " ", h or "")
 BARE_QUOTE_RE = re.compile(r"[A-Za-z]\s'([a-zà-ùéèìòùé]{2,})'", re.I)   # capture the quoted word so we can tell an ITALIAN citation from an ENGLISH gloss
 # English gloss / function words that legitimately appear single-quoted (a translation, e.g. <em>appena</em> means 'just').
@@ -465,25 +481,35 @@ async def author_section(plan_sec: dict, avoid: dict, idx: int, extra_directive:
         (OUT / ".scratch").mkdir(parents=True, exist_ok=True)
         (OUT / ".scratch" / "coldOpen.json").write_text(json.dumps(sec.pop("coldOpen"), ensure_ascii=False, indent=2))
     fpath.write_text(json.dumps(sec, ensure_ascii=False, indent=2))
+    (OUT / f"chapter{n}.NEEDS_REVIEW").unlink(missing_ok=True)
     nem = _rich_blob(sec).count("<em>")
     print(f"[phase 2] section {n}: {len(sec.get('vocab', []))} vocab, {len(sec.get('pearls', []))} pearls, {nem} <em>", flush=True)
     return n
 
 
 async def phase2_sections(syllabus, avoid):
-    async def handler(item, state):
-        i = state["_idx"] = state.get("_idx", -1) + 1
-        try:
-            r = await author_section(item, avoid, i)
-        except Exception as e:               # a section must NEVER kill the whole lesson
-            print(f"[phase 2] section idx {i}: unexpected error ({e}) — skipped, lesson continues", flush=True)
-            r = None
-        state.setdefault("done", []).append(r)
-    state = await over_worklist(syllabus, handler, max_iters=len(syllabus) + 1, max_seconds=2400)
-    done = [x for x in state.get("done", []) if x]
-    print(f"[phase 2] authored {len(done)}/{len(syllabus)} sections: {sorted(done)}"
+    """Author every section, SECTION_CONC at a time. Sections are independent: each reads only its own plan
+    entry and the lesson-wide avoid list, and writes only its own chapterN.json."""
+    gate = asyncio.Semaphore(SECTION_CONC)
+
+    async def one(i, item):
+        async with gate:
+            try:
+                return await author_section(item, avoid, i)
+            except Exception as e:               # a section must NEVER kill the whole lesson
+                print(f"[phase 2] section idx {i}: unexpected error ({e}) — skipped, lesson continues", flush=True)
+                return None
+
+    tasks = [asyncio.create_task(one(i, item)) for i, item in enumerate(syllabus)]
+    _, late = await asyncio.wait(tasks, timeout=2400)
+    for t in late:
+        t.cancel()
+    if late:
+        print(f"[phase 2] {len(late)} section(s) still running after 2400 s — cancelled", flush=True)
+    done = sorted(t.result() for t in tasks if t not in late and t.result())
+    print(f"[phase 2] authored {len(done)}/{len(syllabus)} sections: {done}"
           + (f" | {len(syllabus)-len(done)} flagged NEEDS_REVIEW" if len(done) < len(syllabus) else ""), flush=True)
-    return state
+    return {"done": done}
 
 
 # ── Phase 2b — EXTRAS (coldOpen fallback + matchMadness + scenario + srCards + closing) ──
@@ -505,11 +531,14 @@ def _extras_valid(o):
     return iss or None
 
 
-async def phase2b_extras(syllabus, avoid):
+async def phase2b_extras(syllabus, avoid, force: bool = False):
     fpath = OUT / "extras.json"
-    if fpath.exists() and os.environ.get("CH_FORCE") != "1":
-        print("[phase 2b] RESUME — reusing extras.json", flush=True)
-        return json.loads(fpath.read_text())
+    if fpath.exists() and not force and os.environ.get("CH_FORCE") != "1":
+        prev = json.loads(fpath.read_text())
+        if not prev.get("_failed"):
+            print("[phase 2b] RESUME — reusing extras.json", flush=True)
+            return prev
+        print("[phase 2b] extras.json is the shell from a failed run — writing the extras again", flush=True)
     cold = {}
     cp = OUT / ".scratch" / "coldOpen.json"
     if cp.exists():
@@ -538,8 +567,12 @@ async def phase2b_extras(syllabus, avoid):
     print("[phase 2b] EXTRAS — coldOpen + matchMadness + scenario + srCards + closing …", flush=True)
     ex = await json_with_repair(p, "extras", model_for(MODEL_STRUCT), validate_fn=_extras_valid)
     if ex is None:
-        print("[phase 2b] extras failed — writing minimal shell (lesson continues)", flush=True)
-        ex = {"matchMadness": {"pairs": []}, "srCards": [], "closingHtml": "", "closingEn": ""}
+        print("[phase 2b] extras FAILED — no model wrote them; the lesson has no match game, flashcards or closing "
+              "(extras.NEEDS_REVIEW)", flush=True)
+        ex = {"matchMadness": {"pairs": []}, "srCards": [], "closingHtml": "", "closingEn": "", "_failed": True}
+        (OUT / "extras.NEEDS_REVIEW").write_text("phase 2b: every model failed to write the lesson extras")
+    else:
+        (OUT / "extras.NEEDS_REVIEW").unlink(missing_ok=True)
     if cold.get("it"):
         ex["coldOpen"] = cold                       # section-1's persona cold-open wins
     ex.setdefault("coldOpen", cold or {"it": "", "en": ""})
@@ -655,12 +688,15 @@ async def phase25_qc(syllabus, avoid) -> dict:
             m = re.match(r"(chapter-\d+):", gi)
             if m:
                 fixes.setdefault(m.group(1), []).append(f"- {gi}")
-        passed = (verdict is None or verdict.get("pass")) and not gissues
-        if passed:
+        if verdict is None and not gissues:
+            print(f"[phase 2.5] QC round {rnd}: NOT JUDGED — the judge gave no answer; the lesson ships unjudged", flush=True)
+            break
+        if verdict is not None and verdict.get("pass") and not gissues:
             print(f"[phase 2.5] QC round {rnd}: PASS", flush=True)
             break
         if not fixes:
-            print(f"[phase 2.5] QC round {rnd}: gaps are lesson-level (not per-section) — re-running extras only", flush=True)
+            print(f"[phase 2.5] QC round {rnd}: gaps are lesson-level, not per-section — writing the extras again", flush=True)
+            await phase2b_extras(syllabus, avoid, force=True)
         # re-author the named sections (bounded); then re-merge
         id_to_idx = {s.get("id"): i for i, s in enumerate(syllabus)}
         for sid, notes in fixes.items():

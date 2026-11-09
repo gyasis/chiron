@@ -71,9 +71,9 @@ LEARNER = os.environ.get("CH_LEARNER", "Gyasi")
 SSM_QID = os.environ.get("SSM_QID", "")     # explicit item, else random
 STAGE = os.environ.get("CH_STAGE", "ingest")  # ingest | plan | author | assemble | audio | all
 
-# Models (glm@latest primary — glm-5.2 was flaky on Ollama Cloud; max_tokens AUTOMATIC).
-MODEL_REASON = os.environ.get("CH_MODEL_REASON", "glm@latest")
-MODEL_STRUCT = os.environ.get("CH_MODEL_STRUCT", "glm@latest")
+# Models run with thinking switched off (llm() -> chiron_models.thinking_off); glm cannot switch it off. max_tokens AUTOMATIC.
+MODEL_REASON = os.environ.get("CH_MODEL_REASON", "gemma4:31b")
+MODEL_STRUCT = os.environ.get("CH_MODEL_STRUCT", "gemma4:31b")
 
 
 def ollama(model: str, temperature: float = 0.4) -> dict:
@@ -121,6 +121,7 @@ def fill(t: str, **slots) -> str:
 
 def extract_json(s: str):
     """Pull the first balanced JSON object/array out of an LLM reply (string-aware brace balance)."""
+    chiron_models.refuse_leaked(s)
     s = re.sub(r"^```(?:json)?\s*|\s*```$", "", s.strip(), flags=re.M).strip()
     start = next((i for i, c in enumerate(s) if c in "{["), -1)
     if start < 0:
@@ -144,6 +145,7 @@ def extract_json(s: str):
 
 
 async def llm(model_dict: dict, prompt: str, user_input: str = "go") -> str:
+    model_dict = chiron_models.thinking_off(model_dict)
     instr = prompt + "\n\n{input}" if "{input}" not in prompt else prompt
     chain = PromptChain(models=[model_dict], instructions=[instr])
     try: chain.register_callback(obs.make_callback())   # stream MODEL_CALL/token events → steps.jsonl
