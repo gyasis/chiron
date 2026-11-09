@@ -510,7 +510,8 @@ const LIB = {
   _renderSteps(phase, domain){
     const order=['grounding','planning','writing','assembling','baking','ready'];
     const labels={grounding:/^medic/.test(domain||'medicine')?'Grounding (Harrison / atlas)':'Grounding (your sources)',planning:'Planning chapters',writing:'Writing chapters',assembling:'Assembling lesson',baking:'Baking audio (Mac)',ready:'Ready'};
-    let ci=order.indexOf(phase); if(phase==='queued'||ci<0) ci=(phase==='ready')?order.length-1:0;
+    // A finished job ticks every step, Ready included; an unknown phase starts at the first step.
+    let ci=(phase==='ready'||phase==='published')?order.length:order.indexOf(phase); if(ci<0) ci=0;
     document.getElementById('p-steps').innerHTML=order.map(s=>{ const i=order.indexOf(s), cls=i<ci?'done':i===ci?'active':'';
       return `<div class="step ${cls}"><span class="dot">${i<ci?'✓':''}</span>${labels[s]}</div>`; }).join(''); },
   async _poll(jid){
