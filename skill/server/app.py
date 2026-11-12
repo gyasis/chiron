@@ -2368,6 +2368,10 @@ app.include_router(sessione.router)
 import mazzi  # noqa: E402
 app.include_router(mazzi.router)
 
+# Videos: the anesthesia video library (/videos + /api/videos, media with Range, on-demand 480p phone copies).
+import videos  # noqa: E402
+app.include_router(videos.router)
+
 # Pool: words missed in Match Madness -> audio-only listening drills (/ascolto + /api/pool/*).
 # CORS is already allow-all above (the phone app's origin is http://tauri.localhost); Chromium's Private Network
 # Access preflight additionally wants this header when a non-LAN origin calls a LAN address.
