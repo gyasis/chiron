@@ -132,32 +132,40 @@ for (const d of dirs) {
   if (!cj.title) { try { pageTitle = (readFileSync(join(d, 'lesson.html'), 'utf8').match(/<title>([^<]+)<\/title>/) || [])[1] || ''; } catch {} }
   const title = (cj.title || pageTitle.trim() || rel).replace(/^Chiron\s*·\s*/, '');
   const clips = cj.audioClips ?? 0;
-  // tags: prefer chiron.json.tags (future), else override map, else infer
-  let tags = cj.tags || OVERRIDE[rel] || OVERRIDE[rel.replace(/^chiron-medicina-italiana\//, '')] || null;
-  if (!tags) {
-    // cj.domain is AUTHORITATIVE (the bundler now preserves it verbatim). Slug is only a corrective:
-    // a `chiron-italian-*` slug stamped 'medicine' is residue of the old reset bug → heal it to language-it.
-    // Every real category (incl. video-it) is emitted verbatim — the old else-branch collapsed everything
-    // non-medicine into language-it/medical-italian, which is why video-it could NEVER survive re-indexing.
-    let rawDom = cj.domain
+  // tags: the lesson's own chiron.json.tags win key by key; the override map and title inference only fill
+  // what the manifest leaves out (a display fallback, flagged through metaMissing below).
+  const declared = cj.tags && cj.tags.dom ? cj.tags : null;
+  let tags = declared || OVERRIDE[rel] || OVERRIDE[rel.replace(/^chiron-medicina-italiana\//, '')] || null;
+  if (!tags || declared) {
+    // cj.domain is AUTHORITATIVE; a `chiron-italian-*` slug stamped 'medicine' heals to language-it.
+    // Every real category (incl. video-it) is emitted verbatim.
+    let rawDom = (declared && declared.dom) || cj.domain
               || (/^chiron-italian-/.test(rel) ? 'language-it'
               : /medicina-italiana/.test(rel) ? 'language-it' : 'medicine');
-    if (rawDom === 'medicine' && /^chiron-italian-/.test(rel)) rawDom = 'language-it';   // heal legacy mis-stamp
+    if (rawDom === 'medicine' && /^chiron-italian-/.test(rel)) rawDom = 'language-it';
+    let inferred;
     if (rawDom === 'video-it') {
-      tags = { dom: 'video-it', subj: cj.subject || subjFor(title, ''), level: cj.level || 'B1', scope: 'episode' };
+      inferred = { dom: 'video-it', subj: cj.subject || subjFor(title, ''), level: cj.level || 'B1', scope: 'episode' };
     } else if (rawDom === 'medicine') {
-      const subj = subjFor(title, ''); tags = { dom: 'medicine', sys: sysFor(subj), subj };
+      const subj = subjFor(title, ''); inferred = { dom: 'medicine', sys: sysFor(subj), subj };
     } else { // language-it → medical-italian (wards/patologie) vs italian (general)
       const ward = (rel.match(/wards\/([a-z-]+)/) || [])[1];
-      if (ward) tags = { dom: 'medical-italian', sys: WARD_SYS[ward] || 'Emergency', subj: 'Ward Italian', level: 'B1' };
-      else if (/situazioni\//.test(rel)) tags = { dom: 'medical-italian', sys: 'Emergency', subj: 'Ward Italian', level: 'B1' };  // professional situations (e.g. the Ordine exam)
-      else if (/patologie/.test(rel)) { const subj = subjFor(title, ''); tags = { dom: 'medical-italian', sys: sysFor(subj), subj, level: 'B1' }; }
+      if (ward) inferred = { dom: 'medical-italian', sys: WARD_SYS[ward] || 'Emergency', subj: 'Ward Italian', level: 'B1' };
+      else if (/situazioni\//.test(rel)) inferred = { dom: 'medical-italian', sys: 'Emergency', subj: 'Ward Italian', level: 'B1' };  // professional situations (e.g. the Ordine exam)
+      else if (/patologie/.test(rel)) { const subj = subjFor(title, ''); inferred = { dom: 'medical-italian', sys: sysFor(subj), subj, level: 'B1' }; }
       // a lesson that DECLARES medical-italian (chiron-ward-*, the Ordine Pimsleur seasons) stays medical-italian
-      // even when its folder isn't under wards/ situazioni/ patologie/ — it was being filed as general Italian
-      else if (rawDom === 'medical-italian') tags = { dom: 'medical-italian', sys: 'Emergency', subj: 'Ward Italian', level: 'B1' };
-      else tags = { dom: 'language-it', topic: topicFor(title), level: 'A2' };
+      // even when its folder isn't under wards/ situazioni/ patologie/
+      else if (rawDom === 'medical-italian') inferred = { dom: 'medical-italian', sys: 'Emergency', subj: 'Ward Italian', level: 'B1' };
+      else inferred = { dom: 'language-it', topic: topicFor(title), level: 'A2' };
     }
+    const own = {}; for (const [k, v] of Object.entries(declared || {})) if (v != null) own[k] = v;
+    tags = { ...inferred, ...own };   // tags.sys / tags.subj the manifest names beat the guess
   }
+  // fields the manifest does not carry itself: the card shows a fallback, flagged here
+  const metaMissing = [];
+  if (!cj.title) metaMissing.push('title');
+  if (!cj.domain && !(cj.tags && cj.tags.dom)) metaMissing.push('domain');
+  if ((tags.dom === 'medicine' || tags.dom === 'medical-italian') && !(cj.tags && cj.tags.sys)) metaMissing.push('system');
   const mtime = statSync(join(d, 'lesson.html')).mtimeMs;
   // download-availability = disk truth: is there a packaged .chiron for this lesson?
   const slug = rel.replace(/[\/]/g, '-');
@@ -198,6 +206,7 @@ for (const d of dirs) {
     trend: tags.trend || null, status: cj.status || 'published', clips, ready: true, mtime,
     bundle: hasBundle, sizeMB: hasBundle ? +(statSync(chironPath).size / 1048576).toFixed(1) : null,
     source, source_ref: sourceRef,
+    ...(metaMissing.length ? { metaMissing } : {}),
   });
 }
 

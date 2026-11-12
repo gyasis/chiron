@@ -81,7 +81,7 @@ function renderHidePanel() {
   const el = document.getElementById('hidepanel'); if (!el) return;
   el.style.display = HIDE_OPEN ? '' : 'none';
   if (!HIDE_OPEN) { el.innerHTML = ''; return; }
-  const doms = [['medicine', 'Medicine'], ['medical-italian', 'Med-Italian'], ['italian', 'Italian']].filter(([d]) => LESSONS.some(l => l.domain === d));
+  const doms = [['medicine', 'Medicine'], ['medical-italian', 'Med-Italian'], ['language-it', 'Italian'], ['video-it', 'Italian · Video']].filter(([d]) => LESSONS.some(l => l.domain === d));
   const systems = [...new Set(LESSONS.map(l => l.system).filter(Boolean))].map(s => [s, LESSONS.filter(l => l.system === s).length]).sort((a, b) => b[1] - a[1]);
   let h = `<div class="hgh">Domain <span class="un ${F.hideDom.size ? '' : 'dim'}" data-un="dom">Unhide all</span></div><div class="hwrap">`;
   h += doms.map(([d, l]) => `<div class="hchip ${F.hideDom.has(d) ? 'off' : 'on'}" data-hd="${d}"><span class="bx"></span><span class="hn">${l}</span></div>`).join('') + `</div>`;

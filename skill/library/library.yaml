@@ -36,6 +36,7 @@ facets:
       Rheumatology: ["Connective Tissue Disease", "Vasculitis", "Inflammatory Arthritis"]
       Dermatology: ["Inflammatory Dermatoses", "Skin Oncology"]
       Emergency: ["Resuscitation", "Toxicology", "Trauma", "Ward Italian"]
+      Anesthesia: ["Airway & Induction", "Anesthetic Pharmacology", "Perioperative Medicine", "Critical Care", "Ward Italian"]
   topic:
     label: Language topic
     type: rail

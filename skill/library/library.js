@@ -233,7 +233,7 @@ function tileHtml(l){
   else action = (l.bundle ? `<span class="taction dl" title="download .chiron bundle" onclick="event.stopPropagation();LIB.dlfile('${slug}')">⬇</span>` : '')
               + (/^(language-it|medical-italian)$/.test(l.domain) ? `<span class="taction open" title="Listening cards from this lesson (Ascolto)" onclick="event.stopPropagation();location.href='/ascolto?lesson=${encodeURIComponent(slug)}'">🎧 Ascolta</span>` : '')
               + `<span class="taction open">Open →</span>`;
-  const badges = (staged?`<span class="treview">🟡 REVIEW</span>`:'') + (l.bankable>0?`<span class="tbank">💰 ${l.bankable}</span>`:'')
+  const badges = (staged?`<span class="treview">🟡 REVIEW</span>`:'') + ((l.metaMissing||[]).length?`<span class="tag meta-missing" title="chiron.json lacks: ${l.metaMissing.join(', ')}. Shown with a guessed fallback; run lesson_manifest.py stamp.">details missing</span>`:'') + (l.bankable>0?`<span class="tbank">💰 ${l.bankable}</span>`:'')
     + (l.scope==='system'?`<span class="tag sys">organ system</span>`:'')
     + (l.labels||[]).map(t=>{ const st=tagStyle(t); return `<span class="tag lbl" style="--tagc:${st.color||'var(--chiron-accent)'}">${st.icon?st.icon+' ':''}${t}</span>`; }).join('');
   const hl = (l.labels||[]).map(t=>[t,tagStyle(t)]).find(([,st])=>st.highlight);
