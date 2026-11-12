@@ -27,6 +27,7 @@
 #
 # EXCLUDED from the bundle:
 #   .chiron-state.db*   runtime learner state (never travels with the lesson)
+#   .chiron.json.lock   lock file of lesson_manifest.py
 #   source/             original PDFs (not needed to view; can be large)
 #   modules/ _base.html _footer.html vendor/ build.sh  build inputs already inlined
 #   *.chiron / *.chiron.zip   don't nest a previous bundle
@@ -134,26 +135,27 @@ TITLE_ESC="$(printf '%s' "${TITLE}" | sed 's/\\/\\\\/g; s/"/\\"/g')"
 # trailing `|| true` keeps set -e/pipefail from aborting when there's no audio.
 CLIPS="$( { find "${LESSON_DIR}" -name '*.mp3' 2>/dev/null || true; } | wc -l | tr -d ' ')"
 CREATED="$(date +%F)"
-# MERGE onto any existing manifest — a re-bundle must NEVER strip the lesson's real category domain
-# or its provenance. The category domain (video-it / language-it / medicine) is authoritative and is
-# preserved: existing chiron.json.domain > content.json.domain (the chain's declaration) > the --domain
-# arg (a theme-ish default, correct only on a FIRST bundle). tags/labels (Library tags)/status/subject/level/source are carried
-# forward. (Root cause of the "video-it keeps resetting to medicine on every rebundle" bug.)
-CHIRON_TITLE="${TITLE}" CHIRON_ENTRY="${ENTRY}" CHIRON_DOMAIN_ARG="${DOMAIN}" \
+# MERGE onto any existing manifest through lesson_manifest.stamp: every stored key (tags, labels, depth, status,
+# subject, source, ...) is kept. The domain is the stored chiron.json domain, else content.json's, else the
+# --domain argument, normalized to one of the canonical domains; an unknown value is reported and not written.
+CHIRON_TITLE="${TITLE}" CHIRON_ENTRY="${ENTRY}" CHIRON_DOMAIN_ARG="${DOMAIN}" CHIRON_SCRIPTS="${SCRIPT_DIR}" \
 CHIRON_CLIPS="${CLIPS:-0}" CHIRON_CREATED="${CREATED}" CHIRON_SLUG="${SLUG}" python3 - "${LESSON_DIR}" <<'PY'
 import json, os, sys
-d = sys.argv[1]; cjp = os.path.join(d, "chiron.json")
+sys.path.insert(0, os.environ["CHIRON_SCRIPTS"])
+import lesson_manifest as lm
+d = sys.argv[1]
 def _load(p):
     try: return json.load(open(p))
     except Exception: return {}
-old = _load(cjp); content = _load(os.path.join(d, "content.json"))
-domain = old.get("domain") or content.get("domain") or os.environ.get("CHIRON_DOMAIN_ARG") or ""
-m = {"format": "chiron/1", "title": os.environ["CHIRON_TITLE"], "entry": os.environ["CHIRON_ENTRY"],
-     "domain": domain, "created": os.environ["CHIRON_CREATED"],
-     "audioClips": int(os.environ.get("CHIRON_CLIPS") or 0), "generator": "chiron", "slug": os.environ["CHIRON_SLUG"]}
-for k in ("tags", "labels", "lessonFormat", "status", "subject", "level", "source", "source_ref", "accepted", "series"):
-    if old.get(k) is not None: m[k] = old[k]
-json.dump(m, open(cjp, "w"), ensure_ascii=False, indent=2)
+old = lm.read(d); content = _load(os.path.join(d, "content.json"))
+raw = old.get("domain") or content.get("domain") or os.environ.get("CHIRON_DOMAIN_ARG") or ""
+domain = lm.normalize_domain(raw)
+if raw and domain is None:
+    print(f"bundle-lesson: unknown domain {raw!r} for {d}; chiron.json domain left as is", file=sys.stderr)
+# stamp merges onto the stored manifest: every existing key stays, only these are set.
+lm.stamp(d, title=os.environ["CHIRON_TITLE"], domain=domain, generator="chiron",
+         extra={"format": "chiron/1", "entry": os.environ["CHIRON_ENTRY"], "created": os.environ["CHIRON_CREATED"],
+                "audioClips": int(os.environ.get("CHIRON_CLIPS") or 0), "slug": os.environ["CHIRON_SLUG"]})
 PY
 
 # --- zip (paths relative; entry html + chiron.json at the root) ----------------
@@ -165,6 +167,7 @@ zip -r -q "${OUT}" . \
   -x 'audio/**/*.wav' \
   -x '*.log' \
   -x '.chiron-state.db*' \
+  -x '.chiron.json.lock' \
   -x 'source/*' \
   -x 'modules/*' \
   -x '_base.html' \

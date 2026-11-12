@@ -23,6 +23,7 @@
 import * as fs from 'node:fs';
 import * as os from 'node:os';
 import * as path from 'node:path';
+import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 
 // ---------------------------------------------------------------------------
@@ -619,12 +620,21 @@ process.stdout.write('───────────────────�
 process.stdout.write(`Total: ${results.length}  baked: ${done}  reused: ${reused}  failed: ${failed}\n`);
 
 // The library reads the clip count from chiron.json; keep it in step with what is now on disk.
+// A lesson without a chiron.json gets one from lesson_manifest.py (title from the page, no domain), so the
+// manifest has a single writer; every other key already stored is kept.
 {
   const cjPath = path.join(lessonDir, 'chiron.json');
+  if (!fs.existsSync(cjPath)) {
+    const r = spawnSync('python3', [path.join(__dirname, 'lesson_manifest.py'), 'stamp', lessonDir], { encoding: 'utf8' });
+    if (r.status !== 0) process.stderr.write(`WARNING: lesson_manifest.py stamp failed: ${(r.stderr || '').trim()}\n`);
+    process.stderr.write(`WARNING: ${lessonDir} has no chiron.json: it has no domain or system. Run: python3 ${path.join(__dirname, 'lesson_manifest.py')} stamp ${lessonDir} --domain <domain> [--system <system>]\n`);
+  }
   let cj = { format: 'chiron/1', entry: 'lesson.html' };
-  try { cj = JSON.parse(fs.readFileSync(cjPath, 'utf8')); } catch { /* no chiron.json yet: start a minimal one */ }
+  try { cj = JSON.parse(fs.readFileSync(cjPath, 'utf8')); } catch { /* stamp unavailable: keep a minimal manifest */ }
   cj.audioClips = done + reused;
-  fs.writeFileSync(cjPath, JSON.stringify(cj, null, 2));
+  const tmpPath = `${cjPath}.${process.pid}.tmp`;
+  fs.writeFileSync(tmpPath, JSON.stringify(cj, null, 2));
+  fs.renameSync(tmpPath, cjPath);
   process.stdout.write(`chiron.json audioClips=${cj.audioClips}\n`);
 }
 

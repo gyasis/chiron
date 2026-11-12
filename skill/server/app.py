@@ -35,6 +35,8 @@ JOBS_FILE = STATE / "jobs.json"
 PORT = int(os.environ.get("CHIRON_SERVER_PORT", "8911"))
 
 sys.path.insert(0, str(SKILL / "chains"))
+sys.path.insert(0, str(SKILL / "scripts"))
+import lesson_manifest  # noqa: E402  the one writer of chiron.json
 import dispatch  # noqa: E402  the single routing entry point
 import chiron_models  # noqa: E402  live-catalog model resolver (aliases like glm@latest; heals retired names)
 import ledger  # noqa: E402  prompt ledger: JSONL writer + Postgres loader
@@ -178,25 +180,27 @@ def _bundle_lesson(slug: str) -> None:
 
 
 def _write_status(out: Path, job: dict, status: str) -> None:
-    """Merge {status, domain, depth, subject} into the lesson's chiron.json (create if absent)."""
-    cj_path = out / "chiron.json"
-    cj = {}
-    if cj_path.exists():
-        try:
-            cj = json.loads(cj_path.read_text())
-        except Exception:
-            cj = {}
-    cj["status"] = status
-    cj.setdefault("domain", job.get("domain"))
-    cj.setdefault("depth", job.get("depth"))
-    cj.setdefault("subject", job.get("subject"))
+    """Merge status, timestamps and provenance into the lesson's chiron.json through lesson_manifest.stamp.
+    Domain, depth, subject and system are filled only when the lesson has none, so a value a chain stamped is kept."""
+    cj = lesson_manifest.read(out)
+    raw_dom = job.get("domain")
+    dom = lesson_manifest.normalize_domain(raw_dom)
+    if raw_dom and dom is None:
+        print(f"[chiron] {out.name}: unknown domain {raw_dom!r}; chiron.json domain left unset", file=sys.stderr, flush=True)
+    tags = cj.get("tags") if isinstance(cj.get("tags"), dict) else {}
+    ex = job.get("extra") or {}
+    system = None if tags.get("sys") else (ex.get("system") or lesson_manifest.infer_system(job.get("subject")))
+    extra = {("accepted" if status == "published" else "generated"): _now()}
     # caller-declared provenance (generic — chiron persists whatever the caller sent, it knows no source names)
     if job.get("source"):
-        cj["source"] = job["source"]
+        extra["source"] = job["source"]
     if job.get("source_ref"):
-        cj["source_ref"] = job["source_ref"]
-    cj[("accepted" if status == "published" else "generated")] = _now()
-    cj_path.write_text(json.dumps(cj, indent=2))
+        extra["source_ref"] = job["source_ref"]
+    lesson_manifest.stamp(out, status=status,
+                          domain=None if cj.get("domain") else dom,
+                          depth=None if cj.get("depth") else job.get("depth"),
+                          subject=None if cj.get("subject") else job.get("subject"),
+                          system=system, extra=extra)
 
 
 # OCR the wizard's captured page images through the Atelier governor (R-AG1/AG2 — vision model,
@@ -849,12 +853,12 @@ def _run_bake(job: dict, out: Path) -> None:
         return
     log = STATE / f"{jid}.bake.log"
     log.write_text("")   # fresh per run; the transcript fallback and the bake below both APPEND
-    domain = job.get("domain", "medical-italian")
+    domain = lesson_manifest.normalize_domain(job.get("domain")) or job.get("domain") or "medical-italian"
     # Italian lessons — medical-italian, the SSM/passage format (domain 'language'/'language-it'), AND the
     # pure-Italian chain (domain 'italian') — bake with the language-it baker + the Lucrezia voice. Only true
     # 'medicine' uses pauls-tutor. The old check matched ONLY 'medical-italian'/'language', so pure-Italian
     # lessons (domain 'italian') fell through to pauls-tutor/medicine → wrong voice ('lucrezia_italian' unmatched).
-    _italian = domain in ("italian", "medical-italian", "language", "language-it")
+    _italian = domain in ("medical-italian", "language-it")
     bake_domain = "language-it" if _italian else "medicine"
     # persona MUST match what the generation chain used, else opts.voices (filtered to the persona's
     # declared voice ids) won't contain the segments' voice → "no voice ref registered". Medicine =
@@ -991,11 +995,8 @@ def _run_bake(job: dict, out: Path) -> None:
     # Keep the catalog's audio badge in lockstep with the live clip count (else a fully re-baked, already
     # published lesson keeps showing a stale "Bake audio" / wrong count). Merge clips_done into chiron.json.
     try:
-        _cjp2 = out / "chiron.json"
-        if _cjp2.exists():
-            _cj2 = json.loads(_cjp2.read_text())
-            _cj2["audioClips"] = int(post.get("clips_done", 0))
-            _cjp2.write_text(json.dumps(_cj2, indent=2))
+        if (out / "chiron.json").exists():
+            lesson_manifest.stamp(out, extra={"audioClips": int(post.get("clips_done", 0))})
     except Exception:
         pass
     _rebuild_catalog()
@@ -1239,8 +1240,10 @@ def _slug_of(ref: str) -> str:
     return JOBS[ref]["slug"] if ref in JOBS else ref
 
 
-def _job_for_slug(slug: str) -> dict:
-    """An existing job for this slug, else synthesize one from the lesson's chiron.json (for slug-only re-gen)."""
+def _job_for_slug(slug: str, domain: str | None = None) -> dict:
+    """An existing job for this slug, else synthesize one from the lesson's chiron.json (for slug-only re-gen).
+    A lesson whose chiron.json names no domain raises HTTP 409 with the fix command, unless the caller passes `domain`:
+    a lesson is never baked or regenerated under a guessed domain."""
     for j in JOBS.values():
         if j.get("slug") == slug:
             return j
@@ -1251,9 +1254,13 @@ def _job_for_slug(slug: str) -> dict:
             cj = json.loads(p.read_text())
         except Exception:
             cj = {}
+    dom = lesson_manifest.normalize_domain(cj.get("domain")) or lesson_manifest.normalize_domain(domain)
+    if not dom:
+        raise HTTPException(409, f"lesson '{slug}' has no domain in its chiron.json, so it cannot be baked or regenerated. "
+                                 f"Fix: python3 {SKILL}/scripts/lesson_manifest.py stamp {GEN / slug} --domain <medicine|medical-italian|language-it|video-it>")
     jid = uuid.uuid4().hex[:12]
     job = {"id": jid, "created": _now(), "status": "queued", "phase": "queued",
-           "domain": cj.get("domain", "medicine"), "subject": cj.get("subject", slug),
+           "domain": dom, "subject": cj.get("subject", slug),
            "depth": cj.get("depth"), "slug": slug, "stage": "all", "extra": {}}
     JOBS[jid] = job
     return job
@@ -1381,7 +1388,7 @@ def generate(req: GenReq):
             if ex:
                 jid = ex["id"]
             else:
-                job = _job_for_slug(slug); job.update(status="ready", lesson_url=lesson_url); _save(); jid = job["id"]
+                job = _job_for_slug(slug, res["domain"]); job.update(status="ready", lesson_url=lesson_url); _save(); jid = job["id"]
             return {"job_id": jid, "slug": slug, "depth": res["depth"], "chain": res["chain_name"],
                     "status": "ready", "lesson_url": lesson_url, "duplicate": True,
                     "note": "already generated — not regenerating (use /regenerate to redo, or bake to finish audio)"}
@@ -1479,7 +1486,7 @@ def bake_all(engine: str = "mac"):
         if generating:
             return {"ok": False, "reason": "generation in progress — try again when text lessons finish",
                     "generating": len(generating)}
-    seen, queued = set(), []
+    seen, queued, skipped = set(), [], []
     for j in JOBS.values():
         slug = j.get("slug")
         if not slug or slug in seen or j.get("status") == "published":
@@ -1491,10 +1498,15 @@ def bake_all(engine: str = "mac"):
             continue                                   # no viewable text yet
         rec = _recovery(slug)                          # non-blocking (ro, short timeout)
         if rec.get("text") and rec.get("needs_rebake"):
-            job = _job_for_slug(slug)
+            try:
+                job = _job_for_slug(slug)
+            except HTTPException as e:
+                skipped.append({"slug": slug, "reason": e.detail})
+                continue
             _enqueue_bake(job, engine)
             queued.append(slug)
-    return {"ok": True, "queued": len(queued), "slugs": queued, "engine": engine, "pending": _BAKE_Q.qsize()}
+    return {"ok": True, "queued": len(queued), "slugs": queued, "engine": engine, "pending": _BAKE_Q.qsize(),
+            "skipped": skipped}
 
 
 class BakeBatchReq(BaseModel):
@@ -1506,16 +1518,20 @@ class BakeBatchReq(BaseModel):
 def bake_batch(req: BakeBatchReq):
     """Queue an audio bake for a caller-specified list of slugs (the rebake-all ⚡Fast/🐢Slow selector
     posts here with its exact needs-rebake set + the chosen engine)."""
-    queued = []
+    queued, skipped = [], []
     for slug in req.slugs:
         if not (GEN / slug / "lesson.html").exists():
             continue                                   # no viewable text yet
         if _active_job_for_slug(slug):
             continue                                   # already in flight (any lane)
-        job = _job_for_slug(slug)
+        try:
+            job = _job_for_slug(slug)
+        except HTTPException as e:
+            skipped.append({"slug": slug, "reason": e.detail})   # no domain: report, keep going
+            continue
         _enqueue_bake(job, req.engine)
         queued.append(slug)
-    return {"ok": True, "queued": len(queued), "slugs": queued, "engine": req.engine}
+    return {"ok": True, "queued": len(queued), "slugs": queued, "engine": req.engine, "skipped": skipped}
 
 
 class BakeEstimateReq(BaseModel):

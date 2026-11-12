@@ -19,17 +19,21 @@ const index = JSON.parse(readFileSync(join(OUT, 'library.index.json'), 'utf8'));
 const onlyIdx = process.argv.indexOf('--only');
 const only = onlyIdx >= 0 ? process.argv[onlyIdx + 1] : null;   // bundle ONE slug (the server calls this on accept)
 const ready = index.lessons.filter((l) => l.ready && (!only || l.id.replace(/[\/]/g, '-') === only));
-// Pass the REAL category domain to the bundler (identity) — NOT a theme remap. The bundler now preserves
-// an existing domain anyway (bundle-lesson.sh), so this only seeds a first bundle; it must be the true domain.
-const DOMAP = { medicine: 'medicine', 'medical-italian': 'medical-italian', 'language-it': 'language-it', italian: 'language-it', 'video-it': 'video-it' };
+// The bundler gets the lesson's OWN domain (chiron.json, else content.json). A lesson with none is skipped and
+// listed: the index's display fallback is a guess and never seeds a manifest.
+const readJson = (p) => { try { return JSON.parse(readFileSync(p, 'utf8')); } catch { return {}; } };
+const ownDomain = (dir) => readJson(join(dir, 'chiron.json')).domain || readJson(join(dir, 'content.json')).domain || '';
 const catalog = [];
 let ok = 0, fail = 0;
+const skippedNoDomain = [];
 for (const l of ready) {
   const slug = l.id.replace(/[\/]/g, '-');
   const lessonDir = join(GEN, l.id);
   const out = join(LESSONS_DIR, slug + '.chiron');
+  const domain = ownDomain(lessonDir);
+  if (!domain) { skippedNoDomain.push(l.id); continue; }
   try {
-    execFileSync('bash', [BUNDLER, lessonDir, out, '--domain', DOMAP[l.domain] || 'medicine'], { stdio: 'pipe' });
+    execFileSync('bash', [BUNDLER, lessonDir, out, '--domain', domain], { stdio: 'pipe' });
     // Extract the self-contained bundle UNDER the served root so "Open → stream from hub" works over
     // LAN HTTPS (the un-zipped lesson.html + sibling themes/audio; no ../-escape of the document root).
     const extractDir = join(LESSONS_DIR, slug);
@@ -57,4 +61,8 @@ writeFileSync(join(LESSONS_DIR, 'lessons.json'), JSON.stringify({ generatedAt: n
 // persist the root-relative `path` rewrites (Open streams these) back into the index the app reads
 writeFileSync(join(OUT, 'library.index.json'), JSON.stringify(index, null, 2));
 console.log(`hub catalog → ${LESSONS_DIR}`);
+if (skippedNoDomain.length) {
+  console.log(`  skipped: no domain (${skippedNoDomain.length}) — fix with: python3 scripts/lesson_manifest.py stamp <dir> --domain <domain>`);
+  for (const id of skippedNoDomain) console.log(`    ${id}`);
+}
 console.log(`  bundled: ${ok}   failed: ${fail}   manifest: lessons.json (${catalog.length} entries)`);
