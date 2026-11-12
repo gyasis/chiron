@@ -263,7 +263,58 @@ def _user_ctx() -> str:
     return ""
 
 
+BOOKS = os.environ.get("CH_BOOKS", "").strip()   # booklake profiles that replace Harrison as the per-query source
+BOOK_TAG = os.environ.get("CH_BOOK_TAG", "").strip()   # or: every booklake book with this subject tag (e.g. anesthesia)
+BOOK_SRC = BOOK_TAG and f"tag:{BOOK_TAG}" or BOOKS
+
+if not BOOKS and not BOOK_TAG and re.search(r"an(a)?est", " ".join([SUBJECT, SYSTEM]), re.I):
+    BOOK_TAG = "anesthesia"   # anesthesia lessons ground in the anesthesia books, never in Harrison's
+BOOK_SRC = BOOK_TAG and f"tag:{BOOK_TAG}" or BOOKS
+BOOK_CHARS = int(os.environ.get("CH_BOOK_CHARS", "15000"))   # book-passage budget per grounding query
+BOOK_PREFER = os.environ.get("CH_BOOK_PREFER", "oxford_handbook_anaesthesia_4e" if BOOK_TAG == "anesthesia" else "")   # the authority book: placed first, reserved half the budget
+SOURCE_NAME = f"the {BOOK_SRC} books (booklake)" if (BOOKS or BOOK_TAG) else "Harrison's 22e"
+
+
+def books(query: str, n: int) -> str:
+    """Grounding from the CH_BOOKS / CH_BOOK_TAG booklake books, reranked across books by booklake-ground."""
+    import tempfile
+    with tempfile.NamedTemporaryFile(suffix=".md") as tf:
+        sel = ["--tag", BOOK_TAG] if BOOK_TAG else ["--books", BOOKS]
+        r = subprocess.run([str(HOME / ".local/bin/booklake-ground"), *sel, "--k", str(n),
+                            "--max-chars", str(BOOK_CHARS), *(["--prefer", BOOK_PREFER] if BOOK_PREFER else []), "-o", tf.name, query], capture_output=True, text=True, timeout=600)
+        text = Path(tf.name).read_text().strip()
+    if not text:
+        print(f"[books] no passages for '{query[:60]}': {r.stderr.strip()[-200:]}", flush=True)
+        return f"[books ({BOOK_SRC}): no passages found for this query]"
+    return f"## BOOKS ({BOOK_SRC}) — the ONLY reference source for this lesson\n{text}"
+
+
+DISEASE_CONNECTOR = os.environ.get("CH_DISEASE_CONNECTOR", "1" if BOOK_TAG == "anesthesia" else "0") == "1"
+
+
+def disease_connector(query: str, n: int = 2) -> str:
+    """Harrison's as a CONNECTOR only: the underlying disease (lung, metabolic, renal, hepatic) that changes the
+    anaesthetic plan. The specialty books stay the authority for drugs, doses and technique."""
+    if not DISEASE_CONNECTOR or os.environ.get("CH_GROUNDING_ONLY") == "1":
+        return ""
+    try:
+        r = subprocess.run([str(HOME / ".local/bin/harrison-search"), "-q", query, "-n", str(n), "--prose", "--full"],
+                           capture_output=True, text=True, timeout=180)
+        text = r.stdout.strip()
+    except Exception as e:
+        print(f"[connector] harrison-search unavailable: {e}", flush=True)
+        return ""
+    if not text:
+        return ""
+    return ("\n\n## HARRISON'S — DISEASE CONNECTOR ONLY (secondary)\nUse ONLY to explain the underlying disease process "
+            "an anesthesiologist must consider (e.g. COPD/asthma, diabetes, renal or hepatic failure, acid-base) and why it "
+            "changes the anaesthetic or drug choice. NEVER the source for anaesthetic drugs, doses or technique; the "
+            "BOOKS above win on any conflict.\n" + text[:2500])
+
+
 def harrison(query: str, n: int = 6) -> str:
+    if BOOKS or BOOK_TAG:
+        return books(query, n) + disease_connector(query)
     try:
         r = subprocess.run([str(HOME / ".local/bin/harrison-search"), "-q", query, "-n", str(n), "--prose", "--full"],
                            capture_output=True, text=True, timeout=180)
@@ -277,8 +328,8 @@ def build_source_pack() -> str:
     sp = OUT / "source" / f"{SLUG}-source.md"
     if sp.exists() and sp.stat().st_size > 500:
         return sp.read_text()
-    print(f"[phase 0] grounding source pack from Harrison's for: {SUBJECT}")
-    text = _user_ctx() + f"# {SUBJECT} — grounded source pack (Harrison's 22e)\n\n" + harrison(SUBJECT, n=10)
+    print(f"[phase 0] grounding source pack from {SOURCE_NAME} for: {SUBJECT}")
+    text = _user_ctx() + f"# {SUBJECT} — grounded source pack ({SOURCE_NAME})\n\n" + harrison(SUBJECT, n=10)
     sp.write_text(text)
     return text
 
@@ -344,6 +395,7 @@ async def phase1(source: str, avoid: dict):
     if brief is None:
         raise RuntimeError("[chiron] phase-1 brief: the reasoning model returned unusable JSON after 3 repair attempts — try regenerating (usually transient).")
     brief["extractedText"] = source            # inject the real source deterministically
+    brief["groundingNote"] = f"Grounded in {SOURCE_NAME}."
     brief.setdefault("metadata", {})["subject"] = SUBJECT
     (OUT / "brief.json").write_text(json.dumps(brief, indent=2))
 
@@ -394,6 +446,43 @@ def render_check(chapter_obj) -> list:
         return []  # never block authoring on the checker itself failing
 
 
+def requirement_issues(n: int, obj: dict) -> list:
+    """Deterministic check of the user's numbered requirements ("Chapter N MUST contain ... table",
+    "Chapter N MUST give ... (1.0–1.2 mg/kg, ...)"): a table must be present as an HTML <table>, and every
+    dose the sentence names must appear in the chapter."""
+    p = os.environ.get("CH_GROUNDING")
+    try:
+        text = Path(p).read_text() if p else ""
+    except Exception:
+        return []
+    flat = re.sub(r"\s+", " ", " ".join(b for b in re.split(r"\n\s*\n", text) if "MANDATORY" in b))
+    body = json.dumps(obj, ensure_ascii=False).replace("\u2013", "–").replace("-", "–")
+    iss = []
+    for sent in re.findall(rf"Chapter {n} MUST ([^.]*(?:\.\d[^.]*)*)\.", flat):
+        if "table" in sent.lower() and "<table" not in body:
+            iss.append(f"the user's notes require: Chapter {n} MUST {sent} — write it as an HTML <table> in the prose")
+        for dose in re.findall(r"\d+(?:\.\d+)?(?:[–-]\d+(?:\.\d+)?)? ?mg/kg", sent):
+            if dose.replace("-", "–") not in body:
+                iss.append(f"the user's notes require the dose '{dose}' in chapter {n}")
+    return iss
+
+
+def author_requirements(n: int) -> str:
+    """Every CH_GROUNDING paragraph that says MANDATORY, restated next to the output instruction:
+    in the middle of a long prompt the model drops them (a required dose table went missing)."""
+    p = os.environ.get("CH_GROUNDING")
+    try:
+        text = Path(p).read_text() if p else ""
+    except Exception:
+        text = ""
+    paras = [b.strip() for b in re.split(r"\n\s*\n", text) if "MANDATORY" in b]
+    if not paras:
+        return ""
+    return (f"\n\n## AUTHOR'S REQUIREMENTS (from the user's notes; binding; you are writing CHAPTER {n})\n"
+            + "\n\n".join(paras)
+            + "\nBefore returning, check that every requirement that applies to this chapter is met.")
+
+
 # ── Phase 3 — per-chapter author (grounded + AVOID + light verify) ──────────────
 async def author_chapter(chapter, source: str, avoid: dict, idx: int):
     n = chapter.get("chapterNumber", idx + 1)
@@ -405,9 +494,10 @@ async def author_chapter(chapter, source: str, avoid: dict, idx: int):
     p = fill(load_prompt("04a-chapter-write.md"), chapterSyllabus=chapter) \
         + "\n\n## CLINICAL VIGNETTE (mandatory)\n" + load_prompt("04c-quiz-clinical-vignette.md") \
         + "\n\n" + load_prompt("04u-medical-algorithm-widgets.md")  # shared DDx/algorithm widget pedagogy (parity w/ skill)
-    p += (f"\n\n## GROUNDING (Harrison's — ground every clinical claim to this or the source; never invent):\n{grounding[:6000]}"
+    p += (f"\n\n## GROUNDING ({SOURCE_NAME} — ground every clinical claim to this or the source; never invent; cite only this source):\n{grounding[:BOOK_CHARS + 3000]}"
           f"\n\n## SOURCE PACK:\n{source}"
           + avoid_block(avoid, for_vignettes=True)
+          + author_requirements(n)
           + f"\n\nReturn ONE JSON object: {{chapterIndex:{n}, title, exposition, widgets:[...]}} for chapter '{condition}'. "
             "widgets MUST include a full mcq-clinical-vignette (stem, keyInfo[], 5 options w/ per-distractor "
             "explanation, hammer, attendingTip, vignetteCategory). NET-NEW vignette, not in the AVOID list.")
@@ -420,6 +510,7 @@ async def author_chapter(chapter, source: str, avoid: dict, idx: int):
         widgets = obj.get("widgets") or []
         if not any(w.get("type") == "mcq-clinical-vignette" for w in widgets):
             iss.append("missing the mandatory mcq-clinical-vignette widget")
+        iss += requirement_issues(n, obj)
         return iss or None
     ch = await json_with_repair(p, f"chapter{n}", model_for(MODEL_STRUCT), validate_fn=ch_valid)
     if ch is None:

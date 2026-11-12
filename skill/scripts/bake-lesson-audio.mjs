@@ -618,6 +618,16 @@ for (const r of results) {
 process.stdout.write('──────────────────────────────────────────────────────────\n');
 process.stdout.write(`Total: ${results.length}  baked: ${done}  reused: ${reused}  failed: ${failed}\n`);
 
+// The library reads the clip count from chiron.json; keep it in step with what is now on disk.
+{
+  const cjPath = path.join(lessonDir, 'chiron.json');
+  let cj = { format: 'chiron/1', entry: 'lesson.html' };
+  try { cj = JSON.parse(fs.readFileSync(cjPath, 'utf8')); } catch { /* no chiron.json yet: start a minimal one */ }
+  cj.audioClips = done + reused;
+  fs.writeFileSync(cjPath, JSON.stringify(cj, null, 2));
+  process.stdout.write(`chiron.json audioClips=${cj.audioClips}\n`);
+}
+
 if (dialogueArtifacts.length > 0) {
   process.stdout.write(`\nDialogue turns: voiced=${totalVoiced}  skipped(learner)=${totalSkipped}\n`);
 }

@@ -382,7 +382,9 @@ function writeManifest(db: Database.Database, lessonDir: string, courseId: strin
       `SELECT artifact, section_id AS sectionId, audio_path AS audioPath, status, duration_s AS durationS
          FROM audio_clips WHERE course_id = ?`,
     )
-    .all(courseId) as Array<{ artifact: string; sectionId: string | null }>;
+    .all(courseId)
+    // The DB keeps rows for sections of earlier builds; list only clips whose file is on disk.
+    .filter((c: any) => c.audioPath && existsSync(join(lessonDir, c.audioPath))) as Array<{ artifact: string; sectionId: string | null }>;
   // Order by CHAPTER sequence (from syllabus.json), NOT alphabetically by section slug — the old
   // `ORDER BY section_id` sorted the Listen widgets alphabetically, so they played out of order.
   // Whole-lesson kinds (summary/shortened/overview) sort first; sections follow in chapter order.

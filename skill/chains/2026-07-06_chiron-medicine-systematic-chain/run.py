@@ -317,6 +317,12 @@ BOOKS = os.environ.get("CH_BOOKS", "").strip()   # booklake profiles that replac
 BOOK_TAG = os.environ.get("CH_BOOK_TAG", "").strip()   # or: every booklake book with this subject tag (e.g. anesthesia)
 BOOK_SRC = BOOK_TAG and f"tag:{BOOK_TAG}" or BOOKS
 
+if not BOOKS and not BOOK_TAG and re.search(r"an(a)?est", " ".join([SUBJECT, SYSTEM]), re.I):
+    BOOK_TAG = "anesthesia"   # anesthesia lessons ground in the anesthesia books, never in Harrison's
+BOOK_SRC = BOOK_TAG and f"tag:{BOOK_TAG}" or BOOKS
+BOOK_CHARS = int(os.environ.get("CH_BOOK_CHARS", "15000"))   # book-passage budget per grounding query
+BOOK_PREFER = os.environ.get("CH_BOOK_PREFER", "oxford_handbook_anaesthesia_4e" if BOOK_TAG == "anesthesia" else "")   # the authority book: placed first, reserved half the budget
+
 
 def books(query: str, n: int, extra: tuple = ()) -> str:
     """Grounding from the CH_BOOKS booklake books (reranked across books by booklake-ground).
@@ -325,7 +331,7 @@ def books(query: str, n: int, extra: tuple = ()) -> str:
     with tempfile.NamedTemporaryFile(suffix=".md") as tf:
         sel = ["--tag", BOOK_TAG] if BOOK_TAG else ["--books", BOOKS]
         r = subprocess.run([str(HOME / ".local/bin/booklake-ground"), *sel, "--k", str(n),
-                            "--max-chars", "6000", "-o", tf.name, query, *extra], capture_output=True, text=True, timeout=600)
+                            "--max-chars", str(BOOK_CHARS), *(["--prefer", BOOK_PREFER] if BOOK_PREFER else []), "-o", tf.name, query, *extra], capture_output=True, text=True, timeout=600)
         text = Path(tf.name).read_text().strip()
     if not text:
         print(f"[books] no passages for '{query[:60]}': {r.stderr.strip()[-200:]}", flush=True)
@@ -336,9 +342,32 @@ def books(query: str, n: int, extra: tuple = ()) -> str:
 GROUNDING_ONLY = os.environ.get("CH_GROUNDING_ONLY") == "1"   # CH_GROUNDING is the sole source: Harrison is never queried
 
 
+DISEASE_CONNECTOR = os.environ.get("CH_DISEASE_CONNECTOR", "1" if BOOK_TAG == "anesthesia" else "0") == "1"
+
+
+def disease_connector(query: str, n: int = 2) -> str:
+    """Harrison's as a CONNECTOR only: the underlying disease (lung, metabolic, renal, hepatic) that changes the
+    anaesthetic plan. The specialty books stay the authority for drugs, doses and technique."""
+    if not DISEASE_CONNECTOR or os.environ.get("CH_GROUNDING_ONLY") == "1":
+        return ""
+    try:
+        r = subprocess.run([str(HOME / ".local/bin/harrison-search"), "-q", query, "-n", str(n), "--prose", "--full"],
+                           capture_output=True, text=True, timeout=180)
+        text = r.stdout.strip()
+    except Exception as e:
+        print(f"[connector] harrison-search unavailable: {e}", flush=True)
+        return ""
+    if not text:
+        return ""
+    return ("\n\n## HARRISON'S — DISEASE CONNECTOR ONLY (secondary)\nUse ONLY to explain the underlying disease process "
+            "an anesthesiologist must consider (e.g. COPD/asthma, diabetes, renal or hepatic failure, acid-base) and why it "
+            "changes the anaesthetic or drug choice. NEVER the source for anaesthetic drugs, doses or technique; the "
+            "BOOKS above win on any conflict.\n" + text[:2500])
+
+
 def harrison(query: str, n: int = 5) -> str:
     if BOOKS or BOOK_TAG:
-        return books(query, n)
+        return books(query, n) + disease_connector(query)
     if GROUNDING_ONLY:
         return "(no Harrison excerpt: the USER-PROVIDED source above is the ONLY grounding for this lesson)"
     try:
@@ -395,6 +424,7 @@ async def phase1(source: str):
     # brief.json (assembler/library read metadata from here + chiron.json)
     (OUT / "brief.json").write_text(json.dumps(
         {"domain": "medicine", "subMode": "systematic", "extractedText": source,
+         "groundingNote": f"Grounded in the {BOOK_SRC} books (booklake)." if (BOOKS or BOOK_TAG) else ("Grounded in the user-provided source." if GROUNDING_ONLY else "Grounded in Harrison's 22e."),
          "metadata": {"subject": SUBJECT, "topic": SUBJECT, "depth": "systematic",
                       "chapterCountExact": CHAPTER_COUNT_EXACT}}, indent=2))
     (OUT / "syllabus.json").write_text(json.dumps(syl, indent=2))
@@ -441,7 +471,7 @@ async def author_chapter(chapter, idx: int):
         + "\n\n## CLINICAL VIGNETTE (mandatory)\n" + load_prompt("04c-quiz-clinical-vignette.md") \
         + "\n\n" + load_prompt("04u-medical-algorithm-widgets.md")
     p += (
-        f"\n\n{USER_CTX}## GROUNDING ({'USER-PROVIDED CONTEXT above ONLY' if GROUNDING_ONLY else ('the BOOKS excerpt below, plus any USER-PROVIDED CONTEXT above' if (BOOKS or BOOK_TAG) else "Harrison's, plus any USER-PROVIDED CONTEXT above")} — ground every clinical claim to it; never invent):\n{grounding[:6000]}"
+        f"\n\n{USER_CTX}## GROUNDING ({'USER-PROVIDED CONTEXT above ONLY' if GROUNDING_ONLY else ('the BOOKS excerpt below, plus any USER-PROVIDED CONTEXT above' if (BOOKS or BOOK_TAG) else "Harrison's, plus any USER-PROVIDED CONTEXT above")} — ground every clinical claim to it; never invent):\n{grounding[:BOOK_CHARS + 3000]}"
         f"\n\n## SYSTEMATIC DEEP-DIVE (BLOCKING): this lesson is a single-{ENTITY}, {CHAPTER_COUNT_EXACT}-section "
         f"systematic deep-dive on '{SUBJECT}'. Produce a FULL canonical AMBOSS chapter for the section "
         f"'{theme}' (sectionKey={section_key}), focused on: {focus}. Use the FULL widget palette per 04a — "
