@@ -111,7 +111,7 @@ class Tables(unittest.TestCase):
         self.assertEqual(lm.missing(mk("m3", cj={"title": "t", "domain": "medicine", "tags": {"sys": "Renal"}})), [])
         self.assertEqual(lm.missing(mk("m4", cj={"title": "t", "domain": "language-it"})), [])
         self.assertEqual(lm.missing(mk("m5", cj={"title": "t", "domain": "italian"})), ["domain"])
-        self.assertEqual(lm.missing(mk("m6", cj={"title": "t", "domain": "medical-italian"})), ["tags.sys"])
+        self.assertEqual(lm.missing(mk("m6", cj={"title": "t", "domain": "medical-italian"})), [])   # system optional
 
     def test_check_cli_exit_code(self):
         root = TMP / "chk"

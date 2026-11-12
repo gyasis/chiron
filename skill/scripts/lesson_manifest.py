@@ -17,7 +17,7 @@ import argparse, datetime, fcntl, json, os, re, sys, tempfile
 from pathlib import Path
 
 DOMAINS = ("medicine", "medical-italian", "language-it", "video-it", "code")
-NEEDS_SYSTEM = ("medicine", "medical-italian")
+NEEDS_SYSTEM = ("medicine",)   # a Medical-Italian lesson may carry a system (e.g. Anesthesia) but does not need one
 _DOMAIN_ALIASES = {
     "medicine": "medicine",
     "italian": "language-it", "language": "language-it", "language-it": "language-it", "it": "language-it",
@@ -216,19 +216,24 @@ def _slug_rule_domain(d, rel):
     return None
 
 
-def propose(d, root):
-    """List of changes {dir, field, current, proposed, evidence} for one lesson, plus undecided reasons."""
+def propose(d, root, slug_domain_wins=False, index_systems=None):
+    """List of changes {dir, field, current, proposed, evidence} for one lesson, plus undecided reasons.
+    slug_domain_wins: the folder rule (chiron-ward-, chiron-ssm-, chiron-medicina-italiana/…, chiron-italian-) replaces
+    a stored domain that contradicts it. index_systems: {lesson id: system the Library shows}, stored for a medicine
+    lesson that has no system and no anesthesia match."""
     d = Path(d)
     rel = str(d.relative_to(root))
     cj = read(d)
     changes, undecided = [], []
     dom, ev = _domain_evidence(d, rel)
+    rule = _slug_rule_domain(d, rel)
+    if slug_domain_wins and dom and rule and dom != rule and not (rule == "language-it" and dom == "video-it"):
+        dom, ev = rule, f"folder rule (replaces {dom!r})"
     cur_dom = cj.get("domain")
     if dom is None:
         undecided.append(("domain", ev))
     elif cur_dom != dom:
         changes.append(("domain", cur_dom, dom, ev))
-    rule = _slug_rule_domain(d, rel)
     if dom and rule and dom != rule and not (rule == "language-it" and dom == "video-it"):
         undecided.append(("domain", f"stored/declared domain {dom!r} contradicts the slug rule ({rule!r}); left for a human"))
     final_dom = dom or (cur_dom if cur_dom in DOMAINS else None)
@@ -240,8 +245,14 @@ def propose(d, root):
         sysname = infer_system(title, cj.get("subject"), d.name)
         if sysname:
             changes.append(("tags.sys", None, sysname, "anesthesia pattern in title/subject/slug"))
+        elif index_systems and index_systems.get(rel):
+            changes.append(("tags.sys", None, index_systems[rel], "the system the Library shows today"))
         else:
             undecided.append(("tags.sys", "no anesthesia match; the Library keeps its display fallback"))
+    elif final_dom == "medical-italian" and not tg.get("sys"):
+        sysname = infer_system(cj.get("title") or page_title(d), cj.get("subject"), d.name)
+        if sysname:
+            changes.append(("tags.sys", None, sysname, "anesthesia pattern in title/subject/slug"))
     if not cj.get("title"):
         t = page_title(d)
         if t:
@@ -251,12 +262,24 @@ def propose(d, root):
     return changes, undecided
 
 
-def repair(root, apply, report):
+def _index_systems(path):
+    """{lesson id: system} from a library.index.json, for medicine lessons only. Emergency / General is the
+    Library's no-match fallback, not a system, so it is left out."""
+    data = _json(path) if path else {}
+    items = data.get("lessons") if isinstance(data.get("lessons"), list) else next(
+        (v for v in data.values() if isinstance(v, list)), [])
+    return {i["id"]: i["system"] for i in items
+            if isinstance(i, dict) and i.get("id") and i.get("system") and i.get("domain") == "medicine"
+            and not (i["system"] == "Emergency" and i.get("subject") in (None, "", "General"))}
+
+
+def repair(root, apply, report, slug_domain_wins=False, index=None):
     root = Path(root).expanduser()
+    index_systems = _index_systems(Path(index).expanduser()) if index else None
     rows, und, counts, total = [], [], {}, 0
     for d in lesson_dirs(root):
         total += 1
-        changes, undecided = propose(d, root)
+        changes, undecided = propose(d, root, slug_domain_wins, index_systems)
         rel = str(d.relative_to(root))
         for f, cur, new, ev in changes:
             rows.append((rel, f, cur, new, ev))
@@ -314,6 +337,10 @@ def main(argv=None):
     g.add_argument("--dry-run", action="store_true")
     g.add_argument("--apply", action="store_true")
     r.add_argument("--report", required=True)
+    r.add_argument("--slug-domain-wins", action="store_true",
+                   help="the folder rule replaces a stored domain that contradicts it")
+    r.add_argument("--system-from-index", metavar="LIBRARY_INDEX_JSON",
+                   help="store the system the Library shows today for medicine lessons that have none")
     a = ap.parse_args(argv)
     if a.cmd == "stamp":
         try:
@@ -334,7 +361,7 @@ def main(argv=None):
                 print(f"{k}: missing {', '.join(m)}")
             print(f"{len(bad)} lesson(s) with missing fields")
         return 1 if bad else 0
-    return repair(a.root, a.apply, a.report)
+    return repair(a.root, a.apply, a.report, a.slug_domain_wins, a.system_from_index)
 
 
 if __name__ == "__main__":

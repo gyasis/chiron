@@ -165,7 +165,7 @@ for (const d of dirs) {
   const metaMissing = [];
   if (!cj.title) metaMissing.push('title');
   if (!cj.domain && !(cj.tags && cj.tags.dom)) metaMissing.push('domain');
-  if ((tags.dom === 'medicine' || tags.dom === 'medical-italian') && !(cj.tags && cj.tags.sys)) metaMissing.push('system');
+  if (tags.dom === 'medicine' && !(cj.tags && cj.tags.sys)) metaMissing.push('system');   // only English medicine lessons need a system
   const mtime = statSync(join(d, 'lesson.html')).mtimeMs;
   // download-availability = disk truth: is there a packaged .chiron for this lesson?
   const slug = rel.replace(/[\/]/g, '-');
