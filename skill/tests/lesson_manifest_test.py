@@ -101,7 +101,7 @@ class Tables(unittest.TestCase):
     def test_infer_system(self):
         self.assertEqual(lm.infer_system("Rapid sequence induction", "Anaesthesia"), "Anesthesia")
         self.assertEqual(lm.infer_system(None, "anestesia generale"), "Anesthesia")
-        self.assertEqual(lm.infer_system("preparare la sala operatoria"), "Anesthesia")
+        self.assertIsNone(lm.infer_system("preparare la sala operatoria"))   # the OR alone is not anesthesia (surgery wards)
         self.assertIsNone(lm.infer_system("Atrial fibrillation", "cardiologia"))
         self.assertIsNone(lm.infer_system())
 

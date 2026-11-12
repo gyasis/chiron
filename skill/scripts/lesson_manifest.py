@@ -25,7 +25,7 @@ _DOMAIN_ALIASES = {
     "video-it": "video-it",
     "code": "code",
 }
-_ANESTHESIA = re.compile(r"an(a)?est|sala operatoria", re.I)
+_ANESTHESIA = re.compile(r"an(a)?est", re.I)   # the same test the chains use to pick the anesthesia books
 _TITLE = re.compile(r"<title>([^<]*)</title>", re.I)
 _BASE = {"format": "chiron/1", "entry": "lesson.html"}
 
