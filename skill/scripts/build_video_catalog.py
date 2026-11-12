@@ -81,9 +81,21 @@ def members_only(log_dir):
     return ids
 
 
+VIDEO_DIR = os.environ.get("CHIRON_VIDEO_DIR", "/media/gyasis/Drive 2/chiron-videos/anesthesia")
+
+
+def info_duration(vid):
+    """Length in seconds from the downloaded video's info.json, or 0 when it is not downloaded."""
+    try:
+        with open(os.path.join(VIDEO_DIR, vid, vid + ".info.json")) as f:
+            return int(json.load(f).get("duration") or 0)
+    except (OSError, ValueError):
+        return 0
+
+
 def entry(vid, title, source, kind, dur, views, subject, fmt):
     title = clean_title(title)
-    dur = int(dur or 0)
+    dur = int(dur) if str(dur or "").isdigit() else info_duration(vid)
     bucket = length_bucket(kind, dur)
     return {"id": vid, "title": title, "source": source, "kind": kind, "duration": dur, "views": int(views or 0),
             "subject": subject, "format": fmt, "tags": [subject, fmt, source, bucket],
