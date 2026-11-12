@@ -127,7 +127,10 @@ const lessons = [];
 for (const d of dirs) {
   const rel = relative(GEN, d);                       // e.g. chiron-acute-pericarditis-amboss
   let cj = {}; try { cj = JSON.parse(readFileSync(join(d, 'chiron.json'), 'utf8')); } catch {}
-  const title = (cj.title || rel).replace(/^Chiron\s*·\s*/, '');
+  // The folder name is the last resort: a lesson without a chiron.json title still has its page <title>.
+  let pageTitle = '';
+  if (!cj.title) { try { pageTitle = (readFileSync(join(d, 'lesson.html'), 'utf8').match(/<title>([^<]+)<\/title>/) || [])[1] || ''; } catch {} }
+  const title = (cj.title || pageTitle.trim() || rel).replace(/^Chiron\s*·\s*/, '');
   const clips = cj.audioClips ?? 0;
   // tags: prefer chiron.json.tags (future), else override map, else infer
   let tags = cj.tags || OVERRIDE[rel] || OVERRIDE[rel.replace(/^chiron-medicina-italiana\//, '')] || null;
