@@ -32,6 +32,8 @@ sys.stdout.reconfigure(line_buffering=True)
 
 from promptchain import PromptChain
 import sys as _sys; from pathlib import Path as _P; _sys.path.insert(0, str(_P(__file__).resolve().parent.parent))
+_sys.path.insert(0, str(_P(__file__).resolve().parent.parent.parent / "scripts"))
+import lesson_manifest   # scripts/lesson_manifest.py — the one writer of chiron.json (title, domain, system)
 import chiron_models   # shared chains/chiron_models.py — heals retired cloud model names against the live catalog
 import ledger   # shared chains/ledger.py — one full prompt/response record per model call
 import obs   # shared chains/obs.py — per-lesson steps.jsonl observability (best-effort; never breaks generation)
@@ -573,6 +575,9 @@ async def main():
         print("  " + (r.stdout or r.stderr).strip()[-400:], flush=True)
         if r.returncode != 0:
             print("=== stopped: assemble failed."); obs.error("Assembling the page", "assemble failed"); return
+        lesson_manifest.stamp(OUT, domain="medical-italian",
+                              system=os.environ.get("CH_SYSTEM") or lesson_manifest.infer_system(passage.get("specialization"), passage.get("qid")),
+                              subject=passage.get("specialization") or None)
         obs.phase("Assembling the page", "end")
     # 'scripts' = transcript-ONLY backfill: write audio-scripts.json and stop. It runs phase0/phase1 +
     # phase2 (which RESUMEs the existing breakdown.json, no LLM) + phase4, but SKIPS the scenario re-run
@@ -602,7 +607,7 @@ async def main():
         lib = GEN / "chiron-library"
         bundle = lib / "lessons" / f"{SLUG}.chiron"
         try:
-            subprocess.run(["bash", str(SKILL / "scripts" / "bundle-lesson.sh"), str(OUT), str(bundle), "--domain", "language"],
+            subprocess.run(["bash", str(SKILL / "scripts" / "bundle-lesson.sh"), str(OUT), str(bundle), "--domain", "medical-italian"],
                            capture_output=True, text=True, timeout=300)
             subprocess.run(["node", str(SKILL / "scripts" / "build-library-index.mjs")], capture_output=True, text=True, timeout=120)
             print(f"[phase 6] PUBLISHED → chiron-library/lessons/{SLUG}.chiron (in the app)", flush=True)

@@ -59,6 +59,8 @@ sys.stdout.reconfigure(line_buffering=True)
 HOME = Path(os.path.expanduser("~"))
 SKILL = Path(os.environ.get("CHIRON_SKILL", HOME / "Documents/code/chiron/skill"))
 GEN = HOME / "Documents/generated"
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent / "scripts"))
+import lesson_manifest   # scripts/lesson_manifest.py — the one writer of chiron.json (title, domain, system)
 TOPIC = os.environ.get("CH_TOPIC", "").strip()
 if not TOPIC:
     sys.exit("[pimsleur] CH_TOPIC is required, e.g. CH_TOPIC='irregular verbs in the passato prossimo'")
@@ -646,10 +648,9 @@ Return ONLY JSON:
         "srCards": [{"front": i["en"], "back": i["it"], "tags": ["pimsleur"]} for i in items],
     }
     (out / "content.json").write_text(json.dumps(content, ensure_ascii=False, indent=1))
-    (out / "chiron.json").write_text(json.dumps({
-        "format": "chiron/1", "title": f"Chiron · {l['titleIt']}", "entry": "lesson.html", "domain": DOMAIN,
-        "created": datetime.date.today().isoformat(), "generator": "chiron", "lessonFormat": "pimsleur",
-        **({"labels": LABELS} if LABELS else {})}, indent=2))
+    lesson_manifest.stamp(out, title=f"Chiron · {l['titleIt']}", domain=DOMAIN, generator="chiron", labels=LABELS or None,
+                          extra={"created": lesson_manifest.read(out).get("created") or datetime.date.today().isoformat(),
+                                 "lessonFormat": "pimsleur"})
     subprocess.run(["node", str(SKILL / "scripts" / "assemble-language.mjs"), str(out)], check=True)
     subprocess.run([sys.executable, str(SKILL / "scripts" / "upgrade_player_pimsleur.py"), str(out / "lesson.html")], check=True)
     print(f"[P3] {out.name}: lesson.html", flush=True)

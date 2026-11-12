@@ -30,6 +30,8 @@ from pathlib import Path
 sys.stdout.reconfigure(line_buffering=True)
 from promptchain import PromptChain
 import sys as _sys; from pathlib import Path as _P; _sys.path.insert(0, str(_P(__file__).resolve().parent.parent))
+_sys.path.insert(0, str(_P(__file__).resolve().parent.parent.parent / "scripts"))
+import lesson_manifest   # scripts/lesson_manifest.py — the one writer of chiron.json (title, domain, system)
 import chiron_models   # shared chains/chiron_models.py — heals retired cloud model names against the live catalog
 import ledger   # shared chains/ledger.py — one full prompt/response record per model call
 import obs   # shared chains/obs.py — per-lesson steps.jsonl observability (best-effort; never breaks generation)
@@ -58,7 +60,7 @@ if not GEMINI_KEY:
     except Exception:
         pass
 
-DOMAIN = "medicine"
+DOMAIN = "medical-italian"
 LEARNER = os.environ.get("CH_LEARNER", "Gyasi")
 TOPIC = os.environ.get("CH_TOPIC", "")
 SETTING = os.environ.get("CH_SETTING", "")
@@ -313,6 +315,9 @@ def assemble():
     r = subprocess.run(["node", str(SKILL / "scripts" / "assemble-language.mjs"), str(OUT)],
                        capture_output=True, text=True)
     print("  " + (r.stdout or r.stderr).strip()[-300:], flush=True)
+    if r.returncode == 0:
+        lesson_manifest.stamp(OUT, domain=DOMAIN, system=os.environ.get("CH_SYSTEM") or lesson_manifest.infer_system(TOPIC, SETTING),
+                              subject=TOPIC)
     return r.returncode == 0
 
 

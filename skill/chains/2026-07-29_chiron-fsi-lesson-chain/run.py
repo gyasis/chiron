@@ -51,6 +51,8 @@ HOME = Path(os.path.expanduser("~"))
 SKILL = Path(os.environ.get("CHIRON_SKILL", HOME / "Documents/code/chiron/skill"))
 GEN = HOME / "Documents/generated"
 LESSON = int(os.environ.get("CH_LESSON", "1"))
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent / "scripts"))
+import lesson_manifest   # scripts/lesson_manifest.py — the one writer of chiron.json (title, domain, system)
 
 # ── locate the prepped lesson (written by fsi-lesson-prep.py) ─────────────────────
 cands = sorted(GEN.glob(f"chiron-italian-fsi-{LESSON:02d}-*"))
@@ -218,6 +220,7 @@ async def main():
         pi.obs.phase("Assembling the page", "end")
         if not ok:
             print("=== assemble failed"); return
+        lesson_manifest.stamp(OUT, title=TITLE, domain="language-it", subject=TITLE)
     if stage in ("audio", "all"):
         pi.obs.phase("Writing narration scripts", "start")
         await pi.phase4_audio_scripts()                 # Phase 4 — narration scripts

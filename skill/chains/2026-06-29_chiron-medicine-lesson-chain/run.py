@@ -34,6 +34,8 @@ sys.stdout.reconfigure(line_buffering=True)  # flush phase prints even when redi
 
 from promptchain import PromptChain
 import sys as _sys; from pathlib import Path as _P; _sys.path.insert(0, str(_P(__file__).resolve().parent.parent))
+_sys.path.insert(0, str(_P(__file__).resolve().parent.parent.parent / "scripts"))
+import lesson_manifest   # scripts/lesson_manifest.py — the one writer of chiron.json (title, domain, system)
 import chiron_models   # shared chains/chiron_models.py — heals retired cloud model names against the live catalog
 import ledger   # shared chains/ledger.py — one full prompt/response record per model call
 import obs   # shared chains/obs.py — per-lesson steps.jsonl observability (best-effort; never breaks generation)
@@ -642,7 +644,7 @@ async def main():
     assert OLLAMA_KEY, "OLLAMA_API_KEY not set (source ~/.config/environment.d/ollama-cloud.conf)"
     obs.set_out(OUT)
     if not SYSTEM:
-        SYSTEM = await infer_system(SUBJECT)
+        SYSTEM = lesson_manifest.infer_system(SUBJECT) or await infer_system(SUBJECT)
         print(f"[phase 0] inferred system for '{SUBJECT}': {SYSTEM}", flush=True)
     print(f"=== chiron medicine chain | subject='{SUBJECT}' system='{SYSTEM}' chapters={N_CHAPTERS} stage={STAGE} -> {OUT}")
     obs.phase("Grounding the source", "start")
@@ -684,6 +686,8 @@ async def main():
         except Exception as e:
             print(f"[phase 3.95] glossary gen skipped ({e})", flush=True)
         assemble()
+        lesson_manifest.stamp(OUT, domain="medicine", system=SYSTEM or None, subject=SUBJECT, depth="amboss",
+                              tags={"subj": SUBJECT})
         obs.phase("Assembling the page", "end")
     if STAGE in ("audio", "all"):
         obs.phase("Writing narration scripts", "start")

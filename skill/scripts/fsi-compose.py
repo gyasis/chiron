@@ -19,6 +19,8 @@ from __future__ import annotations
 import argparse, datetime, json, re, sys
 from pathlib import Path
 
+import lesson_manifest   # same directory; the one writer of chiron.json
+
 GEN = Path.home() / "Documents/generated"
 SK  = GEN / "fsi-course/skeletons"
 
@@ -213,12 +215,10 @@ def write_chiron_json(out: Path, L: dict) -> int:
     audio = out / "audio"
     clips = sum(len(list(p.glob("*.mp3"))) for p in audio.iterdir() if p.is_dir()) if audio.is_dir() else 0
     n = L["lesson"]
-    cj = {"format": "chiron/1",
-          "title": f"Chiron \u00b7 FSI {n:02d} \u00b7 {L['titleIt']} \u2014 {L['title']}",
-          "entry": "lesson.html", "domain": "language-it",
-          "created": datetime.date.today().isoformat(), "audioClips": clips,
-          "generator": "chiron", "subject": "FSI Italian FAST", "level": "A1-A2"}
-    (out / "chiron.json").write_text(json.dumps(cj, ensure_ascii=False, indent=2), encoding="utf-8")
+    lesson_manifest.stamp(out, title=f"Chiron \u00b7 FSI {n:02d} \u00b7 {L['titleIt']} \u2014 {L['title']}",
+                          domain="language-it", subject="FSI Italian FAST", generator="chiron",
+                          extra={"created": lesson_manifest.read(out).get("created") or datetime.date.today().isoformat(),
+                                 "audioClips": clips, "level": "A1-A2"})
     return clips
 
 

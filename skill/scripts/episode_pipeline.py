@@ -20,6 +20,8 @@ from __future__ import annotations
 import argparse, json, os, re, subprocess, sys
 from pathlib import Path
 
+import lesson_manifest   # same directory; the one writer of chiron.json
+
 HOME = Path(os.path.expanduser("~"))
 SKILL = Path(os.environ.get("CHIRON_SKILL", HOME / "Documents/code/chiron/skill"))
 SCRIPTS = SKILL / "scripts"
@@ -178,11 +180,10 @@ def main():
     # 8 — register in the Chiron library (chiron.json + rebuild)
     if want("register"):
         clips = len(list((out / "audio/seg").glob("*.mp3"))) if (out / "audio/seg").exists() else 0
-        cj = {"title": meta["title"], "domain": "video-it", "status": "staged", "entry": "lesson.html",
-              "generator": "chiron-video-episode",
-              "tags": {"dom": "video-it", "subj": meta["series"], "level": args.level, "scope": "episode"},
-              "audioClips": clips}
-        (out / "chiron.json").write_text(json.dumps(cj, ensure_ascii=False, indent=2))
+        cur = lesson_manifest.read(out)
+        lesson_manifest.stamp(out, title=meta["title"], domain="video-it", status=None if cur.get("status") else "staged",
+                              generator="chiron-video-episode", scope="episode",
+                              tags={"subj": meta["series"], "level": args.level}, extra={"audioClips": clips})
         print(f"[8/register] chiron.json (video-it · {meta['series']} · {args.level} · {clips} clips) → rebuild library", flush=True)
         sh(["node", SKILL / "scripts" / "build-library-index.mjs"], check=True)
 

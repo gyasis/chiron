@@ -33,6 +33,8 @@ sys.stdout.reconfigure(line_buffering=True)
 
 from promptchain import PromptChain
 import sys as _sys; from pathlib import Path as _P; _sys.path.insert(0, str(_P(__file__).resolve().parent.parent))
+_sys.path.insert(0, str(_P(__file__).resolve().parent.parent.parent / "scripts"))
+import lesson_manifest   # scripts/lesson_manifest.py — the one writer of chiron.json (title, domain, system)
 import chiron_models   # shared chains/chiron_models.py — heals retired cloud model names against the live catalog
 import ledger   # shared chains/ledger.py — one full prompt/response record per model call
 import obs   # shared chains/obs.py — per-lesson steps.jsonl observability (best-effort; never breaks generation)
@@ -65,6 +67,7 @@ if not GEMINI_KEY:
         pass
 
 SUBJECT = os.environ.get("CH_SUBJECT", "").strip()
+PRIMER_SYSTEM = os.environ.get("CH_SYSTEM", "").strip() or lesson_manifest.infer_system(SUBJECT)   # None when neither is known
 if __name__ == "__main__" and not SUBJECT:
     raise SystemExit("[chiron] CH_SUBJECT is empty — refusing to generate a placeholder lesson (wrong-subject guard).")
 N_CHAPTERS = int(os.environ.get("CH_CHAPTERS", "6"))
@@ -454,20 +457,13 @@ def bake_audio():
 # ── Phase 7 — register in the chiron library (stamp chiron.json tags) ───────────
 def register_library(clips: int):
     clips = clips or (len(list((OUT / "audio").glob("**/*.mp3"))) if (OUT / "audio").exists() else 0)
-    chiron_json = {
-        "format": "chiron/1",
-        "title": f"Chiron · {SUBJECT} — Primer",
-        "entry": "lesson.html",
-        "domain": "medicine",
-        "created": date.today().isoformat(),
-        "audioClips": clips,
-        "generator": "chiron-primer",
-        "status": "staged",  # new lessons land in the library's "Needs Review" band until accepted
-        # forward-path tags the library builder prefers (skips inference)
-        "tags": {"dom": "medicine", "sys": "Geriatrics", "subj": SUBJECT, "scope": "subject", "depth": "primer"},
-    }
-    (OUT / "chiron.json").write_text(json.dumps(chiron_json, indent=2))
-    print(f"[phase 7] stamped chiron.json (tags: medicine/Geriatrics/{SUBJECT}, clips={clips})", flush=True)
+    cur = lesson_manifest.read(OUT)
+    lesson_manifest.stamp(OUT, title=f"Chiron · {SUBJECT} — Primer", domain="medicine", system=PRIMER_SYSTEM, depth="primer",
+                          scope="subject", generator="chiron-primer",
+                          status=None if cur.get("status") else "staged",  # new lessons land in the library's "Needs Review" band until accepted
+                          tags={"subj": SUBJECT},
+                          extra={"created": cur.get("created") or date.today().isoformat(), "audioClips": clips})
+    print(f"[phase 7] stamped chiron.json (tags: medicine/{PRIMER_SYSTEM}/{SUBJECT}, clips={clips})", flush=True)
     print("[phase 7] rebuilding chiron library index…", flush=True)
     r = subprocess.run(["node", str(SKILL / "scripts" / "build-library-index.mjs")],
                        capture_output=True, text=True, timeout=180)
@@ -511,6 +507,8 @@ async def main():
         except Exception as e:
             print(f"[phase 3.95] glossary skipped ({e})", flush=True)
         assemble()
+        lesson_manifest.stamp(OUT, domain="medicine", system=PRIMER_SYSTEM, subject=SUBJECT, depth="primer",
+                              scope="subject", tags={"subj": SUBJECT})
         obs.phase("Assembling the page", "end")
     clips = 0
     if STAGE in ("audio", "all"):

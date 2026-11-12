@@ -21,7 +21,7 @@ deterministic assembler.
 
 Run:  cd ~/Documents/PromptChain && bash scripts/observe.sh runs/2026-07-06_chiron-medicine-systematic-chain
 Env:  OLLAMA_API_KEY ; CH_SUBJECT (single disease, default "Aortic aneurysm") ;
-      CH_SYSTEM (tag only, default "General") ; CH_STAGE (plan|chapters|assemble|audio|all).
+      CH_SYSTEM (tag only; default: inferred from the subject, else unset) ; CH_STAGE (plan|chapters|assemble|audio|all).
 """
 from promptchain.observability import init_mlflow
 init_mlflow()
@@ -40,6 +40,8 @@ sys.stdout.reconfigure(line_buffering=True)
 
 from promptchain import PromptChain
 import sys as _sys; from pathlib import Path as _P; _sys.path.insert(0, str(_P(__file__).resolve().parent.parent))
+_sys.path.insert(0, str(_P(__file__).resolve().parent.parent.parent / "scripts"))
+import lesson_manifest   # scripts/lesson_manifest.py — the one writer of chiron.json (title, domain, system)
 import chiron_models   # shared chains/chiron_models.py — heals retired cloud model names against the live catalog
 import ledger   # shared chains/ledger.py — one full prompt/response record per model call
 import obs   # shared chains/obs.py — per-lesson steps.jsonl observability (best-effort; never breaks generation)
@@ -74,7 +76,7 @@ if not GEMINI_KEY:
 SUBJECT = os.environ.get("CH_SUBJECT", "").strip()
 if __name__ == "__main__" and not SUBJECT:
     raise SystemExit("[chiron] CH_SUBJECT is empty — refusing to generate a placeholder lesson (wrong-subject guard).")
-SYSTEM = os.environ.get("CH_SYSTEM", "General")  # tag-only; no atlas/grouping implication
+SYSTEM = os.environ.get("CH_SYSTEM", "").strip() or lesson_manifest.infer_system(SUBJECT)  # tag-only; None when neither is known
 STAGE = os.environ.get("CH_STAGE", "plan")  # plan | chapters | assemble | audio | all
 # Output slug MUST match what the server dispatched (dispatch.py suffixes by depth: '-drug' for the
 # drug template, else '-systematic'). Honor CH_SLUG if the server passed it (authoritative), else derive
@@ -317,7 +319,7 @@ BOOKS = os.environ.get("CH_BOOKS", "").strip()   # booklake profiles that replac
 BOOK_TAG = os.environ.get("CH_BOOK_TAG", "").strip()   # or: every booklake book with this subject tag (e.g. anesthesia)
 BOOK_SRC = BOOK_TAG and f"tag:{BOOK_TAG}" or BOOKS
 
-if not BOOKS and not BOOK_TAG and re.search(r"an(a)?est", " ".join([SUBJECT, SYSTEM]), re.I):
+if not BOOKS and not BOOK_TAG and re.search(r"an(a)?est", " ".join([SUBJECT, SYSTEM or ""]), re.I):
     BOOK_TAG = "anesthesia"   # anesthesia lessons ground in the anesthesia books, never in Harrison's
 BOOK_SRC = BOOK_TAG and f"tag:{BOOK_TAG}" or BOOKS
 BOOK_CHARS = int(os.environ.get("CH_BOOK_CHARS", "15000"))   # book-passage budget per grounding query
@@ -613,19 +615,12 @@ def bake_audio():
 # ── Phase 7 — register in the chiron library (stamp chiron.json tags) ───────────
 def register_library(clips: int):
     clips = clips or (len(list((OUT / "audio").glob("**/*.mp3"))) if (OUT / "audio").exists() else 0)
-    chiron_json = {
-        "format": "chiron/1",
-        "title": f"Chiron · {SUBJECT} — Systematic (Deep-Dive)",
-        "entry": "lesson.html",
-        "domain": "medicine",
-        "created": date.today().isoformat(),
-        "audioClips": clips,
-        "generator": "chiron-systematic",
-        "status": "staged",  # new lessons land in the library's "Needs Review" band until accepted
-        # forward-path tags the library builder prefers (skips inference)
-        "tags": {"dom": "medicine", "sys": SYSTEM, "subj": SUBJECT, "scope": "disease", "depth": "systematic"},
-    }
-    (OUT / "chiron.json").write_text(json.dumps(chiron_json, indent=2))
+    cur = lesson_manifest.read(OUT)
+    lesson_manifest.stamp(OUT, title=f"Chiron · {SUBJECT} — Systematic (Deep-Dive)", domain="medicine", system=SYSTEM, depth="systematic",
+                          scope="disease", generator="chiron-systematic",
+                          status=None if cur.get("status") else "staged",  # new lessons land in the library's "Needs Review" band until accepted
+                          tags={"subj": SUBJECT},
+                          extra={"created": cur.get("created") or date.today().isoformat(), "audioClips": clips})
     print(f"[phase 7] stamped chiron.json (tags: medicine/{SYSTEM}/{SUBJECT}, clips={clips})", flush=True)
     print("[phase 7] rebuilding chiron library index…", flush=True)
     r = subprocess.run(["node", str(SKILL / "scripts" / "build-library-index.mjs")],
@@ -670,6 +665,8 @@ async def main():
         except Exception as e:
             print(f"[phase 3.95] glossary skipped ({e})", flush=True)
         assemble()
+        lesson_manifest.stamp(OUT, domain="medicine", system=SYSTEM, subject=SUBJECT, depth="systematic",
+                              scope="disease", tags={"subj": SUBJECT})
         obs.phase("Assembling the page", "end")
     clips = 0
     # 'scripts' = transcript-ONLY backfill: write audio-scripts.json from the EXISTING chapters and stop.
