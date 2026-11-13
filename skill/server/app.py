@@ -2522,6 +2522,9 @@ def _flat_to_nested(slug: str) -> str | None:
     return None
 
 
+PLAIN_LESSON_RE = re.compile(r'<meta\s+name="chiron-chrome"\s+content="none"', re.I)
+
+
 @app.get("/lessons/{slug:path}/lesson.html", response_class=HTMLResponse)
 def _lesson_with_tutor(slug: str, request: Request):
     p = GEN / slug / "lesson.html"
@@ -2537,6 +2540,10 @@ def _lesson_with_tutor(slug: str, request: Request):
             return RedirectResponse(f"/lessons/{nested}/lesson.html" + (f"?{q}" if q else ""), status_code=307)
         raise HTTPException(404, "lesson not found")
     html = p.read_text(encoding="utf-8")
+    if PLAIN_LESSON_RE.search(html):
+        # A lesson that carries its own player and layout (Il Centro) asks to be served exactly as written:
+        # no tutor, language switch, web player, hand-off or floating-control lanes.
+        return HTMLResponse(html)
     v = int((SKILL / "shell" / "tutor.js").stat().st_mtime)
     tags = f'<link rel="stylesheet" href="/shell/tutor.css?v={v}"><script src="/shell/tutor.js?v={v}" defer></script>'
     if "/shell/tutor.js" not in html:
