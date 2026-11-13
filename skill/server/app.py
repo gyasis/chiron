@@ -166,27 +166,41 @@ def _enrich_job(j: dict, stamp: bool = False) -> bool:
         j["eta_seconds"] = None; j["eta_basis"] = None   # baking/queued/done → no stale generation ETA
     j.setdefault("source", None)   # None = started in-app / via the server; else a caller-declared origin
     j["title"] = lesson_manifest.clean_title(j.get("title")) or _manifest_title(j.get("slug"))
+    if not j.get("depth"):
+        j["depth"] = _manifest_depth(j.get("slug"))
     return changed
 
 
-_TITLE_CACHE: dict = {}   # slug -> (chiron.json mtime_ns, clean title)
+_TITLE_CACHE: dict = {}   # slug -> (chiron.json mtime_ns, clean title, depth)
 
 
-def _manifest_title(slug) -> str | None:
-    """The clean title in a lesson's chiron.json, re-read only when the file's mtime changes."""
+def _manifest_meta(slug) -> tuple:
+    """(clean title, depth) from a lesson's chiron.json, re-read only when the file's mtime changes."""
     if not slug:
-        return None
+        return (None, None)
     p = GEN / slug / "chiron.json"
     try:
         mt = p.stat().st_mtime_ns
     except OSError:
-        return None
+        return (None, None)
     hit = _TITLE_CACHE.get(slug)
     if hit and hit[0] == mt:
-        return hit[1]
-    t = lesson_manifest.clean_title(lesson_manifest.read(p.parent).get("title")) or None
-    _TITLE_CACHE[slug] = (mt, t)
-    return t
+        return hit[1:]
+    cj = lesson_manifest.read(p.parent)
+    tags = cj.get("tags") if isinstance(cj.get("tags"), dict) else {}
+    meta = (lesson_manifest.clean_title(cj.get("title")) or None, cj.get("depth") or tags.get("depth") or None)
+    _TITLE_CACHE[slug] = (mt, *meta)
+    return meta
+
+
+def _manifest_title(slug) -> str | None:
+    """The clean title in a lesson's chiron.json."""
+    return _manifest_meta(slug)[0]
+
+
+def _manifest_depth(slug) -> str | None:
+    """The depth stored in a lesson's chiron.json."""
+    return _manifest_meta(slug)[1]
 
 
 def _rebuild_catalog() -> tuple[bool, str]:
