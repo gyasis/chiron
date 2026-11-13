@@ -520,7 +520,11 @@ def _recovery(slug: str) -> dict:
         # a Pimsleur season: the job slug names the season; its episodes are <slug>-NN-<name>/, each with one drill MP3
         eps = sorted(p for p in GEN.glob(f"{slug}-[0-9][0-9]-*") if (p / "lesson.html").exists())
         done = sum(1 for p in eps if (p / "audio" / "pimsleur.mp3").exists())
+        def _title(p):
+            try: return json.loads((p / "chiron.json").read_text()).get("title") or p.name
+            except Exception: return p.name
         return {"slug": slug, "season": True, "episodes": [p.name for p in eps], "text": bool(eps),
+                "episode_list": [{"slug": p.name, "title": _title(p), "audio": (p / "audio" / "pimsleur.mp3").exists()} for p in eps],
                 "breakdown": False, "scripts": False, "clips_done": done, "clips_total": len(eps), "clips_failed": 0,
                 "audio_complete": bool(eps) and done == len(eps), "needs_rebake": False,
                 "missing": [p.name for p in eps if not (p / "audio" / "pimsleur.mp3").exists()][:12]}

@@ -671,6 +671,7 @@ const LIB = {
       ? `<button class="jbakeall" title="rebake all ${nbake} viewable-but-unbaked lessons — pick ⚡Fast / 🐢Mac when you click" onclick="LIB.bakeAll(${nbake})">Bake all (${nbake})</button>` : '';
     h+=`<div class="jhead jhead-row"><span>Needs review · ${nr} to accept · ${ne} failed</span><span class="jbakebtns">${bakeAll}</span></div>`;
     LIB._rec = LIB._rec || {};
+    LIB._eps = LIB._eps || new Set();
     for(const x of recent){ const sl=x.slug||x.id;
       const st=x.status; const r=LIB._rec[sl]||{};
       const missTip=`text ${r.text?'✓':'✗'}${r.clips_total?` · ${r.clips_done}/${r.clips_total} clips${(r.missing&&r.missing.length)?' · missing: '+r.missing.join(', '):''}`:''}`;
@@ -684,7 +685,8 @@ const LIB = {
       else if(st==='error') pill=`<span class="jpill fail">✗ failed</span>`;
       let act='';
       if(st==='ready'){
-        if(x.lesson_url){ const u=(location.port==='8911'?API:'')+x.lesson_url; act+=`<button class="jopen" onclick="LIB._overlay('${u}','${cssq(jobName(x))}')">Open →</button>`; }
+        if(r.season) act+=`<button class="jopen" onclick="LIB.toggleEpisodes('${sl}')">${LIB._eps.has(sl)?'▾':'▸'} Episodes</button>`;
+        else if(x.lesson_url){ const u=(location.port==='8911'?API:'')+x.lesson_url; act+=`<button class="jopen" onclick="LIB._overlay('${u}','${cssq(jobName(x))}')">Open →</button>`; }
         if(r.needs_rebake && r.clips_total>0) act+=`<button class="jrebake" title="reuse ${r.clips_done}/${r.clips_total} clips, bake the rest — pick ⚡Fast / 🐢Mac when you click" onclick="LIB.rebake('${sl}')">🔥 Rebake</button>`;
         else if('clips_total' in r && !r.season && r.clips_total===0) act+=`<button class="jrebake" title="text-only — bake the audio now (⚡Fast / 🐢Mac)" onclick="LIB.rebake('${sl}')">🔊 Bake audio</button>`;   // never baked → offer the FIRST bake
         act+=`<button class="jaccept" onclick="LIB.acceptJob('${sl}')">✓ Accept</button>`;   // promote → into the library, removes it from here
@@ -703,6 +705,7 @@ const LIB = {
       h+=`<div class="jrow ${st}"><span class="jdot"></span><div class="jmeta"><b>${lbl(x)}</b>${depth}${pill}<span class="jsub">${st} · ${when(x.started)}${r.clips_total?` · ${r.clips_done}/${r.clips_total} clips`:''}</span></div>
            <button class="jexp" onclick="LIB.toggleSteps('${sl}')">${open?'▾':'▸'} steps</button>${act}${dismiss}</div>
            <div class="rail" data-slug="${sl}" ${open?'':'style="display:none"'}></div>`;
+      if(r.season && LIB._eps.has(sl)) h+=LIB._episodeRows(r);
     }
     if(h!==LIB._lastHTML){ LIB._lastHTML=h; el.innerHTML=h; }   // skip the full re-render when nothing changed → kills the 4s-poll flicker/reflow
     LIB._fillRails();
@@ -722,6 +725,26 @@ const LIB = {
       catch(e){ if(!cached) LIB._rec[sl]={}; }
     }
     if(got) LIB._loadJobs();   // re-render with fresh recovery (only when something actually changed)
+  },
+  toggleEpisodes(sl){ LIB._eps=LIB._eps||new Set(); LIB._eps.has(sl)?LIB._eps.delete(sl):LIB._eps.add(sl); LIB._loadJobs(); },
+  // a season's episodes, one line each: number, title, its drill MP3, and Open → for its card
+  _episodeRows(r){
+    const base=location.port==='8911'?API:'';
+    const rows=(r.episode_list||[]).map((e,i)=>{
+      const play=e.audio?`<button class="jepplay" data-src="${base}/lessons/${e.slug}/audio/pimsleur.mp3" onclick="LIB.playDrill(this)">▶ drill</button>`:`<span class="jepnone">no audio</span>`;
+      return `<div class="jep"><span class="jepn">${String(i+1).padStart(2,'0')}</span><span class="jept">${e.title}</span>${play}`
+           +`<button class="jopen" onclick="LIB._overlay('${base}/lessons/${e.slug}/lesson.html','${cssq(e.title)}')">Open →</button></div>`;
+    }).join('');
+    return `<div class="jeps">${rows}</div>`;
+  },
+  // one shared player: a second ▶ stops the first; pressing the playing one pauses it
+  playDrill(btn){
+    const src=btn.dataset.src, a=LIB._drill=LIB._drill||new Audio();
+    document.querySelectorAll('#jobslist .jepplay').forEach(b=>b.textContent='▶ drill');
+    if(a.dataset.src===src && !a.paused){ a.pause(); return; }
+    if(a.dataset.src!==src){ a.src=src; a.dataset.src=src; }
+    a.onended=()=>{ btn.textContent='▶ drill'; };
+    a.play().then(()=>{ btn.textContent='❚❚ pause'; }).catch(e=>alert('Could not play: '+e.message));
   },
   toggleSteps(sl){ LIB._open=LIB._open||new Set(); LIB._open.has(sl)?LIB._open.delete(sl):LIB._open.add(sl); LIB._loadJobs(); },
   async _fillRails(){
