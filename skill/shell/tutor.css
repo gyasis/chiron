@@ -8,6 +8,9 @@ html.chiron-tutor-pushed body {
   transition: padding-right .28s ease;
 }
 
+/* The edge tab gets its own lane: the page keeps a strip free on the right so the tab never covers text */
+html:not(.chiron-tutor-pushed) body:has(.chiron-tutor-tab) { padding-right: 44px; }
+
 /* Audio panel collapse (the tutor auto-collapses the Listen widget on open) */
 .chiron-listen-head { position: relative; }
 .chiron-listen-collapse {

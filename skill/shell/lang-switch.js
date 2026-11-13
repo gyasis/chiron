@@ -104,7 +104,14 @@
     '.lt-en{display:block}' +
     'html.lang-both .lt-en{color:var(--chiron-muted,#666);font-size:.93em;margin-top:2px}' +
     'html.lang-both h1.lt-en,html.lang-both h2.lt-en,html.lang-both h3.lt-en,html.lang-both h4.lt-en{font-size:.95rem;font-weight:500}' +
-    'td.lt-cell>.lt-en,th.lt-cell>.lt-en{display:block}';
+    'td.lt-cell>.lt-en,th.lt-cell>.lt-en{display:block}' +
+    '.turn>[data-lt-own][data-lang="it"]{display:contents}' +
+    '.turn>.chiron-en-block{grid-column:2}' +
+    'html.lang-both .turn{grid-template-columns:100px minmax(0,1.25fr) minmax(0,1fr);column-gap:20px}' +
+    'html.lang-both .turn>.chiron-en-block{grid-column:3;margin-top:0;padding-top:0;border-top:0}' +
+    '@media (max-width:700px){html.lang-both .turn{grid-template-columns:minmax(0,1fr)}' +
+    'html.lang-both .turn>.speaker,html.lang-both .turn>[data-lang="it"]>.speaker{justify-self:start}' +
+    'html.lang-both .turn>.chiron-en-block,html.lang-both .turn>.what,html.lang-both .turn>[data-lang="it"]>.what{grid-column:1}}';
   document.head.appendChild(css);
 
   // ---- tag the English markup the lesson already has ---------------------------------------------------------
@@ -234,9 +241,22 @@
       u.nodes[0].setAttribute('data-lang', 'it'); return;
     }
     if (u.nodes.length === 1 && u.nodes[0].nodeType === 1) { u.nodes[0].setAttribute('data-lang', 'it'); return; }
-    var w = document.createElement('span'); w.setAttribute('data-lang', 'it'); w.setAttribute('data-lt-own', '1');
-    el.insertBefore(w, u.nodes[0]);
-    u.nodes.forEach(function (n) { w.appendChild(n); });
+    // wrap each run of adjacent nodes where it stands: nodes split by English segments must keep their place in the text
+    var runs = [], cur = null;
+    u.nodes.forEach(function (n) {
+      if (cur) {
+        var s = cur[cur.length - 1].nextSibling;
+        while (s && s !== n && s.nodeType === 3 && !s.nodeValue.trim()) s = s.nextSibling;
+        if (s === n) { cur.push(n); return; }
+      }
+      cur = [n]; runs.push(cur);
+    });
+    runs.forEach(function (run) {
+      var w = document.createElement('span'); w.setAttribute('data-lang', 'it'); w.setAttribute('data-lt-own', '1');
+      run[0].parentNode.insertBefore(w, run[0]);
+      var last = run[run.length - 1], n = w.nextSibling, nx;
+      while (n) { nx = n.nextSibling; w.appendChild(n); if (n === last) break; n = nx; }
+    });
   }
   function addEN(u, en) {
     var el = u.el, tag = el.tagName, b;

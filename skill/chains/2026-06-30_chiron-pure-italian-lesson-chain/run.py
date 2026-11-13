@@ -142,11 +142,15 @@ def extract_json(s):
 
 
 _TAG_ATTRS = re.compile(r"<(em|strong)\s[^>]*>", re.I)
+# a model sometimes puts the cited text INSIDE the tag as a JSON object: <em { "it": "le dobbiamo raccogliere" }>
+_TAG_OBJ = re.compile(r'<(em|strong)\s*\{\s*"\w+"\s*:\s*"([^"]*)"\s*\}\s*>', re.I)
 
 
 def plain_markup(o):
-    """<em style="…"> -> <em> (and <strong>) in every string: the lesson theme styles them, and the checks count bare tags."""
+    """<em style="…"> -> <em> (and <strong>) in every string: the lesson theme styles them, and the checks count bare tags.
+    <em { "it": "X" }> -> <em>X</em>, so the cited Italian is kept, not dropped with the attributes."""
     if isinstance(o, str):
+        o = _TAG_OBJ.sub(lambda m: f"<{m.group(1).lower()}>{m.group(2)}</{m.group(1).lower()}>", o)
         return _TAG_ATTRS.sub(lambda m: f"<{m.group(1).lower()}>", o)
     if isinstance(o, list):
         return [plain_markup(x) for x in o]
@@ -410,6 +414,10 @@ def sec_valid(s):
     n_em = blob.count("<em>")
     if n_em < 6:
         iss.append(f"need >=6 <em>-wrapped Italian citations in this section (have {n_em}) — wrap EVERY cited Italian word in <em>")
+    empty = re.findall(r"<em>\s*(?=[,.;:)(]|<em>|$)", blob)
+    if n_em != blob.count("</em>") or empty:
+        iss.append(f"<em> tags are broken ({n_em} open, {blob.count('</em>')} close, {len(empty)} empty) — write every citation "
+                   "as <em>Italian text</em>, never as <em {{...}}> or an empty <em>")
     if "<strong>" not in (s.get("introHtml") or ""):
         iss.append("introHtml must <strong>-define the section's key term on first mention")
     bare = [w for w in BARE_QUOTE_RE.findall(blob) if w.lower() not in _EN_GLOSS]   # ignore English glosses (translations), flag only bare ITALIAN citations
