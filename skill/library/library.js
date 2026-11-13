@@ -679,13 +679,14 @@ const LIB = {
       // A text-first / never-baked lesson (clips_total==0) is NOT broken — it just hasn't been baked yet,
       // so show a calm "audio not baked" pill (not the alarming 🔥) but STILL offer a Bake button below.
       if(r.needs_rebake && r.text && r.clips_total>0) pill=`<span class="jpill rebake" title="${missTip}">🔥 needs rebaking</span>`;
+      else if(st==='ready' && r.season) pill=`<span class="jpill" title="${r.episodes.join('\n')}">🎧 ${r.clips_done}/${r.clips_total} episodes with audio</span>`;
       else if(st==='ready' && r.text && (r.clips_total||0)===0) pill=`<span class="jpill pending" title="text ready — audio not baked yet">🔊 audio not baked</span>`;
       else if(st==='error') pill=`<span class="jpill fail">✗ failed</span>`;
       let act='';
       if(st==='ready'){
         if(x.lesson_url){ const u=(location.port==='8911'?API:'')+x.lesson_url; act+=`<button class="jopen" onclick="LIB._overlay('${u}','${cssq(jobName(x))}')">Open →</button>`; }
         if(r.needs_rebake && r.clips_total>0) act+=`<button class="jrebake" title="reuse ${r.clips_done}/${r.clips_total} clips, bake the rest — pick ⚡Fast / 🐢Mac when you click" onclick="LIB.rebake('${sl}')">🔥 Rebake</button>`;
-        else if((r.clips_total||0)===0) act+=`<button class="jrebake" title="text-only — bake the audio now (⚡Fast / 🐢Mac)" onclick="LIB.rebake('${sl}')">🔊 Bake audio</button>`;   // never baked → offer the FIRST bake
+        else if('clips_total' in r && !r.season && r.clips_total===0) act+=`<button class="jrebake" title="text-only — bake the audio now (⚡Fast / 🐢Mac)" onclick="LIB.rebake('${sl}')">🔊 Bake audio</button>`;   // never baked → offer the FIRST bake
         act+=`<button class="jaccept" onclick="LIB.acceptJob('${sl}')">✓ Accept</button>`;   // promote → into the library, removes it from here
       }
       // smart retry: if the text already exists, only re-bake the audio (never redo the lesson)

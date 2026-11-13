@@ -516,6 +516,14 @@ def _recovery(slug: str) -> dict:
     """What already exists for a lesson (from disk + the per-lesson SQLite audio_clips table) — so a
     retry can reuse it and never redo work. Drives the 🔥 needs-rebake pill + the recovery message."""
     out = GEN / slug
+    if not out.is_dir() and (GEN / f"{slug}.season.json").exists():
+        # a Pimsleur season: the job slug names the season; its episodes are <slug>-NN-<name>/, each with one drill MP3
+        eps = sorted(p for p in GEN.glob(f"{slug}-[0-9][0-9]-*") if (p / "lesson.html").exists())
+        done = sum(1 for p in eps if (p / "audio" / "pimsleur.mp3").exists())
+        return {"slug": slug, "season": True, "episodes": [p.name for p in eps], "text": bool(eps),
+                "breakdown": False, "scripts": False, "clips_done": done, "clips_total": len(eps), "clips_failed": 0,
+                "audio_complete": bool(eps) and done == len(eps), "needs_rebake": False,
+                "missing": [p.name for p in eps if not (p / "audio" / "pimsleur.mp3").exists()][:12]}
     text = (out / "lesson.html").exists()
     breakdown = (out / "breakdown.json").exists()
     scripts = (out / "audio-scripts.json").exists()
