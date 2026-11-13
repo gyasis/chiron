@@ -165,12 +165,43 @@ def _enrich_job(j: dict, stamp: bool = False) -> bool:
     else:
         j["eta_seconds"] = None; j["eta_basis"] = None   # baking/queued/done → no stale generation ETA
     j.setdefault("source", None)   # None = started in-app / via the server; else a caller-declared origin
+    j["title"] = lesson_manifest.clean_title(j.get("title")) or _manifest_title(j.get("slug"))
     return changed
 
 
-def _rebuild_catalog() -> None:
-    subprocess.run(["node", str(SKILL / "scripts" / "build-library-index.mjs")],
-                   cwd=str(SKILL), capture_output=True)
+_TITLE_CACHE: dict = {}   # slug -> (chiron.json mtime_ns, clean title)
+
+
+def _manifest_title(slug) -> str | None:
+    """The clean title in a lesson's chiron.json, re-read only when the file's mtime changes."""
+    if not slug:
+        return None
+    p = GEN / slug / "chiron.json"
+    try:
+        mt = p.stat().st_mtime_ns
+    except OSError:
+        return None
+    hit = _TITLE_CACHE.get(slug)
+    if hit and hit[0] == mt:
+        return hit[1]
+    t = lesson_manifest.clean_title(lesson_manifest.read(p.parent).get("title")) or None
+    _TITLE_CACHE[slug] = (mt, t)
+    return t
+
+
+def _rebuild_catalog() -> tuple[bool, str]:
+    """Rebuild the library index. A failure is logged and returned as (False, message), never ignored."""
+    try:
+        r = subprocess.run(["node", str(SKILL / "scripts" / "build-library-index.mjs")],
+                           cwd=str(SKILL), capture_output=True, text=True)
+    except OSError as e:
+        print(f"[chiron] library index rebuild could not start: {e}", file=sys.stderr, flush=True)
+        return False, str(e)
+    if r.returncode != 0:
+        msg = ((r.stderr or "") + (r.stdout or "")).strip()[-400:]
+        print(f"[chiron] library index rebuild failed (exit {r.returncode}): {msg}", file=sys.stderr, flush=True)
+        return False, msg
+    return True, ""
 
 
 def _bundle_lesson(slug: str) -> None:
@@ -189,7 +220,10 @@ def _write_status(out: Path, job: dict, status: str) -> None:
         print(f"[chiron] {out.name}: unknown domain {raw_dom!r}; chiron.json domain left unset", file=sys.stderr, flush=True)
     tags = cj.get("tags") if isinstance(cj.get("tags"), dict) else {}
     ex = job.get("extra") or {}
-    system = None if tags.get("sys") else (ex.get("system") or lesson_manifest.infer_system(job.get("subject")))
+    subj = job.get("subject")
+    if isinstance(subj, str) and (subj == out.name or re.match(r"^chiron-", subj)):
+        subj = None   # a slug is a folder name, not the generation input
+    system = None if tags.get("sys") else (ex.get("system") or lesson_manifest.infer_system(subj))
     extra = {("accepted" if status == "published" else "generated"): _now()}
     # caller-declared provenance (generic — chiron persists whatever the caller sent, it knows no source names)
     if job.get("source"):
@@ -199,8 +233,9 @@ def _write_status(out: Path, job: dict, status: str) -> None:
     lesson_manifest.stamp(out, status=status,
                           domain=None if cj.get("domain") else dom,
                           depth=None if cj.get("depth") else job.get("depth"),
-                          subject=None if cj.get("subject") else job.get("subject"),
+                          subject=None if cj.get("subject") else subj,
                           system=system, extra=extra)
+    job["title"] = lesson_manifest.clean_title(lesson_manifest.read(out).get("title")) or job.get("title")
 
 
 # OCR the wizard's captured page images through the Atelier governor (R-AG1/AG2 — vision model,
@@ -1260,7 +1295,9 @@ def _job_for_slug(slug: str, domain: str | None = None) -> dict:
                                  f"Fix: python3 {SKILL}/scripts/lesson_manifest.py stamp {GEN / slug} --domain <medicine|medical-italian|language-it|video-it>")
     jid = uuid.uuid4().hex[:12]
     job = {"id": jid, "created": _now(), "status": "queued", "phase": "queued",
-           "domain": dom, "subject": cj.get("subject", slug),
+           "domain": dom,
+           "subject": cj.get("subject") if cj.get("subject") != slug else None,
+           "title": lesson_manifest.clean_title(cj.get("title")),
            "depth": cj.get("depth"), "slug": slug, "stage": "all", "extra": {}}
     JOBS[jid] = job
     return job
@@ -1425,7 +1462,8 @@ def generate(req: GenReq):
                         "note": "already generating — joined the in-flight job (race-guarded)"}
         jid = uuid.uuid4().hex[:12]
         job = {"id": jid, "created": _now(), "status": "queued", "phase": "queued", "lane": "text",
-               **req.model_dump(), "slug": slug, "chain": res["chain_name"], "depth": res["depth"]}
+               **req.model_dump(), "slug": slug, "chain": res["chain_name"], "depth": res["depth"],
+               "title": None}   # filled when the chain stamps the lesson
         JOBS[jid] = job
         _save()
         _GEN_Q.put(job)      # enqueue — the bounded worker pool runs it when a slot frees (Chiron owns concurrency)
@@ -1876,7 +1914,7 @@ def accept(ref: str):
     # classification the bundler REGENERATES to a default ('medicine') → prior MUST win here, not just
     # fill-if-empty. Without this, publishing an episode reset domain 'italian' → 'medicine', so the
     # Italian video lessons dropped out of the app's Italian chip and into the 300+ medicine pile.
-    for k in ("domain", "tags", "level"):
+    for k in ("domain", "tags", "level", "title"):
         if prior.get(k):
             cj[k] = prior[k]
     p.write_text(json.dumps(cj, indent=2))

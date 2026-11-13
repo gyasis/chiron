@@ -215,8 +215,8 @@ def write_chiron_json(out: Path, L: dict) -> int:
     audio = out / "audio"
     clips = sum(len(list(p.glob("*.mp3"))) for p in audio.iterdir() if p.is_dir()) if audio.is_dir() else 0
     n = L["lesson"]
-    lesson_manifest.stamp(out, title=f"Chiron \u00b7 FSI {n:02d} \u00b7 {L['titleIt']} \u2014 {L['title']}",
-                          domain="language-it", subject="FSI Italian FAST", generator="chiron",
+    lesson_manifest.stamp(out, title=L["titleIt"],
+                          domain="language-it", subject="FSI Italian FAST", generator="chiron", labels=[f"FSI {n:02d}"],
                           extra={"created": lesson_manifest.read(out).get("created") or datetime.date.today().isoformat(),
                                  "audioClips": clips, "level": "A1-A2"})
     return clips

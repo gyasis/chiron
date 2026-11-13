@@ -648,7 +648,7 @@ Return ONLY JSON:
         "srCards": [{"front": i["en"], "back": i["it"], "tags": ["pimsleur"]} for i in items],
     }
     (out / "content.json").write_text(json.dumps(content, ensure_ascii=False, indent=1))
-    lesson_manifest.stamp(out, title=f"Chiron · {l['titleIt']}", domain=DOMAIN, generator="chiron", labels=LABELS or None,
+    lesson_manifest.stamp(out, title=l['titleIt'], domain=DOMAIN, generator="chiron", labels=LABELS or None,
                           extra={"created": lesson_manifest.read(out).get("created") or datetime.date.today().isoformat(),
                                  "lessonFormat": "pimsleur"})
     subprocess.run(["node", str(SKILL / "scripts" / "assemble-language.mjs"), str(out)], check=True)

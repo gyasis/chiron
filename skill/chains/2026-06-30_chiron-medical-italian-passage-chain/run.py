@@ -575,7 +575,12 @@ async def main():
         print("  " + (r.stdout or r.stderr).strip()[-400:], flush=True)
         if r.returncode != 0:
             print("=== stopped: assemble failed."); obs.error("Assembling the page", "assemble failed"); return
-        lesson_manifest.stamp(OUT, domain="medical-italian",
+        try:
+            _bd_title = json.loads((OUT / "breakdown.json").read_text()).get("title")
+        except (OSError, ValueError):
+            _bd_title = None
+        lesson_manifest.stamp(OUT, title=lesson_manifest.clean_title(_bd_title) or None, domain="medical-italian",
+                              extra={"source": "ssm", "source_ref": passage.get("qid")},
                               system=os.environ.get("CH_SYSTEM") or lesson_manifest.infer_system(passage.get("specialization"), passage.get("qid")),
                               subject=passage.get("specialization") or None)
         obs.phase("Assembling the page", "end")

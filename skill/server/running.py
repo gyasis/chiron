@@ -12,6 +12,7 @@ Each item is {"kind", "id", "title", "status", "started" (epoch s), "elapsed_s",
 `recent` lists the JOBS that finished in the last RECENT_S seconds, so a page opened after a job ended still sees how
 it ended. The state lives on the server, so closing and reopening a page or the app shows the same list.
 """
+import re
 from datetime import datetime
 
 LIVE = ("queued", "running", "baking")
@@ -25,6 +26,27 @@ def _epoch(ts) -> float | None:
         return datetime.fromisoformat(str(ts)).timestamp()
     except (TypeError, ValueError):
         return None
+
+
+def _pretty_slug(slug) -> str:
+    """A readable name from a lesson slug: no chiron- prefix, no type words, dashes as spaces."""
+    w = [x for x in str(slug or "").removeprefix("chiron-").split("-") if x]
+    if len(w) > 1 and w[0] in ("ssm", "ward", "italian", "pimsleur"):
+        w = w[1:]
+    if len(w) > 1 and w[-1] in ("systematic", "atlas", "primer", "amboss"):
+        w = w[:-1]
+    s = " ".join(w)
+    return s[:1].upper() + s[1:]
+
+
+def _job_name(j: dict) -> str:
+    """The name a job shows: its title, else a prettified slug. A subject that is the slug or a question id is never shown."""
+    if j.get("title"):
+        return j["title"]
+    subj = j.get("subject")
+    if subj and subj != j.get("slug") and not subj.startswith("chiron-") and not re.match(r"^ssm\d{4}_\d+$", subj, re.I):
+        return subj
+    return _pretty_slug(j.get("slug") or j.get("id"))
 
 
 def _item(kind, id_, title, status, started, now, detail="", link=""):
@@ -44,10 +66,10 @@ def collect(jobs: list[dict], phrase_runs: list[dict], live_sessions: list[dict]
             detail = st if st != "running" else (j.get("phase") or "running")
             if j.get("eta_seconds"):
                 detail += f" · about {round(j['eta_seconds'] / 60) or 1} min left"
-            items.append(_item(_job_kind(j), j.get("id"), j.get("subject") or j.get("slug"), st,
+            items.append(_item(_job_kind(j), j.get("id"), _job_name(j), st,
                                _epoch(j.get("started") or j.get("created")), now, detail, "/library/"))
         elif j.get("finished") and (_epoch(j["finished"]) or 0) > now - RECENT_S:
-            recent.append({"kind": _job_kind(j), "id": j.get("id"), "title": j.get("subject") or j.get("slug"),
+            recent.append({"kind": _job_kind(j), "id": j.get("id"), "title": _job_name(j),
                            "status": st, "finished": _epoch(j["finished"]), "link": "/library/"})
     for r in phrase_runs:
         if r.get("status") == "running":

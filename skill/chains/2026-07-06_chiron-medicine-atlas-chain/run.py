@@ -492,7 +492,7 @@ def bake_audio():
 def register_library(clips: int):
     clips = clips or (len(list((OUT / "audio").glob("**/*.mp3"))) if (OUT / "audio").exists() else 0)
     cur = lesson_manifest.read(OUT)
-    lesson_manifest.stamp(OUT, title=f"Chiron · {SUBJECT} — Atlas", domain="medicine", system=SUBJECT, depth="atlas",
+    lesson_manifest.stamp(OUT, title=SUBJECT, domain="medicine", system=SUBJECT, depth="atlas",
                           scope="system", generator="chiron-atlas",
                           status=None if cur.get("status") else "staged",  # new lessons land in the library's "Needs Review" band until accepted
                           tags={},

@@ -122,6 +122,23 @@ function walk(dir, depth = 0, acc = []) {
   }
   return acc;
 }
+// A display title: HTML entities decoded, no "Chiron ·" / "SSM ·" prefix, no depth suffix (same rule as lesson_manifest.clean_title).
+const NAMED_ENT = { amp: '&', lt: '<', gt: '>', quot: '"', apos: "'", nbsp: ' ' };
+function cleanTitle(t) {
+  if (typeof t !== 'string' || !t) return t;
+  let prev;
+  do {
+    prev = t;
+    t = t.replace(/&(#x[0-9a-f]+|#\d+|[a-z]+);/gi, (m, e) => {
+      if (e[0] === '#') { const n = e[1].toLowerCase() === 'x' ? parseInt(e.slice(2), 16) : parseInt(e.slice(1), 10); return Number.isFinite(n) ? String.fromCodePoint(n) : m; }
+      return NAMED_ENT[e.toLowerCase()] ?? m;
+    });
+    t = t.replace(/^\s*(?:chiron\s*[·\-–—:]\s*|ssm\s*·\s*)+/i, '');
+    t = t.replace(/\s+[—–-]\s+(?:systematic(?:\s*\(deep-dive\))?|atlas|primer)\s*$/i, '');
+    t = t.replace(/\s+/g, ' ').trim();
+  } while (t !== prev);
+  return t;
+}
 const dirs = walk(GEN);
 const lessons = [];
 for (const d of dirs) {
@@ -130,7 +147,7 @@ for (const d of dirs) {
   // The folder name is the last resort: a lesson without a chiron.json title still has its page <title>.
   let pageTitle = '';
   if (!cj.title) { try { pageTitle = (readFileSync(join(d, 'lesson.html'), 'utf8').match(/<title>([^<]+)<\/title>/) || [])[1] || ''; } catch {} }
-  const title = (cj.title || pageTitle.trim() || rel).replace(/^Chiron\s*·\s*/, '');
+  const title = cleanTitle(cj.title || pageTitle.trim()) || rel;
   const clips = cj.audioClips ?? 0;
   // tags: the lesson's own chiron.json.tags win key by key; the override map and title inference only fill
   // what the manifest leaves out (a display fallback, flagged through metaMissing below).
@@ -200,7 +217,7 @@ for (const d of dirs) {
   // tags (multi-valued, shown + filterable in the Library): chiron.json "labels" + the derived format tag
   const labels = [...new Set([...(Array.isArray(cj.labels) ? cj.labels : []), ...(format === 'Pimsleur' ? ['Pimsleur'] : [])])];
   lessons.push({
-    id: rel, format, title, labels, path: servedPath, domain: tags.dom,
+    id: rel, format, title, labels, depth: cj.depth || (cj.tags && cj.tags.depth) || null, path: servedPath, domain: tags.dom,
     system: tags.sys || null, subject: tags.subj || null, topic: tags.topic || null,
     level: tags.level || null, scope: tags.scope || (tags.subj && /diseases|disorders/i.test(title) ? 'subject' : 'disease'),
     trend: tags.trend || null, status: cj.status || 'published', clips, ready: true, mtime,

@@ -216,6 +216,20 @@ function group(arr) { return F.view === 'tiles' ? `<div class="tgrid">${arr.map(
 function esc(s) { return String(s == null ? '' : s).replace(/"/g, '&quot;').replace(/</g, '&lt;'); }
 /* ---- generation status: poll active jobs, show spinners, tap to reconnect ---- */
 let ACTIVE = [], ACTIVE_SIG = '';
+// Name a job shows: its title, else a prettified slug; a subject equal to the slug or a question id is never shown.
+function prettySlug(slug) {
+  let w = String(slug || '').replace(/^chiron-/, '').split('-').filter(Boolean);
+  if (w.length > 1 && /^(ssm|ward|italian|pimsleur)$/.test(w[0])) w = w.slice(1);
+  if (w.length > 1 && /^(systematic|atlas|primer|amboss)$/.test(w[w.length - 1])) w = w.slice(0, -1);
+  const s = w.join(' ');
+  return s.charAt(0).toUpperCase() + s.slice(1);
+}
+function jobName(j) {
+  if (j && j.title) return j.title;
+  const subj = j && j.subject;
+  if (subj && subj !== j.slug && !/^chiron-/.test(subj) && !/^ssm\d{4}_\d+$/i.test(subj)) return subj;
+  return prettySlug((j && (j.slug || j.id)) || '') || 'lesson';
+}
 function activeFor(subject) { const s = (subject || '').toLowerCase().trim(); return s && ACTIVE.find(j => (j.subject || '').toLowerCase().trim() === s); }
 async function pollActive() {
   try {
@@ -242,7 +256,7 @@ function renderRows() {
   const hdr = (i, t, n, note) => `<div class="sec">${i} ${t} <span class="ct">${n}</span><span class="note">${note}</span></div>`;
   let h = '';
   if (ACTIVE.length) h += `<div class="sec">⏳ Generating <span class="ct">${ACTIVE.length}</span><span class="note">tap to watch</span></div>` +
-    ACTIVE.map(j => `<div class="genrow" data-recon="${j.id}"><span class="spinc"></span><div class="gi"><b>${esc(j.subject || j.slug || 'lesson')}</b><small>${j.status === 'queued' ? 'queued…' : (j.phase || 'generating') + '…'}</small></div><span class="chev">›</span></div>`).join('');
+    ACTIVE.map(j => `<div class="genrow" data-recon="${j.id}"><span class="spinc"></span><div class="gi"><b>${esc(jobName(j))}</b><small>${j.status === 'queued' ? 'queued…' : (j.phase || 'generating') + '…'}</small></div><span class="chev">›</span></div>`).join('');
   const stale = TAURI && !SERVER_DOWN ? LESSONS.filter(l => l.ready && isStale(l)) : [];
   if (stale.length) h += `<div class="saveall" id="updsaved">⟳ Update ${stale.length} saved lesson${stale.length > 1 ? 's' : ''} — newer version on your computer</div>`;
   if (F.only.size && TAURI && !SERVER_DOWN) {   // one tap: put every lesson of the focused tag(s) on the phone
@@ -281,7 +295,7 @@ function actCard(j) {
     const bars = PHASES.map((_, i) => `<i class="${i < curIdx ? 'done' : i === curIdx ? 'now' : ''}"></i>`).join('');
     const phaseLabel = (PHASES[curIdx] || ['', 'Working'])[1];
     const eta = j.eta_seconds != null ? `<span class="eta">~${fmtDur(j.eta_seconds)} left</span>` : '';
-    return `<div class="acard live tapp"><div class="ah"><span class="sp"></span><span class="at">${esc(j.subject || j.slug || 'lesson')}</span><span class="atime">${fmtDur(j.elapsed_seconds)}</span></div>
+    return `<div class="acard live tapp"><div class="ah"><span class="sp"></span><span class="at">${esc(jobName(j))}</span><span class="atime">${fmtDur(j.elapsed_seconds)}</span></div>
       <div class="asub"><span class="src ${srcCls}">${esc(src)}</span>${j.chain ? `<span>${esc(j.chain)}</span>` : ''}${j.depth ? `<span>· ${esc(j.depth)}</span>` : ''}</div>
       <div class="prog">${bars}</div><div class="plabel"><span>${phaseLabel}…</span>${eta}</div></div>`;
   }
@@ -292,12 +306,12 @@ function actCard(j) {
   if (j.status === 'error') acts = `<button class="abtn retry">↻ Retry</button>`;
   else if (staged && j.slug) acts = `<button class="abtn ghost preview">👁 Preview</button><button class="abtn accept">✓ Accept & keep</button>`;
   else if (j.status === 'published' && j.slug) acts = `<button class="abtn ghost open">Open →</button>`;
-  return `<div class="acard"><div class="ah"><span class="ico ${ok ? 'ok' : 'err'}">${ok ? '✓' : '✕'}</span><span class="at">${esc(j.subject || j.slug || 'lesson')}</span><span class="atime">${relTime(j.finished || j.created)}</span></div>
+  return `<div class="acard"><div class="ah"><span class="ico ${ok ? 'ok' : 'err'}">${ok ? '✓' : '✕'}</span><span class="at">${esc(jobName(j))}</span><span class="atime">${relTime(j.finished || j.created)}</span></div>
     <div class="asub"><span class="src ${srcCls}">${esc(src)}</span>${j.chain ? `<span>${esc(j.chain)}</span>` : ''}${j.elapsed_seconds != null ? `<span>· took ${fmtDur(j.elapsed_seconds)}</span>` : ''}${staged ? '<span style="color:var(--review)">· needs review</span>' : j.status === 'error' ? '<span style="color:#dc2626">· failed</span>' : ''}</div>
     ${acts ? `<div class="aacts">${acts}</div>` : ''}</div>`;
 }
 async function retryJob(j) { try { const r = await (await fetch(LIB + '/retry/' + j.id, { method: 'POST' })).json();
-  if (r.job_id) { toast('Retrying: ' + (j.subject || 'lesson')); pollActive(); renderActivity(); } else toast(r.detail || 'Retry failed'); }
+  if (r.job_id) { toast('Retrying: ' + jobName(j)); pollActive(); renderActivity(); } else toast(r.detail || 'Retry failed'); }
   catch (e) { toast('Retry failed — library reachable?'); } }
 async function acceptJob(j) { const ref = j.slug || j.id; try { const r = await (await fetch(LIB + '/accept/' + ref, { method: 'POST' })).json();
   if (r.ok) { toast('Kept in your library ✓'); loadLibrary(); renderActivity(); } else toast('Accept failed'); } catch (e) { toast('Accept failed'); } }

@@ -778,7 +778,11 @@ def assemble():
     r = subprocess.run(["node", str(SKILL / "scripts" / "assemble-language.mjs"), str(OUT)], capture_output=True, text=True)
     print("  " + (r.stdout or r.stderr).strip()[-300:], flush=True)
     if r.returncode == 0:
-        lesson_manifest.stamp(OUT, domain="language-it", subject=TOPIC or None)
+        try:
+            _lt = json.loads((OUT / "lesson_meta.json").read_text()).get("title")
+        except (OSError, ValueError):
+            _lt = None
+        lesson_manifest.stamp(OUT, title=_lt or None, domain="language-it", subject=TOPIC or None)
     return r.returncode == 0
 
 

@@ -153,7 +153,8 @@ domain = lm.normalize_domain(raw)
 if raw and domain is None:
     print(f"bundle-lesson: unknown domain {raw!r} for {d}; chiron.json domain left as is", file=sys.stderr)
 # stamp merges onto the stored manifest: every existing key stays, only these are set.
-lm.stamp(d, title=os.environ["CHIRON_TITLE"], domain=domain, generator="chiron",
+# an existing manifest title wins; the page <title> fills in only when there is none (stamp cleans either one).
+lm.stamp(d, title=old.get("title") or os.environ["CHIRON_TITLE"], domain=domain, generator="chiron",
          extra={"format": "chiron/1", "entry": os.environ["CHIRON_ENTRY"], "created": os.environ["CHIRON_CREATED"],
                 "audioClips": int(os.environ.get("CHIRON_CLIPS") or 0), "slug": os.environ["CHIRON_SLUG"]})
 PY

@@ -138,7 +138,7 @@ def lesson_slug(domain, depth, subject):
 def resolve(domain, depth=None, subject="", subject_type=None, extra=None):
     """Return the routing decision: {runpy, chain_name, env, depth, domain, slug}."""
     domain = (domain or "medicine").lower()
-    if domain == "italian": domain = "language-it"   # back-compat: legacy routing token → canonical language-it
+    if domain in ("italian", "language"): domain = "language-it"   # back-compat: legacy routing tokens → canonical language-it
     extra = extra or {}
     if not depth:
         depth = {"system": "atlas", "disease": "systematic", "cross-cutting": "primer"}.get(subject_type)

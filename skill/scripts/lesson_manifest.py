@@ -9,11 +9,12 @@ domain or system from its title. Stamping merges: no key is ever deleted, and a 
                                     --label L ... --status S --generator G]
     lesson_manifest.py check <root> [--json]          # lessons with missing fields; exit 1 if any
     lesson_manifest.py repair <root> --dry-run|--apply --report <file.md>
+    lesson_manifest.py normalize-titles <root> --dry-run|--apply --report <file.md> [--subjects-json map.json]
 
 Domains: medicine, medical-italian, language-it, video-it, code. `medicine` and `medical-italian`
 lessons also need a body system (tags.sys).
 """
-import argparse, datetime, fcntl, json, os, re, sys, tempfile
+import argparse, datetime, fcntl, html, json, os, re, sys, tempfile
 from pathlib import Path
 
 DOMAINS = ("medicine", "medical-italian", "language-it", "video-it", "code")
@@ -27,7 +28,25 @@ _DOMAIN_ALIASES = {
 }
 _ANESTHESIA = re.compile(r"an(a)?est", re.I)   # the same test the chains use to pick the anesthesia books
 _TITLE = re.compile(r"<title>([^<]*)</title>", re.I)
+_TITLE_PREFIX = re.compile(r"^\s*(?:chiron\s*[·\-–—:]\s*|ssm\s*·\s*)+", re.I)
+_TITLE_SUFFIX = re.compile(
+    r"\s+[—–-]\s+(?:systematic(?:\s*\(deep-dive\))?|atlas|primer)\s*$", re.I)
 _BASE = {"format": "chiron/1", "entry": "lesson.html"}
+
+
+def clean_title(t):
+    """One short plain-text name: HTML entities decoded, no "Chiron ·" / "SSM ·" prefix, no depth suffix,
+    whitespace collapsed. None and "" come back unchanged."""
+    if not isinstance(t, str) or not t:
+        return t
+    prev = None
+    while prev != t:
+        prev = t
+        t = html.unescape(t)
+        t = _TITLE_PREFIX.sub("", t)
+        t = _TITLE_SUFFIX.sub("", t)
+        t = re.sub(r"\s+", " ", t).strip()
+    return t
 
 
 def normalize_domain(d):
@@ -57,6 +76,7 @@ def page_title(lesson_dir):
     except OSError:
         return None
     t = m.group(1).strip() if m else ""
+    t = clean_title(t)
     return t if t and t != "COURSE_TITLE" else None
 
 
@@ -90,7 +110,7 @@ def stamp(lesson_dir, *, title=None, domain=None, system=None, subject=None, dep
         for k, v in _BASE.items():
             cj.setdefault(k, v)
         if title is not None:
-            cj["title"] = title
+            cj["title"] = clean_title(title)
         elif not cj.get("title"):
             t = page_title(d)
             if t:
@@ -143,6 +163,12 @@ def missing(lesson_dir):
     if (dom in NEEDS_SYSTEM or (dom not in DOMAINS and tg.get("dom") in NEEDS_SYSTEM)) and not tg.get("sys"):
         out.append("tags.sys")
     return out
+
+
+def unclean_title(lesson_dir):
+    """The stored title when clean_title would change it, else None."""
+    t = read(lesson_dir).get("title")
+    return t if isinstance(t, str) and t and clean_title(t) != t else None
 
 
 def lesson_dirs(root, max_depth=4):
@@ -320,6 +346,94 @@ def repair(root, apply, report, slug_domain_wins=False, index=None):
     return 0
 
 
+_SLUG_DEPTH = re.compile(r"^chiron-.+-(amboss|systematic|drug|atlas|primer)$")   # medicine slug = chiron-<base>-<depth>
+
+
+def _is_slug_subject(subject, slug):
+    return isinstance(subject, str) and (subject == slug or subject.startswith("chiron-"))
+
+
+def normalize_titles(root, apply, report, subjects=None):
+    """Clean every lesson's stored title and drop a subject that is the folder slug or a chiron- name (or
+    replace it with the real subject from `subjects` {slug: subject}). Writes under the manifest lock."""
+    root = Path(root).expanduser()
+    subjects = subjects or {}
+    rows, total, n_title, n_subj, n_depth, empties = [], 0, 0, 0, 0, []
+    seen = {}
+    for d in lesson_dirs(root):
+        total += 1
+        cj = read(d)
+        if not cj:
+            continue
+        rel = str(d.relative_to(root))
+        old = cj.get("title")
+        new = clean_title(old)
+        subj = cj.get("subject")
+        drop = _is_slug_subject(subj, d.name)
+        real = subjects.get(d.name)
+        t_changed = new != old
+        cur_depth = cj.get("depth") or (cj.get("tags") or {}).get("depth")
+        m = _SLUG_DEPTH.match(d.name)
+        add_depth = m.group(1) if m and not cur_depth else None
+        if add_depth:
+            n_depth += 1
+        if not t_changed and not drop and not add_depth:
+            if isinstance(new, str) and new:
+                seen.setdefault(new, []).append((rel, cur_depth))
+            continue
+        if isinstance(old, str) and old and not new:
+            empties.append(rel)
+            t_changed = False
+            new = old
+        n_title += t_changed
+        n_subj += drop
+        rows.append((rel, old, new if t_changed else old, subj if drop else None,
+                     real if drop and real else None))
+        if isinstance(new, str) and new:
+            seen.setdefault(new, []).append((rel, cur_depth or add_depth))
+        if apply:
+            with open(d / ".chiron.json.lock", "w") as lock:
+                fcntl.flock(lock, fcntl.LOCK_EX)
+                cur = read(d)
+                if t_changed:
+                    cur["title"] = new
+                if drop:
+                    if real:
+                        cur["subject"] = real
+                    else:
+                        cur.pop("subject", None)
+                if add_depth:
+                    cur["depth"] = add_depth
+                    tg = cur.get("tags") if isinstance(cur.get("tags"), dict) else {}
+                    tg["depth"] = add_depth
+                    cur["tags"] = tg
+                fd, tmp = tempfile.mkstemp(prefix=".chiron.json.", dir=str(d))
+                try:
+                    with os.fdopen(fd, "w") as f:
+                        json.dump(cur, f, ensure_ascii=False, indent=2)
+                    os.replace(tmp, d / "chiron.json")
+                except BaseException:
+                    try:
+                        os.unlink(tmp)
+                    except OSError:
+                        pass
+                    raise
+    collisions = {t: v for t, v in seen.items() if len(v) > 1}
+    cell = lambda v: "-" if v is None else str(v).replace("|", "\\|").replace("\n", " ")
+    lines = [f"# Chiron title normalization ({'APPLIED' if apply else 'dry run'})", "",
+             f"Root: `{root}`  ·  lessons scanned: {total}  ·  titles changed: {n_title}  ·  subjects removed or replaced: {n_subj}"
+             f"  ·  titles that would become empty (left as is): {len(empties)}  ·  colliding titles: {len(collisions)}",
+             "", "## Changes", "", "| dir | old title | new title | old subject | new subject |", "|---|---|---|---|---|"]
+    lines += [f"| {cell(r)} | {cell(o)} | {cell(n)} | {cell(s)} | {cell(x)} |" for r, o, n, s, x in rows]
+    lines += ["", "## Empty after cleaning", ""] + [f"- {e}" for e in empties]
+    lines += ["", "## Collisions (same clean title)", "", "| title | lessons (depth) |", "|---|---|"]
+    lines += [f"| {cell(t)} | {cell('; '.join(f'{r} ({dp})' for r, dp in v))} |" for t, v in sorted(collisions.items())]
+    Path(report).expanduser().write_text("\n".join(lines) + "\n")
+    print(f"{total} lesson(s) scanned; {n_title} title(s) changed; {n_subj} subject(s) removed; {n_depth} depth(s) added; "
+          f"{len(empties)} empty; {len(collisions)} collision(s) -> {report}")
+    return 0
+
+
 def main(argv=None):
     ap = argparse.ArgumentParser(prog="lesson_manifest", description=__doc__.splitlines()[0])
     sub = ap.add_subparsers(dest="cmd", required=True)
@@ -341,6 +455,13 @@ def main(argv=None):
                    help="the folder rule replaces a stored domain that contradicts it")
     r.add_argument("--system-from-index", metavar="LIBRARY_INDEX_JSON",
                    help="store the system the Library shows today for medicine lessons that have none")
+    nt = sub.add_parser("normalize-titles")
+    nt.add_argument("root")
+    g2 = nt.add_mutually_exclusive_group(required=True)
+    g2.add_argument("--dry-run", action="store_true")
+    g2.add_argument("--apply", action="store_true")
+    nt.add_argument("--report", required=True)
+    nt.add_argument("--subjects-json", metavar="MAP_JSON", help="{slug: real subject} used instead of dropping a slug subject")
     a = ap.parse_args(argv)
     if a.cmd == "stamp":
         try:
@@ -360,7 +481,13 @@ def main(argv=None):
             for k, m in bad.items():
                 print(f"{k}: missing {', '.join(m)}")
             print(f"{len(bad)} lesson(s) with missing fields")
+            for d in lesson_dirs(root):
+                if (t := unclean_title(d)):
+                    print(f"{d.relative_to(root)}: title not clean: {t!r}")
         return 1 if bad else 0
+    if a.cmd == "normalize-titles":
+        subj = _json(Path(a.subjects_json).expanduser()) if a.subjects_json else None
+        return normalize_titles(a.root, a.apply, a.report, subj)
     return repair(a.root, a.apply, a.report, a.slug_domain_wins, a.system_from_index)
 
 

@@ -244,5 +244,61 @@ class ChainsStamp(unittest.TestCase):
             self.assertNotIn('"chiron.json").write_text', (SKILL / "scripts" / name).read_text(), name)
 
 
+class CleanTitle(unittest.TestCase):
+    def test_each_prefix_and_suffix(self):
+        for raw, want in [("Chiron · Atrial Fibrillation", "Atrial Fibrillation"),
+                          ("Chiron - Sepsis", "Sepsis"),
+                          ("Chiron · SSM · Asma", "Asma"),
+                          ("SSM · Asma", "Asma"),
+                          ("Renal — Systematic (Deep-Dive)", "Renal"),
+                          ("Renal — Systematic", "Renal"),
+                          ("Renal — Atlas", "Renal"),
+                          ("Renal — Primer", "Renal"),
+                          ("Chiron · Renal — Atlas", "Renal"),
+                          ("  Two   spaces ", "Two spaces")]:
+            self.assertEqual(lm.clean_title(raw), want, raw)
+
+    def test_entities_none_empty(self):
+        self.assertEqual(lm.clean_title("Fluids &amp; Electrolytes"), "Fluids & Electrolytes")
+        self.assertIsNone(lm.clean_title(None))
+        self.assertEqual(lm.clean_title(""), "")
+
+    def test_stamp_and_page_title_clean(self):
+        d = mk("ct1", "Chiron · Cuore &amp; Vasi — Primer")
+        self.assertEqual(lm.page_title(d), "Cuore & Vasi")
+        self.assertEqual(lm.stamp(d, domain="medicine", system="X")["title"], "Cuore & Vasi")
+        self.assertEqual(lm.stamp(d, title="Chiron · Z — Atlas")["title"], "Z")
+
+    def test_check_reports_unclean_title(self):
+        root = TMP / "chk"
+        mk("u1", cj={"title": "Chiron · T", "domain": "language-it"}, root=root)
+        self.assertEqual(lm.unclean_title(root / "u1"), "Chiron · T")
+        self.assertIsNone(lm.unclean_title(mk("u2", cj={"title": "T"}, root=root)))
+
+
+class NormalizeTitles(unittest.TestCase):
+    def test_dry_run_then_apply(self):
+        root = TMP / "nt"
+        a = mk("chiron-renal-atlas", cj={"title": "Renal — Atlas", "subject": "chiron-renal-atlas", "depth": "atlas"}, root=root)
+        b = mk("chiron-renal-primer", cj={"title": "Renal — Primer", "subject": "renal", "depth": "primer"}, root=root)
+        c = mk("plain", cj={"title": "Fine", "subject": "x"}, root=root)
+        rep = TMP / "nt-report.md"
+        lm.normalize_titles(root, False, rep)
+        self.assertEqual(json.loads((a / "chiron.json").read_text())["title"], "Renal — Atlas")
+        self.assertIn("Collisions", rep.read_text())
+        self.assertIn("Renal", rep.read_text())
+        lm.normalize_titles(root, True, rep)
+        ja, jb = (json.loads((x / "chiron.json").read_text()) for x in (a, b))
+        self.assertEqual((ja["title"], "subject" in ja), ("Renal", False))
+        self.assertEqual((jb["title"], jb["subject"]), ("Renal", "renal"))
+        self.assertEqual(json.loads((c / "chiron.json").read_text())["subject"], "x")
+
+    def test_subjects_map_replaces(self):
+        root = TMP / "nt2"
+        a = mk("chiron-z", cj={"title": "Z", "subject": "chiron-z"}, root=root)
+        lm.normalize_titles(root, True, TMP / "nt2.md", {"chiron-z": "Zeta"})
+        self.assertEqual(json.loads((a / "chiron.json").read_text())["subject"], "Zeta")
+
+
 if __name__ == "__main__":
     unittest.main()

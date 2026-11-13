@@ -201,6 +201,29 @@ function childFacetOf(parentKey){ for (const [k,f] of Object.entries(CONFIG.face
 // " -> &quot; (else it closes the attr), < -> &lt;, newlines -> space. Apostrophes are KEPT
 // (Italian l'/c'/un' etc. display correctly) — never stripped. Used for EVERY onclick free-text arg.
 const cssq = s => String(s==null?'':s).replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/[\r\n]+/g,' ');
+// HTML-escape free text for element content and double-quoted attributes.
+const escH = s => String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+// A readable name from a lesson slug: drops the chiron- prefix, the type words (ssm/ward/italian/pimsleur in front,
+// systematic/atlas/primer/amboss behind) and turns dashes into spaces.
+function prettySlug(slug){
+  let w=String(slug||'').replace(/^chiron-/,'').split('-').filter(Boolean);
+  if(w.length>1 && /^(ssm|ward|italian|pimsleur)$/.test(w[0])) w=w.slice(1);
+  if(w.length>1 && /^(systematic|atlas|primer|amboss)$/.test(w[w.length-1])) w=w.slice(0,-1);
+  const s=w.join(' ');
+  return s.charAt(0).toUpperCase()+s.slice(1);
+}
+// The name a job shows: its title, else a prettified slug. A subject that is the slug or a question id is never shown.
+function jobName(j){
+  if(j && j.title) return j.title;
+  const subj=j && j.subject;
+  if(subj && subj!==j.slug && !/^chiron-/.test(subj) && !/^ssm\d{4}_\d+$/i.test(subj)) return subj;
+  return prettySlug((j && (j.slug||j.id)) || '');
+}
+// Small chips for a job or lesson: depth, plus SSM for a question-bank source.
+function jobChips(j){
+  return (j && j.depth ? `<span class="jdepth ${escH(j.domain||'')}">${escH(j.depth)}</span>` : '')
+       + (j && (j.source==='ssm' || /^chiron-ssm-/.test(j.slug||'')) ? `<span class="jdepth jsrc">SSM</span>` : '');
+}
 function crumb(){ const p=[];
   if (F.domain.size) p.push([...F.domain].map(domLabel).join('/'));
   for (const [k,set] of Object.entries(F.facets)){ if(!set.size) continue; const t=[...set].join('/'); p.push(k==='subject'?'<b>'+t+'</b>':t); }
@@ -233,7 +256,7 @@ function tileHtml(l){
   else action = (l.bundle ? `<span class="taction dl" title="download .chiron bundle" onclick="event.stopPropagation();LIB.dlfile('${slug}')">⬇</span>` : '')
               + (/^(language-it|medical-italian)$/.test(l.domain) ? `<span class="taction open" title="Listening cards from this lesson (Ascolto)" onclick="event.stopPropagation();location.href='/ascolto?lesson=${encodeURIComponent(slug)}'">🎧 Ascolta</span>` : '')
               + `<span class="taction open">Open →</span>`;
-  const badges = (staged?`<span class="treview">🟡 REVIEW</span>`:'') + ((l.metaMissing||[]).length?`<span class="tag meta-missing" title="chiron.json lacks: ${l.metaMissing.join(', ')}. Shown with a guessed fallback; run lesson_manifest.py stamp.">details missing</span>`:'') + (l.bankable>0?`<span class="tbank">💰 ${l.bankable}</span>`:'')
+  const badges = (l.depth?`<span class="tag">${escH(l.depth)}</span>`:'') + (l.source==='ssm'?`<span class="tag">SSM</span>`:'') + (staged?`<span class="treview">🟡 REVIEW</span>`:'') + ((l.metaMissing||[]).length?`<span class="tag meta-missing" title="chiron.json lacks: ${l.metaMissing.join(', ')}. Shown with a guessed fallback; run lesson_manifest.py stamp.">details missing</span>`:'') + (l.bankable>0?`<span class="tbank">💰 ${l.bankable}</span>`:'')
     + (l.scope==='system'?`<span class="tag sys">organ system</span>`:'')
     + (l.labels||[]).map(t=>{ const st=tagStyle(t); return `<span class="tag lbl" style="--tagc:${st.color||'var(--chiron-accent)'}">${st.icon?st.icon+' ':''}${t}</span>`; }).join('');
   const hl = (l.labels||[]).map(t=>[t,tagStyle(t)]).find(([,st])=>st.highlight);
@@ -241,7 +264,7 @@ function tileHtml(l){
   const selCls = selectable ? ' selectable' + (isSel?' selected':'') : '';
   return `<div class="tcard ${l.domain}${l.ready?'':' queued'}${l.bankable>0?' bankq':''}${selCls}${hl?' hl':''}"${hl?` style="--hlc:${hl[1].color||'var(--chiron-accent)'}" title="${hl[0]}"`:''}${onclick}>
     ${selectable?`<span class="selmark${isSel?' on':''}">${isSel?'✓':''}</span>`:''}
-    <div class="tb"><div class="tt">${l.title}</div><div class="ts">${subtagOf(l)}</div>${badges?`<div class="tbadges">${badges}</div>`:''}</div>
+    <div class="tb"><div class="tt">${escH(l.title)}</div><div class="ts">${subtagOf(l)}</div>${badges?`<div class="tbadges">${badges}</div>`:''}</div>
     <div class="tf"><span class="db">${domLabel(l.domain)}</span>${l.ready?(l.clips>0?`<span class="tclips baked" title="audio baked (${l.clips} clips) · click to re-bake (⚡Fast / 🐢Mac)" onclick="event.stopPropagation();LIB.rebake('${slug}')">🔊 ${l.clips}</span>`:`<button class="tbake" title="text-only — bake the audio now (⚡Fast / 🐢Mac)" onclick="event.stopPropagation();LIB.rebake('${slug}')">🔊 Bake audio</button>`):'<span class="tclips">not generated</span>'}${action}</div>
   </div>`;
 }
@@ -504,7 +527,7 @@ const LIB = {
   },
   _showProg(r){ document.getElementById('wizform').style.display='none';
     const pg=document.getElementById('wizprog'); pg.style.display='';
-    document.getElementById('p-title').textContent=`Generating: ${r.slug||''}${r.depth?' ('+r.depth+')':''}`;
+    document.getElementById('p-title').textContent=`Generating: ${jobName(r)}${r.depth?' ('+r.depth+')':''}`;
     document.getElementById('p-open').style.display='none'; document.getElementById('p-log').textContent='';
     LIB._renderSteps('queued', r.domain); },
   _renderSteps(phase, domain){
@@ -558,7 +581,7 @@ const LIB = {
     if(d.local_model){ const lp=LIB.PROVIDERS.find(p=>p.value.startsWith('local/')); if(lp) lp.value=d.local_model; }
     const hist=(d.history||[]).slice().sort((a,b)=>(b.started||'').localeCompare(a.started||''));
     const esc=s=>String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/'/g,'&#39;').replace(/"/g,'&quot;');
-    const lbl=x=> esc(x.domain==='medical-italian' ? (x.source_ref||x.subject) : x.subject);
+    const lbl=x=> esc(jobName(x));
     const mins=x=> x.elapsed_seconds!=null ? Math.round(x.elapsed_seconds/60)+'m' : '';
     const eta=x=> x.eta_seconds ? ' · ~'+Math.max(1,Math.round(x.eta_seconds/60))+'m left' : '';
     const when=s=>{ if(!s) return ''; const t=new Date(s); return isNaN(t)?'':t.toLocaleString([], {month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}); };
@@ -585,7 +608,7 @@ const LIB = {
                                        // failures) — keep it collapsed; it's history, the job just hasn't re-run yet.
         const sub = isRun ? `${esc(x.phase||x.status)} · ${mins(x)}${eta(x)}`
                           : `${LIB._genPaused?'⏸ held — resumes when you hit Resume':'queued — waiting for a slot'} · ${mins(x)}`;
-        h+=`<div class="jrow ${isRun?'gen':'genq'}"><span class="jdot"></span><div class="jmeta"><b>${lbl(x)}</b>${x.depth?`<span class="jdepth ${x.domain||''}">${esc(x.depth)}</span>`:''}<span class="jsub">${sub}</span></div>
+        h+=`<div class="jrow ${isRun?'gen':'genq'}"><span class="jdot"></span><div class="jmeta"><b>${lbl(x)}</b>${jobChips(x)}<span class="jsub">${sub}</span></div>
              <button class="jexp" title="full live event stream" onclick="LIB.rawSteps('${sl}')">⤢</button><button class="jcancel" title="stop this job (keeps the lesson text)" onclick="LIB.cancel('${x.id}')">✕ Cancel</button></div>
            <div class="rail" data-slug="${sl}" ${isRun?'':'style="display:none"'}></div>`; }
     } else h+=`<div class="jhead jhead-row"><span>Nothing generating right now</span><span class="jbakebtns">${provBtns}${pauseBtn}</span></div>`;
@@ -607,12 +630,12 @@ const LIB = {
     // LIST the active bakes so they're actually visible — not just a count. Each running bake = a row;
     // then a one-line "+N more queued". This is why the panel looked empty: 100 bakes hid behind one summary line.
     for(const r of bkRun){
-      const nm=(r.slug||'').replace(/^chiron-/,'').replace(/-/g,' ');
+      const nm=prettySlug(r.slug);
       h+=`<div class="jrow ${r.engine==='modal'?'gen':'genq'}"><span class="jdot"></span><div class="jmeta"><b>${esc(nm)}</b><span class="jsub">🔊 baking audio · ${r.engine==='modal'?'⚡ Modal (fast)':'🐢 Mac'}</span></div></div>`;
     }
     // LIST every queued bake (server now sends the full list) — a queued lesson must always be visible, never hidden behind a count.
     for(const q of (bk.queued||[])){
-      const nm=(q.slug||'').replace(/^chiron-/,'').replace(/-/g,' ');
+      const nm=prettySlug(q.slug);
       h+=`<div class="jrow genq"><span class="jdot"></span><div class="jmeta"><b>${esc(nm)}</b><span class="jsub">🔊 queued for audio · ${q.engine==='modal'?'⚡ Modal (fast)':'🐢 Mac'}</span></div>`
         +`<button class="jrebake" title="bake now — pick ⚡Fast / 🐢Mac when you click" onclick="LIB.rebake('${q.slug}')">🔥 Rebake</button>`
         +(q.id?`<button class="jcancel" title="remove from the bake queue (keeps the lesson text)" onclick="LIB.cancel('${q.id}')">✕ Cancel</button>`:'')
@@ -660,7 +683,7 @@ const LIB = {
       else if(st==='error') pill=`<span class="jpill fail">✗ failed</span>`;
       let act='';
       if(st==='ready'){
-        if(x.lesson_url){ const u=(location.port==='8911'?API:'')+x.lesson_url; act+=`<button class="jopen" onclick="LIB._overlay('${u}','${cssq(x.subject||x.source_ref||x.slug||"")}')">Open →</button>`; }
+        if(x.lesson_url){ const u=(location.port==='8911'?API:'')+x.lesson_url; act+=`<button class="jopen" onclick="LIB._overlay('${u}','${cssq(jobName(x))}')">Open →</button>`; }
         if(r.needs_rebake && r.clips_total>0) act+=`<button class="jrebake" title="reuse ${r.clips_done}/${r.clips_total} clips, bake the rest — pick ⚡Fast / 🐢Mac when you click" onclick="LIB.rebake('${sl}')">🔥 Rebake</button>`;
         else if((r.clips_total||0)===0) act+=`<button class="jrebake" title="text-only — bake the audio now (⚡Fast / 🐢Mac)" onclick="LIB.rebake('${sl}')">🔊 Bake audio</button>`;   // never baked → offer the FIRST bake
         act+=`<button class="jaccept" onclick="LIB.acceptJob('${sl}')">✓ Accept</button>`;   // promote → into the library, removes it from here
@@ -674,7 +697,7 @@ const LIB = {
         } else act=`<button class="jretry" onclick="LIB.retry('${x.id}')">↻ Retry (full)</button>`;
       }
       const open=LIB._open.has(sl);
-      const depth=x.depth?`<span class="jdepth ${x.domain||''}">${esc(x.depth)}</span>`:'';
+      const depth=jobChips(x);
       const dismiss=(st==='error'||st==='audio-failed'||st==='cancelled')?`<button class="jdismiss" title="dismiss — remove from the list (doesn't delete the lesson)" onclick="LIB.dismiss('${sl}','${x.started||''}')">✕</button>`:'';
       h+=`<div class="jrow ${st}"><span class="jdot"></span><div class="jmeta"><b>${lbl(x)}</b>${depth}${pill}<span class="jsub">${st} · ${when(x.started)}${r.clips_total?` · ${r.clips_done}/${r.clips_total} clips`:''}</span></div>
            <button class="jexp" onclick="LIB.toggleSteps('${sl}')">${open?'▾':'▸'} steps</button>${act}${dismiss}</div>
