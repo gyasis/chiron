@@ -44,10 +44,11 @@
     const where = p.from === 'web' ? 'Dal computer' : 'Dal telefono';
     const mm = p.from === 'web' && p.mm && p.mm.id ? p.mm : null;
     banner.classList.toggle('hf-mm', !!mm);
+    banner.style.flexWrap = mm ? 'wrap' : 'nowrap';   // the game banner: full-width text, its buttons on a row below
     banner.innerHTML = mm
-      ? `<div style="flex:1;min-width:0"><div style="color:var(--muted);font-size:11px">${where} · ${ago(p.ts)} · tocca per continuare</div>
-         <div style="font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">🎮 Match Madness pronto — ${esc(mm.name)} · ${+mm.count || 0} coppie</div></div>
-         <button id="hf-mm" class="hbtn" style="font-weight:700;color:var(--med)">▶ Gioca</button><button id="hf-go" class="hbtn">Lezione</button><button id="hf-x" class="hbtn" aria-label="Chiudi">✕</button>`
+      ? `<div style="flex:1 1 100%;min-width:0"><div style="color:var(--muted);font-size:11px">${where} · ${ago(p.ts)} · tocca per continuare</div>
+         <div style="font-weight:600;line-height:1.35">🎮 Match Madness pronto — ${esc(mm.name)} · ${+mm.count || 0} coppie</div></div>
+         <div style="display:flex;gap:8px;width:100%"><button id="hf-mm" class="hbtn" style="flex:1;font-weight:700;color:var(--med)">▶ Gioca</button><button id="hf-go" class="hbtn">Lezione</button><button id="hf-x" class="hbtn" aria-label="Chiudi">✕</button></div>`
       : `<div style="flex:1;min-width:0"><div style="color:var(--muted);font-size:11px">${where} · ${ago(p.ts)}</div>
       <div style="font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(p.title)}${p.section ? ' § ' + esc(p.section) : ''}</div></div>
       <button id="hf-go" class="hbtn" style="font-weight:600;color:var(--med)">Riprendi</button><button id="hf-x" class="hbtn" aria-label="Chiudi">✕</button>`;
