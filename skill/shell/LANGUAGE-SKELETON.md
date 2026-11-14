@@ -122,7 +122,7 @@ auto-renders an ℹ️ badge on any audio control whose clip has a surviving def
 - `status` — short string, shown in the popup header (e.g. `"needs-review"`, `"glitch"`).
 - `defects` — array of `{ "time": "M:SS", "type": "<category>", "detail": "<description>" }`.
 
-If `audio/qc-report.json` is absent or unreachable (i.e. all clips passed QC),
+If `audio/qc-report.json` is `{}` (every clip passed QC; the bake writes it so the fetch never 404s), absent or unreachable,
 the script silently exits — no badges appear. Only clips with a non-empty
 `defects` array get the ℹ️ badge. Clicking the badge opens a fixed popup listing
 each defect with its timestamp; clicking anywhere else dismisses it.

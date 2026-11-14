@@ -653,6 +653,12 @@ Return ONLY JSON:
                                  "lessonFormat": "pimsleur"})
     subprocess.run(["node", str(SKILL / "scripts" / "assemble-language.mjs"), str(out)], check=True)
     subprocess.run([sys.executable, str(SKILL / "scripts" / "upgrade_player_pimsleur.py"), str(out / "lesson.html")], check=True)
+    # the tutor sidebar and the page's audio-QC fetch both expect sibling files; without them the page logs 404s
+    subprocess.run(["node", str(SKILL / "scripts" / "deploy-lesson-tutor.mjs"), "--lesson", out.name], check=False)
+    qc = out / "audio" / "qc-report.json"
+    if not qc.exists():
+        qc.parent.mkdir(parents=True, exist_ok=True)
+        qc.write_text("{}\n")
     print(f"[P3] {out.name}: lesson.html", flush=True)
 
 

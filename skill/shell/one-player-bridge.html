@@ -1,0 +1,23 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>one-player bridge</title>
+<style>*{scrollbar-width:none}*::-webkit-scrollbar{display:none;width:0;height:0}</style>
+</head><body>
+<script>
+/* one-player-bridge.html — relays one-player.js pause signals between origins.
+ * A page on another port (the :8910 lesson server, the :8943 hub) embeds this hidden page from
+ * chiron-server's origin. Signals the parent posts go out on this origin's BroadcastChannel;
+ * signals from this origin's pages and other bridges come back to the parent. */
+(function () {
+  var KEY = 'chiron-one-player', bc = null;
+  try { bc = new BroadcastChannel(KEY); } catch (e) { return; }
+  function ok(m) { return m && m.k === KEY && typeof m.from === 'string'; }
+  addEventListener('message', function (e) {
+    if (e.source === parent && ok(e.data)) bc.postMessage({ from: e.data.from, t: e.data.t });
+  });
+  bc.onmessage = function (e) {
+    var m = e.data;
+    if (m && typeof m.from === 'string') parent.postMessage({ k: KEY, from: m.from, t: m.t }, '*');
+  };
+})();
+</script>
+</body></html>

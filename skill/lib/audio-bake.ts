@@ -213,7 +213,7 @@ function displayContainment(audioText: string, displayedText: string): number {
  *   - if it came back clean      → delete any stale entry for that label.
  * Labels not touched this bake run are left unchanged (they may be from a
  * separate run that produced a different artifact set).
- * The report file is removed entirely once all entries are gone.
+ * A clean lesson keeps an empty `{}` report, so the page's fetch finds a file instead of a 404.
  */
 function mergeQcReport(
   lessonDir: string,
@@ -237,10 +237,6 @@ function mergeQcReport(
     }
   }
 
-  if (Object.keys(existing).length === 0) {
-    try { rmSync(reportPath); } catch { /* already gone */ }
-    return;
-  }
   writeFileSync(reportPath, JSON.stringify(existing, null, 2));
 }
 

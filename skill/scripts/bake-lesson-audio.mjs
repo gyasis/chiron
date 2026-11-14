@@ -650,6 +650,6 @@ if (!noQc) {
   process.stdout.write(
     `\nQC: ${qcChecked} clip(s) checked  ${qcWithDefects} with surviving defects` +
     `  re-baked: ${qcWithDefects > 0 ? qcWithDefects : 0}` +
-    `  qc-report.json: ${qcReportWritten ? 'written' : 'not written (all clean)'}\n`
+    `  qc-report.json: ${qcReportWritten ? 'written' : 'empty (all clean)'}\n`
   );
 }
