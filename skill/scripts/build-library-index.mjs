@@ -141,6 +141,11 @@ function cleanTitle(t) {
 }
 const dirs = walk(GEN);
 const lessons = [];
+// Pimsleur seasons: <slug>.season.json names the season; its episodes are <slug>-NN-<name>/
+const seasonOf = (() => {
+  const seasons = readdirSync(GEN).filter(f => f.endsWith('.season.json')).map(f => f.slice(0, -'.season.json'.length));
+  return id => seasons.find(s => id.startsWith(s + '-') && /^\d\d-/.test(id.slice(s.length + 1))) || null;
+})();
 for (const d of dirs) {
   const rel = relative(GEN, d);                       // e.g. chiron-acute-pericarditis-amboss
   let cj = {}; try { cj = JSON.parse(readFileSync(join(d, 'chiron.json'), 'utf8')); } catch {}
@@ -224,6 +229,7 @@ for (const d of dirs) {
     bundle: hasBundle, sizeMB: hasBundle ? +(statSync(chironPath).size / 1048576).toFixed(1) : null,
     source, source_ref: sourceRef,
     ...(metaMissing.length ? { metaMissing } : {}),
+    ...(seasonOf(rel) ? { season: seasonOf(rel) } : {}),
   });
 }
 
@@ -304,10 +310,12 @@ const index = { generatedAt: new Date().toISOString(), counts: { ready: lessons.
 writeFileSync(join(OUT, 'library.index.json'), JSON.stringify(index, null, 2));
 
 // ---------- 4. copy app ----------
-for (const f of ['index.html', 'library.js', 'manifest.webmanifest', 'sw.js', 'library.yaml']) {
+for (const f of ['index.html', 'library.js', 'season.html', 'manifest.webmanifest', 'sw.js', 'library.yaml']) {
   const src = join(LIB_DIR, f);
   if (existsSync(src)) copyFileSync(src, join(OUT, f));
 }
+copyFileSync(join(SKILL, 'shell', 'one-player.js'), join(OUT, 'one-player.js'));
+copyFileSync(join(SKILL, 'shell', 'no-scrollbars.css'), join(OUT, 'no-scrollbars.css'));   // the library pages share the lessons' one-audio-at-a-time guard
 for (const dir of ['icons', 'vendor']) {
   const s = join(LIB_DIR, dir), o = join(OUT, dir);
   if (existsSync(s)) { mkdirSync(o, { recursive: true }); for (const fn of readdirSync(s)) { try { copyFileSync(join(s, fn), join(o, fn)); } catch {} } }

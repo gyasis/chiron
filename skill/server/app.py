@@ -512,13 +512,38 @@ def _append_step(out: Path, rec: dict) -> None:
         pass
 
 
+def _season_episodes(slug: str) -> list:
+    """A Pimsleur season's episode dirs, in order: <slug>-NN-<name>/ holding a lesson.html."""
+    return sorted(p for p in GEN.glob(f"{slug}-[0-9][0-9]-*") if (p / "lesson.html").exists())
+
+
+def _season(slug: str) -> dict:
+    """One Pimsleur season for the season page: titles, and per episode its focus, pattern, target phrases and drill."""
+    if not re.fullmatch(r"[A-Za-z0-9._-]{1,200}", slug) or not (GEN / f"{slug}.season.json").exists():
+        raise HTTPException(404, "season not found")
+    d = json.loads((GEN / f"{slug}.season.json").read_text(encoding="utf-8"))
+    plan = d.get("lessons") or []
+    eps = []
+    for i, p in enumerate(_season_episodes(slug)):
+        L = plan[i] if i < len(plan) else {}
+        try: cj = json.loads((p / "chiron.json").read_text(encoding="utf-8"))
+        except Exception: cj = {}
+        mp3, tl = p / "audio" / "pimsleur.mp3", p / "audio" / "pimsleur.timeline.json"
+        try: dur = json.loads(tl.read_text(encoding="utf-8")).get("durationS") if tl.exists() else None
+        except Exception: dur = None
+        eps.append({"slug": p.name, "titleIt": L.get("titleIt") or cj.get("title") or p.name, "title": L.get("title") or "",
+                    "focus": L.get("focus") or "", "pattern": L.get("pattern") or "", "targets": L.get("targets") or [],
+                    "audio": mp3.exists(), "dur": dur})
+    return {"slug": slug, "title": d.get("title") or "", "titleIt": d.get("titleIt") or d.get("title") or slug, "episodes": eps}
+
+
 def _recovery(slug: str) -> dict:
     """What already exists for a lesson (from disk + the per-lesson SQLite audio_clips table) — so a
     retry can reuse it and never redo work. Drives the 🔥 needs-rebake pill + the recovery message."""
     out = GEN / slug
     if not out.is_dir() and (GEN / f"{slug}.season.json").exists():
         # a Pimsleur season: the job slug names the season; its episodes are <slug>-NN-<name>/, each with one drill MP3
-        eps = sorted(p for p in GEN.glob(f"{slug}-[0-9][0-9]-*") if (p / "lesson.html").exists())
+        eps = _season_episodes(slug)
         done = sum(1 for p in eps if (p / "audio" / "pimsleur.mp3").exists())
         def _title(p):
             try: return json.loads((p / "chiron.json").read_text()).get("title") or p.name
@@ -2601,6 +2626,14 @@ def _lesson_with_tutor(slug: str, request: Request):
             return RedirectResponse(f"/lessons/{nested}/lesson.html" + (f"?{q}" if q else ""), status_code=307)
         raise HTTPException(404, "lesson not found")
     html = p.read_text(encoding="utf-8")
+    if "one-player.js" not in html:          # one audio at a time across every Chiron page; in <head> so it wraps play() before any player
+        ov = int((SKILL / "shell" / "one-player.js").stat().st_mtime)
+        tag = f'<script src="/shell/one-player.js?v={ov}"></script>'
+        if "no-scrollbars.css" not in html:  # no visible scrollbar anywhere in a lesson, page or nested region
+            nv = int((SKILL / "shell" / "no-scrollbars.css").stat().st_mtime)
+            tag += f'<link rel="stylesheet" href="/shell/no-scrollbars.css?v={nv}">'
+        m = re.search(r"<head[^>]*>", html, re.I)
+        html = html[:m.end()] + tag + html[m.end():] if m else tag + html
     v = int(max((SKILL / "shell" / f).stat().st_mtime for f in ("tutor.js", "tutor.css")))
     tags = f'<link rel="stylesheet" href="/shell/tutor.css?v={v}"><script src="/shell/tutor.js?v={v}" defer></script>'
     if "/shell/tutor.js" not in html:
@@ -2645,6 +2678,11 @@ def _lesson_with_tutor(slug: str, request: Request):
 # phone app are same-origin / CORS-open on THIS server, but cannot reach the hub (no CORS; the phone WebView refuses its
 # cert), so relay GET/PUT to it. Served via the hub itself, the hub answers /api/progress locally and never gets here.
 HUB_PLAIN = os.environ.get("CHIRON_HUB_PLAIN", "http://127.0.0.1:8910")
+
+
+@app.get("/api/season/{slug}")
+def _season_route(slug: str):
+    return _season(slug)
 
 
 @app.api_route("/api/progress/{key}", methods=["GET", "PUT"])

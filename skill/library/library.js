@@ -255,6 +255,7 @@ function tileHtml(l){
                       : `<span class="taction open" onclick="event.stopPropagation();LIB.open('${slug}')">Open →</span>`));
   else action = (l.bundle ? `<span class="taction dl" title="download .chiron bundle" onclick="event.stopPropagation();LIB.dlfile('${slug}')">⬇</span>` : '')
               + (/^(language-it|medical-italian)$/.test(l.domain) ? `<span class="taction open" title="Listening cards from this lesson (Ascolto)" onclick="event.stopPropagation();location.href='/ascolto?lesson=${encodeURIComponent(slug)}'">🎧 Ascolta</span>` : '')
+              + (l.season ? `<span class="taction open" title="the whole season: every episode and its drill" onclick="event.stopPropagation();LIB.openSeason('${cssq(l.season)}')">🎧 Season</span>` : '')
               + `<span class="taction open">Open →</span>`;
   const badges = (l.depth?`<span class="tag">${escH(l.depth)}</span>`:'') + (l.source==='ssm'?`<span class="tag">SSM</span>`:'') + (staged?`<span class="treview">🟡 REVIEW</span>`:'') + ((l.metaMissing||[]).length?`<span class="tag meta-missing" title="chiron.json lacks: ${l.metaMissing.join(', ')}. Shown with a guessed fallback; run lesson_manifest.py stamp.">details missing</span>`:'') + (l.bankable>0?`<span class="tbank">💰 ${l.bankable}</span>`:'')
     + (l.scope==='system'?`<span class="tag sys">organ system</span>`:'')
@@ -685,7 +686,7 @@ const LIB = {
       else if(st==='error') pill=`<span class="jpill fail">✗ failed</span>`;
       let act='';
       if(st==='ready'){
-        if(r.season) act+=`<button class="jopen" onclick="LIB.toggleEpisodes('${sl}')">${LIB._eps.has(sl)?'▾':'▸'} Episodes</button>`;
+        if(r.season) act+=`<button class="jopen" onclick="LIB.toggleEpisodes('${sl}')">${LIB._eps.has(sl)?'▾':'▸'} Episodes</button><button class="jopen" onclick="LIB.openSeason('${sl}')">Season page →</button>`;
         else if(x.lesson_url){ const u=(location.port==='8911'?API:'')+x.lesson_url; act+=`<button class="jopen" onclick="LIB._overlay('${u}','${cssq(jobName(x))}')">Open →</button>`; }
         if(r.needs_rebake && r.clips_total>0) act+=`<button class="jrebake" title="reuse ${r.clips_done}/${r.clips_total} clips, bake the rest — pick ⚡Fast / 🐢Mac when you click" onclick="LIB.rebake('${sl}')">🔥 Rebake</button>`;
         else if('clips_total' in r && !r.season && r.clips_total===0) act+=`<button class="jrebake" title="text-only — bake the audio now (⚡Fast / 🐢Mac)" onclick="LIB.rebake('${sl}')">🔊 Bake audio</button>`;   // never baked → offer the FIRST bake
@@ -726,6 +727,7 @@ const LIB = {
     }
     if(got) LIB._loadJobs();   // re-render with fresh recovery (only when something actually changed)
   },
+  openSeason(sl){ location.href='season.html?s='+encodeURIComponent(sl); },
   toggleEpisodes(sl){ LIB._eps=LIB._eps||new Set(); LIB._eps.has(sl)?LIB._eps.delete(sl):LIB._eps.add(sl); LIB._loadJobs(); },
   // a season's episodes, one line each: number, title, its drill MP3, and Open → for its card
   _episodeRows(r){

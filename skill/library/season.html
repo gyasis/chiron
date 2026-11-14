@@ -1,0 +1,125 @@
+<!doctype html><html lang="it"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Season · Chiron</title>
+<script src="one-player.js"></script>
+<link rel="stylesheet" href="no-scrollbars.css">
+<script>try{var _t=localStorage.getItem('chiron.theme');if(_t)document.documentElement.setAttribute('data-theme',_t);}catch(e){}</script>
+<style>
+:root{
+  --chiron-bg:#faf8f5;--chiron-surface:#fff;--chiron-elevated:#f0ebe4;
+  --chiron-fg:#1a1a1a;--chiron-fg-secondary:#4a4a4a;--chiron-muted:#7a7a7a;
+  --chiron-accent:#1e3a5f;--chiron-border:#e5e0d8;--chiron-divider:#ede8df;
+  --r-lg:12px;--lang:#6b8e4e;--langbg:#eef3e6;
+  --font-h:'Inter',system-ui,sans-serif;--font-b:'Source Sans 3','Inter',system-ui,sans-serif;
+}
+:root[data-theme=dark]{
+  --chiron-bg:#0f0f1a;--chiron-surface:#1a1a2e;--chiron-elevated:#252540;
+  --chiron-fg:#f1f5f9;--chiron-fg-secondary:#cbd5e1;--chiron-muted:#64748b;
+  --chiron-accent:#8b5cf6;--chiron-border:#2e2e4a;--chiron-divider:#1f1f35;--lang:#86efac;--langbg:#15301e;
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:var(--font-b);background:var(--chiron-bg);color:var(--chiron-fg)}
+.wrap{max-width:860px;margin:0 auto;padding:20px 24px 110px}
+.back{display:inline-block;font:600 13px var(--font-h);color:var(--chiron-accent);text-decoration:none;margin-bottom:18px}
+.it{font-family:var(--font-h);font-weight:700}.en{color:var(--chiron-muted);font-size:13px}
+.btn{font:700 12px var(--font-h);border:0;border-radius:8px;padding:7px 13px;cursor:pointer;white-space:nowrap;background:var(--chiron-accent);color:#fff}
+.ghost{font:700 12px var(--font-h);border:1px solid var(--chiron-border);border-radius:8px;padding:6px 12px;cursor:pointer;white-space:nowrap;background:transparent;color:var(--chiron-fg);text-decoration:none}
+.na{font:600 11px var(--font-h);color:var(--chiron-muted)}
+.chip{display:inline-block;font:700 10px var(--font-h);letter-spacing:.05em;text-transform:uppercase;background:var(--langbg);color:var(--lang);border-radius:999px;padding:2px 8px}
+.head{display:flex;gap:18px;align-items:flex-end;margin-bottom:24px}
+.cover{width:140px;height:140px;border-radius:var(--r-lg);background:linear-gradient(135deg,var(--chiron-accent),var(--lang));color:#fff;display:flex;flex-direction:column;justify-content:flex-end;padding:12px;font:800 15px/1.15 var(--font-h);flex:none;overflow:hidden}
+.cover small{font:600 10px var(--font-h);opacity:.85;letter-spacing:.06em;text-transform:uppercase}
+h1{font-family:var(--font-h);margin:6px 0 4px;font-size:24px;line-height:1.15}
+.meta{color:var(--chiron-muted);font-size:13px;margin:4px 0 12px}
+.step{display:grid;grid-template-columns:34px 1fr;gap:12px}
+.rail{display:flex;flex-direction:column;align-items:center}
+.dot{width:30px;height:30px;border-radius:50%;border:2px solid var(--chiron-border);display:flex;align-items:center;justify-content:center;font:800 12px var(--font-h);color:var(--chiron-muted);background:var(--chiron-surface);cursor:pointer;padding:0}
+.step.done .dot{background:var(--lang);border-color:var(--lang);color:#fff}
+.step.playing .dot{border-color:var(--chiron-accent);color:var(--chiron-accent)}
+.line{flex:1;width:2px;background:var(--chiron-border);min-height:12px}
+.body{padding:2px 10px 16px;border-radius:8px;min-width:0}
+.step.playing .body{background:var(--chiron-elevated)}
+.top{display:grid;grid-template-columns:1fr auto auto auto;gap:10px;align-items:center}
+.ttl{min-width:0}.ttl .it,.ttl .en{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.d{color:var(--chiron-muted);font-size:12px;font-variant-numeric:tabular-nums}
+.focus{font-size:13px;margin-top:3px;color:var(--chiron-fg-secondary)}
+details{margin-top:5px}summary{cursor:pointer;font:600 12px var(--font-h);color:var(--chiron-accent)}
+.tg{margin:6px 0 0;padding-left:18px;font-size:14px;color:var(--chiron-fg-secondary);line-height:1.5}
+.err{padding:20px;background:var(--chiron-surface);border:1px solid var(--chiron-border);border-radius:var(--r-lg)}
+.dock{position:fixed;left:0;right:0;bottom:0;background:var(--chiron-surface);border-top:1px solid var(--chiron-border);padding:10px 24px;display:flex;gap:14px;align-items:center;box-shadow:0 -4px 12px rgba(0,0,0,.06)}
+.dock .t{flex:1;min-width:0}.dock .t b{font-family:var(--font-h);font-size:13px;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.dock .t small{color:var(--chiron-muted)}
+.prog{height:4px;background:var(--chiron-divider);border-radius:2px;overflow:hidden;margin-top:4px;cursor:pointer}.prog i{display:block;height:100%;width:0;background:var(--chiron-accent)}
+@media (max-width:700px){
+  .wrap{padding:14px 16px 110px}.head{flex-direction:column;align-items:flex-start}.cover{width:110px;height:110px}
+  .top{grid-template-columns:1fr auto auto}.top .d{grid-column:1;grid-row:2}.dock{padding:10px 16px}
+}
+</style></head><body>
+<div class="wrap"><a class="back" href="./">← Library</a><div id="page"><div class="na">Loading season…</div></div></div>
+<div class="dock" id="dock" hidden><button class="btn" id="dplay">▶</button><div class="t"><b id="dt">Nothing playing</b><small id="dtime">—</small><div class="prog" id="dbar"><i id="dprog"></i></div></div><button class="ghost" id="dnext">Next ⏭</button></div>
+<script>
+const HOST=(()=>{try{return (localStorage.getItem('chiron.host')||'').replace(/\/+$/,'');}catch(e){return '';}})();
+const API=HOST||((location.port==='8911')?'':'http://127.0.0.1:8911');
+const SLUG=new URLSearchParams(location.search).get('s')||'';
+const PKEY='chiron-season-'+SLUG;
+let S=null, cur=null, done={};
+const audio=new Audio(); audio.preload='none';
+const $=id=>document.getElementById(id);
+const fmt=s=>s==null||!isFinite(s)?'—':Math.floor(s/60)+':'+String(Math.floor(s%60)).padStart(2,'0');
+const esc=t=>String(t??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const nn=i=>String(i+1).padStart(2,'0');
+const en=e=>e.title&&e.title!==e.titleIt?e.title:'';
+const isDone=e=>!!(done[e.slug]&&done[e.slug].v);
+const lessonUrl=e=>API+'/lessons/'+encodeURIComponent(e.slug)+'/lesson.html';
+
+async function load(){
+  try{
+    const r=await fetch(API+'/api/season/'+encodeURIComponent(SLUG)); if(!r.ok) throw new Error(r.status===404?'No season called "'+SLUG+'".':'Server answered HTTP '+r.status);
+    S=await r.json();
+  }catch(e){ $('page').innerHTML=`<div class="err"><b>Could not load this season.</b><br>${esc(e.message)}</div>`; return; }
+  document.title=S.titleIt+' · Chiron';
+  try{ const p=await (await fetch(API+'/api/progress/'+PKEY)).json(); done=p.entries||{}; }catch(e){ console.warn('season progress unavailable:',e); }
+  $('dock').hidden=false; paint();
+}
+function saveDone(e,v){
+  done[e.slug]={v,t:Date.now()};
+  fetch(API+'/api/progress/'+PKEY,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({entries:{[e.slug]:done[e.slug]}})})
+    .catch(err=>console.warn('season progress not saved:',err));
+}
+function play(i){
+  const e=S.episodes[i]; if(!e||!e.audio) return;
+  if(cur===i){ audio.paused?audio.play().catch(fail):audio.pause(); return; }
+  cur=i; audio.src=API+'/lessons/'+encodeURIComponent(e.slug)+'/audio/pimsleur.mp3'; audio.play().catch(fail); paint();
+}
+function fail(err){ if(err&&err.name!=='AbortError') alert('Could not play this drill: '+err.message); }
+function nextPlayable(i){ for(let j=i+1;j<S.episodes.length;j++) if(S.episodes[j].audio) return j; return null; }
+audio.onended=()=>{ saveDone(S.episodes[cur],true); const j=nextPlayable(cur); if(j!=null) play(j); else paint(); };
+audio.onplay=audio.onpause=()=>paint();
+audio.ontimeupdate=()=>{ $('dprog').style.width=(100*audio.currentTime/(audio.duration||1))+'%'; $('dtime').textContent=fmt(audio.currentTime)+' / '+fmt(audio.duration); };
+$('dbar').onclick=ev=>{ if(!audio.duration) return; const r=ev.currentTarget.getBoundingClientRect(); audio.currentTime=audio.duration*(ev.clientX-r.left)/r.width; };
+$('dplay').onclick=()=>{ if(cur==null){ const j=firstUnheard(); if(j>=0) play(j); } else play(cur); };
+$('dnext').onclick=()=>{ const j=nextPlayable(cur??-1); if(j!=null) play(j); };
+function firstUnheard(){ const k=S.episodes.findIndex(e=>e.audio&&!isDone(e)); return k>=0?k:S.episodes.findIndex(e=>e.audio); }
+function toggleDone(i){ const e=S.episodes[i]; saveDone(e,!isDone(e)); paint(); }
+
+function paint(){
+  const eps=S.episodes, nd=eps.filter(isDone).length, total=eps.reduce((a,e)=>a+(e.dur||0),0);
+  const playing=cur!=null&&!audio.paused, go=cur!=null?cur:firstUnheard();
+  const label=playing?'❚❚ Pause':(cur!=null?'▶ Resume · '+nn(cur):(nd&&go>=0&&!isDone(eps[go])?'▶ Continue · '+nn(go):'▶ Play all'));
+  const row=(e,i)=>{
+    const p=cur===i&&playing, dn=isDone(e);
+    const pb=e.audio?`<button class="btn" onclick="play(${i})">${p?'❚❚ Pause':'▶ Play'}</button>`:`<span class="na">no audio yet</span>`;
+    return `<div class="step${dn?' done':''}${cur===i?' playing':''}"><div class="rail"><button class="dot" title="${dn?'mark as not listened':'mark as listened'}" onclick="toggleDone(${i})">${dn?'✓':(p?'♪':i+1)}</button>${i<eps.length-1?'<div class="line"></div>':''}</div>
+      <div class="body"><div class="top"><span class="ttl"><span class="it">${esc(e.titleIt)}</span>${en(e)?`<span class="en">${esc(en(e))}</span>`:''}</span><span class="d">${e.audio?fmt(e.dur):''}</span>${pb}<a class="ghost" href="${lessonUrl(e)}" target="_blank" rel="noopener">Open →</a></div>
+      ${e.focus?`<div class="focus">${esc(e.focus)}</div>`:''}
+      ${e.targets.length?`<details><summary>${e.targets.length} phrases${e.pattern?' · '+esc(e.pattern):''}</summary><ul class="tg">${e.targets.map(x=>`<li>${esc(x)}</li>`).join('')}</ul></details>`:''}</div></div>`;
+  };
+  const open=[...document.querySelectorAll('details')].map(d=>d.open);
+  $('page').innerHTML=`<div class="head"><div class="cover"><small>Pimsleur</small>${esc(S.titleIt)}</div><div>
+      <span class="chip">Season · ${nd}/${eps.length} listened</span><h1>${esc(S.titleIt)}</h1>${S.title&&S.title!==S.titleIt?`<div class="en">${esc(S.title)}</div>`:''}
+      <div class="meta">${eps.length} episodes · ${fmt(total)} of drills</div>${go>=0?`<button class="btn" onclick="${playing?'audio.pause()':'play('+go+')'}">${label}</button>`:''}</div></div>`
+    + eps.map(row).join('');
+  document.querySelectorAll('details').forEach((d,k)=>{ if(open[k]) d.open=true; });
+  const e=cur!=null?eps[cur]:null; $('dt').textContent=e?nn(cur)+' · '+e.titleIt:'Nothing playing'; $('dplay').textContent=playing?'❚❚':'▶';
+}
+if(!SLUG) $('page').innerHTML='<div class="err">No season given. Open a season from the library or the queue.</div>'; else load();
+</script></body></html>
