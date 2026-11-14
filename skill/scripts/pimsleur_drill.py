@@ -32,7 +32,8 @@ SOURCE-AUDIO MODE — "source_audio": true, every phrase/question ITEM carries
   "audio": {"it": "audio/clips/<x>.wav", "en": "audio/clips/<y>.wav"}   (paths relative to the lesson dir)
   The drill is assembled from the source's own recordings: the cue is the source's English clip after a soft
   tone (no "How do you say" carrier), the answer is the source's Italian clip. Nothing a source already says is
-  synthesized. The only generated lines are the framing ones (intro, "review", outro), written in Italian
+  synthesized. A source with no English (an all-Italian story) leaves out audio.en: that item's "en" is then
+  synthesized in the cue voice, so it should carry its own carrier ("How do you say …?"). The only generated lines are the framing ones (intro, "review", outro), written in Italian
   and voiced by the target voice. Source clips skip ASR-QC: they are the original recording.
 
 AUDIO TRAPS (measured 2026-10-10, see memory finding-pimsleur-audio-builder)
@@ -93,8 +94,8 @@ def validate(bank: dict) -> list[str]:
                 errs.append(f"{tag}: talk prompts cannot be review items")
             if bank.get("source_audio") and kind in ("phrase", "question"):
                 au = it.get("audio") or {}
-                if not (isinstance(au.get("it"), str) and isinstance(au.get("en"), str)):
-                    errs.append(f"{tag}: source_audio needs audio.it and audio.en clip paths")
+                if not isinstance(au.get("it"), str) or not isinstance(au.get("en", ""), str):
+                    errs.append(f"{tag}: source_audio needs an audio.it clip path (audio.en optional)")
             full = _words(it.get("it", ""))
             prev = 0
             for piece in it.get("build") or []:

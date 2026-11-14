@@ -48,7 +48,7 @@
       '.ptr-dot.ptr-linked{background:var(--chiron-success)}.ptr-dot.ptr-new{background:var(--chiron-info)}' +
       '.ptr-hide-en .ptr-en,.ptr-hide-en .ptr-exen,.ptr-hide-en .ptr-li-en{visibility:hidden}' +
       '.ptr-list{list-style:none;margin:var(--chiron-space-4,16px) 0 0;padding:0;display:grid;gap:2px}' +
-      '.ptr-li{display:grid;grid-template-columns:44px 1fr auto;gap:10px;align-items:baseline;padding:6px 8px;border-radius:8px;cursor:pointer}' +
+      '.ptr-li{display:grid;grid-template-columns:44px minmax(0,3fr) minmax(0,2fr);gap:10px;align-items:baseline;padding:6px 8px;border-radius:8px;cursor:pointer}' +
       '.ptr-li:hover{background:var(--chiron-bg)}.ptr-li.ptr-cur{background:var(--ptr-tint)}' +
       '.ptr-li-t{font-size:12px;color:var(--chiron-muted);font-variant-numeric:tabular-nums}' +
       '.ptr-li-it{font-weight:600}.ptr-li-en{color:var(--chiron-muted);font-size:14px}' +
@@ -65,7 +65,7 @@
     try { hideEn = localStorage.getItem(LS_EN) === '1'; } catch (e) {}
     var total = D.durationS || 0;
 
-    root.className = 'ptr' + (hideEn ? ' ptr-hide-en' : '');
+    root.className = 'ptr no-lang' + (hideEn ? ' ptr-hide-en' : ''); // no-lang: the lesson's IT/EN switch leaves the rows alone; the pane has its own English toggle
     root.innerHTML =
       '<div class="ptr-bar">' +
       '<button class="ptr-btn ptr-play" type="button">▶ Ascolta</button>' +

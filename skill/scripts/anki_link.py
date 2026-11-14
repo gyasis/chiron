@@ -56,8 +56,12 @@ def main(words_path, out_path):
     linked, new = {}, []
     for w in words:
         target = norm(w["it"])
-        q = f'"{w["it"]}"' if " " in w["it"] else f'"w:{w["it"]}"'
-        ids = anki("findNotes", query=q)[:400]
+        # search a stretch without punctuation (Anki matches it literally); the field comparison below stays exact
+        word = max((p.strip() for p in re.split(r"[?!.,;:¿¡—–]", w["it"])), key=len)
+        q = f'"{word}"' if " " in word else f'"w:{word}"'
+        ids = anki("findNotes", query=q)
+        if len(ids) > 400:   # a common word: an exact Front match first, so a card for it is never cut off
+            ids = anki("findNotes", query=f'"Front:{word}*"') + ids[:400]
         hits = []
         for n in anki("notesInfo", notes=ids) if ids else []:
             fields = {k: v["value"] for k, v in n["fields"].items()}

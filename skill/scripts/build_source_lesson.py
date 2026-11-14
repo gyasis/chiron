@@ -10,6 +10,14 @@ SPEC = { "out": dir, "slug", "titleIt", "titleEn", "subtitle"?, "labels": [str]?
                       clips: {word, word_slow?, en, example_it?, example_en?}: [s, e] source seconds,
                       segments?: [{kind, s, e}] every spoken line of the entry, for the play-through highlight}],
          "anki": {"linked": {id: [note…]}, "new": [id…]}? }        # from anki_link.py
+  An entry with "play_only": true (a self-test or review block, clips {}) plays in the play-through and nothing else.
+
+STORY SPEC (a listening-comprehension scene) — instead of "entries":
+         "lines": {"span": [s, e], "items": [{id, s, e, it, en, who}]},   # the scene plays as ONE continuous cut
+         "phrases": [{id, it, en, s, e, example_it?, example_en?}],       # key phrases: word table, cards, drill
+         "questions": [{q, a, qEn?, aEn?}]?                                # comprehension, answer-then-reveal
+  The source is all Italian, so the drill's English cue is synthesized ("How do you say …?"); every Italian line
+  is still the recording.
 
 What it writes into SPEC.out (a normal Library-visible lesson dir):
   audio/clips/<id>-<kind>.wav        every clip, cut from the source, levelled (never re-synthesized)
@@ -22,7 +30,7 @@ What it writes into SPEC.out (a normal Library-visible lesson dir):
 """
 from __future__ import annotations
 
-import argparse, datetime, importlib.util, json, os, shutil, subprocess, sys
+import argparse, datetime, html, importlib.util, json, os, shutil, subprocess, sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 SKILL = os.path.dirname(HERE)
@@ -60,6 +68,10 @@ def to_mp3(wav, mp3):
     run("ffmpeg", "-y", "-v", "error", "-i", wav, "-codec:a", "libmp3lame", "-q:a", "4", mp3)
 
 
+def html_esc(s):
+    return html.escape(str(s), quote=False)
+
+
 def build(spec_path, drill=True):
     S = json.load(open(spec_path))
     out, src = os.path.expanduser(S["out"]), os.path.expanduser(S["source"]["audio"])
@@ -68,22 +80,38 @@ def build(spec_path, drill=True):
         os.makedirs(os.path.join(A, d), exist_ok=True)
     linked = (S.get("anki") or {}).get("linked") or {}
     newset = set((S.get("anki") or {}).get("new") or [])
+    story = S.get("lines")
+    if story:
+        S["entries"] = [{"id": p["id"], "it": p["it"], "en": p["en"], "example_it": p.get("example_it"),
+                         "example_en": p.get("example_en"), "span": [p["s"], p["e"]], "clips": {"word": [p["s"], p["e"]]}}
+                        for p in S.get("phrases") or []]
+    words = [e for e in S["entries"] if not e.get("play_only")]
 
     # 1. clips
-    for e in S["entries"]:
+    for ln in (story or {}).get("items", []):
+        wav = cut(src, ln["s"], ln["e"], os.path.join(A, "clips", f"{ln['id']}-line.wav"))
+        to_mp3(wav, os.path.join(A, "phrase", f"vocab-{ln['id']}.mp3"))
+    for e in words:
         for kind, c in e["clips"].items():
             if c:
                 cut(src, c[0], c[1], os.path.join(A, "clips", f"{e['id']}-{kind}.wav"), lufs="-18" if kind.endswith("en") else "-20")
         to_mp3(os.path.join(A, "clips", f"{e['id']}-word.wav"), os.path.join(A, "phrase", f"vocab-{e['id']}.mp3"))
         if e["clips"].get("example_it"):
             to_mp3(os.path.join(A, "clips", f"{e['id']}-example_it.wav"), os.path.join(A, "phrase", f"vocab-{e['id']}-ex.mp3"))
-    print(f"[clips] {sum(1 for e in S['entries'] for c in e['clips'].values() if c)} cut from {os.path.basename(src)}")
+    print(f"[clips] {sum(1 for e in words for c in e['clips'].values() if c) + len((story or {}).get('items', []))} cut from {os.path.basename(src)}")
 
     # 2. play-through: each entry's whole source span, in lesson order
     parts, tl, t = [], [], 0.0
     sil = os.path.join(A, "playthrough-parts", "gap.wav")
     run("ffmpeg", "-y", "-v", "error", "-f", "lavfi", "-i", f"anullsrc=r={RATE}:cl=mono", "-t", str(GAP), sil)
-    for e in S["entries"]:
+    if story:   # the scene as recorded, one continuous cut; the lines are its timeline
+        s0, s1 = story["span"]
+        p = os.path.join(A, "playthrough-parts", "scene.wav")
+        run("ffmpeg", "-y", "-v", "error", "-ss", f"{s0:.3f}", "-to", f"{s1:.3f}", "-i", src, "-ac", "1", "-ar", str(RATE), p)
+        tl = [{"id": ln["id"], "t0": round(ln["s"] - s0, 2), "t1": round(ln["e"] - s0, 2), "it": ln["it"], "en": ln["en"],
+               "who": ln.get("who") or ""} for ln in story["items"]]
+        parts = [p]
+    for e in ([] if story else S["entries"]):
         s0, s1 = e["span"][0] - PAD[0], e["span"][1] + PAD[1]
         p = os.path.join(A, "playthrough-parts", f"{e['id']}.wav")
         run("ffmpeg", "-y", "-v", "error", "-ss", f"{max(0, s0):.3f}", "-to", f"{s1:.3f}", "-i", src, "-ac", "1", "-ar", str(RATE), p)
@@ -111,11 +139,12 @@ def build(spec_path, drill=True):
         baker = pd.Baker(os.path.join(A, "pimsleur-cache"), None)
         to_mp3(baker.clip("frame", S["intro"]["it"]), os.path.join(A, "intro.mp3"))
         intro = {"src": "audio/intro.mp3", **S["intro"]}
-    data = {"mode": "entries", "src": "audio/playthrough.mp3", "durationS": total, "entries": tl, "intro": intro,
+    data = {"mode": "lines" if story else "entries", "src": "audio/playthrough.mp3", "durationS": total,
+            ("lines" if story else "entries"): tl, "intro": intro,
             "source": S["source"].get("url")}
     open(os.path.join(A, "playthrough.timeline.js"), "w").write(
         "window.__chironPlaythrough = " + json.dumps(data, ensure_ascii=False) + ";\n")
-    print(f"[playthrough] {len(tl)} entries, {total/60:.1f} min")
+    print(f"[playthrough] {len(tl)} {'lines' if story else 'entries'}, {total/60:.1f} min")
 
     # 4. read card
     def card_note(e):
@@ -127,18 +156,30 @@ def build(spec_path, drill=True):
         "title": S["titleIt"], "subtitle": S.get("subtitle") or f"{S['titleEn']} — ascolta tutto ▶, poi le parole",
         "langName": "Italiano", "cefr": "A2", "domain": S.get("domain", "language-it"),
         "coldOpen": S.get("intro") or {"it": S["titleIt"], "en": S["titleEn"]},
-        "sections": [
+        "sections": [s for s in [
             {"id": "ascolta", "title": "Ascolta tutta la lezione",
-             "introHtml": "<p>L’audio originale, dall’inizio alla fine. Le parole scorrono sopra mentre ascolti. "
+             "introHtml": "<p>L’audio originale, dall’inizio alla fine. " +
+                          ("Ogni battuta scorre sopra mentre ascolti. " if story else "Le parole scorrono sopra mentre ascolti. ") +
                           "<em>Senza inglese</em> nasconde la traduzione per metterti alla prova.</p><div id=\"chiron-playthrough\"></div>"},
-            {"id": "parole", "title": "Le parole",
-             "vocab": [{"slug": e["id"], "it": e["it"], "en": e["en"], "note": anki_cell(e)} for e in S["entries"]]},
-            {"id": "frasi", "title": "Le frasi",
+            story and {"id": "storia", "title": "La scena, battuta per battuta",
+                       "introHtml": "<p>Tocca una battuta per riascoltarla.</p>",
+                       "vocab": [{"slug": ln["id"], "it": ln["it"], "en": ln["en"], "note": html_esc(ln.get("who") or "")}
+                                 for ln in story["items"]]},
+            {"id": "parole", "title": "Le espressioni chiave" if story else "Le parole",
+             "vocab": [{"slug": e["id"], "it": e["it"], "en": e["en"], "note": anki_cell(e)} for e in words]},
+            any(e.get("example_it") for e in words) and not story and {"id": "frasi", "title": "Le frasi",
              "vocab": [{"slug": f"{e['id']}-ex", "it": e["example_it"], "en": e.get("example_en") or "", "note": ""}
-                       for e in S["entries"] if e.get("example_it")]},
-        ],
-        "matchMadness": {"pairs": [{"a": e["it"], "b": e["en"]} for e in S["entries"]]},
-        "srCards": [{"front": e["en"], "back": e["it"], "tags": ["source-audio", S["slug"]]} for e in S["entries"] if e["id"] in newset],
+                       for e in words if e.get("example_it")]},
+            S.get("questions") and {"id": "domande", "title": "Hai capito?",
+                                    "introHtml": "<p>Rispondi a voce, poi apri la risposta.</p><ol class=\"src-q\">" + "".join(
+                                        f"<li><p><strong>{html_esc(q['q'])}</strong>" +
+                                        (f"<br><span class=\"muted\">{html_esc(q['qEn'])}</span>" if q.get("qEn") else "") +
+                                        f"</p><details><summary>Risposta</summary><p>{html_esc(q['a'])}" +
+                                        (f"<br><span class=\"muted\">{html_esc(q['aEn'])}</span>" if q.get("aEn") else "") +
+                                        "</p></details></li>" for q in S["questions"]) + "</ol>"},
+        ] if s],
+        "matchMadness": {"pairs": [{"a": e["it"], "b": e["en"]} for e in words]},
+        "srCards": [{"front": e["en"], "back": e["it"], "tags": ["source-audio", S["slug"]]} for e in words if e["id"] in newset],
     }
     json.dump(content, open(os.path.join(out, "content.json"), "w"), ensure_ascii=False, indent=1)
     json.dump({"format": "chiron/1", "title": f"Chiron · {S['titleIt']}", "entry": "lesson.html", "domain": content["domain"],
@@ -157,9 +198,12 @@ def build(spec_path, drill=True):
     if drill:
         bank = {"title": f"Pimsleur · {S['titleIt']}", "album": S.get("album") or S["titleIt"], "source_audio": True,
                 "intro": [S["intro"]["it"]] if S.get("intro") else [],
-                "items": [{"id": e["id"], "it": e["it"], "en": e["en"],
-                           "audio": {"it": f"audio/clips/{e['id']}-word.wav", "en": f"audio/clips/{e['id']}-en.wav"}}
-                          for e in S["entries"] if e["clips"].get("en")]}
+                "items": [{"id": e["id"], "it": e["it"],
+                           # no English clip in the source: the cue is synthesized, with its carrier
+                           "en": e["en"] if e["clips"].get("en") else f"How do you say: {e['en']}?",
+                           "audio": {"it": f"audio/clips/{e['id']}-word.wav",
+                                     **({"en": f"audio/clips/{e['id']}-en.wav"} if e["clips"].get("en") else {})}}
+                          for e in words if e.get("drill", True)]}
         json.dump(bank, open(os.path.join(out, "pimsleur.json"), "w"), ensure_ascii=False, indent=1)
         rep = pd.build(out, qc=True)
         if rep["failed"]:

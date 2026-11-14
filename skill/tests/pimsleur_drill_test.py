@@ -207,7 +207,12 @@ class SourceAudio(unittest.TestCase):
 
     def test_item_without_clips_is_rejected(self):
         errs = pd.validate({"source_audio": True, "items": [{"id": "x", "it": "a", "en": "b"}]})
-        self.assertTrue(any("needs audio.it and audio.en" in e for e in errs))
+        self.assertTrue(any("needs an audio.it clip" in e for e in errs))
+
+    def test_item_with_only_an_italian_clip_is_accepted(self):
+        # an all-Italian source (a story) has no English clip: the cue is synthesized instead
+        item = {"id": "x", "it": "Ti sei persa?", "en": "How do you say: Are you lost?", "audio": {"it": "audio/clips/x-word.wav"}}
+        self.assertEqual(pd.validate({"source_audio": True, "items": [item]}), [])
 
     def test_cues_are_the_bare_source_text_never_a_carrier(self):
         cues = [st[1] for st in pd.schedule(self.bank) if st[0] == "cue"]
