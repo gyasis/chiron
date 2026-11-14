@@ -193,6 +193,55 @@ class DefaultVoices(unittest.TestCase):
             self.assertIn(vid, refs, f"{role} voice {vid!r} is not registered")
 
 
+
+S1 = {"id": "testa", "it": "mal di testa", "en": "headache", "audio": {"it": "audio/clips/e001-word.wav", "en": "audio/clips/e001-en.wav"}}
+S2 = {"id": "sintomo", "it": "sintomo", "en": "symptom", "audio": {"it": "audio/clips/e003-word.wav", "en": "audio/clips/e003-en.wav"}}
+S3 = {"id": "caviglia", "it": "caviglia", "en": "ankle", "audio": {"it": "a.wav", "en": "b.wav"}}
+
+
+class SourceAudio(unittest.TestCase):
+    bank = {"source_audio": True, "intro": ["Oggi: salute e corpo."], "items": [S1, S2, S3]}
+
+    def test_validates(self):
+        self.assertEqual(pd.validate(self.bank), [])
+
+    def test_item_without_clips_is_rejected(self):
+        errs = pd.validate({"source_audio": True, "items": [{"id": "x", "it": "a", "en": "b"}]})
+        self.assertTrue(any("needs an audio.it clip" in e for e in errs))
+
+    def test_item_with_only_an_italian_clip_is_accepted(self):
+        # an all-Italian source (a story) has no English clip: the cue is synthesized instead
+        item = {"id": "x", "it": "Ti sei persa?", "en": "How do you say: Are you lost?", "audio": {"it": "audio/clips/x-word.wav"}}
+        self.assertEqual(pd.validate({"source_audio": True, "items": [item]}), [])
+
+    def test_cues_are_the_bare_source_text_never_a_carrier(self):
+        cues = [st[1] for st in pd.schedule(self.bank) if st[0] == "cue"]
+        self.assertTrue(cues)
+        self.assertTrue(set(cues) <= {"headache", "symptom", "ankle"}, cues)
+
+    def test_generated_lines_are_italian_frames_only(self):
+        s = pd.schedule(self.bank)
+        frames = [st[1] for st in s if st[0] == "frame"]
+        self.assertEqual(frames[0], "Oggi: salute e corpo.")
+        self.assertIn("Ripassiamo tutto.", frames)
+        self.assertTrue(s[-1][0] == "frame")
+
+    def test_every_answer_pause_is_followed_by_its_answer_and_preceded_by_a_tone_cue(self):
+        s = pd.schedule(self.bank)
+        for k, st in enumerate(s):
+            if st[0] == "answer_pause":
+                self.assertEqual(s[k + 1], ("target", st[1]))
+                self.assertEqual(s[k - 2], ("tone",))
+
+    def test_heard_before_asked(self):
+        s, heard = pd.schedule(self.bank), set()
+        for st in s:
+            if st[0] == "target":
+                heard.add(st[1])
+            if st[0] == "answer_pause":
+                self.assertIn(st[1], heard)
+
+
 if __name__ == "__main__":
     unittest.main()
 
