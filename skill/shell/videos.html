@@ -5,6 +5,7 @@
 <script>try{var _t=localStorage.getItem('chiron.theme');if(_t)document.documentElement.setAttribute('data-theme',_t);}catch(e){}</script>
 <script src="/shell/inapp-boot.js"></script>
 <style>
+*{scrollbar-width:none} *::-webkit-scrollbar{display:none;width:0;height:0}
 :root{
   --chiron-bg:#faf8f5;--chiron-surface:#fff;--chiron-elevated:#f0ebe4;
   --chiron-fg:#1a1a1a;--chiron-fg-secondary:#4a4a4a;--chiron-muted:#7a7a7a;
@@ -120,7 +121,7 @@ const order=(a,b)=>(!!b.local-!!a.local)||((a.duration||60)-(b.duration||60));
 
 function card(v){
   const p=pos[v.id],pc=p&&v.duration?Math.min(100,p/v.duration*100):0,on=fav.includes(v.id);
-  return `<div class="card" data-id="${v.id}" title="${esc(v.title)}"><div class="thumb"><img loading="lazy" src="${img(v)}" alt=""><span class="st ${v.local?"local":"yt"}">${v.local?"On drive":"YouTube ↗"}</span><button class="heart ${on?"on":""}" data-heart="${v.id}" title="My list" aria-label="My list">${on?"♥":"♡"}</button><span class="dur">${fmt(v.duration)}</span>${pc?`<span class="prog"><i style="width:${pc}%"></i></span>`:""}</div><div class="tt">${esc(v.title)}</div><div class="src">${esc(v.source)} · ${esc(v.format)}</div></div>`;
+  return `<div class="card" data-id="${v.id}" title="${esc(v.title)}"><div class="thumb"><img loading="lazy" src="${img(v)}" alt=""><span class="st ${v.local?"local":"yt"}">${v.local?"On drive":"YouTube ↗"}</span><button class="heart ${on?"on":""}" data-heart="${v.id}" title="My list" aria-label="My list">${on?"♥":"♡"}</button><span class="dur">${fmt(v.duration)}</span>${pc?`<span class="prog"><i style="width:${pc}%"></i></span>`:""}</div><div class="tt">${esc(v.title)}</div><div class="src">${esc(v.source)} · ${esc(v.format)}${v.narration===false?" · No narration":""}</div></div>`;
 }
 const rail=(title,list,ct,emptyMsg)=>`<div class="rowh"><h3>${esc(title)}</h3><span class="ct">${esc(ct||"")}</span></div>`+(list.length?`<div class="rail"><button class="arrow l" aria-label="Scroll left">‹</button><div class="track">${list.map(card).join("")}</div><button class="arrow r" aria-label="Scroll right">›</button></div>`:`<div class="empty">${esc(emptyMsg||"")}</div>`);
 

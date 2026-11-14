@@ -38,6 +38,7 @@ class CatalogBuild(unittest.TestCase):
              "subject": "Airway", "format": "Teaching"}]))
         write(f"{d}/catalog/gallagher.tsv", "videos\tFzvWfuAEfwo\t376\t22000\tSwan Ganz Placement: presented by Dr. Gallagher's Neighborhood\n")
         write(f"{d}/catalog/stonybrook-extra-urls.txt", "https://www.youtube.com/watch?v=cr7IlA3zgFQ\n")
+        write(f"{d}/catalog/no-narration.txt", "FzvWfuAEfwo  # silent procedure video\n\n")
         write(f"{d}/download-x.log", f"ERROR: [youtube] {D}: Join this channel to get access to members-only content like this video\n")
         self.vids, self.blocked = bvc.build(f"{d}/catalog", d)
         self.by = {v["id"]: v for v in self.vids}
@@ -70,6 +71,11 @@ class CatalogBuild(unittest.TestCase):
         self.assertEqual(self.by["FzvWfuAEfwo"]["subject"], "Vascular access & lines")
         self.assertEqual(self.by["cr7IlA3zgFQ"]["source"], "Stony Brook")
         self.assertEqual(self.by["cr7IlA3zgFQ"]["subject"], "Spinal & epidural")
+
+    def test_no_narration(self):
+        self.assertIs(self.by["FzvWfuAEfwo"]["narration"], False)
+        self.assertEqual(self.by["FzvWfuAEfwo"]["tags"][-1], "No narration")
+        self.assertNotIn("narration", self.by[A])
 
     def test_idempotent(self):
         again, _ = bvc.build(os.path.join(self.t.name, "catalog"), self.t.name)

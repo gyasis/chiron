@@ -3,7 +3,9 @@
 
 Reads priority.json, rest-keep.json, gallagher.tsv and stonybrook-extra-urls.txt from the catalog directory,
 drops ids that the download logs report as members-only, strips hashtag suffixes from titles, assigns subject,
-format and tags, dedupes by id and writes videos.json (same input -> same output).
+format and tags, dedupes by id and writes videos.json (same input -> same output). Ids listed in
+no-narration.txt (one per line, # comments) get narration=false and a "No narration" tag: silent videos
+that can have no transcript or lesson.
 
     python3 build_video_catalog.py [--catalog DIR] [--logs DIR] [--out FILE]
 """
@@ -145,6 +147,13 @@ def build(catalog_dir, log_dir):
         add(entry(r["id"], r["title"], r["source"], r.get("kind", "Video"), r.get("dur"), r.get("views"),
                   r.get("subject"), r.get("format") or "Teaching"))
     order = {s: i for i, s in enumerate(SUBJECTS)}
+    p = os.path.join(catalog_dir, "no-narration.txt")
+    if os.path.exists(p):
+        with open(p) as f:
+            for vid in (l.split("#")[0].strip() for l in f):
+                if vid in out:
+                    out[vid]["narration"] = False
+                    out[vid]["tags"].append("No narration")
     return sorted(out.values(), key=lambda e: (order.get(e["subject"], 99), -e["views"], e["id"])), blocked
 
 
