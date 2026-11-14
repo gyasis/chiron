@@ -648,3 +648,12 @@ user's selection (Italian-only grounding). Not yet built — next focused piece.
   Also this session: phrase-level bilingual audio fix (whole-phrase citation, content-QC whisper+Gemini,
   2-round rebake cap, retry metric qc-stats.json) — recipe `chiron-bilingual-tts-phrase-level-bake` +
   chiron-bank memory `project-bilingual-tts-phrase-level-audio`. E03 now generating via the full pipeline.
+
+## Note: Ask → video word examples (user request, 2026-10-18)
+A **🎬 Video** button on any word or phrase (in Ask answers, cards and lessons):
+- finds every spoken occurrence across the video lessons, using the existing ASR word timestamps (§8);
+- plays each occurrence as a clip, with selectable bookends: the line only, or the whole scene;
+- highlights the word in the subtitles as it is spoken;
+- ends with listen-and-repeat.
+Already built: an Ask citation plays the cited scene inline, bounded to the next scene (commit d85fcf5).
+**Status:** deferred until after the 2026-10-19 Ordine exam.
