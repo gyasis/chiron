@@ -28,6 +28,8 @@
     try { b = window.CHIRON_TUTOR_BASE || ''; } catch (e) {}
     if (!b) { try { b = new URLSearchParams(location.search).get('tutor') || ''; } catch (e) {} }
     if (!b) { try { b = localStorage.getItem('chiron.tutor') || ''; } catch (e) {} }
+    // An https page (the hub) proxies the tutor routes on its own origin; an http :8912 call would be blocked as mixed content.
+    if (!b && location.protocol === 'https:') b = location.origin;
     if (!b) {
       try {
         var lib = localStorage.getItem('chiron.lib');

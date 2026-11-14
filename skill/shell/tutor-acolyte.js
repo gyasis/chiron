@@ -57,7 +57,8 @@ function token() {
   // Inside the Chiron phone app the app's own tutor panel is used; skip this one (as shell/tutor.js does).
   if (/[?&]inapp=1\b/.test(location.search)) return;
   const HOST = location.hostname || '127.0.0.1';
-  const TUTOR = `http://${HOST}:8912`;
+  // On the https hub the tutor routes are proxied same-origin; http :8912 would be blocked as mixed content.
+  const TUTOR = location.protocol === 'https:' ? location.origin : `http://${HOST}:8912`;
 
   // Lesson identity, for the hand-up link and for telling the model where it is.
   const slug = (location.pathname.match(/\/lessons\/([^/]+)\//) || [])[1]
