@@ -686,6 +686,59 @@ export const CompareLanesWidgetSchema = z.object({
   })).min(1),
 });
 
+// Written-exam and simulation widgets (medicine) — exam-mtf · castest.
+export const ExamMtfWidgetSchema = z.object({
+  type: z.literal('exam-mtf'),
+  id: z.string().optional(),
+  title: z.string().optional(),
+  lang: z.enum(['it', 'en']).default('it'),
+  instructions: z.string().optional(),
+  timeLimitMin: z.number().positive().optional(),
+  passPct: z.number().min(0).max(100).default(75),
+  questions: z.array(z.object({
+    id: z.string().optional(),
+    topic: z.string().optional(),
+    stem: z.string(),
+    statements: z.array(z.object({
+      text: z.string(),
+      correct: z.boolean(),
+      explanation: z.string().optional(),
+      explanationEn: z.string().optional(),
+    })).min(1),
+  })).min(1),
+});
+
+export const CastestWidgetSchema = z.object({
+  type: z.literal('castest'),
+  id: z.string().optional(),
+  title: z.string().optional(),
+  lang: z.enum(['it', 'en']).default('it'),
+  setting: z.string().optional(),
+  briefing: z.string().optional(),
+  stages: z.array(z.object({
+    id: z.string().optional(),
+    time: z.string().optional(),
+    situation: z.string(),
+    monitor: z.object({
+      rhythm: z.string().optional(),
+      hr: z.string().optional(),
+      bp: z.string().optional(),
+      spo2: z.string().optional(),
+      etco2: z.string().optional(),
+    }).optional(),
+    prompt: z.string().optional(),
+    options: z.array(z.object({
+      text: z.string(),
+      correct: z.boolean(),
+      critical: z.boolean().optional(),
+      feedback: z.string().optional(),
+    })).min(2),
+    checklist: z.string().optional(),
+  })).min(1),
+  debrief: z.string().optional(),
+  passRule: z.string().optional(),
+});
+
 const WidgetUnionSchema = z.discriminatedUnion('type', [
   // Quiz primitives
   McqWidgetSchema,
@@ -732,6 +785,8 @@ const WidgetUnionSchema = z.discriminatedUnion('type', [
   DdxTreeWidgetSchema,
   DecisionFlowWidgetSchema,
   CompareLanesWidgetSchema,
+  ExamMtfWidgetSchema,
+  CastestWidgetSchema,
 ]);
 
 /**
@@ -820,6 +875,8 @@ export const WIDGET_KINDS: WidgetKind[] = [
   'annotated-passage',
   // Medical-algorithm / DDx family (2026-06-29)
   'ddx-tree', 'decision-flow', 'compare-lanes',
+  // Exam / simulation
+  'exam-mtf', 'castest',
 ];
 
 /** Which widgets are universal (no domain constraint) vs domain-gated.
@@ -838,7 +895,7 @@ export const MEDICINE_ONLY_WIDGETS: WidgetKind[] = [
   'mcq-clinical-vignette', 'agreement-matrix', 'assertion-reason',
   'chemical-reaction', 'molecule-2d', 'pathway-diagram',
   'reactive-math', 'forest-plot', 'slider-estimation', 'boss',
-  'confidence-weighted',
+  'confidence-weighted', 'exam-mtf', 'castest',
 ];
 export const LANGUAGE_ONLY_WIDGETS: WidgetKind[] = [
   'fill-blank', 'matching-pair', 'cloze',

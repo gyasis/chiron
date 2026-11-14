@@ -829,6 +829,7 @@ registerRenderer('cloze', (widget) => renderCloze(widget as ClozeWidget));
 // ---------------------------------------------------------------------------
 import { emitMatchMadness } from './widgets/match-madness.js';
 import { emitSrDeck, emitSrCardCss } from './widgets/sr-card.js';
+import { renderExamMtf, renderCastest } from './widgets/exam.js';
 
 type MatchMadnessWidget = Extract<WidgetSpec, { type: 'match-madness' }>;
 type LanguageFlashcardDeckWidget = Extract<WidgetSpec, { type: 'language-flashcard-deck' }>;
@@ -3087,3 +3088,6 @@ export function renderAnnotatedPassage(spec: AnnotatedPassageWidget): string {
 registerRenderer('annotated-passage', (w) =>
   renderAnnotatedPassage(w as AnnotatedPassageWidget),
 );
+
+registerRenderer('exam-mtf', (w) => renderExamMtf(w as Extract<WidgetSpec, { type: 'exam-mtf' }>));
+registerRenderer('castest', (w) => renderCastest(w as Extract<WidgetSpec, { type: 'castest' }>));
