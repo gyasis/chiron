@@ -397,10 +397,12 @@ const lessonHtml = `<!DOCTYPE html>
   <link rel="stylesheet" href="themes/clinical.css" />
   <link rel="stylesheet" href="themes/linguistic.css" />
   <link rel="stylesheet" href="themes/ocean.css" />
+  <link rel="stylesheet" href="themes/centro.css" />
+  <link rel="stylesheet" href="themes/centro-notte.css" />
 
   <script>
     (function () {
-      const valid = ['linguistic','midnight','warm-paper','clinical','ocean'];
+      const valid = ['linguistic','midnight','warm-paper','clinical','ocean','centro','centro-notte'];
       const p = new URLSearchParams(location.search);
       const t = p.get('theme');
       const stored = localStorage.getItem('chiron-theme');
@@ -424,6 +426,8 @@ ${emitSrCardCss()}
       <button data-set-theme="clinical">clinical</button>
       <button data-set-theme="midnight">midnight</button>
       <button data-set-theme="ocean">ocean</button>
+      <button data-set-theme="centro">centro</button>
+      <button data-set-theme="centro-notte">notte</button>
     </div>
   </header>
 

@@ -1460,17 +1460,19 @@
 .emtf-tf .emtf-btn{flex:1;font-weight:600}
 .emtf-widget .emtf-btn.is-mine{background:var(--chiron-accent);color:var(--chiron-surface);border-color:var(--chiron-accent);font-weight:700;opacity:1}
 .emtf-widget .emtf-btn.is-key{border:2px solid var(--chiron-success);font-weight:700;opacity:1}
-.emtf-widget .emtf-btn.is-miss{background:var(--chiron-error);color:var(--chiron-surface);border-color:var(--chiron-error);opacity:1}
+/* error pulled 15% toward fg: darker under white text on light themes, lighter under dark text on dark ones */
+.emtf-widget .emtf-btn.is-miss{background:color-mix(in srgb,var(--chiron-error) 85%,var(--chiron-fg));color:var(--chiron-surface);border-color:var(--chiron-error);opacity:1}
 .emtf-verdict{font-weight:700;font-size:.85rem;margin:var(--chiron-space-2) 0 4px}
 .emtf-expl{margin:4px 0;font-size:.88rem;line-height:1.5;color:var(--chiron-fg-secondary)}
 .emtf-expl-en{padding:var(--chiron-space-2);background:var(--chiron-elevated);border-radius:var(--chiron-radius-sm)}
-.emtf-widget .emtf-link{min-height:40px;border:none;background:transparent;color:color-mix(in srgb,var(--chiron-accent-light) calc(var(--chiron-is-dark,0) * 100%),var(--chiron-accent));text-decoration:underline;padding:0 var(--chiron-space-2)}
+.emtf-widget .emtf-link{min-height:40px;border:none;background:transparent;color:color-mix(in srgb,var(--chiron-accent-light) calc(var(--chiron-is-dark,0) * 100%),color-mix(in srgb,var(--chiron-accent) 75%,var(--chiron-fg)));text-decoration:underline;padding:0 var(--chiron-space-2)}
 .emtf-actions,.cast-actions{display:flex;flex-wrap:wrap;gap:var(--chiron-space-2);margin-top:var(--chiron-space-3)}
 .emtf-confirm{margin-top:var(--chiron-space-3);padding:var(--chiron-space-3);background:var(--chiron-elevated);border:1px solid var(--chiron-border);border-radius:var(--chiron-radius-md)}
 .emtf-confirm p{margin:0}
 .emtf-results{margin-bottom:var(--chiron-space-4);padding:var(--chiron-space-3);background:var(--chiron-elevated);border-radius:var(--chiron-radius-md)}
 .emtf-score,.cast-end{display:flex;flex-wrap:wrap;align-items:center;gap:var(--chiron-space-4)}
-.emtf-badge,.cast-badge{display:inline-block;padding:6px 16px;border-radius:100px;font-weight:700;font-size:1rem}
+/* 1.2rem bold is large text, so the white-on-colour verdict meets contrast on every theme's success/error colour */
+.emtf-badge,.cast-badge{display:inline-block;padding:6px 16px;border-radius:100px;font-weight:700;font-size:1.2rem}
 .emtf-badge.is-pass,.cast-badge.is-pass{background:var(--chiron-success);color:var(--chiron-surface)}
 .emtf-badge.is-fail,.cast-badge.is-fail{background:var(--chiron-error);color:var(--chiron-surface)}
 .emtf-stats,.cast-stats{display:flex;flex-wrap:wrap;gap:var(--chiron-space-5);margin:0}

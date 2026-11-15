@@ -1,7 +1,7 @@
 /**
  * Chiron — Theme registry (T019).
  *
- * Wraps the five CSS files shipped under `skill/shell/themes/` and chooses a
+ * Wraps the CSS files shipped under `skill/shell/themes/` and chooses a
  * default theme per domain (FR-024). The CSS files are still the source of
  * truth for visual tokens; this registry is the in-process index used by the
  * pipeline (Stage 2 prompt-injection, Stage 5 assembly) to know which file to
@@ -51,6 +51,18 @@ export const THEMES: Record<string, Theme> = {
     name: 'Linguistic',
     cssFile: 'themes/linguistic.css',
     defaultFor: 'language-it',
+  },
+  centro: {
+    id: 'centro',
+    name: 'Centro',
+    cssFile: 'themes/centro.css',
+    defaultFor: null,
+  },
+  'centro-notte': {
+    id: 'centro-notte',
+    name: 'Centro Notte',
+    cssFile: 'themes/centro-notte.css',
+    defaultFor: null,
   },
 };
 

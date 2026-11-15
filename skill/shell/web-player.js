@@ -23,13 +23,16 @@
 
   var css = document.createElement('style');
   css.textContent = [
-    ':root{--wp-bg:var(--color-surface,#fff);--wp-fg:var(--color-text,#1a1a1a);--wp-mut:var(--color-text-muted,#777);',
-    '--wp-acc:var(--color-accent,#D94F30);--wp-el:var(--color-accent-light,#f3efe9);--wp-bd:var(--color-border,#e2e2e2)}',
+    /* lesson theme tokens first (they follow the picked theme, dark ones included); the older --color-* names after */
+    ':root{--wp-bg:var(--chiron-surface,var(--color-surface,#fff));--wp-fg:var(--chiron-fg,var(--color-text,#1a1a1a));',
+    '--wp-mut:var(--chiron-fg-secondary,var(--color-text-muted,#777));--wp-acc:var(--chiron-accent,var(--color-accent,#D94F30));',
+    '--wp-on-acc:var(--chiron-surface,#fff);--wp-el:var(--chiron-elevated,var(--color-accent-light,#f3efe9));',
+    '--wp-bd:var(--chiron-border,var(--color-border,#e2e2e2))}',
     '.chiron-listen,.chiron-bottom-bar{display:none!important}',            /* the old players, retired */
     '#wp-mini{position:fixed;left:50%;transform:translateX(-50%);bottom:14px;z-index:9998;width:min(720px,calc(100vw - 28px));',
     'display:flex;align-items:center;gap:10px;padding:8px 10px 8px 8px;border-radius:16px;background:var(--wp-bg);color:var(--wp-fg);',
     'border:1px solid var(--wp-bd);box-shadow:0 10px 34px rgba(0,0,0,.18);font:14px/1.3 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}',
-    '#wp-mini .wp-pp{flex:0 0 42px;height:42px;border-radius:50%;border:none;background:var(--wp-acc);color:#fff;display:grid;place-items:center;cursor:pointer}',
+    '#wp-mini .wp-pp{flex:0 0 42px;height:42px;border-radius:50%;border:none;background:var(--wp-acc);color:var(--wp-on-acc);display:grid;place-items:center;cursor:pointer}',
     '#wp-mini .wp-mid{flex:1;min-width:0}',
     '#wp-mini .wp-ttl{font-weight:700;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}',
     '#wp-mini .wp-row{display:flex;align-items:center;gap:8px;font-size:11.5px;color:var(--wp-mut)}',
@@ -52,7 +55,7 @@
     '#wp-sheet .transport button{border:none;background:none;color:var(--wp-fg);padding:8px;display:grid;place-items:center;font:inherit;cursor:pointer}',
     '#wp-sheet .transport button:disabled{opacity:.3}',
     '#wp-sheet .transport .t15{font-weight:700;font-size:13px;color:var(--wp-mut)}',
-    '#wp-sheet .transport .play{width:66px;height:66px;border-radius:50%;background:var(--wp-acc);color:#fff;padding:0}',
+    '#wp-sheet .transport .play{width:66px;height:66px;border-radius:50%;background:var(--wp-acc);color:var(--wp-on-acc);padding:0}',
     '#wp-sheet .speed{display:flex;justify-content:center;gap:8px;margin:0 0 10px;flex-wrap:wrap}',
     '#wp-sheet .speed button{border:1px solid var(--wp-bd);background:none;color:var(--wp-fg);font-weight:700;font-size:12px;padding:6px 12px;border-radius:99px;cursor:pointer}',
     '#wp-sheet .speed button.on,#wp-sheet .speed button[aria-pressed="true"]{background:var(--wp-el);color:var(--wp-acc);border-color:var(--wp-acc)}',

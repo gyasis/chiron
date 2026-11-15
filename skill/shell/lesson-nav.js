@@ -24,7 +24,7 @@
     '.cl-nav-in a:hover{background:var(--chiron-border,#eee)}' +
     '.cl-nav-themes{display:flex;flex-wrap:wrap;gap:6px}' +
     '.cl-nav-themes button{padding:6px 10px;border-radius:99px;border:1px solid var(--chiron-border,#ccc);background:transparent;color:inherit;cursor:pointer}' +
-    '.cl-nav-themes button[aria-pressed="true"]{background:var(--chiron-accent,#1e3a5f);border-color:var(--chiron-accent,#1e3a5f);color:#fff}' +
+    '.cl-nav-themes button[aria-pressed="true"]{background:var(--chiron-accent,#1e3a5f);border-color:var(--chiron-accent,#1e3a5f);color:var(--chiron-surface,#fff)}' +
     (/[?&]inapp=1\b/.test(location.search) ? 'aside.side{padding-bottom:80px!important}' : '');
   document.head.appendChild(css);
 

@@ -817,8 +817,8 @@ body.chiron-pen-on ::selection { background: #fde68a; color: #000; }
 .chiron-backbar{
   position:fixed; top:0; left:50%; transform:translateX(-50%) translateY(-64%);
   z-index:9997; display:inline-flex; align-items:center; gap:5px;
-  background:var(--color-surface,#fff); color:var(--color-accent,#1e6fbf);
-  border:1px solid var(--color-border,#d8e3f0); border-top:0;
+  background:var(--chiron-surface,var(--color-surface,#fff)); color:var(--chiron-accent,var(--color-accent,#1e6fbf));
+  border:1px solid var(--chiron-border,var(--color-border,#d8e3f0)); border-top:0;
   border-radius:0 0 12px 12px; padding:7px 16px 6px;
   font:800 12.5px var(--font-body,system-ui); text-decoration:none;
   box-shadow:0 3px 10px rgba(15,31,51,.14); opacity:.92;

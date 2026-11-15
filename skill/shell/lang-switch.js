@@ -93,7 +93,7 @@
     'background:var(--chiron-surface,#fff);box-shadow:0 2px 10px rgba(0,0,0,.15);overflow:hidden;' +
     'font:600 12px/1 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}' +
     '.cl-lang button{border:0;background:transparent;color:var(--chiron-fg,#222);padding:0 12px;height:34px;min-width:44px;cursor:pointer;font:inherit}' +
-    '.cl-lang button[aria-pressed="true"]{background:var(--chiron-accent,#1e3a5f);color:#fff}' +
+    '.cl-lang button[aria-pressed="true"]{background:var(--chiron-accent,#1e3a5f);color:var(--chiron-surface,#fff)}' +
     '.cl-lang .cl-chip{display:none}' +
     '@media (max-width:560px){.cl-lang:not(.open) button[data-m]{display:none}.cl-lang:not(.open) .cl-chip{display:block;padding:0 10px;min-width:0;font-size:11px}' +
     '.cl-lang.open .cl-chip{display:none}.cl-lang{top:8px;right:8px}}' +
@@ -102,7 +102,7 @@
     'html.lang-en .chiron-en-block[data-lang="en"],html.lang-both .chiron-en-block[data-lang="en"]{display:block!important}' +
     'html.lang-en [data-lang="en"]{color:inherit!important;font-size:inherit!important;font-style:normal!important;opacity:1!important}' +
     '.lt-en{display:block}' +
-    'html.lang-both .lt-en{color:var(--chiron-muted,#666);font-size:.93em;margin-top:2px}' +
+    'html.lang-both .lt-en{color:var(--chiron-fg-secondary,#555);font-size:.93em;margin-top:2px}' +
     'html.lang-both h1.lt-en,html.lang-both h2.lt-en,html.lang-both h3.lt-en,html.lang-both h4.lt-en{font-size:.95rem;font-weight:500}' +
     'td.lt-cell>.lt-en,th.lt-cell>.lt-en{display:block}' +
     '.turn>[data-lt-own][data-lang="it"]{display:contents}' +

@@ -305,13 +305,15 @@ const html = `<!DOCTYPE html>
   <link rel="stylesheet" href="themes/clinical.css" />
   <link rel="stylesheet" href="themes/linguistic.css" />
   <link rel="stylesheet" href="themes/ocean.css" />
+  <link rel="stylesheet" href="themes/centro.css" />
+  <link rel="stylesheet" href="themes/centro-notte.css" />
   <!-- Clinical / domain widget CSS (mcq, why-care, pattern-cards, glossary) -->
   <link rel="stylesheet" href="clinical-widgets.css" />
 
   <!-- Early theme apply: reads ?theme= or localStorage, falls back to 'linguistic' -->
   <script>
     (function () {
-      var valid = ['linguistic','midnight','warm-paper','clinical','ocean'];
+      var valid = ['linguistic','midnight','warm-paper','clinical','ocean','centro','centro-notte'];
       var params = new URLSearchParams(location.search);
       var t = params.get('theme');
       var stored = localStorage.getItem('chiron-theme');
@@ -488,6 +490,8 @@ const html = `<!DOCTYPE html>
       <button data-set-theme="clinical">clinical</button>
       <button data-set-theme="midnight">midnight</button>
       <button data-set-theme="ocean">ocean</button>
+      <button data-set-theme="centro">centro</button>
+      <button data-set-theme="centro-notte">notte</button>
     </nav>
   </aside>
 
@@ -576,7 +580,7 @@ const html = `<!DOCTYPE html>
   <!-- Theme switcher -->
   <script>
     (function () {
-      var valid = ['linguistic','midnight','warm-paper','clinical','ocean'];
+      var valid = ['linguistic','midnight','warm-paper','clinical','ocean','centro','centro-notte'];
       document.querySelectorAll('.theme-bar button').forEach(function (btn) {
         btn.addEventListener('click', function () {
           var t = btn.getAttribute('data-set-theme');

@@ -54,7 +54,7 @@ _script = re.search(r"const themeSwitcherScript = `(.*?)`;", _asm, re.S).group(1
 _switcher = re.search(r'(<div class="theme-switcher">.*?</div>)', _asm, re.S).group(1)
 _baked("med", f"""<!DOCTYPE html><html lang="en" data-theme="clinical"><head><meta name="viewport" content="width=device-width">
 <link rel="stylesheet" href="themes/_tokens.css">{''.join(f'<link rel="stylesheet" href="themes/{t}.css">' for t in
- ('clinical', 'midnight', 'warm-paper', 'linguistic', 'ocean'))}{_script}
+ ('clinical', 'midnight', 'warm-paper', 'linguistic', 'ocean', 'centro', 'centro-notte'))}{_script}
 <style>body{{margin:0;background:var(--chiron-bg);color:var(--chiron-fg);display:flex}} aside.side{{width:240px;padding:20px}}</style>
 </head><body><aside class="side">{_switcher}</aside><main><h1>Pericardite</h1><p>Lorem.</p></main></body></html>""")
 

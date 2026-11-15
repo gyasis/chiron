@@ -367,7 +367,7 @@ footer.lesson-footer {
 const themeSwitcherScript = `
 <script>
 (function(){
-  var themes = ['clinical','midnight','warm-paper','linguistic','ocean'];
+  var themes = ['clinical','midnight','warm-paper','linguistic','ocean','centro','centro-notte'];
   var stored = (new URLSearchParams(window.location.search)).get('theme') ||
                localStorage.getItem('chiron-theme') || 'clinical';
   if (themes.includes(stored)) {
@@ -541,6 +541,8 @@ const html = `<!DOCTYPE html>
   <link rel="stylesheet" href="themes/warm-paper.css" />
   <link rel="stylesheet" href="themes/linguistic.css" />
   <link rel="stylesheet" href="themes/ocean.css" />
+  <link rel="stylesheet" href="themes/centro.css" />
+  <link rel="stylesheet" href="themes/centro-notte.css" />
 
   <!-- theme switcher must run before body render -->
   ${themeSwitcherScript}
@@ -585,7 +587,7 @@ ${srCardCss}
         <option value="midnight">Midnight</option>
         <option value="warm-paper">Warm Paper</option>
         <option value="linguistic">Linguistic</option>
-        <option value="ocean">Ocean</option>
+        <option value="ocean">Ocean</option><option value="centro">Centro</option><option value="centro-notte">Centro Notte</option>
       </select>
     </div>
   </aside>

@@ -658,6 +658,8 @@ const html = `<!DOCTYPE html>
   <link rel="stylesheet" href="themes/clinical.css" />
   <link rel="stylesheet" href="themes/linguistic.css" />
   <link rel="stylesheet" href="themes/ocean.css" />
+  <link rel="stylesheet" href="themes/centro.css" />
+  <link rel="stylesheet" href="themes/centro-notte.css" />
 
   <script>
     window.MathJax = {
@@ -1086,7 +1088,7 @@ ${chaptersHtml}
   <script>
     // Theme picker
     (function () {
-      const validThemes = ['clinical','midnight','warm-paper','linguistic','ocean'];
+      const validThemes = ['clinical','midnight','warm-paper','linguistic','ocean','centro','centro-notte'];
       const params = new URLSearchParams(location.search);
       const tUrl = params.get('theme');
       const tStored = localStorage.getItem('chiron-theme');

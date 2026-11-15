@@ -1,7 +1,7 @@
 /* chrome-lanes.js — "lanes" layout for the floating controls of a lesson page. ON by default (approved 2026-10-19); opt out
  * with ?lanes=0 or localStorage 'chiron.lanes' === '0'.  Rule (2026-10-18): every floating control lives in its own
  * lane — never over another control, a title or an interactive element; only the ☰ (.cl-nav-btn / .chiron-hamburger) may cover content.
- *   - bottom dock #chiron-dock adopts #chiron-handoff-btn | #wp-mini | .cl-lang (app mode: .cl-lang only, right, >=84px for the app's own pill)
+ *   - bottom dock #chiron-dock adopts .chiron-backbar (‹ Library) | #chiron-handoff-btn | #wp-mini | .cl-lang (app mode: .cl-lang only, right, >=84px for the app's own pill)
  *   - --chiron-dock-h (on <html>) is the dock's height; body/scroll padding reserves it; .cra (Pimsleur read-along) sits above it
  *   - duplicate ☰ / bottom bars hidden; the in-page players are hidden in the app; the lesson's own #enBtn hidden when .cl-lang exists
  * Server-injected into /lessons/**\/lesson.html (server/app.py). window.__chironLanes = {dockH(), report()} for the audit. */
@@ -24,7 +24,11 @@
     '#chiron-dock:empty{display:none}' +
     '#chiron-dock>*{pointer-events:auto}' +
     '#chiron-dock .cl-docked{position:static!important;inset:auto!important;transform:none!important;margin:0!important;z-index:auto!important;box-sizing:border-box}' +
-    '#chiron-dock #chiron-handoff-btn{order:1;flex:0 0 auto}' +
+    '#chiron-dock .chiron-backbar{order:0;flex:0 0 auto;border:1px solid var(--chiron-border,#d8e3f0)!important;border-radius:99px!important;' +
+    'padding:9px 14px!important;opacity:1!important;box-shadow:var(--chiron-shadow-sm,0 1px 2px rgba(0,0,0,.12))!important}' +
+    '#chiron-dock.cl-compact .chiron-backbar{font-size:0!important;width:40px;height:40px;padding:0!important;justify-content:center}' +
+    '#chiron-dock.cl-compact .chiron-backbar .cb-arrow{font-size:20px}' +
+    '#chiron-dock #chiron-handoff-btn{order:1;flex:0 0 auto;background:var(--chiron-surface,#fff)!important}' +
     '#chiron-dock #wp-mini{order:2;flex:1 1 0;min-width:0;width:auto!important;max-width:720px;margin:0 auto!important}' +
     '#chiron-dock .acolyte-fab{order:4;flex:0 0 auto}#chiron-dock .cl-lang{order:3;flex:0 0 auto;margin-left:auto!important}' +
     'html.chiron-lanes-app #chiron-dock{min-height:84px;align-items:flex-end;justify-content:flex-end}' +
@@ -44,7 +48,7 @@
   var dock = document.createElement('div'); dock.id = 'chiron-dock'; dock.setAttribute('role', 'toolbar'); dock.setAttribute('aria-label', 'Lesson controls');
   document.body.appendChild(dock);
 
-  var WEB = ['#chiron-handoff-btn', '#wp-mini', '.cl-lang', '.acolyte-fab'], APP = ['.cl-lang', '.acolyte-fab'];
+  var WEB = ['.chiron-backbar', '#chiron-handoff-btn', '#wp-mini', '.cl-lang', '.acolyte-fab'], APP = ['.cl-lang', '.acolyte-fab'];
   function adopt() {
     (inapp ? APP : WEB).forEach(function (s) {
       var el = document.querySelector(s);

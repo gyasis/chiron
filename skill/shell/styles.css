@@ -1253,39 +1253,39 @@ p:last-child { margin-bottom: 0; }
 .chiron-listen {
   position: fixed; right: 18px; bottom: 18px; z-index: 9999;
   width: 230px; max-width: calc(100vw - 36px);
-  background: var(--color-surface, #fff);
-  border: 1px solid var(--color-border, #e2e2e2);
+  background: var(--chiron-surface, var(--color-surface, #fff));
+  border: 1px solid var(--chiron-border, var(--color-border, #e2e2e2));
   border-radius: 14px; box-shadow: 0 8px 30px rgba(0,0,0,.16);
   font-family: 'DM Sans', system-ui, sans-serif; overflow: hidden;
 }
 .chiron-listen-head {
   display: flex; align-items: center; gap: 7px;
   font-weight: 700; font-size: 13px;
-  padding: 11px 14px; border-bottom: 1px solid var(--color-border-light, #eee);
-  color: var(--color-text, #1a1a1a);
+  padding: 11px 14px; border-bottom: 1px solid var(--chiron-divider, var(--color-border-light, #eee));
+  color: var(--chiron-fg, var(--color-text, #1a1a1a));
 }
 .chiron-listen-list { display: flex; flex-direction: column; padding: 6px; gap: 2px; max-height: 46vh; overflow-y: auto; }
 .chiron-listen-btn {
   display: flex; align-items: center; gap: 9px; text-align: left;
   background: transparent; border: 0; border-radius: 9px; padding: 9px 11px;
   cursor: pointer; font: inherit; font-size: 13px; line-height: 1.25;
-  color: var(--color-text, #1a1a1a); transition: background .12s ease;
+  color: var(--chiron-fg, var(--color-text, #1a1a1a)); transition: background .12s ease;
 }
-.chiron-listen-btn:hover { background: var(--color-accent-light, #f3f3f3); }
+.chiron-listen-btn:hover { background: var(--chiron-elevated, var(--color-accent-light, #f3f3f3)); }
 .chiron-listen-btn .ico {
   flex: none; width: 18px; height: 18px; display: grid; place-items: center;
-  font-size: 10px; color: var(--color-accent, #D94F30);
+  font-size: 10px; color: var(--chiron-accent, var(--color-accent, #D94F30));
 }
 .chiron-listen-btn.playing {
   background: linear-gradient(
     to right,
-    color-mix(in srgb, var(--color-accent, #D94F30) 18%, transparent) calc(var(--clip-progress, 0) * 100%),
-    var(--color-accent-light, #f3f3f3) calc(var(--clip-progress, 0) * 100%)
+    color-mix(in srgb, var(--chiron-accent, var(--color-accent, #D94F30)) 18%, transparent) calc(var(--clip-progress, 0) * 100%),
+    var(--chiron-elevated, var(--color-accent-light, #f3f3f3)) calc(var(--clip-progress, 0) * 100%)
   );
   font-weight: 600;
   position: relative;
 }
-.chiron-listen-btn.err .lbl { color: var(--color-error, #c0392b); }
+.chiron-listen-btn.err .lbl { color: var(--chiron-error, var(--color-error, #c0392b)); }
 
 /* ── Feature A — button-body scrubber cursor (playing state) ──────────────────
    The gradient fill on the playing button IS the scrubber — no separate track.
@@ -1305,12 +1305,12 @@ p:last-child { margin-bottom: 0; }
   padding-left: 8px;
   font-size: 11px;
   font-family: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
-  color: var(--color-text-muted, #9E9790);
+  color: var(--chiron-fg-secondary, var(--color-text-muted, #9E9790));
   white-space: nowrap;
   flex-shrink: 0;
   letter-spacing: 0.03em;
 }
-.chiron-listen-kind { font-size: 11px; color: var(--color-text-muted, #888); font-weight: 400; }
+.chiron-listen-kind { font-size: 11px; color: var(--chiron-fg-secondary, var(--color-text-muted, #888)); font-weight: 400; }
 /* section being lectured — soft pulsing glow (the lone acolyte-derived gesture) */
 .chiron-listening {
   border-radius: 10px; scroll-margin-top: 84px;
@@ -1321,14 +1321,14 @@ p:last-child { margin-bottom: 0; }
   50%      { box-shadow: 0 0 0 7px var(--color-accent-muted, rgba(217,79,48,.16)); }
 }
 @media (prefers-reduced-motion: reduce) {
-  .chiron-listening { animation: none; outline: 2px solid var(--color-accent, #D94F30); }
+  .chiron-listening { animation: none; outline: 2px solid var(--chiron-accent, var(--color-accent, #D94F30)); }
 }
 /* grouped panel (Whole lesson vs By section) */
 .chiron-listen-group { padding: 6px; }
-.chiron-listen-group + .chiron-listen-group { border-top: 1px solid var(--color-border-light, #eee); }
+.chiron-listen-group + .chiron-listen-group { border-top: 1px solid var(--chiron-divider, var(--color-border-light, #eee)); }
 .chiron-listen-grouptitle {
   font-size: 10px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase;
-  color: var(--color-text-muted, #999); padding: 4px 11px 5px;
+  color: var(--chiron-fg-secondary, var(--color-text-muted, #999)); padding: 4px 11px 5px;
 }
 /* inline ▶ — injected next to a vocab phrase / dialogue line / story / grammar pearl */
 .chiron-play-inline {

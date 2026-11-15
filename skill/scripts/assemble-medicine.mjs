@@ -22,11 +22,14 @@ import { normaliseWidget } from './widget-normalize.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const SKILL_DIR = resolve(__dirname, '..');
-// Generalized from build-bloodchem-assemble.mjs (D4c — one data-driven assembler per chain).
+// One data-driven assembler for every medicine chain.
 // Usage: node assemble-medicine.mjs <lesson-output-dir>   (reads chapter*.json, emits lesson.html)
-const OUT_DIR = process.argv[2]
-  ? resolve(process.argv[2])
-  : resolve(process.env.HOME, 'Documents', 'generated', 'chiron-blood-chemistry-amboss');
+// The folder is required: the assembler overwrites that lesson's lesson.html, so it never picks one by default.
+if (!process.argv[2]) {
+  process.stderr.write('usage: node assemble-medicine.mjs <lesson-output-dir>\n');
+  process.exit(2);
+}
+const OUT_DIR = resolve(process.argv[2]);
 const OUT = resolve(OUT_DIR, 'lesson.html');
 const DB_PATH = resolve(OUT_DIR, '.chiron-state.db');
 
@@ -394,13 +397,28 @@ footer.lesson-footer {
   aside.side { position: relative; height: auto; border-right: none; border-bottom: 1px solid var(--chiron-border); }
   section.chapter { padding: 2rem 1.25rem 4rem; }
 }
+/* Phone: a prose table becomes one card per row, each cell headed by its column name (data-label, set by the
+   table-label script) — the page never scrolls sideways. */
+@media (max-width: 640px) {
+  .chapter-prose table, .chapter-prose tbody, .chapter-prose tr, .chapter-prose td, .chapter-prose th { display: block; width: auto; }
+  .chapter-prose thead, .chapter-prose tr.tl-head { display: none; }
+  .chapter-prose tr {
+    border: 1px solid var(--chiron-border); border-radius: var(--chiron-radius-sm);
+    background: var(--chiron-surface); padding: var(--chiron-space-2) var(--chiron-space-3); margin-bottom: var(--chiron-space-3);
+  }
+  .chapter-prose th, .chapter-prose td { border: 0; padding: 4px 0; }
+  .chapter-prose td[data-label]::before {
+    content: attr(data-label); display: block; font-size: 0.75rem; font-weight: 700;
+    color: var(--chiron-fg-secondary); text-transform: uppercase; letter-spacing: 0.04em;
+  }
+}
 `;
 
 // ── theme switcher script ─────────────────────────────────────────────────────
 const themeSwitcherScript = `
 <script>
 (function(){
-  var themes = ['clinical','midnight','warm-paper','linguistic','ocean'];
+  var themes = ['clinical','midnight','warm-paper','linguistic','ocean','centro','centro-notte'];
   var stored = (new URLSearchParams(window.location.search)).get('theme') ||
                localStorage.getItem('chiron-theme') || '${themeId}';
   if (themes.includes(stored)) {
@@ -567,13 +585,15 @@ const html = `<!DOCTYPE html>
   <meta name="chiron-lesson-id" content="${lessonId}" />
   <title>Chiron · ${lessonTitle}</title>
 
-  <!-- 6 theme <link> tags — theme contract requirement -->
+  <!-- theme <link> tags — theme contract requirement -->
   <link rel="stylesheet" href="themes/_tokens.css" />
   <link rel="stylesheet" href="themes/clinical.css" />
   <link rel="stylesheet" href="themes/midnight.css" />
   <link rel="stylesheet" href="themes/warm-paper.css" />
   <link rel="stylesheet" href="themes/linguistic.css" />
   <link rel="stylesheet" href="themes/ocean.css" />
+  <link rel="stylesheet" href="themes/centro.css" />
+  <link rel="stylesheet" href="themes/centro-notte.css" />
 
   <!-- theme switcher must run before body render -->
   ${themeSwitcherScript}
@@ -623,6 +643,8 @@ ${srCardCss}
         <option value="warm-paper">Warm Paper</option>
         <option value="linguistic">Linguistic</option>
         <option value="ocean">Ocean</option>
+        <option value="centro">Centro</option>
+        <option value="centro-notte">Centro Notte</option>
       </select>
     </div>
   </aside>
@@ -648,6 +670,19 @@ ${glossaryHtml}
 
   <script>
 ${shellMainJs}
+  </script>
+  <script>
+  /* table-label: give each prose-table cell its column name, for the phone card layout */
+  document.querySelectorAll('.chapter-prose table').forEach(function (t) {
+    var head = t.querySelector('thead tr') || t.querySelector('tr');
+    if (!head || head.querySelector('td')) return;
+    if (!head.closest('thead')) head.classList.add('tl-head');
+    var names = Array.prototype.map.call(head.children, function (c) { return c.textContent.trim(); });
+    t.querySelectorAll('tr').forEach(function (r) {
+      if (r === head) return;
+      Array.prototype.forEach.call(r.children, function (c, i) { if (names[i]) c.setAttribute('data-label', names[i]); });
+    });
+  });
   </script>
   ${animationJs}
 </body>

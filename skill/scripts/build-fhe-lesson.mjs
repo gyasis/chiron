@@ -52,7 +52,7 @@ const brief = {
     'FHE_Comprehensive_Guide.md (the ONLY source — no external research performed)',
   ],
   default_theme: 'linguistic',
-  available_themes: ['linguistic', 'warm-paper', 'clinical', 'midnight', 'ocean'],
+  available_themes: ['linguistic', 'warm-paper', 'clinical', 'midnight', 'ocean', 'centro', 'centro-notte'],
   generated_by: 'chiron skill (parent agent) — pipeline TODAY (no Stage 2.5 enrichment)',
   generated_at: '2026-05-14',
 };
@@ -561,6 +561,8 @@ const html = `<!DOCTYPE html>
   <link rel="stylesheet" href="themes/clinical.css" />
   <link rel="stylesheet" href="themes/linguistic.css" />
   <link rel="stylesheet" href="themes/ocean.css" />
+  <link rel="stylesheet" href="themes/centro.css" />
+  <link rel="stylesheet" href="themes/centro-notte.css" />
 
   <style>
     * { box-sizing: border-box; }
@@ -626,6 +628,8 @@ ${sidebarToc}
       <button data-set-theme="clinical">clinical</button>
       <button data-set-theme="midnight">midnight</button>
       <button data-set-theme="ocean">ocean</button>
+      <button data-set-theme="centro">centro</button>
+      <button data-set-theme="centro-notte">notte</button>
     </div>
 
     <div class="toc-header" style="margin-top:var(--chiron-space-8);font-size:0.65rem;">Pipeline state</div>

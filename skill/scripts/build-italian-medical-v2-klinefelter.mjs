@@ -241,6 +241,8 @@ const html = `<!DOCTYPE html>
   <link rel="stylesheet" href="themes/clinical.css" />
   <link rel="stylesheet" href="themes/linguistic.css" />
   <link rel="stylesheet" href="themes/ocean.css" />
+  <link rel="stylesheet" href="themes/centro.css" />
+  <link rel="stylesheet" href="themes/centro-notte.css" />
 
   <link rel="stylesheet" href="layouts/l1-lms.css" />
   <link rel="stylesheet" href="layouts/l2-editorial.css" />
@@ -248,7 +250,7 @@ const html = `<!DOCTYPE html>
 
   <script>
     (function () {
-      const validT = ['linguistic','midnight','warm-paper','clinical','ocean'];
+      const validT = ['linguistic','midnight','warm-paper','clinical','ocean','centro','centro-notte'];
       const validL = ['l1','l2','l5'];
       const p = new URLSearchParams(location.search);
       const t = p.get('theme'); const l = p.get('layout');
@@ -380,6 +382,8 @@ ${sidebarToc}
       <button data-set-theme="warm-paper">warm</button>
       <button data-set-theme="midnight">midnight</button>
       <button data-set-theme="ocean">ocean</button>
+      <button data-set-theme="centro">centro</button>
+      <button data-set-theme="centro-notte">notte</button>
     </div>
 
     <div class="toc-header">Layout</div>
