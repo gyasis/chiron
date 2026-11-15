@@ -11,6 +11,7 @@
                      kind = word | word_slow | en | example_it | example_en
      mode "lines":   lines[{t0, t1, it, en, who}]          (a story / dialogue)
    Optional intro: {src, it, en} — the narrator's spoken overview of the lesson.
+   Optional overview: {src, it, en} — the narrator's map of the whole series.
 
    Mounts into <div id="chiron-playthrough"></div>. Colours come only from the
    lesson's --chiron-* theme tokens.
@@ -69,6 +70,7 @@
     root.innerHTML =
       '<div class="ptr-bar">' +
       '<button class="ptr-btn ptr-play" type="button">▶ Ascolta</button>' +
+      (D.overview ? '<button class="ptr-btn ptr-overview" type="button">La serie</button>' : '') +
       (D.intro ? '<button class="ptr-btn ptr-intro" type="button">Introduzione</button>' : '') +
       '<button class="ptr-btn ptr-rate" type="button" data-r="1">1×</button>' +
       '<button class="ptr-btn ptr-enbtn" type="button" aria-pressed="' + hideEn + '">Senza inglese</button>' +
@@ -136,10 +138,13 @@
       if (audio.__intro) { setSrc(D.src || 'audio/playthrough.mp3', false); }
       if (audio.paused) audio.play(); else audio.pause();
     };
-    if (D.intro) q('.ptr-intro').onclick = function () {
-      setSrc(D.intro.src, true); audio.currentTime = 0; audio.play();
-      now.innerHTML = '<div class="ptr-ex ptr-on">' + esc(D.intro.it) + '</div><div class="ptr-exen">' + esc(D.intro.en) + '</div>';
-    };
+    function narrate(n) {
+      setSrc(n.src, true); audio.currentTime = 0; audio.play();
+      now.innerHTML = '<div class="ptr-ex ptr-on">' + esc(n.it).replace(/\n\n/g, '<br><br>') + '</div><div class="ptr-exen">' +
+        esc(n.en).replace(/\n\n/g, '<br><br>') + '</div>';
+    }
+    if (D.intro) q('.ptr-intro').onclick = function () { narrate(D.intro); };
+    if (D.overview) q('.ptr-overview').onclick = function () { narrate(D.overview); };
     q('.ptr-rate').onclick = function () {
       var r = { '1': 0.8, '0.8': 1.25, '1.25': 1 }[this.dataset.r] || 1;
       this.dataset.r = String(r); this.textContent = r + '×'; audio.playbackRate = r;
