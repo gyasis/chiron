@@ -118,7 +118,8 @@ const EXAM_JS = String.raw`
 
   function submit(auto) {
     if (st.submitted) return;
-    st.submitted = true; st.endedAt = Date.now(); st.timeUp = !!auto; confirming = false;
+    st.submitted = true; st.timeUp = !!auto; confirming = false;
+    st.endedAt = limitMs ? Math.min(Date.now(), st.startedAt + limitMs) : Date.now();
     if (tick) { clearInterval(tick); tick = null; }
     save(); render();
     var res = root.querySelector('.emtf-results');

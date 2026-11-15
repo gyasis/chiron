@@ -1438,7 +1438,7 @@
 .emtf-bar{display:flex;flex-wrap:wrap;align-items:center;gap:var(--chiron-space-3);margin-bottom:var(--chiron-space-3)}
 .emtf-timer{font-size:.9rem;color:var(--chiron-fg-secondary)}
 .emtf-time{font-variant-numeric:tabular-nums;font-weight:700;color:var(--chiron-fg)}
-.emtf-unans{font-size:.85rem;color:var(--chiron-muted);margin-left:auto}
+.emtf-unans{font-size:.85rem;color:var(--chiron-fg-secondary);margin-left:auto}
 .emtf-grid{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:var(--chiron-space-3)}
 .emtf-widget .emtf-num{min-width:44px;padding:0 6px}
 .emtf-num.is-done{background:var(--chiron-elevated)}
@@ -1464,7 +1464,7 @@
 .emtf-verdict{font-weight:700;font-size:.85rem;margin:var(--chiron-space-2) 0 4px}
 .emtf-expl{margin:4px 0;font-size:.88rem;line-height:1.5;color:var(--chiron-fg-secondary)}
 .emtf-expl-en{padding:var(--chiron-space-2);background:var(--chiron-elevated);border-radius:var(--chiron-radius-sm)}
-.emtf-widget .emtf-link{min-height:40px;border:none;background:transparent;color:var(--chiron-accent);text-decoration:underline;padding:0 var(--chiron-space-2)}
+.emtf-widget .emtf-link{min-height:40px;border:none;background:transparent;color:color-mix(in srgb,var(--chiron-accent-light) calc(var(--chiron-is-dark,0) * 100%),var(--chiron-accent));text-decoration:underline;padding:0 var(--chiron-space-2)}
 .emtf-actions,.cast-actions{display:flex;flex-wrap:wrap;gap:var(--chiron-space-2);margin-top:var(--chiron-space-3)}
 .emtf-confirm{margin-top:var(--chiron-space-3);padding:var(--chiron-space-3);background:var(--chiron-elevated);border:1px solid var(--chiron-border);border-radius:var(--chiron-radius-md)}
 .emtf-confirm p{margin:0}
@@ -1474,9 +1474,9 @@
 .emtf-badge.is-pass,.cast-badge.is-pass{background:var(--chiron-success);color:var(--chiron-surface)}
 .emtf-badge.is-fail,.cast-badge.is-fail{background:var(--chiron-error);color:var(--chiron-surface)}
 .emtf-stats,.cast-stats{display:flex;flex-wrap:wrap;gap:var(--chiron-space-5);margin:0}
-.emtf-stats dt,.cast-stats dt{font-size:.72rem;color:var(--chiron-muted);text-transform:uppercase;letter-spacing:.04em}
+.emtf-stats dt,.cast-stats dt{font-size:.72rem;color:var(--chiron-fg-secondary);text-transform:uppercase;letter-spacing:.04em}
 .emtf-stats dd,.cast-stats dd{margin:0;font-weight:700;font-size:1.05rem}
-.emtf-stats small{font-weight:400;color:var(--chiron-muted)}
+.emtf-stats small{font-weight:400;color:var(--chiron-fg-secondary)}
 .emtf-note,.cast-rule{font-size:.88rem;color:var(--chiron-fg-secondary);margin:var(--chiron-space-2) 0}
 .emtf-topics,.cast-table{width:100%;border-collapse:collapse;font-size:.88rem;margin:var(--chiron-space-3) 0}
 .emtf-topics th,.emtf-topics td,.cast-table th,.cast-table td{text-align:left;padding:8px;border:1px solid var(--chiron-divider)}
@@ -1488,9 +1488,12 @@
 .cast-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:var(--chiron-space-2)}
 .cast-stageno{font-family:var(--chiron-font-heading);font-weight:700}
 .cast-clock{font-family:var(--chiron-font-mono);font-size:.85rem;padding:2px 10px;border-radius:100px;background:var(--chiron-elevated)}
-.cast-monitor{display:grid;grid-template-columns:repeat(auto-fit,minmax(90px,1fr));gap:1px;margin:0 0 var(--chiron-space-3);
-  background:var(--chiron-fg);color:var(--chiron-bg);border-radius:var(--chiron-radius-md);overflow:hidden;font-family:var(--chiron-font-mono)}
-.cast-cell{padding:8px 10px;background:var(--chiron-fg)}
+/* The monitor stays dark in every theme: the fg colour is dark in light themes, the bg colour in dark ones. */
+.cast-monitor{--cast-mon-bg:color-mix(in srgb,var(--chiron-bg) calc(var(--chiron-is-dark,0) * 100%),var(--chiron-fg));
+  --cast-mon-fg:color-mix(in srgb,var(--chiron-fg) calc(var(--chiron-is-dark,0) * 100%),var(--chiron-bg));
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(90px,1fr));gap:1px;margin:0 0 var(--chiron-space-3);
+  background:var(--cast-mon-bg);color:var(--cast-mon-fg);border:1px solid var(--chiron-border);border-radius:var(--chiron-radius-md);overflow:hidden;font-family:var(--chiron-font-mono)}
+.cast-cell{padding:8px 10px;background:var(--cast-mon-bg)}
 .cast-cell dt{font-size:.68rem;opacity:.7;text-transform:uppercase;letter-spacing:.05em}
 .cast-cell dd{margin:0;font-size:1.15rem;font-weight:700}
 .cast-cell.cast-rhythm{grid-column:1/-1}
