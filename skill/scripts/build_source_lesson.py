@@ -6,6 +6,7 @@
 SPEC = { "out": dir, "slug", "titleIt", "titleEn", "subtitle"?, "labels": [str]?, "domain": "language-it",
          "source": {"audio": path to the original recording, "url"?, "title"?},
          "intro": {"it", "en"}?,                    # the narrator's spoken overview (the only synthesized speech)
+         "overview": {"it": [str], "en": [str]}?,   # the narrator's map of the whole series, one string per paragraph
          "entries": [{id, it, en, example_it?, example_en?, span: [s, e],
                       clips: {word, word_slow?, en, example_it?, example_en?}: [s, e] source seconds,
                       segments?: [{kind, s, e}] every spoken line of the entry, for the play-through highlight}],
@@ -24,6 +25,7 @@ What it writes into SPEC.out (a normal Library-visible lesson dir):
   audio/phrase/vocab-<id>[-ex].mp3   the lesson player's inline ▶ on each word / example row
   audio/playthrough.mp3 + playthrough.timeline.js   the whole lesson in order, for the play-through pane
   audio/intro.mp3                    the narrator's overview (target voice, Italian)
+  audio/overview.mp3                 the narrator's series overview, paragraphs voiced one by one and joined
   pimsleur.json + audio/pimsleur.mp3 a source-audio drill (pimsleur_drill.py, source_audio mode)
   content.json -> lesson.html        assemble-language.mjs, then the play-through pane and the drill player inlined
   cards.json                         Anki: notes that already teach a word (linked) and the words that need a card
@@ -139,8 +141,20 @@ def build(spec_path, drill=True):
         baker = pd.Baker(os.path.join(A, "pimsleur-cache"), None)
         to_mp3(baker.clip("frame", S["intro"]["it"]), os.path.join(A, "intro.mp3"))
         intro = {"src": "audio/intro.mp3", **S["intro"]}
+    overview = None
+    if S.get("overview"):
+        baker = pd.Baker(os.path.join(A, "pimsleur-cache"), None)
+        lst = os.path.join(A, "overview-concat.txt")
+        pause = os.path.join(A, "overview-pause.wav")
+        run("ffmpeg", "-y", "-v", "error", "-f", "lavfi", "-i", f"anullsrc=r={RATE}:cl=mono", "-t", "0.7", pause)
+        paras = [os.path.abspath(baker.clip("frame", p)) for p in S["overview"]["it"]]
+        open(lst, "w").write("".join(f"file '{p}'\nfile '{os.path.abspath(pause)}'\n" for p in paras))
+        run("ffmpeg", "-y", "-v", "error", "-f", "concat", "-safe", "0", "-i", lst, "-ar", str(RATE),
+            "-codec:a", "libmp3lame", "-q:a", "3", os.path.join(A, "overview.mp3"))
+        os.remove(lst); os.remove(pause)
+        overview = {"src": "audio/overview.mp3", "it": "\n\n".join(S["overview"]["it"]), "en": "\n\n".join(S["overview"]["en"])}
     data = {"mode": "lines" if story else "entries", "src": "audio/playthrough.mp3", "durationS": total,
-            ("lines" if story else "entries"): tl, "intro": intro,
+            ("lines" if story else "entries"): tl, "intro": intro, "overview": overview,
             "source": S["source"].get("url")}
     open(os.path.join(A, "playthrough.timeline.js"), "w").write(
         "window.__chironPlaythrough = " + json.dumps(data, ensure_ascii=False) + ";\n")
