@@ -256,6 +256,19 @@ class RouteTest(Base):
         r2 = self.c.post("/api/lesson/chiron-italian-un-modulo/pimsleur", json={"confirm": True}).json()
         self.assertTrue(r2["duplicate"])
         self.assertEqual(len(self.calls), 1)
+        self.assertEqual(r2["job_id"], "job1")
+
+    def test_pimsleur_ready_links_first_episode(self):
+        self.c.post("/api/lesson/chiron-italian-un-modulo/pimsleur", json={"confirm": True})
+        L.JOBS["job1"].update(status="ready", lesson_url="/library/")
+        self.assertEqual(L.pimsleur_status("chiron-italian-un-modulo")["url"], "/library/")
+        for n in ("02-due", "01-uno"):
+            (GEN / f"chiron-pimsleur-un-modulo-{n}").mkdir(parents=True, exist_ok=True)
+            (GEN / f"chiron-pimsleur-un-modulo-{n}" / "lesson.html").write_text("<h1>x</h1>")
+        st = L.pimsleur_status("chiron-italian-un-modulo")
+        self.assertEqual(st["url"], "/lessons/chiron-pimsleur-un-modulo-01-uno/lesson.html")
+        r = self.c.post("/api/lesson/chiron-italian-un-modulo/pimsleur", json={"confirm": True}).json()
+        self.assertEqual((r["job_id"], r["url"]), ("job1", st["url"]))
 
     def test_pimsleur_too_few_pairs_is_422(self):
         make_lesson("chiron-italian-poco", html=lesson_html(PAIRS[:3])); L.italian_lessons(force=True)
