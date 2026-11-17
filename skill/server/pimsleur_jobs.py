@@ -181,10 +181,19 @@ async def from_phrases(request: Request):
         b = await request.json()
     except ValueError:
         b = None
+    return start_from_phrases(b)
+
+
+def start_from_phrases(b) -> "dict | JSONResponse":
+    """The body of POST /api/pimsleur/from-phrases, callable in-process (lesson_links starts a lesson's season through it).
+    `source_lesson` (optional string) is stored on the job as extra.source_lesson."""
     if not isinstance(b, dict):
         return _reply(400, "body must be a JSON object")
     if b.get("confirm") is not True:
         return _reply(400, "a Pimsleur season costs a generation run plus an audio bake: send confirm:true")
+    src_lesson = b.get("source_lesson")
+    if src_lesson is not None and not isinstance(src_lesson, str):
+        return _reply(400, "source_lesson must be a string")
 
     cid = b.get("collection")
     if cid is not None:
@@ -231,7 +240,8 @@ async def from_phrases(request: Request):
     path.write_text(json.dumps(doc, ensure_ascii=False, indent=1))
     res = SUBMIT({"domain": "language-it", "depth": "pimsleur", "subject": topic, "stage": "all",
                   "source": "Chiron · Ask phrase coach", "source_ref": h,
-                  "extra": {"source_file": str(path), "lessons": lessons, "phrase_hash": h, "phrases": len(phrases)}})
+                  "extra": {"source_file": str(path), "lessons": lessons, "phrase_hash": h, "phrases": len(phrases),
+                            **({"source_lesson": src_lesson} if src_lesson else {})}})
     if res.get("duplicate"):     # generate() joined an in-flight or failed job of the same slug
         return {"ok": True, "duplicate": True, "job_id": res.get("job_id"), "status": res.get("status"), "topic": topic,
                 "url": "/library/", "note": res.get("note") or "already exists"}

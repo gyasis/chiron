@@ -2500,6 +2500,12 @@ pimsleur_jobs.SUBMIT = lambda d: generate(GenReq(**d))
 pimsleur_jobs.JOBS = JOBS
 pimsleur_jobs.ORIGIN_OK = lambda request: _anki_origin_ok(request)
 
+# Lesson companion: per-lesson Anki / Pimsleur / Match Madness status and the on-demand actions behind lesson-actions.js.
+import lesson_links  # noqa: E402
+app.include_router(lesson_links.router)
+lesson_links.JOBS = JOBS
+lesson_links.ORIGIN_OK = lambda request: _anki_origin_ok(request)
+
 # Live drill: POST /api/pimsleur/live makes the lines in the background while the Ask page plays the earlier ones.
 import pimsleur_live  # noqa: E402
 app.include_router(pimsleur_live.router)
@@ -2653,6 +2659,10 @@ def _lesson_with_tutor(slug: str, request: Request):
     if "mm-send.js" not in html and 'id="match-madness"' in html:     # "🎮 Gioca in Match Madness": send this lesson's pairs to the MM app
         mv = int((SKILL / "shell" / "mm-send.js").stat().st_mtime)
         rep = f'<script src="/shell/mm-send.js?v={mv}" defer></script>'
+        html = html.replace("</body>", rep + "</body>", 1) if "</body>" in html else html + rep
+    if "lesson-actions.js" not in html and lesson_links.is_italian(slug):   # Anki / Pimsleur / Match Madness block for Italian lessons
+        av = int((SKILL / "shell" / "lesson-actions.js").stat().st_mtime)
+        rep = f'<script src="/shell/lesson-actions.js?v={av}" defer></script>'
         html = html.replace("</body>", rep + "</body>", 1) if "</body>" in html else html + rep
     if "chiron-lang-switch" not in html and "lang-switch.js" not in html and 'class="subsbar"' not in html:   # IT · IT+EN · EN switch (a lesson with its own inline copy keeps it, for offline)
         lv = int((SKILL / "shell" / "lang-switch.js").stat().st_mtime)
