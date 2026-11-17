@@ -271,6 +271,15 @@ def _season_file(slug: str | None) -> bool:
     return bool(slug) and (GEN / f"{slug}.season.json").is_file()
 
 
+def _season_url(slug: str | None, fallback: str | None = None) -> str:
+    """The first episode of a season (<slug>-NN-<name>/lesson.html); else `fallback`; else the library."""
+    if slug:
+        eps = sorted(p for p in GEN.glob(f"{slug}-[0-9][0-9]-*") if (p / "lesson.html").is_file())
+        if eps:
+            return f"/lessons/{eps[0].name}/lesson.html"
+    return fallback or "/library/"
+
+
 def pimsleur_status(key_or_row) -> dict:
     """{state: "generating"|"ready"|"is_pimsleur"|"none", job_id?, season?, url?}: the recorded link, else a job started
     from this lesson, else the lesson being a Pimsleur season itself."""
@@ -287,10 +296,10 @@ def pimsleur_status(key_or_row) -> dict:
             return {"state": "generating", "job_id": job["id"], "status": st, "slug": job.get("slug")}
         if st in PIMSLEUR_DONE:
             return {"state": "ready", "job_id": job["id"], "status": st, "slug": job.get("slug"),
-                    "url": job.get("lesson_url") or f"/lessons/{job.get('slug')}/lesson.html"}
+                    "url": _season_url(job.get("slug"), job.get("lesson_url"))}
     elif link.get("season") and _season_file(link["season"]):
         return {"state": "ready", "job_id": link.get("job_id"), "slug": link["season"],
-                "url": f"/lessons/{link['season']}/lesson.html"}
+                "url": _season_url(link["season"])}
     if row and (row.get("format") or "") == "pimsleur":
         return {"state": "is_pimsleur"}
     return {"state": "none"}
@@ -406,7 +415,7 @@ def start_pimsleur(row: dict, dry: bool) -> dict:
     with _action_lock(row["key"], "pimsleur"):
         cur = pimsleur_status(row)
         if cur["state"] != "none":
-            return {"ok": True, "duplicate": True, "pimsleur": cur,
+            return {"ok": True, "duplicate": True, "pimsleur": cur, "job_id": cur.get("job_id"), "url": cur.get("url"),
                     "note": "this lesson already has a Pimsleur season" if cur["state"] != "is_pimsleur" else "this lesson is a Pimsleur season"}
         phrases = pick_phrases(lesson_pairs(row))
         if phrases is None:
