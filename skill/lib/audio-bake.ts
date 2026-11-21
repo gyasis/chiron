@@ -317,6 +317,15 @@ async function synthWithRetry(url: string, seg: LectureSegment, ref: VoiceRef, o
   }
 }
 
+/**
+ * How hard to try on one artifact. A phrase is one segment, and three tries are
+ * plenty. A 60-segment lecture meets the shared TTS engine sixty times, so it
+ * gets more. The cap keeps a dead engine failing fast instead of hanging.
+ */
+function synthAttemptsFor(segmentCount: number): number {
+  return Math.min(8, 3 + Math.ceil(segmentCount / 20));
+}
+
 async function diaReady(url: string): Promise<boolean> {
   try {
     const r = await fetch(`${url}/readyz`, { signal: AbortSignal.timeout(6000) });
@@ -582,6 +591,8 @@ export async function bakeAudio(opts: AudioBakeOptions): Promise<AudioClipResult
       const label = `${art.kind}${sid ? `/${sid}` : ''}`;
       const hash = hashSegments(art.segments);
       const relPath = relAudioPath(art.kind, sid);
+      // Long artifacts try harder — see synthAttemptsFor.
+      const synthAttempts = synthAttemptsFor(art.segments.length);
 
       // Deterministic audio-vs-DISPLAY divergence check (no model). Runs for any
       // `section` whose displayed text was supplied — regardless of bake/reuse
@@ -663,7 +674,7 @@ export async function bakeAudio(opts: AudioBakeOptions): Promise<AudioClipResult
               progress(STAGE, `  Dia failed (${msg.slice(0, 44)}) — falling back to OmniVoice`);
               const ref = opts.voices[seg.voice];
               if (!ref) throw new Error(`no voice ref registered for '${seg.voice}' (Dia fallback)`);
-              await synthWithRetry(url, seg, ref, rawWav);
+              await synthWithRetry(url, seg, ref, rawWav, synthAttempts);
               if (diaParams.speed < 1.0) {
                 const slowed = `${rawWav}.slow.wav`;
                 execFileSync('ffmpeg', ['-y', '-loglevel', 'error', '-i', rawWav, '-filter:a', `atempo=${diaParams.speed}`, slowed], { stdio: 'pipe' });
@@ -674,7 +685,7 @@ export async function bakeAudio(opts: AudioBakeOptions): Promise<AudioClipResult
           }
           const ref = opts.voices[seg.voice];
           if (!ref) throw new Error(`no voice ref registered for '${seg.voice}'`);
-          await synthWithRetry(url, seg, ref, rawWav);
+          await synthWithRetry(url, seg, ref, rawWav, synthAttempts);
           // OmniVoice slow read: apply pitch-preserved atempo for any omni section
           // with speed<1.0. This is the Italian slow-reading path — Dia is English-
           // only, so `language-it` passage slow-reads use omni+atempo (same voice as
