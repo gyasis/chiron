@@ -22,6 +22,7 @@ the loudness. Those are exactly where the 2026-10-10 prototype had its bugs.
 ITEM BANK — <lesson-dir>/pimsleur.json
   { "title": str, "album": str?, "track": int?, "intro": [str]?, "outro": str?,
     "voices": {"cue": "pimsleur_narrator", "target": "lucrezia_italian"}?,
+    "say": {"MOF": "Mof"}?,          # Italian word -> spoken respelling for the voice (text shown stays as written)
     "items":  [ITEM], "review": [ITEM]? }
   ITEM = { "id": str, "it": str, "en": str, "kind": "phrase"|"question"|"talk",
            "build": [str]?,   # back-chain pieces, shortest first, each a word-suffix of "it"
@@ -229,8 +230,9 @@ def _dur(p: str) -> float:
 
 
 class Baker:
-    def __init__(self, cache: str, voices: dict, source: dict | None = None):
+    def __init__(self, cache: str, voices: dict, source: dict | None = None, say: dict | None = None):
         self.cache, self.voices = cache, {**DEFAULT_VOICES, **(voices or {})}
+        self.say = say or {}                 # Italian word -> how the voice should say it, e.g. {"MOF": "Mof"}
         self.voices.setdefault("frame", self.voices["target"])   # Italian framing lines: the target voice
         self.source = source or {}           # (role, text) -> absolute path of a recorded source clip
         self.refs = json.load(open(VOICES_FILE))
@@ -242,8 +244,16 @@ class Baker:
     def is_source(self, role: str, text: str) -> bool:
         return (role, text) in self.source
 
+    def speak(self, role: str, text: str) -> str:
+        """The text the voice reads: Italian lines get the bank's "say" respellings as whole words."""
+        if role == "cue":
+            return text
+        for word, spoken in self.say.items():
+            text = re.sub(rf"\b{re.escape(word)}\b", spoken, text)
+        return text
+
     def key(self, role: str, text: str) -> str:
-        return hashlib.sha256(f"{self.voices[role]}|{text}".encode()).hexdigest()[:16]
+        return hashlib.sha256(f"{self.voices[role]}|{self.speak(role, text)}".encode()).hexdigest()[:16]
 
     def raw(self, role: str, text: str) -> str:
         return f"{self.cache}/{self.key(role, text)}.wav"
@@ -263,7 +273,7 @@ class Baker:
         if not os.path.exists(raw):
             ref = self.refs[self.voices[role]]
             lang = "en" if role == "cue" else "it"
-            body = json.dumps({"text": text, "ref_audio": ref["refAudio"], "ref_text": ref["refText"],
+            body = json.dumps({"text": self.speak(role, text), "ref_audio": ref["refAudio"], "ref_text": ref["refText"],
                                "language": lang, "num_step": 48, "guidance_scale": 2.0,
                                "class_temperature": 0.3, "pitch_semitones": 0}).encode()
             req = urllib.request.Request(f"{OV_URL}/tts", body, {"content-type": "application/json"})
@@ -391,7 +401,7 @@ def synth_modal(baker: Baker, lines: list, slug: str):
     todo = [(r, t) for r, t in lines if not os.path.exists(baker.raw(r, t))]
     if not todo:
         return 0, 0.0
-    segs = [{"voice": baker.voices[r], "lang": "en" if r == "cue" else "it", "text": t} for r, t in todo]
+    segs = [{"voice": baker.voices[r], "lang": "en" if r == "cue" else "it", "text": baker.speak(r, t)} for r, t in todo]
     refs = {v: {"wav": os.path.basename(baker.refs[v]["refAudio"]), "txt": baker.refs[v]["refText"]}
             for v in {s["voice"] for s in segs}}
     with tempfile.TemporaryDirectory(prefix="pimsleur-modal-") as td:
@@ -441,7 +451,7 @@ def build(lesson_dir: str, qc: bool, engine: str = "mac") -> dict:
                     if not os.path.exists(ap):
                         sys.exit(f"source clip missing for {item['id']}: {ap}")
                     source.setdefault((role, item[lang]), ap)
-    baker = Baker(os.path.join(audio_dir, "pimsleur-cache"), bank.get("voices"), source)
+    baker = Baker(os.path.join(audio_dir, "pimsleur-cache"), bank.get("voices"), source, bank.get("say"))
 
     lines = {(st[0], st[1]) for st in steps if st[0] in ("cue", "target", "frame")}
     lines |= {("target", st[1]) for st in steps if st[0] == "answer_pause"}
@@ -451,7 +461,7 @@ def build(lesson_dir: str, qc: bool, engine: str = "mac") -> dict:
     if qc:
         bad = []
         for role, text in sorted(lines):
-            ratio, heard = qc_clip(baker.raw(role, text), text, "en" if role == "cue" else "it")
+            ratio, heard = qc_clip(baker.raw(role, text), baker.speak(role, text), "en" if role == "cue" else "it")
             report["checked"] += 1
             if ratio < QC_MIN_RATIO:
                 bad.append((role, text))
@@ -459,7 +469,7 @@ def build(lesson_dir: str, qc: bool, engine: str = "mac") -> dict:
                 report["resynth"].append({"text": text, "heard": heard, "ratio": round(ratio, 2)})
         synth(baker, bad, engine, "qc-" + os.path.basename(os.path.normpath(lesson_dir)), report)
         for role, text in bad:
-            ratio2, heard2 = qc_clip(baker.raw(role, text), text, "en" if role == "cue" else "it")
+            ratio2, heard2 = qc_clip(baker.raw(role, text), baker.speak(role, text), "en" if role == "cue" else "it")
             if ratio2 < QC_MIN_RATIO:
                 report["failed"].append({"text": text, "heard": heard2, "ratio": round(ratio2, 2)})
         print(f"  qc: {report['checked']} clips, {len(report['resynth'])} re-synthesized, {len(report['failed'])} still failing")
@@ -611,7 +621,7 @@ def recheck(lesson_dir: str, text: str) -> tuple[bool, list[str]]:
         return False, ["no timestamped clip-glitch complaint to measure — FIX stands"]
     notes = [f"not measurable, FIX stands: {o[:140]}" for o in other]
     bank = json.load(open(os.path.join(lesson_dir, "pimsleur.json")))
-    baker = Baker(os.path.join(lesson_dir, "audio", "pimsleur-cache"), bank.get("voices"))
+    baker = Baker(os.path.join(lesson_dir, "audio", "pimsleur-cache"), bank.get("voices"), None, bank.get("say"))
     timeline = json.load(open(os.path.join(lesson_dir, "audio", "pimsleur.timeline.json")))["timeline"]
     ok, seen = not other, set()
     for a, b in ranges:

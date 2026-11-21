@@ -251,3 +251,22 @@ def test_flagged_ignores_earlier_auto_recheck():
             "\n## Auto re-check (measured)\n- 03:25 'persone': ASR heard 'x' (WORDS DIFFER) -> CONFIRMED\n")
     ranges, other = pd.flagged(text)
     assert ranges == [(206, 206)] and other == []
+
+
+class Say(unittest.TestCase):
+    def baker(self, say):
+        b = pd.Baker.__new__(pd.Baker)
+        b.say, b.voices = say, {"cue": "n", "target": "t", "frame": "t"}
+        return b
+
+    def test_italian_lines_respelled_as_whole_words(self):
+        b = self.baker({"MOF": "Mof"})
+        self.assertEqual(b.speak("target", "La MOF condiziona la prognosi."), "La Mof condiziona la prognosi.")
+        self.assertEqual(b.speak("frame", "MOFS e MOF"), "MOFS e Mof")
+
+    def test_cue_lines_untouched(self):
+        self.assertEqual(self.baker({"MOF": "Mof"}).speak("cue", "Say: MOF."), "Say: MOF.")
+
+    def test_cache_key_follows_spoken_text(self):
+        self.assertNotEqual(self.baker({}).key("target", "la MOF"), self.baker({"MOF": "Mof"}).key("target", "la MOF"))
+        self.assertEqual(self.baker({}).key("target", "il rene"), self.baker({"MOF": "Mof"}).key("target", "il rene"))

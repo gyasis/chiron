@@ -148,3 +148,27 @@ class Wiring(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class CardWords(unittest.TestCase):
+    BASE = {k: {"it": "x", "en": "y"} for k in ("coldOpen", "pearl")}
+
+    def card(self, words):
+        return {**self.BASE, "pattern": {"title": "t", "rows": [{"it": "a", "en": "b"}]}, "words": words}
+
+    def words_issues(self, words):
+        return [i for i in m.card_valid(self.card(words)) if i.startswith("words")]
+
+    def test_dictionary_entries_pass(self):
+        w = [{"it": "la spalla", "en": "the shoulder"}, {"it": "respirare", "en": "to breathe"},
+             {"it": "il rene", "en": "the kidney"}]
+        self.assertEqual(self.words_issues(w), [])
+
+    def test_missing_or_too_few_words_refused(self):
+        self.assertTrue(self.words_issues(None))
+        self.assertTrue(self.words_issues([{"it": "il rene", "en": "the kidney"}]))
+
+    def test_a_phrase_is_not_a_word(self):
+        w = [{"it": "il rene", "en": "the kidney"}, {"it": "respirare", "en": "to breathe"},
+             {"it": "la MOF condiziona la prognosi", "en": "MOF affects prognosis"}]
+        self.assertTrue(any("not a phrase" in i for i in self.words_issues(w)))

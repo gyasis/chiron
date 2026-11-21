@@ -614,6 +614,15 @@ def card_valid(o) -> list:
         v = o.get(k) if isinstance(o, dict) else None
         if not isinstance(v, dict) or not v.get("it") or not v.get("en"):
             iss.append(f"{k}: need {{it, en}}")
+    words = o.get("words") if isinstance(o, dict) else None
+    if not isinstance(words, list) or not 3 <= len(words) <= 14:
+        iss.append("words: need 3-14 {it, en} dictionary entries")
+    else:
+        for k, w in enumerate(words):
+            if not isinstance(w, dict) or not w.get("it") or not w.get("en"):
+                iss.append(f"words[{k}]: need {{it, en}}")
+            elif len(str(w["it"]).split()) > 3 or len(str(w["en"]).split()) > 4:
+                iss.append(f"words[{k}]: one dictionary entry (article + word), not a phrase: {w['it']!r}")
     return iss
 
 
@@ -628,7 +637,12 @@ ITEMS: {json.dumps([{'it': i['it'], 'en': i['en']} for i in bank['items'] if i.g
 Return ONLY JSON:
 {{"coldOpen": {{"it": "<one warm Italian sentence>", "en": "<English>"}},
   "pattern": {{"title": "<short Italian title>", "rows": [{{"it": "<form, e.g. fare → ho fatto>", "en": "<English>"}}]}},
-  "pearl": {{"it": "<the ONE thing to remember, Italian, 1-2 sentences>", "en": "<English>"}}}}"""
+  "pearl": {{"it": "<the ONE thing to remember, Italian, 1-2 sentences>", "en": "<English>"}},
+  "words": [{{"it": "<dictionary form>", "en": "<English>"}}]}}
+`words` = the lesson's key content words as single dictionary entries, so the learner builds vocabulary as well as
+phrases: a noun WITH its definite article ("la spalla", "il ginocchio", "l'orecchio", "i denti"), a verb in the
+infinitive ("respirare"), an adjective in the masculine singular. 4-12 entries, each one used in the ITEMS; no
+function words, no whole phrases."""
     o = await ask_json(prompt, f"pimsleur-card-{n:02d}", WRITERS, card_valid)
     if not o:
         sys.exit(f"[P3] lesson {n}: card failed on every model")
@@ -642,10 +656,14 @@ Return ONLY JSON:
             {"id": "frasi", "title": "Le frasi della lezione",
              "introHtml": "<p>Queste sono le frasi del drill audio. Ascoltalo prima (🎧 in alto), poi rileggile qui.</p>",
              "vocab": [{"slug": i["id"], "it": i["it"], "en": i["en"]} for i in items]},
+            {"id": "parole", "title": "Le parole",
+             "vocab": [{"slug": f"w-{k}", "it": w["it"], "en": w["en"]} for k, w in enumerate(o["words"])]},
             {"id": "ricorda", "title": "Da ricordare", "pearls": [{"slug": "ricorda", **o["pearl"]}]},
         ],
-        "matchMadness": {"pairs": [{"a": i["it"], "b": i["en"]} for i in items]},
-        "srCards": [{"front": i["en"], "back": i["it"], "tags": ["pimsleur"]} for i in items],
+        "matchMadness": {"pairs": [{"a": w["it"], "b": w["en"]} for w in o["words"]]
+                                  + [{"a": i["it"], "b": i["en"]} for i in items]},
+        "srCards": [{"front": w["en"], "back": w["it"], "tags": ["pimsleur", "parola"]} for w in o["words"]]
+                   + [{"front": i["en"], "back": i["it"], "tags": ["pimsleur"]} for i in items],
     }
     (out / "content.json").write_text(json.dumps(content, ensure_ascii=False, indent=1))
     lesson_manifest.stamp(out, title=l['titleIt'], domain=DOMAIN, generator="chiron", labels=LABELS or None,
