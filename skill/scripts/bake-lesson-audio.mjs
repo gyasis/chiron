@@ -18,6 +18,14 @@
  *   --no-passage       Skip the annotated-passage whole-passage listen (passage-fast/passage-slow)
  *   --no-qc            Disable Gemini audio QC (default: on when GEMINI_API_KEY/GOOGLE_API_KEY set)
  *   --dry-run          Parse + print the artifact plan; do NOT call bakeAudio
+ *   --allow-partial    Exit 0 even when clips are missing (default: strict, exit 2)
+ *
+ * Exit codes: 0 complete · 1 precondition failure · 2 clips missing · 3 TTS lock
+ * timeout. Writes audio/bake-status.json (current), audio/bake-report.json
+ * (append-only history) and, when clips are missing, audio/incomplete.json.
+ *
+ * Env: CH_BAKE_LOCK_WAIT (seconds to queue, default 1800) · CH_BAKE_LOCK_PATH ·
+ *      CH_OMNIVOICE_URL (TTS host override) · CH_BAKE_ENGINE=modal.
  */
 
 import * as fs from 'node:fs';
@@ -59,6 +67,7 @@ let dryRun = false;
 let noQc = false;
 let onlyKinds = null;   // --only summary,shortened : bake just these artifact kinds
 let learnerVoice = null; // --learner-voice it_giuseppe : VOICE the learner's dialogue turns with this voice instead of skipping them
+let allowPartial = false; // --allow-partial : exit 0 even when clips are missing (opt-in; default is strict)
 
 for (let i = 1; i < argv.length; i++) {
   if (argv[i] === '--persona' && argv[i + 1]) { personaIdArg = argv[++i]; continue; }
@@ -70,6 +79,7 @@ for (let i = 1; i < argv.length; i++) {
   if (argv[i] === '--only' && argv[i + 1]) { onlyKinds = new Set(argv[++i].split(',')); continue; }
   if (argv[i] === '--learner-voice' && argv[i + 1]) { learnerVoice = argv[++i]; continue; }
   if (argv[i] === '--dry-run') { dryRun = true; continue; }
+  if (argv[i] === '--allow-partial') { allowPartial = true; continue; }
 }
 
 if (!fs.existsSync(lessonDir)) {
@@ -584,6 +594,86 @@ if (dryRun) {
 }
 
 // ---------------------------------------------------------------------------
+// Step 3b — Serialize bakes on the shared TTS host
+//
+// Every lesson synthesizes through ONE OmniVoice service (the Mac sidecar by
+// default; see lib/audio-bake.ts DEFAULT_OV). Two bakes in flight therefore
+// compete for one engine, and the longest artifacts — the lecture and the
+// dialogues — are the ones that burn their retries and fail. This lock makes a
+// second bake WAIT rather than stampede. It is a local queue, not a distributed
+// one: two different machines still share the sidecar.
+//
+// Env: CH_BAKE_LOCK_WAIT seconds to wait for the lock (default 1800).
+//      CH_BAKE_LOCK_PATH to relocate the lock file (default ~/.chiron/bake.lock).
+// ---------------------------------------------------------------------------
+const LOCK_PATH = process.env.CH_BAKE_LOCK_PATH || path.join(os.homedir(), '.chiron', 'bake.lock');
+const LOCK_STALE_MS = 3 * 60 * 60 * 1000;   // a lock older than 3h is debris, not a live bake
+
+function pidAlive(pid) {
+  if (!Number.isInteger(pid) || pid <= 0) return false;
+  try { process.kill(pid, 0); return true; } catch (e) { return e.code === 'EPERM'; }
+}
+
+function releaseLock() {
+  try {
+    const held = JSON.parse(fs.readFileSync(LOCK_PATH, 'utf8'));
+    if (held.pid === process.pid) fs.unlinkSync(LOCK_PATH);
+  } catch { /* already gone, or not ours — leave it */ }
+}
+
+async function acquireLock() {
+  fs.mkdirSync(path.dirname(LOCK_PATH), { recursive: true });
+  const waitMs = (Number(process.env.CH_BAKE_LOCK_WAIT || 1800) || 1800) * 1000;
+  const started = Date.now();
+  let announced = false;
+  for (;;) {
+    try {
+      const fd = fs.openSync(LOCK_PATH, 'wx');
+      fs.writeSync(fd, JSON.stringify({
+        pid: process.pid, host: os.hostname(), lessonDir, startedAt: new Date().toISOString(),
+      }));
+      fs.closeSync(fd);
+      process.on('exit', releaseLock);
+      for (const sig of ['SIGINT', 'SIGTERM', 'SIGHUP']) {
+        process.on(sig, () => { releaseLock(); process.exit(130); });
+      }
+      return;
+    } catch (e) {
+      if (e.code !== 'EEXIST') throw e;
+      let holder = null;
+      try { holder = JSON.parse(fs.readFileSync(LOCK_PATH, 'utf8')); } catch { /* unreadable: treat as stale below */ }
+      const age = Date.now() - Date.parse(holder?.startedAt || 0);
+      const stale = !holder || !pidAlive(holder.pid) || age > LOCK_STALE_MS;
+      if (stale) {
+        process.stderr.write(`[bake-lesson-audio] removing stale TTS lock (pid ${holder?.pid ?? '?'}, ${Math.round(age / 60000)}m old)\n`);
+        try { fs.unlinkSync(LOCK_PATH); } catch { /* raced with another waiter */ }
+        continue;
+      }
+      if (Date.now() - started > waitMs) {
+        const heldFor = age >= 60000 ? `${Math.round(age / 60000)}m` : `${Math.round(age / 1000)}s`;
+        const waited = waitMs >= 60000 ? `${Math.round(waitMs / 60000)}m` : `${Math.round(waitMs / 1000)}s`;
+        throw new Error(
+          `TTS lock held by pid ${holder.pid} (${holder.lessonDir}) for ${heldFor} — ` +
+          `gave up after ${waited}. Raise CH_BAKE_LOCK_WAIT or remove ${LOCK_PATH} if that bake is gone.`,
+        );
+      }
+      if (!announced) {
+        process.stderr.write(`[bake-lesson-audio] another bake holds the TTS lock (pid ${holder.pid}, ${holder.lessonDir}) — queueing\n`);
+        announced = true;
+      }
+      await new Promise((r) => setTimeout(r, 2000));
+    }
+  }
+}
+
+try {
+  await acquireLock();
+} catch (e) {
+  process.stderr.write(`bake-lesson-audio: ${e instanceof Error ? e.message : String(e)}\n`);
+  process.exit(3);
+}
+
+// ---------------------------------------------------------------------------
 // Step 4 — Bake
 // ---------------------------------------------------------------------------
 // Init the SQLite db (idempotent)
@@ -598,6 +688,9 @@ const results = await bakeAudio({
   ...(noQc ? { qc: false } : {}),
   engine: process.env.CH_BAKE_ENGINE === 'modal' ? 'modal' : 'mac',
   modalSynthScript: fileURLToPath(new URL('../modal/modal_synth.py', import.meta.url)),
+  // CH_OMNIVOICE_URL: point the bake at a different TTS host (or a dead port, to
+  // prove the failure path). Unset → lib/audio-bake.ts uses its default sidecar.
+  ...(process.env.CH_OMNIVOICE_URL ? { omnivoiceUrl: process.env.CH_OMNIVOICE_URL } : {}),
 });
 
 // ---------------------------------------------------------------------------
@@ -647,9 +740,87 @@ const qcChecked = results.filter(r => r.status === 'done').length;
 const qcWithDefects = results.filter(r => r.qcDefects && r.qcDefects.length > 0).length;
 const qcReportWritten = qcWithDefects > 0;
 if (!noQc) {
+  // The denominator is what the lesson ASKED FOR, not what survived: a run that
+  // silently drops two clips must not read "0 defects".
   process.stdout.write(
-    `\nQC: ${qcChecked} clip(s) checked  ${qcWithDefects} with surviving defects` +
+    `\nQC: ${qcChecked}/${allArtifacts.length} clip(s) checked  ${qcWithDefects} with surviving defects` +
     `  re-baked: ${qcWithDefects > 0 ? qcWithDefects : 0}` +
     `  qc-report.json: ${qcReportWritten ? 'written' : 'empty (all clean)'}\n`
   );
+}
+
+// ---------------------------------------------------------------------------
+// Step 6 — Completeness, durable run record, honest exit code
+//
+// A bake is "complete" only when every planned artifact has a clip ON DISK.
+// manifest.json is the ground truth (writeManifest filters to files that exist),
+// so compare against that rather than against the in-memory results.
+// ---------------------------------------------------------------------------
+const audioDir = path.join(lessonDir, 'audio');
+let produced = [];
+try {
+  produced = JSON.parse(fs.readFileSync(path.join(audioDir, 'manifest.json'), 'utf8')).clips || [];
+} catch { /* no manifest → everything is missing, reported below */ }
+
+const keyOf = (kind, sectionId) => `${kind}\u0000${sectionId || ''}`;
+const producedKeys = new Set(produced.map((c) => keyOf(c.artifact, c.sectionId)));
+const missing = allArtifacts
+  .filter((a) => !producedKeys.has(keyOf(a.kind, a.sectionId)))
+  .map((a) => ({ artifact: a.kind, sectionId: a.sectionId ?? '' }));
+// Anything that is not on disk counts: 'failed' (synth gave up) and 'pending'
+// (engine unreachable, marked up-front) are both "no clip", and both carry an error.
+const failedResults = results
+  .filter((r) => r.status !== 'done' && r.status !== 'reused')
+  .map((r) => ({ artifact: r.artifact, sectionId: r.sectionId ?? '', status: r.status, error: r.error ?? '' }));
+
+const complete = missing.length === 0;
+const stamp = new Date().toISOString();
+
+// Always-current status: one small file the app, SIO and a human can all read.
+fs.writeFileSync(
+  path.join(audioDir, 'bake-status.json'),
+  JSON.stringify({ complete, ts: stamp, planned: allArtifacts.length, produced: produced.length, missing, failures: failedResults }, null, 2),
+);
+
+// Append-only history, so a later recovery run never erases an earlier failure.
+const reportPath = path.join(audioDir, 'bake-report.json');
+let runs = [];
+try { runs = JSON.parse(fs.readFileSync(reportPath, 'utf8')); } catch { /* first run, or a corrupt file we replace */ }
+if (!Array.isArray(runs)) runs = [];
+runs.push({
+  ts: stamp,
+  lessonDir,
+  persona: personaId,
+  planned: allArtifacts.length,
+  baked: done,
+  reused,
+  failed,
+  missing: missing.length,
+  failures: failedResults,
+});
+fs.writeFileSync(reportPath, JSON.stringify(runs, null, 2));
+
+if (!complete) {
+  fs.writeFileSync(
+    path.join(audioDir, 'incomplete.json'),
+    JSON.stringify({ ts: stamp, missing, failures: failedResults }, null, 2),
+  );
+  process.stdout.write(
+    `\nINCOMPLETE — ${missing.length} of ${allArtifacts.length} clip(s) missing:\n` +
+    missing.map((m) => `  - ${m.artifact}${m.sectionId ? `/${m.sectionId}` : ''}` +
+      (failedResults.find((f) => f.artifact === m.artifact && f.sectionId === m.sectionId)?.error
+        ? `  → ${failedResults.find((f) => f.artifact === m.artifact && f.sectionId === m.sectionId).error.slice(0, 160)}`
+        : '')).join('\n') +
+    `\nRun details: ${path.join(audioDir, 'bake-report.json')}\n`,
+  );
+} else {
+  // A clean run retires the marker, so a stale "incomplete" never reads as current.
+  try { fs.unlinkSync(path.join(audioDir, 'incomplete.json')); } catch { /* nothing to retire */ }
+}
+
+if (!complete && !allowPartial) {
+  process.stderr.write(
+    `bake-lesson-audio: exiting 2 — ${missing.length} clip(s) missing (use --allow-partial to accept a partial bake)\n`,
+  );
+  process.exitCode = 2;
 }
