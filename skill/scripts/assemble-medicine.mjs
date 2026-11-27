@@ -621,6 +621,11 @@ ${clinicalWidgetsCss}
 
 /* ── SR card CSS ─────────────────────────────────────────────── */
 ${srCardCss}
+
+/* ── lesson media: book figures and local video segments fit the chapter column ── */
+figure.book-figure, figure.lesson-video { margin: 1.25rem 0; max-width: 100%; }
+figure.book-figure img, figure.lesson-video video { display: block; max-width: 100%; height: auto; border-radius: 8px; }
+figure.book-figure figcaption, figure.lesson-video figcaption { font-size: 0.85em; opacity: 0.8; margin-top: 0.4rem; }
   </style>
   <!-- Audio manifest loader: sets window.__chironAudioManifest BEFORE the player init, so audio plays on
        file:// (browsers BLOCK fetch('audio/manifest.json') on file://). Written by the bake; 404s silently

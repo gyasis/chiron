@@ -159,6 +159,10 @@ def resolve(domain, depth=None, subject="", subject_type=None, extra=None):
             env["CH_CHAPTERS"] = str(extra["chapters"])
         if extra.get("system"):
             env["CH_SYSTEM"] = extra["system"]   # user-confirmed/edited system → chain uses it, never re-infers
+        if extra.get("books"):
+            env["CH_BOOKS"] = str(extra["books"])   # explicit booklake profiles, e.g. an Italian + US book set
+        if extra.get("book_prefer"):
+            env["CH_BOOK_PREFER"] = str(extra["book_prefer"])   # the authority book placed first with a reserved share
     elif domain == "medical-italian" and depth == "passage":
         env["SSM_QID"] = subject   # an SSM question id; blank → the chain picks random
     elif domain == "medical-italian" and depth == "ward":
