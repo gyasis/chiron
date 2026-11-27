@@ -26,10 +26,19 @@ It speaks ollama's /api/embed contract exactly, so nothing calling it needs to
 know it changed.
 
     embed_server.py [--port 8913] [--model BAAI/bge-m3] [--device cuda]
+                    [--idle-unload 600] [--preload]
 
     POST /api/embed  {"model": "...", "input": "..." | [...]}
                   -> {"embeddings": [[...]], "model": ..., "device": ...}
-    GET  /healthz -> readiness, device, dim, and whether CUDA is really in use
+    POST /api/load   {"pin": true}  load now; a pinned model stays until /api/unload
+    POST /api/unload               free the GPU now; the next call loads again
+    GET  /healthz -> loaded, pinned, idle seconds, GPU MiB, device, dim, counters
+
+WHY ON DEMAND
+-------------
+The GPU on this box is small and shared. The server starts without the model.
+It loads the model on the first call (about 20 s cold). It unloads the model
+after --idle-unload seconds without use, so other work can use the GPU. `chiron-embed on|off|status` (~/.local/bin) is the manual switch.
 """
 import argparse, json, os, sys, threading, time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -46,6 +55,11 @@ ap.add_argument("--batch", type=int, default=int(os.environ.get("CHIRON_EMBED_BA
 # up SLOWER. int8 is Turing's real low-precision path if fp16 is ever not enough.
 ap.add_argument("--dtype", default=os.environ.get("CHIRON_EMBED_DTYPE", "float16"),
                 choices=["float32", "float16", "bfloat16"])
+# The model sits in GPU memory only while it is in use. It loads on the first
+# call (or POST /api/load) and unloads after this many idle seconds, so other
+# work can use the GPU. 0 keeps it loaded. A pinned load ignores the timer.
+ap.add_argument("--idle-unload", type=int, default=int(os.environ.get("CHIRON_EMBED_IDLE_UNLOAD", 600)))
+ap.add_argument("--preload", action="store_true", help="load the model at startup (pinned)")
 args = ap.parse_args()
 
 import torch
@@ -58,16 +72,61 @@ if args.device == "cuda" and not torch.cuda.is_available():
                      "Refusing to fall back silently. Pass --device cpu to accept it.\n")
     sys.exit(2)
 
-t0 = time.time()
-sys.stderr.write(f"loading {args.model} on {args.device} …\n")
 DT = {"float32": torch.float32, "float16": torch.float16, "bfloat16": torch.bfloat16}[args.dtype]
 # fp16 vs fp32 changes a vector by ~1e-3, an order of magnitude BELOW the int8
 # storage step (1/127 ~ 8e-3) the sidecar already applies. So vectors embedded
 # at either precision stay mutually comparable — this is not a parity break.
-MODEL = SentenceTransformer(args.model, device=args.device,
-                            model_kwargs={"torch_dtype": DT} if args.device == "cuda" else None)
-DIM = MODEL.get_sentence_embedding_dimension()
-sys.stderr.write(f"ready in {time.time()-t0:.0f}s · dim={DIM} · batch={args.batch} · {args.dtype}\n")
+MODEL = None
+DIM = None
+PINNED = False
+LAST_USE = 0.0
+LOAD_SECONDS = None
+LOCK = threading.Lock()          # one GPU, one batch at a time; also guards load/unload
+
+
+def _load_locked():
+    """Load the model. Caller holds LOCK."""
+    global MODEL, DIM, LOAD_SECONDS
+    if MODEL is not None:
+        return
+    t0 = time.time()
+    sys.stderr.write(f"loading {args.model} on {args.device} …\n")
+    MODEL = SentenceTransformer(args.model, device=args.device,
+                                model_kwargs={"torch_dtype": DT} if args.device == "cuda" else None)
+    DIM = MODEL.get_sentence_embedding_dimension()
+    LOAD_SECONDS = round(time.time() - t0, 1)
+    sys.stderr.write(f"ready in {LOAD_SECONDS}s · dim={DIM} · batch={args.batch} · {args.dtype}\n")
+
+
+def _unload_locked(reason):
+    """Drop the model and return its GPU memory. Caller holds LOCK."""
+    global MODEL, PINNED
+    if MODEL is None:
+        return False
+    MODEL = None
+    PINNED = False
+    import gc
+    gc.collect()
+    if torch.cuda.is_available():
+        torch.cuda.empty_cache()
+    sys.stderr.write(f"unloaded ({reason})\n")
+    return True
+
+
+def _idle_watch():
+    while True:
+        time.sleep(30)
+        if args.idle_unload <= 0:
+            continue
+        with LOCK:
+            if MODEL is not None and not PINNED and time.time() - LAST_USE > args.idle_unload:
+                _unload_locked(f"idle {args.idle_unload}s")
+
+
+def _vram_mib():
+    if not torch.cuda.is_available():
+        return 0
+    return round(torch.cuda.memory_reserved() / 2**20)
 
 # E5-family models are trained with ASYMMETRIC prefixes and lose several points
 # without them: a question must be prefixed "query: " and a document "passage: ".
@@ -131,17 +190,21 @@ def _load_shards():
         sys.stderr.write(f"search ready: {sum(len(v[0]) for v in SHARDS.values()):,} vectors "
                          f"across {len(SHARDS)} domains · {len(PASSAGES):,} passages\n")
 
-LOCK = threading.Lock()          # one GPU, one batch at a time
-STATS = {"requests": 0, "vectors": 0, "nan_rejected": 0}
+STATS = {"requests": 0, "vectors": 0, "nan_rejected": 0, "loads": 0}
 
 
 def embed(texts, kind="passage"):
+    global LAST_USE
     pre = PREFIX.get(kind, "")
     if pre:
         texts = [pre + t for t in texts]
     with LOCK:
+        if MODEL is None:
+            _load_locked()
+            STATS["loads"] += 1
         v = MODEL.encode(texts, batch_size=args.batch,
                          normalize_embeddings=True, show_progress_bar=False)
+        LAST_USE = time.time()
     out = v.tolist()
     # NaN is exactly how the ollama path failed. Catch it here rather than
     # letting a poisoned vector reach the corpus, where it would silently
@@ -168,17 +231,44 @@ class H(BaseHTTPRequestHandler):
 
     def do_GET(self):
         if self.path.startswith("/healthz"):
-            return self._send(200, {
-                "ok": True, "model": args.model, "dim": DIM, "device": args.device, "dtype": args.dtype,
-                "cuda_in_use": args.device == "cuda" and torch.cuda.is_available(),
-                "prefixes": PREFIX,
-                "search_domains": {d: len(v[0]) for d, v in SHARDS.items()},
-                "vram_mib": round(torch.cuda.max_memory_allocated() / 2**20) if torch.cuda.is_available() else 0,
-                **STATS,
-            })
+            return self._send(200, self._state())
         self._send(404, {"error": "not found"})
 
+    def _state(self):
+        loaded = MODEL is not None
+        return {
+            "ok": True, "model": args.model, "dim": DIM, "device": args.device, "dtype": args.dtype,
+            "loaded": loaded, "pinned": PINNED,
+            "idle_s": round(time.time() - LAST_USE) if loaded and LAST_USE else None,
+            "idle_unload_s": args.idle_unload, "load_seconds": LOAD_SECONDS,
+            "cuda_in_use": loaded and args.device == "cuda" and torch.cuda.is_available(),
+            "prefixes": PREFIX,
+            "search_domains": {d: len(v[0]) for d, v in SHARDS.items()},
+            "vram_mib": _vram_mib(),
+            **STATS,
+        }
+
     def do_POST(self):
+        global PINNED, LAST_USE
+        if self.path.startswith("/api/load"):
+            # The "on" button: load now and keep it loaded until /api/unload.
+            try:
+                n = int(self.headers.get("content-length", 0))
+                req = json.loads(self.rfile.read(n) or b"{}")
+                with LOCK:
+                    if MODEL is None:
+                        _load_locked()
+                        STATS["loads"] += 1
+                    PINNED = bool(req.get("pin", True))
+                    LAST_USE = time.time()
+                return self._send(200, self._state())
+            except Exception as e:
+                return self._send(500, {"error": f"{type(e).__name__}: {e}"})
+        if self.path.startswith("/api/unload"):
+            # The "off" button: free the GPU now. The next call loads it again.
+            with LOCK:
+                _unload_locked("requested")
+            return self._send(200, self._state())
         if self.path.startswith("/api/search"):
             try:
                 import numpy as np
@@ -260,6 +350,15 @@ try:
 except Exception as e:
     sys.stderr.write(f"search unavailable ({type(e).__name__}: {e}) — /api/embed still works\n")
 
+if args.preload:
+    with LOCK:
+        _load_locked()
+        STATS["loads"] += 1
+        PINNED = True
+threading.Thread(target=_idle_watch, daemon=True).start()
+
 srv = ThreadingHTTPServer(("127.0.0.1", args.port), H)
-sys.stderr.write(f"listening on http://127.0.0.1:{args.port}  (POST /api/embed, GET /healthz)\n")
+sys.stderr.write(f"listening on http://127.0.0.1:{args.port}  (POST /api/embed /api/search /api/load "
+                 f"/api/unload, GET /healthz) · model {'loaded' if MODEL is not None else 'loads on demand'}"
+                 f" · idle unload {args.idle_unload}s\n")
 srv.serve_forever()
